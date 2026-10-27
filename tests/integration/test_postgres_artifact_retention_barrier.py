@@ -104,6 +104,7 @@ def test_bounded_reference_collection_uses_real_postgres_collector_lease(tmp_pat
     artifacts = LocalArtifactStore(tmp_path / "artifacts")
     live = artifacts.put_bytes(role="live", data=b"live")
     query_evidence = artifacts.put_bytes(role="query-evidence", data=b"query-evidence")
+    query_run_id = f"retention-run-{query_evidence.digest[:16]}"
     stale = artifacts.put_bytes(role="stale", data=b"stale")
     query_evidence_store = PostgresQueryEvidenceReferenceStore(
         os.environ["RONIN_POSTGRES_TEST_DSN"],
@@ -112,10 +113,21 @@ def test_bounded_reference_collection_uses_real_postgres_collector_lease(tmp_pat
     with barrier.writer():
         query_evidence_store.record(
             project_id="retention-project",
-            run_id="retention-run",
+            run_id=query_run_id,
             attempt_id="retention-attempt",
             artifact=query_evidence,
         )
+    assert query_evidence_store.get_evidence_reference(
+        project_id="retention-project",
+        run_id=query_run_id,
+        attempt_id="retention-attempt",
+    ) == {
+        "project_id": "retention-project",
+        "run_id": query_run_id,
+        "attempt_id": "retention-attempt",
+        "storage_ref": query_evidence.storage_ref,
+        "digest": query_evidence.digest,
+    }
     workspace = Workspace(WorkspaceId("retention-workspace"), "Retention")
     file_asset = CatalogAsset(AssetId("source-file"), "file", "source.csv")
     revision = AssetRevision(

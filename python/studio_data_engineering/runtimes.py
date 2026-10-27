@@ -56,6 +56,16 @@ class QueryEngineRuntimeProvider:
 
         return dict(self._discovered.handshake.capabilities.values)
 
+    def allowed_engines(self, profile: str) -> tuple[str, ...]:
+        """Return the configured, safe-to-disclose engine choices for one profile."""
+
+        return self._policy.allowed_engines(profile)
+
+    def profiles(self) -> tuple[str, ...]:
+        """Return configured profile names without provider connection details."""
+
+        return tuple(profile for profile, _engines in self._policy.profile_engines)
+
     def is_healthy(self) -> bool:
         """Return the provider health observed during discovery."""
 

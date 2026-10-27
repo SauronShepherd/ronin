@@ -1,6 +1,8 @@
 """Ronin-owned provider-neutral query execution contracts."""
 
 from .contracts import (
+    DEFAULT_MAX_RESULT_BYTES,
+    MAX_RESULT_BYTES,
     QUERY_ENGINE_NAMESPACE,
     QUERY_ENGINE_VERSION,
     CancellationResult,
@@ -23,6 +25,7 @@ from .trino import HttpClient, QueryFailure, TrinoHttpTransport
 
 __all__ = [
     "CancellationResult",
+    "DEFAULT_MAX_RESULT_BYTES",
     "DiscoveredEngine",
     "DiscoveryClient",
     "EngineCapabilities",
@@ -38,6 +41,7 @@ __all__ = [
     "QueryFluxDiscovery",
     "QueryFluxTrinoTransport",
     "LocalSqlTransport",
+    "MAX_RESULT_BYTES",
     "QueryState",
     "QueryStatus",
     "QUERY_ENGINE_NAMESPACE",

@@ -339,7 +339,12 @@ test('SQL Studio sends one workspace-scoped request per submit', async ({ page }
   let queryCount = 0;
   await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/sql/query', async route => {
     queryCount += 1;
-    expect(route.request().postDataJSON()).toMatchObject({sql: 'SELECT 1 AS value', max_rows: 1000});
+    expect(route.request().postDataJSON()).toMatchObject({
+      sql: 'SELECT 1 AS value',
+      max_rows: 1000,
+      timeout_ms: 5000,
+      max_result_bytes: 1048576,
+    });
     await route.fulfill({ json: { columns: [{ name: 'value' }], rows: [[1]], row_count: 1 } });
   });
   await page.goto('./#sql');
@@ -353,7 +358,9 @@ test('Data Engineering Studio executes a bounded read-only SQL query', async ({ 
     const body = route.request().postDataJSON();
     expect(body.sql).toBe('SELECT 1 AS value');
     expect(body.max_rows).toBe(1000);
-    expect(body.dialect).toBe('ansi');
+    expect(body.timeout_ms).toBe(5000);
+    expect(body.max_result_bytes).toBe(1048576);
+    expect(body.dialect).toBeUndefined();
     await route.fulfill({ json: { columns: [{ name: 'value', type_name: 'INTEGER' }], rows: [[1]], row_count: 1 } });
   });
   await page.goto('./#data');

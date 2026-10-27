@@ -16,6 +16,23 @@ def test_query_policy_requires_explicit_profile_engine_and_capability() -> None:
     )
 
 
+def test_query_policy_requires_engine_parameter_binding_capability() -> None:
+    policy = QueryExecutionPolicy((("local", ("duckdb",)),))
+    request = QueryRequest("SELECT ?", "local", parameters=(1,))
+
+    with pytest.raises(PermissionError, match="parameter binding"):
+        policy.select_engine(request, engine="duckdb", capabilities=EngineCapabilities(()))
+
+    assert (
+        policy.select_engine(
+            request,
+            engine="duckdb",
+            capabilities=EngineCapabilities((("parameter_binding", True),)),
+        )
+        == "duckdb"
+    )
+
+
 @pytest.mark.parametrize(
     ("query_request", "engine", "capabilities", "message"),
     [

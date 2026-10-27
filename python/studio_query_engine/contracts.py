@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from studio_core.canonical_json import encode as encode_canonical_json
+from studio_sql import normalize_sql_parameters, validate_read_only_select
 
 QueryState = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 TranslationPolicy = Literal["native_only", "best_effort", "strict"]
@@ -15,6 +16,8 @@ TranslationPolicy = Literal["native_only", "best_effort", "strict"]
 # may add fields in their own payloads, but must not replace this identity.
 QUERY_ENGINE_NAMESPACE = "ronin.query-engine"
 QUERY_ENGINE_VERSION = "v1"
+DEFAULT_MAX_RESULT_BYTES = 1_048_576
+MAX_RESULT_BYTES = 10_485_760
 
 
 def _text(value: str, name: str, *, maximum: int = 512) -> str:
@@ -36,6 +39,23 @@ def _digest(value: str, name: str) -> str:
     if not re.fullmatch(r"[0-9a-f]{64}", value):
         raise ValueError(f"{name} must be a lowercase SHA-256 hex digest")
     return value
+
+
+def _parameter_payload(value: object) -> dict[str, object]:
+    """Encode a normalized scalar without losing its SQL type or int64 range."""
+    if value is None:
+        return {"type": "null", "value": None}
+    if isinstance(value, bool):
+        return {"type": "boolean", "value": value}
+    if isinstance(value, int):
+        # canonical_json intentionally limits bare integers to JavaScript's
+        # exact range; decimal text preserves the SQL int64 value cross-runtime.
+        return {"type": "integer", "value": str(value)}
+    if isinstance(value, float):
+        return {"type": "float", "value": value}
+    if isinstance(value, str):
+        return {"type": "string", "value": value}
+    raise ValueError("query parameters must be normalized SQL scalars")
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,9 +114,12 @@ class QueryRequest:
     profile: str
     translation_policy: TranslationPolicy = "native_only"
     max_rows: int = 1_000
+    parameters: tuple[object, ...] = ()
+    max_result_bytes: int = DEFAULT_MAX_RESULT_BYTES
 
     def __post_init__(self) -> None:
         _text(self.sql, "sql", maximum=1_000_000)
+        validate_read_only_select(self.sql)
         _text(self.profile, "profile")
         if self.translation_policy not in {"native_only", "best_effort", "strict"}:
             raise ValueError("unsupported translation policy")
@@ -104,6 +127,17 @@ class QueryRequest:
             raise ValueError("max_rows must be an integer")
         if not 1 <= self.max_rows <= 1_000_000:
             raise ValueError("max_rows is outside the configured bound")
+        if isinstance(self.max_result_bytes, bool) or not isinstance(self.max_result_bytes, int):
+            raise ValueError("max_result_bytes must be an integer")
+        if not 1 <= self.max_result_bytes <= MAX_RESULT_BYTES:
+            raise ValueError("max_result_bytes is outside the configured bound")
+        if not isinstance(self.parameters, (tuple, list)):
+            raise ValueError("parameters must be an array")
+        try:
+            parameters = normalize_sql_parameters(list(self.parameters))
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
+        object.__setattr__(self, "parameters", parameters)
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -111,6 +145,8 @@ class QueryRequest:
             "profile": self.profile,
             "translation_policy": self.translation_policy,
             "max_rows": self.max_rows,
+            "max_result_bytes": self.max_result_bytes,
+            "parameters": [_parameter_payload(value) for value in self.parameters],
         }
 
     def canonical_json(self) -> str:
@@ -270,6 +306,7 @@ class QueryEngineTransport(Protocol):
 
 __all__ = [
     "CancellationResult",
+    "DEFAULT_MAX_RESULT_BYTES",
     "EngineCapabilities",
     "EngineHandshake",
     "QueryEvidence",
@@ -279,6 +316,7 @@ __all__ = [
     "QueryResultPage",
     "QueryState",
     "QueryStatus",
+    "MAX_RESULT_BYTES",
     "TranslationPolicy",
     "QUERY_ENGINE_NAMESPACE",
     "QUERY_ENGINE_VERSION",

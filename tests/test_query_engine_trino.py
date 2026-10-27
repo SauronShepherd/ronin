@@ -42,6 +42,58 @@ def test_trino_transport_submits_polls_pages_and_cancels() -> None:
     assert client.calls[0][0:2] == ("POST", "http://engine/v1/statement")
 
 
+def test_trino_transport_returns_initial_post_result_page_before_polling() -> None:
+    client = _Client(
+        [
+            {
+                "id": "q-1",
+                "columns": [{"name": "id"}],
+                "data": [[1]],
+                "nextUri": "http://engine/q-1/1",
+            },
+            {"columns": [{"name": "id"}], "data": [[2]]},
+        ]
+    )
+    transport = TrinoHttpTransport(client, base_url="http://engine/")
+    handle, uri = transport.submit(QueryRequest("SELECT 1", "trino"))
+
+    status, first_page, following = transport.poll(handle, uri)
+    assert status.state == "running"
+    assert first_page is not None
+    assert first_page.rows == ((1,),)
+    assert following == "http://engine/q-1/1"
+    assert len(client.calls) == 1
+
+    final_status, second_page, _ = transport.poll(handle, following)
+    assert final_status.state == "succeeded"
+    assert second_page is not None
+    assert second_page.rows == ((2,),)
+    assert len(client.calls) == 2
+
+
+def test_trino_transport_counts_initial_page_in_the_request_row_limit() -> None:
+    client = _Client(
+        [
+            {
+                "id": "q-1",
+                "columns": [{"name": "id"}],
+                "data": [[1]],
+                "nextUri": "http://engine/q-1/1",
+            },
+            {"columns": [{"name": "id"}], "data": [[2]]},
+        ]
+    )
+    transport = TrinoHttpTransport(client, base_url="http://engine/")
+    handle, uri = transport.submit(QueryRequest("SELECT 1", "trino", max_rows=1))
+    status, page, following = transport.poll(handle, uri)
+    assert status.state == "running"
+    assert page is not None
+    assert len(page.rows) == 1
+
+    with pytest.raises(QueryFailure, match="too many rows"):
+        transport.poll(handle, following or "")
+
+
 def test_queryflux_trino_transport_preserves_lifecycle_and_provider_identity() -> None:
     client = _Client(
         [
@@ -63,7 +115,7 @@ def test_trino_transport_normalizes_provider_errors_and_provider_mismatch() -> N
         [{"id": "q-1", "nextUri": "http://engine/q-1"}, {"error": {"message": "bad sql"}}]
     )
     transport = TrinoHttpTransport(client, base_url="http://engine/")
-    handle, uri = transport.submit(QueryRequest("BAD", "trino"))
+    handle, uri = transport.submit(QueryRequest("SELECT missing_column", "trino"))
     status, page, next_uri = transport.poll(handle, uri)
     assert status.state == "failed"
     assert status.message == "bad sql"
@@ -85,6 +137,31 @@ def test_trino_transport_enforces_request_row_bound() -> None:
     handle, uri = transport.submit(QueryRequest("SELECT 1", "trino", max_rows=1))
     with pytest.raises(QueryFailure, match="too many rows"):
         transport.poll(handle, uri)
+
+
+def test_trino_transport_encodes_typed_parameters_using_prepared_execution() -> None:
+    client = _Client([{"id": "q-1", "nextUri": "http://engine/q-1/1"}])
+    transport = TrinoHttpTransport(client, base_url="http://engine/")
+    transport.submit(
+        QueryRequest(
+            "SELECT ?, ?, ?, ?",
+            "trino",
+            parameters=("x'); DROP TABLE t; --", None, True, 2.5),
+        )
+    )
+    submitted = client.calls[0][2]
+    assert submitted is not None
+    assert submitted.startswith("EXECUTE IMMEDIATE 'SELECT ?, ?, ?, ?' USING ")
+    assert "from_utf8(from_base64(" in submitted
+    assert "DROP TABLE" not in submitted
+    assert submitted.endswith(", NULL, TRUE, CAST(2.5 AS DOUBLE)")
+
+
+def test_query_request_rejects_non_select_before_remote_io() -> None:
+    client = _Client([])
+    with pytest.raises(ValueError, match="read-only SELECT"):
+        QueryRequest("UPDATE t SET x = 1", "trino")
+    assert client.calls == []
 
 
 def test_trino_transport_enforces_request_row_bound_across_pages() -> None:

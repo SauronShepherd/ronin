@@ -21,6 +21,8 @@ class PluginEventSchema:
     required_fields: tuple[str, ...] = ()
 
     def validate(self) -> None:
+        if not isinstance(self.schema_version, int) or isinstance(self.schema_version, bool):
+            raise PluginEventError("event schema version must be an integer")
         if self.schema_version < 1 or not self.event_type.endswith(f".v{self.schema_version}"):
             raise PluginEventError("event schema must use a positive versioned event_type")
         if len(set(self.required_fields)) != len(self.required_fields):
@@ -84,6 +86,8 @@ class PluginEvent:
             for value in values.values()
         ):
             raise PluginEventError("event identity fields must be non-empty and trimmed")
+        if not isinstance(self.schema_version, int) or isinstance(self.schema_version, bool):
+            raise PluginEventError("event schema_version must be an integer")
         if self.schema_version < 1:
             raise PluginEventError("event schema_version must be positive")
         if not self.event_type.endswith(f".v{self.schema_version}"):

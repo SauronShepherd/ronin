@@ -10,6 +10,67 @@ def test_public_openapi_snapshot_is_current() -> None:
     assert len(check(root / "api/openapi-v1.json", root / "api/openapi-v1.sha256")) == 64
 
 
+def test_queryflux_execution_route_and_result_budgets_are_documented() -> None:
+    import json
+
+    root = Path(__file__).parents[1]
+    document = json.loads((root / "api/openapi-v1.json").read_text(encoding="utf-8"))
+    operation = document["paths"][
+        "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute"
+    ]["post"]
+    request = document["components"]["schemas"]["QueryFluxExecuteRequest"]
+
+    assert operation["operationId"] == "executeQueryFlux"
+    assert operation["description"].find("data-engineering:execute") >= 0
+    assert [item["name"] for item in operation["parameters"]] == [
+        "workspace_id",
+        "project_id",
+    ]
+    assert operation["requestBody"]["content"]["application/json"]["schema"]["$ref"] == (
+        "#/components/schemas/QueryFluxExecuteRequest"
+    )
+    assert request["properties"]["max_result_bytes"] == {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10485760,
+        "default": 1048576,
+    }
+    assert request["properties"]["max_rows"]["maximum"] == 1000000
+    assert "project_id" not in request["properties"]
+    sql_request = document["components"]["schemas"]["SqlRequest"]
+    capability_schema = document["components"]["schemas"]["QueryFluxCapabilities"]
+    capability_operation = document["paths"]["/v1/data-engineering/queryflux/capabilities"]["get"]
+    assert capability_operation["responses"]["200"]["content"]["application/json"]["schema"][
+        "$ref"
+    ] == ("#/components/schemas/QueryFluxCapabilities")
+    assert capability_schema["properties"]["allowed_engines"]["type"] == "array"
+    assert capability_schema["properties"]["capabilities"]["additionalProperties"]["type"] == [
+        "boolean",
+        "null",
+    ]
+    assert request["properties"]["profile"]["const"] == "queryflux"
+    assert sql_request["properties"]["timeout_ms"] == {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 60000,
+        "default": 5000,
+    }
+    assert sql_request["properties"]["max_result_bytes"]["maximum"] == 10485760
+    assert sql_request["properties"]["profile"]["enum"] == ["local"]
+    sql_operation = document["paths"]["/v1/sql"]["post"]
+    assert "413" in sql_operation["responses"]
+    sql_result = document["components"]["schemas"]["SqlResult"]
+    assert sql_result["additionalProperties"] is False
+    assert sql_result["properties"]["query_evidence"]["$ref"] == (
+        "#/components/schemas/SqlQueryEvidence"
+    )
+    assert "routing_trace" in document["components"]["schemas"]["SqlQueryEvidence"]["required"]
+    project_sql = document["paths"][
+        "/v1/workspaces/{workspace_id}/projects/{project_id}/sql/query"
+    ]["post"]["requestBody"]["content"]["application/json"]["schema"]
+    assert project_sql["additionalProperties"] is False
+
+
 def test_ml_lab_openapi_schema_matches_v1_contract() -> None:
     import json
 

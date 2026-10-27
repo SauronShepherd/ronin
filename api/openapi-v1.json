@@ -14,9 +14,51 @@
         "operationId": "getQueryFluxCapabilities",
         "description": "Return provider-neutral QueryFlux capability and health evidence without exposing cluster configuration.",
         "responses": {
-          "200": {"description": "QueryFlux capability evidence", "content": {"application/json": {"schema": {"type": "object"}}}},
+          "200": {"description": "QueryFlux capability evidence", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QueryFluxCapabilities"}}}},
           "401": {"$ref": "#/components/responses/Error"},
           "403": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute": {
+      "post": {
+        "operationId": "executeQueryFlux",
+        "description": "Execute one read-only SELECT through the configured provider-neutral query engine and persist bounded execution evidence. Workspace and project are explicit path scopes; the project must belong to that workspace. The route requires data-engineering:execute; it is unavailable when the optional provider runtime is not composed.",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QueryFluxExecuteRequest"}}}},
+        "responses": {
+          "200": {"description": "Query result and durable evidence reference", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QueryFluxExecutionResult"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
+          "404": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/results": {
+      "get": {
+        "operationId": "getQueryFluxResultPage",
+        "description": "Read a stable page from the immutable result artifact of a successful QueryFlux execution. The request is project-scoped and requires data-engineering:read.",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "run_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "attempt_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "page_size", "in": "query", "required": false, "schema": {"type": "integer", "minimum": 1, "maximum": 10000, "default": 1000}},
+          {"name": "cursor", "in": "query", "required": false, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}
+        ],
+        "responses": {
+          "200": {"description": "Stable result page", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QueryFluxResultPage"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
+          "404": {"$ref": "#/components/responses/Error"},
+          "409": {"$ref": "#/components/responses/Error"},
           "503": {"$ref": "#/components/responses/Error"}
         }
       }
@@ -273,6 +315,7 @@
           "401": {"$ref": "#/components/responses/Error"},
           "403": {"$ref": "#/components/responses/Error"},
           "404": {"$ref": "#/components/responses/Error"},
+          "413": {"$ref": "#/components/responses/Error"},
           "500": {"$ref": "#/components/responses/Error"},
           "503": {"$ref": "#/components/responses/Error"},
           "504": {"$ref": "#/components/responses/Error"}
@@ -797,8 +840,8 @@
       "post": {
         "operationId": "querySql",
         "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string"}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["sql"], "properties": {"sql": {"type": "string"}, "parameters": {"type": "array"}, "max_rows": {"type": "integer", "minimum": 1, "maximum": 10000}}}}}},
-        "responses": {"200": {"description": "SQL query result", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["sql"], "properties": {"sql": {"type": "string", "description": "One trimmed, read-only SELECT over registered project relations."}, "parameters": {"type": "array", "items": {}}, "max_rows": {"type": "integer", "minimum": 1, "maximum": 10000, "default": 10000}, "timeout_ms": {"type": "integer", "minimum": 1, "maximum": 60000, "default": 5000}, "max_result_bytes": {"type": "integer", "minimum": 1, "maximum": 10485760, "default": 1048576}}}}}},
+        "responses": {"200": {"description": "SQL query result", "content": {"application/json": {"schema": {"type": "object", "required": ["columns", "rows", "row_count", "max_rows", "max_result_bytes"], "properties": {"columns": {"type": "array", "items": {"type": "object"}}, "rows": {"type": "array", "items": {"type": "array"}}, "row_count": {"type": "integer", "minimum": 0}, "max_rows": {"type": "integer"}, "max_result_bytes": {"type": "integer"}}}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "408": {"$ref": "#/components/responses/Error"}, "413": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
       }
     },
     "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/query": {
@@ -1283,22 +1326,110 @@
           "items": {"type": "array", "items": {"type": "object"}}
         }
       },
+      "QueryFluxCapabilities": {
+        "type": "object", "additionalProperties": false,
+        "required": ["profile", "provider", "status", "target", "allowed_engines", "capabilities", "translation_policies"],
+        "properties": {
+          "profile": {"const": "queryflux"},
+          "provider": {"type": "string", "minLength": 1, "maxLength": 512},
+          "provider_version": {"type": "string", "maxLength": 512},
+          "status": {"type": "string", "enum": ["ready", "degraded", "not_configured"]},
+          "target": {"type": "string", "maxLength": 512},
+          "allowed_engines": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 512}},
+          "capabilities": {"type": "object", "additionalProperties": {"type": ["boolean", "null"]}},
+          "translation_policies": {"type": "array", "items": {"type": "string", "enum": ["native_only", "best_effort", "strict"]}}
+        }
+      },
+      "QueryFluxExecuteRequest": {
+        "type": "object", "additionalProperties": false,
+        "required": ["sql", "profile", "engine", "run_id", "attempt_id"],
+        "properties": {
+          "sql": {"type": "string", "minLength": 1, "maxLength": 1000000},
+          "parameters": {"type": "array", "maxItems": 1000, "items": {"oneOf": [{"$ref": "#/components/schemas/SqlTypedParameter"}, {"$ref": "#/components/schemas/SqlLegacyParameter"}]}, "default": []},
+          "profile": {"const": "queryflux"},
+          "translation_policy": {"type": "string", "enum": ["native_only", "best_effort", "strict"], "default": "native_only"},
+          "max_rows": {"type": "integer", "minimum": 1, "maximum": 1000000, "default": 1000},
+          "page_size": {"type": "integer", "minimum": 1, "maximum": 10000, "default": 1000},
+          "max_result_bytes": {"type": "integer", "minimum": 1, "maximum": 10485760, "default": 1048576},
+          "engine": {"type": "string", "minLength": 1, "maxLength": 512},
+          "run_id": {"type": "string", "minLength": 1, "maxLength": 512},
+          "attempt_id": {"type": "string", "minLength": 1, "maxLength": 512}
+        }
+      },
+      "QueryFluxExecutionResult": {
+        "type": "object", "additionalProperties": false,
+        "required": ["status", "message", "selected_engine", "columns", "rows", "row_count", "next_cursor", "evidence"],
+        "properties": {
+          "status": {"type": "string", "enum": ["queued", "running", "succeeded", "failed", "cancelled"]},
+          "message": {"type": ["string", "null"], "maxLength": 4000},
+          "selected_engine": {"type": "string", "minLength": 1, "maxLength": 512},
+          "columns": {"type": "array", "items": {"type": "string"}},
+          "rows": {"type": "array", "items": {"type": "array", "items": {}}},
+          "row_count": {"type": "integer", "minimum": 0},
+          "next_cursor": {"type": ["string", "null"], "maxLength": 256},
+          "evidence": {"type": "object", "additionalProperties": false, "required": ["role", "digest", "storage_ref"], "properties": {"role": {"type": "string"}, "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "storage_ref": {"type": "string"}}}
+        }
+      },
+      "QueryFluxResultPage": {
+        "type": "object", "additionalProperties": false,
+        "required": ["columns", "rows", "row_count", "next_cursor"],
+        "properties": {
+          "columns": {"type": "array", "items": {"type": "string"}},
+          "rows": {"type": "array", "items": {"type": "array", "items": {}}},
+          "row_count": {"type": "integer", "minimum": 0},
+          "next_cursor": {"type": ["string", "null"], "maxLength": 256}
+        }
+      },
       "SqlRequest": {
         "type": "object", "additionalProperties": false, "required": ["project", "sql"],
         "properties": {
           "project": {"type": "string", "minLength": 1, "maxLength": 256},
           "sql": {"type": "string", "minLength": 1, "maxLength": 1048576},
-          "parameters": {"type": "array", "items": {"type": ["boolean", "integer", "number", "string", "null"]}, "default": []},
+          "parameters": {"type": "array", "maxItems": 1000, "items": {"oneOf": [{"$ref": "#/components/schemas/SqlTypedParameter"}, {"$ref": "#/components/schemas/SqlLegacyParameter"}]}, "default": []},
           "max_rows": {"type": "integer", "minimum": 1, "maximum": 10000, "default": 10000},
-          "profile": {"type": "string", "enum": ["local", "queryflux"], "default": "local"},
-          "translation_policy": {"type": "string", "enum": ["native_only", "best_effort", "strict"], "default": "native_only"}
+          "timeout_ms": {"type": "integer", "minimum": 1, "maximum": 60000, "default": 5000},
+          "max_result_bytes": {"type": "integer", "minimum": 1, "maximum": 10485760, "default": 1048576},
+          "profile": {"type": "string", "enum": ["local"], "default": "local"},
+          "translation_policy": {"type": "string", "const": "native_only", "default": "native_only"}
         }
+      },
+      "SqlTypedParameter": {
+        "oneOf": [
+          {"type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": {"type": {"const": "null"}, "value": {"type": "null"}}},
+          {"type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": {"type": {"const": "boolean"}, "value": {"type": "boolean"}}},
+          {"type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": {"type": {"const": "integer"}, "value": {"type": "integer", "minimum": -9223372036854775808, "maximum": 9223372036854775807}}},
+          {"type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": {"type": {"const": "float"}, "value": {"type": "number"}}},
+          {"type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": {"type": {"const": "string"}, "value": {"type": "string", "maxLength": 524288}}}
+        ],
+        "description": "Explicit SQL scalar binding. Float values must be finite. Legacy untagged scalar values remain accepted for compatibility."
+      },
+      "SqlLegacyParameter": {
+        "anyOf": [
+          {"type": "null"},
+          {"type": "boolean"},
+          {"type": "integer", "minimum": -9223372036854775808, "maximum": 9223372036854775807},
+          {"type": "number", "description": "Must be finite."},
+          {"type": "string", "maxLength": 524288}
+        ],
+        "description": "Legacy JSON scalar binding retained for v1 compatibility."
       },
       "SqlResult": {
         "type": "object", "additionalProperties": false, "required": ["columns", "rows"],
         "properties": {
           "columns": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name", "type"], "properties": {"name": {"type": "string"}, "type": {"type": "string"}}}},
-          "rows": {"type": "array", "items": {"type": "array", "items": {"$ref": "#/components/schemas/SqlWireScalar"}}}
+          "rows": {"type": "array", "items": {"type": "array", "items": {"$ref": "#/components/schemas/SqlWireScalar"}}},
+          "query_evidence": {"$ref": "#/components/schemas/SqlQueryEvidence"}
+        }
+      },
+      "SqlQueryEvidence": {
+        "type": "object", "additionalProperties": false,
+        "required": ["provider_id", "provider_version", "selected_engine", "routing_trace", "translation_policy"],
+        "properties": {
+          "provider_id": {"type": "string", "const": "ronin-local-sql"},
+          "provider_version": {"type": "string", "const": "1"},
+          "selected_engine": {"type": "string", "const": "duckdb"},
+          "routing_trace": {"type": "object", "additionalProperties": false, "required": ["profile", "selected_engine"], "properties": {"profile": {"type": "string", "const": "local"}, "selected_engine": {"type": "string", "const": "duckdb"}}},
+          "translation_policy": {"type": "string", "const": "native_only"}
         }
       },
       "SqlWireScalar": {

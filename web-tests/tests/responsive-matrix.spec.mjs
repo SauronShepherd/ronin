@@ -32,7 +32,7 @@ for (const viewport of [
 
     const layout = await page.evaluate(() => {
       const rail = document.querySelector('#rail');
-      const nav = rail.querySelector('.nav-group');
+      const nav = rail.querySelector('.nav-sections');
       const main = document.querySelector('#main');
       const railBox = rail.getBoundingClientRect();
       return {

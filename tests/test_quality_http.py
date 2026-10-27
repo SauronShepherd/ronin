@@ -8,7 +8,11 @@ from studio_core import (
     QualityRuleId,
     WorkspaceId,
 )
-from studio_quality import QualityContractDigestMismatch
+from studio_quality import (
+    QualityContractDigestMismatch,
+    QualityEvaluationBudget,
+    QualityExecutionBlocked,
+)
 from studio_quality.http import QualityHTTPAdapter
 
 
@@ -54,9 +58,12 @@ def test_quality_http_runs_and_lists_evidence() -> None:
     }
     result = adapter.run(WorkspaceId("ws"), body, now="2026-09-21T00:00:00Z")
     assert result["gate_passed"] is True
-    assert len(adapter.history(WorkspaceId("ws"), body["asset"])) == 1
+    history = adapter.history(WorkspaceId("ws"), body["asset"])
+    assert len(history) == 1
+    assert history[0]["status"] == "passed"
     state = adapter.state(WorkspaceId("ws"), body["asset"])
     assert state["latest_status"] == "passed"
+    assert state["latest_run"]["status"] == "passed"
     assert state["latest_run"]["results"][0]["rule_id"] == "rows"
 
 
@@ -103,6 +110,74 @@ def test_quality_http_rejects_contract_drift_before_recording_evidence() -> None
                 "rows": [{"id": 1}],
                 "run_id": "run-stale-contract",
                 "contract_digest": pinned_digest,
+            },
+            now="2026-09-21T00:00:00Z",
+        )
+
+    assert store.runs == []
+
+
+def test_quality_http_gate_uses_blocking_policy_not_overall_run_status() -> None:
+    store = Store()
+    store.contract = DataContract(
+        store.contract.asset,
+        "exact",
+        (
+            QualityRule(
+                QualityRuleId("advisory-rows"),
+                "row_count",
+                "Advisory row count",
+                parameters=(("min", "1"),),
+            ),
+        ),
+    )
+    adapter = QualityHTTPAdapter(store)
+
+    result = adapter.run(
+        WorkspaceId("ws"),
+        {
+            "asset": store.contract.asset.to_payload(),
+            "rows": [],
+            "run_id": "advisory-failure",
+            "enforce_blocking": True,
+        },
+        now="2026-09-21T00:00:00Z",
+    )
+
+    assert result["run"]["results"][0]["status"] == "failed"
+    assert result["gate_passed"] is True
+
+
+def test_quality_http_gate_fails_closed_for_unknown_and_incomplete_runs() -> None:
+    store = Store()
+    asset = store.contract.asset
+    store.contract = DataContract(asset, "exact", ())
+    adapter = QualityHTTPAdapter(store)
+    body = {"asset": asset.to_payload(), "rows": [], "run_id": "unknown-run"}
+
+    result = adapter.run(WorkspaceId("ws"), body, now="2026-09-21T00:00:00Z")
+
+    assert result["run"]["results"] == []
+    assert result["gate_passed"] is False
+    with pytest.raises(QualityExecutionBlocked):
+        adapter.run(
+            WorkspaceId("ws"),
+            {**body, "run_id": "unknown-enforced", "enforce_blocking": True},
+            now="2026-09-21T00:00:00Z",
+        )
+
+
+def test_quality_http_rejects_over_budget_rows_before_recording() -> None:
+    store = Store()
+    adapter = QualityHTTPAdapter(store, budget=QualityEvaluationBudget(max_rows=1))
+
+    with pytest.raises(ValueError, match="row budget exceeded"):
+        adapter.run(
+            WorkspaceId("ws"),
+            {
+                "asset": store.contract.asset.to_payload(),
+                "rows": [{"id": 1}, {"id": 2}],
+                "run_id": "too-many-rows",
             },
             now="2026-09-21T00:00:00Z",
         )

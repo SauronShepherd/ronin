@@ -18,6 +18,8 @@ def test_sensitivity_metadata_resolves_and_round_trips_canonically() -> None:
 def test_sensitivity_metadata_rejects_noncanonical_or_unsafe_state() -> None:
     with pytest.raises(ValueError, match="positive"):
         SensitivityMetadata(0)
+    with pytest.raises(ValueError, match="positive integer"):
+        SensitivityMetadata(True)
     with pytest.raises(ValueError, match="non-empty"):
         SensitivityMetadata(1, explicit=(" ",))
     metadata = SensitivityMetadata(1, explicit=("public",))

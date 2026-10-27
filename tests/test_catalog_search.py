@@ -47,6 +47,65 @@ def test_catalog_search_is_project_scoped_and_matches_governance_metadata(tmp_pa
         catalog.search_assets(workspace, "orders", limit=0)
 
 
+def test_catalog_asset_pages_are_bounded_ordered_and_filter_bound(tmp_path: Path) -> None:
+    now = Instant("2026-09-13T10:10:00.000000Z")
+    workspace = WorkspaceId("workspace-catalog-pages")
+    database = tmp_path / "catalog.sqlite3"
+    SqliteWorkspaceStore(database, migration_now=now).create_workspace(
+        Workspace(workspace, "Catalog pages"), now=now
+    )
+    catalog = SqliteCatalogStore(database, migration_now=now)
+    for asset_id, name, tags in (
+        ("a-orders", "Orders", ("sales",)),
+        ("b-customers", "Customers", ("sales",)),
+        ("c-events", "Events", ("telemetry",)),
+        ("d-sales", "History", ("SALES",)),
+    ):
+        catalog.create_asset(
+            workspace,
+            CatalogAsset(AssetId(asset_id), "table", name, tags=tags),
+            now=now,
+        )
+
+    first = catalog.list_assets_page(workspace, limit=2)
+    assert tuple(asset.id.value for asset in first.items) == ("a-orders", "b-customers")
+    assert first.next_cursor is not None
+    second = catalog.list_assets_page(workspace, limit=2, cursor=first.next_cursor)
+    assert tuple(asset.id.value for asset in second.items) == ("c-events", "d-sales")
+    assert second.next_cursor is None
+
+    search_first = catalog.search_assets_page(workspace, "sales", limit=1)
+    assert tuple(asset.id.value for asset in search_first.items) == ("a-orders",)
+    assert search_first.next_cursor is not None
+    search_second = catalog.search_assets_page(
+        workspace, " SALES ", limit=1, cursor=search_first.next_cursor
+    )
+    assert tuple(asset.id.value for asset in search_second.items) == ("b-customers",)
+    assert search_second.next_cursor is not None
+    search_last = catalog.search_assets_page(
+        workspace, "sales", limit=1, cursor=search_second.next_cursor
+    )
+    assert tuple(asset.id.value for asset in search_last.items) == ("d-sales",)
+    assert search_last.next_cursor is None
+
+    with pytest.raises(ValueError, match="does not match filters"):
+        catalog.search_assets_page(workspace, "orders", cursor=search_first.next_cursor)
+    with pytest.raises(ValueError, match="does not match filters"):
+        catalog.list_assets_page(WorkspaceId("different-workspace"), cursor=first.next_cursor)
+    with pytest.raises(ValueError, match="invalid"):
+        catalog.list_assets_page(workspace, cursor="not-a-cursor")
+
+    with pytest.raises(ValueError, match="must not be empty"):
+        catalog.search_assets_page(workspace, "  ")
+    with pytest.raises(ValueError, match="between 1 and 100"):
+        catalog.list_assets_page(workspace, limit=101)
+    empty_page = catalog.search_assets_page(workspace, "no-match", limit=1)
+    assert empty_page.items == ()
+    assert empty_page.next_cursor is None
+    with pytest.raises(ValueError, match="between 1 and 1000"):
+        catalog.search_assets(workspace, "orders", limit=1001)
+
+
 def test_catalog_sensitivity_is_versioned_idempotent_and_latest_is_effective(
     tmp_path: Path,
 ) -> None:

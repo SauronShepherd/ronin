@@ -4,12 +4,29 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+from studio_core import ProjectId, Workspace, WorkspaceId
 from studio_core.ir import Node, OperatorRef, Port
 from studio_core.plugins import PluginManager, PluginRecord
-from studio_data_engineering import DataEnginerringStudioPlugin
+from studio_data_engineering import (
+    DataEnginerringStudioPlugin,
+    QueryEngineRuntimeProvider,
+    SqliteQueryEvidenceReferenceStore,
+)
 from studio_plugin_workspaces import WorkspacesPlugin
+from studio_query_engine import (
+    CancellationResult,
+    DiscoveredEngine,
+    EngineCapabilities,
+    EngineHandshake,
+    QueryExecutionPolicy,
+    QueryHandle,
+    QueryRequest,
+    QueryResultPage,
+    QueryStatus,
+)
 from studio_runtime import PluginHost
-from test_workspace_project_http_api import _Authorizer, _server, _Store
+from studio_storage import LocalArtifactStore
+from test_workspace_project_http_api import _Authorizer, _manifest, _server, _Store
 
 
 def _request(
@@ -45,6 +62,29 @@ class _PipelineWriter:
             source_digest=source.source_digest,
             metadata_artifact=SimpleNamespace(storage_ref="artifact://metadata"),
         )
+
+
+class _QueryFluxTransport:
+    def __init__(self, rows: tuple[tuple[object, ...], ...] = ((1,),)) -> None:
+        self.submitted = 0
+        self.rows = rows
+
+    def submit(self, request: QueryRequest) -> tuple[QueryHandle, str]:
+        del request
+        self.submitted += 1
+        return QueryHandle("query-1", "queryflux", "provider-query-1"), "next"
+
+    def poll(self, handle: QueryHandle, next_uri: str):
+        del next_uri
+        return (
+            QueryStatus("succeeded", provider_query_id=handle.provider_query_id),
+            QueryResultPage(("value",), self.rows),
+            None,
+        )
+
+    def cancel(self, handle: QueryHandle) -> CancellationResult:
+        del handle
+        return CancellationResult(False, "succeeded")
 
 
 def test_data_engineering_routes_execute_through_real_control_plane() -> None:
@@ -127,6 +167,143 @@ def test_data_engineering_routes_execute_through_real_control_plane() -> None:
         assert validation["diagnostics"] == [], validation
         assert preview_status == 200
         assert preview["status"] == "completed"
+    finally:
+        host.stop()
+
+
+def test_queryflux_execution_is_bound_to_an_existing_project_in_workspace(tmp_path) -> None:
+    plugin = DataEnginerringStudioPlugin()
+    workspaces_plugin = WorkspacesPlugin()
+    transport = _QueryFluxTransport(((10,), (20,), (30,)))
+    provider = QueryEngineRuntimeProvider(
+        DiscoveredEngine(
+            EngineHandshake(
+                "queryflux",
+                "qf-1",
+                EngineCapabilities((("cancel", True),)),
+                True,
+            ),
+            ("duckdb",),
+            "ready",
+        ),
+        QueryExecutionPolicy((("queryflux", ("duckdb",)),), required_capability="cancel"),
+    )
+    services = {
+        "artifact_store": LocalArtifactStore(tmp_path / "artifacts"),
+        "queryflux_runtime_provider": provider,
+        "queryflux_transport": transport,
+        "queryflux_evidence_reference_store": SqliteQueryEvidenceReferenceStore(
+            tmp_path / "evidence.db"
+        ),
+    }
+    manager = PluginManager()
+    plan = manager.compose(
+        (
+            PluginRecord(workspaces_plugin.manifest, workspaces_plugin, "test"),
+            PluginRecord(plugin.manifest, plugin, "test"),
+        ),
+        services=services,
+    )
+    host = PluginHost(manager, plan)
+    host.start()
+
+    store = _Store()
+    workspace_a = WorkspaceId("workspace-a")
+    workspace_b = WorkspaceId("workspace-b")
+    store.workspaces[workspace_a] = Workspace(workspace_a, "Workspace A")
+    store.workspaces[workspace_b] = Workspace(workspace_b, "Workspace B")
+    store.projects[(workspace_a, ProjectId("project-1"))] = _manifest()
+    store.projects[(workspace_b, ProjectId("project-2"))] = _manifest(
+        name="Project B", project_id=ProjectId("project-2")
+    )
+    authorizer = _Authorizer()
+    request_body = {
+        "sql": "SELECT 1",
+        "profile": "queryflux",
+        "engine": "duckdb",
+        "run_id": "run-1",
+        "attempt_id": "attempt-1",
+        "page_size": 1,
+    }
+    try:
+        with _server(
+            store,
+            authorizer,
+            plugin_host=host,
+            plugin_routes_enabled=True,
+        ) as address:
+            success_status, success = _request(
+                address,
+                "POST",
+                "/v1/workspaces/workspace-a/projects/project-1/data-engineering/queryflux/execute",
+                request_body,
+            )
+            cross_workspace_status, cross_workspace = _request(
+                address,
+                "POST",
+                "/v1/workspaces/workspace-a/projects/project-2/data-engineering/queryflux/execute",
+                request_body,
+            )
+            first_page_status, first_page = _request(
+                address,
+                "GET",
+                "/v1/workspaces/workspace-a/projects/project-1/data-engineering/"
+                "queryflux/executions/run-1/attempt-1/results?page_size=1",
+            )
+            second_page_status, second_page = _request(
+                address,
+                "GET",
+                "/v1/workspaces/workspace-a/projects/project-1/data-engineering/"
+                "queryflux/executions/run-1/attempt-1/results?page_size=1&cursor="
+                + success["next_cursor"],
+            )
+            third_page_status, third_page = _request(
+                address,
+                "GET",
+                "/v1/workspaces/workspace-a/projects/project-1/data-engineering/"
+                "queryflux/executions/run-1/attempt-1/results?page_size=1&cursor="
+                + second_page["next_cursor"],
+            )
+            empty_cursor_status, empty_cursor = _request(
+                address,
+                "GET",
+                "/v1/workspaces/workspace-a/projects/project-1/data-engineering/"
+                "queryflux/executions/run-1/attempt-1/results?page_size=1&cursor=",
+            )
+            cross_workspace_read_status, cross_workspace_read = _request(
+                address,
+                "GET",
+                "/v1/workspaces/workspace-a/projects/project-2/data-engineering/"
+                "queryflux/executions/run-1/attempt-1/results",
+            )
+
+        assert success_status == 200
+        assert success["rows"] == [[10]]
+        assert success["row_count"] == 3
+        assert success["next_cursor"]
+        assert cross_workspace_status == 404
+        assert cross_workspace["error"]["code"] == "project_not_found"
+        assert first_page_status == 200
+        assert first_page["rows"] == [[10]]
+        assert second_page_status == 200
+        assert second_page["rows"] == [[20]]
+        assert third_page_status == 200
+        assert third_page["rows"] == [[30]]
+        assert third_page["next_cursor"] is None
+        assert empty_cursor_status == 400
+        assert empty_cursor["error"]["code"] == "invalid_request"
+        assert cross_workspace_read_status == 404
+        assert cross_workspace_read["error"]["code"] == "project_not_found"
+        assert transport.submitted == 1
+        assert [item.resource_ref for item in authorizer.requirements] == [
+            "project-1",
+            "project-2",
+            "project-1",
+            "project-1",
+            "project-1",
+            "project-1",
+            "project-2",
+        ]
     finally:
         host.stop()
 

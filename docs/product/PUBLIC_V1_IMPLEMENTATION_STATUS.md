@@ -36,7 +36,19 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `9f3ee2fa140c7503c571b95395a6b6f75f2b8f72` (2026-10-26).
+**Observed source head:** `cca60214044402867094335a2c999a50c3c7fda7` (2026-10-27).
+
+PR #552 merged at 19:41:11 UTC. Required PR checks passed; all six exact-head push workflows on the merge SHA passed (CI 40388942726, Docker 40388942459, Web 40388942544, Release 40388943097, Security 40388942691, Status consistency 40388942624). `mutation` and release publish/verdict jobs were skipped by policy and are not passes. The remote feature branch was deleted; local main is aligned with origin/main.
+
+PR #553 merged at 01:20 UTC on 2026-10-27 as `main@993f519e02e611a951b258bb266979fa747e7bbf`. All required PR checks and all six exact-head post-merge workflows passed; `mutation` was skipped by policy. The branch was deleted after merge.
+
+**SQL execution budgets integrated by PR #553:** the request contract now accepts bounded `timeout_ms` and `max_result_bytes`; DuckDB interrupts overdue queries and enforces result limits during fetch, while the HTTP adapter enforces the exact serialized payload cap. SQL Studio forms and OpenAPI expose/document both bounds and the route maps timeout/result-limit failures to 408/413. Focused SQL/API tests passed 85/85, Playwright passed 96 with 3 external-service skips, local Docker worker qualification passed 8/8 against a fresh PostgreSQL database, frozen v0.1 acceptance passed 16 with 3 Spark-configuration skips, and performance tests passed 3/3. The local whole-suite attempt had 4,111 passes, 22 skips and three documentation-sync failures; after correcting those ledgers, the affected tests passed 6/6. The whole suite was not rerun locally, but exact-head CI passed both Python versions and Docker qualification. These tests do not qualify P3 or the release. Explicit pagination/cancel/explain, governed assets, source-revision evidence, CPU bounds, engine-neutral semantics, and full SQL journeys remain open.
+
+**Historical implementation candidate (now merged by PR #552):** `codex/postgres-catalog-support@5f2a3bbaba8f32446293b9d280f6fe2d1bc7bd74` added governed catalog pagination/search and a durable quality workflow across SQLite/PostgreSQL, API, Studio and observability. Its full local suite passed 4,097 tests with 24 environment/platform skips in 337.92s; Docker runtime/acceptance passed 23 tests and strict v0.1 acceptance passed 15/15 using a fresh PostgreSQL database. Coverage run also passed 4,097/24; it emitted 679 Python 3.13 `ResourceWarning` reports, which remain under investigation. Per-file storage ratchet baselines were raised to measured catalog and PostgreSQL-core coverage. This evidence is local and does not qualify a Public v1 family.
+
+The follow-up `68519402` aligned HTTP adapter and DuckDB statement validation on the shared read-only `SELECT` subset; it is included in PR #552. Its focused SQL/API tests passed 26/26. This did not implement pagination, cancel, explain or source-revision evidence; RPV1-304 remains partial.
+
+Commit `2109cbc9` wires the local-composed SQL Studio API to a project-scoped DuckDB engine, verifies the project exists before namespace creation, serializes typed query results, and closes the engine on server shutdown. SQL/composition/server/Parquet tests passed 46/46; the full Python suite with Docker PostgreSQL passed 4,104 tests with 24 environment/platform skips in 590.19s; `tests/perf` passed 3/3. PR #552 then fixed the no-DSN storage coverage gate to exclude PostgreSQL-only `postgres_quality.py` only in that lane; the full Docker lane still measures it. The final PR rerun passed Python 3.11/3.12, Docker/PostgreSQL, Web, Security, ledger and Release packaging; all six exact-head post-merge workflows also passed. Mutation and release publication/verdict jobs were skipped by policy. These results do not qualify P3 or the Public v1 release.
 
 PR #547 restricts known OpenLineage facets to dataset entities. All six exact-head `push` workflows passed (links above); Docker workflow details and conditional skip are stated above. Five focused test commands on a clean worktree of this SHA passed: connectors/checkpoints/ingestion 54; Streaming Bundle 6; PostgreSQL Bundle 2 using PostgreSQL 16.4 in an ephemeral Docker container; OTLP exporter 5; and OTLP collector integration 1 using an ephemeral Docker collector. These 68 tests are local focused evidence only and do not replace the pre-merge 3,962-test result or qualify any of the 13 family gates.
 **Release status:** **INCOMPLETE**.
@@ -49,12 +61,59 @@ journey and applicable provider, security and exact-head evidence are complete.
 No active family is release-qualified; this is a release-completion metric, not a measure of
 code already implemented. P9 is out of scope.
 
-**Estimated build-plan implementation progress:** **14% (provisional rebaseline)** across the 13 active
-capability families, based on the latest reviewed source-path assessment and the
-remaining gaps in the capability matrix. GenAI and multi-user Pro capabilities do
-not count. This is a rounded engineering estimate, not a task-count or release qualification metric.
+**Build-plan implementation progress:** **not calculable**. No reproducible weighted rubric currently maps partial implementation across the 13 active capability families to a global percentage. The earlier 14% estimate is retired; it must not be reported as current progress. GenAI and multi-user Pro capabilities do not count.
+
+PR [#557](https://github.com/SauronShepherd/ronin/pull/557) integrated the QueryFlux SQL result-byte limit and OpenAPI route parity. All required PR checks passed; mutation was skipped by policy. Six post-merge exact-SHA workflows passed on the merge commit: CI 40444233807, Docker 40444233763, Web 40444233747, Release 40444233740, Security 40444233748 and Status consistency 40444233746. Local verification of this merge SHA passed **4,090 tests with 74 environment/platform skips** and performance tests **3/3**. This does not qualify P3 or any release family.
+
+PR [#558](https://github.com/SauronShepherd/ronin/pull/558) binds QueryFlux execution to explicit workspace/project path scopes, authorizes the project resource and rejects cross-workspace project IDs before execution. Its HTTP integration case, focused route/API checks, local full suite (**4,091 passed, 74 skipped**) and performance suite (**3/3**) passed on the PR candidate. All required PR checks and all six exact-head post-merge workflows passed on `main@56e42c77f5dfc4bc60a3a0047f0a09fdfc112688`: CI 40446346828, Docker 40446346782, Web 40446346833, Release 40446347050, Security 40446346780 and Status consistency 40446346794. Docker qualification included real Docker runtime acceptance and PostgreSQL storage coverage. `mutation` remained skipped by policy. This closes an authorization gap but does not qualify P3 or any release family.
+
+**QueryFlux pagination and SQL route follow-up integrated by PRs #560/#561:** PR #560 added immutable content-addressed result pages scoped to project/run/attempt, authorized page retrieval, durable SQLite/PostgreSQL references and Studio retrieval/export of loaded pages. It also reconciled `/v1/sql` timeout/result-byte enforcement and OpenAPI response/error shapes. PR #561 fixed the explicit empty-cursor edge case: `cursor=` now returns 400 instead of restarting at page one. Focused local evidence includes 82 SQL/QueryFlux tests, 7 HTTP SQL tests, a separate overlapping group of 48, 3 QueryFlux Playwright journeys and the corrected legacy SQL journey. The local web suite initially had one stale `dialect` expectation (98 passed, 3 skipped, 1 failed); after updating it, the affected journey and QueryFlux journeys passed. Mypy (429 files), Ruff, formatting (896 files), OpenAPI and diff checks passed. These separate local runs are not represented as one clean full-suite run. PR #560 and #561 required checks passed; all six exact-head push workflows passed on `main@cca60214044402867094335a2c999a50c3c7fda7` (CI 40452266063, Docker 40452265954, Web 40452266016, Release 40452265985, Security 40452265996, Status consistency 40452266002). The first PR #561 Docker evidence upload timed out after runtime/acceptance passed; its rerun passed and uploaded evidence. `mutation` was skipped by policy. P3 remains partial: durable cancellation, safe explain, governed assets/source revisions, CPU budgets, broader journeys and provider qualification remain open. Release remains 0/13; global implementation progress is not calculable; integral clean-review streak is 0/10.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
+
+### SQL typed scalar-binding candidate (2026-10-27)
+
+The current candidate makes typed SQL scalar bindings explicit and consistent
+across `DurableHTTPApplication.sql` and `SqlHTTPAdapter`: `null`, `boolean`,
+signed 64-bit `integer`, finite `float`, and bounded `string`. Unknown fields,
+unsupported types, type mismatches, non-finite floats, out-of-range integers,
+more than 1,000 parameters, and strings over 512 KiB fail before engine execution.
+Existing untagged JSON scalars remain accepted and are normalized to preserve
+Public v1 client compatibility. OpenAPI and API compatibility documentation
+describe both forms. Local focused tests cover the live HTTP route and DuckDB
+binding behavior; remote engine parameter parity is still unqualified.
+
+The current-code/API/ledger focused suites pass 61 tests. The whole local
+Python run reported 4,072 passed, 72 skipped and one failure caused by the
+OpenAPI hash becoming stale after the schema edit. The snapshot was updated and
+the focused suite, including `test_openapi_snapshot`, passes; the whole suite
+was not rerun after the final schema and string-limit refinement. Local Docker
+qualification passed 21 tests and strict v0.1 acceptance 15/15; two PostgreSQL
+worker tests skipped because no DSN was configured. That image was built before
+the final schema/string-limit refinement and does not cover SQL bindings;
+exact-head PR CI remains required.
+
+This slice does not close RPV1-304/P3: pagination, durable cancellation,
+explain, catalog-backed asset registration, source revisions in query evidence,
+CPU budgets, engine-neutral provider semantics, complete journeys and provider
+qualification remain open. Release progress remains **0/13 (0%, NO-GO)**;
+global implementation progress is **not calculable**. Integral clean review
+streak after this code change: **0/10**.
+
+**Shared query-engine binding follow-up:** `QueryRequest` now enforces the
+shared read-only `SELECT` grammar and carries normalized typed scalar values in
+its canonical digest. The local transport binds parameters through DuckDB; the
+Trino transport emits `EXECUTE IMMEDIATE ... USING`, with string values encoded
+as UTF-8/base64 expressions. QueryFlux rejects execution unless its discovered
+engine advertises `parameter_binding: true`. The durable query evidence retains
+the request digest without persisting bound values. The current worktree passes
+74 focused tests across DuckDB, Trino request construction, QueryFlux, capability
+authorization and evidence, including a live Trino 484 Docker transport test
+for string, int64, boolean, float and null bindings. This does not certify the
+full QueryFlux/provider deployment; the dynamic QueryFlux route also lacks
+static core OpenAPI coverage.
+RPV1-304 and Public v1 remain partial; release is still **0/13 (0%, NO-GO)**,
+and global implementation progress remains **not calculable**.
 
 ## Reading this snapshot
 

@@ -27,8 +27,17 @@ class WorkerLimits:
     execution_timeout_seconds: int = 3600
 
     def validate(self) -> None:
-        if self.max_payload_bytes < 1 or self.heartbeat_seconds < 1:
-            raise WorkerProtocolError("worker limits must be positive")
+        limits = (
+            self.max_payload_bytes,
+            self.heartbeat_seconds,
+            self.execution_timeout_seconds,
+        )
+        if any(not isinstance(value, int) or isinstance(value, bool) for value in limits):
+            raise WorkerProtocolError("worker limits must be integers")
+        if any(value < 1 for value in limits[:2]):
+            raise WorkerProtocolError("worker payload and heartbeat limits must be positive")
+        if self.execution_timeout_seconds < 1:
+            raise WorkerProtocolError("worker execution timeout must be positive")
         if self.execution_timeout_seconds < self.heartbeat_seconds:
             raise WorkerProtocolError("execution timeout must cover heartbeat interval")
 

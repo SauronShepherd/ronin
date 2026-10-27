@@ -102,3 +102,30 @@ def test_local_server_composition_rolls_back_partial_startup() -> None:
     assert not composition.ready
     with pytest.raises(RuntimeError, match="composition is closed"):
         composition.start()
+
+
+def test_plugins_stop_before_server_close_releases_their_services() -> None:
+    events = []
+
+    class OrderedServer(_Server):
+        def __init__(self, name: str) -> None:
+            super().__init__()
+            self.name = name
+
+        def server_close(self) -> None:
+            events.append(f"{self.name}.close")
+
+    class OrderedPluginHost(_PluginHost):
+        def stop(self) -> None:
+            events.append("plugins.stop")
+            super().stop()
+
+    jobs = OrderedServer("jobs")
+    control = OrderedServer("control")
+    plugin_host = OrderedPluginHost()
+    composition = LocalServerComposition(jobs, control, plugin_host=plugin_host)
+
+    composition.start()
+    composition.stop()
+
+    assert events == ["plugins.stop", "jobs.close", "control.close"]

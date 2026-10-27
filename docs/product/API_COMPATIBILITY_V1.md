@@ -86,8 +86,14 @@ Before stable v1, incompatible removals/renames/type changes or required-request
 
 `POST /v1/jobs` accepts only `project`, `target`, and optional `parameters`; unknown request fields are rejected. `parameters` is intentionally extensible JSON object data and is not interpreted as protocol field expansion.
 
-`POST /v1/sql` accepts `project`, `sql`, optional scalar `parameters`, and optional
-`max_rows` (`1..10000`). The request requires the project's `read` grant. The
+`POST /v1/sql` accepts `project`, `sql`, optional `parameters`, and optional
+`max_rows` (`1..10000`), `timeout_ms` (`1..60000`, default `5000`), and
+`max_result_bytes` (`1..10485760`, default `1048576`). Each binding may be a legacy JSON scalar or a tagged
+`{"type": "integer", "value": 42}` object. Tagged parameter types are `null`,
+`boolean`, signed 64-bit `integer`, finite `float`, and `string`; each object is
+closed to exactly `type` and `value`. At most 1,000 parameters are accepted and
+strings are bounded to 512 KiB. Legacy scalars remain supported for v1 clients and
+are normalized using their JSON type. The request requires the project's `read` grant. The
 reference DuckDB service accepts one read-only `SELECT` statement, bounds SQL text
 to 1 MiB, and rejects mutating or multi-statement input. Deployments without a
 configured SQL engine return `404 sql_unavailable`. SQL result rows use JSON-safe
@@ -95,6 +101,40 @@ scalars: UTC timestamps are RFC 3339 strings with `Z`, dates/times use ISO 8601,
 decimals and UUID-like values are strings, and binary values are standard Base64
 strings. Non-finite numeric results are rejected, and raw engine diagnostics are
 never returned to clients.
+
+The plugin route
+`POST /v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute`
+binds execution to an existing project in the authorized workspace and accepts an
+optional `parameters` array using the same tagged scalar forms and limits,
+`max_rows` (`1..1000000`, default `1000`), and `max_result_bytes`
+(`1..10485760`, default `1048576`). Its shared `QueryRequest` accepts only the
+common read-only `SELECT` grammar and includes typed bindings and both output
+budgets in its canonical request digest; the durable evidence artifact stores
+that digest, not the bound values. The selected engine must explicitly
+advertise `parameter_binding: true` or authorization fails before submission.
+The Trino transport uses `EXECUTE IMMEDIATE ... USING`; string values are
+UTF-8/base64 encoded before they are placed in SQL expressions. The execution
+orchestrator rejects excess rows or a serialized `{columns, rows, row_count}`
+result over `max_result_bytes`, returns no partial result, and attempts to
+cancel a still-running query. The dynamically contributed route is described
+in the static core OpenAPI contract; it remains unavailable when the optional
+provider runtime is not composed.
+
+The execute request accepts `page_size` (`1..10000`, default `1000`). It returns
+the first page, total `row_count`, and an opaque `next_cursor` when rows remain.
+Continue with
+`GET /v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/results`
+and pass `cursor` plus optional `page_size`. Pages read from the immutable,
+content-addressed evidence artifact, so they remain stable after server restart
+and are authorized against the same project. Cursor reuse with another query
+attempt or evidence digest fails closed. Each response is bounded by the shared
+10 MiB result budget; a single row that cannot fit fails with a validation error.
+The Data Engineering Studio QueryFlux profile uses this project-scoped execution
+route, obtains engine choices from `GET /v1/data-engineering/queryflux/capabilities`,
+and loads later pages from the evidence route. Its CSV export operates on loaded
+query rows and refuses to imply completeness while a next page is still available.
+The local SQL route accepts only its documented SQL fields; QueryFlux profile and
+translation options are not silently ignored by that route.
 
 `POST /v1/platform/connectors/discover` accepts optional `page_size` and opaque
 `cursor` fields. Its response always contains `schema`, `items`, `count`,

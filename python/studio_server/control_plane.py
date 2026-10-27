@@ -21,6 +21,7 @@ from studio_core import (
     AssetRevision,
     AssetVersion,
     CatalogAsset,
+    CatalogAssetPage,
     ConnectionDefinition,
     ConnectionId,
     DataContract,
@@ -74,6 +75,7 @@ from studio_execution import (
 from studio_orchestrator import Instant
 from studio_quality.http import QualityHTTPAdapter
 from studio_security import Actor, Permission, PolicyDecision, PolicyRequirement
+from studio_sql import SqlResultLimitError, SqlTimeoutError
 from studio_storage.bundle import BundleFile, write_bundle
 from studio_storage.bundle_payload import read_bundle_payload
 from studio_storage.scheduler_backfill import BackfillId, BackfillRequest
@@ -84,6 +86,7 @@ _MAX_REQUEST_BYTES = 1024 * 1024
 _MAX_LIST_LIMIT = 100
 _DEFAULT_LIST_LIMIT = 50
 _MAX_CURSOR_BYTES = 256
+_MAX_CATALOG_CURSOR_BYTES = 1024
 
 CONTROL_PLANE_ROUTES = frozenset(
     {
@@ -404,13 +407,32 @@ class OntologyReader(Protocol):
 
 @runtime_checkable
 class CatalogReader(Protocol):
-    def list_assets(self, workspace_id: WorkspaceId) -> tuple[CatalogAsset, ...]: ...
+    def list_assets(
+        self, workspace_id: WorkspaceId, *, limit: int | None = None
+    ) -> tuple[CatalogAsset, ...]: ...
 
     def get_asset(self, workspace_id: WorkspaceId, asset_id: AssetId) -> CatalogAsset | None: ...
 
     def search_assets(
         self, workspace_id: WorkspaceId, query: str, *, limit: int = 100
     ) -> tuple[CatalogAsset, ...]: ...
+
+    def list_assets_page(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> CatalogAssetPage: ...
+
+    def search_assets_page(
+        self,
+        workspace_id: WorkspaceId,
+        query: str,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> CatalogAssetPage: ...
 
     def create_asset(
         self, workspace_id: WorkspaceId, asset: CatalogAsset, *, now: Instant
@@ -452,6 +474,14 @@ class CatalogReader(Protocol):
         now: Instant,
     ) -> object: ...
 
+    def get_sensitivity(
+        self, workspace_id: WorkspaceId, asset_id: AssetId, *, version: int | None = None
+    ) -> SensitivityMetadata | None: ...
+
+    def list_sensitivity_versions(
+        self, workspace_id: WorkspaceId, asset_id: AssetId
+    ) -> tuple[SensitivityMetadata, ...]: ...
+
     def put_ownership(
         self,
         workspace_id: WorkspaceId,
@@ -460,6 +490,14 @@ class CatalogReader(Protocol):
         *,
         now: Instant,
     ) -> object: ...
+
+    def get_ownership(
+        self, workspace_id: WorkspaceId, asset_id: AssetId, *, version: int | None = None
+    ) -> OwnershipMetadata | None: ...
+
+    def list_ownership_versions(
+        self, workspace_id: WorkspaceId, asset_id: AssetId
+    ) -> tuple[OwnershipMetadata, ...]: ...
 
 
 @runtime_checkable
@@ -538,13 +576,17 @@ class FinOpsReader(Protocol):
 
 @runtime_checkable
 class AlertReader(Protocol):
-    def list_rules(self) -> dict[str, object]: ...
+    def list_rules(self, *, workspace_id: str) -> dict[str, object]: ...
 
-    def list_instances(self, *, limit: int = 100) -> dict[str, object]: ...
+    def list_instances(self, *, workspace_id: str, limit: int = 100) -> dict[str, object]: ...
 
-    def evaluate(self, body: object, *, now: Instant | str) -> dict[str, object]: ...
+    def evaluate(
+        self, body: object, *, now: Instant | str, workspace_id: str
+    ) -> dict[str, object]: ...
 
-    def acknowledge(self, body: object, *, now: Instant | str) -> dict[str, object]: ...
+    def acknowledge(
+        self, body: object, *, now: Instant | str, workspace_id: str
+    ) -> dict[str, object]: ...
 
 
 @runtime_checkable
@@ -811,6 +853,14 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.request_timeout_seconds = request_timeout_seconds
         self.audit_mutation = audit_mutation
         super().__init__(server_address, _WorkspaceProjectHandler)
+
+    def server_close(self) -> None:
+        try:
+            super().server_close()
+        finally:
+            close = getattr(self.sql_reader, "close", None)
+            if callable(close):
+                close()
 
 
 class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
@@ -1086,10 +1136,23 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             )
         elif isinstance(exc, ml_backend_not_found):
             self._error(HTTPStatus.NOT_FOUND, "ml_backend_not_found", str(exc))
-        elif isinstance(exc, TimeoutError):
+        elif isinstance(exc, SqlResultLimitError):
             self._error(
-                HTTPStatus.REQUEST_TIMEOUT, "request_timeout", "request body read timed out"
+                HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                "sql_result_too_large",
+                "SQL result exceeds the configured size limit",
             )
+        elif isinstance(exc, TimeoutError):
+            if isinstance(exc, SqlTimeoutError):
+                self._error(
+                    HTTPStatus.REQUEST_TIMEOUT,
+                    "sql_timeout",
+                    "SQL query exceeded its execution time limit",
+                )
+            else:
+                self._error(
+                    HTTPStatus.REQUEST_TIMEOUT, "request_timeout", "request body read timed out"
+                )
         elif isinstance(exc, (TypeError, ValueError)):
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
         else:
@@ -1353,6 +1416,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         route, parameters = resolved
                         permission = getattr(route, "permission", "")
                         workspace_value = parameters.get("workspace_id")
+                        project_id = parameters.get("project_id")
+                        queryflux_project_read = permission == "data-engineering:read" and getattr(
+                            route, "path", ""
+                        ) == (
+                            "/v1/workspaces/{workspace_id}/projects/{project_id}/"
+                            "data-engineering/queryflux/executions/{run_id}/{attempt_id}/results"
+                        )
                         if workspace_value is None and (
                             permission.startswith("data-engineering:")
                             or permission.startswith("ml-studio:")
@@ -1380,8 +1450,32 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                                     "plugin route permission is not mapped",
                                 )
                                 return
-                            if not self._authorize(actor, workspace_id, mapped_permission):
+                            if queryflux_project_read and project_id is None:
+                                self._error(
+                                    HTTPStatus.FORBIDDEN,
+                                    "plugin_project_scope_required",
+                                    "QueryFlux result reads require a project-scoped route",
+                                )
                                 return
+                            if not self._authorize(
+                                actor,
+                                workspace_id,
+                                mapped_permission,
+                                resource_ref=project_id if queryflux_project_read else None,
+                            ):
+                                return
+                            if queryflux_project_read and project_id is not None:
+                                try:
+                                    self._server().project_service.get(
+                                        workspace_id, ProjectId(project_id)
+                                    )
+                                except WorkspaceServiceNotFound:
+                                    self._error(
+                                        HTTPStatus.NOT_FOUND,
+                                        "project_not_found",
+                                        "project not found in the authorized workspace",
+                                    )
+                                    return
                         elif permission == "synthetic:read":
                             workspace_value = parse_qs(query).get("workspace_id", [None])[0]
                             if workspace_value is None or not self._authorize(
@@ -1958,20 +2052,37 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
                 params = parse_qs(query or "", keep_blank_values=True)
+                allowed_params = {"q", "limit", "cursor", "include_governance"}
+                if set(params) - allowed_params or any(
+                    len(values) != 1 for values in params.values()
+                ):
+                    raise ValueError("catalog query parameters are invalid")
                 search = params.get("q", [""])[0].strip()
+                if len(search) > 256:
+                    raise ValueError("catalog search query must not exceed 256 characters")
                 limit = int(params.get("limit", [str(_DEFAULT_LIST_LIMIT)])[0])
                 if not 1 <= limit <= _MAX_LIST_LIMIT:
                     raise ValueError("catalog limit must be between 1 and 100")
-                catalog_assets = (
-                    catalog_reader.search_assets(workspace_id, search, limit=limit)
+                cursor = params.get("cursor", [None])[0]
+                if cursor is not None and (
+                    not cursor
+                    or cursor != cursor.strip()
+                    or len(cursor.encode("utf-8")) > _MAX_CATALOG_CURSOR_BYTES
+                ):
+                    raise ValueError("catalog cursor is invalid")
+                governance_value = params.get("include_governance", ["false"])[0].casefold()
+                if governance_value not in {"true", "false"}:
+                    raise ValueError("include_governance must be true or false")
+                catalog_page = (
+                    catalog_reader.search_assets_page(
+                        workspace_id, search, limit=limit, cursor=cursor
+                    )
                     if search
-                    else catalog_reader.list_assets(workspace_id)[:limit]
+                    else catalog_reader.list_assets_page(workspace_id, limit=limit, cursor=cursor)
                 )
-                include_governance = (
-                    params.get("include_governance", ["false"])[0].casefold() == "true"
-                )
+                include_governance = governance_value == "true"
                 catalog_items: list[dict[str, object]] = []
-                for catalog_asset_entry in catalog_assets:
+                for catalog_asset_entry in catalog_page.items:
                     catalog_asset = cast(CatalogAsset, catalog_asset_entry)
                     catalog_asset_payload = cast(dict[str, object], catalog_asset.to_payload())
                     if include_governance:
@@ -1994,7 +2105,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                                 None if ownership_value is None else ownership_value.to_payload()
                             )
                     catalog_items.append(catalog_asset_payload)
-                self._write_json(HTTPStatus.OK, {"items": catalog_items})
+                self._write_json(
+                    HTTPStatus.OK,
+                    {"items": catalog_items, "next_cursor": catalog_page.next_cursor},
+                )
                 return
             if (
                 len(segments) == 5
@@ -2819,7 +2933,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                self._write_json(HTTPStatus.OK, alert_reader.list_rules())
+                self._write_json(
+                    HTTPStatus.OK,
+                    alert_reader.list_rules(workspace_id=str(workspace_id)),
+                )
                 return
             if (
                 len(segments) == 5
@@ -2839,7 +2956,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 alert_params = parse_qs(query or "", keep_blank_values=True)
                 limit = int(alert_params.get("limit", ["100"])[0]) if query else 100
-                self._write_json(HTTPStatus.OK, alert_reader.list_instances(limit=limit))
+                self._write_json(
+                    HTTPStatus.OK,
+                    alert_reader.list_instances(workspace_id=str(workspace_id), limit=limit),
+                )
                 return
             if (
                 len(segments) == 5
@@ -3271,8 +3391,41 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             )
                             return
                         workspace_id = WorkspaceId(workspace_value)
-                        if not self._authorize(actor, workspace_id, mapped_permission):
+                        project_id = parameters.get("project_id")
+                        project_scoped_execute = (
+                            permission == "data-engineering:execute"
+                            and getattr(route, "path", "")
+                            == (
+                                "/v1/workspaces/{workspace_id}/projects/{project_id}/"
+                                "data-engineering/queryflux/execute"
+                            )
+                        )
+                        if project_scoped_execute and project_id is None:
+                            self._error(
+                                HTTPStatus.FORBIDDEN,
+                                "plugin_project_scope_required",
+                                "data engineering execution requires a project-scoped route",
+                            )
                             return
+                        if not self._authorize(
+                            actor,
+                            workspace_id,
+                            mapped_permission,
+                            resource_ref=project_id if project_scoped_execute else None,
+                        ):
+                            return
+                        if project_scoped_execute and project_id is not None:
+                            try:
+                                self._server().project_service.get(
+                                    workspace_id, ProjectId(project_id)
+                                )
+                            except WorkspaceServiceNotFound:
+                                self._error(
+                                    HTTPStatus.NOT_FOUND,
+                                    "project_not_found",
+                                    "project not found in the authorized workspace",
+                                )
+                                return
                         body = self._read_json()
                         if not self._audit_mutation(
                             actor,
@@ -3501,6 +3654,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
+                self._server().project_service.get(workspace_id, ProjectId(project_id))
                 self._write_json(HTTPStatus.OK, sql_reader.query(project_id, self._read_json()))
                 return
             if (
@@ -4127,49 +4281,6 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 )
                 return
             if (
-                len(segments) == 7
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3] == "quality"
-                and segments[4] == "contracts"
-            ):
-                quality_reader = self._server().quality_reader
-                if quality_reader is None:
-                    self._error(
-                        HTTPStatus.SERVICE_UNAVAILABLE,
-                        "quality_unavailable",
-                        "quality service is not configured",
-                    )
-                    return
-                if query:
-                    raise ValueError(
-                        "quality contract replacement does not accept query parameters"
-                    )
-                workspace_id = WorkspaceId(segments[2])
-                if not self._authorize(
-                    actor, workspace_id, "project.write", resource_ref=segments[5]
-                ):
-                    return
-                body = self._read_json()
-                if not isinstance(body, dict):
-                    raise ValueError("quality contract body must be an object")
-                contract = DataContract.from_payload(body)
-                if (
-                    str(contract.asset.asset_id) != segments[5]
-                    or str(contract.asset.version) != segments[6]
-                ):
-                    raise ValueError("quality contract asset must match the request path")
-                if not self._audit_mutation(
-                    actor,
-                    "quality.contract.replace",
-                    workspace_id,
-                    {"resource": f"{segments[5]}@{segments[6]}"},
-                ):
-                    return
-                self._write_json(
-                    HTTPStatus.OK, quality_reader.put_contract(workspace_id, body, now=_now())
-                )
-                return
-            if (
                 len(segments) == 5
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:] == ("quality", "runs")
@@ -4190,11 +4301,26 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 body = self._read_json()
                 if not isinstance(body, dict):
                     raise ValueError("quality run body must be an object")
+                asset_payload = body.get("asset")
+                audit_asset_id = (
+                    asset_payload.get("asset_id") if isinstance(asset_payload, dict) else None
+                )
+                audit_asset_version = (
+                    asset_payload.get("version") if isinstance(asset_payload, dict) else None
+                )
+                audit_resource = (
+                    f"{audit_asset_id}@{audit_asset_version}"
+                    if isinstance(audit_asset_id, str)
+                    and isinstance(audit_asset_version, str)
+                    and audit_asset_id.strip()
+                    and audit_asset_version.strip()
+                    else "quality-run"
+                )
                 if not self._audit_mutation(
                     actor,
                     "quality.run.create",
                     workspace_id,
-                    {"resource": str(body.get("asset_id", "quality-run"))},
+                    {"resource": audit_resource},
                 ):
                     return
                 self._write_json(
@@ -4224,7 +4350,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, "alert.evaluate", workspace_id, {"resource": "alert"}
                 ):
                     return
-                self._write_json(HTTPStatus.OK, alert_reader.evaluate(body, now=_now()))
+                self._write_json(
+                    HTTPStatus.OK,
+                    alert_reader.evaluate(body, now=_now(), workspace_id=str(workspace_id)),
+                )
                 return
             if (
                 len(segments) == 5
@@ -4249,7 +4378,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, "alert.acknowledge", workspace_id, {"resource": "alert"}
                 ):
                     return
-                self._write_json(HTTPStatus.OK, alert_reader.acknowledge(body, now=_now()))
+                self._write_json(
+                    HTTPStatus.OK,
+                    alert_reader.acknowledge(body, now=_now(), workspace_id=str(workspace_id)),
+                )
                 return
             if (
                 len(segments) == 4
@@ -4375,6 +4507,49 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "quality"
+                and segments[4] == "contracts"
+            ):
+                quality_reader = self._server().quality_reader
+                if quality_reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "quality_unavailable",
+                        "quality service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError(
+                        "quality contract replacement does not accept query parameters"
+                    )
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=segments[5]
+                ):
+                    return
+                body = self._read_json()
+                if not isinstance(body, dict):
+                    raise ValueError("quality contract body must be an object")
+                contract = DataContract.from_payload(body)
+                if (
+                    str(contract.asset.asset_id) != segments[5]
+                    or str(contract.asset.version) != segments[6]
+                ):
+                    raise ValueError("quality contract asset must match the request path")
+                if not self._audit_mutation(
+                    actor,
+                    "quality.contract.replace",
+                    workspace_id,
+                    {"resource": f"{segments[5]}@{segments[6]}"},
+                ):
+                    return
+                self._write_json(
+                    HTTPStatus.OK, quality_reader.put_contract(workspace_id, body, now=_now())
+                )
+                return
             if (
                 len(segments) == 5
                 and segments[:2] == ("v1", "workspaces")

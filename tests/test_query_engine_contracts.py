@@ -38,7 +38,42 @@ def test_query_engine_contract_is_provider_neutral_and_canonical() -> None:
     assert capabilities.get("joins") is None
     assert handshake.to_payload()["provider_id"] == "local-duckdb"
     assert handshake.to_payload()["contract"] == f"{QUERY_ENGINE_NAMESPACE}/{QUERY_ENGINE_VERSION}"
-    assert request.canonical_json().startswith('{"max_rows":5')
+    assert request.canonical_json().startswith('{"max_result_bytes":1048576')
+
+
+def test_query_request_canonicalizes_and_validates_scalar_parameters() -> None:
+    request = QueryRequest(
+        "SELECT ?, ?, ?, ?, ?",
+        "local",
+        parameters=(
+            {"type": "null", "value": None},
+            {"type": "boolean", "value": True},
+            {"type": "integer", "value": 2**63 - 1},
+            {"type": "float", "value": 1},
+            {"type": "string", "value": "O'Reilly"},
+        ),
+    )
+
+    assert request.parameters == (None, True, 2**63 - 1, 1.0, "O'Reilly")
+    assert '"value":"9223372036854775807"' in request.canonical_json()
+    assert "O'Reilly" in request.canonical_json()
+    assert QueryRequest("SELECT ?", "local", parameters=(1,)).canonical_json() != (
+        QueryRequest("SELECT ?", "local", parameters=(2,)).canonical_json()
+    )
+
+
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        (object(),),
+        ({"type": "integer", "value": True},),
+        ({"type": "float", "value": float("inf")},),
+        ({"type": "integer", "value": 2**63},),
+    ],
+)
+def test_query_request_rejects_unsupported_or_mismatched_parameters(parameters) -> None:
+    with pytest.raises(ValueError, match="SQL parameter"):
+        QueryRequest("SELECT ?", "local", parameters=parameters)
 
 
 def test_query_result_and_status_are_bounded_and_shape_checked() -> None:
@@ -53,6 +88,19 @@ def test_query_result_and_status_are_bounded_and_shape_checked() -> None:
         QueryRequest("SELECT 1", "local", max_rows=0)
     with pytest.raises(ValueError, match="integer"):
         QueryRequest("SELECT 1", "local", max_rows=True)
+    with pytest.raises(ValueError, match="max_result_bytes"):
+        QueryRequest("SELECT 1", "local", max_result_bytes=0)
+    with pytest.raises(ValueError, match="max_result_bytes"):
+        QueryRequest("SELECT 1", "local", max_result_bytes=True)
+
+
+def test_query_request_result_byte_budget_is_part_of_canonical_identity() -> None:
+    default = QueryRequest("SELECT 1", "local")
+    bounded = QueryRequest("SELECT 1", "local", max_result_bytes=64)
+
+    assert default.max_result_bytes == 1_048_576
+    assert '"max_result_bytes":64' in bounded.canonical_json()
+    assert default.canonical_json() != bounded.canonical_json()
 
 
 def test_query_evidence_rejects_duplicate_timings() -> None:

@@ -96,6 +96,8 @@ class OperatorRef:
     version: int = 1
 
     def __post_init__(self) -> None:
+        if not isinstance(self.version, int) or isinstance(self.version, bool):
+            raise ValueError("operator version must be an integer")
         if self.version < 1:
             raise ValueError("operator version must be >= 1")
 

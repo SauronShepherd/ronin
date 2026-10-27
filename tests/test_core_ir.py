@@ -60,6 +60,8 @@ def test_ir_objects_are_immutable() -> None:
 def test_operator_version_must_be_positive() -> None:
     with pytest.raises(ValueError, match=">= 1"):
         OperatorRef("invalid", 0)
+    with pytest.raises(ValueError, match="integer"):
+        OperatorRef("invalid", True)
 
 
 def test_freeze_value_is_canonical_hashable_and_round_trips() -> None:

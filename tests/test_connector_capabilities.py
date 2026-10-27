@@ -38,8 +38,15 @@ def test_capabilities_validate_incremental_and_bounds() -> None:
         ConnectorCapabilities(incremental=True)
     with pytest.raises(ValueError, match="positive"):
         ConnectorCapabilities(read=True, max_page_size=0)
+    with pytest.raises(ValueError, match="positive integer"):
+        ConnectorCapabilities(read=True, max_batch_size=True)
     with pytest.raises(ValueError, match="unique"):
         ConnectorCapabilities(read=True, auth_modes=("secret-ref", "secret-ref"))
+
+
+def test_connector_contract_version_rejects_booleans() -> None:
+    with pytest.raises(ValueError, match="integer"):
+        ConnectorDescriptor("invalid", True, ConnectorCapabilities())
 
 
 def test_capability_payload_is_deterministic_and_json_ready() -> None:

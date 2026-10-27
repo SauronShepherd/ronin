@@ -12,15 +12,42 @@ from .contracts import AlertRule, MetricPoint
 
 
 class _QualityResult(Protocol):
-    rule_id: object
-    status: str
+    @property
+    def rule_id(self) -> object: ...
+
+    @property
+    def status(self) -> str: ...
+
+
+class _Identifier(Protocol):
+    @property
+    def value(self) -> str: ...
+
+
+class _AssetRef(Protocol):
+    @property
+    def asset_id(self) -> _Identifier | str: ...
+
+    @property
+    def version(self) -> _Identifier | str: ...
 
 
 class _QualityRun(Protocol):
-    asset: object
-    id: object
-    status: str
-    results: tuple[_QualityResult, ...]
+    @property
+    def asset(self) -> _AssetRef: ...
+
+    @property
+    def id(self) -> object: ...
+
+    @property
+    def status(self) -> str: ...
+
+    @property
+    def results(self) -> tuple[_QualityResult, ...]: ...
+
+
+def _identity_part(value: _Identifier | str) -> str:
+    return value if isinstance(value, str) else value.value
 
 
 def record_quality_metrics(
@@ -31,6 +58,7 @@ def record_quality_metrics(
 ) -> tuple[MetricPoint, ...]:
     """Materialize a quality run as metrics consumable by ``evaluate_alert``."""
     observed = Instant(observed_at)
+    asset = f"{_identity_part(run.asset.asset_id)}@{_identity_part(run.asset.version)}"
     points = tuple(
         MetricPoint(
             "quality.rule.failure",
@@ -38,17 +66,21 @@ def record_quality_metrics(
             "boolean",
             "gauge",
             observed,
-            (("asset", str(run.asset)), ("rule_id", str(result.rule_id))),
+            (
+                ("asset", asset),
+                ("rule_id", str(result.rule_id)),
+                ("run_id", str(run.id)),
+            ),
         )
         for result in run.results
     ) + (
         MetricPoint(
             "quality.run.failure",
-            1.0 if run.status in {"failed", "error"} else 0.0,
+            1.0 if run.status in {"failed", "error", "unknown"} else 0.0,
             "boolean",
             "gauge",
             observed,
-            (("asset", str(run.asset)), ("run_id", str(run.id))),
+            (("asset", asset), ("run_id", str(run.id))),
         ),
     )
     for point in points:

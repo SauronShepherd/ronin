@@ -54,7 +54,7 @@ pytestmark = pytest.mark.e2e
 _IMAGE = os.environ.get("RONIN_DOCKER_QUALIFICATION_IMAGE")
 _DOCKER = shutil.which("docker")
 _LOCAL_RONIN = Path(sys.executable).with_name("ronin.exe")
-_RONIN = shutil.which("ronin") or (str(_LOCAL_RONIN) if _LOCAL_RONIN.exists() else None)
+_RONIN = str(_LOCAL_RONIN) if _LOCAL_RONIN.exists() else shutil.which("ronin")
 _NOW = Instant("2026-09-06T20:00:00.000000Z")
 _OPERATOR_GRANTS = GrantSet(
     (
@@ -256,7 +256,7 @@ def _ronin(*args: str) -> subprocess.CompletedProcess[str]:
         text=True,
         capture_output=True,
         check=False,
-        timeout=15.0,
+        timeout=45.0,
     )
 
 

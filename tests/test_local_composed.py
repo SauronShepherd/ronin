@@ -2,12 +2,30 @@ from __future__ import annotations
 
 import asyncio
 import csv
+import http.client
+import json
+import socket
 import time
 from types import SimpleNamespace
 
 import pytest
-from studio_cli.local_composed import _workflow_reader_for_backend, build_local_composed_from_env
-from studio_core import AssetId, ConnectionDefinition, ConnectionId, WorkspaceId
+from studio_cli.local_composed import (
+    _catalog_reader_for_backend,
+    _workflow_reader_for_backend,
+    build_local_composed_from_env,
+)
+from studio_core import (
+    AssetId,
+    ConnectionDefinition,
+    ConnectionId,
+    ExecutionProfile,
+    Project,
+    ProjectId,
+    ProjectManifest,
+    RepositoryBinding,
+    RuntimeProfileRef,
+    WorkspaceId,
+)
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import PostgresWorkflowHTTPAdapter, SqliteWorkflowHTTPAdapter
 from studio_ml import FeatureSpec, Lab
@@ -15,6 +33,7 @@ from studio_ml.domain import PipelineIR
 from studio_ml.orchestration import JobStoreExecutionStore
 from studio_orchestrator import Instant
 from studio_server import LocalServerComposition
+from studio_sql import SqlTimeoutError
 from studio_storage import (
     ArtifactRef,
     LocalArtifactStore,
@@ -40,6 +59,33 @@ def _environment(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
         ),
     )
     monkeypatch.setenv("RONIN_TOKEN", "job-token")
+
+
+def _unused_port() -> int:
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        return int(listener.getsockname()[1])
+
+
+def _sql_request(
+    address: tuple[str, int], project_id: str, sql: str, **limits: int
+) -> tuple[int, object]:
+    connection = http.client.HTTPConnection(*address, timeout=5)
+    body = json.dumps({"sql": sql, **limits}, separators=(",", ":"))
+    try:
+        connection.request(
+            "POST",
+            f"/v1/workspaces/workspace-1/projects/{project_id}/sql/query",
+            body=body,
+            headers={
+                "Authorization": "Bearer control-token",
+                "Content-Type": "application/json",
+            },
+        )
+        response = connection.getresponse()
+        return response.status, json.loads(response.read().decode("utf-8"))
+    finally:
+        connection.close()
 
 
 def test_workflow_routes_are_not_mounted_for_incomplete_postgres_scheduler_store() -> None:
@@ -75,6 +121,20 @@ def test_workflow_routes_use_the_complete_sqlite_scheduler_contract(tmp_path) ->
     assert isinstance(reader, SqliteWorkflowHTTPAdapter)
 
 
+def test_catalog_routes_require_the_complete_store_contract(tmp_path) -> None:
+    complete = object.__new__(PostgresSchedulerSnapshotStore)
+    assert _catalog_reader_for_backend(complete) is complete
+    assert (
+        _catalog_reader_for_backend(SimpleNamespace(list_assets=lambda *_args, **_kwargs: ()))
+        is None
+    )
+
+    sqlite_store = SqliteCatalogStore(
+        tmp_path / "catalog.sqlite3", migration_now="2026-10-17T00:00:00.000000Z"
+    )
+    assert _catalog_reader_for_backend(sqlite_store) is sqlite_store
+
+
 def test_build_local_composed_from_env_creates_two_surface_composition(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
@@ -94,10 +154,88 @@ def test_build_local_composed_from_env_creates_two_surface_composition(
     assert composition.control_plane_server.connector_registry is not None
     assert composition.control_plane_server.ingestion_adapter is not None
     assert composition.control_plane_server.durable_jobs is composition.job_server.application
+    assert composition.control_plane_server.alert_reader is not None
     workspace = composition.control_plane_server.workspace_service.get(WorkspaceId("workspace-1"))
     assert workspace.name == "Local workspace"
     assert composition.control_plane_server.plugin_routes_enabled
     composition.stop()
+
+
+def test_local_composed_sql_route_executes_scoped_queries_and_closes_engine(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    composition = build_local_composed_from_env()
+    server = composition.control_plane_server
+    sql_reader = server.sql_reader
+    assert sql_reader is not None
+    engine = sql_reader._engine
+    server.project_service.register(
+        WorkspaceId("workspace-1"),
+        ProjectManifest.from_project(
+            Project(
+                ProjectId("project-1"),
+                "SQL test project",
+                (RepositoryBinding("code", "https://example.test/repo.git", role="primary"),),
+                ExecutionProfile(runtime=RuntimeProfileRef("python", "3.11")),
+            )
+        ),
+        now=Instant("2026-10-26T00:00:00.000000Z"),
+    )
+    try:
+        composition.start()
+        status, missing = _sql_request(server.server_address, "missing-project", "SELECT 1")
+        assert status == 404
+        assert missing["error"]["code"] == "not_found"
+        assert engine._engines == {}
+
+        status, result = _sql_request(
+            server.server_address,
+            "project-1",
+            "SELECT 1 AS value UNION ALL SELECT 2 AS value",
+        )
+        assert status == 200
+        assert result["rows"] == [[1], [2]]
+        assert result["row_count"] == 2
+
+        status, typed = _sql_request(
+            server.server_address, "project-1", "SELECT CAST(12.34 AS DECIMAL(5, 2)) AS amount"
+        )
+        assert status == 200
+        assert typed["rows"] == [["12.34"]]
+
+        status, oversized = _sql_request(
+            server.server_address,
+            "project-1",
+            "SELECT REPEAT('x', 512)",
+            max_result_bytes=128,
+        )
+        assert status == 413
+        assert oversized["error"]["code"] == "sql_result_too_large"
+
+        original_reader = server.sql_reader
+
+        class TimedOutSqlReader:
+            def query(self, _project_id: str, _body: object) -> dict[str, object]:
+                raise SqlTimeoutError("SQL query exceeded its execution time limit")
+
+            def close(self) -> None:
+                return None
+
+        server.sql_reader = TimedOutSqlReader()
+        try:
+            status, timed_out = _sql_request(server.server_address, "project-1", "SELECT 1")
+            assert status == 408
+            assert timed_out["error"]["code"] == "sql_timeout"
+            assert timed_out["error"]["message"] == "SQL query exceeded its execution time limit"
+        finally:
+            server.sql_reader = original_reader
+    finally:
+        composition.stop()
+    assert engine._closed
 
 
 def test_local_composition_injects_the_shared_durable_job_service(

@@ -150,6 +150,35 @@ def decode_event_cursor(cursor: str, *, run_id: RunId) -> tuple[int, int, int]:
     return next_sequence, attempt_ordinal, attempt_sequence
 
 
+def encode_catalog_asset_cursor(*, workspace_id: str, query: str, after_asset_id: str) -> str:
+    """Bind a catalog keyset cursor to the workspace and normalized search term."""
+    return encode_cursor(
+        {
+            "v": _CURSOR_VERSION,
+            "kind": "catalog-assets",
+            "workspace_id": workspace_id,
+            "query": query,
+            "after_asset_id": after_asset_id,
+        }
+    )
+
+
+def decode_catalog_asset_cursor(cursor: str, *, workspace_id: str, query: str) -> str:
+    payload = decode_cursor(cursor)
+    if (
+        set(payload) != {"v", "kind", "workspace_id", "query", "after_asset_id"}
+        or payload.get("v") != _CURSOR_VERSION
+        or payload.get("kind") != "catalog-assets"
+        or payload.get("workspace_id") != workspace_id
+        or payload.get("query") != query
+    ):
+        raise ValueError("catalog cursor does not match filters")
+    after_asset_id = payload.get("after_asset_id")
+    if not isinstance(after_asset_id, str) or not after_asset_id:
+        raise ValueError("invalid catalog cursor")
+    return after_asset_id
+
+
 def validate_limit(limit: int) -> None:
     if limit < 1 or limit > 100:
         raise ValueError("limit must be between 1 and 100")
@@ -157,9 +186,11 @@ def validate_limit(limit: int) -> None:
 
 __all__ = (
     "decode_cursor",
+    "decode_catalog_asset_cursor",
     "decode_event_cursor",
     "decode_job_cursor",
     "encode_cursor",
+    "encode_catalog_asset_cursor",
     "encode_event_cursor",
     "encode_job_cursor",
     "initial_event_cursor",

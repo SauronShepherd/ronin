@@ -22,7 +22,11 @@ from studio_storage import LocalArtifactStore
 
 
 class _QueryFluxTransport:
+    def __init__(self) -> None:
+        self.submitted_request = None
+
     def submit(self, _request):
+        self.submitted_request = _request
         return QueryHandle("q-1", "queryflux", "provider-q-1"), "next-1"
 
     def poll(self, _handle, _next_uri):
@@ -56,7 +60,7 @@ def test_data_enginerring_studio_manifest_and_contributions(tmp_path) -> None:
 
     assert plugin.manifest.name == "Data Enginerring Studio"
     assert "data-engineering.ir.v1" in registry.capabilities
-    assert len(registry.routes) == 13
+    assert len(registry.routes) == 14
     assert registry.job_registry.items[0].job_type == "data-engineering.pipeline-run.v1"
     assert registry.ui_registry.items[0].manifest["navigation"][0]["label"] == (
         "Data Enginerring Studio"
@@ -123,10 +127,19 @@ def test_configured_queryflux_capabilities_are_handshake_bound(tmp_path) -> None
             },
         )
     )
+    execute_route = next(
+        route
+        for route in registry.routes
+        if route.method == "POST"
+        and route.path
+        == "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute"
+    )
+    assert execute_route.permission == "data-engineering:execute"
     plugin.startup()
     capabilities = plugin.queryflux_capabilities()
     assert capabilities["status"] == "ready"
     assert capabilities["provider_version"] == "qf-1.2"
+    assert capabilities["allowed_engines"] == ["duckdb"]
     assert capabilities["translation_policies"] == ["native_only", "best_effort"]
     assert capabilities["capabilities"]["strict_translation"] is False
 
@@ -169,7 +182,12 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
         registry.add_permission(permission, plugin.manifest.id)
     provider = QueryEngineRuntimeProvider(
         DiscoveredEngine(
-            EngineHandshake("queryflux", "qf-1.2", EngineCapabilities((("cancel", True),)), True),
+            EngineHandshake(
+                "queryflux",
+                "qf-1.2",
+                EngineCapabilities((("cancel", True), ("parameter_binding", True))),
+                True,
+            ),
             ("duckdb",),
             "ready",
         ),
@@ -177,6 +195,7 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
     )
     store = LocalArtifactStore(tmp_path / "artifacts")
     references = SqliteQueryEvidenceReferenceStore(tmp_path / "ronin.db")
+    transport = _QueryFluxTransport()
     plugin.register(
         PluginContext(
             plugin.manifest.id,
@@ -184,25 +203,30 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
             {
                 "artifact_store": store,
                 "queryflux_runtime_provider": provider,
-                "queryflux_transport": _QueryFluxTransport(),
+                "queryflux_transport": transport,
                 "queryflux_evidence_reference_store": references,
             },
         )
     )
     plugin.startup()
     result = plugin.queryflux_execute(
+        workspace_id="workspace-1",
+        project_id="project-1",
         body={
             "sql": "SELECT 1",
             "profile": "queryflux",
             "engine": "duckdb",
-            "project_id": "project-1",
             "run_id": "run-1",
             "attempt_id": "attempt-1",
-        }
+            "parameters": [{"type": "integer", "value": 7}],
+            "max_result_bytes": 2048,
+        },
     )
     assert result["status"] == "succeeded"
     assert result["rows"] == [[1]]
     assert result["evidence"]["digest"]
+    assert transport.submitted_request.parameters == (7,)
+    assert transport.submitted_request.max_result_bytes == 2048
     records = references.list_evidence_references()
     assert len(records) == 1
     assert records[0]["storage_ref"] == result["evidence"]["storage_ref"]

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-26T13:34:01+00:00",
-  "observed_main_sha": "9f3ee2fa140c7503c571b95395a6b6f75f2b8f72",
+  "observed_at": "2026-10-27T05:03:00+00:00",
+  "observed_main_sha": "cca60214044402867094335a2c999a50c3c7fda7",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -14,10 +14,10 @@
     "release_ready": false
   },
   "local_verification": {
-    "observed_at": "2026-10-24",
-    "candidate_sha": "b8e6d7834692e35688054f50655f8f73733d34cb",
-    "command": "$env:PATH = \"$PWD\\.venv\\Scripts;$env:PATH\"; .venv\\Scripts\\python.exe -m pytest -q",
-    "result": "3962 passed, 66 skipped in 447.66s (Windows; this is local evidence only, not release qualification. Docker/PostgreSQL and platform/provider workflow evidence is tracked separately against its own SHA and must not be attributed to this candidate.)",
+    "observed_at": "2026-10-26",
+    "candidate_sha": "5f2a3bbaba8f32446293b9d280f6fe2d1bc7bd74",
+    "command": "$env:RONIN_TEST_POSTGRES_DSN=postgresql://…/ronin; $env:RONIN_POSTGRES_TEST_DSN=postgresql://…/ronin; python -m pytest -q --ignore=tests/perf",
+    "result": "4097 passed, 24 skipped in 337.92s (Windows/Python 3.13; PostgreSQL 16 in Docker; platform, external-service, and dedicated-Docker skips remain. Separate Docker gate: 23 passed; strict v0.1 acceptance: 15/15. This is local candidate evidence only.)",
     "qualification_claimed": false,
     "mutation_campaign": {
       "status": "historical_frozen",
@@ -72,7 +72,7 @@
     {
       "id": "p3-lakehouse-sql",
       "status": "partial",
-      "summary": "Bounded Arrow/Parquet open-data and streaming publication paths, provider-neutral SQL/table contracts, optional local DuckDB engine with bounded relation lifecycle, shared query lifecycle adapter, provider-neutral query-engine contracts with discovery, local transport and Trino HTTP submit/poll/cancel transport, QueryFlux discovery and QueryFlux-to-Trino lifecycle adapters, bounded project-scoped fail-closed read-only SQL HTTP adapter/route, and optional Iceberg/Delta create-append-overwrite-read-inspect-delete adapters exist; external QueryFlux qualification, remote/catalog qualification, full format features, and broader SQL service remain incomplete."
+      "summary": "Bounded Arrow/Parquet open-data paths, provider-neutral SQL/table contracts, optional local DuckDB with project-scoped relation lifecycle, shared read-only SELECT grammar, typed results and project-checked SQL API/Studio routes with execution-time and serialized-result-byte budgets exist. Shared typed scalar bindings cover null, boolean, signed 64-bit integer, finite float and bounded string across SQL and query-engine request contracts; local DuckDB and the Trino transport implement bindings, while QueryFlux authorization requires an explicit parameter_binding capability. Local DuckDB and fake-HTTP Trino tests pass; live provider qualification remains incomplete. Stable pagination, explicit client cancellation, explain, governed asset registration, source-revision evidence, CPU budgets, broader format support and the full SQL service remain incomplete."
     },
     {
       "id": "p4-data-engineering-studio",
@@ -167,7 +167,7 @@
     {
       "id": "web-studio",
       "status": "partial",
-      "summary": "Authenticated static Studio shell supports job listing, detail status, events, evidence, cancellation, navigation, packaged asset delivery, project-scoped read-only SQL, workspace creation, project creation/listing/archive, environment binding/editing, resource-scoped project permission inspection, Bundle actions, governed pipeline execution and a Monitoring & Alerts route backed by alert APIs; 77 Playwright route/accessibility/history/domain-journey checks pass; authoring editors, domain workflows, and complete Public v1 journeys remain incomplete."
+      "summary": "Authenticated static Studio shell supports job listing/detail/events/evidence/cancellation, navigation, packaged assets, project-scoped read-only SQL with a local backend, workspace/project and environment operations, resource-scoped permission inspection, Bundle actions, governed pipeline execution and Monitoring & Alerts backed by APIs. Authoring editors, domain workflows and complete Public v1 journeys remain incomplete."
     },
     {
       "id": "public-v1-release-qualification",
@@ -231,7 +231,9 @@
     286,
     287,
     288,
-    389
+    389,
+    552,
+    553
   ],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",

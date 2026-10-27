@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 from threading import Thread
-from urllib.request import urlopen
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 import pytest
 from pyronin import APIError, HTTPTransport, Ronin
@@ -13,7 +15,7 @@ from studio_execution import DurableExecutionService
 from studio_lakehouse import write_parquet_rows
 from studio_orchestrator import AttemptId, Instant, JobId, LeaseToken, StoredExecutionEvent
 from studio_server import CONTROL_PLANE_ROUTES, SUPPORTED_ROUTES, RoninHTTPServer
-from studio_sql import DuckDbSqlEngine
+from studio_sql import DuckDbSqlEngine, SqlQueryResult
 from studio_storage import SqliteJobStore
 
 _MIGRATION_NOW = Instant("2026-09-07T06:00:00.000000Z")
@@ -49,6 +51,16 @@ def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
         "failure_code",
     }
     assert document["security"] == [{"bearerAuth": []}]
+    sql_parameters = document["components"]["schemas"]["SqlRequest"]["properties"]["parameters"]
+    assert sql_parameters["maxItems"] == 1000
+    legacy_sql_parameter = document["components"]["schemas"]["SqlLegacyParameter"]
+    assert len(legacy_sql_parameter["anyOf"]) == 5
+    typed_sql_parameter = document["components"]["schemas"]["SqlTypedParameter"]
+    assert len(typed_sql_parameter["oneOf"]) == 5
+    assert all(
+        item["additionalProperties"] is False and item["required"] == ["type", "value"]
+        for item in typed_sql_parameter["oneOf"]
+    )
     event = document["components"]["schemas"]["JobEvent"]
     assert event["additionalProperties"] is False
     assert set(event["required"]) == {
@@ -59,6 +71,145 @@ def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
         "message",
         "occurred_at",
     }
+
+
+def test_http_sql_accepts_typed_bindings_and_rejects_type_mismatches(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = SqliteJobStore(tmp_path / "sql.db", migration_now=_MIGRATION_NOW)
+    service = DurableExecutionService(store, max_workers=1, max_in_flight=2)
+    engine = DuckDbSqlEngine()
+    execute = engine.execute
+    execution_limits: dict[str, int] = {}
+
+    def capture_limits(
+        sql: str,
+        parameters: tuple[object, ...] = (),
+        *,
+        max_rows: int = 10_000,
+        timeout_ms: int = 5_000,
+        max_result_bytes: int = 1_048_576,
+    ) -> SqlQueryResult:
+        execution_limits.update(timeout_ms=timeout_ms, max_result_bytes=max_result_bytes)
+        return execute(
+            sql,
+            parameters,
+            max_rows=max_rows,
+            timeout_ms=timeout_ms,
+            max_result_bytes=max_result_bytes,
+        )
+
+    monkeypatch.setattr(engine, "execute", capture_limits)
+    server = RoninHTTPServer(
+        ("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=_GRANTS, sql_engine=engine
+    )
+    server_thread = Thread(target=server.serve_forever, name="ronin-sql-types-test", daemon=True)
+    server_thread.start()
+
+    try:
+        body = json.dumps(
+            {
+                "project": "typed-bindings",
+                "sql": "SELECT ?, ?, ?, ?, ?",
+                "parameters": [
+                    {"type": "null", "value": None},
+                    {"type": "boolean", "value": True},
+                    {"type": "integer", "value": 12},
+                    {"type": "float", "value": 1.25},
+                    {"type": "string", "value": "ronin"},
+                ],
+                "timeout_ms": 2345,
+                "max_result_bytes": 4096,
+            }
+        ).encode()
+        request = Request(
+            f"http://127.0.0.1:{server.server_port}/v1/sql",
+            data=body,
+            headers={
+                "Authorization": f"Bearer {_AUTHORIZATION}",
+                "Content-Type": "application/json",
+            },
+        )
+        with urlopen(request) as response:  # noqa: S310 - fixed loopback test server
+            payload = json.loads(response.read())
+        assert payload["rows"] == [[None, True, 12, 1.25, "ronin"]]
+        assert execution_limits == {"timeout_ms": 2345, "max_result_bytes": 4096}
+
+        invalid = json.dumps(
+            {
+                "project": "typed-bindings",
+                "sql": "SELECT ?",
+                "parameters": [{"type": "integer", "value": True}],
+            }
+        ).encode()
+        invalid_request = Request(
+            f"http://127.0.0.1:{server.server_port}/v1/sql",
+            data=invalid,
+            headers={
+                "Authorization": f"Bearer {_AUTHORIZATION}",
+                "Content-Type": "application/json",
+            },
+        )
+        with pytest.raises(HTTPError) as error:
+            urlopen(invalid_request)  # noqa: S310 - fixed loopback test server
+        assert error.value.code == 400
+        assert "type" in json.loads(error.value.read())["error"]["message"]
+
+        oversized = json.dumps(
+            {
+                "project": "typed-bindings",
+                "sql": "SELECT 'x' AS value",
+                "max_result_bytes": 10,
+            }
+        ).encode()
+        oversized_request = Request(
+            f"http://127.0.0.1:{server.server_port}/v1/sql",
+            data=oversized,
+            headers={
+                "Authorization": f"Bearer {_AUTHORIZATION}",
+                "Content-Type": "application/json",
+            },
+        )
+        with pytest.raises(HTTPError) as size_error:
+            urlopen(oversized_request)  # noqa: S310 - fixed loopback test server
+        assert size_error.value.code == 413
+        assert json.loads(size_error.value.read())["error"]["code"] == "sql_result_too_large"
+
+        unsupported_profile = json.dumps(
+            {"project": "typed-bindings", "sql": "SELECT 1", "profile": "queryflux"}
+        ).encode()
+        unsupported_request = Request(
+            f"http://127.0.0.1:{server.server_port}/v1/sql",
+            data=unsupported_profile,
+            headers={
+                "Authorization": f"Bearer {_AUTHORIZATION}",
+                "Content-Type": "application/json",
+            },
+        )
+        with pytest.raises(HTTPError) as profile_error:
+            urlopen(unsupported_request)  # noqa: S310 - fixed loopback test server
+        assert profile_error.value.code == 400
+
+        malformed_profile = json.dumps(
+            {"project": "typed-bindings", "sql": "SELECT 1", "profile": []}
+        ).encode()
+        malformed_request = Request(
+            f"http://127.0.0.1:{server.server_port}/v1/sql",
+            data=malformed_profile,
+            headers={
+                "Authorization": f"Bearer {_AUTHORIZATION}",
+                "Content-Type": "application/json",
+            },
+        )
+        with pytest.raises(HTTPError) as malformed_error:
+            urlopen(malformed_request)  # noqa: S310 - fixed loopback test server
+        assert malformed_error.value.code == 400
+    finally:
+        server.shutdown()
+        server.server_close()
+        server_thread.join(timeout=5)
+        engine.close()
+        asyncio.run(service.aclose())
 
 
 def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempotency(
@@ -304,7 +455,9 @@ def test_http_job_listing_rejects_project_outside_typed_grant(tmp_path: Path) ->
         thread.join(timeout=2)
 
 
-def test_healthz_is_available_without_bearer_authorization(tmp_path: Path, monkeypatch) -> None:
+def test_healthz_is_available_without_bearer_authorization(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("RONIN_DB", str(tmp_path / "ronin.db"))
     service = DurableExecutionService(
         SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)

@@ -15,6 +15,7 @@ from studio_core import (
     AssetRef,
     AssetRevision,
     CatalogAsset,
+    CatalogAssetPage,
     ConnectionDefinition,
     ConnectionId,
     LineageEdge,
@@ -212,11 +213,30 @@ class CatalogStore(Protocol):
 
     def get_asset(self, workspace_id: WorkspaceId, asset_id: AssetId) -> CatalogAsset | None: ...
 
-    def list_assets(self, workspace_id: WorkspaceId) -> tuple[CatalogAsset, ...]: ...
+    def list_assets(
+        self, workspace_id: WorkspaceId, *, limit: int | None = None
+    ) -> tuple[CatalogAsset, ...]: ...
 
     def search_assets(
         self, workspace_id: WorkspaceId, query: str, *, limit: int = 100
     ) -> tuple[CatalogAsset, ...]: ...
+
+    def list_assets_page(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> CatalogAssetPage: ...
+
+    def search_assets_page(
+        self,
+        workspace_id: WorkspaceId,
+        query: str,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> CatalogAssetPage: ...
 
     def put_revision(
         self,

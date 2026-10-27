@@ -44,7 +44,7 @@ test.describe('Studio route traversal', () => {
       await page.setViewportSize(viewport);
       const layout = await page.evaluate(() => {
         const rail = document.querySelector('#rail');
-        const nav = rail.querySelector('.nav-group');
+        const nav = rail.querySelector('.nav-sections');
         const railBox = rail.getBoundingClientRect();
         return {
           documentWidth: document.documentElement.scrollWidth,
