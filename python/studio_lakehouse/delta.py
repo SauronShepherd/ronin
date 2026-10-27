@@ -199,7 +199,12 @@ class DeltaTableStore:
         deltalake = _deltalake()
         path = self._path(identifier)
         table = deltalake.DeltaTable(str(path))
-        arrow = table.to_pyarrow_table().schema
+        schema = getattr(table, "schema", None)
+        if not callable(schema):
+            raise DeltaCapabilityError(
+                "configured Delta runtime does not expose metadata-only schema inspection"
+            )
+        arrow = schema().to_pyarrow()
         metadata = table.metadata()
         configuration = metadata.configuration or {}
         return OpenTableState(
