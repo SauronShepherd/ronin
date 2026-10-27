@@ -264,6 +264,12 @@ def test_queryflux_execution_is_bound_to_an_existing_project_in_workspace(tmp_pa
                 "queryflux/executions/run-1/attempt-1/results?page_size=1&cursor="
                 + second_page["next_cursor"],
             )
+            empty_cursor_status, empty_cursor = _request(
+                address,
+                "GET",
+                "/v1/workspaces/workspace-a/projects/project-1/data-engineering/"
+                "queryflux/executions/run-1/attempt-1/results?page_size=1&cursor=",
+            )
             cross_workspace_read_status, cross_workspace_read = _request(
                 address,
                 "GET",
@@ -284,12 +290,15 @@ def test_queryflux_execution_is_bound_to_an_existing_project_in_workspace(tmp_pa
         assert third_page_status == 200
         assert third_page["rows"] == [[30]]
         assert third_page["next_cursor"] is None
+        assert empty_cursor_status == 400
+        assert empty_cursor["error"]["code"] == "invalid_request"
         assert cross_workspace_read_status == 404
         assert cross_workspace_read["error"]["code"] == "project_not_found"
         assert transport.submitted == 1
         assert [item.resource_ref for item in authorizer.requirements] == [
             "project-1",
             "project-2",
+            "project-1",
             "project-1",
             "project-1",
             "project-1",
