@@ -2,7 +2,7 @@
 
 **Límites de alcance:** multiusuario pertenece a Ronin Pro y no forma parte de Public v1. Ronin no integra capacidades GenAI; los coding agents se usan fuera del producto mediante skills. No contar estas capacidades como huecos de release.
 
-**Estado actual (2026-10-27):** `main@3f73d21d977caca2156febe7f3fc8ac96e866600` (PR #563). Los seis workflows post-merge exact-SHA terminaron `success` inicialmente, pero un run programado posterior en el mismo SHA falló en el límite de tamaño de `web/js/data-engineering-studio.js` y por un timeout demasiado estricto en una prueba asíncrona. Esos resultados describen el estado histórico de ese commit; la decisión vigente del usuario es retirar CI. Los cambios locales que eliminan workflows y corrigen ambos hallazgos aún requieren revisión y cualificación manual; no cuentan como integrados ni verificados. Public v1 sigue incompleto, 0/13 release-qualified.
+**Estado actual (2026-10-27):** `main@4542002c` (consolidación local-only posterior a PR #563). La decisión vigente es retirar CI: los workflows de validación fueron eliminados y solo queda el publicador manual de alias de Docker Hub. Los resultados de workflows de commits anteriores son históricos y no califican este estado. Las correcciones de límite de módulo, robustez asíncrona y contratos locales están integradas; la suite Python actual pasó 4.102 pruebas y omitió 74. Public v1 sigue incompleto, 0/13 release-qualified.
 
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
