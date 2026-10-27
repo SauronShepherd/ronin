@@ -60,7 +60,7 @@ def test_data_enginerring_studio_manifest_and_contributions(tmp_path) -> None:
 
     assert plugin.manifest.name == "Data Enginerring Studio"
     assert "data-engineering.ir.v1" in registry.capabilities
-    assert len(registry.routes) == 13
+    assert len(registry.routes) == 14
     assert registry.job_registry.items[0].job_type == "data-engineering.pipeline-run.v1"
     assert registry.ui_registry.items[0].manifest["navigation"][0]["label"] == (
         "Data Enginerring Studio"
@@ -139,6 +139,7 @@ def test_configured_queryflux_capabilities_are_handshake_bound(tmp_path) -> None
     capabilities = plugin.queryflux_capabilities()
     assert capabilities["status"] == "ready"
     assert capabilities["provider_version"] == "qf-1.2"
+    assert capabilities["allowed_engines"] == ["duckdb"]
     assert capabilities["translation_policies"] == ["native_only", "best_effort"]
     assert capabilities["capabilities"]["strict_translation"] is False
 

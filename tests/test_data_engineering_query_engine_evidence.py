@@ -67,6 +67,19 @@ def test_query_evidence_reference_store_is_immutable_and_bounded(tmp_path: Path)
         attempt_id="attempt-1",
         artifact=first,
     )
+    assert store.get_evidence_reference(
+        project_id="project-1", run_id="run-1", attempt_id="attempt-1"
+    ) == {
+        "project_id": "project-1",
+        "run_id": "run-1",
+        "attempt_id": "attempt-1",
+        "storage_ref": first.storage_ref,
+        "digest": first.digest,
+    }
+    assert (
+        store.get_evidence_reference(project_id="project-1", run_id="run-1", attempt_id="missing")
+        is None
+    )
     assert store.list_evidence_references() == (
         {
             "project_id": "project-1",

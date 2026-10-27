@@ -65,8 +65,9 @@ class _PipelineWriter:
 
 
 class _QueryFluxTransport:
-    def __init__(self) -> None:
+    def __init__(self, rows: tuple[tuple[object, ...], ...] = ((1,),)) -> None:
         self.submitted = 0
+        self.rows = rows
 
     def submit(self, request: QueryRequest) -> tuple[QueryHandle, str]:
         del request
@@ -77,7 +78,7 @@ class _QueryFluxTransport:
         del next_uri
         return (
             QueryStatus("succeeded", provider_query_id=handle.provider_query_id),
-            QueryResultPage(("value",), ((1,),)),
+            QueryResultPage(("value",), self.rows),
             None,
         )
 
@@ -173,7 +174,7 @@ def test_data_engineering_routes_execute_through_real_control_plane() -> None:
 def test_queryflux_execution_is_bound_to_an_existing_project_in_workspace(tmp_path) -> None:
     plugin = DataEnginerringStudioPlugin()
     workspaces_plugin = WorkspacesPlugin()
-    transport = _QueryFluxTransport()
+    transport = _QueryFluxTransport(((10,), (20,), (30,)))
     provider = QueryEngineRuntimeProvider(
         DiscoveredEngine(
             EngineHandshake(
@@ -222,6 +223,7 @@ def test_queryflux_execution_is_bound_to_an_existing_project_in_workspace(tmp_pa
         "engine": "duckdb",
         "run_id": "run-1",
         "attempt_id": "attempt-1",
+        "page_size": 1,
     }
     try:
         with _server(
@@ -242,13 +244,54 @@ def test_queryflux_execution_is_bound_to_an_existing_project_in_workspace(tmp_pa
                 "/v1/workspaces/workspace-a/projects/project-2/data-engineering/queryflux/execute",
                 request_body,
             )
+            first_page_status, first_page = _request(
+                address,
+                "GET",
+                "/v1/workspaces/workspace-a/projects/project-1/data-engineering/"
+                "queryflux/executions/run-1/attempt-1/results?page_size=1",
+            )
+            second_page_status, second_page = _request(
+                address,
+                "GET",
+                "/v1/workspaces/workspace-a/projects/project-1/data-engineering/"
+                "queryflux/executions/run-1/attempt-1/results?page_size=1&cursor="
+                + success["next_cursor"],
+            )
+            third_page_status, third_page = _request(
+                address,
+                "GET",
+                "/v1/workspaces/workspace-a/projects/project-1/data-engineering/"
+                "queryflux/executions/run-1/attempt-1/results?page_size=1&cursor="
+                + second_page["next_cursor"],
+            )
+            cross_workspace_read_status, cross_workspace_read = _request(
+                address,
+                "GET",
+                "/v1/workspaces/workspace-a/projects/project-2/data-engineering/"
+                "queryflux/executions/run-1/attempt-1/results",
+            )
 
         assert success_status == 200
-        assert success["rows"] == [[1]]
+        assert success["rows"] == [[10]]
+        assert success["row_count"] == 3
+        assert success["next_cursor"]
         assert cross_workspace_status == 404
         assert cross_workspace["error"]["code"] == "project_not_found"
+        assert first_page_status == 200
+        assert first_page["rows"] == [[10]]
+        assert second_page_status == 200
+        assert second_page["rows"] == [[20]]
+        assert third_page_status == 200
+        assert third_page["rows"] == [[30]]
+        assert third_page["next_cursor"] is None
+        assert cross_workspace_read_status == 404
+        assert cross_workspace_read["error"]["code"] == "project_not_found"
         assert transport.submitted == 1
         assert [item.resource_ref for item in authorizer.requirements] == [
+            "project-1",
+            "project-2",
+            "project-1",
+            "project-1",
             "project-1",
             "project-2",
         ]

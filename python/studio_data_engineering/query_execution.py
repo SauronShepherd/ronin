@@ -23,6 +23,7 @@ from studio_storage import ArtifactRef
 from studio_storage.ports import ArtifactReferenceBarrier
 
 from .evidence import EvidenceStore, persist_query_engine_evidence
+from .result_paging import page_query_result
 from .runtimes import QueryEngineRuntimeProvider
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,11 +49,17 @@ class QueryEvidenceReferenceStore(Protocol):
         artifact: ArtifactRef,
     ) -> None: ...
 
+    def get_evidence_reference(
+        self, *, project_id: str, run_id: str, attempt_id: str
+    ) -> dict[str, str] | None: ...
+
 
 @dataclass(frozen=True, slots=True)
 class QueryExecutionResult:
     status: QueryStatus
     page: QueryResultPage | None
+    row_count: int
+    next_cursor: str | None
     evidence_artifact: ArtifactRef
     selected_engine: str
 
@@ -69,6 +76,7 @@ def execute_query(
     attempt_id: str,
     evidence_reference_store: QueryEvidenceReferenceStore | None = None,
     artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
+    page_size: int = 1_000,
     max_polls: int = 100,
     clock: Callable[[], float] = time.monotonic,
 ) -> QueryExecutionResult:
@@ -76,6 +84,12 @@ def execute_query(
 
     if max_polls < 1:
         raise ValueError("max_polls must be positive")
+    if (
+        isinstance(page_size, bool)
+        or not isinstance(page_size, int)
+        or not 1 <= page_size <= 10_000
+    ):
+        raise ValueError("page_size must be between 1 and 10000")
     started = clock()
     selected = provider.authorize(request, engine=engine)
     request_digest = hashlib.sha256(request.canonical_json().encode("utf-8")).hexdigest()
@@ -167,6 +181,9 @@ def execute_query(
         columns = None
         rows = []
 
+    if status.state != "succeeded":
+        columns = None
+        rows.clear()
     result_page = QueryResultPage(columns or (), tuple(rows)) if columns is not None else None
     finished = clock()
 
@@ -200,7 +217,11 @@ def execute_query(
             attempt_id=attempt_id,
             query_evidence=evidence,
             status=status,
-            output={"row_count": len(rows)},
+            output={
+                "row_count": len(rows),
+                "columns": list(columns or ()),
+                "rows": [list(row) for row in rows],
+            },
         )
         if evidence_reference_store is not None:
             evidence_reference_store.record(
@@ -209,7 +230,20 @@ def execute_query(
                 attempt_id=attempt_id,
                 artifact=artifact,
             )
-    return QueryExecutionResult(status, result_page, artifact, selected)
+    next_cursor: str | None = None
+    if result_page is not None:
+        page_payload = page_query_result(
+            columns=list(result_page.columns),
+            rows=[list(row) for row in result_page.rows],
+            digest=artifact.digest,
+            page_size=page_size,
+        )
+        result_page = QueryResultPage(
+            tuple(result_page.columns),
+            tuple(tuple(row) for row in page_payload["rows"]),
+        )
+        next_cursor = page_payload["next_cursor"]
+    return QueryExecutionResult(status, result_page, len(rows), next_cursor, artifact, selected)
 
 
 __all__ = (

@@ -38,6 +38,17 @@ def test_queryflux_execution_route_and_result_budgets_are_documented() -> None:
     assert request["properties"]["max_rows"]["maximum"] == 1000000
     assert "project_id" not in request["properties"]
     sql_request = document["components"]["schemas"]["SqlRequest"]
+    capability_schema = document["components"]["schemas"]["QueryFluxCapabilities"]
+    capability_operation = document["paths"]["/v1/data-engineering/queryflux/capabilities"]["get"]
+    assert capability_operation["responses"]["200"]["content"]["application/json"]["schema"][
+        "$ref"
+    ] == ("#/components/schemas/QueryFluxCapabilities")
+    assert capability_schema["properties"]["allowed_engines"]["type"] == "array"
+    assert capability_schema["properties"]["capabilities"]["additionalProperties"]["type"] == [
+        "boolean",
+        "null",
+    ]
+    assert request["properties"]["profile"]["const"] == "queryflux"
     assert sql_request["properties"]["timeout_ms"] == {
         "type": "integer",
         "minimum": 1,
@@ -45,6 +56,19 @@ def test_queryflux_execution_route_and_result_budgets_are_documented() -> None:
         "default": 5000,
     }
     assert sql_request["properties"]["max_result_bytes"]["maximum"] == 10485760
+    assert sql_request["properties"]["profile"]["enum"] == ["local"]
+    sql_operation = document["paths"]["/v1/sql"]["post"]
+    assert "413" in sql_operation["responses"]
+    sql_result = document["components"]["schemas"]["SqlResult"]
+    assert sql_result["additionalProperties"] is False
+    assert sql_result["properties"]["query_evidence"]["$ref"] == (
+        "#/components/schemas/SqlQueryEvidence"
+    )
+    assert "routing_trace" in document["components"]["schemas"]["SqlQueryEvidence"]["required"]
+    project_sql = document["paths"][
+        "/v1/workspaces/{workspace_id}/projects/{project_id}/sql/query"
+    ]["post"]["requestBody"]["content"]["application/json"]["schema"]
+    assert project_sql["additionalProperties"] is False
 
 
 def test_ml_lab_openapi_schema_matches_v1_contract() -> None:

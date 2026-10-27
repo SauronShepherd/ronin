@@ -120,6 +120,22 @@ cancel a still-running query. The dynamically contributed route is described
 in the static core OpenAPI contract; it remains unavailable when the optional
 provider runtime is not composed.
 
+The execute request accepts `page_size` (`1..10000`, default `1000`). It returns
+the first page, total `row_count`, and an opaque `next_cursor` when rows remain.
+Continue with
+`GET /v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/results`
+and pass `cursor` plus optional `page_size`. Pages read from the immutable,
+content-addressed evidence artifact, so they remain stable after server restart
+and are authorized against the same project. Cursor reuse with another query
+attempt or evidence digest fails closed. Each response is bounded by the shared
+10 MiB result budget; a single row that cannot fit fails with a validation error.
+The Data Engineering Studio QueryFlux profile uses this project-scoped execution
+route, obtains engine choices from `GET /v1/data-engineering/queryflux/capabilities`,
+and loads later pages from the evidence route. Its CSV export operates on loaded
+query rows and refuses to imply completeness while a next page is still available.
+The local SQL route accepts only its documented SQL fields; QueryFlux profile and
+translation options are not silently ignored by that route.
+
 `POST /v1/platform/connectors/discover` accepts optional `page_size` and opaque
 `cursor` fields. Its response always contains `schema`, `items`, `count`,
 `has_more`, and `next_cursor`; `source_version` is present only when supplied by

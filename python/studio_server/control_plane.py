@@ -1416,6 +1416,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         route, parameters = resolved
                         permission = getattr(route, "permission", "")
                         workspace_value = parameters.get("workspace_id")
+                        project_id = parameters.get("project_id")
+                        queryflux_project_read = permission == "data-engineering:read" and getattr(
+                            route, "path", ""
+                        ) == (
+                            "/v1/workspaces/{workspace_id}/projects/{project_id}/"
+                            "data-engineering/queryflux/executions/{run_id}/{attempt_id}/results"
+                        )
                         if workspace_value is None and (
                             permission.startswith("data-engineering:")
                             or permission.startswith("ml-studio:")
@@ -1443,8 +1450,32 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                                     "plugin route permission is not mapped",
                                 )
                                 return
-                            if not self._authorize(actor, workspace_id, mapped_permission):
+                            if queryflux_project_read and project_id is None:
+                                self._error(
+                                    HTTPStatus.FORBIDDEN,
+                                    "plugin_project_scope_required",
+                                    "QueryFlux result reads require a project-scoped route",
+                                )
                                 return
+                            if not self._authorize(
+                                actor,
+                                workspace_id,
+                                mapped_permission,
+                                resource_ref=project_id if queryflux_project_read else None,
+                            ):
+                                return
+                            if queryflux_project_read and project_id is not None:
+                                try:
+                                    self._server().project_service.get(
+                                        workspace_id, ProjectId(project_id)
+                                    )
+                                except WorkspaceServiceNotFound:
+                                    self._error(
+                                        HTTPStatus.NOT_FOUND,
+                                        "project_not_found",
+                                        "project not found in the authorized workspace",
+                                    )
+                                    return
                         elif permission == "synthetic:read":
                             workspace_value = parse_qs(query).get("workspace_id", [None])[0]
                             if workspace_value is None or not self._authorize(

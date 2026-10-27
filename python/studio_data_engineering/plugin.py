@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from typing import Any, Literal, cast
+from urllib.parse import parse_qs
 
 from studio_core.operators import builtin_operator_catalog
 from studio_core.plugins import (
@@ -22,10 +23,15 @@ from .execution import plan_pipeline_execution
 from .ide import IdeCell
 from .previews import preview_pipeline
 from .query_execution import QueryTransport, execute_query
+from .result_paging import page_query_result
 from .revisions import RevisionApplication, RevisionArtifactStore, RevisionRecordStore
 from .runtimes import QueryEngineRuntimeProvider
 from .sdp_adapter import SdpProjectSource
 from .worker import PipelineExecutionError, execute_pipeline_job
+
+
+def _plugin_error(code: str, message: str) -> dict[str, object]:
+    return {"error": {"code": code, "message": message}}
 
 
 class DataEnginerringStudioPlugin:
@@ -138,6 +144,13 @@ class DataEnginerringStudioPlugin:
             context.plugin_id,
             self.queryflux_execute,
             permission="data-engineering:execute",
+        )
+        context.contributions.add_route(
+            "GET",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/results",
+            context.plugin_id,
+            self.queryflux_results,
+            permission="data-engineering:read",
         )
         context.contributions.add_route(
             "POST",
@@ -387,10 +400,12 @@ class DataEnginerringStudioPlugin:
                 "provider": "queryflux",
                 "status": "not_configured",
                 "target": "provider-neutral query engine",
+                "allowed_engines": [],
                 "capabilities": {
                     "routing_trace": True,
                     "bounded_preview": True,
                     "cancellation": True,
+                    "stable_result_paging": True,
                 },
                 "translation_policies": ["native_only", "best_effort"],
             }
@@ -405,7 +420,12 @@ class DataEnginerringStudioPlugin:
             "provider_version": handshake.version,
             "status": "ready" if self._queryflux_runtime.is_healthy() else "degraded",
             "target": "provider-neutral query engine",
-            "capabilities": dict(capability_values),
+            "allowed_engines": list(
+                self._queryflux_runtime.allowed_engines("queryflux")
+                if "queryflux" in self._queryflux_runtime.profiles()
+                else ()
+            ),
+            "capabilities": {**dict(capability_values), "stable_result_paging": True},
             "translation_policies": translation_policies,
         }
 
@@ -437,6 +457,7 @@ class DataEnginerringStudioPlugin:
             "profile",
             "translation_policy",
             "max_rows",
+            "page_size",
             "max_result_bytes",
             "engine",
             "run_id",
@@ -456,6 +477,8 @@ class DataEnginerringStudioPlugin:
             raise ValueError(
                 "queryflux execution identifiers must be trimmed single-line text up to 512 chars"
             )
+        if body.get("profile") != "queryflux":
+            raise ValueError("queryflux execution profile must be queryflux")
         if any(
             not isinstance(value, str)
             or not value
@@ -472,6 +495,9 @@ class DataEnginerringStudioPlugin:
         max_rows = body.get("max_rows", 1_000)
         if isinstance(max_rows, bool) or not isinstance(max_rows, int):
             raise ValueError("max_rows must be an integer")
+        page_size = body.get("page_size", 1_000)
+        if isinstance(page_size, bool) or not isinstance(page_size, int):
+            raise ValueError("page_size must be an integer")
         parameters = body.get("parameters", [])
         if not isinstance(parameters, list):
             raise ValueError("parameters must be an array")
@@ -497,6 +523,7 @@ class DataEnginerringStudioPlugin:
             attempt_id=cast(str, body["attempt_id"]),
             evidence_reference_store=cast(Any, self._queryflux_evidence_reference_store),
             artifact_reference_barrier=cast(Any, self._artifact_reference_barrier),
+            page_size=page_size,
         )
         return {
             "status": result.status.state,
@@ -504,12 +531,105 @@ class DataEnginerringStudioPlugin:
             "selected_engine": result.selected_engine,
             "columns": list(result.page.columns) if result.page is not None else [],
             "rows": [list(row) for row in result.page.rows] if result.page is not None else [],
+            "row_count": result.row_count,
+            "next_cursor": result.next_cursor,
             "evidence": {
                 "role": result.evidence_artifact.role,
                 "digest": result.evidence_artifact.digest,
                 "storage_ref": result.evidence_artifact.storage_ref,
             },
         }
+
+    def queryflux_results(
+        self,
+        *,
+        project_id: str,
+        run_id: str,
+        attempt_id: str,
+        query: str | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        """Read a stable page from the immutable, project-scoped query evidence."""
+
+        self._assert_ready()
+        reference_store = self._queryflux_evidence_reference_store
+        artifact_store = self._queryflux_evidence_store
+        if reference_store is None or artifact_store is None:
+            return _plugin_error(
+                "query_results_not_configured", "durable QueryFlux results are not configured"
+            )
+        get_bytes = getattr(artifact_store, "get_bytes_by_storage_ref", None)
+        get_reference = getattr(reference_store, "get_evidence_reference", None)
+        if not callable(get_bytes) or not callable(get_reference):
+            return _plugin_error(
+                "query_results_not_configured", "durable QueryFlux result reads are unavailable"
+            )
+        params = parse_qs(query or "", keep_blank_values=True)
+        if set(params) - {"cursor", "page_size"}:
+            raise ValueError("QueryFlux result requests accept only cursor and page_size")
+        if any(len(values) != 1 for values in params.values()):
+            raise ValueError("QueryFlux result parameters must not be repeated")
+        raw_cursor = params.get("cursor", [None])[0]
+        cursor = raw_cursor if raw_cursor else None
+        raw_page_size = params.get("page_size", ["1000"])[0]
+        if not raw_page_size.isascii() or not raw_page_size.isdigit():
+            raise ValueError("page_size must be an integer")
+        page_size = int(raw_page_size)
+        reference = get_reference(
+            project_id=project_id,
+            run_id=run_id,
+            attempt_id=attempt_id,
+        )
+        if reference is None:
+            return _plugin_error("query_results_not_found", "QueryFlux results do not exist")
+        digest = reference.get("digest")
+        storage_ref = reference.get("storage_ref")
+        if (
+            not isinstance(digest, str)
+            or len(digest) != 64
+            or any(character not in "0123456789abcdef" for character in digest)
+            or not isinstance(storage_ref, str)
+        ):
+            raise RuntimeError("stored QueryFlux evidence reference is invalid")
+        try:
+            evidence_bytes = get_bytes(storage_ref, digest=digest)
+            evidence = json.loads(evidence_bytes)
+        except (OSError, ValueError, TypeError) as exc:
+            raise RuntimeError("stored QueryFlux evidence is unavailable or invalid") from exc
+        if (
+            not isinstance(evidence, dict)
+            or evidence.get("version") != "data-engineering.query-engine-evidence.v1"
+            or evidence.get("project_id") != project_id
+            or evidence.get("run_id") != run_id
+            or evidence.get("attempt_id") != attempt_id
+        ):
+            raise RuntimeError("stored QueryFlux evidence identity does not match the request")
+        status = evidence.get("status")
+        if not isinstance(status, dict) or status.get("state") != "succeeded":
+            return _plugin_error(
+                "query_results_conflict", "results are available only for successful queries"
+            )
+        output = evidence.get("output")
+        if not isinstance(output, dict):
+            raise RuntimeError("stored QueryFlux result output is invalid")
+        result_rows = output.get("rows")
+        result_row_count = output.get("row_count")
+        if (
+            not isinstance(result_rows, list)
+            or isinstance(result_row_count, bool)
+            or not isinstance(result_row_count, int)
+            or result_row_count != len(result_rows)
+        ):
+            raise RuntimeError("stored QueryFlux result rows are invalid")
+        return dict(
+            page_query_result(
+                columns=output.get("columns"),
+                rows=result_rows,
+                digest=digest,
+                cursor=cursor,
+                page_size=page_size,
+            )
+        )
 
     def health(self, **_kwargs: Any) -> dict[str, object]:
         return {
