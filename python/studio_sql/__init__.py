@@ -12,6 +12,7 @@ from .contracts import (
     SqlTimeoutError,
     SqlValidationError,
     normalize_sql_parameters,
+    sanitize_sql_explain_text,
     validate_read_only_select,
 )
 from .duckdb_engine import (
@@ -38,5 +39,6 @@ __all__ = (
     "SqlTimeoutError",
     "SqlValidationError",
     "normalize_sql_parameters",
+    "sanitize_sql_explain_text",
     "validate_read_only_select",
 )

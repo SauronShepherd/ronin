@@ -21,6 +21,7 @@ from .contracts import (
     SqlResultLimitError,
     SqlTimeoutError,
     SqlValidationError,
+    sanitize_sql_explain_text,
     validate_read_only_select,
 )
 from .wire import sql_wire_value
@@ -413,7 +414,7 @@ class DuckDbSqlEngine:
         total = 0
         for key, value in rows:
             key_text = str(key)
-            value_text = str(value)
+            value_text = sanitize_sql_explain_text(str(value))
             encoded = len((key_text + value_text).encode("utf-8"))
             if total + encoded > max_bytes:
                 raise SqlResultLimitError("SQL explain output exceeds max_bytes")

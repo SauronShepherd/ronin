@@ -257,6 +257,17 @@ def test_sql_engine_explain_rejects_unbounded_output() -> None:
         engine.explain("SELECT 1", max_bytes=1)
 
 
+def test_sql_explain_text_sanitizes_paths_urls_and_secret_assignments() -> None:
+    from studio_sql import sanitize_sql_explain_text
+
+    value = sanitize_sql_explain_text(
+        "file=/var/lib/ronin/data.parquet url=https://example.invalid/x token=abc123"
+    )
+    assert "/var/lib" not in value
+    assert "https://" not in value
+    assert "abc123" not in value
+
+
 def test_project_scoped_sql_engines_isolate_relation_collisions(tmp_path: Path) -> None:
     first = tmp_path / "first.parquet"
     second = tmp_path / "second.parquet"

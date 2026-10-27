@@ -36,6 +36,18 @@ _READ_ONLY_SELECT = re.compile(r"^SELECT\b", re.IGNORECASE)
 _MAX_SQL_PARAMETER_COUNT = 1_000
 _MAX_SQL_PARAMETER_TEXT_LENGTH = 524_288
 _SQL_PARAMETER_TYPES = frozenset({"null", "boolean", "integer", "float", "string"})
+_EXPLAIN_PATH = re.compile(r"(?:[A-Za-z]:\\|/)[^\s,;)]*")
+_EXPLAIN_URL = re.compile(r"\b(?:https?|s3|gs)://[^\s,;)]*", re.IGNORECASE)
+_EXPLAIN_SECRET = re.compile(r"(?i)\b(?:password|passwd|secret|token|api[_-]?key)\s*=\s*[^\s,;)]*")
+
+
+def sanitize_sql_explain_text(value: str) -> str:
+    """Remove paths, URLs, and inline secret assignments from plan text."""
+    if not isinstance(value, str):
+        raise ValueError("SQL explain text must be text")
+    sanitized = _EXPLAIN_URL.sub("<external>", value)
+    sanitized = _EXPLAIN_PATH.sub("<path>", sanitized)
+    return _EXPLAIN_SECRET.sub(lambda match: match.group(0).split("=")[0] + "=<redacted>", sanitized)
 
 
 def normalize_sql_parameters(value: object) -> tuple[object, ...]:
@@ -201,5 +213,6 @@ __all__ = (
     "SqlTimeoutError",
     "SqlValidationError",
     "normalize_sql_parameters",
+    "sanitize_sql_explain_text",
     "validate_read_only_select",
 )
