@@ -534,7 +534,7 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
 @pytest.fixture(scope="module")
 def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     if not _docker_qualification_ready():
-        pytest.skip("live worker acceptance requires the dedicated real-Docker qualification job")
+        pytest.skip("live worker acceptance is opt-in; run tools/run_docker_qualification.ps1 locally")
 
     tmp_path = tmp_path_factory.mktemp("v01-worker-restart")
     data_dir = tmp_path / "process-crash"
@@ -609,7 +609,7 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
 def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     if not _docker_qualification_ready():
         pytest.skip(
-            "live cancellation acceptance requires the dedicated real-Docker qualification job"
+            "live cancellation acceptance is opt-in; run tools/run_docker_qualification.ps1 locally"
         )
 
     tmp_path = tmp_path_factory.mktemp("v01-worker-cancel")
