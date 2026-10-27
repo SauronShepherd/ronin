@@ -69,6 +69,29 @@ class SqliteQueryEvidenceReferenceStore:
         finally:
             connection.close()
 
+    def get_evidence_reference(
+        self, *, project_id: str, run_id: str, attempt_id: str
+    ) -> dict[str, str] | None:
+        _validate_identity(project_id, run_id, attempt_id)
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT storage_ref,digest FROM de_query_evidence_refs "
+                "WHERE project_id=? AND run_id=? AND attempt_id=?",
+                (project_id, run_id, attempt_id),
+            ).fetchone()
+        finally:
+            connection.close()
+        if row is None:
+            return None
+        return {
+            "project_id": project_id,
+            "run_id": run_id,
+            "attempt_id": attempt_id,
+            "storage_ref": str(row["storage_ref"]),
+            "digest": str(row["digest"]),
+        }
+
     def list_evidence_references(
         self, *, max_references: int = 10_000
     ) -> tuple[dict[str, object], ...]:
@@ -151,6 +174,32 @@ class PostgresQueryEvidenceReferenceStore:
             raise
         finally:
             connection.close()
+
+    def get_evidence_reference(
+        self, *, project_id: str, run_id: str, attempt_id: str
+    ) -> dict[str, str] | None:
+        _validate_identity(project_id, run_id, attempt_id)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT storage_ref,digest FROM ronin_de_query_evidence_refs "
+                    "WHERE project_id=%s AND run_id=%s AND attempt_id=%s",
+                    (project_id, run_id, attempt_id),
+                )
+                row = cursor.fetchone()
+            connection.commit()
+        finally:
+            connection.close()
+        if row is None:
+            return None
+        return {
+            "project_id": project_id,
+            "run_id": run_id,
+            "attempt_id": attempt_id,
+            "storage_ref": str(row[0]),
+            "digest": str(row[1]),
+        }
 
     def list_evidence_references(
         self, *, max_references: int = 10_000

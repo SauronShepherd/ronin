@@ -40,6 +40,29 @@
         }
       }
     },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/results": {
+      "get": {
+        "operationId": "getQueryFluxResultPage",
+        "description": "Read a stable page from the immutable result artifact of a successful QueryFlux execution. The request is project-scoped and requires data-engineering:read.",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "run_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "attempt_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "page_size", "in": "query", "required": false, "schema": {"type": "integer", "minimum": 1, "maximum": 10000, "default": 1000}},
+          {"name": "cursor", "in": "query", "required": false, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}
+        ],
+        "responses": {
+          "200": {"description": "Stable result page", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QueryFluxResultPage"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
+          "404": {"$ref": "#/components/responses/Error"},
+          "409": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
     "/v1/platform/plugins": {
       "get": {
         "operationId": "listPlugins",
@@ -1311,6 +1334,7 @@
           "profile": {"type": "string", "minLength": 1, "maxLength": 512},
           "translation_policy": {"type": "string", "enum": ["native_only", "best_effort", "strict"], "default": "native_only"},
           "max_rows": {"type": "integer", "minimum": 1, "maximum": 1000000, "default": 1000},
+          "page_size": {"type": "integer", "minimum": 1, "maximum": 10000, "default": 1000},
           "max_result_bytes": {"type": "integer", "minimum": 1, "maximum": 10485760, "default": 1048576},
           "engine": {"type": "string", "minLength": 1, "maxLength": 512},
           "run_id": {"type": "string", "minLength": 1, "maxLength": 512},
@@ -1319,14 +1343,26 @@
       },
       "QueryFluxExecutionResult": {
         "type": "object", "additionalProperties": false,
-        "required": ["status", "message", "selected_engine", "columns", "rows", "evidence"],
+        "required": ["status", "message", "selected_engine", "columns", "rows", "row_count", "next_cursor", "evidence"],
         "properties": {
           "status": {"type": "string", "enum": ["queued", "running", "succeeded", "failed", "cancelled"]},
           "message": {"type": ["string", "null"], "maxLength": 4000},
           "selected_engine": {"type": "string", "minLength": 1, "maxLength": 512},
           "columns": {"type": "array", "items": {"type": "string"}},
           "rows": {"type": "array", "items": {"type": "array", "items": {}}},
+          "row_count": {"type": "integer", "minimum": 0},
+          "next_cursor": {"type": ["string", "null"], "maxLength": 256},
           "evidence": {"type": "object", "additionalProperties": false, "required": ["role", "digest", "storage_ref"], "properties": {"role": {"type": "string"}, "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "storage_ref": {"type": "string"}}}
+        }
+      },
+      "QueryFluxResultPage": {
+        "type": "object", "additionalProperties": false,
+        "required": ["columns", "rows", "row_count", "next_cursor"],
+        "properties": {
+          "columns": {"type": "array", "items": {"type": "string"}},
+          "rows": {"type": "array", "items": {"type": "array", "items": {}}},
+          "row_count": {"type": "integer", "minimum": 0},
+          "next_cursor": {"type": ["string", "null"], "maxLength": 256}
         }
       },
       "SqlRequest": {

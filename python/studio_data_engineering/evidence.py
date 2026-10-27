@@ -33,9 +33,13 @@ def persist_pipeline_evidence(
         "output": dict(output),
         "evidence": dict(evidence),
     }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
-        "utf-8"
-    )
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
     return store.put_bytes(
         role=f"data-engineering/{project_id}/{run_id}/preview-evidence.json",
         data=encoded,
@@ -71,9 +75,13 @@ def persist_query_engine_evidence(
         "query_evidence": query_evidence.to_payload(),
         "output": dict(output or {}),
     }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
-        "utf-8"
-    )
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
     return store.put_bytes(
         role=f"data-engineering/{project_id}/{run_id}/{attempt_id}/query-evidence.json",
         data=encoded,

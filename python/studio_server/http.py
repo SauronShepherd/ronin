@@ -116,6 +116,10 @@ SUPPORTED_ROUTES = (
                 "POST",
                 "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute",
             ),
+            (
+                "GET",
+                "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/results",
+            ),
         }
     )
     | MIGRATION_ROUTES
