@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
@@ -15,7 +17,7 @@ from studio_sql import (
 
 class FakeSqlEngine:
     def __init__(self) -> None:
-        self.calls: list[tuple[str, tuple[object, ...], int]] = []
+        self.calls: list[tuple[str, tuple[object, ...], int, int]] = []
 
     def register_parquet(self, name: str, path: str) -> None:
         del name, path
@@ -26,8 +28,9 @@ class FakeSqlEngine:
         parameters: tuple[object, ...] = (),
         *,
         max_rows: int = 10_000,
+        max_result_bytes: int = 1_048_576,
     ) -> SqlQueryResult:
-        self.calls.append((sql, parameters, max_rows))
+        self.calls.append((sql, parameters, max_rows, max_result_bytes))
         if sql == "SELECT bad":
             raise SqlValidationError("invalid column")
         return SqlQueryResult((SqlColumn("value", "INTEGER"),), ((1,), (2,)))
@@ -39,7 +42,9 @@ class FakeSqlEngine:
 def test_local_transport_executes_shared_contract() -> None:
     engine = FakeSqlEngine()
     transport = LocalSqlTransport(engine)
-    request = QueryRequest("SELECT value", "local", max_rows=7, parameters=("bound",))
+    request = QueryRequest(
+        "SELECT value", "local", max_rows=7, parameters=("bound",), max_result_bytes=128
+    )
 
     handle, next_uri = transport.submit(request)
     status, page, following = transport.poll(handle, next_uri)
@@ -49,7 +54,7 @@ def test_local_transport_executes_shared_contract() -> None:
     assert page.columns == ("value",)
     assert page.rows == ((1,), (2,))
     assert following is None
-    assert engine.calls == [("SELECT value", ("bound",), 7)]
+    assert engine.calls == [("SELECT value", ("bound",), 7, 128)]
 
 
 def test_local_transport_binds_typed_scalar_in_duckdb() -> None:
@@ -67,6 +72,38 @@ def test_local_transport_binds_typed_scalar_in_duckdb() -> None:
     assert status.state == "succeeded"
     assert page is not None
     assert page.rows == ((None, True, 42, "bound value"),)
+    assert following is None
+
+
+def test_local_transport_enforces_result_byte_budget_in_duckdb() -> None:
+    with DuckDbSqlEngine() as engine:
+        transport = LocalSqlTransport(engine)
+        handle, next_uri = transport.submit(
+            QueryRequest("SELECT 'value'", "local", max_result_bytes=1)
+        )
+        status, page, following = transport.poll(handle, next_uri)
+
+    assert status.state == "failed"
+    assert "max_result_bytes" in (status.message or "")
+    assert page is None
+    assert following is None
+
+
+def test_local_transport_accepts_exact_serialized_result_byte_budget() -> None:
+    result_payload = {"columns": ["1"], "rows": [[1]], "row_count": 1}
+    exact_limit = len(
+        json.dumps(result_payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    )
+    with DuckDbSqlEngine() as engine:
+        transport = LocalSqlTransport(engine)
+        handle, next_uri = transport.submit(
+            QueryRequest("SELECT 1", "local", max_result_bytes=exact_limit)
+        )
+        status, page, following = transport.poll(handle, next_uri)
+
+    assert status.state == "succeeded"
+    assert page is not None
+    assert page.rows == ((1,),)
     assert following is None
 
 

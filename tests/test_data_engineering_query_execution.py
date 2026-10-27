@@ -59,6 +59,23 @@ class _MismatchedTransport(_Transport):
         return QueryHandle("ronin-q-1", "other-provider", "other-q-1"), "next-1"
 
 
+class _OversizedRunningTransport(_Transport):
+    def __init__(self) -> None:
+        super().__init__([QueryStatus("running")])
+        self.cancelled = False
+
+    def poll(self, _handle, _next_uri):
+        return (
+            QueryStatus("running"),
+            QueryResultPage(("value",), (("x" * 256,),)),
+            "next-2",
+        )
+
+    def cancel(self, _handle):
+        self.cancelled = True
+        return type("Cancellation", (), {"cancelled": True})()
+
+
 def _provider() -> QueryEngineRuntimeProvider:
     return QueryEngineRuntimeProvider(
         DiscoveredEngine(
@@ -152,6 +169,67 @@ def test_execute_query_accumulates_bounded_pages(tmp_path: Path) -> None:
 
     assert result.page is not None
     assert result.page.rows == ((1,), (2,))
+
+
+def test_execute_query_fails_instead_of_silently_truncating_rows(tmp_path: Path) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    result = execute_query(
+        _provider(),
+        _PagedTransport(),
+        store,
+        QueryRequest("SELECT id", "local", max_rows=1),
+        engine="duckdb",
+        project_id="project-1",
+        run_id="run-1",
+        attempt_id="attempt-1",
+    )
+
+    assert result.status.state == "failed"
+    assert result.status.message == "query result exceeds the configured row limit"
+    assert result.page is None
+
+
+def test_execute_query_cancels_when_result_byte_budget_is_exceeded(tmp_path: Path) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    transport = _OversizedRunningTransport()
+    result = execute_query(
+        _provider(),
+        transport,
+        store,
+        QueryRequest("SELECT value", "local", max_result_bytes=64),
+        engine="duckdb",
+        project_id="project-1",
+        run_id="run-1",
+        attempt_id="attempt-1",
+    )
+
+    assert transport.cancelled
+    assert result.status.state == "failed"
+    assert result.status.message == "query result exceeds the configured byte limit"
+    assert result.page is None
+
+
+def test_execute_query_accepts_result_at_exact_serialized_byte_budget(tmp_path: Path) -> None:
+    serialized_result = json.dumps(
+        {"columns": ["id"], "rows": [[1]], "row_count": 1},
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    result = execute_query(
+        _provider(),
+        _Transport([QueryStatus("succeeded")]),
+        store,
+        QueryRequest("SELECT 1", "local", max_result_bytes=len(serialized_result)),
+        engine="duckdb",
+        project_id="project-1",
+        run_id="run-1",
+        attempt_id="attempt-1",
+    )
+
+    assert result.status.state == "succeeded"
+    assert result.page is not None
+    assert result.page.rows == ((1,),)
 
 
 def test_execute_query_persists_monotonic_lifecycle_timings(tmp_path: Path) -> None:

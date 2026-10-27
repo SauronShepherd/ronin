@@ -103,15 +103,20 @@ strings. Non-finite numeric results are rejected, and raw engine diagnostics are
 never returned to clients.
 
 The plugin route `POST /v1/data-engineering/queryflux/execute` accepts an
-optional `parameters` array using the same tagged scalar forms and limits. Its
-shared `QueryRequest` accepts only the common read-only `SELECT` grammar and
-includes typed bindings in its canonical request digest; the durable evidence
-artifact stores that digest, not the bound values. The selected engine must
-explicitly advertise `parameter_binding: true` or authorization fails before
-submission. The Trino transport uses `EXECUTE IMMEDIATE ... USING`; string
-values are UTF-8/base64 encoded before they are placed in SQL expressions. This
-plugin route is dynamically contributed and is not currently described by the
-static core OpenAPI document, so route-schema parity remains open.
+optional `parameters` array using the same tagged scalar forms and limits,
+`max_rows` (`1..1000000`, default `1000`), and `max_result_bytes`
+(`1..10485760`, default `1048576`). Its shared `QueryRequest` accepts only the
+common read-only `SELECT` grammar and includes typed bindings and both output
+budgets in its canonical request digest; the durable evidence artifact stores
+that digest, not the bound values. The selected engine must explicitly
+advertise `parameter_binding: true` or authorization fails before submission.
+The Trino transport uses `EXECUTE IMMEDIATE ... USING`; string values are
+UTF-8/base64 encoded before they are placed in SQL expressions. The execution
+orchestrator rejects excess rows or a serialized `{columns, rows, row_count}`
+result over `max_result_bytes`, returns no partial result, and attempts to
+cancel a still-running query. The dynamically contributed route is described
+in the static core OpenAPI contract; it remains unavailable when the optional
+provider runtime is not composed.
 
 `POST /v1/platform/connectors/discover` accepts optional `page_size` and opaque
 `cursor` fields. Its response always contains `schema`, `items`, `count`,

@@ -66,6 +66,7 @@ class LocalSqlTransport:
                 pending.request.sql,
                 pending.request.parameters,
                 max_rows=pending.request.max_rows,
+                max_result_bytes=pending.request.max_result_bytes,
             )
         except Exception as exc:
             return (

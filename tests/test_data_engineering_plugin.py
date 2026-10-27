@@ -127,6 +127,12 @@ def test_configured_queryflux_capabilities_are_handshake_bound(tmp_path) -> None
             },
         )
     )
+    execute_route = next(
+        route
+        for route in registry.routes
+        if route.method == "POST" and route.path == "/v1/data-engineering/queryflux/execute"
+    )
+    assert execute_route.permission == "data-engineering:execute"
     plugin.startup()
     capabilities = plugin.queryflux_capabilities()
     assert capabilities["status"] == "ready"
@@ -209,12 +215,14 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
             "run_id": "run-1",
             "attempt_id": "attempt-1",
             "parameters": [{"type": "integer", "value": 7}],
+            "max_result_bytes": 2048,
         }
     )
     assert result["status"] == "succeeded"
     assert result["rows"] == [[1]]
     assert result["evidence"]["digest"]
     assert transport.submitted_request.parameters == (7,)
+    assert transport.submitted_request.max_result_bytes == 2048
     records = references.list_evidence_references()
     assert len(records) == 1
     assert records[0]["storage_ref"] == result["evidence"]["storage_ref"]
