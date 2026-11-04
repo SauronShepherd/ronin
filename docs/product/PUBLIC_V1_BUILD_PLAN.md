@@ -616,3 +616,32 @@ artefacto final, aprobación de NOTICE/licencias, decisión de producto/versión
 las journeys/provider qualifications de las familias. Public v1 sigue
 **INCOMPLETE, 0/13 (0%, NO-GO)**; implementación global no calculable; revisión
 integral limpia **0/10**. No se añadió CI, GenAI integrado ni multiusuario.
+
+## 59. Cualificación reproducible de artefactos Ronin (2026-11-04)
+
+Sobre el SHA limpio y sincronizado `a2180a470a813d24dc1082fffc5dfa09858133a2`
+se compilaron dos veces el wheel y el sdist con Python 3.13.15, `build 1.6.0`,
+`setuptools 84.2.1` y `SOURCE_DATE_EPOCH` fijado al timestamp del commit. Los
+artefactos normalizados fueron reproducibles: wheel
+`sha256:df904217683ed2f89588da77fe5aaff982290ecd33c80b893c3c71d7e7148140` y
+sdist `sha256:f235a34941b3da83ba9e12ba358237b5f3f121cc0372483eaca14dc588661f96`.
+
+Ambos artefactos se instalaron en entornos aislados que usaron
+`requirements-dev.lock` con hashes. `pip check`, import desde `site-packages`,
+el entry point instalado `ronin --help`, `ronin doctor --require core`, y
+`ronin skills list/validate/package` pasaron para wheel y sdist. Los tres
+bundles de skills fueron válidos; los ZIP producidos desde ambos formatos
+coinciden por SHA256 (`ronin-core` `23c6a771…a12a97`, `ronin-data-engineering`
+`ce370e09…a8db456`, `ronin-machine-learning` `a75485eb…b9cbd3`). Recibo completo
+con logs e informes: `%TEMP%\ronin-main-installed-a2180a4-20261104\ronin-main-artifact-qualification-receipt.json`;
+los artefactos están bajo `%TEMP%\ronin-main-artifacts-a2180a4-20261104`.
+
+El smoke Playwright extraído del artefacto no pudo iniciar su driver: Windows
+devolvió `WinError 5` antes de abrir Chromium. Se registra como **no ejecutado**,
+no como fallo de Ronin ni como PASS. Los tests live y UI previos pertenecen al
+SHA `b972556`, por lo que no sustituyen un browser gate exact-candidate. Esta
+cualificación también es diagnóstica, no candidate-bound: el paquete sigue en
+`0.0.0`, no existe versión/claims aprobados ni candidato congelado, y siguen
+abiertos los journeys y revisiones manuales de las familias. Public v1 continúa
+**INCOMPLETE, 0/13 (0%, NO-GO)**; no se añadió CI, GenAI integrado ni
+multiusuario.
