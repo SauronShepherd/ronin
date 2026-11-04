@@ -258,6 +258,7 @@ def test_real_docker_worker_executes_clean_container_demo(tmp_path: Path) -> Non
             "uri": "https://github.com/SauronShepherd/ronin",
             "default_ref": "main",
             "subdirectory": "examples/demo",
+            "sync_policy": "manual",
         }
 
         outputs = _log_outputs(config.execution_evidence_root)
@@ -361,6 +362,7 @@ def test_real_docker_worker_executes_demo_against_postgres(tmp_path: Path) -> No
             "uri": "https://github.com/SauronShepherd/ronin",
             "default_ref": "main",
             "subdirectory": "examples/demo",
+            "sync_policy": "manual",
         }
 
         outputs = _log_outputs(config.execution_evidence_root)

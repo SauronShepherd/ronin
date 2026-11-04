@@ -173,6 +173,74 @@ class GitSourceAdapter:
             shutil.rmtree(target, ignore_errors=True)
             raise
 
+    def clone_fast_forward(
+        self,
+        source_project_dir: Path,
+        repository: SourceRepository,
+        destination: Path,
+        *,
+        subdirectory: str = "",
+    ) -> GitCheckoutResult:
+        """Clone a clean local branch and fast-forward only the isolated clone."""
+
+        source_root_text = self._run(source_project_dir, "rev-parse", "--show-toplevel")
+        source_root = Path(source_root_text).resolve()
+        if safe_checkout_path(source_root, subdirectory) != source_project_dir.resolve():
+            raise GitSourceError("project path does not match the declared repository subdirectory")
+        if self.is_dirty(source_root):
+            raise GitSourceError("refusing fast-forward from a dirty source checkout")
+        branch_status, branch = self._run_result(
+            source_root,
+            "symbolic-ref",
+            "--quiet",
+            "--short",
+            "HEAD",
+            allowed_returncodes=(0, 1),
+        )
+        if branch_status == 1 or not branch:
+            raise GitSourceError("refusing fast-forward from a detached source HEAD")
+        self._run(source_root, "check-ref-format", "--branch", branch)
+        local_commit = self._resolve_commit(source_root, "HEAD")
+
+        target = destination.resolve()
+        safe_checkout_path(target, subdirectory)
+        if target.exists():
+            raise GitSourceError("checkout destination already exists")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            target.mkdir()
+        except FileExistsError as exc:
+            raise GitSourceError("checkout destination already exists") from exc
+        executable = shutil.which("git")
+        if executable is None:
+            shutil.rmtree(target, ignore_errors=True)
+            raise GitSourceError("Git executable is unavailable")
+        try:
+            self._invoke(
+                (
+                    executable,
+                    "-c",
+                    "credential.helper=",
+                    "-c",
+                    f"core.hooksPath={os.devnull}",
+                    "clone",
+                    "--no-hardlinks",
+                    "--no-checkout",
+                    "--no-tags",
+                    "--",
+                    str(source_root),
+                    str(target),
+                )
+            )
+            self._run(target, "checkout", branch)
+            if self._resolve_commit(target, "HEAD") != local_commit:
+                raise GitSourceError("isolated checkout did not preserve the local source commit")
+            self._run(target, "remote", "set-url", "origin", repository.uri)
+            return self.fast_forward(target, repository, subdirectory=subdirectory)
+        except Exception:
+            shutil.rmtree(target, ignore_errors=True)
+            raise
+
     def is_dirty(self, worktree: Path) -> bool:
         return bool(self._run(worktree, "status", "--porcelain", "--untracked-files=all"))
 

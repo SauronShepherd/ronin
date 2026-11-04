@@ -155,6 +155,7 @@ def _load_project_content(
             source_uri=repository.uri,
             source_default_ref=repository.default_ref,
             source_subdirectory=repository.subdirectory,
+            source_sync_policy=repository.sync_policy,
         ),
         project_dir=project_dir,
         execution_mode=execution_mode,
@@ -181,25 +182,44 @@ def load_project(
             job,
             local_manifest,
         )
-    if repository.sync_policy == "fast-forward":
-        raise WorkerPreparationError(
-            "fast-forward source policy requires a managed worker checkout"
-        )
     if repository.auth_ref is not None:
         raise WorkerPreparationError(
             "authenticated Git source is unavailable in the portable project manifest"
         )
+    if repository.sync_policy not in {"fetch", "fast-forward"}:
+        raise WorkerPreparationError("project Git sync policy is unsupported")
 
     adapter = git_source or GitSourceAdapter()
+    if repository.sync_policy == "fast-forward":
+        try:
+            capture_source_revision(
+                repository.uri,
+                local_project_dir,
+                subdirectory=repository.subdirectory,
+                allow_dirty=False,
+            )
+        except SourcePolicyError as exc:
+            raise WorkerPreparationError(
+                f"project Git source is not eligible for fast-forward: {exc}"
+            ) from exc
     paths.data_dir.mkdir(parents=True, exist_ok=True)
     try:
         with tempfile.TemporaryDirectory(prefix="ronin-source-", dir=paths.data_dir) as temporary:
             checkout_root = Path(temporary) / "checkout"
-            result = adapter.clone_checkout(
-                SourceRepository(repository.uri, repository.default_ref),
-                checkout_root,
-                subdirectory=repository.subdirectory or "",
-            )
+            source_repository = SourceRepository(repository.uri, repository.default_ref)
+            if repository.sync_policy == "fetch":
+                result = adapter.clone_checkout(
+                    source_repository,
+                    checkout_root,
+                    subdirectory=repository.subdirectory or "",
+                )
+            else:
+                result = adapter.clone_fast_forward(
+                    local_project_dir,
+                    source_repository,
+                    checkout_root,
+                    subdirectory=repository.subdirectory or "",
+                )
             remote_project_dir = result.worktree
             remote_manifest = ProjectManifest.from_json(
                 _read_text(remote_project_dir / ".ronin" / "project.json", "project manifest")
@@ -330,6 +350,7 @@ def _repository_digest(revision: RepositoryRevision) -> str:
                     "uri": revision.source_uri,
                     "default_ref": revision.source_default_ref,
                     "subdirectory": revision.source_subdirectory,
+                    "sync_policy": revision.source_sync_policy,
                 }
                 if revision.source_uri is not None
                 else None

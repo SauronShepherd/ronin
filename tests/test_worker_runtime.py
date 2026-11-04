@@ -293,6 +293,7 @@ def test_run_once_executes_claim_through_sqlite_and_container_boundary(
             "uri": "https://github.com/SauronShepherd/ronin",
             "default_ref": "main",
             "subdirectory": "examples/demo",
+            "sync_policy": "manual",
         }
 
     asyncio.run(scenario())

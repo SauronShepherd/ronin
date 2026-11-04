@@ -93,11 +93,13 @@ def test_repository_revision_validates_clean_and_dirty_git_identity() -> None:
         source_uri="https://example.test/team/project.git",
         source_default_ref="main",
         source_subdirectory="apps/demo",
+        source_sync_policy="manual",
     )
     assert clean.dirty_patch_sha256 is None
     assert dirty.dirty_patch_sha256 == "c" * 64
     assert bound.source_uri == "https://example.test/team/project.git"
     assert bound.source_subdirectory == "apps/demo"
+    assert bound.source_sync_policy == "manual"
 
     for commit in ("a" * 39, "A" * 40, "z" * 40):
         with pytest.raises(ValueError, match="repository commit"):
@@ -127,6 +129,8 @@ def test_repository_revision_validates_clean_and_dirty_git_identity() -> None:
             source_default_ref="main",
             source_subdirectory="../outside",
         )
+    with pytest.raises(ValueError, match="requires a source binding"):
+        RepositoryRevision("a" * 40, source_sync_policy="fetch")
 
 
 def test_directives_are_canonical_and_fail_closed_on_invalid_metadata() -> None:

@@ -222,6 +222,62 @@ def test_git_clone_checkout_cleans_partial_destination_on_failure(tmp_path: Path
     assert not destination.exists()
 
 
+def test_git_clone_fast_forward_updates_isolated_branch_and_preserves_source(
+    tmp_path: Path,
+) -> None:
+    source = _repository(tmp_path / "source")
+    _git(source, "branch", "-M", "main")
+    first = _git(source, "rev-parse", "HEAD")
+    remote = tmp_path / "remote.git"
+    remote.mkdir()
+    _git(remote, "init", "--bare", "-q")
+    _git(source, "remote", "add", "origin", str(remote))
+    _git(source, "push", "-q", "origin", "main")
+    (source / "src" / "version.txt").write_text("remote second\n", encoding="utf-8")
+    _git(source, "add", "src/version.txt")
+    _git(source, "commit", "-qm", "remote second")
+    second = _git(source, "rev-parse", "HEAD")
+    _git(source, "push", "-q", "origin", "main")
+    _git(source, "reset", "--hard", first)
+    destination = tmp_path / "managed-checkout"
+
+    result = GitSourceAdapter().clone_fast_forward(
+        source / "src",
+        SourceRepository(remote.as_uri(), "refs/heads/main"),
+        destination,
+        subdirectory="src",
+    )
+
+    assert result.commit == second
+    assert (result.worktree / "version.txt").read_text(encoding="utf-8") == "remote second\n"
+    assert _git(destination, "rev-parse", "--abbrev-ref", "HEAD") == "main"
+    assert _git(source, "rev-parse", "HEAD") == first
+
+
+def test_git_clone_fast_forward_rejects_dirty_and_detached_source(tmp_path: Path) -> None:
+    source = _repository(tmp_path / "source")
+    destination = tmp_path / "checkout"
+    (source / "src" / "version.txt").write_text("dirty\n", encoding="utf-8")
+    with pytest.raises(GitSourceError, match="dirty"):
+        GitSourceAdapter().clone_fast_forward(
+            source,
+            SourceRepository("file:///remote.git", "main"),
+            destination,
+        )
+    assert not destination.exists()
+
+    (source / "src" / "version.txt").write_text("first\n", encoding="utf-8")
+    _git(source, "checkout", "--", ".")
+    _git(source, "checkout", "--detach", "HEAD")
+    with pytest.raises(GitSourceError, match="detached"):
+        GitSourceAdapter().clone_fast_forward(
+            source,
+            SourceRepository("file:///remote.git", "main"),
+            destination,
+        )
+    assert not destination.exists()
+
+
 def test_git_fast_forward_is_noop_when_already_at_source(tmp_path: Path) -> None:
     root = _repository(tmp_path / "repo")
     _git(root, "branch", "-M", "main")

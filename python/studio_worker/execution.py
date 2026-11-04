@@ -470,6 +470,7 @@ class DurableWorkerExecution:
                                     "uri": request.repository.source_uri,
                                     "default_ref": request.repository.source_default_ref,
                                     "subdirectory": request.repository.source_subdirectory,
+                                    "sync_policy": request.repository.source_sync_policy,
                                 }
                                 if request.repository.source_uri is not None
                                 else None

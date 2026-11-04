@@ -38,6 +38,7 @@ class RepositoryRevision:
     source_uri: str | None = None
     source_default_ref: str | None = None
     source_subdirectory: str | None = None
+    source_sync_policy: Literal["manual", "fetch", "fast-forward"] | None = None
 
     def __post_init__(self) -> None:
         if len(self.commit) not in {40, 64} or any(
@@ -94,6 +95,11 @@ class RepositoryRevision:
             normalized = self.source_subdirectory.replace("\\", "/")
             if normalized.startswith("/") or ".." in normalized.split("/"):
                 raise ValueError("source subdirectory must stay inside its repository")
+        if self.source_sync_policy is not None:
+            if self.source_uri is None:
+                raise ValueError("source sync policy requires a source binding")
+            if self.source_sync_policy not in {"manual", "fetch", "fast-forward"}:
+                raise ValueError("source sync policy is unsupported")
 
 
 @dataclass(frozen=True, order=True, slots=True)

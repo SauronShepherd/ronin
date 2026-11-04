@@ -98,6 +98,7 @@ def test_load_project_uses_real_fixture_and_captured_dirty_revision(
         source_uri="https://github.com/SauronShepherd/ronin",
         source_default_ref="main",
         source_subdirectory="examples/demo",
+        source_sync_policy="manual",
     )
     assert loaded.project_dir == (Path.cwd() / "examples" / "demo").resolve()
 
@@ -114,7 +115,15 @@ def test_load_project_fails_closed_when_declared_source_cannot_be_verified(
         load_project(WorkerPaths(Path.cwd(), Path(".ronin-data")), _job())
 
 
-def test_fetch_policy_loads_and_records_exact_remote_notebook_snapshot(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("sync_policy", "local_dirty"),
+    [("fetch", False), ("fast-forward", False), ("fast-forward", True)],
+)
+def test_remote_sync_policy_loads_exact_notebook_snapshot(
+    tmp_path: Path,
+    sync_policy: str,
+    local_dirty: bool,
+) -> None:
     fixture = Path(__file__).parents[1] / "examples" / "demo"
     remote = tmp_path / "remote.git"
     remote.mkdir()
@@ -131,7 +140,7 @@ def test_fetch_policy_loads_and_records_exact_remote_notebook_snapshot(tmp_path:
     repository["uri"] = remote.as_uri()
     repository["default_ref"] = "refs/heads/main"
     repository["subdirectory"] = "examples/demo"
-    repository["sync_policy"] = "fetch"
+    repository["sync_policy"] = sync_policy
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     _git(author, "add", ".")
     _git(author, "commit", "-qm", "initial remote project")
@@ -152,6 +161,21 @@ def test_fetch_policy_loads_and_records_exact_remote_notebook_snapshot(tmp_path:
 
     data_dir = tmp_path / "worker-data"
     local_project_dir = workspace / "examples" / "demo"
+    local_commit = _git(workspace, "rev-parse", "HEAD")
+    if local_dirty:
+        local_notebook = local_project_dir / "notebooks" / "etl.ronin.json"
+        local_notebook.write_text(
+            local_notebook.read_text(encoding="utf-8") + "\nLocal dirty change.\n",
+            encoding="utf-8",
+        )
+
+    if local_dirty:
+        with pytest.raises(WorkerPreparationError, match="not eligible for fast-forward"):
+            load_project(WorkerPaths(workspace, data_dir), _job())
+        assert _git(workspace, "rev-parse", "HEAD") == local_commit
+        assert not tuple(data_dir.glob("ronin-source-*"))
+        return
+
     loaded = load_project(WorkerPaths(workspace, data_dir), _job())
     runtime = resolve_runtime_snapshot(loaded.manifest, RuntimeCatalog((LOCAL_DOCKER_PROFILE,)))
     request = build_request(loaded, runtime, AttemptId("attempt-fetch-source"))
@@ -161,6 +185,7 @@ def test_fetch_policy_loads_and_records_exact_remote_notebook_snapshot(tmp_path:
     assert "Remote fetch snapshot." in request.cells[0].authored_source
     assert loaded.project_dir == local_project_dir.resolve()
     assert not tuple(data_dir.glob("ronin-source-*"))
+    assert _git(workspace, "rev-parse", "HEAD") == local_commit
 
 
 def test_inline_cell_execution_selects_only_requested_cell(
