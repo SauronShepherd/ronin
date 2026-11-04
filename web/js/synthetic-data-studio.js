@@ -42,6 +42,25 @@ async function renderSyntheticDataStudio() {
   const assetsTarget = view.querySelector('#synthetic-studio-assets');
   const runsTarget = view.querySelector('#synthetic-studio-runs');
   const isCurrent = () => revision === renderRevision && location.hash === '#synthetic' && view === document.querySelector('#view');
+  view.querySelector('#synthetic-studio-catalog-search').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    await loadCatalogAssets(view.querySelector('#synthetic-studio-search').value, revision, view);
+  });
+  view.querySelector('#synthetic-studio-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const output = view.querySelector('#synthetic-studio-result');
+    try {
+      const plan = JSON.parse(view.querySelector('#synthetic-studio-plan').value);
+      const generation = await post('/v1/synthetic-data-studio/generate', {plan});
+      if (!isCurrent() || !output.isConnected) return;
+      lastGeneration = generation;
+      output.textContent = JSON.stringify(lastGeneration, null, 2);
+      await prepareExport(lastGeneration, isCurrent);
+    } catch (error) {
+      if (!isCurrent() || !output.isConnected) return;
+      output.textContent = `Generation failed: ${error.message}`;
+    }
+  });
   try {
     const providers = await get('/v1/synthetic-data-studio/catalog/providers');
     if (!isCurrent()) return;
@@ -58,10 +77,6 @@ async function renderSyntheticDataStudio() {
     assetsTarget.innerHTML = `<p class="muted">Catalog unavailable: ${esc(error.message)}</p>`;
   }
   if (!isCurrent()) return;
-  view.querySelector('#synthetic-studio-catalog-search').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    await loadCatalogAssets(view.querySelector('#synthetic-studio-search').value, revision, view);
-  });
   try {
     const runs = await get('/v1/synthetic-data-studio/runs');
     if (!isCurrent()) return;
@@ -73,21 +88,6 @@ async function renderSyntheticDataStudio() {
     runsTarget.innerHTML = `<p class="muted">Runs unavailable: ${esc(error.message)}</p>`;
   }
   if (!isCurrent()) return;
-  view.querySelector('#synthetic-studio-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const output = view.querySelector('#synthetic-studio-result');
-    try {
-      const plan = JSON.parse(view.querySelector('#synthetic-studio-plan').value);
-      const generation = await post('/v1/synthetic-data-studio/generate', {plan});
-      if (!isCurrent() || !output.isConnected) return;
-      lastGeneration = generation;
-      output.textContent = JSON.stringify(lastGeneration, null, 2);
-      await prepareExport(lastGeneration, isCurrent);
-    } catch (error) {
-      if (!isCurrent() || !output.isConnected) return;
-      output.textContent = `Generation failed: ${error.message}`;
-    }
-  });
 }
 
 async function prepareExport(generation, isCurrent) {

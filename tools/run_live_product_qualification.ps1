@@ -137,6 +137,7 @@ $qualificationMode = if ($workingTreeStatus.Count -gt 0) { "DIRTY-WORKTREE DIAGN
 $streamingOnlyDiagnostic = $TestGrep -eq "streaming"
 $semanticOnlyDiagnostic = $TestGrep -eq "semantic"
 $mlOnlyDiagnostic = $TestGrep -eq "mlstudio"
+$syntheticOnlyDiagnostic = $TestGrep -eq "synthetic"
 $workerImageId = $null
 if (-not $WorkerImage -and -not $TestGrep) {
     throw "Full live product qualification requires -WorkerImage so notebook execution is exercised by a real worker."
@@ -240,9 +241,10 @@ try {
     $env:RONIN_LIVE_WORKER_ENABLED = if ($WorkerImage) { "1" } else { "0" }
     $env:RONIN_RUNNER_BROKER_TOKEN = [guid]::NewGuid().ToString("N")
     $env:RONIN_TOKEN_SCOPES = '{"version":1,"grants":[{"version":1,"actions":["read","list","events","submit","execute","cancel","evidence:read"],"resource":{"kind":"project","identifier":"examples/demo"},"constraints":{}}]}'
-    $composeStarted = -not ($semanticOnlyDiagnostic -or $mlOnlyDiagnostic)
-    if ($semanticOnlyDiagnostic -or $mlOnlyDiagnostic) {
-        $diagnosticName = if ($mlOnlyDiagnostic) { "Machine Learning Studio" } else { "Semantic Studio" }
+    $sqliteOnlyDiagnostic = $semanticOnlyDiagnostic -or $mlOnlyDiagnostic -or $syntheticOnlyDiagnostic
+    $composeStarted = -not $sqliteOnlyDiagnostic
+    if ($sqliteOnlyDiagnostic) {
+        $diagnosticName = if ($mlOnlyDiagnostic) { "Machine Learning Studio" } elseif ($semanticOnlyDiagnostic) { "Semantic Studio" } else { "Synthetic Data Studio" }
         Write-Output "$diagnosticName-only diagnostic: SQLite product routes do not require PostgreSQL or Kafka containers."
     } elseif ($streamingOnlyDiagnostic) {
         Write-Output "Streaming-only diagnostic: starting Redpanda without unrelated PostgreSQL fixtures."
@@ -250,10 +252,10 @@ try {
     } else {
         docker compose -p $composeProject --profile qualification-streaming up -d --wait --wait-timeout 120 postgres streaming-broker
     }
-    if (-not ($semanticOnlyDiagnostic -or $mlOnlyDiagnostic) -and $LASTEXITCODE -ne 0) { throw "Could not start the required isolated live-test services for '$composeProject'." }
+    if (-not $sqliteOnlyDiagnostic -and $LASTEXITCODE -ne 0) { throw "Could not start the required isolated live-test services for '$composeProject'." }
     $servicesReady = $true
-    $postgresStarted = -not ($streamingOnlyDiagnostic -or $semanticOnlyDiagnostic -or $mlOnlyDiagnostic)
-    $kafkaStarted = -not ($semanticOnlyDiagnostic -or $mlOnlyDiagnostic)
+    $postgresStarted = -not ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)
+    $kafkaStarted = -not $sqliteOnlyDiagnostic
 
     if ($postgresStarted) {
         $databaseExists = (docker compose -p $composeProject exec -T postgres psql -U $env:POSTGRES_USER -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = 'ronin_test'" | Out-String).Trim()
@@ -289,7 +291,7 @@ try {
     $env:RONIN_LIVE_WORKSPACE = $env:RONIN_WORKSPACE_ID
     $env:RONIN_LIVE_PG_PORT = [string]$postgresPort
     $env:RONIN_LIVE_PG_DATABASE = "ronin_test"
-    $env:RONIN_LIVE_REQUIRE_POSTGRES = if ($streamingOnlyDiagnostic -or $semanticOnlyDiagnostic -or $mlOnlyDiagnostic) { "0" } else { "1" }
+    $env:RONIN_LIVE_REQUIRE_POSTGRES = if ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic) { "0" } else { "1" }
     $env:RONIN_LIVE_STREAMING_BOOTSTRAP = "127.0.0.1:$kafkaPort"
     $env:RONIN_LIVE_API_TRAFFIC_OUTPUT = $evidenceFiles.Traffic
     # The jobs server serves the installed Studio assets. The control-plane
@@ -339,6 +341,8 @@ try {
     Set-QualificationPhase "seed live data and start Ronin server"
     if ($semanticOnlyDiagnostic) {
         & $python -m tools.seed_live_studio --semantic-only
+    } elseif ($syntheticOnlyDiagnostic) {
+        & $python -m tools.seed_live_studio --workspace-only
     } elseif ($streamingOnlyDiagnostic) {
         & $python -m tools.seed_live_studio --workspace-only
     } else {
@@ -364,7 +368,7 @@ try {
     if (-not $ready) { throw "Ronin Studio did not become ready; inspect saved server logs." }
     $apiReady = $true
 
-    if (-not ($semanticOnlyDiagnostic -or $mlOnlyDiagnostic)) {
+    if (-not $sqliteOnlyDiagnostic) {
         & $python -m tools.seed_live_streaming
         if ($LASTEXITCODE -ne 0) { throw "Could not seed the isolated live Kafka stream fixture." }
     }
@@ -395,6 +399,8 @@ try {
         "run Machine Learning Studio browser journey against isolated SQLite and real Ronin APIs"
     } elseif ($semanticOnlyDiagnostic) {
         "run semantic browser journey against isolated SQLite and real Ronin APIs"
+    } elseif ($syntheticOnlyDiagnostic) {
+        "run Synthetic Data Studio generation/export against isolated SQLite and real Ronin APIs"
     } elseif ($streamingOnlyDiagnostic) {
         "run streaming browser journey against Redpanda and real Ronin APIs"
     } else {

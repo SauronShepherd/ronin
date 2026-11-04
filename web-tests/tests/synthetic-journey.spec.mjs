@@ -47,3 +47,39 @@ test('synthetic studio completes deterministic generation and export journey', a
   await expect(page.locator('#synthetic-studio-result')).toContainText('jsonl');
   expect(calls).toEqual(expect.arrayContaining(['providers', 'assets', 'runs', 'generate', 'formats', 'export']));
 });
+
+test('synthetic generation remains actionable while the initial catalog request is pending', async ({ page }) => {
+  let markProvidersStarted;
+  let releaseProviders;
+  const providersStarted = new Promise(resolve => { markProvidersStarted = resolve; });
+  const heldProviders = new Promise(resolve => { releaseProviders = resolve; });
+  await page.route('**/v1/synthetic-data-studio/catalog/providers**', async route => {
+    markProvidersStarted();
+    await heldProviders;
+    await route.fulfill({json: {mode: 'offline', external_connections: false, items: []}});
+  });
+  await page.route('**/v1/synthetic-data-studio/catalog/assets**', route => route.fulfill({json: {items: []}}));
+  await page.route('**/v1/synthetic-data-studio/runs**', route => route.fulfill({json: {items: []}}));
+  await page.route('**/v1/synthetic-data-studio/generate**', route => route.fulfill({json: {
+    run_id: 'run-before-catalog',
+    status: 'generated',
+    tables: [{name: 'customers', rows: [{id: 1}]}],
+  }}));
+  await page.route('**/v1/synthetic-data-studio/formats**', route => route.fulfill({json: [
+    {format_id: 'jsonl', status: 'ready'},
+  ]}));
+
+  await page.goto('./#synthetic', {waitUntil: 'load'});
+  await providersStarted;
+  try {
+    const generationResponse = page.waitForResponse(response =>
+      response.request().method() === 'POST' &&
+      new URL(response.url()).pathname === '/v1/synthetic-data-studio/generate',
+    );
+    await page.locator('#synthetic-studio-form button[type="submit"]').click();
+    expect((await generationResponse).status()).toBe(200);
+    await expect(page.locator('#synthetic-studio-result')).toContainText('run-before-catalog');
+  } finally {
+    releaseProviders();
+  }
+});

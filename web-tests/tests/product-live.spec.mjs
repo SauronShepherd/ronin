@@ -474,6 +474,37 @@ for (const route of routes) {
       ]);
       const renderedDashboard = JSON.parse(await page.locator('#semantic-dashboard-result').textContent());
       expect(renderedDashboard).toEqual(dashboardResult);
+    } else if (route.id === 'synthetic') {
+      const generatePath = '/v1/synthetic-data-studio/generate';
+      const generateResponse = page.waitForResponse(item =>
+        item.request().method() === 'POST' && new URL(item.url()).pathname === generatePath,
+      );
+      await page.locator('#synthetic-studio-form button[type="submit"]').click();
+      const generated = await generateResponse;
+      expect([200, 201], await generated.text()).toContain(generated.status());
+      const generation = await generated.json();
+      expect(generation.status).toBe('generated');
+      expect(generation.run_id).toBeTruthy();
+      expect(generation.tables).toHaveLength(1);
+      expect(generation.tables[0].name).toBe('customers');
+      expect(generation.tables[0].rows).toHaveLength(10);
+      await expect(page.locator('#synthetic-studio-result')).toContainText(generation.run_id);
+      await expect(page.locator('#synthetic-studio-export')).toBeVisible();
+      await page.locator('#synthetic-studio-format').selectOption('jsonl');
+
+      const exportPath = '/v1/synthetic-data-studio/export';
+      const exportResponse = page.waitForResponse(item =>
+        item.request().method() === 'POST' && new URL(item.url()).pathname === exportPath,
+      );
+      await page.locator('#synthetic-studio-export-button').click();
+      const exported = await exportResponse;
+      expect(exported.status(), await exported.text()).toBe(200);
+      const exportPayload = await exported.json();
+      expect(exportPayload).toMatchObject({
+        status: 'completed', run_id: generation.run_id, format_id: 'jsonl', table: 'customers',
+      });
+      expect(exportPayload.content.trim().split('\n')).toHaveLength(10);
+      await expect(page.locator('#synthetic-studio-result')).toContainText('completed');
     } else if (route.id === 'catalog') {
       await page.locator('#catalog-search-form [name="workspace"]').fill(process.env.RONIN_LIVE_WORKSPACE);
       await page.locator('#catalog-search-form').evaluate(form => form.requestSubmit());
