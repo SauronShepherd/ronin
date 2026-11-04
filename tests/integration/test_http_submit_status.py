@@ -285,6 +285,14 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
                     "cell-2",
                     Instant("2099-01-01T00:00:00.200000Z"),
                 ),
+                StoredExecutionEvent(
+                    first_attempt,
+                    2,
+                    "worker.source_revision.captured",
+                    '{"commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",'
+                    '"dirty_patch_sha256":null,"version":1}',
+                    Instant("2099-01-01T00:00:00.300000Z"),
+                ),
             ),
             owner="worker-http-events-1",
             lease_token=first_lease,
@@ -326,9 +334,18 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
         ]
         assert [item.attempt_sequence for item in events_one.items] == [0, 1]
         events_two = first.events(since=events_one.next_since, limit=2)
-        assert [item.sequence for item in events_two.items] == [2]
-        assert events_two.items[0].attempt_id == str(second_attempt)
-        assert events_two.items[0].attempt_sequence == 0
+        assert [item.sequence for item in events_two.items] == [2, 3]
+        revision_event, second_attempt_event = events_two.items
+        assert revision_event.kind == "worker.source_revision.captured"
+        assert json.loads(revision_event.message) == {
+            "commit": "a" * 40,
+            "dirty_patch_sha256": None,
+            "version": 1,
+        }
+        assert revision_event.attempt_id == str(first_attempt)
+        assert revision_event.attempt_sequence == 2
+        assert second_attempt_event.attempt_id == str(second_attempt)
+        assert second_attempt_event.attempt_sequence == 0
 
         second = client.submit(
             project="examples/demo",

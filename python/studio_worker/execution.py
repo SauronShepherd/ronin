@@ -458,6 +458,17 @@ class DurableWorkerExecution:
                 }
                 previous_evidence = await self.service.worker_read_evidence(claim.run.id)
                 await self._append_event(claim, "worker.attempt.started")
+                await self._append_event(
+                    claim,
+                    "worker.source_revision.captured",
+                    encode_canonical_json(
+                        {
+                            "commit": request.repository.commit,
+                            "dirty_patch_sha256": request.repository.dirty_patch_sha256,
+                            "version": 1,
+                        }
+                    ).decode("utf-8"),
+                )
 
                 for cell, identity in zip(request.cells, identities, strict=True):
                     if lease_lost.is_set():

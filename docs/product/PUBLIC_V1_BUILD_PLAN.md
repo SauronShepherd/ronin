@@ -366,3 +366,42 @@ La revisión de la ruta paginada detectó luego que `cursor=` vacío se interpre
 La suite local tras los cambios pasó 82 pruebas SQL/QueryFlux focalizadas, la suite de integración HTTP de SQL (7), otro grupo de 48 pruebas y 3 journeys Playwright QueryFlux; el journey local SQL se corrigió para no exigir el campo retirado `dialect` y pasó individualmente. La suite Web de PR reportó 98 passed, 3 skips y una expectativa de test obsoleta; tras actualizarla pasaron el journey afectado y los 3 journeys QueryFlux. Mypy encontró 429 archivos sin incidencias, Ruff, formato (896 archivos), OpenAPI y `git diff --check` pasaron. Las suites Python 3.11/3.12 y los workflows Web/Docker exact-head de GitHub son la evidencia amplia posterior al merge; los skips no cuentan como éxitos.
 
 P3/RPV1-304 sigue `partial`: se retira la paginación estable de la lista pendiente, pero faltan cancelación SQL explícita y durable, explain sanitizado, assets y revisiones de fuentes gobernados, presupuesto de CPU, semántica engine-neutral compartida, journeys completos y qualification de providers/motores. Las otras familias conservan sus propios gaps. Public v1 permanece **0/13 (0%, NO-GO)**; el progreso global de implementación es **no calculable**; las revisiones integrales limpias siguen **0/10**. Tras los merges, el checkout local y remoto contienen solo `main`; las ramas de trabajo ya integradas fueron eliminadas. Los artefactos locales no versionados de qualification se preservaron.
+
+## 53. Revisión Git visible en evidencia durable de ejecución (2026-11-04)
+
+El worker ya capturaba commit y digest de cambios locales para calcular la
+identidad de ejecución, pero la evidencia persistida solo exponía ese digest
+opaco. Ahora cada intento de notebook escribe el evento
+`worker.source_revision.captured` junto al `worker.attempt.started`, con JSON
+canónico que contiene el commit exacto, `dirty_patch_sha256` (o `null` si el
+checkout está limpio) y versión del payload. El mensaje se conserva en el store
+SQLite/PostgreSQL y se devuelve en la página autenticada de eventos del Job.
+
+Validación diagnóstica sobre el árbol modificado basado en
+`6c2fccd7eccf4c237419dd1c2f734470f2d2c5b7`:
+
+- Suite Python completa: **4.484 passed, 76 skipped, 0 failed**, 325,06 s;
+  JUnit en `%TEMP%\ronin-source-revision-python-full-20261104.xml`. Los skips
+  incluyen integraciones opt-in sin sus servicios/DSN y pruebas POSIX/symlink
+  no disponibles en Windows; no se cuentan como ejecuciones exitosas.
+- Worker real con imagen Ronin construida en Docker y ejecución de las celdas
+  demo: **1 passed, 26 deselected**, 7,98 s de pytest; imagen
+  `sha256:b638764e79b36d6dda7e07a586ea368f94b51bd0c6507924aec4817c6f53f381`.
+  Recibo: `%TEMP%\ronin-source-revision-worker-6c2fccd-diagnostic-final`.
+- El mismo worker con PostgreSQL 16.4 efímero: **1 passed, 26 deselected**,
+  8,51 s; recibo `%TEMP%\ronin-source-revision-worker-postgres-6c2fccd-diagnostic`.
+- Suite de rendimiento: **5/5 passed**, 12,24 s. No se modificaron los
+  umbrales ni se usó un benchmark reducido.
+- Suite focalizada de worker/API/evidencia: **40 passed**. Ruff check/format y
+  `git diff --check` pasan.
+
+La evidencia es diagnóstica, no candidate-bound: se ejecutó sobre un árbol
+sucio y no incluye la suite de rendimiento ni todos los servicios opt-in. El
+evento acredita la revisión Git local usada por el worker, pero no conecta aún
+el `RepositoryBinding` declarado con un checkout remoto resuelto; el
+`GitSourceAdapter` continúa sin una ruta vertical desde el proyecto al worker.
+Por tanto, P1 y P4 permanecen **OPEN**, y este trabajo tampoco incluye
+`query_evidence` de SQL. No cierra ninguna familia: release **0/13 (0%, NO-GO)**,
+progreso global de implementación **no calculable** y revisiones limpias
+integrales **0/10**. No se añadió ni ejecutó CI, GenAI integrado o multiusuario
+en Public v1.

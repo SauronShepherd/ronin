@@ -243,6 +243,17 @@ def test_real_docker_worker_executes_clean_container_demo(tmp_path: Path) -> Non
         assert job is not None
         assert job.state is JobState.SUCCEEDED
         assert len(store.read_cell_results(RunId("run-real-demo"))) == 5
+        events = store.read_events(RunId("run-real-demo"), since=0)
+        source_revision_events = [
+            event for event in events if event.kind == "worker.source_revision.captured"
+        ]
+        assert len(source_revision_events) == 1
+        source_revision = json.loads(source_revision_events[0].message)
+        assert len(source_revision["commit"]) in {40, 64}
+        assert (
+            source_revision["dirty_patch_sha256"] is None
+            or len(source_revision["dirty_patch_sha256"]) == 64
+        )
 
         outputs = _log_outputs(config.execution_evidence_root)
         assert len(outputs) == 5
@@ -331,6 +342,16 @@ def test_real_docker_worker_executes_demo_against_postgres(tmp_path: Path) -> No
         assert len(store.read_cell_results(run_id)) == 5
         events = store.read_events(run_id, since=0)
         assert sum(event.kind == "worker.attempt.succeeded" for event in events) == 1
+        source_revision_events = [
+            event for event in events if event.kind == "worker.source_revision.captured"
+        ]
+        assert len(source_revision_events) == 1
+        source_revision = json.loads(source_revision_events[0].message)
+        assert len(source_revision["commit"]) in {40, 64}
+        assert (
+            source_revision["dirty_patch_sha256"] is None
+            or len(source_revision["dirty_patch_sha256"]) == 64
+        )
 
         outputs = _log_outputs(config.execution_evidence_root)
         assert len(outputs) == 5

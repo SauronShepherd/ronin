@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import threading
 import time
 from dataclasses import dataclass, field, replace
@@ -280,6 +281,14 @@ def test_run_once_executes_claim_through_sqlite_and_container_boundary(
         assert job is not None
         assert job.state is JobState.SUCCEEDED
         assert len(store.read_cell_results(RunId("run-runtime"))) == 5
+        events = store.read_events(RunId("run-runtime"), since=0)
+        source_revision_events = [
+            event for event in events if event.kind == "worker.source_revision.captured"
+        ]
+        assert len(source_revision_events) == 1
+        revision = json.loads(source_revision_events[0].message)
+        assert len(revision["commit"]) in {40, 64}
+        assert revision["dirty_patch_sha256"] is None or len(revision["dirty_patch_sha256"]) == 64
 
     asyncio.run(scenario())
 
