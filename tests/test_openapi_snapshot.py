@@ -376,14 +376,17 @@ def test_semantic_bundle_openapi_requires_reviewed_digest_and_project_scopes() -
     paths = document["paths"]
     export = paths["/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/bundle"]["get"]
     plan = paths["/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/bundle/plan"]["post"]
-    imported = paths[
-        "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/bundle/import"
-    ]["post"]
+    imported = paths["/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/bundle/import"][
+        "post"
+    ]
 
     assert export["operationId"] == "exportSemanticBundle"
-    assert export["responses"]["200"]["content"]["application/json"]["schema"]["properties"][
-        "size_bytes"
-    ]["maximum"] == 700 * 1024
+    assert (
+        export["responses"]["200"]["content"]["application/json"]["schema"]["properties"][
+            "size_bytes"
+        ]["maximum"]
+        == 700 * 1024
+    )
     assert plan["operationId"] == "planSemanticBundleImport"
     assert plan["x-ronin-required-project-actions"] == ["read"]
     assert set(plan["requestBody"]["content"]["application/json"]["schema"]["required"]) == {

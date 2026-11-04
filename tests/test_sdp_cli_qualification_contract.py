@@ -20,8 +20,8 @@ def test_sdp_runner_executes_the_exact_official_cli_integration_test() -> None:
 
     assert "test_sdp_studio_real_cli_validation" in script
     assert "tests/e2e/test_data_engineering_external.py -k real_cli" in script
-    assert '$skipped -ne 0' in script
-    assert '$failed -ne 0' in script
+    assert "$skipped -ne 0" in script
+    assert "$failed -ne 0" in script
     assert "$timingSummary.executed -ne 1" in script
 
 

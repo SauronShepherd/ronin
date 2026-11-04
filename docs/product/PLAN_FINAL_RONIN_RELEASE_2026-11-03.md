@@ -3519,3 +3519,27 @@ publicación: el metadato sigue en `0.0.0`, la versión pública necesita decisi
 explícita de producto y los gates quedan ligados a una build diagnóstica. El
 gate Docker/PostgreSQL y las demás familias de release siguen pendientes; GO
 no está autorizado y la recomendación continúa siendo retrasar.
+
+## 88. Cierre de hallazgos de calidad local — 4/11/2026
+
+El pase completo de gates estáticos detectó que dos pruebas estaban sin formato y
+mypy 1.20.2 ya no acepta dos imports opcionales de Azure cuando el extra Azure no
+está instalado. Se reformatearon los tests y se añadieron ignores de
+`import-not-found` solo a esos imports, que permanecen protegidos por guards de
+`ImportError` y mensajes explícitos de dependencia. Ruff format/check pasaron
+sobre 928 archivos; mypy pasó sobre 442 módulos. El conector Azure pasó 13/13 y
+los tests de OpenAPI/contrato del runner pasaron 15/15.
+
+`capability-status`, consistencia de 196 operaciones, Studio surface, auditoría
+web (60 archivos, 179 invocaciones, cero fallos), skills (3/3), negativos de
+arquitectura, OpenAPI snapshot, 10 vectores/5 rechazos de JSON canónico y 2
+fixtures del protocolo del runner pasaron. El Studio budget falló inicialmente
+porque el ratchet no incluía el crecimiento funcional del commit `c4e3a780`, que
+añadió 589 líneas a Semantic y Streaming Studio. Se actualizó el valor observado
+de 1.943.665 a 1.970.850 bytes (+27.185; +1,40%); requests, módulos, CSS y HTML
+no crecieron. La repetición del budget pasó y futuras subidas vuelven a requerir
+un ratchet explícito.
+
+La suite integral PostgreSQL y la qualification Docker siguen pendientes por la
+disponibilidad del engine. Estos checks locales no sustituyen esos gates ni
+cambian la recomendación **NO-GO**.
