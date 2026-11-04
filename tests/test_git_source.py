@@ -275,3 +275,36 @@ def test_git_fast_forward_rejects_divergent_history(tmp_path: Path) -> None:
             root,
             SourceRepository(remote.as_uri(), "refs/heads/main"),
         )
+
+
+def test_git_sync_rejects_unsafe_subdirectory_before_changing_head(tmp_path: Path) -> None:
+    root = _repository(tmp_path / "repo")
+    commit = _git(root, "rev-parse", "HEAD")
+    with pytest.raises(ValueError, match="escapes"):
+        GitSourceAdapter().fast_forward(
+            root,
+            SourceRepository("file:///unreachable/repo", "main"),
+            subdirectory="../outside",
+        )
+    assert _git(root, "rev-parse", "HEAD") == commit
+
+
+def test_git_checkout_rejects_symlink_subdirectory_before_checkout(tmp_path: Path) -> None:
+    root = _repository(tmp_path / "repo")
+    first = _git(root, "rev-parse", "HEAD")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    try:
+        (root / "linked").symlink_to(outside, target_is_directory=True)
+    except OSError as exc:
+        if getattr(exc, "winerror", None) == 1314:
+            pytest.skip("symlink creation requires Windows developer privileges")
+        raise
+
+    with pytest.raises(ValueError, match="symlink"):
+        GitSourceAdapter().checkout_detached(
+            root,
+            SourceRepository("https://git.example.invalid/repo.git", first),
+            subdirectory="linked",
+        )
+    assert _git(root, "rev-parse", "HEAD") == first

@@ -98,6 +98,7 @@ class GitSourceAdapter:
         """Fetch and fast-forward the current local branch without rewriting history."""
 
         root = worktree.resolve()
+        checkout_path = safe_checkout_path(root, subdirectory)
         if self.is_dirty(root):
             raise GitSourceError("refusing fast-forward in a dirty worktree")
         branch_status, branch = self._run_result(
@@ -134,7 +135,7 @@ class GitSourceAdapter:
             if target_is_ancestor == 0:
                 return GitCheckoutResult(
                     repository,
-                    safe_checkout_path(root, subdirectory),
+                    checkout_path,
                     current,
                     False,
                 )
@@ -144,7 +145,7 @@ class GitSourceAdapter:
         if current == target:
             return GitCheckoutResult(
                 repository,
-                safe_checkout_path(root, subdirectory),
+                checkout_path,
                 current,
                 False,
             )
@@ -152,7 +153,7 @@ class GitSourceAdapter:
         actual = self._resolve_commit(root, "HEAD")
         if actual != target:
             raise GitSourceError("fast-forward did not reach the fetched source revision")
-        return GitCheckoutResult(repository, safe_checkout_path(root, subdirectory), actual, False)
+        return GitCheckoutResult(repository, checkout_path, actual, False)
 
     def checkout_detached(
         self,
@@ -164,6 +165,7 @@ class GitSourceAdapter:
         fetch: bool = False,
     ) -> GitCheckoutResult:
         root = worktree.resolve()
+        checkout_path = safe_checkout_path(root, subdirectory)
         dirty = self.is_dirty(root)
         if dirty and not allow_dirty:
             raise GitSourceError("refusing checkout in a dirty worktree")
@@ -174,7 +176,7 @@ class GitSourceAdapter:
         # `--` makes the following SHA a pathspec. The revision has already
         # been resolved and validated as a commit id, so pass it as a revision.
         self._run(root, "checkout", "--detach", commit)
-        return GitCheckoutResult(repository, safe_checkout_path(root, subdirectory), commit, dirty)
+        return GitCheckoutResult(repository, checkout_path, commit, dirty)
 
     def update(
         self,

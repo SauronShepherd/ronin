@@ -460,16 +460,18 @@ integrado ni multiusuario en Public v1.
 
 El adapter Git de ejecución incorpora ahora `fetch_revision`, que obtiene y
 resuelve el ref remoto sin mover `HEAD`, y `fast_forward`, que sólo opera sobre
-una rama local simbólica limpia. Antes de avanzar compara la historia local con
-el commit obtenido; rechaza divergencias, detached HEAD y worktrees sucios. Si
+una rama local simbólica limpia. Valida el subdirectorio antes de mutar el repo;
+un path inválido o symlink se rechaza antes de fetch, merge o checkout. Antes de
+avanzar compara la historia local con el commit obtenido; rechaza divergencias,
+detached HEAD y worktrees sucios. Si
 la rama ya apunta al mismo commit, la operación es idempotente; si la rama ya
 está por delante del ref remoto, conserva el HEAD local sin rebobinarlo. Todo
 fetch y comando Git sigue limitado por timeout y no usa un shell.
 
 Validación focalizada en repositorios bare/locales reales:
 
-- `tests/test_git_source.py tests/test_vcs_source.py`: **23 passed, 1 skipped**;
-  el skip es creación de symlink que requiere privilegios de Windows.
+- `tests/test_git_source.py tests/test_vcs_source.py`: **24 passed, 2 skipped**;
+  ambos skips son creación de symlink que requiere privilegios de Windows.
 - Ruff check, formato y `git diff --check`: pasan.
 
 Esto endurece el adapter, pero no conecta todavía las políticas del manifiesto
