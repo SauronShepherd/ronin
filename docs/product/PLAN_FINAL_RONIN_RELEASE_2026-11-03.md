@@ -829,11 +829,11 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Sdist install failed.' }
   Push-Location $EmptyRunDir
   try {
-    & $WheelPython -c "import importlib.metadata as m; print(m.version('ronin'))" | Tee-Object -FilePath (Join-Path $EvidenceDir 'wheel-installed-version.txt')
+    & $WheelPython -c "import importlib.metadata as m; print(m.version('ronin-studio'))" | Tee-Object -FilePath (Join-Path $EvidenceDir 'wheel-installed-version.txt')
     if ($LASTEXITCODE -ne 0) { throw 'Wheel import/version smoke failed.' }
     & (Join-Path $WheelVenv 'Scripts/ronin.exe') --help 2>&1 | Tee-Object -FilePath (Join-Path $EvidenceDir 'wheel-cli-help.log')
     if ($LASTEXITCODE -ne 0) { throw 'Wheel CLI entrypoint smoke failed.' }
-    & $SdistPython -c "import importlib.metadata as m; print(m.version('ronin'))" | Tee-Object -FilePath (Join-Path $EvidenceDir 'sdist-installed-version.txt')
+    & $SdistPython -c "import importlib.metadata as m; print(m.version('ronin-studio'))" | Tee-Object -FilePath (Join-Path $EvidenceDir 'sdist-installed-version.txt')
     if ($LASTEXITCODE -ne 0) { throw 'Sdist import/version smoke failed.' }
     & (Join-Path $InstallRoot 'sdist/Scripts/ronin.exe') --help 2>&1 | Tee-Object -FilePath (Join-Path $EvidenceDir 'sdist-cli-help.log')
     if ($LASTEXITCODE -ne 0) { throw 'Sdist CLI entrypoint smoke failed.' }
@@ -3483,8 +3483,7 @@ completa. La release permanece **NO-GO, 0/13**.
 ## 86. Revisión del 4 de noviembre — release vencida y siguiente gate
 
 La fecha objetivo del 3 de noviembre a las 09:00 ya pasó sin candidato GO.
-Mantener la release retrasada es la decisión correcta: el worktree sigue
-sucio, ninguna de las 13 familias está cualificada sobre un SHA común y hay
+Mantener la release retrasada es la decisión correcta: en esa auditoría el worktree estaba sucio. La rama quedó limpia en `667bd4a4`, pero ninguna de las 13 familias está cualificada sobre un SHA común y hay
 decisiones humanas y revisión visual pendientes.
 
 No paralelicé la suite Python/PostgreSQL: sus tests comparten la base
@@ -3496,3 +3495,27 @@ focal de arquitectura y resumen pasó **25/25 en 2.96 s**; el full suite
 pre-fix tardó 508.75 s y su timing/JUnit quedó reconciliado. La suite completa
 debe repetirse una vez más al congelar el siguiente candidato, después de todos
 los cambios restantes; no repetirla entre cada corrección focal.
+
+## 87. Cualificación reproducible del wheel y sdist — 4/11/2026
+
+En el SHA limpio `667bd4a4060a7da58f751525a7db5efebc96e6a9` se construyeron dos
+veces wheel y sdist con Python 3.13.15, `build==1.6.0`, `setuptools==84.2.1`,
+el toolchain de qualification instalado con `--require-hashes` y
+`SOURCE_DATE_EPOCH=1793763268`. Los dos wheels produjeron SHA-256
+`d171e6f9a2c6695ab6e0c7ddc9e872b7973d2a770585f8fe18df6f299b4b01f7` y los
+dos sdists normalizados produjeron `07bf0353b439c3c454c640f428c86c01bc8444e5127b312e938be56a9edba3d2`.
+
+Se instalaron ambos formatos en entornos desechables con el lock de desarrollo
+verificado por hash. Desde un directorio vacío, wheel y sdist devolvieron
+`ronin --help` correctamente y el metadato informó `ronin-studio==0.0.0`. El
+smoke de navegador contra cada artefacto cargó las 25 rutas y los tres coding
+agent skills; cero fallos de ruta, peticiones, consola, CSP u overflow. El audit
+axe/responsive del wheel cubrió las 25 rutas en 320, 768 y 1440 px: cero
+violaciones críticas/serias y cero desbordamientos.
+
+Recibos y logs: `%TEMP%\\ronin-artifact-667bd4a4060a-241f76c7`. Esta evidencia
+cierra el diagnóstico de instalación y recursos incluidos, pero no habilita
+publicación: el metadato sigue en `0.0.0`, la versión pública necesita decisión
+explícita de producto y los gates quedan ligados a una build diagnóstica. El
+gate Docker/PostgreSQL y las demás familias de release siguen pendientes; GO
+no está autorizado y la recomendación continúa siendo retrasar.
