@@ -394,6 +394,10 @@ def test_postgres_runner_isolates_container_and_externalizes_evidence() -> None:
     assert "cleanup_seconds" in script
     assert 'cleanup_status = "not-required"' in script
     assert 'cleanup_status = "failed"' in script
+    assert 'status = "incomplete"' in script
+    assert "test_exit_code = $testResult" in script
+    assert "$phaseTimings.failure = $_.Exception.Message" in script
+    assert '$phaseTimings.status = if ($testResult -eq 0) { "passed" } else { "failed" }' in script
     assert "The run is incomplete and must not be treated as a pass." in script
     assert 'if ($phaseTimings.cleanup_status -eq "failed")' in script
     assert "Run result: INCOMPLETE (cleanup failed)" in script

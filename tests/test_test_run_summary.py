@@ -99,6 +99,51 @@ def test_runner_summary_fails_when_cleanup_failed(
     assert "cleanup status: failed" in capsys.readouterr().out
 
 
+def test_postgres_runner_summary_fails_when_pytest_never_started(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    report = tmp_path / "runner-timings.json"
+    report.write_text(
+        json.dumps(
+            {
+                "status": "failed",
+                "test_exit_code": 1,
+                "failure": "Could not start isolated PostgreSQL container.",
+                "pytest_wall_seconds": None,
+                "cleanup_status": "not-required",
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("sys.argv", ["test_run_summary", str(report)])
+
+    assert main() == 1
+    output = capsys.readouterr().out
+    assert "pytest did not complete successfully" in output
+    assert "Could not start isolated PostgreSQL container" in output
+
+
+def test_postgres_runner_summary_accepts_completed_passing_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    report = tmp_path / "runner-timings.json"
+    report.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "test_exit_code": 0,
+                "pytest_wall_seconds": 4.2,
+                "cleanup_status": "succeeded",
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("sys.argv", ["test_run_summary", str(report)])
+
+    assert main() == 0
+    assert "pytest=4.20s" in capsys.readouterr().out
+
+
 def test_live_summary_shows_real_api_log_and_route_evidence(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

@@ -12,6 +12,9 @@ $ErrorActionPreference = "Stop"
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $runnerWallClock = [Diagnostics.Stopwatch]::StartNew()
 $phaseTimings = [ordered]@{
+    status = "incomplete"
+    test_exit_code = 1
+    failure = $null
     source_commit = $null
     worktree_clean = $null
     qualification_mode = $null
@@ -282,6 +285,10 @@ try {
     }
     Write-Output "Evidence: $evidenceRoot"
     Write-Output "Pytest console output: $pytestOutput"
+} catch {
+    $phaseTimings.failure = $_.Exception.Message
+    $testResult = 1
+    throw
 } finally {
     $cleanupClock = [Diagnostics.Stopwatch]::StartNew()
     if ($containerStarted) {
@@ -305,6 +312,8 @@ try {
     $cleanupClock.Stop()
     $phaseTimings.cleanup_seconds = [Math]::Round($cleanupClock.Elapsed.TotalSeconds, 3)
     $phaseTimings.total_wall_seconds = [Math]::Round($runnerWallClock.Elapsed.TotalSeconds, 3)
+    $phaseTimings.test_exit_code = $testResult
+    $phaseTimings.status = if ($testResult -eq 0) { "passed" } else { "failed" }
     $phaseTimings | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $evidenceRoot "runner-timings.json") -Encoding utf8
     if ($phaseTimings.cleanup_status -eq "failed") {
         Write-Output "Run result: INCOMPLETE (cleanup failed); see runner-timings.json."

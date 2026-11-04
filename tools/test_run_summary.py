@@ -246,8 +246,24 @@ def _print_runner(path: Path) -> int:
         print(f"  cleanup status: {evidence['cleanup_status']}")
     if "status" in evidence:
         print(f"  status: {evidence['status']}")
+    if evidence.get("failure"):
+        print(f"  failure: {evidence['failure']}")
+    postgres_pytest_runner = "pytest_wall_seconds" in evidence
+    incomplete_pytest = postgres_pytest_runner and (
+        not isinstance(evidence.get("pytest_wall_seconds"), (int, float))
+        or evidence.get("status") != "passed"
+        or evidence.get("test_exit_code") != 0
+    )
+    if incomplete_pytest:
+        print("  evidence consistency: pytest did not complete successfully")
     return (
-        1 if evidence.get("cleanup_status") == "failed" or evidence.get("status") == "failed" else 0
+        1
+        if (
+            evidence.get("cleanup_status") == "failed"
+            or evidence.get("status") == "failed"
+            or incomplete_pytest
+        )
+        else 0
     )
 
 
