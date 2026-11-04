@@ -287,7 +287,7 @@ def test_semantic_live_diagnostic_skips_unrelated_postgres_and_kafka_containers(
     )
     assert (
         "$sqliteOnlyDiagnostic = $semanticOnlyDiagnostic -or $mlOnlyDiagnostic -or "
-        "$syntheticOnlyDiagnostic" in script
+        "$syntheticOnlyDiagnostic -or $qualityOnlyDiagnostic" in script
     )
     assert "$postgresStarted = -not ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)" in script
     assert "$kafkaStarted = -not $sqliteOnlyDiagnostic" in script
@@ -340,6 +340,24 @@ def test_synthetic_live_diagnostic_uses_sqlite_and_exercises_real_generation_exp
     assert "const generatePath = '/v1/synthetic-data-studio/generate';" in live
     assert "const exportPath = '/v1/synthetic-data-studio/export';" in live
     assert "expect(exportPayload.content.trim().split('\\n')).toHaveLength(10);" in live
+
+
+def test_quality_live_diagnostic_uses_sqlite_and_checks_warn_outcomes() -> None:
+    script = (ROOT / "tools" / "run_live_product_qualification.ps1").read_text(encoding="utf-8")
+    live = (ROOT / "web-tests" / "tests" / "product-live.spec.mjs").read_text(encoding="utf-8")
+
+    assert '$qualityOnlyDiagnostic = $TestGrep -eq "quality"' in script
+    assert "$postgresStarted = -not ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)" in script
+    assert (
+        "} elseif ($qualityOnlyDiagnostic) {\n        & $python -m tools.seed_live_studio" in script
+    )
+    assert (
+        "run Quality Studio passing and blocking checks against isolated SQLite and real Ronin APIs"
+        in script
+    )
+    assert "} else if (route.id === 'quality') {" in live
+    assert "Quality operation failed." in live
+    assert "call.status === 409 && call.outcome === 'WARN'" in live
 
 
 def test_live_runner_precompiles_only_ronin_source_modules() -> None:

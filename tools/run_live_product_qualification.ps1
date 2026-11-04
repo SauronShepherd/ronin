@@ -138,6 +138,7 @@ $streamingOnlyDiagnostic = $TestGrep -eq "streaming"
 $semanticOnlyDiagnostic = $TestGrep -eq "semantic"
 $mlOnlyDiagnostic = $TestGrep -eq "mlstudio"
 $syntheticOnlyDiagnostic = $TestGrep -eq "synthetic"
+$qualityOnlyDiagnostic = $TestGrep -eq "quality"
 $workerImageId = $null
 if (-not $WorkerImage -and -not $TestGrep) {
     throw "Full live product qualification requires -WorkerImage so notebook execution is exercised by a real worker."
@@ -241,10 +242,10 @@ try {
     $env:RONIN_LIVE_WORKER_ENABLED = if ($WorkerImage) { "1" } else { "0" }
     $env:RONIN_RUNNER_BROKER_TOKEN = [guid]::NewGuid().ToString("N")
     $env:RONIN_TOKEN_SCOPES = '{"version":1,"grants":[{"version":1,"actions":["read","list","events","submit","execute","cancel","evidence:read"],"resource":{"kind":"project","identifier":"examples/demo"},"constraints":{}}]}'
-    $sqliteOnlyDiagnostic = $semanticOnlyDiagnostic -or $mlOnlyDiagnostic -or $syntheticOnlyDiagnostic
+    $sqliteOnlyDiagnostic = $semanticOnlyDiagnostic -or $mlOnlyDiagnostic -or $syntheticOnlyDiagnostic -or $qualityOnlyDiagnostic
     $composeStarted = -not $sqliteOnlyDiagnostic
     if ($sqliteOnlyDiagnostic) {
-        $diagnosticName = if ($mlOnlyDiagnostic) { "Machine Learning Studio" } elseif ($semanticOnlyDiagnostic) { "Semantic Studio" } else { "Synthetic Data Studio" }
+        $diagnosticName = if ($mlOnlyDiagnostic) { "Machine Learning Studio" } elseif ($semanticOnlyDiagnostic) { "Semantic Studio" } elseif ($qualityOnlyDiagnostic) { "Quality Studio" } else { "Synthetic Data Studio" }
         Write-Output "$diagnosticName-only diagnostic: SQLite product routes do not require PostgreSQL or Kafka containers."
     } elseif ($streamingOnlyDiagnostic) {
         Write-Output "Streaming-only diagnostic: starting Redpanda without unrelated PostgreSQL fixtures."
@@ -341,6 +342,8 @@ try {
     Set-QualificationPhase "seed live data and start Ronin server"
     if ($semanticOnlyDiagnostic) {
         & $python -m tools.seed_live_studio --semantic-only
+    } elseif ($qualityOnlyDiagnostic) {
+        & $python -m tools.seed_live_studio
     } elseif ($syntheticOnlyDiagnostic) {
         & $python -m tools.seed_live_studio --workspace-only
     } elseif ($streamingOnlyDiagnostic) {
@@ -401,6 +404,8 @@ try {
         "run semantic browser journey against isolated SQLite and real Ronin APIs"
     } elseif ($syntheticOnlyDiagnostic) {
         "run Synthetic Data Studio generation/export against isolated SQLite and real Ronin APIs"
+    } elseif ($qualityOnlyDiagnostic) {
+        "run Quality Studio passing and blocking checks against isolated SQLite and real Ronin APIs"
     } elseif ($streamingOnlyDiagnostic) {
         "run streaming browser journey against Redpanda and real Ronin APIs"
     } else {
