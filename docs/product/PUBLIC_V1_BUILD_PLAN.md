@@ -493,3 +493,33 @@ por proyecto para ejecutar revisiones remotas. Por tanto `manual/fetch/fast-
 forward` no está cualificado como flujo vertical; P1 permanece **OPEN**, sin
 cierre de familia ni cambio de release **0/13 (0%, NO-GO)**. No se añade CI,
 GenAI integrado ni multiusuario en Public v1.
+
+## 56. Ejecución desde snapshot Git con política `fetch` (2026-11-04)
+
+El worker aplica ahora `sync_policy=fetch` antes de leer los archivos del
+proyecto. Crea un checkout detached temporal desde el `default_ref` remoto en
+`data_dir`, valida que el manifest obtenido conserve identidad y binding Git,
+lee notebook y manifest desde esa revisión, y guarda el commit remoto exacto en
+la identidad/evidencia durable. El checkout temporal se elimina después de la
+preparación; el `LoadedProject` mantiene la ruta local registrada y no deja
+referencias colgantes. `manual` continúa usando el checkout local.
+
+Validación del commit `c3bed15eea797b13bdbd8c2403f063d0e5069ef5`:
+
+- Git, binding y preparación: **44 passed, 2 skipped**; ambos skips requieren
+  privilegios de symlink en Windows. El caso vertical usa un bare remote local,
+  avanza una celda Python remota y confirma commit, contenido del request de
+  kernel y limpieza del checkout temporal.
+- mypy del test environment en los dos módulos cambiados: **sin incidencias**;
+  Ruff, formato y `git diff --check` pasan.
+- Worker real en Docker: **2 passed, 25 deselected, 0 skipped**, con PostgreSQL
+  efímero y contenedor limpio. Imagen `sha256:cb5a5730467dd90e37b9c34e5ea3b6d186df767d5cacdd8caee232f49a45d9be`;
+  recibo `%TEMP%\ronin-fetch-policy-worker-docker-c3bed15`.
+
+El filtro Docker es diagnóstico y no ejecutó acceptance estricta. La política
+`fetch` sólo está verificada para remotos que no requieren autenticación: el
+manifest portable elimina `auth_ref` y el worker todavía no recibe bindings
+workspace-scoped ni resuelve secrets Git. `fast-forward` permanece rechazado
+por el worker hasta implementar un checkout administrado que preserve la
+semántica de no reescritura. P1 sigue **OPEN**; release permanece **0/13 (0%,
+NO-GO)**. No se introduce GenAI, multiusuario ni CI.
