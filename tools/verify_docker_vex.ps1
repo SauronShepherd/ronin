@@ -34,24 +34,42 @@ $inspectOutput = & docker image inspect $ImageRef 2>&1
 if ($LASTEXITCODE -ne 0) { throw "Could not inspect image '$ImageRef': $inspectOutput" }
 $image = @($inspectOutput | ConvertFrom-Json)[0]
 $repoDigest = @($image.RepoDigests)[0]
-if (-not $repoDigest -or $repoDigest -notmatch '^(?<name>.+)@(?<digest>sha256:[0-9a-f]{64})$') {
-    throw "Image '$ImageRef' has no immutable repository digest; VEX evidence must be bound to a digest."
+if ($repoDigest -and $repoDigest -match '^(?<name>.+)@(?<digest>sha256:[0-9a-f]{64})$') {
+    $imageName = $Matches.name
+    $imageDigest = $Matches.digest
+    $imageDigestKind = "registry-manifest-digest"
+} else {
+    # Locally qualified builds are intentionally not pushed to a registry. Bind
+    # their VEX statements to Docker's immutable image-config ID instead.
+    $imageDigest = [string]$image.Id
+    $imageName = $ImageRef -replace ':[^/:]+$', ''
+    $imageDigestKind = "local-image-config-digest"
+    if ($imageDigest -notmatch '^sha256:[0-9a-f]{64}$' -or -not $imageName) {
+        throw "Image '$ImageRef' has no valid immutable registry digest or local image ID."
+    }
 }
-$imageName = $Matches.name
-$imageDigest = $Matches.digest
 $imagePurl = "pkg:docker/$imageName@$imageDigest"
 $vex = Get-Content -Raw -LiteralPath $vexFullPath | ConvertFrom-Json
 $author = [string]$vex.author
 if (-not $author) { throw "OpenVEX document must name its author." }
-$productMatches = @(
-    foreach ($statement in $vex.statements) {
-        foreach ($product in $statement.products) {
-            if ($product.'@id' -eq $imagePurl) { $product }
-        }
+$expectedVulnerabilities = @("CVE-2026-107891", "CVE-2026-119586")
+$vexStatements = @($vex.statements)
+$statementVulnerabilities = @($vexStatements | ForEach-Object { [string]$_.vulnerability.name })
+if (
+    $statementVulnerabilities.Count -ne $expectedVulnerabilities.Count -or
+    (@($statementVulnerabilities | Sort-Object) -join ",") -ne
+    (@($expectedVulnerabilities | Sort-Object) -join ",")
+) {
+    throw "OpenVEX must contain exactly the reviewed vulnerability statements."
+}
+foreach ($statement in $vexStatements) {
+    if ($statement.status -ne "not_affected" -or $statement.justification -ne "vulnerable_code_not_present") {
+        throw "OpenVEX statements must explicitly justify that vulnerable code is not present."
     }
-)
-if ($productMatches.Count -ne 1) {
-    throw "OpenVEX must bind exactly once to this image digest: $imagePurl"
+    $productMatches = @($statement.products | Where-Object { $_.'@id' -eq $imagePurl })
+    if ($productMatches.Count -ne 1) {
+        throw "OpenVEX must bind each vulnerability exactly once to this image digest: $imagePurl"
+    }
 }
 
 $rawReport = Join-Path $evidenceRoot "docker-scout-raw.sarif.json"
@@ -85,9 +103,28 @@ function Read-SarifFindings([string]$Path) {
 
 $rawFindings = @(Read-SarifFindings $rawReport)
 $vexFindings = @(Read-SarifFindings $vexReport)
-$expectedPackage = "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"
-if ($rawFindings.Count -gt 1 -or ($rawFindings.Count -eq 1 -and ($rawFindings[0].id -ne "CVE-2026-107891" -or $rawFindings[0].package -ne $expectedPackage))) {
-    throw "Raw scan has findings beyond the reviewed Alpine backport; review $rawReport before accepting this image."
+$expectedFindings = @(
+    [pscustomobject]@{
+        id = "CVE-2026-107891"
+        package = "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"
+    }
+    [pscustomobject]@{
+        id = "CVE-2026-119586"
+        package = "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"
+    }
+)
+if ($rawFindings.Count -ne $expectedFindings.Count) {
+    throw "Raw scan finding count differs from the reviewed set; review $rawReport before accepting this image."
+}
+foreach ($expectedFinding in $expectedFindings) {
+    $matchingFindings = @(
+        $rawFindings | Where-Object {
+            $_.id -eq $expectedFinding.id -and $_.package -eq $expectedFinding.package
+        }
+    )
+    if ($matchingFindings.Count -ne 1) {
+        throw "Raw scan does not match the reviewed finding $($expectedFinding.id); review $rawReport."
+    }
 }
 if ($vexFindings.Count -ne 0) {
     throw "Docker Scout still reports vulnerabilities after applying the digest-bound VEX; review $vexReport."
@@ -108,6 +145,7 @@ $summary = [ordered]@{
     image_ref = $ImageRef
     image_id = [string]$image.Id
     image_digest = [string]$imageDigest
+    image_digest_kind = $imageDigestKind
     image_purl = $imagePurl
     scout_vex_author = $author
     vex_path = [IO.Path]::GetRelativePath($repoRoot, $vexFullPath)
@@ -115,7 +153,10 @@ $summary = [ordered]@{
     vex_evidence_file = $vexEvidence
     raw_findings = $rawFindings
     vex_findings = $vexFindings
-    vex_suppressed_reviewed_backport = ($rawFindings.Count -eq 1)
+    vex_suppressed_reviewed_findings = $rawFindings.Count
+    security_review_required = $true
+    security_review_accepted = $false
+    release_security_gate_closed = $false
     raw_sarif = $rawReport
     vex_sarif = $vexReport
 }

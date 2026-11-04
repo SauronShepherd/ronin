@@ -2,17 +2,25 @@
   "@context": "https://openvex.dev/ns/v0.2.0",
   "@id": "https://github.com/SauronShepherd/ronin/blob/20261029/docker/qualification-image-vex.openvex.json",
   "author": "Ronin release qualification",
-  "timestamp": "2026-11-03T16:47:12Z",
-  "version": 1,
+  "timestamp": "2026-11-04T19:00:31Z",
+  "version": 2,
   "statements": [
     {
       "vulnerability": {
         "name": "CVE-2026-107891"
       },
-      "timestamp": "2026-11-03T15:53:00Z",
+      "timestamp": "2026-11-04T19:00:31Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:fb9029dad0d8d5aade4bb5809c8a4e027f416a158fedc633c65667d0b21b01b8",
+          "@id": "pkg:docker/ronin@sha256:27944d09ca62ea22524eb599208aed25d82d17e90c1d145d9bc5c9e29aae1665",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"
+            }
+          ]
+        },
+        {
+          "@id": "pkg:docker/ronin-probe@sha256:0ffdc4eca3c4e5ee6057eaf3a7bd2a14e4e36d558084622b1f558f9541b40c61",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"
@@ -22,7 +30,34 @@
       ],
       "status": "not_affected",
       "justification": "vulnerable_code_not_present",
-      "impact_statement": "The Alpine Security Tracker marks musl 1.2.6-r3 on the 3.24-main branch fixed for CVE-2026-107891. Docker Scout generic version matching reports upstream fixed version 1.2.6-r6 and does not account for Alpine's branch-specific backport. Source: https://security.alpinelinux.org/vuln/CVE-2026-107891"
+      "impact_statement": "Alpine 3.24.3 includes the musl fix for this branch. Docker Scout reports the generic upstream fixed version and does not account for Alpine's branch-specific backport. Source: https://security.alpinelinux.org/vuln/CVE-2026-107891"
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-119586"
+      },
+      "timestamp": "2026-11-04T19:00:31Z",
+      "products": [
+        {
+          "@id": "pkg:docker/ronin@sha256:27944d09ca62ea22524eb599208aed25d82d17e90c1d145d9bc5c9e29aae1665",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"
+            }
+          ]
+        },
+        {
+          "@id": "pkg:docker/ronin-probe@sha256:0ffdc4eca3c4e5ee6057eaf3a7bd2a14e4e36d558084622b1f558f9541b40c61",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "The advisory is specific to command injection in the SQLite command-line shell's .recover output. Both images contain sqlite-libs but no sqlite package or sqlite3 executable; Python's SQLite library remains available. The CLI-only vulnerable code is absent. This exact-image assessment requires security reviewer acceptance. Sources: https://github.com/sqlite/sqlite/blob/version-3.54.1/src/shell.c.in and https://www.sqlite.org/cli.html"
     }
   ]
 }

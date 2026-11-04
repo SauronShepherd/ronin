@@ -645,3 +645,63 @@ cualificación también es diagnóstica, no candidate-bound: el paquete sigue en
 abiertos los journeys y revisiones manuales de las familias. Public v1 continúa
 **INCOMPLETE, 0/13 (0%, NO-GO)**; no se añadió CI, GenAI integrado ni
 multiusuario.
+
+## 60. Seguridad de artefactos, VEX e historial de secretos (2026-11-04)
+
+El SHA limpio `f8894defa1a21baaedbcc8bc65daae64f56401fb` se compiló dos veces:
+wheel `sha256:a54a72e1256590b801abd7020c8b90870ff05ebb4c8f2c54e95ed85dda63fb7a`
+y sdist normalizado `sha256:ae647986c6dcd5f9757da6b733f3c6e4d3de756be5d3a2873d95600ce2c17a63`,
+ambos reproducibles. Runtime y probe construidos desde ese SHA tienen IDs
+Docker `sha256:27944d09ca62ea22524eb599208aed25d82d17e90c1d145d9bc5c9e29aae1665`
+y `sha256:0ffdc4eca3c4e5ee6057eaf3a7bd2a14e4e36d558084622b1f558f9541b40c61`.
+Se guardaron TARs, SBOMs CycloneDX Trivy, identidad, SBOM de release y
+provenance local en `%TEMP%\ronin-supply-chain-f8894de-20261104`. Esa
+provenance declara un builder local no confiable y no está firmada.
+
+Docker Scout 1.27.0 detectó en las dos imágenes las mismas dos entradas: el
+backport musl `CVE-2026-107891` y un HIGH `CVE-2026-119586` atribuido a
+SQLite `3.53.4-r0`. La segunda CVE afecta al shell CLI de SQLite y a su salida
+`.recover`; la vulnerabilidad descrita está en el programa shell, no en la
+interfaz SQLite de Python ([registro CVE](https://nvd.nist.gov/vuln/detail/CVE-2026-119586),
+[documentación oficial del CLI](https://www.sqlite.org/cli.html)). En runtime y
+probe se comprobó que está instalado `sqlite-libs`, que no están instalados el
+paquete `sqlite` ni el ejecutable `sqlite3`, y que Python conserva su biblioteca
+SQLite (`3.53.4`). La afirmación VEX `vulnerable_code_not_present` está ligada a
+los IDs exactos de ambas imágenes. El runner real dio **2 hallazgos raw → 0
+tras VEX** para runtime y probe. La excepción musl apunta al tracker de Alpine
+para 3.24.3. El verificador ahora valida ambos PURL/CVE exactos y soporta IDs
+de configuración local cuando no hay manifest digest de registry.
+
+Esta supresión es una evaluación técnica, **no aprobación del revisor**: ambos
+recibos fijan `security_review_required=true`, `security_review_accepted=false`
+y `release_security_gate_closed=false`. El gate de seguridad sigue abierto
+hasta aceptación humana de VEX y revisión de los artefactos finales.
+
+pip-audit 2.10.1, sin resolver ni reinstalar, auditó con hashes y modo estricto
+los locks `requirements-test` (101 distribuciones), runtime (3) y bootstrap
+(1); los tres dieron cero advisories conocidos. Gitleaks 8.30.1 dio cero en el
+árbol actual (74,58 MB) y cero en los filesystems extraídos del runtime
+(142.985.617 bytes) y probe (108.789.396 bytes). Gitleaks procesó 1.899 commits
+con `--all --full-history -p` en el clon completo de `20261029` y detectó
+cuatro fingerprints `generic-api-key`:
+la clave pública documentada del emulador Azurite, una clave de idempotencia de
+test y dos tokens fijos de tests HTTP. Se añadieron sus fingerprints exactos
+(commit/ruta/regla/línea) a `.gitleaksignore`; no se permiten patrones globales.
+Con esas cuatro supresiones exactas el mismo historial volvió a dar cero. La
+clasificación está anotada aquí; no se infieren credenciales remotas reales.
+
+Trivy 0.76.1 sí produjo los SBOMs, pero no completó el escaneo vuln porque la
+descarga de su base CVE quedó pendiente; su escaneo secret tampoco terminó. No
+se cuentan como PASS y los informes Scout/Gitleaks anteriores cubren solo sus
+respectivos alcances. La cualificación legal `license_qualification.py` para
+Python 3.13 sigue fallando cerradamente porque faltan decisiones revisadas para
+30 distribuciones de `requirements-dev.lock`; no se inventaron approvals. Los
+recibos y logs están bajo `%TEMP%\ronin-supply-chain-f8894de-20261104`, y los
+dos runners VEX bajo `%TEMP%\ronin-vex-f8894de-runtime-20261104` y
+`%TEMP%\ronin-vex-f8894de-probe-20261104`.
+
+Todo lo anterior es diagnóstico de `f8894de`, no un candidato congelado. La
+revisión manual visual, aprobación de versión/claims/licencias/VEX, journeys
+completos y validación exact-candidate siguen pendientes. Public v1 continúa
+**INCOMPLETE, 0/13 (0%, NO-GO)**. No se añadió CI, GenAI integrado ni
+multiusuario.

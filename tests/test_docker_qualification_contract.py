@@ -92,30 +92,67 @@ def test_docker_and_postgres_qualifications_share_the_hash_locked_test_environme
 def test_docker_vex_scan_is_digest_bound_and_uses_an_explicit_author() -> None:
     vex = json.loads((ROOT / "docker" / "qualification-image-vex.openvex.json").read_text())
     script = (ROOT / "tools" / "verify_docker_vex.ps1").read_text(encoding="utf-8")
-    statement = vex["statements"][0]
-    product = statement["products"][0]
+    statements = {item["vulnerability"]["name"]: item for item in vex["statements"]}
 
     assert vex["author"] == "Ronin release qualification"
-    assert statement["vulnerability"]["name"] == "CVE-2026-107891"
-    assert statement["status"] == "not_affected"
-    assert statement["justification"] == "vulnerable_code_not_present"
-    assert "security.alpinelinux.org/vuln/CVE-2026-107891" in statement["impact_statement"]
-    assert re.fullmatch(r"pkg:docker/ronin@sha256:[0-9a-f]{64}", product["@id"])
-    assert product["subcomponents"] == [
-        {"@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"}
-    ]
+    assert set(statements) == {"CVE-2026-107891", "CVE-2026-119586"}
+    for statement in statements.values():
+        assert statement["status"] == "not_affected"
+        assert statement["justification"] == "vulnerable_code_not_present"
+        assert len(statement["products"]) == 2
+        assert {product["@id"].split("@", maxsplit=1)[0] for product in statement["products"]} == {
+            "pkg:docker/ronin",
+            "pkg:docker/ronin-probe",
+        }
+        assert all(
+            re.fullmatch(r"pkg:docker/[^@]+@sha256:[0-9a-f]{64}", product["@id"])
+            for product in statement["products"]
+        )
+    musl = statements["CVE-2026-107891"]
+    assert "security.alpinelinux.org/vuln/CVE-2026-107891" in musl["impact_statement"]
+    assert all(
+        product["subcomponents"]
+        == [{"@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"}]
+        for product in musl["products"]
+    )
+    sqlite = statements["CVE-2026-119586"]
+    assert "sqlite3 executable" in sqlite["impact_statement"]
+    assert "command-line shell" in sqlite["impact_statement"]
+    assert all(
+        product["subcomponents"]
+        == [{"@id": "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"}]
+        for product in sqlite["products"]
+    )
     assert "--vex-author $author" in script
-    assert "VEX evidence must be bound to a digest" in script
+    assert "valid immutable registry digest or local image ID" in script
     assert "Docker Scout version" in script
     assert "worktree_clean = ($gitStatus.Count -eq 0)" in script
     assert '"qualification-image-vex.openvex.json"' in script
     assert "Copy-Item -LiteralPath $vexFullPath -Destination $vexEvidence" in script
     assert "vex_sha256 = $vexSha256" in script
-    assert '"CVE-2026-107891"' in script
+    assert "local-image-config-digest" in script
+    assert '"CVE-2026-107891", "CVE-2026-119586"' in script
     assert "if ($productMatches.Count -ne 1)" in script
-    assert "if ($rawFindings.Count -gt 1" in script
+    assert "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24" in script
+    assert "if ($rawFindings.Count -ne $expectedFindings.Count)" in script
     assert "if ($vexFindings.Count -ne 0)" in script
+    assert "security_review_required = $true" in script
+    assert "release_security_gate_closed = $false" in script
     assert "VEX scan" in script
+
+
+def test_gitleaks_allowlist_is_limited_to_reviewed_historical_fingerprints() -> None:
+    entries = (ROOT / ".gitleaksignore").read_text(encoding="utf-8").splitlines()
+
+    assert len(entries) == 4
+    assert all(
+        re.fullmatch(r"[0-9a-f]{40}:[^:*]+:generic-api-key:[1-9][0-9]*", entry) for entry in entries
+    )
+    assert {entry.split(":", maxsplit=3)[1] for entry in entries} == {
+        "tools/run_docker_qualification.ps1",
+        "tests/test_s3_json_connector.py",
+        "tests/e2e/test_v01_journey.py",
+    }
 
 
 def test_local_docker_qualification_runs_real_s3_profiles_with_isolated_cleanup() -> None:
