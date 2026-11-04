@@ -39,6 +39,7 @@ from studio_storage import (
     ArtifactRef,
     LocalArtifactStore,
     PostgresSchedulerSnapshotStore,
+    SqliteAuditStore,
     SqliteCatalogStore,
 )
 from studio_storage.local_files import LocalFileConnector
@@ -203,6 +204,64 @@ def test_build_local_composed_from_env_creates_two_surface_composition(
     assert workspace.name == "Local workspace"
     assert composition.control_plane_server.plugin_routes_enabled
     composition.stop()
+
+
+def test_local_composed_persists_project_mutations_to_the_audit_store(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PLUGIN_API", "legacy")
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS",
+        "workspace.read,workspace.write,project.read,project.write",
+    )
+    composition = build_local_composed_from_env()
+    audit_store = SqliteAuditStore(
+        tmp_path / "ronin.sqlite3", migration_now=Instant("2026-10-17T00:00:00.000000Z")
+    )
+    manifest = ProjectManifest.from_project(
+        Project(
+            ProjectId("audit-project"),
+            "Audit project",
+            (RepositoryBinding("code", "https://example.test/repo.git", role="primary"),),
+            ExecutionProfile(runtime=RuntimeProfileRef("python", "3.11")),
+        )
+    )
+    server = composition.control_plane_server
+    try:
+        composition.start()
+        connection = http.client.HTTPConnection(*server.server_address, timeout=5)
+        try:
+            connection.request(
+                "POST",
+                "/v1/workspaces/workspace-1/projects",
+                body=json.dumps(manifest.to_data()).encode("utf-8"),
+                headers={
+                    "Authorization": "Bearer control-token",
+                    "Content-Type": "application/json",
+                    "Idempotency-Key": "audit-project-create",
+                },
+            )
+            response = connection.getresponse()
+            payload = json.loads(response.read().decode("utf-8"))
+        finally:
+            connection.close()
+
+        assert response.status in {200, 201}, payload
+        events = audit_store.list_for_resource(
+            WorkspaceId("workspace-1"),
+            resource_kind="workspace_resource",
+            resource_ref="workspace-1/audit-project",
+        )
+        assert len(events) == 1
+        assert events[0].action == "project.register"
+        assert events[0].outcome == "succeeded"
+        assert events[0].actor.ref
+    finally:
+        composition.stop()
 
 
 def test_local_composed_data_engineering_health_and_debugger_routes_are_live(

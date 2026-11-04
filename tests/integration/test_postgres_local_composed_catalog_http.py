@@ -15,15 +15,22 @@ from studio_core import (
     AssetVersion,
     CatalogAsset,
     DataContract,
+    ExecutionProfile,
     LineageEdge,
     OwnershipMetadata,
+    Project,
+    ProjectId,
+    ProjectManifest,
     QualityRule,
     QualityRuleId,
+    RepositoryBinding,
+    RuntimeProfileRef,
     SensitivityMetadata,
     WorkspaceId,
 )
 from studio_observability import AlertRule, SqliteTelemetryStore
 from studio_orchestrator import Instant
+from studio_storage import PostgresAuditStore
 
 _DSN = os.environ.get("RONIN_TEST_POSTGRES_DSN")
 if not _DSN:
@@ -66,6 +73,7 @@ def test_postgres_composition_serves_catalog_and_governance_over_real_http(
     monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
     monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
     monkeypatch.setenv("RONIN_CONTROL_PLANE_TOKEN", "postgres-catalog-http-test")
+    monkeypatch.setenv("RONIN_PLUGIN_API", "legacy")
     monkeypatch.setenv(
         "RONIN_CONTROL_PLANE_PERMISSIONS",
         "scheduler.read,scheduler.write,workspace.read,workspace.write,workspace.admin,project.read,project.write",
@@ -115,6 +123,36 @@ def test_postgres_composition_serves_catalog_and_governance_over_real_http(
         telemetry = SqliteTelemetryStore(tmp_path / "ronin.sqlite3")
         telemetry.put_alert_rule(alert_rule)
         composition.start()
+
+        project_id = ProjectId(f"audit-project-{uuid4().hex}")
+        project_manifest = ProjectManifest.from_project(
+            Project(
+                project_id,
+                "PostgreSQL audit project",
+                (
+                    RepositoryBinding(
+                        "code", "https://example.test/team/project.git", role="primary"
+                    ),
+                ),
+                ExecutionProfile(runtime=RuntimeProfileRef("python", "3.11")),
+            )
+        )
+        status, project_payload = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{workspace_text}/projects",
+            body=project_manifest.to_data(),
+        )
+        assert status == 201, project_payload
+        audit_store = PostgresAuditStore(_DSN, application_name="ronin-audit-http-assertion")
+        project_events = audit_store.list_for_resource(
+            workspace_id,
+            resource_kind="workspace_resource",
+            resource_ref=f"{workspace_text}/{project_id}",
+        )
+        assert len(project_events) == 1
+        assert project_events[0].action == "project.register"
+        assert project_events[0].outcome == "succeeded"
 
         status, payload = _request(
             address,

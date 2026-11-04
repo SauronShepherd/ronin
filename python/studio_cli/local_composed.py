@@ -70,7 +70,7 @@ from studio_observability import (
 from studio_orchestrator import Instant, LeaseToken
 from studio_plugin_observability import LocalObservabilityBuffer
 from studio_runtime import PluginAuditSink, PluginHost, PluginLock, PluginLockError
-from studio_security import Permission
+from studio_security import Actor, Permission, mutation_audit_event
 from studio_semantic import ProjectScopedSemanticRuntime, SemanticHTTPAdapter, SqliteSemanticStore
 from studio_server import (
     LocalServerComposition,
@@ -405,6 +405,24 @@ def build_local_composed_from_env() -> LocalServerComposition:
         if postgres_dsn is not None
         else SqliteAuditStore(database, migration_now=now)
     )
+
+    def audit_mutation(
+        actor: Actor,
+        action: str,
+        scoped_workspace_id: WorkspaceId,
+        metadata: dict[str, object],
+    ) -> None:
+        resource_ref = metadata.get("resource", str(scoped_workspace_id))
+        event = mutation_audit_event(
+            actor,
+            workspace_id=str(scoped_workspace_id),
+            action=action,
+            resource_ref=str(resource_ref),
+            metadata=metadata,
+            now=scheduler_clock(),
+        )
+        audit_store.append(scoped_workspace_id, event)
+
     observability_buffer = LocalObservabilityBuffer()
     ml_lab_store = (
         PostgresMLLabStore(postgres_dsn, application_name="ronin-composed-ml")
@@ -629,6 +647,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
             plugin_host=plugin_host,
             plugin_routes_enabled=plugin_routes_enabled,
             default_workspace_id=workspace_id,
+            audit_mutation=audit_mutation,
         )
     except Exception:
         if sql_reader is not None:
