@@ -523,3 +523,38 @@ workspace-scoped ni resuelve secrets Git. `fast-forward` permanece rechazado
 por el worker hasta implementar un checkout administrado que preserve la
 semántica de no reescritura. P1 sigue **OPEN**; release permanece **0/13 (0%,
 NO-GO)**. No se introduce GenAI, multiusuario ni CI.
+
+## 57. Política `fast-forward` en el worker y calificación Docker (2026-11-04)
+
+La afirmación final de §56 sobre `fast-forward` quedó obsoleta con el commit
+`e2cf983890467176806803ada2f8553412d50100`. El worker ya admite `manual`,
+`fetch` y `fast-forward`. Para `fast-forward`, valida que el checkout registrado
+esté limpio, en una rama local adjunta, y ligado al repositorio y subdirectorio
+declarados; clona esa rama en un directorio temporal aislado, aplica el avance
+remoto mediante `git merge --ff-only`, y lee el manifest y notebook desde ese
+snapshot. El checkout registrado del usuario no se mueve. La identidad durable
+incluye el commit ejecutado y la política declarada. Rechaza estado sucio,
+detached HEAD, binding discordante, divergencia o manifiesto remoto con otro
+binding; limpia el checkout aislado al terminar.
+
+Evidencia del cambio:
+
+- Suite focalizada de Git, preparación, contratos, worker y HTTP: **72 passed,
+  3 skipped**. Dos skips son comprobaciones de symlink que requieren privilegios
+  de Windows; uno es el caso Docker opt-in que se ejecutó por separado.
+- mypy: **4 módulos sin incidencias**; Ruff check/formato y `git diff --check`
+  pasaron antes del commit.
+- En el SHA limpio `e2cf983890467176806803ada2f8553412d50100`, Docker ejecutó el
+  worker tanto en contenedor limpio como con PostgreSQL efímero: **2 passed, 0
+  skipped**, imagen `sha256:f61a1887ade938308245a6f79839a55a239c598ac2f0c93d5f197b070cbf8244`;
+  recibo `%TEMP%\ronin-ff-policy-worker-docker-e2cf983-retry`. Es un filtro
+  diagnóstico y no ejecuta la aceptación estricta completa.
+
+Limitaciones vigentes: `auth_ref` aún no se materializa como credenciales
+workspace-scoped del worker y fetch/fast-forward sólo están cualificados con
+remotos accesibles sin autenticación. Esta evidencia tampoco completa los
+journeys de producto, compatibilidad de providers ni gates de las otras familias.
+P1 continúa **OPEN**; no se cierra ninguna familia y Public v1 sigue **0/13
+(0%, NO-GO)**. La implementación global continúa no calculable y la racha de
+revisiones integrales limpias sigue **0/10** tras este cambio. No se añadió CI,
+GenAI integrado ni multiusuario.
