@@ -3543,3 +3543,25 @@ un ratchet explícito.
 La suite integral PostgreSQL y la qualification Docker siguen pendientes por la
 disponibilidad del engine. Estos checks locales no sustituyen esos gates ni
 cambian la recomendación **NO-GO**.
+
+## 89. Corregir respuestas tardías de Synthetic Studio — 4/11/2026
+
+La suite estática de UI del candidato `849529e5` pasó **106/106**, pero su
+barrido de navegación registró una excepción que no hacía fallar el test:
+Synthetic Studio intentaba escribir resultados tras haber cambiado de ruta. La
+causa era una petición de catálogo pendiente durante el `hashchange`. Se añadieron
+revisiones de render y catálogo para descartar respuestas obsoletas, guardas para
+los resultados de generación/export/lineage y un test que libera deliberadamente
+la respuesta después de navegar fuera de la ruta. El recorrido responsive completo
+y la regresión de carrera pasaron **2/2**; los cinco tests focales de Synthetic,
+incluidos generación, exportación y cancelación, pasaron **5/5**. El harness de
+traversal ahora falla ante excepciones JavaScript no capturadas en vez de solo
+imprimirlas.
+
+El fix añade 1.712 bytes a la descarga web (0,09% sobre el ratchet anterior); no
+añade requests, módulos, CSS ni HTML. Se actualizó el baseline a la medición real
+del fix, y las regresiones futuras siguen rechazándose. La repetición completa de
+107 casos, empaquetado y audit de accesibilidad del nuevo SHA quedan como los
+siguientes recibos de candidato; no se debe usar el resultado de `849529e5` para
+aprobarlos. El gate release sigue **NO-GO** por Docker/PostgreSQL, policy de
+licencias y decisiones de versión/claims.

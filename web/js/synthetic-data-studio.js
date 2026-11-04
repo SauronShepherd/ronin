@@ -6,8 +6,11 @@ const scoped = (path) => path.includes('workspace_id=') ? path : `${path}${path.
 const get = (path) => apiGet(scoped(path));
 const post = (path, body) => apiPost(scoped(path), body);
 let lastGeneration = null;
+let renderRevision = 0;
+let catalogRequestRevision = 0;
 
 async function renderSyntheticDataStudio() {
+  const revision = ++renderRevision;
   if (location.hash !== '#synthetic') return;
   const view = document.querySelector('#view');
   if (!view) return;
@@ -35,52 +38,67 @@ async function renderSyntheticDataStudio() {
         <h2>Governance boundary</h2><p class="muted">Synthetic output is not automatically classified as anonymous or privacy-preserving.</p>
       </section>
     </div>`;
+  const providersTarget = view.querySelector('#synthetic-studio-providers');
+  const assetsTarget = view.querySelector('#synthetic-studio-assets');
+  const runsTarget = view.querySelector('#synthetic-studio-runs');
+  const isCurrent = () => revision === renderRevision && location.hash === '#synthetic' && view === document.querySelector('#view');
   try {
     const providers = await get('/v1/synthetic-data-studio/catalog/providers');
-    document.querySelector('#synthetic-studio-providers').innerHTML = `<p class="muted">Mode: ${esc(providers.mode)} · external connections: ${providers.external_connections ? 'enabled' : 'disabled'}</p>` +
+    if (!isCurrent()) return;
+    providersTarget.innerHTML = `<p class="muted">Mode: ${esc(providers.mode)} · external connections: ${providers.external_connections ? 'enabled' : 'disabled'}</p>` +
       (providers.items || []).map((item) => `<span class="tag">${esc(item.display_name)}</span> `).join('');
   } catch (error) {
-    document.querySelector('#synthetic-studio-providers').innerHTML = `<p class="muted">Catalog profiles unavailable: ${esc(error.message)}</p>`;
+    if (!isCurrent()) return;
+    providersTarget.innerHTML = `<p class="muted">Catalog profiles unavailable: ${esc(error.message)}</p>`;
   }
   try {
-    await loadCatalogAssets();
+    await loadCatalogAssets('', revision, view);
   } catch (error) {
-    document.querySelector('#synthetic-studio-assets').innerHTML = `<p class="muted">Catalog unavailable: ${esc(error.message)}</p>`;
+    if (!isCurrent()) return;
+    assetsTarget.innerHTML = `<p class="muted">Catalog unavailable: ${esc(error.message)}</p>`;
   }
-  document.querySelector('#synthetic-studio-catalog-search').addEventListener('submit', async (event) => {
+  if (!isCurrent()) return;
+  view.querySelector('#synthetic-studio-catalog-search').addEventListener('submit', async (event) => {
     event.preventDefault();
-    await loadCatalogAssets(document.querySelector('#synthetic-studio-search').value);
+    await loadCatalogAssets(view.querySelector('#synthetic-studio-search').value, revision, view);
   });
   try {
     const runs = await get('/v1/synthetic-data-studio/runs');
-    document.querySelector('#synthetic-studio-runs').innerHTML = (runs.items || []).map((run) =>
+    if (!isCurrent()) return;
+    runsTarget.innerHTML = (runs.items || []).map((run) =>
       `<p><strong>${esc(run.run_id)}</strong><br><span class="muted">${esc(run.status)}</span></p>`
     ).join('') || '<p class="muted">No runs yet.</p>';
   } catch (error) {
-    document.querySelector('#synthetic-studio-runs').innerHTML = `<p class="muted">Runs unavailable: ${esc(error.message)}</p>`;
+    if (!isCurrent()) return;
+    runsTarget.innerHTML = `<p class="muted">Runs unavailable: ${esc(error.message)}</p>`;
   }
-  document.querySelector('#synthetic-studio-form').addEventListener('submit', async (event) => {
+  if (!isCurrent()) return;
+  view.querySelector('#synthetic-studio-form').addEventListener('submit', async (event) => {
     event.preventDefault();
-    const output = document.querySelector('#synthetic-studio-result');
+    const output = view.querySelector('#synthetic-studio-result');
     try {
-      const plan = JSON.parse(document.querySelector('#synthetic-studio-plan').value);
-      lastGeneration = await post('/v1/synthetic-data-studio/generate', {plan});
+      const plan = JSON.parse(view.querySelector('#synthetic-studio-plan').value);
+      const generation = await post('/v1/synthetic-data-studio/generate', {plan});
+      if (!isCurrent() || !output.isConnected) return;
+      lastGeneration = generation;
       output.textContent = JSON.stringify(lastGeneration, null, 2);
-      await prepareExport(lastGeneration);
+      await prepareExport(lastGeneration, isCurrent);
     } catch (error) {
+      if (!isCurrent() || !output.isConnected) return;
       output.textContent = `Generation failed: ${error.message}`;
     }
   });
 }
 
-async function prepareExport(generation) {
+async function prepareExport(generation, isCurrent) {
   const tables = (generation.tables || []).map((table) => table.name);
   const tableSelect = document.querySelector('#synthetic-studio-table');
   const formatSelect = document.querySelector('#synthetic-studio-format');
   const panel = document.querySelector('#synthetic-studio-export');
-  if (!generation.run_id || !tables.length || !tableSelect || !formatSelect || !panel) return;
+  if (!generation.run_id || !tables.length || !tableSelect || !formatSelect || !panel || !isCurrent()) return;
   tableSelect.innerHTML = tables.map((name) => `<option value="${esc(name)}">${esc(name)}</option>`).join('');
   const formats = await get('/v1/synthetic-data-studio/formats');
+  if (!isCurrent() || !tableSelect.isConnected || !formatSelect.isConnected || !panel.isConnected) return;
   // The plugin contract uses `ready`/`optional_missing`; never expose an
   // optional table provider as writable until its dependency is installed.
   const available = (formats || []).filter((item) => item.status === 'ready');
@@ -89,34 +107,46 @@ async function prepareExport(generation) {
 }
 
 document.addEventListener('click', async (event) => {
-  if (!event.target.closest('#synthetic-studio-export-button') || !lastGeneration) return;
+  if (!(event.target instanceof Element) || !event.target.closest('#synthetic-studio-export-button') || !lastGeneration || location.hash !== '#synthetic') return;
   const output = document.querySelector('#synthetic-studio-result');
+  const tableSelect = document.querySelector('#synthetic-studio-table');
+  const formatSelect = document.querySelector('#synthetic-studio-format');
+  if (!output || !tableSelect || !formatSelect) return;
   try {
     const content = await post('/v1/synthetic-data-studio/export', {
       run_id: lastGeneration.run_id,
-      table: document.querySelector('#synthetic-studio-table').value,
-      format_id: document.querySelector('#synthetic-studio-format').value,
+      table: tableSelect.value,
+      format_id: formatSelect.value,
     });
+    if (!output.isConnected || location.hash !== '#synthetic') return;
     output.textContent = JSON.stringify(content, null, 2);
   } catch (error) {
+    if (!output.isConnected || location.hash !== '#synthetic') return;
     output.textContent = `Export failed: ${error.message}`;
   }
 });
 
-async function loadCatalogAssets(search = '') {
+async function loadCatalogAssets(search = '', renderGeneration = renderRevision, view = document.querySelector('#view')) {
+  const requestRevision = ++catalogRequestRevision;
+  const target = view?.querySelector('#synthetic-studio-assets');
+  const isCurrent = () => renderGeneration === renderRevision && requestRevision === catalogRequestRevision && location.hash === '#synthetic' && Boolean(target?.isConnected);
+  if (!target || !isCurrent()) return;
   const params = new URLSearchParams({workspace_id: workspace()});
   if (search.trim()) params.set('search', search.trim());
   try {
     const data = await get(`/v1/synthetic-data-studio/catalog/assets?${params}`);
-    document.querySelector('#synthetic-studio-assets').innerHTML = (data.items || []).map((asset) =>
+    if (!isCurrent()) return;
+    target.innerHTML = (data.items || []).map((asset) =>
       `<p><strong>${esc(asset.name)}</strong><br><span class="muted">${esc(asset.id)}</span><br><button class="button" data-sds-lineage="${esc(asset.id)}">View lineage</button> <button class="button" data-sds-revisions="${esc(asset.id)}">Versions</button></p>`
     ).join('') || '<p class="muted">No matching assets visible.</p>';
   } catch (error) {
-    document.querySelector('#synthetic-studio-assets').innerHTML = `<p class="muted">Catalog unavailable: ${esc(error.message)}</p>`;
+    if (!isCurrent()) return;
+    target.innerHTML = `<p class="muted">Catalog unavailable: ${esc(error.message)}</p>`;
   }
 }
 
 document.addEventListener('click', async (event) => {
+  if (!(event.target instanceof Element) || location.hash !== '#synthetic') return;
   const button = event.target.closest('[data-sds-lineage]');
   const revisions = event.target.closest('[data-sds-revisions]');
   if (!button && !revisions) return;
@@ -127,8 +157,10 @@ document.addEventListener('click', async (event) => {
       ? `/v1/synthetic-data-studio/catalog/assets/${encodeURIComponent(assetId)}/lineage?workspace_id=${encodeURIComponent(workspace())}&version=1`
       : `/v1/synthetic-data-studio/catalog/assets/${encodeURIComponent(assetId)}/revisions?workspace_id=${encodeURIComponent(workspace())}`;
     const data = await get(endpoint);
+    if (!output?.isConnected || location.hash !== '#synthetic') return;
     output.textContent = JSON.stringify(data, null, 2);
   } catch (error) {
+    if (!output?.isConnected || location.hash !== '#synthetic') return;
     output.textContent = `Lineage unavailable: ${error.message}`;
   }
 });

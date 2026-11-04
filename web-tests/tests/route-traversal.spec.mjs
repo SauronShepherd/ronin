@@ -6,9 +6,12 @@ const staticOrigin = new URL(process.env.RONIN_STUDIO_E2E_URL || 'http://127.0.0
 
 test.describe('Studio route traversal', () => {
   test.beforeEach(async ({ page }) => {
-    const diagnostics = { unexpectedResponses: [], failedRequests: [], staticApiMisses: new Set() };
+    const diagnostics = { unexpectedResponses: [], failedRequests: [], pageErrors: [], staticApiMisses: new Set() };
     diagnosticsByPage.set(page, diagnostics);
-    page.on('pageerror', error => console.error(`[browser pageerror] ${error.stack || error.message}`));
+    page.on('pageerror', error => {
+      diagnostics.pageErrors.push(error.stack || error.message);
+      console.error(`[browser pageerror] ${error.stack || error.message}`);
+    });
     page.on('console', message => {
       if (
         message.type() === 'error' &&
@@ -47,6 +50,7 @@ test.describe('Studio route traversal', () => {
     const diagnostics = diagnosticsByPage.get(page);
     expect(diagnostics.unexpectedResponses, 'unexpected failed static resources').toEqual([]);
     expect(diagnostics.failedRequests, 'failed browser network requests').toEqual([]);
+    expect(diagnostics.pageErrors, 'uncaught browser exceptions').toEqual([]);
   });
 
   for (const route of routes) {
@@ -61,6 +65,29 @@ test.describe('Studio route traversal', () => {
       await expect(page.locator('body')).not.toContainText('undefined');
     });
   }
+
+  test('synthetic ignores an API response that arrives after leaving the route', async ({ page }) => {
+    let markRequestStarted;
+    let releaseResponse;
+    const requestStarted = new Promise(resolve => { markRequestStarted = resolve; });
+    const heldResponse = new Promise(resolve => { releaseResponse = resolve; });
+    await page.route('**/v1/synthetic-data-studio/catalog/providers**', async route => {
+      markRequestStarted();
+      await heldResponse;
+      await route.fulfill({ json: { mode: 'local', external_connections: false, items: [] } });
+    });
+
+    await page.goto('./#synthetic', { waitUntil: 'load' });
+    await requestStarted;
+    const responseReceived = page.waitForResponse(response =>
+      new URL(response.url()).pathname === '/v1/synthetic-data-studio/catalog/providers',
+    );
+    await page.locator('#rail .nav-item[href="#home"]').click();
+    releaseResponse();
+    await responseReceived;
+    await expect(page).toHaveURL(/#home$/);
+    await expect(page.locator('#breadcrumb')).toContainText('Overview');
+  });
 
   test('full navigation and responsive sweep stay usable', async ({ page }) => {
     await page.goto('./#home', { waitUntil: 'load' });
