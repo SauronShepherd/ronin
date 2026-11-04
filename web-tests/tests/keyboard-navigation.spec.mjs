@@ -6,6 +6,7 @@ test('keyboard users can skip navigation and activate a route', async ({ page })
   await expect(page.locator('.skip-link')).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('#main')).toBeFocused();
+  await expect(page.locator('#breadcrumb')).toHaveText('Overview');
 
   await page.locator('#rail a[href="#workspaces"]').focus();
   await expect(page.locator('#rail a[href="#workspaces"]')).toBeFocused();
