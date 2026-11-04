@@ -558,3 +558,61 @@ P1 continúa **OPEN**; no se cierra ninguna familia y Public v1 sigue **0/13
 (0%, NO-GO)**. La implementación global continúa no calculable y la racha de
 revisiones integrales limpias sigue **0/10** tras este cambio. No se añadió CI,
 GenAI integrado ni multiusuario.
+
+## 58. Rebaseline de calidad, UI/API live y build aislado de PyRonin (2026-11-04)
+
+Sobre el checkout limpio `b97255683f56c0643df64928941b79721d492dc7` se volvió
+a ejecutar el conjunto global y las lanes reales que estaban abiertas en el
+checklist. La primera suite Python del SHA (sin PostgreSQL explícito ni
+cobertura) pasó **4.510**, omitió **77** y falló **0** en 461,28 s; JUnit
+`%TEMP%\ronin-public-v1-full-b972556.xml`. El runner completo con PostgreSQL
+16.4 y coverage pasó **4.558/4.585**, omitió **27**, falló **0** en 405,24 s;
+recibo `%TEMP%\ronin-public-v1-postgres-coverage-b972556`. Todos los pisos de
+cobertura de Makefile pasaron, incluidos T1–T4, SDK, control plane, broker,
+tools, release tools y el gate per-file de **53 módulos de storage**. `tests/perf`
+pasó **5/5**.
+
+Las lanes de producto real en el mismo SHA limpio dieron:
+
+- Docker integration acceptance: **27/27**, 0 skips/fallos, con PostgreSQL,
+  worker, backup/restore, Floci/S3 y Azurite/Azure; acceptance estricta v0.1:
+  **15/15**. Imagen `sha256:20bb7a3779163f0913a2c4a94fd8f2bf2378461009e796214b2d9e8a0f1b1e57`;
+  recibo `%TEMP%\ronin-public-v1-full-docker-b972556`.
+- Live browser/API: **33/33** casos en 25 rutas (23 API-backed), **213** llamadas
+  reales correlacionadas con logs estructurados (199 OK, 14 WARN esperados), 0
+  huecos inesperados de autorización, 0 errores de red/servidor y 0 log errors/
+  critical; receipts y tráfico en `%TEMP%\ronin-public-v1-full-live-b972556`.
+- Playwright estático: **112/112**, incluidos axe, matriz responsive, teclado,
+  tutoriales y surfaces de producto; JUnit `%TEMP%\ronin-public-v1-static-b972556.xml`.
+- Quality estática: Ruff check/formato en **928** archivos, mypy **442** fuentes,
+  arquitectura y gates negativos, hash OpenAPI, consistencia de **196 rutas**,
+  auditoría y presupuesto web, dependency surfaces, estado de capacidades,
+  validación de skills y protocolos Go pasan. Studio surface informa **129/238**
+  operaciones asociadas; el chequeo pasa, pero esa cobertura parcial no cierra
+  ninguna familia.
+
+Al probar el gate de artefacto PyRonin se encontró que `python -m build` se
+invocaba con cwd en la raíz del checkout. El directorio ignorado `build/` del
+repo lo ocultaba como namespace package y rompía el build. `tools/artifact_
+qualification.py` ahora lanza build e install desde su work root aislado y la
+prueba contractual verifica ese cwd. El fix se guardó en `bf9d0f7`.
+`tests/test_artifact_qualification.py`: **19/19**; Ruff, formato y mypy
+focalizados pasan. La qualification real posterior, ejecutada sobre el tree
+con el fix antes del commit, construyó wheel y sdist de PyRonin `0.0.1a0`,
+instaló el wheel fuera del repo y pasó los **90/90** tests del SDK. Recibo
+`%TEMP%\ronin-pyronin-artifact-b972556-fix2\artifact-receipt.json`; wheel
+`sha256:8a919a720decef4ee527253b635f440fc7d254383b24569ccc78566ffb0c61ff`,
+sdist `sha256:d158c3f2cd597a59be5255164ece5695a85b7527deafd446c72461a452edbd9d`.
+
+Delimitación: el conjunto de **4.510/77**, las lanes PostgreSQL/Docker/live/UI
+y la quality estática pertenecen al SHA `b972556`, anterior al fix de la
+herramienta de artefactos; por ello son diagnósticos limpios de ese SHA, no
+evidencia candidate-bound para `bf9d0f7`. La qualification PyRonin incluye el
+fix, pero no el artefacto Ronin principal: no aprueba wheel/sdist instalados de
+la aplicación, las claims, el SBOM/provenance final ni la versión global, que
+sigue `0.0.0`. El Studio surface no equivale a journeys completos. Siguen
+pendientes la revisión visual manual, la matriz de soporte, seguridad del
+artefacto final, aprobación de NOTICE/licencias, decisión de producto/versión y
+las journeys/provider qualifications de las familias. Public v1 sigue
+**INCOMPLETE, 0/13 (0%, NO-GO)**; implementación global no calculable; revisión
+integral limpia **0/10**. No se añadió CI, GenAI integrado ni multiusuario.

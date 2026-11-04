@@ -4,7 +4,7 @@
 
 **Last evidence review:** 4 November 2026
 
-**Candidate SHA:** none; latest clean implementation commit on `20261029` is `87f4e5b9a6afbd50ee5b64e171b7a982ae0a8ab6` (filtered diagnostics only, not a frozen release candidate)
+**Candidate SHA:** none; current implementation baseline is `bf9d0f732e53705b37a847177d1729b53e688294` on `20261029` (not a frozen release candidate)
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -19,6 +19,27 @@ non-empty set of uniquely identified blocking conditions, each with a valid
 status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
+
+## 4 November clean-source diagnostic refresh
+
+The broad checks below were rerun on clean implementation SHA
+`b97255683f56c0643df64928941b79721d492dc7`: Python full suite **4,510 passed,
+77 skipped, 0 failed**; PostgreSQL + coverage suite **4,558 passed, 27 skipped,
+0 failed** and all configured coverage floors passed; performance **5/5**;
+Docker integration **27/27** plus strict acceptance **15/15**; live browser/API
+**33/33** across 25 routes and 213 real requests/log correlations; static
+Playwright **112/112**. Ruff, format, mypy, architecture, negative gates,
+OpenAPI, 196-route consistency, web audit/budget, dependency surfaces,
+skills and cross-language protocol checks passed. Receipts are indexed in §58
+of `PUBLIC_V1_BUILD_PLAN.md`.
+
+The build checks then exposed a cwd collision in the PyRonin artifact gate. It
+was fixed in implementation commit `bf9d0f7`; the focused regression passed
+19/19, and the repaired gate built/installed PyRonin wheel+sdist `0.0.1a0` and
+passed 90/90 installed SDK tests. This fix changes the source after `b972556`,
+so its full-suite/Docker/live/UI results do not qualify `bf9d0f7`. The PyRonin
+receipt does not qualify Ronin's main wheel/sdist, still versioned `0.0.0`.
+Candidate-wide checks must be repeated after implementation is frozen.
 
 ## Product scope guardrails
 
@@ -153,10 +174,10 @@ PASS forward by editing the evidence ledger.
 ## Current decision
 
 **NO-GO — delay the launch.** The planned 3 November 2026, 09:00 launch time
-has passed. The worktree is dirty and no common clean
-candidate binds the evidence. Recent diagnostics now exercise the broad Python/
+has passed. The current implementation baseline is clean, but no frozen release
+candidate binds the evidence. Recent diagnostics cover the broad Python/
 PostgreSQL suite, Docker/strict acceptance and live browser/API paths, but do
-not qualify every family or artifact on one clean candidate. The ledger remains
-0/13; human license/NOTICE and version/claims decisions remain open, and
-candidate-bound manual visual review and several family journeys are missing.
-These diagnostic passes cannot overturn those blockers.
+not qualify every family or artifact on one common candidate. The ledger remains
+0/13; human license/NOTICE and version/claims decisions remain open, as do the
+candidate-bound manual visual review and several family journeys. These
+diagnostic passes cannot overturn those blockers.
