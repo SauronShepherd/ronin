@@ -289,6 +289,11 @@ def test_run_once_executes_claim_through_sqlite_and_container_boundary(
         revision = json.loads(source_revision_events[0].message)
         assert len(revision["commit"]) in {40, 64}
         assert revision["dirty_patch_sha256"] is None or len(revision["dirty_patch_sha256"]) == 64
+        assert revision["declared_source"] == {
+            "uri": "https://github.com/SauronShepherd/ronin",
+            "default_ref": "main",
+            "subdirectory": "examples/demo",
+        }
 
     asyncio.run(scenario())
 

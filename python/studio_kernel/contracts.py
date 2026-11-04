@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Literal, Protocol, TypeAlias
+from urllib.parse import urlsplit
 
 from studio_core import Requirement, ResolvedRuntimeSnapshot
 from studio_notebook import CellId, NotebookCell, NotebookDocument, analyze_notebook_dependencies
@@ -30,10 +31,13 @@ def _require_text(value: str, name: str) -> None:
 
 @dataclass(frozen=True, slots=True)
 class RepositoryRevision:
-    """Portable Git identity captured before notebook execution."""
+    """Exact local Git revision plus its optional declared project binding."""
 
     commit: str
     dirty_patch_sha256: str | None = None
+    source_uri: str | None = None
+    source_default_ref: str | None = None
+    source_subdirectory: str | None = None
 
     def __post_init__(self) -> None:
         if len(self.commit) not in {40, 64} or any(
@@ -47,6 +51,49 @@ class RepositoryRevision:
             or any(ch not in "0123456789abcdef" for ch in self.dirty_patch_sha256)
         ):
             raise ValueError("dirty patch digest must be a lowercase SHA-256 hex digest")
+        if (self.source_uri is None) != (self.source_default_ref is None):
+            raise ValueError("source URI and default ref must be provided together")
+        if self.source_uri is not None:
+            _require_text(self.source_uri, "source URI")
+            if any(
+                ord(character) < 0x20 or ord(character) == 0x7F for character in self.source_uri
+            ):
+                raise ValueError("source URI must not contain control characters")
+            try:
+                parsed = urlsplit(self.source_uri)
+                _ = parsed.port
+            except ValueError as exc:
+                raise ValueError("source URI must be valid") from exc
+            if (
+                parsed.scheme not in {"https", "ssh", "git", "file"}
+                or parsed.password is not None
+                or (parsed.username is not None and parsed.scheme != "ssh")
+                or parsed.query
+                or parsed.fragment
+                or (parsed.scheme == "file" and parsed.netloc)
+                or (parsed.scheme == "file" and not parsed.path)
+                or (parsed.scheme != "file" and not parsed.hostname)
+            ):
+                raise ValueError("source URI must be supported and credential-free")
+            default_ref = self.source_default_ref or ""
+            _require_text(default_ref, "source default ref")
+            if default_ref.startswith("-") or any(
+                character.isspace() or ord(character) < 0x20 or ord(character) == 0x7F
+                for character in default_ref
+            ):
+                raise ValueError("source default ref must be a stable ref")
+        if self.source_subdirectory is not None:
+            if self.source_uri is None:
+                raise ValueError("source subdirectory requires a source binding")
+            _require_text(self.source_subdirectory, "source subdirectory")
+            if any(
+                ord(character) < 0x20 or ord(character) == 0x7F
+                for character in self.source_subdirectory
+            ):
+                raise ValueError("source subdirectory must not contain control characters")
+            normalized = self.source_subdirectory.replace("\\", "/")
+            if normalized.startswith("/") or ".." in normalized.split("/"):
+                raise ValueError("source subdirectory must stay inside its repository")
 
 
 @dataclass(frozen=True, order=True, slots=True)

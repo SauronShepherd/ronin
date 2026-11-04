@@ -254,6 +254,11 @@ def test_real_docker_worker_executes_clean_container_demo(tmp_path: Path) -> Non
             source_revision["dirty_patch_sha256"] is None
             or len(source_revision["dirty_patch_sha256"]) == 64
         )
+        assert source_revision["declared_source"] == {
+            "uri": "https://github.com/SauronShepherd/ronin",
+            "default_ref": "main",
+            "subdirectory": "examples/demo",
+        }
 
         outputs = _log_outputs(config.execution_evidence_root)
         assert len(outputs) == 5
@@ -352,6 +357,11 @@ def test_real_docker_worker_executes_demo_against_postgres(tmp_path: Path) -> No
             source_revision["dirty_patch_sha256"] is None
             or len(source_revision["dirty_patch_sha256"]) == 64
         )
+        assert source_revision["declared_source"] == {
+            "uri": "https://github.com/SauronShepherd/ronin",
+            "default_ref": "main",
+            "subdirectory": "examples/demo",
+        }
 
         outputs = _log_outputs(config.execution_evidence_root)
         assert len(outputs) == 5

@@ -88,8 +88,16 @@ def _prepare(
 def test_repository_revision_validates_clean_and_dirty_git_identity() -> None:
     clean = RepositoryRevision("a" * 40)
     dirty = RepositoryRevision("b" * 64, "c" * 64)
+    bound = RepositoryRevision(
+        "d" * 40,
+        source_uri="https://example.test/team/project.git",
+        source_default_ref="main",
+        source_subdirectory="apps/demo",
+    )
     assert clean.dirty_patch_sha256 is None
     assert dirty.dirty_patch_sha256 == "c" * 64
+    assert bound.source_uri == "https://example.test/team/project.git"
+    assert bound.source_subdirectory == "apps/demo"
 
     for commit in ("a" * 39, "A" * 40, "z" * 40):
         with pytest.raises(ValueError, match="repository commit"):
@@ -97,6 +105,28 @@ def test_repository_revision_validates_clean_and_dirty_git_identity() -> None:
     for patch in ("d" * 63, "D" * 64, "z" * 64):
         with pytest.raises(ValueError, match="dirty patch"):
             RepositoryRevision("a" * 40, patch)
+    for uri in (
+        "https://user:pass@example.test/repo",
+        "https://example.test:99999/repo",
+        "https://example.test/repo?token=secret",
+        "https://example.test/repo\x00",
+        "ftp://example.test/repo",
+    ):
+        with pytest.raises(ValueError, match="source URI"):
+            RepositoryRevision(
+                "a" * 40,
+                source_uri=uri,
+                source_default_ref="main",
+            )
+    with pytest.raises(ValueError, match="provided together"):
+        RepositoryRevision("a" * 40, source_uri="https://example.test/repo")
+    with pytest.raises(ValueError, match="inside its repository"):
+        RepositoryRevision(
+            "a" * 40,
+            source_uri="https://example.test/repo",
+            source_default_ref="main",
+            source_subdirectory="../outside",
+        )
 
 
 def test_directives_are_canonical_and_fail_closed_on_invalid_metadata() -> None:

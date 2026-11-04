@@ -395,13 +395,63 @@ Validación diagnóstica sobre el árbol modificado basado en
 - Suite focalizada de worker/API/evidencia: **40 passed**. Ruff check/format y
   `git diff --check` pasan.
 
-La evidencia es diagnóstica, no candidate-bound: se ejecutó sobre un árbol
-sucio y no incluye la suite de rendimiento ni todos los servicios opt-in. El
-evento acredita la revisión Git local usada por el worker, pero no conecta aún
-el `RepositoryBinding` declarado con un checkout remoto resuelto; el
-`GitSourceAdapter` continúa sin una ruta vertical desde el proyecto al worker.
-Por tanto, P1 y P4 permanecen **OPEN**, y este trabajo tampoco incluye
-`query_evidence` de SQL. No cierra ninguna familia: release **0/13 (0%, NO-GO)**,
-progreso global de implementación **no calculable** y revisiones limpias
-integrales **0/10**. No se añadió ni ejecutó CI, GenAI integrado o multiusuario
-en Public v1.
+La evidencia de este corte era diagnóstica, no candidate-bound. En ese momento,
+el evento aún no enlazaba el `RepositoryBinding` declarado con el checkout; ese
+hueco se abordó en el seguimiento de §54. El checkout remoto/sincronización
+operativa y `query_evidence` de SQL siguen abiertos. No cierra ninguna familia:
+release **0/13 (0%, NO-GO)**, progreso global de implementación **no calculable**
+y revisiones limpias integrales **0/10**. No se añadió ni ejecutó CI, GenAI
+integrado o multiusuario en Public v1.
+
+## 54. Verificación del binding Git del proyecto (2026-11-04)
+
+La preparación del worker ahora verifica que `origin` identifique el URI
+primario del manifiesto antes de ejecutar: HTTPS/SSH se comparan por host y
+ruta Git, sin credenciales, query ni fragmento. También comprueba con
+`safe_checkout_path` que la carpeta local corresponda al `subdirectory`
+declarado y no atraviese symlinks. Si falta `origin`, no coincide el repo o la
+ruta no coincide, la preparación falla con `worker.preparation.error`; no se
+registra una revisión que aparente pertenecer a otra fuente.
+
+La revisión durable lleva ahora commit local, digest de cambios, y el binding
+declarado (`uri`, `default_ref`, `subdirectory`). El binding forma parte del
+`repository_digest` de cada celda y del evento
+`worker.source_revision.captured`, de modo que cambiar el repo/ref/subdirectorio
+invalida la identidad reutilizable y la API muestra el origen junto con el
+commit exacto.
+
+Validación diagnóstica sobre árbol modificado basado en
+`19e57d87e0bc8ede18c393ff19c5b90f6dc35a9e`:
+
+- Suite Python completa: **4.488 passed, 76 skipped, 0 failed**, 399,36 s;
+  JUnit `%TEMP%\ronin-bound-source-python-full-20261104.xml`. Los skips siguen
+  incluyendo PostgreSQL/servicios opt-in no configurados y symlink checks que
+  requieren permisos de Windows.
+- Worker real contra SQLite y PostgreSQL 16.4 efímero: **2 passed, 25
+  deselected, 0 skipped** en 13,49 s; imagen construida desde el árbol actual
+  `sha256:a0e73dc2fc4afce76c34e550c6132b71aba8cb272b2887a7d0b66f69ee74aafd`.
+  Recibo `%TEMP%\ronin-bound-source-worker-docker-current-diagnostic`.
+- Pruebas focalizadas de contratos, origen, preparación, worker y API: **60
+  passed, 1 skipped**; el skip es el caso de symlink no disponible en Windows.
+- `tests/perf`: **5/5**; Ruff check/formato en 928 archivos; mypy en 442 fuentes
+  con el entorno fijado por `requirements-test.lock`; arquitectura, gates
+  negativos, consistencia de 196 rutas, snapshot OpenAPI y ledger pasan.
+  `studio_surface` reporta 129/238 operaciones publicadas emparejadas; este
+  check no constituye cobertura de journeys ni cierre de familias.
+
+La suite completa y el primer Docker run de este corte preceden a la última
+validación del contrato URI y a la equivalencia de remotos `file://`; después de
+ese endurecimiento se repitieron los tests focalizados (16 passed, 1 skipped),
+Ruff, mypy y Docker (2 passed, 0 skipped). El filtro Docker fue diagnóstico;
+no ejecutó la aceptación estricta completa.
+
+El `mypy` del Python global del host no tenía instalados los imports opcionales
+de Azure y falló en `studio_connectors/azure_blob_json.py`; al repetir con el
+entorno fijado de test (que contiene Azure Storage) pasó sin errores. La suite
+completa y los Docker runs son diagnósticos con worktree sucio. El worker
+verifica el checkout local, pero todavía no clona/fetchea el `default_ref`, no
+aplica `auth_ref` y no implementa la política de sync manual/fetch/fast-forward.
+Por tanto P1 continúa **OPEN**; tampoco se cierra P4 ni ninguna familia. Release
+**0/13 (0%, NO-GO)**; progreso global de implementación **no calculable**;
+revisiones limpias integrales **0/10**. No se añadió ni ejecutó CI, GenAI
+integrado ni multiusuario en Public v1.

@@ -30,7 +30,7 @@ from studio_kernel import (
 )
 from studio_notebook import Notebook, NotebookCell, NotebookDocument
 from studio_orchestrator import AttemptId, CellExecutionIdentity, Job, RunId
-from studio_vcs import capture_revision
+from studio_vcs import SourcePolicyError, capture_source_revision
 
 
 class WorkerPreparationError(RuntimeError):
@@ -132,11 +132,26 @@ def load_project(paths: WorkerPaths, job: Job) -> LoadedProject:
     else:
         target_path = _contained_path(project_dir, job.target, "notebook target")
         document = NotebookDocument.from_json(_read_text(target_path, "notebook target"))
-    revision = capture_revision(project_dir)
+    source = manifest.project.primary_repository
+    try:
+        source_evidence = capture_source_revision(
+            source.uri,
+            project_dir,
+            subdirectory=source.subdirectory,
+            allow_dirty=True,
+        )
+    except SourcePolicyError as exc:
+        raise WorkerPreparationError(f"project Git source binding is invalid: {exc}") from exc
     return LoadedProject(
         manifest=manifest,
         document=document,
-        revision=RepositoryRevision(revision.commit, revision.dirty_patch_sha256),
+        revision=RepositoryRevision(
+            source_evidence.revision.commit,
+            source_evidence.revision.dirty_patch_sha256,
+            source_uri=source.uri,
+            source_default_ref=source.default_ref,
+            source_subdirectory=source.subdirectory,
+        ),
         project_dir=project_dir,
         execution_mode=execution_mode,
         selected_cell_id=selected_cell_id,
@@ -242,6 +257,15 @@ def _repository_digest(revision: RepositoryRevision) -> str:
         {
             "commit": revision.commit,
             "dirty_patch_sha256": revision.dirty_patch_sha256,
+            "declared_source": (
+                {
+                    "uri": revision.source_uri,
+                    "default_ref": revision.source_default_ref,
+                    "subdirectory": revision.source_subdirectory,
+                }
+                if revision.source_uri is not None
+                else None
+            ),
             "version": 1,
         }
     )

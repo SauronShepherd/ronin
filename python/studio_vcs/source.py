@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
-from .git import GitCaptureError, GitRevision, capture_revision
+from studio_core.source_control import safe_checkout_path
+
+from .git import GitCaptureError, GitRevision, _git, _repository_root, capture_revision
 
 
 class SourcePolicyError(ValueError):
@@ -48,11 +51,55 @@ def validate_repository_uri(uri: str) -> str:
     return uri
 
 
+def _repository_location(uri: str) -> tuple[str, str, int | None, str]:
+    parsed = urlsplit(uri)
+    if parsed.scheme == "file":
+        raw_path = unquote(parsed.path)
+        if re.match(r"^/[A-Za-z]:/", raw_path):
+            raw_path = raw_path[1:]
+        path = Path(raw_path).resolve(strict=False)
+        return ("file", "", None, str(path).casefold())
+    return (
+        "git",
+        (parsed.hostname or "").casefold(),
+        parsed.port,
+        parsed.path.rstrip("/").removesuffix(".git"),
+    )
+
+
+def _verify_local_binding(uri: str, path: Path, subdirectory: str | None) -> None:
+    try:
+        root = _repository_root(path)
+        configured_urls = _git(root, "remote", "get-url", "--all", "origin")
+        urls = tuple(
+            line.decode("utf-8").strip() for line in configured_urls.splitlines() if line.strip()
+        )
+        expected_location = _repository_location(uri)
+        matching_remote = any(
+            _repository_location(validate_repository_uri(remote)) == expected_location
+            for remote in urls
+        )
+        expected_path = safe_checkout_path(root, subdirectory or "")
+    except (GitCaptureError, OSError, TypeError, ValueError, UnicodeError) as exc:
+        raise SourcePolicyError(
+            "declared Git source could not be verified against the local checkout"
+        ) from exc
+    if not matching_remote:
+        raise SourcePolicyError("declared Git source does not match the local origin remote")
+    if expected_path != path.resolve():
+        raise SourcePolicyError("project path does not match the declared repository subdirectory")
+
+
 def capture_source_revision(
-    uri: str, path: Path, *, allow_dirty: bool = False
+    uri: str,
+    path: Path,
+    *,
+    subdirectory: str | None = None,
+    allow_dirty: bool = False,
 ) -> SourceRevisionEvidence:
-    """Capture exact local Git identity, rejecting uncommitted state by default."""
+    """Verify the local source binding and capture its exact Git identity."""
     validated = validate_repository_uri(uri)
+    _verify_local_binding(validated, path, subdirectory)
     try:
         revision = capture_revision(path)
     except GitCaptureError as exc:

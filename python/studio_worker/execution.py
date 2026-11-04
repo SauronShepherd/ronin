@@ -465,6 +465,15 @@ class DurableWorkerExecution:
                         {
                             "commit": request.repository.commit,
                             "dirty_patch_sha256": request.repository.dirty_patch_sha256,
+                            "declared_source": (
+                                {
+                                    "uri": request.repository.source_uri,
+                                    "default_ref": request.repository.source_default_ref,
+                                    "subdirectory": request.repository.source_subdirectory,
+                                }
+                                if request.repository.source_uri is not None
+                                else None
+                            ),
                             "version": 1,
                         }
                     ).decode("utf-8"),

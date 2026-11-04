@@ -1,7 +1,109 @@
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
 from studio_vcs import SourcePolicyError, validate_repository_uri
+
+
+def _git(path: Path, *args: str) -> str:
+    completed = subprocess.run(  # noqa: S603
+        (shutil.which("git") or "git", "-C", str(path), *args),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return completed.stdout.strip()
+
+
+def _repo_with_source(
+    root: Path,
+    *,
+    origin: str,
+    subdirectory: str = "",
+) -> tuple[Path, str]:
+    root.mkdir()
+    _git(root, "init", "-q")
+    _git(root, "config", "user.name", "Ronin Test")
+    _git(root, "config", "user.email", "ronin@example.invalid")
+    source = root / subdirectory if subdirectory else root
+    source.mkdir(parents=True, exist_ok=True)
+    (source / "notebook.ronin.json").write_text("{}\n", encoding="utf-8")
+    _git(root, "add", ".")
+    _git(root, "commit", "-qm", "initial")
+    commit = _git(root, "rev-parse", "HEAD")
+    _git(root, "remote", "add", "origin", origin)
+    return source, commit
+
+
+def test_capture_source_revision_matches_remote_identity_and_subdirectory(
+    tmp_path: Path,
+) -> None:
+    from studio_vcs import capture_source_revision
+
+    source, expected_commit = _repo_with_source(
+        tmp_path / "checkout",
+        origin="ssh://git@example.test/team/project.git",
+        subdirectory="apps/demo",
+    )
+    evidence = capture_source_revision(
+        "https://example.test/team/project",
+        source,
+        subdirectory="apps/demo",
+    )
+
+    assert evidence.uri == "https://example.test/team/project"
+    assert evidence.revision.commit == expected_commit
+    assert evidence.revision.dirty_patch_sha256 is None
+
+
+def test_capture_source_revision_matches_local_file_remote_uri(tmp_path: Path) -> None:
+    from studio_vcs import capture_source_revision
+
+    remote = tmp_path / "upstream.git"
+    remote.mkdir()
+    _git(remote, "init", "--bare", "-q")
+    source, expected_commit = _repo_with_source(
+        tmp_path / "checkout",
+        origin=remote.as_uri(),
+        subdirectory="src",
+    )
+
+    evidence = capture_source_revision(
+        remote.as_uri(),
+        source,
+        subdirectory="src",
+    )
+
+    assert evidence.uri == remote.as_uri()
+    assert evidence.revision.commit == expected_commit
+
+
+def test_capture_source_revision_rejects_origin_mismatch(tmp_path: Path) -> None:
+    from studio_vcs import capture_source_revision
+
+    source, _ = _repo_with_source(
+        tmp_path / "checkout",
+        origin="https://other.example/team/project.git",
+    )
+    with pytest.raises(SourcePolicyError, match="does not match"):
+        capture_source_revision("https://example.test/team/project.git", source)
+
+
+def test_capture_source_revision_rejects_subdirectory_mismatch(tmp_path: Path) -> None:
+    from studio_vcs import capture_source_revision
+
+    source, _ = _repo_with_source(
+        tmp_path / "checkout",
+        origin="https://example.test/team/project.git",
+        subdirectory="apps/actual",
+    )
+    with pytest.raises(SourcePolicyError, match="subdirectory"):
+        capture_source_revision(
+            "https://example.test/team/project",
+            source,
+            subdirectory="apps/declared",
+        )
 
 
 @pytest.mark.parametrize("uri", ["https://example.test/repo.git", "ssh://git@example.test/repo"])

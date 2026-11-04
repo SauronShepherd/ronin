@@ -290,6 +290,8 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
                     2,
                     "worker.source_revision.captured",
                     '{"commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",'
+                    '"declared_source":{"default_ref":"main","subdirectory":"src",'
+                    '"uri":"https://example.test/repo"},'
                     '"dirty_patch_sha256":null,"version":1}',
                     Instant("2099-01-01T00:00:00.300000Z"),
                 ),
@@ -339,6 +341,11 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
         assert revision_event.kind == "worker.source_revision.captured"
         assert json.loads(revision_event.message) == {
             "commit": "a" * 40,
+            "declared_source": {
+                "default_ref": "main",
+                "subdirectory": "src",
+                "uri": "https://example.test/repo",
+            },
             "dirty_patch_sha256": None,
             "version": 1,
         }

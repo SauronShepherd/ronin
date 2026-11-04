@@ -20,7 +20,7 @@ from studio_core.canonical_json import encode as encode_canonical_json
 from studio_kernel import RepositoryRevision
 from studio_notebook import CellId, NotebookCell
 from studio_orchestrator import AttemptId, Job, JobId, JobState, RunId
-from studio_vcs import GitRevision
+from studio_vcs import GitRevision, SourcePolicyError, SourceRevisionEvidence
 from studio_worker import (
     LOCAL_DOCKER_PROFILE,
     LoadedProject,
@@ -58,8 +58,10 @@ def _job(
 
 def _load_demo(monkeypatch: pytest.MonkeyPatch) -> LoadedProject:
     monkeypatch.setattr(
-        "studio_worker.preparation.capture_revision",
-        lambda _path: GitRevision("b" * 40, "c" * 64),
+        "studio_worker.preparation.capture_source_revision",
+        lambda uri, _path, **_kwargs: SourceRevisionEvidence(
+            uri, GitRevision("b" * 40, "c" * 64), dirty_allowed=True
+        ),
     )
     return load_project(WorkerPaths(Path.cwd(), Path(".ronin-data")), _job())
 
@@ -77,8 +79,26 @@ def test_load_project_uses_real_fixture_and_captured_dirty_revision(
     loaded = _load_demo(monkeypatch)
     assert loaded.manifest.project.id == ProjectId("demo")
     assert len(loaded.document.notebook.cells) == 6
-    assert loaded.revision == RepositoryRevision("b" * 40, "c" * 64)
+    assert loaded.revision == RepositoryRevision(
+        "b" * 40,
+        "c" * 64,
+        source_uri="https://github.com/SauronShepherd/ronin",
+        source_default_ref="main",
+        source_subdirectory="examples/demo",
+    )
     assert loaded.project_dir == (Path.cwd() / "examples" / "demo").resolve()
+
+
+def test_load_project_fails_closed_when_declared_source_cannot_be_verified(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def reject_source(*_args: object, **_kwargs: object) -> SourceRevisionEvidence:
+        raise SourcePolicyError("declared Git source does not match the local origin remote")
+
+    monkeypatch.setattr("studio_worker.preparation.capture_source_revision", reject_source)
+
+    with pytest.raises(WorkerPreparationError, match="source binding is invalid"):
+        load_project(WorkerPaths(Path.cwd(), Path(".ronin-data")), _job())
 
 
 def test_inline_cell_execution_selects_only_requested_cell(
@@ -236,9 +256,22 @@ def test_identity_changes_for_dirty_revision_and_not_json_key_order(
         loaded=replace(loaded, revision=RepositoryRevision("b" * 40, "d" * 64)),
         job=_job(parameters_json='{"a":1,"b":2}'),
     )[0]
+    source_changed = execution_identities(
+        request,
+        run_id=RunId("run-1"),
+        loaded=replace(
+            loaded,
+            revision=replace(
+                loaded.revision,
+                source_uri="https://github.com/fork/ronin",
+            ),
+        ),
+        job=_job(parameters_json='{"a":1,"b":2}'),
+    )[0]
     assert first.parameter_digest == reordered.parameter_digest
     assert first.digest == reordered.digest
     assert first.repository_digest != dirty_changed.repository_digest
+    assert first.repository_digest != source_changed.repository_digest
     assert first.digest != dirty_changed.digest
 
 
