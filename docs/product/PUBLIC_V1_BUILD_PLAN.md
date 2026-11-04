@@ -468,9 +468,15 @@ la rama ya apunta al mismo commit, la operación es idempotente; si la rama ya
 está por delante del ref remoto, conserva el HEAD local sin rebobinarlo. Todo
 fetch y comando Git sigue limitado por timeout y no usa un shell.
 
+La invocación ignora variables ambientales que redirigen el repositorio, index,
+árbol de trabajo, SSH/askpass o configuración inyectada; fuerza modo no
+interactivo, desactiva credential helpers implícitos y hooks. Conserva la
+configuración de usuario de representación de archivos (por ejemplo,
+`core.autocrlf`) para que Windows no marque falsamente los checkouts como sucios.
+
 Validación focalizada en repositorios bare/locales reales:
 
-- `tests/test_git_source.py tests/test_vcs_source.py`: **24 passed, 2 skipped**;
+- `tests/test_git_source.py tests/test_vcs_source.py`: **25 passed, 2 skipped**;
   ambos skips son creación de symlink que requiere privilegios de Windows.
 - Ruff check, formato y `git diff --check`: pasan.
 

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import re
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,6 +12,41 @@ from pathlib import Path
 from studio_core.source_control import SourceRepository, safe_checkout_path
 
 _COMMIT_ID = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
+
+
+def _git_environment() -> dict[str, str]:
+    """Remove ambient Git overrides and implicit credential/prompt behavior."""
+
+    environment = os.environ.copy()
+    controlled = {
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_COMMON_DIR",
+        "GIT_CONFIG",
+        "GIT_CONFIG_PARAMETERS",
+        "GIT_CONFIG_COUNT",
+        "GIT_CONFIG_SYSTEM",
+        "GIT_CONFIG_GLOBAL",
+        "GIT_SSH",
+        "GIT_SSH_COMMAND",
+        "GIT_ASKPASS",
+        "SSH_ASKPASS",
+        "GIT_TERMINAL_PROMPT",
+        "GCM_INTERACTIVE",
+    }
+    for name in tuple(environment):
+        if name in controlled or name.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")):
+            environment.pop(name, None)
+    environment.update(
+        {
+            "GIT_TERMINAL_PROMPT": "0",
+            "GCM_INTERACTIVE": "Never",
+        }
+    )
+    return environment
 
 
 class GitSourceError(RuntimeError):
@@ -46,14 +83,27 @@ class GitSourceAdapter:
         *args: str,
         allowed_returncodes: tuple[int, ...] = (0,),
     ) -> tuple[int, str]:
+        executable = shutil.which("git")
+        if executable is None:
+            raise GitSourceError("Git executable is unavailable")
         try:
             result = subprocess.run(  # noqa: S603
-                ("git", "-C", str(worktree), *args),  # noqa: S607
+                (
+                    executable,
+                    "-c",
+                    "credential.helper=",
+                    "-c",
+                    f"core.hooksPath={os.devnull}",
+                    "-C",
+                    str(worktree),
+                    *args,
+                ),
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=self._timeout,
                 stdin=subprocess.DEVNULL,
+                env=_git_environment(),
             )
         except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
             raise GitSourceError(f"git operation failed: {' '.join(args)}") from exc

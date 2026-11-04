@@ -308,3 +308,19 @@ def test_git_checkout_rejects_symlink_subdirectory_before_checkout(tmp_path: Pat
             subdirectory="linked",
         )
     assert _git(root, "rev-parse", "HEAD") == first
+
+
+def test_git_adapter_ignores_ambient_repository_overrides(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    target = _repository(tmp_path / "target")
+    other = _repository(tmp_path / "other")
+    (other / "src" / "version.txt").write_text("dirty\n", encoding="utf-8")
+    monkeypatch.setenv("GIT_DIR", str(other / ".git"))
+    monkeypatch.setenv("GIT_WORK_TREE", str(other))
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
+    monkeypatch.setenv("GIT_CONFIG_KEY_0", "core.worktree")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_0", str(other))
+
+    assert GitSourceAdapter().is_dirty(target) is False
