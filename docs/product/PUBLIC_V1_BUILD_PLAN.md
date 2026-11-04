@@ -478,7 +478,13 @@ Validación focalizada en repositorios bare/locales reales:
 
 - `tests/test_git_source.py tests/test_vcs_source.py`: **25 passed, 2 skipped**;
   ambos skips son creación de symlink que requiere privilegios de Windows.
+- Worker real en Docker, built desde `e8c23d4de2a58970af4a712d22f4b141b4ad3a54`:
+  **2 passed, 25 deselected, 0 skipped**, incluyendo PostgreSQL efímero; imagen
+  `sha256:8f4defaee56dcb8abd6dfca5b405612346191378ad3d8c4eb1b4e081dab77ed1`;
+  recibo `%TEMP%\ronin-git-env-worker-docker-e8c23d4`.
 - Ruff check, formato y `git diff --check`: pasan.
+
+La prueba Docker fue filtrada y diagnóstica; no ejecutó la aceptación estricta.
 
 Esto endurece el adapter, pero no conecta todavía las políticas del manifiesto
 con la preparación/ejecución durable del worker. `auth_ref` aún no dispone de
