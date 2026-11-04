@@ -2,9 +2,22 @@
 
 from __future__ import annotations
 
+import json
+import tempfile
+from pathlib import Path
+
+from studio_sql import SqlResultLimitError
+
+from .bundle import (
+    MAX_SEMANTIC_BUNDLE_BYTES,
+    SemanticBundleTooLarge,
+    commit_semantic_bundle_import,
+    export_semantic_bundle,
+    plan_semantic_bundle_import,
+)
 from .contracts import DashboardDefinition, MetricQuery, SemanticModel
 from .joins import SemanticJoin
-from .runtime import ProjectScopedSemanticRuntime, SemanticRuntime
+from .runtime import MAX_DASHBOARD_RESULT_BYTES, ProjectScopedSemanticRuntime, SemanticRuntime
 from .store import SqliteSemanticStore
 
 
@@ -21,6 +34,41 @@ class SemanticHTTPAdapter:
 
     def list_models(self, project_id: str) -> dict[str, object]:
         return {"items": [model.to_payload() for model in self._store.list_models(project_id)]}
+
+    def export_bundle(self, project_id: str) -> bytes:
+        with tempfile.TemporaryDirectory(prefix="ronin-semantic-bundle-export-") as directory:
+            path = Path(directory) / "semantic.roninbundle"
+            export_semantic_bundle(project_id, self._store, path)
+            archive = path.read_bytes()
+        if len(archive) > MAX_SEMANTIC_BUNDLE_BYTES:
+            raise SemanticBundleTooLarge("semantic Bundle exceeds the 700 KiB archive limit")
+        return archive
+
+    def plan_bundle(self, archive: bytes) -> dict[str, object]:
+        if len(archive) > MAX_SEMANTIC_BUNDLE_BYTES:
+            raise SemanticBundleTooLarge("semantic Bundle exceeds the 700 KiB archive limit")
+        with tempfile.TemporaryDirectory(prefix="ronin-semantic-bundle-plan-") as directory:
+            path = Path(directory) / "semantic.roninbundle"
+            path.write_bytes(archive)
+            plan = plan_semantic_bundle_import(path)
+        return {
+            "inventory": plan.inventory.to_payload(),
+            "models": [model.to_payload() for model in plan.models],
+            "dashboards": [dashboard.to_payload() for dashboard in plan.dashboards],
+        }
+
+    def import_bundle(self, project_id: str, archive: bytes) -> dict[str, object]:
+        if len(archive) > MAX_SEMANTIC_BUNDLE_BYTES:
+            raise SemanticBundleTooLarge("semantic Bundle exceeds the 700 KiB archive limit")
+        with tempfile.TemporaryDirectory(prefix="ronin-semantic-bundle-import-") as directory:
+            path = Path(directory) / "semantic.roninbundle"
+            path.write_bytes(archive)
+            plan = commit_semantic_bundle_import(path, project_id, self._store)
+        return {
+            "inventory": plan.inventory.to_payload(),
+            "models": [model.to_payload() for model in plan.models],
+            "dashboards": [dashboard.to_payload() for dashboard in plan.dashboards],
+        }
 
     def put_dashboard(self, project_id: str, body: object) -> dict[str, object]:
         dashboard = DashboardDefinition.from_payload(_object_body(body))
@@ -119,7 +167,13 @@ class SemanticHTTPAdapter:
                     "rows": [list(row) for row in item.result.rows],
                 }
             )
-        return {"dashboard_id": dashboard.id, "tiles": tiles}
+        payload: dict[str, object] = {"dashboard_id": dashboard.id, "tiles": tiles}
+        response_bytes = len(
+            json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        )
+        if response_bytes > MAX_DASHBOARD_RESULT_BYTES:
+            raise SqlResultLimitError("semantic dashboard exceeds its 8 MiB response byte limit")
+        return payload
 
 
 def _object_body(body: object) -> dict[str, object]:

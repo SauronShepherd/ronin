@@ -33,6 +33,28 @@ def _checksum_path(source: Path) -> Path:
     return source.with_name(f"{source.name}.sha256")
 
 
+def verify_backup_checksum(source: Path) -> str:
+    """Validate and return the SHA-256 bound to a PostgreSQL dump sidecar."""
+    if not source.is_file():
+        raise ValueError("restore source must be an existing file")
+    checksum = _checksum_path(source)
+    if not checksum.is_file():
+        raise ValueError("PostgreSQL backup checksum sidecar is required")
+    checksum_lines = checksum.read_text(encoding="ascii").splitlines()
+    checksum_line = checksum_lines[0] if len(checksum_lines) == 1 else ""
+    if (
+        len(checksum_line) < 67
+        or checksum_line[64:66] != "  "
+        or checksum_line[66:] != source.name
+        or any(character not in "0123456789abcdefABCDEF" for character in checksum_line[:64])
+    ):
+        raise ValueError("invalid PostgreSQL backup checksum sidecar")
+    digest = checksum_line[:64]
+    if _sha256(source) != digest:
+        raise ValueError("PostgreSQL backup checksum mismatch")
+    return digest
+
+
 def backup(compose_file: Path, output: Path) -> None:
     if output.exists() and output.is_dir():
         raise ValueError("backup output must be a file")
@@ -60,26 +82,25 @@ def backup(compose_file: Path, output: Path) -> None:
             subprocess.run(command, check=True, stdout=stream)  # noqa: S603
         digest = _sha256(temporary)
         temporary.replace(output)
-        _checksum_path(output).write_text(f"{digest}  {output.name}\n", encoding="ascii")
+        sidecar = _checksum_path(output)
+        fd, sidecar_temporary_name = tempfile.mkstemp(
+            prefix=f".{sidecar.name}.", suffix=".tmp", dir=sidecar.parent
+        )
+        sidecar_temporary = Path(sidecar_temporary_name)
+        try:
+            with os.fdopen(fd, "w", encoding="ascii", newline="\n") as stream:
+                stream.write(f"{digest}  {output.name}\n")
+                stream.flush()
+                os.fsync(stream.fileno())
+            sidecar_temporary.replace(sidecar)
+        finally:
+            sidecar_temporary.unlink(missing_ok=True)
     finally:
         temporary.unlink(missing_ok=True)
 
 
 def restore(compose_file: Path, source: Path, *, force: bool) -> None:
-    if not source.is_file():
-        raise ValueError("restore source must be an existing file")
-    checksum = _checksum_path(source)
-    if checksum.is_file():
-        expected = checksum.read_text(encoding="ascii").strip().split()
-        if (
-            len(expected) != 2
-            or expected[1] != source.name
-            or len(expected[0]) != 64
-            or any(character not in "0123456789abcdefABCDEF" for character in expected[0])
-        ):
-            raise ValueError("invalid PostgreSQL backup checksum sidecar")
-        if _sha256(source) != expected[0]:
-            raise ValueError("PostgreSQL backup checksum mismatch")
+    verify_backup_checksum(source)
     if not force:
         raise ValueError("restore is destructive; pass --force explicitly")
     user = os.environ.get("POSTGRES_USER", "ronin").strip() or "ronin"

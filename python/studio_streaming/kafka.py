@@ -9,9 +9,17 @@ from typing import Any
 
 from .contracts import StreamBatch, StreamCheckpoint, StreamPosition, StreamRecord
 
+MAX_KAFKA_RECORD_BYTES = 1_048_576
+MAX_KAFKA_BATCH_BYTES = 8_388_608
+_KAFKA_PROTOCOL_OVERHEAD_BYTES = 512
+
 
 class KafkaDependencyError(RuntimeError):
     """Raised when the optional confluent-kafka runtime is unavailable."""
+
+
+class KafkaInputRejected(ValueError):
+    """Raised when a broker record violates Ronin's bounded JSON input contract."""
 
 
 def _kafka() -> tuple[Any, Any, int, int]:
@@ -70,6 +78,13 @@ class KafkaJsonSource:
             "client.id",
             "enable.auto.commit",
             "enable.auto.offset.store",
+            # Keep transport buffering under Ronin's byte budgets. Allowing a
+            # connection option to override these would make API batch limits
+            # insufficient to bound memory before JSON decoding.
+            "fetch.max.bytes",
+            "max.partition.fetch.bytes",
+            "receive.message.max.bytes",
+            "queued.max.messages.kbytes",
         }
         if forbidden & set(extra):
             raise ValueError("Kafka config must not override Ronin-owned identity/offset settings")
@@ -93,6 +108,10 @@ class KafkaJsonSource:
             "client.id": self._client_id,
             "enable.auto.commit": False,
             "enable.auto.offset.store": False,
+            "fetch.max.bytes": MAX_KAFKA_BATCH_BYTES,
+            "max.partition.fetch.bytes": MAX_KAFKA_RECORD_BYTES + _KAFKA_PROTOCOL_OVERHEAD_BYTES,
+            "receive.message.max.bytes": MAX_KAFKA_BATCH_BYTES + _KAFKA_PROTOCOL_OVERHEAD_BYTES,
+            "queued.max.messages.kbytes": (MAX_KAFKA_BATCH_BYTES // 1024) + 1024,
             "auto.offset.reset": "earliest",
             **self._config,
         }
@@ -106,6 +125,7 @@ class KafkaJsonSource:
             consumer.assign(assignments)
             messages = consumer.consume(num_messages=limit, timeout=timeout_seconds)
             records: list[StreamRecord] = []
+            batch_bytes = 0
             latest = {item.partition: item.offset for item in checkpoint.positions}
             for message in messages:
                 error = message.error()
@@ -115,14 +135,21 @@ class KafkaJsonSource:
                     raise RuntimeError(f"Kafka consume error: {error}")
                 raw = message.value()
                 if raw is None:
-                    raise ValueError("Kafka JSON source does not accept null message values")
+                    raise KafkaInputRejected(
+                        "Kafka JSON source does not accept null message values"
+                    )
+                raw_bytes = raw if isinstance(raw, bytes) else str(raw).encode("utf-8")
+                if len(raw_bytes) > MAX_KAFKA_RECORD_BYTES:
+                    raise KafkaInputRejected("Kafka JSON message exceeds the 1 MiB record limit")
+                batch_bytes += len(raw_bytes)
+                if batch_bytes > MAX_KAFKA_BATCH_BYTES:
+                    raise KafkaInputRejected("Kafka JSON micro-batch exceeds the 8 MiB byte limit")
                 try:
-                    decoded = raw.decode("utf-8") if isinstance(raw, bytes) else str(raw)
-                    value = json.loads(decoded)
+                    value = json.loads(raw_bytes.decode("utf-8"))
                 except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-                    raise ValueError("Kafka message value is not valid UTF-8 JSON") from exc
+                    raise KafkaInputRejected("Kafka message value is not valid UTF-8 JSON") from exc
                 if not isinstance(value, dict):
-                    raise ValueError("Kafka JSON source requires object message values")
+                    raise KafkaInputRejected("Kafka JSON source requires object message values")
                 key_raw = message.key()
                 if key_raw is None:
                     key = None
@@ -130,7 +157,9 @@ class KafkaJsonSource:
                     try:
                         key = key_raw.decode("utf-8")
                     except UnicodeDecodeError as exc:
-                        raise ValueError("Kafka message key must be UTF-8 when present") from exc
+                        raise KafkaInputRejected(
+                            "Kafka message key must be UTF-8 when present"
+                        ) from exc
                 else:
                     key = str(key_raw)
                 timestamp_type, timestamp_value = message.timestamp()
@@ -152,4 +181,4 @@ class KafkaJsonSource:
             consumer.close()
 
 
-__all__ = ("KafkaDependencyError", "KafkaJsonSource")
+__all__ = ("KafkaDependencyError", "KafkaInputRejected", "KafkaJsonSource")

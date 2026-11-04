@@ -3,7 +3,8 @@ from __future__ import annotations
 import asyncio
 import os
 import sqlite3
-from dataclasses import dataclass, field
+from contextlib import closing
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from threading import Event
 
@@ -73,6 +74,12 @@ def _config(tmp_path: Path) -> LocalWorkerRuntimeConfig:
     assert config.artifact_max_workers == 2
     assert config.artifact_max_in_flight == 4
     return config
+
+
+def _fast_heartbeat_config(tmp_path: Path) -> LocalWorkerRuntimeConfig:
+    """Keep lease-renewal stress semantics while avoiding production-length sleeps."""
+    config = _config(tmp_path)
+    return replace(config, lease_seconds=2, heartbeat_interval_seconds=0.1)
 
 
 def _seed(config: LocalWorkerRuntimeConfig) -> None:
@@ -167,7 +174,7 @@ class _SlowVerifyArtifactStore(LocalArtifactStore):
 
 
 def _lease_state(database_path: Path, attempt_id: AttemptId) -> tuple[str, str]:
-    with sqlite3.connect(database_path) as connection:
+    with closing(sqlite3.connect(database_path)) as connection:
         row = connection.execute(
             "SELECT heartbeat_at, lease_expires_at FROM attempts WHERE attempt_id=?",
             (str(attempt_id),),
@@ -200,7 +207,7 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     async def scenario() -> None:
-        config = _config(tmp_path)
+        config = _fast_heartbeat_config(tmp_path)
         _seed(config)
         slow_store: _SlowStatusSqliteStore | None = None
         slow_artifacts: _SlowPutArtifactStore | None = None
@@ -268,7 +275,7 @@ def test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verif
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     async def scenario() -> None:
-        config = _config(tmp_path)
+        config = _fast_heartbeat_config(tmp_path)
         _seed(config)
         first_runner = _Runner(block_on_call=2)
         first_runtime = LocalWorkerRuntime(

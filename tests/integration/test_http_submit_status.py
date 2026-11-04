@@ -73,6 +73,11 @@ def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
     }
 
 
+def _consume_http_error(error: HTTPError) -> tuple[int, bytes]:
+    with error:
+        return error.code, error.read()
+
+
 def test_http_sql_accepts_typed_bindings_and_rejects_type_mismatches(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -152,8 +157,9 @@ def test_http_sql_accepts_typed_bindings_and_rejects_type_mismatches(
         )
         with pytest.raises(HTTPError) as error:
             urlopen(invalid_request)  # noqa: S310 - fixed loopback test server
-        assert error.value.code == 400
-        assert "type" in json.loads(error.value.read())["error"]["message"]
+        status, response_body = _consume_http_error(error.value)
+        assert status == 400
+        assert "type" in json.loads(response_body)["error"]["message"]
 
         oversized = json.dumps(
             {
@@ -172,8 +178,9 @@ def test_http_sql_accepts_typed_bindings_and_rejects_type_mismatches(
         )
         with pytest.raises(HTTPError) as size_error:
             urlopen(oversized_request)  # noqa: S310 - fixed loopback test server
-        assert size_error.value.code == 413
-        assert json.loads(size_error.value.read())["error"]["code"] == "sql_result_too_large"
+        status, response_body = _consume_http_error(size_error.value)
+        assert status == 413
+        assert json.loads(response_body)["error"]["code"] == "sql_result_too_large"
 
         unsupported_profile = json.dumps(
             {"project": "typed-bindings", "sql": "SELECT 1", "profile": "queryflux"}
@@ -188,7 +195,8 @@ def test_http_sql_accepts_typed_bindings_and_rejects_type_mismatches(
         )
         with pytest.raises(HTTPError) as profile_error:
             urlopen(unsupported_request)  # noqa: S310 - fixed loopback test server
-        assert profile_error.value.code == 400
+        status, _response_body = _consume_http_error(profile_error.value)
+        assert status == 400
 
         malformed_profile = json.dumps(
             {"project": "typed-bindings", "sql": "SELECT 1", "profile": []}
@@ -203,7 +211,8 @@ def test_http_sql_accepts_typed_bindings_and_rejects_type_mismatches(
         )
         with pytest.raises(HTTPError) as malformed_error:
             urlopen(malformed_request)  # noqa: S310 - fixed loopback test server
-        assert malformed_error.value.code == 400
+        status, _response_body = _consume_http_error(malformed_error.value)
+        assert status == 400
     finally:
         server.shutdown()
         server.server_close()

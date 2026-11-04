@@ -1,0 +1,28 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/SauronShepherd/ronin/blob/20261029/docker/qualification-image-vex.openvex.json",
+  "author": "Ronin release qualification",
+  "timestamp": "2026-11-03T16:47:12Z",
+  "version": 1,
+  "statements": [
+    {
+      "vulnerability": {
+        "name": "CVE-2026-107891"
+      },
+      "timestamp": "2026-11-03T15:53:00Z",
+      "products": [
+        {
+          "@id": "pkg:docker/ronin@sha256:fb9029dad0d8d5aade4bb5809c8a4e027f416a158fedc633c65667d0b21b01b8",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "The Alpine Security Tracker marks musl 1.2.6-r3 on the 3.24-main branch fixed for CVE-2026-107891. Docker Scout generic version matching reports upstream fixed version 1.2.6-r6 and does not account for Alpine's branch-specific backport. Source: https://security.alpinelinux.org/vuln/CVE-2026-107891"
+    }
+  ]
+}

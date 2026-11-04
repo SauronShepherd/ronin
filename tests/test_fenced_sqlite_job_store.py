@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import gc
+import sqlite3
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -56,6 +59,45 @@ def _seed_claim(store: SqliteJobStore, *, suffix: str = "1"):
     )
     assert claim is not None
     return claim
+
+
+def test_store_close_releases_current_thread_connection_and_prevents_reuse(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    assert store.get_job(JobId("missing")) is None
+    connection = store._connections.connection.connection
+
+    store.close()
+    with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
+        connection.execute("SELECT 1")
+    with pytest.raises(RuntimeError, match="SQLite JobStore is closed"):
+        store.get_job(JobId("missing"))
+    store.close()
+
+
+def test_store_close_releases_connections_created_by_worker_threads(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        assert executor.submit(store.get_job, JobId("missing")).result() is None
+    connections = [handle.connection for handle in store._owned_connections]
+    assert connections
+
+    store.close()
+
+    for connection in connections:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
+            connection.execute("SELECT 1")
+
+
+def test_store_destruction_closes_its_thread_local_connection(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    assert store.get_job(JobId("missing")) is None
+    connection = store._connections.connection.connection
+
+    del store
+    gc.collect()
+
+    with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
+        connection.execute("SELECT 1")
 
 
 def test_fenced_sqlite_delegates_read_control_paths(tmp_path: Path) -> None:

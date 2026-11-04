@@ -220,14 +220,42 @@ class CloudStudioPlugin:
         edges = tuple(tuple(edge) for edge in payload.get("edges", []))
         return CloudTopology(resources, edges)
 
-    def validate(self, payload: dict[str, Any], *_args: Any, **_kwargs: Any) -> dict[str, Any]:
+    @staticmethod
+    def _request_payload(payload: dict[str, Any] | None, body: object | None) -> dict[str, Any]:
+        value = body if body is not None else payload
+        if not isinstance(value, dict):
+            raise ValueError("cloud request body must be a JSON object")
+        return value
+
+    def validate(
+        self,
+        payload: dict[str, Any] | None = None,
+        *_args: Any,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, Any]:
+        payload = self._request_payload(payload, body)
         topology = self._topology(payload)
         return {"valid": not topology.validate(), "errors": topology.validate()}
 
-    def apply(self, payload: dict[str, Any], *_args: Any, **_kwargs: Any) -> dict[str, Any]:
+    def apply(
+        self,
+        payload: dict[str, Any] | None = None,
+        *_args: Any,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, Any]:
+        payload = self._request_payload(payload, body)
         return self.backend.apply(self._topology(payload))
 
-    def plan(self, payload: dict[str, Any], *_args: Any, **_kwargs: Any) -> dict[str, Any]:
+    def plan(
+        self,
+        payload: dict[str, Any] | None = None,
+        *_args: Any,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, Any]:
+        payload = self._request_payload(payload, body)
         return self.backend.plan(self._topology(payload))
 
     def refresh(self, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
@@ -236,7 +264,14 @@ class CloudStudioPlugin:
     def destroy(self, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
         return self.backend.destroy()
 
-    def terraform(self, payload: dict[str, Any], *_args: Any, **_kwargs: Any) -> dict[str, str]:
+    def terraform(
+        self,
+        payload: dict[str, Any] | None = None,
+        *_args: Any,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, str]:
+        payload = self._request_payload(payload, body)
         return {
             "format": "hcl",
             "content": terraform_provider_config(self.backend)
@@ -244,7 +279,14 @@ class CloudStudioPlugin:
             + export_terraform(self._topology(payload)),
         }
 
-    def import_hcl(self, payload: dict[str, Any], *_args: Any, **_kwargs: Any) -> dict[str, Any]:
+    def import_hcl(
+        self,
+        payload: dict[str, Any] | None = None,
+        *_args: Any,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, Any]:
+        payload = self._request_payload(payload, body)
         topology = import_terraform(str(payload.get("hcl", "")))
         return {
             "resources": [
@@ -257,7 +299,14 @@ class CloudStudioPlugin:
     def backend_info(self, *_args: Any, **_kwargs: Any) -> dict[str, object]:
         return self.backend.health()
 
-    def save_snapshot(self, payload: dict[str, Any], *_args: Any, **_kwargs: Any) -> dict[str, Any]:
+    def save_snapshot(
+        self,
+        payload: dict[str, Any] | None = None,
+        *_args: Any,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, Any]:
+        payload = self._request_payload(payload, body)
         workspace = str(payload.get("workspace", "default"))
         snapshot = {"resources": payload.get("resources", []), "edges": payload.get("edges", [])}
         return {"workspace": workspace, "snapshot": self.snapshots.save(workspace, snapshot)}

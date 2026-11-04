@@ -7,9 +7,12 @@ All notable user-visible changes to Ronin are recorded here. Ronin is currently 
 ### Documentation
 
 - Reconciled the Public v1 implementation ledger, documentation index and
-  README with the 2026-09-20 workspace snapshot. The checkout is currently
-  uncommitted, so historical SHA and CI qualification records are explicitly
-  separated from current source state.
+  README with the 2026-10-29 scope and test plan. Historical workflow results
+  are separated from today's dirty-worktree diagnostics; current qualification
+  remains blocked and no release candidate is claimed.
+- Public claims now state that Ronin has no GenAI/RAG/in-product agent runtime;
+  external coding-agent skills are kept separate. The public Helm chart is
+  single-replica and has no multi-user configuration.
 
 ### Breaking / compatibility tightening
 
@@ -20,6 +23,7 @@ All notable user-visible changes to Ronin are recorded here. Ronin is currently 
 
 - Durable local job/run/attempt execution with SQLite-backed state, worker leasing/reclaim, container execution, public evidence retrieval, typed project/action grants, authenticated HTTP control, CLI, OpenAPI, `pyronin`, production Compose topology, readiness, and observed container resource evidence are present in current source.
 - Canonical JSON v1 now covers the public HTTP request/idempotency identity boundary in addition to existing internal identity-bearing surfaces.
+- The local-composed profile now manages the durable workflow scheduler lifecycle. Its local API covers cron schedules and fire history, event triggers and delivery history, immutable bounded backfill plans and cancellation, and workflow-run cancellation. SQLite and PostgreSQL scheduler persistence are exercised; this remains a single-operator local capability, not an HA/SLA claim.
 
 ### Fixes and hardening
 
@@ -30,16 +34,18 @@ All notable user-visible changes to Ronin are recorded here. Ronin is currently 
 ### Security-relevant changes
 
 - Typed project/action grants and bearer authorization are implemented in the public HTTP surface.
-- Secret-bearing and evidence/privacy boundaries are progressively hardened, but current automated Security qualification is disabled and no current-head security gate is claimed.
+- Secret-bearing and evidence/privacy boundaries are progressively hardened; local security qualification has not yet passed for the current candidate.
+- Runtime and probe images now use digest-pinned Alpine bases, exact-version APK package locks, and a hash-locked, build-only pip 26.2.2 bootstrap; `apk upgrade`, pip, and its build tools are absent from the final images. Current image evidence is still dirty-worktree diagnostic, not release qualification.
 
 ### Known limitations
 
-- GitHub Actions and automated tests are currently disabled by maintainer policy; current `main` therefore lacks exact-head automated release qualification.
+- CI workflows are excluded by maintainer policy; tests remain runnable manually. No exact clean-candidate release qualification is available for the current worktree.
 - The last authoritative automated frozen-journey result remains historical rather than current-head evidence; do not claim 15/15 until all fifteen steps execute on one exact candidate SHA.
 - `SECURITY.md` documents the private vulnerability-reporting route; repository configuration and release qualification remain maintainer-owned evidence.
 - Release license/NOTICE evidence still requires exact resolved-environment generation and human review.
-- Repository/ref protection remains a release-gate requirement before `v0.1.0`, no later than 2026-11-01.
-- Post-v0.1 breadth such as ingestion, CDC, lakehouse, SQL federation, streaming, catalog, BI, ML, GenAI, RAG, and additional runtimes remains out of scope.
+- Package version `0.0.0`, README alpha/v0.1 wording and Helm `0.1.0` still need a human-approved release identity.
+- The supported OS/Python matrix, Helm/kind qualification and security scanners remain incomplete. The local Floci plan requires Terraform 1.13.5, while this host has 1.16.2.
+- Ingestion, CDC, lakehouse, SQL federation, streaming, catalog, BI, ML and additional runtimes are not release-qualified until their stated journeys pass. GenAI/RAG/in-product agents are excluded from every Ronin tier, not deferred to a later Ronin release.
 
 ## Compatibility policy
 

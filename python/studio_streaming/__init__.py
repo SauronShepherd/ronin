@@ -17,8 +17,8 @@ from .contracts import (
     StreamSource,
     StreamSourceDefinition,
 )
-from .health import stream_health
-from .kafka import KafkaDependencyError, KafkaJsonSource
+from .health import KafkaStreamingHealthReader, StreamingUnavailable, stream_health
+from .kafka import KafkaDependencyError, KafkaInputRejected, KafkaJsonSource
 from .parquet_sink import ParquetMicroBatchSink
 from .processor import (
     IdentityTransform,
@@ -27,13 +27,17 @@ from .processor import (
     StreamCheckpointConflict,
     StreamTransform,
 )
+from .runtime import KafkaStreamingRuntime, StreamingInputRejected, StreamingRunUnavailable
 from .table import SqliteStreamTable
 from .windows import EventTimeWindow, WindowedBatch, window_records
 
 __all__ = (
     "IdentityTransform",
     "KafkaDependencyError",
+    "KafkaInputRejected",
     "KafkaJsonSource",
+    "KafkaStreamingRuntime",
+    "KafkaStreamingHealthReader",
     "MicroBatchProcessor",
     "MicroBatchResult",
     "ParquetMicroBatchSink",
@@ -45,6 +49,9 @@ __all__ = (
     "StreamDataType",
     "StreamDefinition",
     "StreamDefinitionConflict",
+    "StreamingUnavailable",
+    "StreamingInputRejected",
+    "StreamingRunUnavailable",
     "StreamPosition",
     "StreamRecord",
     "StreamRuntimeBinding",

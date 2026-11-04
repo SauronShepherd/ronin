@@ -10,13 +10,14 @@ from contextlib import contextmanager
 from pathlib import Path
 from threading import Event, Lock, Timer
 from typing import Any
+from urllib.parse import quote
 
 from .contracts import (
     SqlColumn,
     SqlExecutionError,
-    SqlQueryResult,
     SqlExplainResult,
     SqlExplainUnsupportedError,
+    SqlQueryResult,
     SqlRelationUnavailableError,
     SqlResultLimitError,
     SqlTimeoutError,
@@ -398,28 +399,87 @@ class DuckDbSqlEngine:
         parameters: tuple[object, ...] = (),
         *,
         max_bytes: int = 262_144,
+        timeout_ms: int = 5_000,
     ) -> SqlExplainResult:
         """Return a bounded, sanitized DuckDB plan for a read-only SELECT."""
         self._require_open()
         validate_read_only_select(sql)
-        if not 1 <= max_bytes <= 1_048_576:
+        if (
+            isinstance(max_bytes, bool)
+            or not isinstance(max_bytes, int)
+            or not 1 <= max_bytes <= 1_048_576
+        ):
             raise SqlValidationError("SQL explain max_bytes is outside the configured bound")
+        if (
+            isinstance(timeout_ms, bool)
+            or not isinstance(timeout_ms, int)
+            or not 1 <= timeout_ms <= 60_000
+        ):
+            raise SqlValidationError("SQL explain timeout_ms must be between 1 and 60000")
+        if len(sql.encode("utf-8")) > _MAX_SQL_BYTES:
+            raise SqlValidationError("SQL text exceeds the configured byte limit")
         if _UNSAFE_SQL.search(sql):
             raise SqlValidationError("SQL external filesystem and network access is disabled")
-        try:
-            rows = self._connection.execute("EXPLAIN " + sql, parameters).fetchall()
-        except Exception as exc:
-            raise SqlExplainUnsupportedError("SQL provider cannot explain this query") from exc
+        _validate_relation_sources(sql, {name.casefold() for name in self.list_relations()})
+
+        timed_out = Event()
+        state_lock = Lock()
+        execution_active = True
+
+        def interrupt_if_active() -> None:
+            nonlocal execution_active
+            with state_lock:
+                if execution_active:
+                    timed_out.set()
+                    try:
+                        self._connection.interrupt()
+                    except Exception:
+                        return
+
+        deadline = Timer(timeout_ms / 1000, interrupt_if_active)
+        deadline.daemon = True
+        deadline.start()
         result: list[tuple[str, str]] = []
-        total = 0
-        for key, value in rows:
-            key_text = str(key)
-            value_text = sanitize_sql_explain_text(str(value))
-            encoded = len((key_text + value_text).encode("utf-8"))
-            if total + encoded > max_bytes:
+        # Count the serialized rows array delimiters as part of the caller's
+        # byte budget, including the empty-array case.
+        total = 2
+        try:
+            cursor = self._connection.execute("EXPLAIN " + sql, parameters)
+            while (row := cursor.fetchone()) is not None:
+                key, value = row
+                key_text = sanitize_sql_explain_text(str(key))
+                value_text = sanitize_sql_explain_text(str(value))
+                encoded = len(
+                    json.dumps(
+                        [key_text, value_text], ensure_ascii=False, separators=(",", ":")
+                    ).encode("utf-8")
+                )
+                next_total = total + (1 if result else 0) + encoded
+                if next_total > max_bytes:
+                    raise SqlResultLimitError("SQL explain output exceeds max_bytes")
+                result.append((key_text, value_text))
+                total = next_total
+            if total > max_bytes:
                 raise SqlResultLimitError("SQL explain output exceeds max_bytes")
-            result.append((key_text, value_text))
-            total += encoded
+        except Exception as exc:
+            if timed_out.is_set():
+                raise SqlTimeoutError("SQL query exceeded its execution time limit") from exc
+            if isinstance(exc, (SqlResultLimitError, SqlValidationError)):
+                raise
+            message = str(exc).lower()
+            if "table with name" in message or "does not exist" in message:
+                raise SqlRelationUnavailableError("requested SQL relation is unavailable") from exc
+            if "binder error" in message or "parser error" in message or "column" in message:
+                raise SqlValidationError("SQL explain references invalid SQL or a column") from exc
+            if "not implemented" in message or "unsupported" in message:
+                raise SqlExplainUnsupportedError("SQL provider cannot explain this query") from exc
+            raise SqlExecutionError("SQL EXPLAIN failed") from exc
+        finally:
+            with state_lock:
+                execution_active = False
+            deadline.cancel()
+        if timed_out.is_set():
+            raise SqlTimeoutError("SQL query exceeded its execution time limit")
         return SqlExplainResult(tuple(result))
 
     def close(self) -> None:
@@ -438,11 +498,50 @@ class DuckDbSqlEngine:
 class ProjectScopedDuckDbSqlEngine:
     """DuckDB reference engine with independent relation namespaces per project."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, parquet_root: str | Path | None = None) -> None:
         self._engines: dict[str, DuckDbSqlEngine] = {}
         self._engine_locks: dict[str, threading.RLock] = {}
+        self._parquet_root: Path | None = None
+        self._parquet_relations: dict[str, set[str]] = {}
+        if parquet_root is not None:
+            root = Path(parquet_root).expanduser()
+            root.mkdir(parents=True, exist_ok=True)
+            self._parquet_root = root.resolve(strict=True)
         self._lock = threading.RLock()
         self._closed = False
+
+    def _refresh_project_parquet(self, project: str, engine: DuckDbSqlEngine) -> None:
+        if self._parquet_root is None:
+            return
+        project_path = self._parquet_root / quote(project, safe="")
+        if project_path.is_symlink():
+            raise ValueError("project Parquet directory must not be a symbolic link")
+        directory = project_path.resolve()
+        if not directory.is_relative_to(self._parquet_root):
+            raise ValueError("project Parquet directory escapes the configured root")
+        if directory.exists() and not directory.is_dir():
+            raise ValueError("project Parquet path must be a directory")
+        paths = sorted(directory.glob("*.parquet")) if directory.is_dir() else []
+        current: dict[str, Path] = {}
+        for path in paths:
+            if path.is_symlink():
+                raise ValueError("project Parquet files must not be symbolic links")
+            resolved = path.resolve(strict=True)
+            if not resolved.is_relative_to(directory) or not resolved.is_file():
+                raise ValueError("project Parquet files must remain inside their project directory")
+            relation = path.stem
+            if not _IDENTIFIER.fullmatch(relation):
+                raise ValueError("project Parquet filenames must be SQL-safe relation names")
+            if relation in current:
+                raise ValueError(f"duplicate project Parquet relation: {relation}")
+            current[relation] = resolved
+
+        previous = self._parquet_relations.get(project, set())
+        for stale_relation in sorted(previous - current.keys()):
+            engine.drop_relation(stale_relation)
+        for relation, path in current.items():
+            engine.register_parquet(relation, str(path))
+        self._parquet_relations[project] = set(current)
 
     @contextmanager
     def _project_engine(self, project: str) -> Iterator[DuckDbSqlEngine]:
@@ -460,6 +559,19 @@ class ProjectScopedDuckDbSqlEngine:
             # Acquire before releasing the registry lock so close() cannot
             # overtake an operation that has already passed the open check.
             operation_lock.acquire()
+        try:
+            self._refresh_project_parquet(project, engine)
+        except Exception:
+            with self._lock:
+                if self._engines.get(project) is engine:
+                    self._engines.pop(project, None)
+                    self._engine_locks.pop(project, None)
+                    self._parquet_relations.pop(project, None)
+            try:
+                engine.close()
+            finally:
+                operation_lock.release()
+            raise
         try:
             yield engine
         finally:
@@ -503,9 +615,15 @@ class ProjectScopedDuckDbSqlEngine:
         parameters: tuple[object, ...] = (),
         *,
         max_bytes: int = 262_144,
+        timeout_ms: int = 5_000,
     ) -> SqlExplainResult:
         with self._project_engine(project) as engine:
-            return engine.explain(sql, parameters, max_bytes=max_bytes)
+            return engine.explain(
+                sql,
+                parameters,
+                max_bytes=max_bytes,
+                timeout_ms=timeout_ms,
+            )
 
     def close(self) -> None:
         with self._lock:
@@ -516,6 +634,7 @@ class ProjectScopedDuckDbSqlEngine:
             locks = tuple(self._engine_locks.values())
             self._engines.clear()
             self._engine_locks.clear()
+            self._parquet_relations.clear()
             for engine, operation_lock in zip(engines, locks, strict=True):
                 with operation_lock:
                     engine.close()

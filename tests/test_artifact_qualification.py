@@ -57,6 +57,29 @@ def test_origin_must_be_site_packages_and_outside_checkout(tmp_path: Path) -> No
         module.assert_installed_origin(alien, checkout=checkout, site_packages=site)
 
 
+def test_qualification_subprocess_environment_drops_parent_coverage_hooks(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("COVERAGE_FILE", str(tmp_path / ".coverage"))
+    monkeypatch.setenv("COVERAGE_PROCESS_START", str(tmp_path / ".coveragerc"))
+    monkeypatch.setenv("COV_CORE_CONFIG", str(tmp_path / ".coveragerc"))
+    monkeypatch.setenv("COV_CORE_DATAFILE", str(tmp_path / ".coverage"))
+    monkeypatch.setenv("COV_CORE_SOURCE", "ronin-test-source")
+    monkeypatch.setenv("COV_CORE_CONTEXT", "killed-child")
+
+    environment = module._qualification_subprocess_environment(pythonpath=tmp_path)
+
+    assert environment["PYTHONPATH"] == str(tmp_path)
+    assert not {
+        "COVERAGE_FILE",
+        "COVERAGE_PROCESS_START",
+        "COV_CORE_CONFIG",
+        "COV_CORE_DATAFILE",
+        "COV_CORE_SOURCE",
+        "COV_CORE_CONTEXT",
+    }.intersection(environment)
+
+
 def test_qualification_record_is_machine_path_independent(tmp_path: Path) -> None:
     candidate = {"schema": "ronin.python-artifact-candidate/v1", "package": "pyronin"}
     results: list[dict[str, object]] = []

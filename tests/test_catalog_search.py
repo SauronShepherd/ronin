@@ -13,7 +13,7 @@ from studio_core import (
     WorkspaceId,
 )
 from studio_orchestrator import Instant
-from studio_storage.catalog import CatalogConflict, SqliteCatalogStore
+from studio_storage.catalog import CatalogConflict, LineageLimitExceeded, SqliteCatalogStore
 from studio_storage.workspaces import SqliteWorkspaceStore
 
 
@@ -158,3 +158,45 @@ def test_catalog_lineage_listing_is_deterministic_and_bounded(tmp_path: Path) ->
     assert catalog.list_lineage(workspace, limit=1) == listed[:1]
     with pytest.raises(ValueError, match="between 1 and 10000"):
         catalog.list_lineage(workspace, limit=0)
+
+
+def test_catalog_directional_lineage_queries_never_return_partial_results(tmp_path: Path) -> None:
+    now = Instant("2026-09-13T10:10:00.000000Z")
+    workspace = WorkspaceId("workspace-lineage-limit")
+    database = tmp_path / "catalog-lineage-limit.sqlite3"
+    SqliteWorkspaceStore(database, migration_now=now).create_workspace(
+        Workspace(workspace, "Lineage limit"), now=now
+    )
+    catalog = SqliteCatalogStore(database, migration_now=now)
+    refs = tuple(
+        AssetRef(AssetId(asset_id), AssetVersion("1"))
+        for asset_id in ("source-a", "source-b", "target-a", "target-b")
+    )
+    for ref in refs:
+        catalog.create_asset(
+            workspace,
+            CatalogAsset(ref.asset_id, "table", str(ref.asset_id)),
+            now=now,
+        )
+        catalog.put_revision(workspace, AssetRevision(ref), now=now)
+    source_a, source_b, target_a, target_b = refs
+    edges = (
+        LineageEdge(source_a, target_a, "transform", "declared"),
+        LineageEdge(source_b, target_a, "read", "observed"),
+        LineageEdge(source_a, target_b, "transform", "observed"),
+    )
+    for edge in edges:
+        catalog.put_lineage(workspace, edge, now=now)
+
+    with pytest.raises(LineageLimitExceeded, match="exceeds requested limit of 1"):
+        catalog.upstream(workspace, target_a, limit=1)
+    with pytest.raises(LineageLimitExceeded, match="exceeds requested limit of 1"):
+        catalog.downstream(workspace, source_a, limit=1)
+    assert catalog.upstream(workspace, target_a, limit=2) == tuple(
+        sorted(edges[:2], key=lambda item: item.digest)
+    )
+    assert catalog.downstream(workspace, source_a, limit=2) == tuple(
+        sorted((edges[0], edges[2]), key=lambda item: item.digest)
+    )
+    with pytest.raises(ValueError, match="lineage limit must be between 1 and 100"):
+        catalog.upstream(workspace, target_a, limit=101)

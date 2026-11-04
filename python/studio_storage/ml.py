@@ -34,6 +34,7 @@ from .workspaces import WorkspaceNotFound
 
 _ML_SCHEMA_VERSION = 2
 _ML_MIGRATIONS = {1: "ml_001.sql", 2: "ml_002.sql"}
+MAX_MODEL_EVALUATIONS = 100
 
 
 class MLConflict(RuntimeError):
@@ -731,6 +732,15 @@ class SqliteMLStore:
                 (str(workspace_id), str(evaluation.model_id), str(evaluation.version), digest),
             ).fetchone()
             if existing is None:
+                evaluation_count = connection.execute(
+                    "SELECT COUNT(*) AS total FROM model_evaluations "
+                    "WHERE workspace_id=? AND model_id=? AND version=?",
+                    (str(workspace_id), str(evaluation.model_id), str(evaluation.version)),
+                ).fetchone()["total"]
+                if evaluation_count >= MAX_MODEL_EVALUATIONS:
+                    raise MLConflict(
+                        f"model versions may contain at most {MAX_MODEL_EVALUATIONS} evaluations"
+                    )
                 connection.execute(
                     "INSERT INTO model_evaluations("
                     "workspace_id,model_id,version,evaluation_digest,evaluation_json,created_at) "

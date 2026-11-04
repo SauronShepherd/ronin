@@ -194,7 +194,9 @@ class RemoteTrainingResult:
                 or not math.isfinite(float(value))
             ):
                 raise ValueError("remote result metrics must be finite numbers")
-        if bool(self.artifact_ref) != bool(self.artifact_digest):
+        if not isinstance(self.artifact_digest, str) or bool(self.artifact_ref) != bool(
+            self.artifact_digest
+        ):
             raise ValueError("remote artifact reference and digest must be supplied together")
         if self.artifact_ref and (
             not isinstance(self.artifact_ref, str)
@@ -210,12 +212,10 @@ class RemoteTrainingResult:
             if not self.artifact_digest.startswith("sha256:"):
                 raise ValueError("remote artifact digest must use the sha256 namespace")
             digest = self.artifact_digest.removeprefix("sha256:")
-            if (
-                not digest
-                or len(digest) > 64
-                or any(char not in "0123456789abcdefghijklmnopqrstuvwxyz._-" for char in digest)
-            ):
-                raise ValueError("remote artifact digest must be a bounded lowercase token")
+            if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+                raise ValueError(
+                    "remote artifact digest must be 64 lowercase hexadecimal characters"
+                )
 
 
 class RemoteAdapterError(RuntimeError):
@@ -267,7 +267,12 @@ class RemoteMLBackend(Protocol):
     display_name: str
     capabilities: BackendCapabilities
 
-    def submit(self, request: RemoteTrainingRequest) -> RemoteTrainingResult: ...
+    def submit(
+        self,
+        request: RemoteTrainingRequest,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> RemoteTrainingResult: ...
 
     def poll(self, run_id: str) -> RemoteTrainingResult: ...
 

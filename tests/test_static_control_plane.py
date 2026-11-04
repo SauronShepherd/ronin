@@ -4,7 +4,7 @@ from studio_security import PolicyRequirement
 from studio_server import StaticControlPlaneAuthenticator, StaticControlPlaneAuthorizer
 
 
-def test_static_control_plane_is_explicit_and_workspace_scoped() -> None:
+def test_static_control_plane_is_explicit_and_registered_workspace_scoped() -> None:
     authenticator = StaticControlPlaneAuthenticator("secret")
     authorizer = StaticControlPlaneAuthorizer(
         WorkspaceId("workspace-a"), frozenset({"scheduler.read"})
@@ -17,6 +17,13 @@ def test_static_control_plane_is_explicit_and_workspace_scoped() -> None:
     ).allowed
     assert not authorizer.authorize(
         actor, PolicyRequirement(WorkspaceId("workspace-b"), "scheduler.read")
+    ).allowed
+    authorizer.register_workspace(WorkspaceId("workspace-b"))
+    assert authorizer.authorize(
+        actor, PolicyRequirement(WorkspaceId("workspace-b"), "scheduler.read")
+    ).allowed
+    assert not authorizer.authorize(
+        actor, PolicyRequirement(WorkspaceId("workspace-unknown"), "scheduler.read")
     ).allowed
     assert not authorizer.authorize(
         actor, PolicyRequirement(WorkspaceId("workspace-a"), "scheduler.write")

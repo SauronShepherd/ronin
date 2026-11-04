@@ -11,7 +11,9 @@ from studio_cloud import (
 )
 from studio_cloud.backends import HttpEmulatorBackend, TerraformEmulatorBackend
 from studio_cloud.plugin import CloudStudioPlugin, factory
-from studio_core.plugins import ContributionRegistry, PluginContext
+from studio_core.plugins import ContributionRegistry, PluginContext, PluginManager, PluginRecord
+from studio_plugin_workspaces import WorkspacesPlugin
+from studio_runtime import PluginHost
 
 
 def topology() -> CloudTopology:
@@ -65,6 +67,16 @@ def test_terraform_provider_config_is_endpoint_based_and_secret_free() -> None:
     assert "AWS_ACCESS_KEY_ID" not in config
 
 
+def test_terraform_backend_writes_exact_pinned_tool_versions(tmp_path) -> None:
+    backend = create_backend("floci", workspace_dir=str(tmp_path))
+
+    backend._write_config(topology())
+
+    config = (tmp_path / "main.tf").read_text(encoding="utf-8")
+    assert 'required_version = "= 1.13.5"' in config
+    assert 'version = "= 6.65.0"' in config
+
+
 def test_factory_reads_backend_from_environment(monkeypatch) -> None:
     monkeypatch.setenv("RONIN_CLOUD_STUDIO_BACKEND", "floci")
     monkeypatch.setenv("RONIN_CLOUD_STUDIO_ENDPOINT", "http://emulator:4566")
@@ -99,6 +111,31 @@ def test_plugin_api_lifecycle_is_operational() -> None:
     assert plugin.apply(payload)["resources"]
     assert plugin.refresh()["resources"]
     assert plugin.destroy()["destroyed"] == ["bucket"]
+
+
+def test_cloud_api_route_passes_http_body_to_plugin_handler() -> None:
+    plugin = CloudStudioPlugin()
+    workspaces = WorkspacesPlugin()
+    manager = PluginManager()
+    host = PluginHost(
+        manager,
+        manager.compose(
+            (
+                PluginRecord(workspaces.manifest, workspaces, "test"),
+                PluginRecord(plugin.manifest, plugin, "test"),
+            )
+        ),
+    )
+    host.start()
+    try:
+        response = host.invoke_route(
+            "POST",
+            "/v1/cloud-studio/validate",
+            body={"resources": [], "edges": []},
+        )
+        assert response == {"valid": True, "errors": []}
+    finally:
+        host.stop()
 
 
 def test_plugin_registers_complete_api_surface() -> None:

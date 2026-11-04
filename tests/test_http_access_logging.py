@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from http.client import HTTPResponse
+from http.server import ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
 from typing import cast
@@ -14,6 +15,7 @@ from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant
 from studio_server import RoninHTTPServer
+from studio_server.control_plane import WorkspaceProjectHTTPServer
 from studio_server.http import _Handler
 from studio_storage import SqliteJobStore
 
@@ -22,11 +24,11 @@ def _request(url: str, *, token: str | None) -> HTTPResponse | HTTPError:
     headers = {} if token is None else {"Authorization": f"Bearer {token}"}
     request = Request(url, headers=headers)  # noqa: S310 - URL is the test's loopback server
     try:
-        return cast(
-            HTTPResponse | HTTPError,
-            urlopen(request, timeout=5),  # noqa: S310 - loopback test server
-        )
+        with urlopen(request, timeout=5) as response:  # noqa: S310 - loopback test server
+            response.read()
+            return cast(HTTPResponse, response)
     except HTTPError as response:
+        response.close()
         return response
 
 
@@ -100,6 +102,39 @@ def test_http_server_failures_are_logged_as_errors(caplog: pytest.LogCaptureFixt
     assert caplog.records[-1].levelno == logging.ERROR
     assert event["outcome"] == "ERROR"
     assert event["status_code"] == 503
+
+
+@pytest.mark.parametrize("server_type", [RoninHTTPServer, WorkspaceProjectHTTPServer])
+@pytest.mark.parametrize(
+    "disconnect",
+    [BrokenPipeError, ConnectionAbortedError, ConnectionResetError],
+)
+def test_http_servers_suppress_expected_client_disconnect_traces(
+    monkeypatch: pytest.MonkeyPatch,
+    server_type: type[ThreadingHTTPServer],
+    disconnect: type[OSError],
+) -> None:
+    delegated: list[tuple[object, object, object]] = []
+    monkeypatch.setattr(
+        ThreadingHTTPServer,
+        "handle_error",
+        lambda server, request, address: delegated.append((server, request, address)),
+    )
+    server = object.__new__(server_type)
+
+    try:
+        raise disconnect("browser closed the response socket")
+    except OSError:
+        server.handle_error(None, ("127.0.0.1", 12345))
+
+    assert delegated == []
+
+    try:
+        raise RuntimeError("unexpected handler failure")
+    except RuntimeError:
+        server.handle_error(None, ("127.0.0.1", 12345))
+
+    assert len(delegated) == 1
 
 
 def test_scoped_runs_authenticate_before_requiring_a_project_filter(tmp_path: Path) -> None:

@@ -86,6 +86,8 @@ def _runtime_image(base_url: str, token: str, *, allow_insecure_http: bool) -> s
         with build_opener(_RejectRedirects()).open(request, timeout=10.0) as response:  # noqa: S310
             body = response.read(64 * 1024 + 1)
     except (HTTPError, URLError, OSError) as exc:
+        if isinstance(exc, HTTPError):
+            exc.close()
         raise RuntimeError("runner broker runtime discovery failed") from exc
     if len(body) > 64 * 1024:
         raise RuntimeError("runner broker runtime response exceeded byte limit")

@@ -7,7 +7,7 @@ import math
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict
-from typing import cast
+from typing import Protocol, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -28,6 +28,16 @@ MAX_REMOTE_PREDICTION_BYTES = 8 * 1024 * 1024
 MAX_REMOTE_ID_LENGTH = 256
 
 
+class RemoteJsonTransport(Protocol):
+    def __call__(
+        self,
+        operation: str,
+        payload: Mapping[str, object],
+        *,
+        timeout_seconds: float | None = None,
+    ) -> Mapping[str, object]: ...
+
+
 class RemoteExecutionController:
     def __init__(
         self,
@@ -45,10 +55,11 @@ class RemoteExecutionController:
     def submit(self, request: RemoteTrainingRequest) -> RemoteTrainingResult:
         deadline = self._clock() + request.timeout_seconds
         for attempt in range(1, self.policy.max_attempts + 1):
-            if self._clock() >= deadline:
+            remaining = deadline - self._clock()
+            if remaining <= 0:
                 raise RemoteTransientError("remote training wall-clock budget expired")
             try:
-                return self.backend.submit(request)
+                result = self.backend.submit(request, timeout_seconds=remaining)
             except RemoteTransientError:
                 if attempt == self.policy.max_attempts:
                     raise
@@ -58,6 +69,10 @@ class RemoteExecutionController:
                         "remote training wall-clock budget expired"
                     ) from None
                 self._sleep(min(self.policy.delay_for(attempt), remaining))
+                continue
+            if self._clock() >= deadline:
+                raise RemoteTransientError("remote training wall-clock budget expired") from None
+            return result
         raise AssertionError("unreachable")
 
     def poll(self, run_id: str) -> RemoteTrainingResult:
@@ -96,7 +111,7 @@ class JsonRemoteBackend:
         backend_id: str,
         display_name: str,
         capabilities: BackendCapabilities,
-        transport: Callable[[str, Mapping[str, object]], Mapping[str, object]],
+        transport: RemoteJsonTransport,
     ) -> None:
         self.backend_id = backend_id
         self.display_name = display_name
@@ -135,8 +150,18 @@ class JsonRemoteBackend:
             tuple(metrics),
         )
 
-    def submit(self, request: RemoteTrainingRequest) -> RemoteTrainingResult:
-        return self._result(self._transport("submit", {"request": asdict(request)}))
+    def submit(
+        self,
+        request: RemoteTrainingRequest,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> RemoteTrainingResult:
+        payload = {"request": asdict(request)}
+        if timeout_seconds is None:
+            result = self._transport("submit", payload)
+        else:
+            result = self._transport("submit", payload, timeout_seconds=timeout_seconds)
+        return self._result(result)
 
     def poll(self, run_id: str) -> RemoteTrainingResult:
         return self._result(self._transport("poll", {"run_id": run_id}))
@@ -171,6 +196,8 @@ class JsonRemoteBackend:
         predictions = payload.get("predictions", [])
         if not isinstance(predictions, list) or len(predictions) > MAX_REMOTE_PREDICTION_ROWS:
             raise ValueError("remote predictions must be an array")
+        if len(predictions) != len(materialized):
+            raise ValueError("remote prediction count must match the input row count")
         return predictions
 
 
@@ -182,7 +209,7 @@ def urllib_json_transport(
     *,
     allow_http: bool = False,
     allowed_hosts: Sequence[str] | None = None,
-) -> Callable[[str, Mapping[str, object]], Mapping[str, object]]:
+) -> RemoteJsonTransport:
     """Create a minimal POST JSON transport for provider deployment wiring."""
     normalized = base_url.rstrip("/")
     parsed_base = urlparse(normalized)
@@ -210,19 +237,34 @@ def urllib_json_transport(
         or max_response_bytes < 1
     ):
         raise ValueError("remote transport limits must be positive")
+    configured_timeout_seconds = float(timeout_seconds)
     opener = build_opener(_NoRedirectHandler())
 
-    def transport(operation: str, payload: Mapping[str, object]) -> Mapping[str, object]:
+    def transport(
+        operation: str,
+        payload: Mapping[str, object],
+        *,
+        timeout_seconds: float | None = None,
+    ) -> Mapping[str, object]:
         request_payload = payload.get("request")
         request_timeout = (
             request_payload.get("timeout_seconds") if isinstance(request_payload, Mapping) else None
         )
-        effective_timeout = timeout_seconds
+        effective_timeout = configured_timeout_seconds
         if isinstance(request_timeout, (int, float)) and not isinstance(request_timeout, bool):
             request_timeout = float(request_timeout)
             if not math.isfinite(request_timeout) or request_timeout <= 0:
                 raise ValueError("remote request timeout must be positive and finite")
-            effective_timeout = min(timeout_seconds, request_timeout)
+            effective_timeout = min(configured_timeout_seconds, request_timeout)
+        if timeout_seconds is not None:
+            if (
+                isinstance(timeout_seconds, bool)
+                or not isinstance(timeout_seconds, (int, float))
+                or not math.isfinite(float(timeout_seconds))
+                or timeout_seconds <= 0
+            ):
+                raise ValueError("remote deadline timeout must be positive and finite")
+            effective_timeout = min(effective_timeout, float(timeout_seconds))
         request = Request(  # noqa: S310
             f"{normalized}/{operation}",
             data=json.dumps(dict(payload), separators=(",", ":")).encode("utf-8"),
@@ -233,6 +275,7 @@ def urllib_json_transport(
             with opener.open(request, timeout=effective_timeout) as response:
                 raw = response.read(max_response_bytes + 1)
         except HTTPError as exc:
+            exc.close()
             if exc.code == 429 or 500 <= exc.code < 600:
                 raise RemoteTransientError(f"remote service returned HTTP {exc.code}") from exc
             raise RemoteValidationError(f"remote service returned HTTP {exc.code}") from exc
@@ -249,9 +292,7 @@ def urllib_json_transport(
 
 
 class MLflowBackend(JsonRemoteBackend):
-    def __init__(
-        self, transport: Callable[[str, Mapping[str, object]], Mapping[str, object]]
-    ) -> None:
+    def __init__(self, transport: RemoteJsonTransport) -> None:
         super().__init__(
             "remote.mlflow",
             "Remote · MLflow",
@@ -272,9 +313,7 @@ class MLflowBackend(JsonRemoteBackend):
 
 
 class SparkBackend(JsonRemoteBackend):
-    def __init__(
-        self, transport: Callable[[str, Mapping[str, object]], Mapping[str, object]]
-    ) -> None:
+    def __init__(self, transport: RemoteJsonTransport) -> None:
         super().__init__(
             "remote.spark",
             "Remote · Spark ML",

@@ -1,5 +1,9 @@
 import pytest
 from studio_semantic import (
+    MAX_DASHBOARD_EXECUTION_MS,
+    MAX_DASHBOARD_QUERY_BYTES,
+    MAX_DASHBOARD_ROWS,
+    MAX_DASHBOARD_TILES,
     DashboardDefinition,
     DashboardTile,
     MetricQuery,
@@ -15,7 +19,7 @@ from studio_semantic import (
     SqliteSemanticStore,
     compile_metric_query,
 )
-from studio_sql import SqlColumn, SqlQueryResult
+from studio_sql import SqlColumn, SqlQueryResult, SqlResultLimitError, SqlTimeoutError
 
 
 def _model() -> SemanticModel:
@@ -73,6 +77,7 @@ def test_unknown_semantic_field_fails_closed() -> None:
 class _FakeEngine:
     def __init__(self) -> None:
         self.calls: list[tuple[str, tuple[object, ...], int]] = []
+        self.execution_limits: list[tuple[int, int]] = []
 
     def register_parquet(self, name: str, path: str) -> None:
         del name, path
@@ -83,8 +88,11 @@ class _FakeEngine:
         parameters: tuple[object, ...] = (),
         *,
         max_rows: int = 10_000,
+        timeout_ms: int = 5_000,
+        max_result_bytes: int = 1_048_576,
     ) -> SqlQueryResult:
         self.calls.append((sql, parameters, max_rows))
+        self.execution_limits.append((timeout_ms, max_result_bytes))
         return SqlQueryResult((SqlColumn("orders", "BIGINT"),), ((3,),))
 
     def close(self) -> None:
@@ -122,6 +130,7 @@ def test_runtime_executes_bounded_join_chain() -> None:
 class _ProjectScopedFakeEngine:
     def __init__(self) -> None:
         self.calls: list[tuple[str, str, int]] = []
+        self.execution_limits: list[tuple[int, int]] = []
 
     def execute(
         self,
@@ -130,9 +139,12 @@ class _ProjectScopedFakeEngine:
         parameters: tuple[object, ...] = (),
         *,
         max_rows: int = 10_000,
+        timeout_ms: int = 5_000,
+        max_result_bytes: int = 1_048_576,
     ) -> SqlQueryResult:
         del parameters
         self.calls.append((project_id, sql, max_rows))
+        self.execution_limits.append((timeout_ms, max_result_bytes))
         return SqlQueryResult((SqlColumn("orders_id", "BIGINT"),), ((7,),))
 
 
@@ -165,6 +177,186 @@ def test_project_scoped_runtime_executes_dashboard_tiles() -> None:
     results = runtime.execute_dashboard_for_project("project", {"sales": _model()}, dashboard)
     assert results[0].result.rows == ((7,),)
     assert engine.calls[-1][0] == "project"
+    assert 0 < engine.execution_limits[-1][0] <= MAX_DASHBOARD_EXECUTION_MS
+    assert engine.execution_limits[-1][1] <= MAX_DASHBOARD_QUERY_BYTES
+
+
+def _execute_test_dashboard(engine, dashboard, models):
+    if isinstance(engine, _ProjectScopedFakeEngine):
+        return ProjectScopedSemanticRuntime(engine).execute_dashboard_for_project(
+            "project", models, dashboard
+        )
+    return SemanticRuntime(engine).execute_dashboard(models, dashboard)
+
+
+@pytest.mark.parametrize("project_scoped", [False, True])
+def test_dashboard_rejects_fanout_and_aggregate_rows_before_any_query(project_scoped) -> None:
+    engine = _ProjectScopedFakeEngine() if project_scoped else _FakeEngine()
+    models = {"sales": _model()}
+    tiles = tuple(
+        DashboardTile(
+            f"tile_{index}",
+            f"Tile {index}",
+            "number",
+            MetricQuery("sales", ("orders",)),
+        )
+        for index in range(MAX_DASHBOARD_TILES + 1)
+    )
+    over_fanout = DashboardDefinition("too_many", "Too many", tiles)
+    with pytest.raises(ValueError, match="exceeds 12 tiles"):
+        _execute_test_dashboard(engine, over_fanout, models)
+    assert engine.calls == []
+
+    over_budget = DashboardDefinition(
+        "too_many_rows",
+        "Too many rows",
+        (
+            DashboardTile("tile_a", "A", "table", MetricQuery("sales", ("orders",), limit=60_000)),
+            DashboardTile("tile_b", "B", "table", MetricQuery("sales", ("orders",), limit=60_000)),
+        ),
+    )
+    with pytest.raises(ValueError, match=f"aggregate row budget of {MAX_DASHBOARD_ROWS}"):
+        _execute_test_dashboard(engine, over_budget, models)
+    assert engine.calls == []
+
+
+@pytest.mark.parametrize("project_scoped", [False, True])
+def test_dashboard_precompiles_all_tiles_before_executing(project_scoped) -> None:
+    engine = _ProjectScopedFakeEngine() if project_scoped else _FakeEngine()
+    dashboard = DashboardDefinition(
+        "stale_reference",
+        "Stale reference",
+        (
+            DashboardTile("tile_a", "A", "number", MetricQuery("sales", ("orders",))),
+            DashboardTile("tile_b", "B", "number", MetricQuery("missing", ("orders",))),
+        ),
+    )
+    with pytest.raises(KeyError, match="unknown semantic model: missing"):
+        _execute_test_dashboard(engine, dashboard, {"sales": _model()})
+    assert engine.calls == []
+
+
+@pytest.mark.parametrize("project_scoped", [False, True])
+def test_dashboard_global_timeout_stops_before_starting_another_tile(
+    project_scoped, monkeypatch
+) -> None:
+    engine = _ProjectScopedFakeEngine() if project_scoped else _FakeEngine()
+    dashboard = DashboardDefinition(
+        "deadline",
+        "Deadline",
+        tuple(
+            DashboardTile(
+                f"tile_{index}",
+                f"Tile {index}",
+                "number",
+                MetricQuery("sales", ("orders",)),
+            )
+            for index in range(2)
+        ),
+    )
+    clock = iter((100.0, 100.001, 115.0))
+    monkeypatch.setattr("studio_semantic.runtime.monotonic", lambda: next(clock))
+    with pytest.raises(SqlTimeoutError, match="total execution time limit"):
+        _execute_test_dashboard(engine, dashboard, {"sales": _model()})
+    assert len(engine.calls) == 1
+    assert 0 < engine.execution_limits[0][0] <= MAX_DASHBOARD_EXECUTION_MS - 1
+
+
+class _OversizedDashboardEngine(_FakeEngine):
+    def execute(
+        self,
+        sql: str,
+        parameters: tuple[object, ...] = (),
+        *,
+        max_rows: int = 10_000,
+        timeout_ms: int = 5_000,
+        max_result_bytes: int = 1_048_576,
+    ) -> SqlQueryResult:
+        self.calls.append((sql, parameters, max_rows))
+        self.execution_limits.append((timeout_ms, max_result_bytes))
+        return SqlQueryResult((SqlColumn("orders", "VARCHAR"),), (("x" * (max_result_bytes + 1),),))
+
+
+class _ProjectScopedOversizedDashboardEngine(_ProjectScopedFakeEngine):
+    def execute(
+        self,
+        project_id: str,
+        sql: str,
+        parameters: tuple[object, ...] = (),
+        *,
+        max_rows: int = 10_000,
+        timeout_ms: int = 5_000,
+        max_result_bytes: int = 1_048_576,
+    ) -> SqlQueryResult:
+        del parameters
+        self.calls.append((project_id, sql, max_rows))
+        self.execution_limits.append((timeout_ms, max_result_bytes))
+        return SqlQueryResult((SqlColumn("orders", "VARCHAR"),), (("x" * (max_result_bytes + 1),),))
+
+
+@pytest.mark.parametrize("project_scoped", [False, True])
+def test_dashboard_total_result_budget_fails_without_returning_partial_results(project_scoped):
+    engine = (
+        _ProjectScopedOversizedDashboardEngine() if project_scoped else _OversizedDashboardEngine()
+    )
+    dashboard = DashboardDefinition(
+        "oversized",
+        "Oversized",
+        (
+            DashboardTile("tile_a", "A", "table", MetricQuery("sales", ("orders",))),
+            DashboardTile("tile_b", "B", "table", MetricQuery("sales", ("orders",))),
+        ),
+    )
+    with pytest.raises(SqlResultLimitError, match="total response byte limit"):
+        _execute_test_dashboard(engine, dashboard, {"sales": _model()})
+    assert len(engine.calls) == 1
+
+
+@pytest.mark.parametrize("project_scoped", [False, True])
+def test_dashboard_budgets_execute_against_real_duckdb(project_scoped, tmp_path) -> None:
+    pytest.importorskip("pyarrow")
+    from studio_lakehouse import write_parquet_rows
+    from studio_sql import DuckDbSqlEngine, ProjectScopedDuckDbSqlEngine
+
+    parquet = tmp_path / "orders.parquet"
+    write_parquet_rows(
+        parquet,
+        (
+            {"country": "ES", "status": "done", "amount": 5},
+            {"country": "US", "status": "done", "amount": 7},
+        ),
+    )
+    dashboard = DashboardDefinition(
+        "real_dashboard",
+        "Real dashboard",
+        (
+            DashboardTile(
+                "total_orders", "Total orders", "number", MetricQuery("sales", ("orders",))
+            ),
+            DashboardTile(
+                "revenue_by_country",
+                "Revenue by country",
+                "bar",
+                MetricQuery("sales", ("revenue",), ("country",), limit=10),
+            ),
+        ),
+    )
+    model = _model()
+    if project_scoped:
+        with ProjectScopedDuckDbSqlEngine() as engine:
+            engine.register_parquet("project", "orders", str(parquet))
+            results = ProjectScopedSemanticRuntime(engine).execute_dashboard_for_project(
+                "project", {"sales": model}, dashboard
+            )
+    else:
+        with DuckDbSqlEngine() as engine:
+            engine.register_parquet("orders", str(parquet))
+            results = SemanticRuntime(engine).execute_dashboard({"sales": model}, dashboard)
+
+    assert [result.tile_id for result in results] == ["revenue_by_country", "total_orders"]
+    by_country = results[0].result.rows
+    assert {tuple(row) for row in by_country} == {("ES", 5), ("US", 7)}
+    assert results[1].result.rows == ((2,),)
 
 
 def test_semantic_http_adapter_persists_and_queries_bounded_contract(tmp_path) -> None:

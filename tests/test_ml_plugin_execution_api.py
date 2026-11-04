@@ -2,6 +2,7 @@
 
 # ruff: noqa: E501
 import json
+import logging
 import time
 from dataclasses import replace
 from threading import Event
@@ -998,6 +999,27 @@ def test_register_execution_model_persists_run_and_verified_artifact(tmp_path) -
                     "artifact_size_bytes": artifact.size_bytes,
                 },
             ),
+            "registration_snapshot": lambda _self, _workspace, _run: ExecutionSnapshot(
+                run_id="run-1",
+                state="succeeded",
+                workspace_id="ws",
+                lab_id=lab.id,
+                lab_digest=lab.digest,
+                rows_json=json.dumps(rows),
+                result_payload={
+                    "lab_id": lab.id,
+                    "task": result.model.task,
+                    "algorithm": result.model.algorithm,
+                    "backend_id": result.backend_id,
+                    "features": list(result.model.features),
+                    "target": result.model.target,
+                    "metrics": [[name, value] for name, value in result.model.metrics],
+                    "artifact_ref": artifact.storage_ref,
+                    "artifact_digest": artifact.digest,
+                    "artifact_media_type": artifact.media_type,
+                    "artifact_size_bytes": artifact.size_bytes,
+                },
+            ),
         },
     )()
     plugin._labs = LabService(InMemoryMLLabStore())
@@ -1029,6 +1051,9 @@ def test_register_execution_model_rejects_unfinished_execution() -> None:
         {
             "close": lambda _self: None,
             "status": lambda *_args: ExecutionSnapshot(run_id="queued", state="running"),
+            "registration_snapshot": lambda *_args: ExecutionSnapshot(
+                run_id="queued", state="running"
+            ),
         },
     )()
     try:
@@ -1107,7 +1132,7 @@ def test_compare_route_rejects_invalid_tie_breaker_contract(
     plugin._coordinator.close()
 
 
-def test_search_route_executes_grid_trials() -> None:
+def test_search_route_executes_grid_trials(caplog: pytest.LogCaptureFixture) -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())
     lab = Lab(
@@ -1120,6 +1145,7 @@ def test_search_route_executes_grid_trials() -> None:
         (FeatureSpec("x"),),
     )
     plugin._labs.create(WorkspaceId("ws"), lab)
+    caplog.set_level(logging.INFO, logger="studio_ml.plugin")
     result = plugin.search_trials(
         "ws",
         "search",
@@ -1134,6 +1160,21 @@ def test_search_route_executes_grid_trials() -> None:
     )
     assert len(result["items"]) == 2
     assert all("metrics" in item for item in result["items"])
+    events = [
+        json.loads(record.getMessage())
+        for record in caplog.records
+        if record.name == "studio_ml.plugin"
+    ]
+    assert [event["event"] for event in events] == [
+        "ml.search.started",
+        "ml.search.trial_completed",
+        "ml.search.trial_completed",
+        "ml.search.completed",
+    ]
+    assert [event["trial_ordinal"] for event in events[1:3]] == [1, 2]
+    assert events[-1]["trial_count"] == 2
+    assert events[-1]["duration_ms"] >= events[-1]["training_duration_ms"]
+    assert all("target" not in record.getMessage() for record in caplog.records)
     plugin._coordinator.close()
 
 

@@ -53,7 +53,9 @@ def test_third_party_tutorial_builds_and_discovers_from_wheel(tmp_path: Path) ->
         "'com.example.ronin.tutorial'])"
     )
     result = subprocess.run(  # noqa: S603
-        [sys.executable, "-c", script],
+        # Skip global site-packages: this clean-room check should discover only
+        # the installed tutorial wheel, not scan unrelated developer packages.
+        [sys.executable, "-S", "-c", script],
         check=True,
         capture_output=True,
         text=True,

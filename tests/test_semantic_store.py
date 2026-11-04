@@ -18,6 +18,7 @@ from studio_semantic import (
     commit_semantic_bundle_import,
     export_semantic_bundle,
     plan_semantic_bundle_import,
+    semantic_project_scope,
 )
 
 
@@ -51,6 +52,45 @@ def test_semantic_models_are_durable_and_project_scoped(tmp_path: Path) -> None:
 def test_semantic_store_rejects_invalid_project_id(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="project_id"):
         SqliteSemanticStore(tmp_path / "semantic.sqlite").list_models(" ")
+
+
+def test_semantic_workspace_project_key_is_unambiguous_and_validated() -> None:
+    assert semantic_project_scope("a", "bc") != semantic_project_scope("ab", "c")
+    with pytest.raises(ValueError, match="workspace_id"):
+        semantic_project_scope(" ", "project")
+    with pytest.raises(ValueError, match="project_id"):
+        semantic_project_scope("workspace", "project\x00suffix")
+
+
+def test_legacy_semantic_scope_migration_is_atomic_conflict_safe_and_replayable(
+    tmp_path: Path,
+) -> None:
+    store = SqliteSemanticStore(tmp_path / "semantic.sqlite")
+    store.put_model("project-a", _model())
+    store.put_dashboard("project-a", _dashboard())
+
+    assert store.migrate_legacy_project_scope("project-a", "11:workspace-aproject-a") == {
+        "models": 1,
+        "dashboards": 1,
+    }
+    assert store.migrate_legacy_project_scope("project-a", "11:workspace-aproject-a") == {
+        "models": 0,
+        "dashboards": 0,
+    }
+    assert store.list_models("project-a") == ()
+    assert store.list_dashboards("project-a") == ()
+    assert store.list_models("11:workspace-aproject-a") == (_model(),)
+    assert store.list_dashboards("11:workspace-aproject-a") == (_dashboard(),)
+
+    store.put_model("project-b", _model())
+    store.put_dashboard("project-b", _dashboard())
+    store.put_model("11:workspace-bproject-b", _model("Existing target"))
+    with pytest.raises(SemanticModelConflict, match="scope migration conflicts"):
+        store.migrate_legacy_project_scope("project-b", "11:workspace-bproject-b")
+    assert store.list_models("project-b") == (_model(),)
+    assert store.list_dashboards("project-b") == (_dashboard(),)
+    assert store.list_models("11:workspace-bproject-b") == (_model("Existing target"),)
+    assert store.list_dashboards("11:workspace-bproject-b") == ()
 
 
 def test_semantic_bundle_round_trip_is_deterministic(tmp_path: Path) -> None:

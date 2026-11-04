@@ -145,6 +145,7 @@ def test_event_delivery_creates_deterministic_workflow_run_once(tmp_path: Path) 
     assert delivered.state == "delivered"
     assert delivered.workflow_run_id is not None
     assert store.list_pending_deliveries(workspace_id) == ()
+    assert store.list_event_deliveries(workspace_id) == (delivered,)
 
     # Replaying the same durable delivery maps to the same WorkflowRun.
     replay = store.deliver_event(pending[0], now=NOW)

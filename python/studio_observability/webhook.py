@@ -143,6 +143,8 @@ class WebhookNotificationSink:
                 if len(raw) > self._max_response_bytes:
                     raise WebhookNotificationError("webhook response exceeds configured byte limit")
         except (HTTPError, URLError, OSError) as exc:
+            if isinstance(exc, HTTPError):
+                exc.close()
             raise WebhookNotificationError("webhook notification delivery failed") from exc
         if status < 200 or status >= 300:
             raise WebhookNotificationError(f"webhook returned HTTP status {status}")

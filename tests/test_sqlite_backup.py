@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import closing
 
 import pytest
 from studio_storage.backup import (
@@ -13,13 +14,13 @@ from studio_storage.backup import (
 
 def test_sqlite_backup_and_restore_are_consistent(tmp_path) -> None:
     source = tmp_path / "source.sqlite"
-    with sqlite3.connect(source) as connection:
+    with closing(sqlite3.connect(source)) as connection, connection:
         connection.execute("CREATE TABLE values_table (value TEXT NOT NULL)")
         connection.execute("INSERT INTO values_table VALUES ('ronin')")
         connection.commit()
     backup = backup_sqlite(source, tmp_path / "backup.sqlite")
     restored = restore_sqlite(backup, tmp_path / "restored.sqlite")
-    with sqlite3.connect(restored) as connection:
+    with closing(sqlite3.connect(restored)) as connection, connection:
         assert connection.execute("SELECT value FROM values_table").fetchone() == ("ronin",)
 
 
@@ -30,7 +31,7 @@ def test_deployment_backup_restores_database_and_artifacts_with_digest_verificat
     artifacts = tmp_path / "artifacts"
     artifacts.mkdir()
     (artifacts / "evidence.json").write_text('{"run":"r1"}', encoding="utf-8")
-    with sqlite3.connect(source) as connection:
+    with closing(sqlite3.connect(source)) as connection, connection:
         connection.execute("CREATE TABLE values_table (value TEXT NOT NULL)")
         connection.execute("INSERT INTO values_table VALUES ('ronin')")
         connection.commit()
@@ -41,7 +42,7 @@ def test_deployment_backup_restores_database_and_artifacts_with_digest_verificat
     assert (
         restored_artifacts.joinpath("evidence.json").read_text(encoding="utf-8") == '{"run":"r1"}'
     )
-    with sqlite3.connect(restored_db) as connection:
+    with closing(sqlite3.connect(restored_db)) as connection, connection:
         assert connection.execute("SELECT value FROM values_table").fetchone() == ("ronin",)
 
 
@@ -51,7 +52,7 @@ def test_deployment_restore_binds_artifact_digest_to_logical_path(tmp_path) -> N
     artifacts.mkdir()
     (artifacts / "a.json").write_text("a", encoding="utf-8")
     (artifacts / "b.json").write_text("b", encoding="utf-8")
-    with sqlite3.connect(source) as connection:
+    with closing(sqlite3.connect(source)) as connection, connection:
         connection.execute("CREATE TABLE values_table (value TEXT NOT NULL)")
         connection.commit()
     bundle = backup_deployment(source, artifacts, tmp_path / "bundle")

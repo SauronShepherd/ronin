@@ -1,3 +1,5 @@
+import hashlib
+
 import pytest
 
 from tools import ronin_postgres_backup
@@ -23,6 +25,7 @@ def test_postgres_backup_writes_atomic_dump_and_checksum(tmp_path, monkeypatch) 
     sidecar = output.with_name("ronin.dump.sha256")
     assert sidecar.read_text(encoding="ascii").endswith("  ronin.dump\n")
     assert not list(tmp_path.glob(".ronin.dump.*.tmp"))
+    assert not list(tmp_path.glob(".ronin.dump.sha256.*.tmp"))
 
 
 def test_postgres_restore_rejects_corrupt_dump_before_compose(monkeypatch, tmp_path) -> None:
@@ -41,3 +44,43 @@ def test_postgres_restore_rejects_corrupt_dump_before_compose(monkeypatch, tmp_p
     with pytest.raises(ValueError, match="checksum mismatch"):
         ronin_postgres_backup.restore(tmp_path / "compose.yaml", source, force=True)
     assert called is False
+
+
+def test_postgres_restore_rejects_missing_dump_checksum_before_compose(
+    monkeypatch, tmp_path
+) -> None:
+    source = tmp_path / "ronin.dump"
+    source.write_bytes(b"dump without its integrity receipt")
+    called = False
+
+    def fake_run(*_args, **_kwargs):
+        nonlocal called
+        called = True
+
+    monkeypatch.setattr(ronin_postgres_backup.subprocess, "run", fake_run)
+    with pytest.raises(ValueError, match="checksum sidecar is required"):
+        ronin_postgres_backup.restore(tmp_path / "compose.yaml", source, force=True)
+    assert called is False
+
+
+def test_postgres_restore_accepts_checksum_for_dump_name_with_spaces(monkeypatch, tmp_path) -> None:
+    source = tmp_path / "ronin backup.dump"
+    contents = b"valid custom-format dump"
+    source.write_bytes(contents)
+    digest = hashlib.sha256(contents).hexdigest()
+    ronin_postgres_backup._checksum_path(source).write_text(
+        f"{digest}  {source.name}\n", encoding="ascii"
+    )
+    observed = {}
+
+    def fake_run(command, *, check, stdin):
+        observed["command"] = command
+        observed["check"] = check
+        observed["input"] = stdin.read()
+
+    monkeypatch.setattr(ronin_postgres_backup.subprocess, "run", fake_run)
+    ronin_postgres_backup.restore(tmp_path / "compose.yaml", source, force=True)
+
+    assert observed["check"] is True
+    assert observed["input"] == contents
+    assert "pg_restore" in observed["command"]

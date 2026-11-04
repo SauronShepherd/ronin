@@ -36,7 +36,11 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `cca60214044402867094335a2c999a50c3c7fda7` (2026-10-27).
+**Observed source head:** `f9a0456ab7df3e2bb77247d54b4336fca64903b0` (2026-10-31).
+
+**Current worktree update (2026-10-30; dirty diagnostic candidate):** P3 now includes a project-authorized local DuckDB `POST .../sql/explain` route and a SQL Studio action. The route reuses project-read authorization, validates the shared read-only SELECT contract and registered relation scope, forwards a bounded execution deadline, incrementally caps serialized plan rows, and redacts paths, URLs and inline secret assignments. Providers without the optional capability return an explicit 501. Targeted verification is recorded in `PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`; this does not qualify P3 or the release, and the historical notes below remain historical snapshots.
+
+**Suite completa más reciente (30-10-2026):** Windows/Python 3.13/PostgreSQL 16.4: **4.404 passed, 24 skipped, 0 failed**; Linux/Python 3.11.18/PostgreSQL 16.4 en Docker: **4.412 passed, 16 skipped, 0 failed**, 4.428 casos JUnit; `tests/perf`: **3/3**. No hubo warnings de coverage/procesos hijos. El test positivo del sandbox ahora aísla los hooks `pytest-cov` del worker; los 47 tests focalizados de superficie/calidad/sandbox pasan en Linux y Windows. Ruff check/format y mypy del test modificado pasan. Los resultados son del worktree sucio basado en `f9a0456`, no de un candidato limpio; el ledger sigue en **0/13**. Véase §18 del plan fechado para diagnóstico, skips y expediente.
 
 PR #552 merged at 19:41:11 UTC. Required PR checks passed; all six exact-head push workflows on the merge SHA passed (CI 40388942726, Docker 40388942459, Web 40388942544, Release 40388943097, Security 40388942691, Status consistency 40388942624). `mutation` and release publish/verdict jobs were skipped by policy and are not passes. The remote feature branch was deleted; local main is aligned with origin/main.
 
@@ -422,8 +426,8 @@ workspaces and generated reports are not release evidence.
 | Data quality/contracts | partial | versioned definitions/results, all built-in checks, injected SQL/Python/referential checks, quality gates, scheduler release enforcement, quality-to-common-alert transition evaluation, authenticated contract read/replace and run/history/state APIs, pyronin SDK parity including contract authoring, and Quality Studio contract authoring, validation, dry-run, evidence/history and blocking-policy controls exist; provider qualification remains |
 | AI/ML/MLOps | partial | experiment/run/model/evaluation provenance, deterministic tabular training, canonical Lab/pipeline digest pinning for scheduled ML runs, digest-verified inference, champion serving resolution, deterministic trial comparison, bounded numeric drift summaries, explicit feature-level threshold assessments, versioned feature definitions with dataset snapshots, workspace-scoped HTTP routes and pyronin SDK parity exist; broader feature engineering, algorithms, MLflow and network serving remain |
 | GenAI/RAG/agent runtime | out of scope | No Ronin tier ships model/provider invocation, RAG, tools, or in-product agent runtime/API/Studio. Coding-agent skills are installed for external agent use only. |
-| Semantic models/dashboards | partial | safe semantic contracts, canonical persistence, parameterized metric compiler, calculated metrics, SQL metric runtime, bounded declared-column two-model JOIN execution, dashboard CRUD/execution, Studio and native semantic Bundle round-trips with atomic SQLite model+dashboard import and exact replay exist; multi-join planning, richer portable join/grain semantics, PostgreSQL import and public API qualification remain |
-| Streaming/real-time | partial | Kafka polling, durable CAS checkpoints, micro-batch processing, Parquet sinks, event-time windows, stream tables, scheduler integration, bounded health/lag projection and canonical stream-definition Bundles with explicit connection/storage/runtime remaps and reset/resume checkpoint identity exist; runtime API wiring and production qualification remain |
+| Semantic models/dashboards | partial | safe semantic contracts, canonical persistence, parameterized metric compiler, calculated metrics, SQL metric runtime, bounded declared-column two-model JOIN execution, dashboard CRUD/execution, workspace+project-scoped storage keys, Studio semantic Bundle export/plan/import API with digest-bound preview, project read/write permissions, audit, 700 KiB limit, SQLite atomic model+dashboard import, exact replay and conflict handling exist; an explicit SQLite migration tool rehomes legacy unscoped definitions into an operator-selected workspace with conflict-safe atomicity; dashboard fan-out/cancellation budget, PostgreSQL import and exact-head public API/Studio qualification remain |
+| Streaming/real-time | partial | Kafka polling, durable CAS checkpoints, micro-batch processing, Parquet sinks, event-time windows, stream tables, scheduler integration, bounded health/lag and canonical stream-definition Bundles exist. Local execution caps records at 1 MiB and batches at 8 MiB. Focused real Redpanda browser/API proof consumes five records in 2/2/1 batches with lag 5→3→1→0, covers reset/resume and idle replay, and rejects a poison record twice with HTTP 422 without advancing lag or revealing content; all 20 HTTP events correlate with logs. Byte-boundary, poison checkpoint and Bundle reset/resume contract tests pass; real-broker record-overload/recovery now has focused evidence; broader operational, provider and complete Bundle qualification remain |
 | Observability/alerts/FinOps | partial | durable metrics/events, threshold alerts, SMTP/webhook notification adapters, durable delivery intents with retry/backoff, Prometheus export, instrumentation, usage pricing, actual-versus-estimated costs, non-ledger forecasts, anomaly hooks and budget gates exist; authenticated alert-rule/evaluation APIs, SDK parity, fail-closed alert operation validation and the Monitoring & Alerts Studio route are covered by static and Playwright smoke evidence; broader service adoption and production qualification remain |
 | Security/authentication (single-operator) | partial | bearer auth, transport policy, fail-closed classification-aware policy actions, secret resolver ports, broad mutation audit and append-only audit foundation exist; external provider qualification and release evidence remain. OIDC, user/group administration and multi-user role management are Ronin Pro scope. |
 | Local/Compose operations | partial | local/Compose foundation, PostgreSQL metadata healthcheck, PostgreSQL JobStore adapter wired to the server, single-node real-PostgreSQL lifecycle qualification, SQLite backup/restore with path-bound artifact-tree manifests, PostgreSQL dump verification, S3 artifact retry/corruption checks, Kubernetes Job adapter and recovery runbooks exist; Kubernetes/server deployment and multi-user Helm are not Public v1 profiles. Scheduler conformance and backup/restore qualification remain incomplete. |
@@ -433,7 +437,7 @@ workspaces and generated reports are not release evidence.
 | Palantir Foundry data/Ontology migration | qualification pending | deterministic fixture discovery and fail-closed Python-function translation with CLI/report tests; AIP generative models, prompts, agents, tools and model/provider invocation are excluded; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
 | Dataiku DSS migration | qualification pending | deterministic fixture discovery and fail-closed Python/SQL recipe translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
 | Web Studio | partial | authenticated static Studio shell supports job/evidence/event workflows, project-scoped read-only SQL, project/environment/Bundle/governed-pipeline journeys, resource-scoped project permission inspection and a Monitoring & Alerts route; 77 Playwright route/accessibility/history/domain-journey checks pass; authoring editors, domain workflows and complete Public v1 journeys remain |
-| Public v1 release qualification | blocked | exact-head CI, security, Docker and release-packaging workflows are active; release qualification now generates and verifies candidate-bound SBOM/provenance evidence for wheel and sdist artifacts, alongside installed Studio smoke and accessibility checks; main is protected with required PR approval, strict checks and no force-push/deletion; Public v1 remains blocked by incomplete mandatory product capabilities, provider certification and legal/release decisions |
+| Public v1 release qualification | blocked | CI is intentionally absent; latest dirty-worktree digest-pinned Alpine runtime/probe images use exact-version APK package locks and passed Trivy 0.76.1 across all severities with 0 vulnerabilities and 0 secrets; Docker qualification passed 23/23 and strict acceptance 15/15; live UI/API passed 30/30 with 102 real calls and 0 5xx; server logs recorded 1,348 INFO/OK, 4 expected WARN for invalid cron/credentials, and 0 ERROR. This supersedes Debian/VEX evidence. A clean candidate-bound evidence set, complete capability journeys, legal/product decisions and provider certification remain pending. |
 
 ## Public v1 source work merged in the current construction sequence
 
@@ -457,7 +461,7 @@ These merges do **not** imply that their parent capability families are complete
 
 - **License/NOTICE/attribution and release approval:** tooling may inventory facts; maintainers/legal review own conclusions.
 - **Provider certifications:** real vendor qualification still needs authorized environments and credentials; fixture-only migration evidence is not certification.
-- **#102:** `main` enforces a 90% line floor on 11 release-decision modules: strict v0.1 acceptance gate (94%), exact-candidate release aggregator (100%), artifact identity (96%), installed-artifact qualification (96%), release evidence (91%), evidence emission (100%), artifact qualification (96%), license qualification (97%), SBOM generation (96%), supply-chain evidence (97%), and mutation policy (97%). The explicit module list and threshold are enforced by `coverage-release-gates`; the finding stays open for review of future decision modules.
+- **#102:** the `coverage-release-gates` target enforces its explicit 90% floor on release and evidence modules. The previously summarized 11 gate modules passed their recorded thresholds; this branch adds `tools/bind_container_sbom.py` to that enforced list with **100% line and branch coverage**. Future evidence-decision modules must join the same floor.
 - **#63:** current GitHub API evidence shows protected `main` with eight required checks, admin enforcement, no force pushes or deletion, and an active `v*` tag ruleset. Reconcile the open issue's checklist with this evidence before claiming the issue is fully satisfied.
 - **#199, #57, #96, #202:** automated qualification is active and exact-head runs pass on the recorded candidate. The strict 15-step Docker/release gate for #96 landed in #389; keep the broader journey and product/provider/legal criteria open.
 - **Mutation:** the campaign is permanently frozen and the score gate retired by product decision. Do not rerun; reopen only through a new explicit product decision and campaign plan.
@@ -474,7 +478,7 @@ These merges do **not** imply that their parent capability families are complete
 8. Complete quality runtime, ontology/KG actions/query, RQL, ML, semantic/dashboard, streaming and observability/alerts/FinOps.
 9. Keep multi-user identity, administration and Kubernetes multi-user deployment on the Ronin Pro roadmap.
 10. Build the four vendor migration profiles only against executable canonical target capabilities and certify them with exhaustive migration reports.
-11. Continue #102 coverage work: `coverage-release-gates` now applies a 90% line floor to the strict gate, exact-candidate aggregator, artifact identity, release evidence/emission, installed-artifact evidence, artifact/license qualification, SBOM generation, supply-chain evidence, and mutation-policy parser. Review future release-decision modules against this explicit list.
+11. Continue #102 coverage work: `coverage-release-gates` applies a 90% floor to the strict gate, exact-candidate aggregator, artifact identity, release evidence/emission, installed-artifact evidence, artifact/license qualification, SBOM generation, supply-chain evidence, container SBOM binding, and mutation-policy parser. The container binder currently has 100% line and branch coverage.
 12. Maintain exact-candidate qualification; the strict Docker/release acceptance gate must pass on its exact candidate. Public v1 remains incomplete until every mandatory family has its supported end-to-end path and the human-owned evidence is approved.
 
 ### Reconciled after PRs #420–#421 (2026-10-18)
@@ -513,4 +517,99 @@ El PR [#418](https://github.com/SauronShepherd/ronin/pull/418) continúa el caso
 El PR [#419](https://github.com/SauronShepherd/ronin/pull/419) añadió ejecución de notebook en contenedores Docker reales con Jobs/checkpoints/eventos persistidos en PostgreSQL. La qualification usa una base PostgreSQL dedicada y verifica cinco celdas, estado terminal, checkpoints, evento único y resultados. El módulo worker real pasó localmente (**3 tests**, 67.83s); CI 3.11/3.12 y Docker qualification (**8m11s**) pasaron. El squash es `main@f067affb09d5db74013e66544d16fc2f1423c90a`; todos los checks exact-head post-merge están verdes.
 
 El PR [#420](https://github.com/SauronShepherd/ronin/pull/420) añadió la terminación forzada de un worker PostgreSQL real tras tres checkpoints, espera del lease de 30 segundos y recuperación en proceso sustituto. Reutilizó las tres celdas y ejecutó las dos restantes; Job y evento terminal quedaron persistidos sin duplicados. Los cuatro tests de `tests/integration/test_worker_runtime_real.py` pasaron localmente en Docker/PostgreSQL 16 (**4/4**, 102.57s); CI 3.11/3.12, Docker qualification y los seis workflows exact-head post-merge también pasaron. PR [#421](https://github.com/SauronShepherd/ronin/pull/421) luego integró el journey completo daemon→worker Docker→reconciliación, cuyos checks PR también pasaron. No se cualifican proveedores externos ni operator general/HA; P5 continúa parcial y release-qualified en **0% (0/14)**.
+
+
+## Current diagnostic validation — 2026-10-30
+
+On dirty branch 20261029 at base f9a0456ab7df3e2bb77247d54b4336fca64903b0, the Windows/Python 3.13/PostgreSQL 16.4 full suite passed **4,404 passed, 24 skipped, 0 failed** (4,428 JUnit cases). The later Linux/Python 3.11.18/PostgreSQL 16.4 full suite passed **4,412 passed, 16 skipped, 0 failed** (4,428 JUnit cases); details and evidence are in §18 of the build plan. Docker qualification passed (**23/23**) and strict v0.1 acceptance passed (**15/15**).
+
+These are diagnostic worktree results, not clean-candidate evidence. The release ledger remains **0/13 families qualified (0%) — NO-GO**. Version 0.0.0, human license/NOTICE and claim approvals, complete family journeys on one clean SHA, and manual visual review remain open. No CI, integrated GenAI, or Public multi-user support was added.
+
+The license qualification gate exposed 21 packages without a current human review and one stale `pyyaml==6.0.3` entry. Its CLI now prints the exact missing/stale keys without a traceback; 103 focused tests plus Ruff, format, and mypy passed. The gate remains failed pending human license/NOTICE decisions.
+
+The first full Python/PostgreSQL rerun after that harness change passed **4,353 tests, 24 skipped, 1 failed**: a Hypothesis slow-generation health check. A second rerun exposed the same non-deterministic health check in another bounded property. Both properties now keep 100 examples; the first bounds generated text to 32 characters while retaining Unicode, and the second suppresses only `HealthCheck.too_slow`. The timed-out quality sandbox test removes pytest-cov hooks from its intentionally terminated multiprocessing child.
+
+The earlier pre-binder rerun recorded in section 16 passed **4,354 tests, 24 skipped, 0 failed** in 807.37 seconds against PostgreSQL 16.4. Its 4,378 JUnit cases match the pytest summary; no coverage warning or secondary .coverage.* file remained, and the temporary PostgreSQL container was removed. The later rerun after the container SBOM boundary tests is recorded in section 17. Evidence remains diagnostic for a dirty worktree, not a clean release candidate. Public v1 remains **NO-GO, 0/13 families qualified** while version, human license/NOTICE and claims decisions, complete candidate-bound journeys, and manual visual review remain open.
+
+Version review: `PUBLIC_V1_SCOPE.md` explicitly calls the existing `0.1.0a*` line an engineering alpha/foundation milestone and does not select the final package version. Do not treat `0.1.0` or `1.0.0` as approved by inference; `ronin-studio 0.0.0` and `pyronin 0.0.1a0` remain diagnostic metadata until the product version is decided.
+
+Supply-chain follow-up: `tools/bind_container_sbom.py` now binds Trivy CycloneDX 1.7 package inventories to exact runtime/probe image TARs and artifact identity; `tools/supply_chain_evidence.py --require-container-inventory` rechecks each full inventory and requires both images. The 123 focused supply-chain tests pass, and the binder has **100% line and branch coverage**. A diagnostic integration using actual Trivy 0.76.1 runtime/probe TARs passed. The final Windows/Python 3.13/PostgreSQL 16.4 rerun passed **4,404 tests, skipped 24, failed 0** (4,428 JUnit cases) in 659.30 seconds; `tests/perf` passed **3/3**. The later Linux/Python 3.11.18/PostgreSQL 16.4 rerun passed **4,412 tests, skipped 16, failed 0** (4,428 JUnit cases) in 730.15 seconds; its separate `tests/perf` run passed **3/3**. The Linux result is recorded in §18 of PLAN_FINAL_RONIN_RELEASE_2026-11-03.md. The 15-module `coverage-release-gates` report passed its 90% floor (95% total). No `CoverageWarning` or secondary `.coverage.*` file remained, and the ephemeral PostgreSQL container was removed. Both runs are dirty-worktree diagnostics, not a release candidate. Release remains **NO-GO, 0/13**; ten clean iterations, clean-candidate qualification, visual review, and human decisions remain open.
+
+## Latest full Python and web rerun — 2026-10-30
+
+After the Quality gate and ML registration fixes, the full Windows/Python 3.13.15 suite with isolated PostgreSQL 16.4 completed with **4,406 passed, 24 skipped, and 0 failed** (4,430 JUnit cases). The complete static Playwright suite reported **100 passed and 31 skipped**; those cases require API-backed live services. The separate Docker-backed Ronin live matrix passed **31/31**, exercised **130 real API calls** with no 5xx responses, and recorded 1,415 INFO, 8 expected WARNING, and 0 ERROR server events. The ML live journey completed training and durable model registration successfully; the full focused ML suite passed 67/67.
+
+Evidence is diagnostic on dirty branch `20261029` at `f9a0456ab7df3e2bb77247d54b4336fca64903b0`, not a clean release candidate. Cold synchronous ML search took 73 seconds and remains an open P8 performance issue. Skips are not counted as passes. Release remains **NO-GO, 0/13**; clean-candidate gates, the full family journeys, manual visual review, and human version/license/NOTICE/claims decisions remain outstanding. No CI, integrated GenAI, or Public multi-user capability was added.
+
+## Latest diagnostic rerun after ML operator evaluation — 2026-10-30
+
+The live ML lifecycle now records an explicit operator evaluation (`passed`,
+`failed`, or `unknown`) against the immutable source-run dataset and metrics.
+Promotion is blocked until an evaluation is `passed`; cards expose the bounded
+review history, and SQLite/PostgreSQL enforce idempotent writes and a 100-review
+limit. OpenAPI and its digest were updated.
+
+Windows/Python 3.13.15 with PostgreSQL 16.4: **4,408 passed, 24 skipped, 0
+failed**; `tests/perf`: **3/3**. Static Playwright: **101 passed, 31 skipped**.
+Docker worker/acceptance: **23/23**, strict acceptance **15/15**. The final real
+API/Chromium matrix: **31/31**, all **25 active routes**, **143 API calls**, 0
+5xx/network errors, 0 unexpected authorization gaps; expected WARN responses
+were 1×400, 5×401, 1×403 and 2×409. Detailed transcripts and artifact paths are
+in §24 of `PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`.
+
+The latest ML search still takes about **78 seconds** cold; P8 remains open. All
+results are dirty-worktree diagnostics at `f9a0456ab7df3e2bb77247d54b4336fca64903b0`.
+Release remains **NO-GO, 0/13 families release-qualified** pending a clean
+candidate and complete journeys, human version/license/NOTICE/claims decisions,
+manual visual approval, and supported-platform runs. No CI, integrated GenAI,
+or Public multi-user support was added.
+
+## Full diagnostic rerun — 2026-10-30
+
+The dirty-worktree Python/PostgreSQL suite passed **4,408**, skipped **24**,
+failed **0** (4,432 JUnit cases); `tests/perf` passed **3/3**. Docker worker
+qualification passed **23/23**, with strict v0.1 acceptance **15/15**. Static
+Playwright passed **101** and skipped **31** live-only cases. A separate live
+Chromium/API run passed **31/31**, covered **25/25** routes and made **146 real
+API calls** with no 5xx, network errors, or unexpected authorization gaps.
+Server logs contained **1,430 INFO/OK**, **9 expected WARN**, **0 ERROR**. All
+temporary Docker services were removed. Evidence is under the three
+`%TEMP%\ronin-*-full-continuation-20261030` directories referenced in section
+26 of the build plan.
+
+ML search remains a P8 performance blocker: the live run completed, but its
+38.33-second cold search spent 38.23 seconds in the first trial. Release remains
+**NO-GO, 0/13 qualified**; human version/license/NOTICE/claims and visual
+approvals, clean-candidate journeys, platform qualification, and ten clean
+iterations remain open.
+
+## Follow-up — 2026-10-30
+
+The isolated live ML search completed **1/1** with 36 real API calls. Safe phase
+timing shows a **37.38 s** cold search, almost entirely in its first trial; P8
+remains open. The live runner now compiles third-party bytecode during setup,
+but this did not establish an acceptable search time. The Studio budget was
+reviewed for the added SQL explain and ML evaluation-review interactions and
+ratcheted to the measured **1,943,645 bytes**; asset/module counts are unchanged.
+The size gate and 60-file Studio web audit pass. Focused ML and qualification
+contract modules pass **45/45** sequentially; an earlier concurrent run had one
+30-second test timeout, which passed in isolation and on the sequential rerun.
+
+These results remain dirty-worktree diagnostics. Public v1 remains **NO-GO,
+0/13 release-qualified** pending P8, clean-candidate family journeys, human
+release decisions, and manual visual review. Ten clean iterations are not
+complete.
+
+## Empaquetado reproducible — 2026-10-31
+
+Dos compilaciones del mismo árbol diagnóstico, con `SOURCE_DATE_EPOCH` fijado,
+produjeron wheel y sdist byte a byte idénticos. SHA-256: wheel
+`0230ed664aa32e89902d2a581993be840b96e9eeb775f94664b7cda6bb10ef4e` y sdist
+`8dec5b0785c53429f95f4acb8b942e32d329a44d932fa883bb88f4d5653b2b04`. Evidencia
+en `%TEMP%\ronin-artifacts-repro-20261031`; los artefactos son `0.0.0` y no
+califican como release. El plan §27 registra el alcance de este resultado.
+
+El estado sigue **NO-GO, 0/13 (0%)**: P8, decisiones humanas de versión,
+licencias/NOTICE y claims, revisión visual manual, candidate SHA limpio,
+qualification completa por familia y matriz de plataformas están pendientes.
 

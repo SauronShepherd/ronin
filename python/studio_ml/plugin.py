@@ -4,6 +4,8 @@
 import base64
 import hashlib
 import json
+import logging
+import time
 from contextlib import suppress
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -54,6 +56,7 @@ from .services import InMemoryMLLabStore, LabService
 
 MAX_PREDICTION_ROWS = 100_000
 MAX_PREDICTION_ARTIFACT_BYTES = 64 * 1024 * 1024
+_LOGGER = logging.getLogger(__name__)
 
 
 def _plugin_now() -> Instant:
@@ -479,6 +482,13 @@ class MachineLearningStudioPlugin:
         )
         context.contributions.add_route(
             "POST",
+            "/v1/ml-studio/models/{model_id}/{version}/evaluations",
+            context.plugin_id,
+            self.record_model_evaluation,
+            permission="ml-studio:write",
+        )
+        context.contributions.add_route(
+            "POST",
             "/v1/ml-studio/models/{model_id}/{version}/predict",
             context.plugin_id,
             self.predict_model,
@@ -637,6 +647,77 @@ class MachineLearningStudioPlugin:
             WorkspaceId(workspace_id), ModelId(model_id), ModelVersion(version), now=_plugin_now()
         )
         return model.to_payload()
+
+    def record_model_evaluation(
+        self,
+        workspace_id: str | None = None,
+        model_id: str | None = None,
+        version: str | None = None,
+        *,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        """Persist an operator review against immutable training evidence."""
+        if self._registry is None:
+            raise RuntimeError("ML registry is unavailable")
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        if (
+            not isinstance(model_id, str)
+            or not isinstance(version, str)
+            or not model_id
+            or not version
+            or model_id != model_id.strip()
+            or version != version.strip()
+            or len(model_id) > 256
+            or len(version) > 256
+            or any(char in model_id for char in "\r\n\x00")
+            or any(char in version for char in "\r\n\x00")
+        ):
+            raise ValueError("model_id and version are bounded identifiers")
+        if (
+            not isinstance(body, dict)
+            or set(body) != {"status", "review_ref"}
+            or body.get("status") not in {"passed", "failed", "unknown"}
+            or not isinstance(body.get("review_ref"), str)
+            or not body["review_ref"].strip()
+            or body["review_ref"] != body["review_ref"].strip()
+            or len(body["review_ref"]) > 512
+            or any(char in body["review_ref"] for char in "\r\n\x00")
+        ):
+            raise ValueError(
+                "evaluation requires status passed/failed/unknown and a bounded review_ref"
+            )
+
+        from studio_core.ml import (
+            EvaluationStatus,
+            MLRunId,
+            ModelEvaluation,
+            ModelId,
+            ModelVersion,
+        )
+        from studio_storage.ml import MLConflict
+
+        workspace = WorkspaceId(workspace_id)
+        model_key = ModelId(model_id)
+        version_key = ModelVersion(version)
+        model = self._registry.get_model(workspace, model_key, version_key)
+        if model is None:
+            raise KeyError(f"{model_id}@{version}")
+        source_run = self._registry.get_run(workspace, MLRunId(model.source_run_id.value))
+        if source_run is None or len(source_run.datasets) != 1 or not source_run.metrics:
+            raise MLConflict(
+                "model evaluation requires one governed source dataset and recorded metrics"
+            )
+        evaluation = ModelEvaluation(
+            model_key,
+            version_key,
+            source_run.datasets[0],
+            cast(EvaluationStatus, body["status"]),
+            source_run.metrics,
+            body["review_ref"],
+        )
+        recorded = self._registry.record_evaluation(workspace, evaluation, now=_plugin_now())
+        return {"evaluation": recorded.to_payload()}
 
     def predict_model(
         self,
@@ -798,6 +879,9 @@ class MachineLearningStudioPlugin:
         if model is None:
             raise KeyError(f"{model_id}@{version}")
         source_run = self._registry.get_run(WorkspaceId(workspace_id), model.source_run_id)
+        evaluations = self._registry.list_evaluations(
+            WorkspaceId(workspace_id), ModelId(model_id), ModelVersion(version)
+        )
         run_parameters = dict(source_run.parameters) if source_run is not None else {}
         limitations = ["Review dataset quality and evaluation evidence before promotion."]
         if source_run is None:
@@ -832,6 +916,7 @@ class MachineLearningStudioPlugin:
                 if source_run is not None
                 else []
             ),
+            "evaluations": [evaluation.to_payload() for evaluation in evaluations],
             "fairness": {
                 "status": "not_assessed",
                 "reason": "No protected-group or fairness evaluation evidence is attached to this model version.",
@@ -1187,9 +1272,10 @@ class MachineLearningStudioPlugin:
             "telemetry": updated.to_payload()["telemetry"],
         }
 
-    def list_labs(self, workspace_id: str, **_kwargs: Any) -> dict[str, object]:
+    def list_labs(self, workspace_id: str | None = None, **kwargs: Any) -> dict[str, object]:
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
+        workspace_id = self._workspace(workspace_id, kwargs)
         return {"items": [lab.to_payload() for lab in self._labs.list(WorkspaceId(workspace_id))]}
 
     @staticmethod
@@ -1869,6 +1955,7 @@ class MachineLearningStudioPlugin:
         body: object | None = None,
         **_kwargs: Any,
     ) -> dict[str, object]:
+        search_started_at = time.perf_counter()
         workspace_id = self._workspace(workspace_id, _kwargs)
         if self._labs is None or lab_id is None:
             raise RuntimeError("ML Studio is not ready")
@@ -1978,6 +2065,21 @@ class MachineLearningStudioPlugin:
         ):
             raise ValueError("register must contain only model_id and version_prefix text")
         pending = list(spec.trials()[:1] if spec.mode == "bayesian" else spec.trials())
+        rows_resolved_at = time.perf_counter()
+        training_duration_ms = 0.0
+        _LOGGER.info(
+            json.dumps(
+                {
+                    "event": "ml.search.started",
+                    "mode": spec.mode,
+                    "row_count": len(rows),
+                    "trial_budget": spec.max_trials,
+                    "task": lab.task,
+                },
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+        )
         seen_parameters: set[tuple[tuple[str, object], ...]] = set()
         while pending and len(trials) < spec.max_trials:
             parameters = pending.pop(0)
@@ -2003,7 +2105,24 @@ class MachineLearningStudioPlugin:
                     raise ValueError("search parameters must be numeric")
                 effective_values.append((name, value))
             effective = tuple(effective_values)
+            trial_started_at = time.perf_counter()
             result = self._runner.run(candidate, rows, effective)
+            trial_duration_ms = (time.perf_counter() - trial_started_at) * 1000
+            training_duration_ms += trial_duration_ms
+            _LOGGER.info(
+                json.dumps(
+                    {
+                        "event": "ml.search.trial_completed",
+                        "duration_ms": round(trial_duration_ms, 3),
+                        "mode": spec.mode,
+                        "row_count": len(rows),
+                        "task": lab.task,
+                        "trial_ordinal": len(trials) + 1,
+                    },
+                    separators=(",", ":"),
+                    sort_keys=True,
+                )
+            )
             trial = Trial.create(
                 parameters, dict(result.model.metrics), random_seed=spec.random_seed
             )
@@ -2075,6 +2194,24 @@ class MachineLearningStudioPlugin:
         }
         if registered:
             response["registered"] = registered
+        _LOGGER.info(
+            json.dumps(
+                {
+                    "event": "ml.search.completed",
+                    "duration_ms": round((time.perf_counter() - search_started_at) * 1000, 3),
+                    "mode": spec.mode,
+                    "preparation_duration_ms": round(
+                        (rows_resolved_at - search_started_at) * 1000, 3
+                    ),
+                    "row_count": len(rows),
+                    "task": lab.task,
+                    "training_duration_ms": round(training_duration_ms, 3),
+                    "trial_count": len(trials),
+                },
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+        )
         return response
 
     def execution_status(
@@ -2127,7 +2264,7 @@ class MachineLearningStudioPlugin:
         )
 
         if snapshot_override is None:
-            snapshot = self._coordinator.status(workspace_id, run_id)
+            snapshot = self._coordinator.registration_snapshot(workspace_id, run_id)
             if snapshot.state != "succeeded" or not isinstance(snapshot.result_payload, dict):
                 raise ValueError(
                     "only a succeeded execution with a materialized model can be registered"

@@ -13,6 +13,9 @@ document.addEventListener('submit', async event => {
   if (!(form instanceof HTMLFormElement) || form.id !== 'alerts-form') return;
   event.preventDefault();
   const data = new FormData(form);
+  if (event.submitter instanceof HTMLButtonElement && event.submitter.name) {
+    data.set(event.submitter.name, event.submitter.value);
+  }
   const workspaceValue = String(data.get('workspace') || '').trim();
   const result = document.querySelector('#alerts-result');
   try {

@@ -37,8 +37,12 @@ read-only discovery ahead of mutations. Inspect or package them with:
 ```text
 PYTHONPATH=python python -m studio_cli.entrypoint skills list
 PYTHONPATH=python python -m studio_cli.entrypoint skills validate
-PYTHONPATH=python python -m studio_cli.entrypoint skills package --output .tmp-agent-skills-dist
+PYTHONPATH=python python -m studio_cli.entrypoint skills package --output "${TMPDIR:-/tmp}/ronin-agent-skills"
 ```
+
+On Windows PowerShell, set `$env:PYTHONPATH = 'python'` and use
+`--output (Join-Path $env:TEMP 'ronin-agent-skills')`. Keep generated archives
+outside the checkout.
 
 The validator never executes a skill. It checks metadata, parses helper Python
 files, and the packager writes deterministic `skill.zip` archives for an agent
@@ -89,6 +93,8 @@ Ronin is multi-project. Each project selects a primary Git repository, optional 
 
 See [`docs/product/PROJECTS_AND_EXECUTION.md`](docs/product/PROJECTS_AND_EXECUTION.md) for the existing project/repository/runtime contract. Public v1 expands this into workspace, migration, data, scheduler and platform-level contracts.
 
+The local-composed SQL and Semantic Studios share project-isolated Parquet relations. See [`docs/operations/LOCAL_SQL_PARQUET_LAYOUT.md`](docs/operations/LOCAL_SQL_PARQUET_LAYOUT.md) for the data directory layout and source registration rules.
+
 ### Migration inventory
 
 To produce a canonical, credential-free inventory report from a supported vendor export:
@@ -129,7 +135,7 @@ See [`SECURITY.md`](SECURITY.md) for the private vulnerability-reporting route, 
 
 ## Governance and contribution
 
-Ronin is currently a single-maintainer project with an autonomous build pipeline. The Autonomous Builder implements accepted work; it does not create human governance authority, replace external contributor authorship or fabricate security/legal decisions.
+Ronin is currently a single-maintainer project with local-only build and qualification. The Autonomous Builder implements accepted work; it does not create human governance authority, replace external contributor authorship or fabricate security/legal decisions.
 
 Substantial architecture/product changes require an explicit public record. The Public v1 contracts above are now the target for future implementation work.
 
@@ -145,6 +151,19 @@ python -m pip install -e . --no-deps
 ```
 
 Repository validation commands and the local-only qualification policy are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). Report local evidence with the exact candidate SHA, commands, environment, results, skips, and artifact digests. This evidence does not replace the remaining product, provider-certification, legal, or administrative release decisions.
+
+`requirements-dev.lock` is the smaller contributor-tooling set. To collect and
+run the complete Python suite, install `requirements-test.lock` instead; it
+locks the development tools together with every declared runtime extra
+(`data-plane`, `open-tables`, `ml`, and `streaming`) so optional-provider tests
+are not silently skipped or fail during collection:
+
+```bash
+python -m pip install --require-hashes -r requirements-test.lock
+python -m pip install -e . --no-deps
+python -m pytest --ignore=tests/perf
+python -m pytest tests/perf -q
+```
 
 ## Layout
 

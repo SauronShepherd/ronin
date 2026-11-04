@@ -4,6 +4,7 @@ from decimal import Decimal
 from pathlib import Path
 from threading import Event
 from types import SimpleNamespace
+from urllib.parse import quote
 
 import pytest
 import studio_sql.duckdb_engine as duckdb_engine_module
@@ -170,6 +171,50 @@ def test_duckdb_engine_interrupts_a_query_at_its_execution_deadline(monkeypatch)
         engine.close()
 
 
+def test_duckdb_engine_interrupts_explain_at_its_execution_deadline(monkeypatch) -> None:
+    entered = Event()
+    interrupted = Event()
+
+    class Cursor:
+        def fetchall(self):
+            return []
+
+        def fetchone(self):
+            return None
+
+    class Connection:
+        def execute(self, sql, _parameters=()):
+            if "information_schema.tables" in sql:
+                return Cursor()
+            if sql.startswith("EXPLAIN"):
+                entered.set()
+                if not interrupted.wait(timeout=1):
+                    raise AssertionError("EXPLAIN deadline did not interrupt the query")
+                raise RuntimeError("interrupted")
+            return Cursor()
+
+        def interrupt(self):
+            interrupted.set()
+
+        def close(self):
+            return None
+
+    connection = Connection()
+    monkeypatch.setattr(
+        duckdb_engine_module,
+        "_duckdb",
+        lambda: SimpleNamespace(connect=lambda **_kwargs: connection),
+    )
+    engine = DuckDbSqlEngine()
+    try:
+        with pytest.raises(SqlTimeoutError, match="execution time limit"):
+            engine.explain("SELECT 1", timeout_ms=25)
+        assert entered.is_set()
+        assert interrupted.is_set()
+    finally:
+        engine.close()
+
+
 def test_duckdb_engine_stops_fetching_when_serialized_result_exceeds_budget() -> None:
     with DuckDbSqlEngine() as engine, pytest.raises(SqlResultLimitError, match="max_result_bytes"):
         engine.execute("SELECT REPEAT('x', 512)", max_result_bytes=128)
@@ -263,9 +308,52 @@ def test_sql_explain_text_sanitizes_paths_urls_and_secret_assignments() -> None:
     value = sanitize_sql_explain_text(
         "file=/var/lib/ronin/data.parquet url=https://example.invalid/x token=abc123"
     )
-    assert "/var/lib" not in value
-    assert "https://" not in value
-    assert "abc123" not in value
+    assert value == "file=<path> url=<external> token=<redacted>"
+
+
+def test_sql_explain_stops_fetching_when_serialized_plan_exceeds_budget(monkeypatch) -> None:
+    from studio_sql import SqlResultLimitError
+
+    class Cursor:
+        calls = 0
+
+        def fetchall(self):
+            return []
+
+        def fetchone(self):
+            self.calls += 1
+            return ("physical_plan", "x" * 100) if self.calls <= 3 else None
+
+    class Connection:
+        def execute(self, sql, *_args):
+            return Cursor() if "information_schema.tables" in sql else cursor
+
+        def close(self):
+            return None
+
+    cursor = Cursor()
+    monkeypatch.setattr(
+        duckdb_engine_module,
+        "_duckdb",
+        lambda: SimpleNamespace(connect=lambda **_kwargs: Connection()),
+    )
+    engine = DuckDbSqlEngine()
+    try:
+        with pytest.raises(SqlResultLimitError, match="max_bytes"):
+            engine.explain("SELECT 1", max_bytes=128)
+        assert cursor.calls == 2  # one bounded row read, then budget rejection
+    finally:
+        engine.close()
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_duckdb_explain_rejects_boolean_budgets(value: bool) -> None:
+    from studio_sql import SqlValidationError
+
+    with DuckDbSqlEngine() as engine, pytest.raises(SqlValidationError):
+        engine.explain("SELECT 1", max_bytes=value)
+    with DuckDbSqlEngine() as engine, pytest.raises(SqlValidationError):
+        engine.explain("SELECT 1", timeout_ms=value)
 
 
 def test_project_scoped_sql_engines_isolate_relation_collisions(tmp_path: Path) -> None:
@@ -281,6 +369,28 @@ def test_project_scoped_sql_engines_isolate_relation_collisions(tmp_path: Path) 
         assert engine.execute("project-b", "SELECT value FROM events").rows == ((2,),)
         with pytest.raises(SqlRelationUnavailableError):
             engine.execute("project-c", "SELECT value FROM events")
+
+
+def test_project_scoped_sql_engine_refreshes_only_its_workspace_project_parquet(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "sql-parquet"
+    project_a = "7:defaultexamples/demo"
+    project_b = "7:defaultother/demo"
+    path_a = root / quote(project_a, safe="") / "events.parquet"
+    path_b = root / quote(project_b, safe="") / "events.parquet"
+    write_parquet_rows(path_a, ({"value": 1},))
+    write_parquet_rows(path_b, ({"value": 2},))
+
+    with ProjectScopedDuckDbSqlEngine(parquet_root=root) as engine:
+        assert engine.execute(project_a, "SELECT value FROM events").rows == ((1,),)
+        assert engine.execute(project_b, "SELECT value FROM events").rows == ((2,),)
+        write_parquet_rows(path_a, ({"value": 3},))
+        assert engine.execute(project_a, "SELECT value FROM events").rows == ((3,),)
+        path_a.unlink()
+        with pytest.raises(SqlRelationUnavailableError):
+            engine.execute(project_a, "SELECT value FROM events")
+        assert engine.execute(project_b, "SELECT value FROM events").rows == ((2,),)
 
 
 def test_project_scoped_sql_engine_reuses_and_closes_each_connection(

@@ -99,6 +99,9 @@ class BoundedAsyncJobStore:
             return
         self._closed = True
         await asyncio.to_thread(self._executor.shutdown, wait=True, cancel_futures=False)
+        close = getattr(self._store, "close", None)
+        if callable(close):
+            await asyncio.to_thread(close)
 
     async def create_job(self, job: Job, run: Run) -> Job:
         return await self._call(partial(self._store.create_job, job, run))

@@ -1,8 +1,8 @@
 services:
   floci:
-    image: floci/floci:latest
+    image: floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db
     ports:
-      - "4566:4566"
+      - "127.0.0.1:${RONIN_FLOCI_PORT:-4566}:4566"
     volumes:
       - floci-data:/app/data
 volumes:

@@ -28,6 +28,37 @@ test('ML Studio exposes model card and promotion actions', async ({ page }) => {
   await expect.poll(() => promoted).toBe(true);
 });
 
+test('ML Studio records a bounded operator review against registered model evidence', async ({ page }) => {
+  let evaluationBody;
+  const card = {
+    dataset: [{asset_id: 'customers', version: 'v1'}],
+    metrics: [{name: 'accuracy', value: 0.9, step: 0}],
+    provenance: {source_run_id: 'run-1'},
+  };
+  await page.route('**/v1/ml-studio/labs**', route => route.fulfill({json: {items: []}}));
+  await page.route('**/v1/ml-studio/models?**', route => route.fulfill({json: {
+    items: [{model_id: 'model-a', version: 'v1', stage: 'candidate'}],
+  }}));
+  await page.route('**/v1/ml-studio/models/model-a/v1/card**', route => route.fulfill({json: card}));
+  await page.route('**/v1/ml-studio/models/model-a/v1/evaluations**', async route => {
+    evaluationBody = route.request().postDataJSON();
+    await route.fulfill({json: {evaluation: {
+      model_id: 'model-a', version: 'v1', dataset: card.dataset[0],
+      metrics: card.metrics, status: evaluationBody.status,
+      execution_ref: evaluationBody.review_ref,
+    }}});
+  });
+  await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
+  await page.locator('[data-feature="ml-review-evaluation"]').click();
+  await expect(page.locator('#ml-output')).toContainText('accuracy');
+  const form = page.locator('[data-feature-form="ml-evaluation"]');
+  await form.locator('[name="status"]').selectOption('passed');
+  await form.locator('[name="review_ref"]').fill('manual-review-1');
+  await form.getByRole('button', {name: 'Save evaluation review'}).click();
+  await expect.poll(() => evaluationBody).toEqual({status: 'passed', review_ref: 'manual-review-1'});
+  await expect(page.locator('#ml-output')).toContainText('Saved passed evaluation review');
+});
+
 test('ML Studio registers a successful durable run as a candidate model', async ({ page }) => {
   let registered = false;
   let promoted = false;

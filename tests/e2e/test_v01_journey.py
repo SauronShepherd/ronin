@@ -18,7 +18,7 @@ import subprocess
 import sys
 import time
 import uuid
-from contextlib import redirect_stdout
+from contextlib import closing, redirect_stdout
 from io import StringIO
 from pathlib import Path
 from threading import Thread
@@ -341,7 +341,7 @@ def _process_args(
 
 
 def _attempt_rows(database_path: Path) -> list[sqlite3.Row]:
-    with sqlite3.connect(database_path) as connection:
+    with closing(sqlite3.connect(database_path)) as connection, connection:
         connection.row_factory = sqlite3.Row
         return list(
             connection.execute(
@@ -534,7 +534,9 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
 @pytest.fixture(scope="module")
 def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     if not _docker_qualification_ready():
-        pytest.skip("live worker acceptance is opt-in; run tools/run_docker_qualification.ps1 locally")
+        pytest.skip(
+            "live worker acceptance is opt-in; run tools/run_docker_qualification.ps1 locally"
+        )
 
     tmp_path = tmp_path_factory.mktemp("v01-worker-restart")
     data_dir = tmp_path / "process-crash"

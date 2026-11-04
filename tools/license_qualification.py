@@ -7,11 +7,15 @@ import hashlib
 import importlib.metadata as metadata
 import json
 import re
+import sys
 import tomllib
+from collections.abc import Mapping
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
-_LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \t\\;]+)(?:[ \t]+;[ \t]+.+)?$")
+from packaging.markers import Marker, default_environment
+
+_LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \t\\;]+)(?:[ \t]+;[ \t]+(.+))?$")
 _LOCKED_HASH = re.compile(r"^--hash=sha256:[0-9a-f]{64}$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _LICENSE_FILE_NAMES = ("license", "copying", "notice", "authors", "copyright")
@@ -55,10 +59,16 @@ def package_evidence_sha256(entry: dict[str, object]) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def locked_graph(path: Path) -> dict[str, str]:
-    """Return the exact canonical package->version graph from a hash-locked file."""
+def locked_graph(
+    path: Path,
+    *,
+    marker_environment: Mapping[str, str] | None = None,
+) -> dict[str, str]:
+    """Return the exact package graph selected from a hash-locked file."""
     result: dict[str, str] = {}
     current_name: str | None = None
+    current_version: str | None = None
+    current_active = True
     current_hashes = 0
     for line_number, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         stripped = raw_line.strip()
@@ -82,7 +92,24 @@ def locked_graph(path: Path) -> dict[str, str]:
                 )
             current_hashes += 1
             if not continued:
+                if current_name is None or current_version is None:
+                    raise LicenseQualificationError(
+                        f"missing locked requirement state at line {line_number}"
+                    )
+                if current_active:
+                    previous = result.get(current_name)
+                    if previous is not None:
+                        if previous != current_version:
+                            raise LicenseQualificationError(
+                                f"lock contains conflicting versions for {current_name}"
+                            )
+                        raise LicenseQualificationError(
+                            f"lock contains duplicate requirement for {current_name}"
+                        )
+                    result[current_name] = current_version
                 current_name = None
+                current_version = None
+                current_active = True
                 current_hashes = 0
             continue
 
@@ -98,14 +125,20 @@ def locked_graph(path: Path) -> dict[str, str]:
             raise LicenseQualificationError(f"unsupported active lock syntax at line {line_number}")
         name = _canonical_name(match.group(1))
         version = match.group(2)
-        if name in result:
-            if result[name] != version:
-                raise LicenseQualificationError(f"lock contains conflicting versions for {name}")
-            raise LicenseQualificationError(f"lock contains duplicate requirement for {name}")
+        marker_text = match.group(3)
+        active = marker_environment is None or marker_text is None
+        if marker_environment is not None and marker_text is not None:
+            try:
+                active = Marker(marker_text).evaluate(dict(marker_environment))
+            except (KeyError, SyntaxError, ValueError) as exc:
+                raise LicenseQualificationError(
+                    f"invalid environment marker at line {line_number}: {marker_text}"
+                ) from exc
         if not continued:
             raise LicenseQualificationError(f"locked requirement has no sha256 hash: {name}")
-        result[name] = version
         current_name = name
+        current_version = version
+        current_active = active
         current_hashes = 0
 
     if current_name is not None:
@@ -121,24 +154,26 @@ def locked_graph(path: Path) -> dict[str, str]:
     return result
 
 
-def direct_requirements(root: Path) -> set[str]:
+def direct_requirements(root: Path, *, extras: tuple[str, ...] = ("dev",)) -> set[str]:
     """Return direct dependencies represented by the resolved qualification graph."""
     direct: set[str] = set()
     for path in (root / "pyproject.toml", root / "packages/pyronin/pyproject.toml"):
         with path.open("rb") as handle:
             data = tomllib.load(handle)
-        for requirement in data.get("project", {}).get("optional-dependencies", {}).get("dev", []):
-            direct.add(_canonical_name(re.split(r"[<>=!~ ;\[]", requirement, maxsplit=1)[0]))
+        optional = data.get("project", {}).get("optional-dependencies", {})
+        for extra in extras:
+            for requirement in optional.get(extra, []):
+                direct.add(_canonical_name(re.split(r"[<>=!~ ;\[]", requirement, maxsplit=1)[0]))
         for requirement in data.get("project", {}).get("dependencies", []):
             direct.add(_canonical_name(re.split(r"[<>=!~ ;\[]", requirement, maxsplit=1)[0]))
     return direct
 
 
-def _require_direct_coverage(graph: dict[str, str], direct: set[str]) -> None:
+def _require_direct_coverage(graph: dict[str, str], direct: set[str], lock_file: str) -> None:
     missing = sorted(direct - set(graph))
     if missing:
         raise LicenseQualificationError(
-            "direct project dependencies missing from requirements-dev.lock: " + ", ".join(missing)
+            f"direct project dependencies missing from {lock_file}: " + ", ".join(missing)
         )
 
 
@@ -342,12 +377,22 @@ def _locked_distributions(graph: dict[str, str]) -> dict[str, metadata.Distribut
     return installed
 
 
-def generate_inventory(root: Path) -> dict[str, object]:
-    """Generate metadata evidence for exactly the committed locked graph."""
-    lock_path = root / "requirements-dev.lock"
-    graph = locked_graph(lock_path)
-    direct = direct_requirements(root)
-    _require_direct_coverage(graph, direct)
+def generate_inventory(
+    root: Path,
+    *,
+    lock_file: Path = Path("requirements-dev.lock"),
+    extras: tuple[str, ...] = ("dev",),
+    marker_environment: Mapping[str, str] | None = None,
+) -> dict[str, object]:
+    """Generate metadata evidence for exactly the selected locked graph."""
+    lock_path = (root / lock_file).resolve()
+    try:
+        lock_name = lock_path.relative_to(root.resolve()).as_posix()
+    except ValueError as exc:
+        raise LicenseQualificationError("lock file must be inside the repository root") from exc
+    graph = locked_graph(lock_path, marker_environment=marker_environment)
+    direct = direct_requirements(root, extras=extras)
+    _require_direct_coverage(graph, direct, lock_name)
     installed = _locked_distributions(graph)
     entries: list[dict[str, object]] = []
     for name, version in sorted(graph.items()):
@@ -375,7 +420,7 @@ def generate_inventory(root: Path) -> dict[str, object]:
         entries.append(entry)
     return {
         "schema_version": 1,
-        "lock_file": "requirements-dev.lock",
+        "lock_file": lock_name,
         "lock_sha256": lock_sha256(lock_path),
         "packages": entries,
     }
@@ -386,19 +431,20 @@ def qualify(
     policy: object,
     graph: dict[str, str],
     *,
+    expected_lock_file: str = "requirements-dev.lock",
     expected_lock_sha256: str,
     expected_direct: set[str],
 ) -> None:
     """Fail unless inventory exactly matches the lock and every package is reviewed."""
     if not isinstance(inventory, dict) or inventory.get("schema_version") != 1:
         raise LicenseQualificationError("inventory schema_version must be 1")
-    if inventory.get("lock_file") != "requirements-dev.lock":
-        raise LicenseQualificationError("inventory lock_file must be requirements-dev.lock")
+    if inventory.get("lock_file") != expected_lock_file:
+        raise LicenseQualificationError(f"inventory lock_file must be {expected_lock_file}")
     if inventory.get("lock_sha256") != expected_lock_sha256:
         raise LicenseQualificationError(
-            "inventory lock_sha256 does not match requirements-dev.lock"
+            f"inventory lock_sha256 does not match {expected_lock_file}"
         )
-    _require_direct_coverage(graph, expected_direct)
+    _require_direct_coverage(graph, expected_direct, expected_lock_file)
     packages = inventory.get("packages")
     if not isinstance(packages, list):
         raise LicenseQualificationError("inventory packages must be a list")
@@ -462,8 +508,27 @@ def qualify(
     if not isinstance(reviews, dict):
         raise LicenseQualificationError("policy reviews must be an object")
     expected_review_keys = {f"{name}=={version}" for name, version in graph.items()}
-    if set(reviews) != expected_review_keys:
-        raise LicenseQualificationError("policy review keys must exactly match the locked graph")
+    missing_reviews = sorted(expected_review_keys - set(reviews))
+    stale_reviews = sorted(set(reviews) - expected_review_keys)
+    stale_review_evidence = sorted(
+        key
+        for key in expected_review_keys & set(reviews)
+        if isinstance(reviews[key], dict)
+        and reviews[key].get("evidence_sha256") != evidence_by_key.get(key)
+    )
+    if missing_reviews or stale_reviews or stale_review_evidence:
+        details: list[str] = []
+        if missing_reviews:
+            details.append("missing review decisions: " + ", ".join(missing_reviews))
+        if stale_reviews:
+            details.append("stale policy entries: " + ", ".join(stale_reviews))
+        for key in stale_review_evidence:
+            details.append(f"review evidence is stale or mismatched: {key}")
+        raise LicenseQualificationError(
+            "policy review keys must exactly match the locked graph and current evidence ("
+            + "; ".join(details)
+            + ")"
+        )
     for key in sorted(expected_review_keys):
         review = reviews[key]
         if not isinstance(review, dict) or review.get("decision") not in {"allow", "deny"}:
@@ -495,27 +560,50 @@ def _load_json(path: Path) -> object:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=Path())
+    parser.add_argument("--lock", type=Path, default=Path("requirements-dev.lock"))
+    parser.add_argument("--extra", action="append", dest="extras")
     parser.add_argument("--write-inventory", type=Path)
     parser.add_argument("--inventory", type=Path, default=Path("third_party/licenses-v1.json"))
     parser.add_argument("--policy", type=Path, default=Path("third_party/license-policy-v1.json"))
     args = parser.parse_args()
     root = args.root.resolve()
+    lock_file = args.lock
+    extras = tuple(args.extras or ("dev",))
+    marker_environment = {str(key): str(value) for key, value in default_environment().items()}
     if args.write_inventory is not None:
-        payload = generate_inventory(root)
+        payload = generate_inventory(
+            root,
+            lock_file=lock_file,
+            extras=extras,
+            marker_environment=marker_environment,
+        )
         args.write_inventory.parent.mkdir(parents=True, exist_ok=True)
         args.write_inventory.write_text(
             json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
         return 0
-    lock_path = root / "requirements-dev.lock"
-    graph = locked_graph(lock_path)
-    qualify(
-        _load_json(root / args.inventory),
-        _load_json(root / args.policy),
-        graph,
-        expected_lock_sha256=lock_sha256(lock_path),
-        expected_direct=direct_requirements(root),
-    )
+    lock_path = (root / lock_file).resolve()
+    try:
+        lock_name = lock_path.relative_to(root).as_posix()
+    except ValueError:
+        print(
+            "license qualification: failed: lock file must be inside the repository root",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        graph = locked_graph(lock_path, marker_environment=marker_environment)
+        qualify(
+            _load_json(root / args.inventory),
+            _load_json(root / args.policy),
+            graph,
+            expected_lock_file=lock_name,
+            expected_lock_sha256=lock_sha256(lock_path),
+            expected_direct=direct_requirements(root, extras=extras),
+        )
+    except LicenseQualificationError as exc:
+        print(f"license qualification: failed: {exc}", file=sys.stderr)
+        return 1
     print(f"license qualification: ok ({len(graph)} locked distributions)")
     return 0
 

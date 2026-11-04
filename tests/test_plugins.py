@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from studio_core import EnvironmentDefinition, EnvironmentId, WorkspaceId
 from studio_core.plugins import (
     ContributionRegistry,
     PluginCompatibilityError,
@@ -16,6 +17,7 @@ from studio_core.plugins import (
     SurfaceOption,
     _satisfies_host,
 )
+from studio_orchestrator import Instant
 from studio_plugin_workspaces import WorkspacesPlugin
 from studio_runtime import discover_plugins
 
@@ -589,6 +591,56 @@ def test_workspace_plugin_delegates_to_injected_service() -> None:
         }
     ]
     manager.stop(plan)
+
+
+def test_environment_plugin_mutations_pass_canonical_instants() -> None:
+    class EnvironmentService:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+            self.environment = EnvironmentDefinition(EnvironmentId("local"), "Local")
+
+        def create(self, workspace_id, environment, *, now):
+            assert workspace_id == WorkspaceId("default")
+            Instant(str(now))
+            self.calls.append("create")
+            self.environment = environment
+            return environment
+
+        def replace(self, workspace_id, environment, *, now):
+            assert workspace_id == WorkspaceId("default")
+            Instant(str(now))
+            self.calls.append("replace")
+            self.environment = environment
+            return environment
+
+        def disable(self, workspace_id, environment_id, *, now):
+            assert workspace_id == WorkspaceId("default")
+            assert environment_id == EnvironmentId("local")
+            Instant(str(now))
+            self.calls.append("disable")
+            self.environment = EnvironmentDefinition(environment_id, "Local", state="disabled")
+            return self.environment
+
+        def enable(self, workspace_id, environment_id, *, now):
+            assert workspace_id == WorkspaceId("default")
+            assert environment_id == EnvironmentId("local")
+            Instant(str(now))
+            self.calls.append("enable")
+            self.environment = EnvironmentDefinition(environment_id, "Local")
+            return self.environment
+
+    plugin = WorkspacesPlugin()
+    plugin.started = True
+    service = EnvironmentService()
+    plugin._environment_service = service
+    definition = {"id": "local", "name": "Local", "description": "", "state": "active"}
+
+    plugin.create_environment("default", body=definition)
+    plugin.replace_environment("default", "local", body=definition)
+    plugin.disable_environment("default", "local")
+    plugin.enable_environment("default", "local")
+
+    assert service.calls == ["create", "replace", "disable", "enable"]
 
 
 def test_surface_contributions_are_sorted_and_collision_safe() -> None:

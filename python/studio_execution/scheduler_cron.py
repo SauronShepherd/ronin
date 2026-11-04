@@ -151,6 +151,16 @@ def schedule_matches(schedule: Schedule, instant: Instant | str) -> bool:
     return expression.matches_local(local)
 
 
+def validate_schedule(schedule: Schedule) -> None:
+    """Reject invalid cron/timezone definitions before persisting them."""
+
+    CronExpression.parse(schedule.cron)
+    try:
+        ZoneInfo(schedule.timezone)
+    except ZoneInfoNotFoundError as exc:
+        raise CronSyntaxError(f"unknown schedule timezone: {schedule.timezone}") from exc
+
+
 def evaluated_minutes(
     *,
     cursor: Instant | None,
@@ -193,4 +203,5 @@ __all__ = (
     "CronSyntaxError",
     "evaluated_minutes",
     "schedule_matches",
+    "validate_schedule",
 )

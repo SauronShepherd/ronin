@@ -126,7 +126,11 @@ def test_migration_discovery_and_scope_work_through_real_http(tmp_path) -> None:
             ) as response:
                 scoped = json.loads(response.read())
         except HTTPError as error:
-            raise AssertionError(error.read().decode()) from error
+            try:
+                message = error.read().decode()
+            finally:
+                error.close()
+            raise AssertionError(message) from error
         assert scoped["state"] == "scope_ready"
         assert scoped["scope_digest"]
         with urlopen(  # noqa: S310

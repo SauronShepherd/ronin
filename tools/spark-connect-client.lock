@@ -1,0 +1,19 @@
+# Spark Connect client plus dependencies absent from requirements-test.lock.
+# Base requirements-test.lock already pins numpy, pyarrow, python-dateutil,
+# typing-extensions, tzdata and zstandard for the qualification interpreter.
+pyspark-client==4.2.0 \
+    --hash=sha256:4008fe5e537bf0e57e7243d03abfaac089b7c87316bd07024784d8ea726f5d41
+pandas==2.3.3 \
+    --hash=sha256:f8bfc0e12dc78f777f323f55c58649591b2cd0c43534e8355c51d3fede5f4dee
+pytz==2025.2 \
+    --hash=sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00
+grpcio==1.85.1 \
+    --hash=sha256:c17d61af28b322c48ab3881c685e5f6e7e367c56844cf589ee7707be9477b969
+grpcio-status==1.85.1 \
+    --hash=sha256:ef84cb262c7a05fd7c27e61bb70c9f63bce4484ce8b3366585a381fed738fcb0
+googleapis-common-protos==1.76.0 \
+    --hash=sha256:59e13344a9f3651aa201a03e2bee815a3bf43a4baf1f9ff8a9b62a840ce25fac
+protobuf==7.36.2 \
+    --hash=sha256:a300819d441e078a5608c0d3c709796bb548136058fda017ae51d425b44fd353
+PyYAML==6.0.3 \
+    --hash=sha256:79005a0d97d5ddabfeeea4cf676af11e647e41d81c9a7722a193022accdb6b7c

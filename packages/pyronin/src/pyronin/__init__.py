@@ -12,6 +12,7 @@ import json
 import re
 import time
 from collections.abc import Mapping
+from contextlib import closing
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Protocol
@@ -774,22 +775,23 @@ class HTTPTransport:
                 with self._opener.open(request, timeout=self.timeout) as response:  # noqa: S310
                     body = _read_bounded(response, self.max_response_bytes)
             except HTTPError as exc:
-                try:
-                    error_body = _read_bounded(exc, self.max_response_bytes)
-                except TransportError as limit_error:
-                    raise APIError(
-                        exc.code,
-                        "error response exceeded configured byte limit",
-                    ) from limit_error
-                if (
-                    retry_safe
-                    and exc.code in _RETRYABLE_STATUS_CODES
-                    and attempt < self.max_retries
-                ):
-                    self._sleep_before_retry(attempt)
-                    continue
-                code, message = _api_error(error_body)
-                raise APIError(exc.code, message, code) from exc
+                with closing(exc):
+                    try:
+                        error_body = _read_bounded(exc, self.max_response_bytes)
+                    except TransportError as limit_error:
+                        raise APIError(
+                            exc.code,
+                            "error response exceeded configured byte limit",
+                        ) from limit_error
+                    if (
+                        retry_safe
+                        and exc.code in _RETRYABLE_STATUS_CODES
+                        and attempt < self.max_retries
+                    ):
+                        self._sleep_before_retry(attempt)
+                        continue
+                    code, message = _api_error(error_body)
+                    raise APIError(exc.code, message, code) from exc
             except URLError as exc:
                 if retry_safe and attempt < self.max_retries:
                     self._sleep_before_retry(attempt)

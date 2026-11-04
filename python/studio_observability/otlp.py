@@ -482,6 +482,8 @@ class OtlpHttpExporter:
                     raise OtlpExportError(f"collector returned HTTP {response.status}")
                 response.read(65_537)
         except (HTTPError, URLError, TimeoutError, OSError) as exc:
+            if isinstance(exc, HTTPError):
+                exc.close()
             raise OtlpExportError("OTLP collector request failed") from exc
 
     def _run(self) -> None:

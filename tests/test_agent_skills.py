@@ -40,7 +40,7 @@ def test_discovery_ignores_generated_output_and_bytecode(tmp_path: Path) -> None
     root = tmp_path / "skills"
     shutil.copytree(SKILLS_ROOT / "ronin-core", root / "ronin-core")
     bytecode = root / "ronin-core" / "scripts" / "__pycache__"
-    bytecode.mkdir()
+    bytecode.mkdir(exist_ok=True)
     (bytecode / "preflight.pyc").write_bytes(b"generated")
     (root / "dist" / "ronin-core").mkdir(parents=True)
 

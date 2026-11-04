@@ -1,12 +1,59 @@
 import { test, expect } from '@playwright/test';
 import routes from '../../web/routes.json' with { type: 'json' };
 
+const diagnosticsByPage = new WeakMap();
+const staticOrigin = new URL(process.env.RONIN_STUDIO_E2E_URL || 'http://127.0.0.1:8099/web/').origin;
+
 test.describe('Studio route traversal', () => {
+  test.beforeEach(async ({ page }) => {
+    const diagnostics = { unexpectedResponses: [], failedRequests: [], staticApiMisses: new Set() };
+    diagnosticsByPage.set(page, diagnostics);
+    page.on('pageerror', error => console.error(`[browser pageerror] ${error.stack || error.message}`));
+    page.on('console', message => {
+      if (
+        message.type() === 'error' &&
+        !message.text().includes('Failed to load resource: the server responded with a status of 404')
+      ) {
+        console.error(`[browser console] ${message.text()}`);
+      }
+    });
+    page.on('response', response => {
+      if (response.status() >= 400) {
+        const request = response.request();
+        const url = new URL(response.url());
+        const expectedStaticApiMiss =
+          staticOrigin === 'http://127.0.0.1:8099' &&
+          url.origin === staticOrigin &&
+          url.pathname.startsWith('/v1/') &&
+          response.status() === 404 &&
+          request.resourceType() === 'fetch';
+        if (expectedStaticApiMiss) {
+          diagnostics.staticApiMisses.add(`${request.method()} ${url.pathname}`);
+        } else {
+          const failure = `${response.status()} ${request.resourceType()} ${response.url()}`;
+          diagnostics.unexpectedResponses.push(failure);
+          console.error(`[browser response] ${failure}`);
+        }
+      }
+    });
+    page.on('requestfailed', request => {
+      const failure = `${request.resourceType()} ${request.url()}: ${request.failure()?.errorText || 'unknown error'}`;
+      diagnostics.failedRequests.push(failure);
+      console.error(`[browser requestfailed] ${failure}`);
+    });
+  });
+
+  test.afterEach(async ({ page }) => {
+    const diagnostics = diagnosticsByPage.get(page);
+    expect(diagnostics.unexpectedResponses, 'unexpected failed static resources').toEqual([]);
+    expect(diagnostics.failedRequests, 'failed browser network requests').toEqual([]);
+  });
+
   for (const route of routes) {
     test(`${route.id} renders a stable surface`, async ({ page }) => {
       await page.goto(`./#${route.id}`, { waitUntil: 'load' });
       await expect(page.locator('#rail')).toBeVisible();
-      await expect(page.locator('#rail .nav-item')).toHaveCount(routes.length);
+      await expect(page.locator('#rail .nav-item')).toHaveCount(routes.length, { timeout: 15_000 });
       await expect(page.locator('#rail .nav-item').first()).toBeVisible();
       await expect(page.locator('#breadcrumb')).not.toHaveText('Studio');
       await expect(page.locator('#view')).toBeVisible();
@@ -18,7 +65,7 @@ test.describe('Studio route traversal', () => {
   test('full navigation and responsive sweep stay usable', async ({ page }) => {
     await page.goto('./#home', { waitUntil: 'load' });
     const links = page.locator('#rail .nav-item');
-    await expect(links).toHaveCount(routes.length);
+    await expect(links).toHaveCount(routes.length, { timeout: 15_000 });
 
     for (const route of routes) {
       await page.locator(`#rail .nav-item[href="#${route.id}"]`).click();

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from threading import Thread
 from typing import Protocol
 
@@ -21,6 +21,15 @@ class PluginLifecycle(Protocol):
     def stop(self) -> None: ...
 
 
+class BackgroundLifecycle(Protocol):
+    @property
+    def ready(self) -> bool: ...
+
+    def start(self) -> None: ...
+
+    def stop(self) -> None: ...
+
+
 class LocalServerComposition:
     """Start and stop job and control-plane servers as one local unit."""
 
@@ -31,17 +40,23 @@ class LocalServerComposition:
         *,
         thread_factory: Callable[..., Thread] = Thread,
         plugin_host: PluginLifecycle | None = None,
+        background_services: Sequence[BackgroundLifecycle] = (),
     ) -> None:
         self.job_server = job_server
         self.control_plane_server = control_plane_server
         self._thread_factory = thread_factory
         self.plugin_host = plugin_host
+        self.background_services = tuple(background_services)
         self._threads: tuple[Thread, Thread] | None = None
         self._closed = False
 
     @property
     def ready(self) -> bool:
-        return self._threads is not None and all(thread.is_alive() for thread in self._threads)
+        return (
+            self._threads is not None
+            and all(thread.is_alive() for thread in self._threads)
+            and all(service.ready for service in self.background_services)
+        )
 
     def start(self) -> None:
         if self._closed:
@@ -50,6 +65,7 @@ class LocalServerComposition:
             raise RuntimeError("local server composition is already started")
         servers = (self.job_server, self.control_plane_server)
         started: list[tuple[StoppableServer, Thread]] = []
+        started_services: list[BackgroundLifecycle] = []
         plugin_start_attempted = False
         try:
             if self.plugin_host is not None:
@@ -68,6 +84,9 @@ class LocalServerComposition:
             for server, thread in zip(servers, threads, strict=True):
                 thread.start()
                 started.append((server, thread))
+            for service in self.background_services:
+                started_services.append(service)
+                service.start()
             self._threads = threads
         except Exception as startup_error:
             cleanup_errors: list[Exception] = []
@@ -80,6 +99,8 @@ class LocalServerComposition:
 
             for server, _thread in reversed(started):
                 attempt_cleanup(server.shutdown)
+            for service in reversed(started_services):
+                attempt_cleanup(service.stop)
             for _server, thread in reversed(started):
                 try:
                     thread.join(timeout=10.0)
@@ -123,6 +144,11 @@ class LocalServerComposition:
                 if thread.is_alive():
                     failures.append(RuntimeError(f"server thread did not stop: {thread.name}"))
 
+        # Background workers share durable stores with both servers; stop them
+        # after HTTP ingress is quiesced and before plugins/server resources close.
+        for service in reversed(self.background_services):
+            attempt(service.stop)
+
         # Plugins can own workers that still use the shared job store. Stop those
         # consumers after HTTP ingress is quiesced but before closing server stores.
         if self.plugin_host is not None:
@@ -135,4 +161,9 @@ class LocalServerComposition:
             raise failures[0]
 
 
-__all__ = ("LocalServerComposition", "PluginLifecycle", "StoppableServer")
+__all__ = (
+    "BackgroundLifecycle",
+    "LocalServerComposition",
+    "PluginLifecycle",
+    "StoppableServer",
+)

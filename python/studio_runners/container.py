@@ -282,13 +282,14 @@ class AsyncioCommandRunner:
         wait_task = asyncio.create_task(process.wait())
         completed_normally = False
         try:
-            stdin.write(input_text.encode())
-            with contextlib.suppress(ConnectionResetError):
-                await stdin.drain()
-                # A short-lived command may exit before the input pipe is
-                # drained (notably on Windows); its stdout/stderr remain the
-                # authoritative outcome and are collected below.
-                pass
+            if input_text:
+                stdin.write(input_text.encode())
+                with contextlib.suppress(ConnectionResetError):
+                    await stdin.drain()
+                    # A short-lived command may exit before the input pipe is
+                    # drained (notably on Windows); its stdout/stderr remain the
+                    # authoritative outcome and are collected below.
+                    pass
             stdin.close()
             cancelled = False
             timed_out = False

@@ -188,7 +188,15 @@ class S3JsonConnector:
         if prefix and not key.startswith(prefix.rstrip("/") + "/"):
             raise ValueError("S3 asset is outside the configured prefix")
         response = self._client_for(connection).get_object(Bucket=bucket, Key=key)
-        body = response["Body"].read(self.MAX_OBJECT_BYTES + 1)
+        body_stream = response["Body"]
+        try:
+            body = body_stream.read(self.MAX_OBJECT_BYTES + 1)
+        finally:
+            close = getattr(body_stream, "close", None)
+            if callable(close):
+                close()
+        if not isinstance(body, bytes):
+            raise ValueError("S3 JSON object body must be bytes")
         if len(body) > self.MAX_OBJECT_BYTES:
             raise ValueError("S3 JSON object exceeds configured byte limit")
         try:

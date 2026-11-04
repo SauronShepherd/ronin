@@ -242,7 +242,10 @@ class StreamDefinition:
 
     @classmethod
     def from_json(cls, payload: str) -> StreamDefinition:
-        data = decode_canonical_json(payload)
+        return cls.from_payload(decode_canonical_json(payload))
+
+    @classmethod
+    def from_payload(cls, data: object) -> StreamDefinition:
         if not isinstance(data, Mapping) or set(data) != {
             "id",
             "name",

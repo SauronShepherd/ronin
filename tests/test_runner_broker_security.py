@@ -133,7 +133,10 @@ def test_runtime_endpoint_requires_token_and_client_checks_image(tmp_path: Path)
     try:
         with pytest.raises(HTTPError) as unauthorized:
             urlopen(f"http://127.0.0.1:{server.server_port}/v1/runtime", timeout=1.0)  # noqa: S310
-        assert unauthorized.value.code == 401
+        try:
+            assert unauthorized.value.code == 401
+        finally:
+            unauthorized.value.close()
 
         client = BrokerClient(_client_config(server))
         assert client.runtime_image() == _IMAGE
@@ -207,8 +210,11 @@ def test_execution_route_rejects_extra_request_fields_over_http(tmp_path: Path) 
     try:
         with pytest.raises(HTTPError) as invalid:
             urlopen(request, timeout=1.0)  # noqa: S310
-        assert invalid.value.code == 400
-        assert server.execute_count == 0
+        try:
+            assert invalid.value.code == 400
+            assert server.execute_count == 0
+        finally:
+            invalid.value.close()
     finally:
         _close(server, thread)
 

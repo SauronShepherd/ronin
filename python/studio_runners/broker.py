@@ -6,6 +6,7 @@ import asyncio
 import contextlib
 import hashlib
 import re
+from contextlib import closing
 from dataclasses import dataclass, field
 from typing import Any, cast
 from urllib.error import HTTPError, URLError
@@ -142,13 +143,14 @@ class BrokerClient:
             ) as response:
                 body = _read_bounded(response, self.config.max_response_bytes)
         except HTTPError as exc:
-            try:
-                body = _read_bounded(exc, min(self.config.max_response_bytes, 64 * 1024))
-                error = _object(body)
-                code = error.get("code")
-                detail = code if isinstance(code, str) else "request_failed"
-            except (BrokerProtocolError, OSError):
-                detail = "request_failed"
+            with closing(exc):
+                try:
+                    body = _read_bounded(exc, min(self.config.max_response_bytes, 64 * 1024))
+                    error = _object(body)
+                    code = error.get("code")
+                    detail = code if isinstance(code, str) else "request_failed"
+                except (BrokerProtocolError, OSError):
+                    detail = "request_failed"
             raise BrokerRequestError(
                 f"runner broker request failed ({exc.code}, {detail})"
             ) from exc

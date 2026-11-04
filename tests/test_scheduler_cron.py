@@ -20,6 +20,7 @@ from studio_execution.scheduler_cron import (
     CronSyntaxError,
     evaluated_minutes,
     schedule_matches,
+    validate_schedule,
 )
 from studio_execution.scheduler_schedule_service import (
     ScheduleFireLimitExceeded,
@@ -87,6 +88,20 @@ def test_schedule_rejects_unknown_timezone_during_evaluation() -> None:
                 timezone="Mars/Olympus",
             ),
             Instant("2026-09-12T07:00:00.000000Z"),
+        )
+
+
+def test_schedule_definition_validation_rejects_invalid_cron_and_timezone() -> None:
+    with pytest.raises(CronSyntaxError, match="exactly five fields"):
+        validate_schedule(Schedule(ScheduleId("bad-cron"), WorkflowId("workflow-1"), "0 0 *"))
+    with pytest.raises(CronSyntaxError, match="unknown schedule timezone"):
+        validate_schedule(
+            Schedule(
+                ScheduleId("bad-zone"),
+                WorkflowId("workflow-1"),
+                "0 0 * * *",
+                timezone="Mars/Olympus",
+            )
         )
 
 

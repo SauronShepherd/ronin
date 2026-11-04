@@ -275,15 +275,18 @@ def test_register_uses_host_injected_service_and_artifact_store(tmp_path) -> Non
     contributions = ContributionRegistry()
     for permission in plugin.manifest.permissions:
         contributions.add_permission(permission, plugin.manifest.id)
-    plugin.register(
-        PluginContext(
-            plugin.manifest.id,
-            contributions,
-            {"govern_studio_service": service, "artifact_store": artifacts},
+    try:
+        plugin.register(
+            PluginContext(
+                plugin.manifest.id,
+                contributions,
+                {"govern_studio_service": service, "artifact_store": artifacts},
+            )
         )
-    )
-    assert plugin.service is service
-    assert plugin.artifact_store is artifacts
+        assert plugin.service is service
+        assert plugin.artifact_store is artifacts
+    finally:
+        plugin.shutdown()
 
 
 def test_plugin_host_invokes_generate_validate_and_export_routes() -> None:
@@ -316,11 +319,17 @@ def test_plugin_host_invokes_generate_validate_and_export_routes() -> None:
 def test_plugin_can_use_durable_service_across_restart(tmp_path) -> None:
     database = tmp_path / "synthetic.db"
     first = _plugin(GovernStudioService(SqliteRunStore(str(database))))
-    created = first.generate(body={"plan": _plan()}, idempotency_key="durable-1")
-    second = _plugin(GovernStudioService(SqliteRunStore(str(database))))
-    restored = second.service.get_run(created["run_id"])
-    assert restored.run_id == created["run_id"]
-    assert restored.result is not None
+    second = None
+    try:
+        created = first.generate(body={"plan": _plan()}, idempotency_key="durable-1")
+        second = _plugin(GovernStudioService(SqliteRunStore(str(database))))
+        restored = second.service.get_run(created["run_id"])
+        assert restored.run_id == created["run_id"]
+        assert restored.result is not None
+    finally:
+        first.shutdown()
+        if second is not None:
+            second.shutdown()
 
 
 def test_plugin_run_query_is_available_through_composed_runtime() -> None:

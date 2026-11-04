@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from studio_core.canonical_json import encode as encode_canonical_json
@@ -15,7 +16,7 @@ class SQLiteMigrationSessionStore:
     def __init__(self, path: Path) -> None:
         self.path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(self.path) as connection:
+        with closing(sqlite3.connect(self.path)) as connection, connection:
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS migration_sessions ("
                 "id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL, project_id TEXT NOT NULL, "
@@ -24,7 +25,7 @@ class SQLiteMigrationSessionStore:
 
     def save(self, session: MigrationSession) -> None:
         payload = json.dumps(session.to_snapshot(), sort_keys=True, separators=(",", ":"))
-        with sqlite3.connect(self.path) as connection:
+        with closing(sqlite3.connect(self.path)) as connection, connection:
             connection.execute(
                 "INSERT INTO migration_sessions(id, workspace_id, project_id, state, snapshot) "
                 "VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET "
@@ -40,7 +41,7 @@ class SQLiteMigrationSessionStore:
             )
 
     def get(self, session_id: str, *, workspace_id: str, project_id: str) -> dict[str, object]:
-        with sqlite3.connect(self.path) as connection:
+        with closing(sqlite3.connect(self.path)) as connection, connection:
             row = connection.execute(
                 "SELECT workspace_id, project_id, snapshot FROM migration_sessions WHERE id = ?",
                 (session_id,),
@@ -55,7 +56,7 @@ class SQLiteMigrationSessionStore:
         return payload
 
     def load(self, session_id: str) -> MigrationSession:
-        with sqlite3.connect(self.path) as connection:
+        with closing(sqlite3.connect(self.path)) as connection, connection:
             row = connection.execute(
                 "SELECT snapshot FROM migration_sessions WHERE id = ?", (session_id,)
             ).fetchone()
@@ -67,7 +68,7 @@ class SQLiteMigrationSessionStore:
         return MigrationSession.from_snapshot(payload)
 
     def list(self, *, workspace_id: str, project_id: str) -> tuple[dict[str, object], ...]:
-        with sqlite3.connect(self.path) as connection:
+        with closing(sqlite3.connect(self.path)) as connection, connection:
             rows = connection.execute(
                 "SELECT snapshot FROM migration_sessions WHERE workspace_id = ? AND project_id = ? "
                 "ORDER BY id",

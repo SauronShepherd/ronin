@@ -121,7 +121,14 @@ function render() {
 function addSqlContractFields() {
   const grid = document.querySelector('#de-sql-form .grid.three');
   if (!grid || grid.querySelector('[name="max_rows"]')) return;
-  grid.insertAdjacentHTML('beforeend', '<label data-queryflux-only hidden>Translation policy<select class="field" name="translation_policy"><option value="native_only">Native only</option></select></label><label data-sql-local-only>Execution time limit (ms)<input class="field" name="timeout_ms" type="number" min="1" max="60000" value="5000" required></label><label>Maximum rows<input class="field" name="max_rows" type="number" min="1" max="10000" value="1000" required></label><label>Maximum result size (bytes)<input class="field" name="max_result_bytes" type="number" min="1" max="10485760" value="1048576" required></label><label data-queryflux-only hidden>QueryFlux engine<select class="field" name="queryflux_engine" required></select></label><label data-queryflux-only hidden>QueryFlux page size<input class="field" name="page_size" type="number" min="1" max="10000" value="100" required></label>');
+  grid.insertAdjacentHTML('beforeend', '<label data-queryflux-only hidden>Translation policy<select class="field" name="translation_policy"><option value="native_only">Native only</option></select></label><label data-sql-local-only>Execution time limit (ms)<input class="field" name="timeout_ms" type="number" min="1" max="60000" value="5000" required></label><label>Maximum rows<input class="field" name="max_rows" type="number" min="1" max="10000" value="1000" required></label><label>Maximum result size (bytes)<input class="field" name="max_result_bytes" type="number" min="1" max="10485760" value="1048576" required></label><label data-sql-local-only>Maximum explain plan size (bytes)<input class="field" name="max_explain_bytes" type="number" min="1" max="1048576" value="262144" required></label><label data-queryflux-only hidden>QueryFlux engine<select class="field" name="queryflux_engine" required></select></label><label data-queryflux-only hidden>QueryFlux page size<input class="field" name="page_size" type="number" min="1" max="10000" value="100" required></label>');
+  const execute = document.querySelector('#de-sql-form [data-action="de-sql-execute"]');
+  if (execute && !document.querySelector('#de-sql-form [data-action="de-sql-explain"]')) {
+    execute.insertAdjacentHTML(
+      'afterend',
+      '<button class="button" data-action="de-sql-explain" data-sql-local-only type="button">Explain query plan</button>',
+    );
+  }
   const result = document.querySelector('#de-sql-result');
   if (result && !document.querySelector('#de-queryflux-next-page')) {
     const next = document.createElement('button');
@@ -279,6 +286,23 @@ document.addEventListener('click', async event => {
       const columns = (lastSqlResult.columns || []).map(column => typeof column === 'string' ? column : column.name);
       const rows = lastSqlResult.rows || [];
       out.textContent = [columns.map(csvField).join(','), ...rows.map(row => row.map(csvField).join(','))].join('\r\n');
+    }
+    else if (action === 'de-sql-explain') {
+      const form = document.querySelector('#de-sql-form');
+      const data = new FormData(form);
+      if (data.get('profile') !== 'local') throw new Error('EXPLAIN is only available for Local SQL.');
+      const workspace = encodeURIComponent(data.get('workspace'));
+      const project = encodeURIComponent(data.get('project'));
+      out.textContent = 'Explaining bounded query plan…';
+      const result = await post(
+        `/v1/workspaces/${workspace}/projects/${project}/sql/explain`,
+        {
+          sql: data.get('sql'),
+          max_bytes: Number(data.get('max_explain_bytes')),
+          timeout_ms: Number(data.get('timeout_ms')),
+        },
+      );
+      out.textContent = json(result);
     }
     else if (action === 'de-sql-execute') {
       const form = document.querySelector('#de-sql-form');

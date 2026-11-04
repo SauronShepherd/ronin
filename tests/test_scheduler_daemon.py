@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import signal
+import time
 from pathlib import Path
 from threading import Event, Timer
 from types import SimpleNamespace
 
+import pytest
 from studio_core import (
     Node,
     OperatorRef,
@@ -23,6 +25,7 @@ from studio_execution.scheduler_daemon import (
 )
 from studio_execution.scheduler_daemon import (
     SchedulerDaemon,
+    SchedulerDaemonService,
     SchedulerDaemonWork,
     install_scheduler_stop_signals,
 )
@@ -105,6 +108,85 @@ def test_scheduler_health_and_readiness_do_not_expose_lease_secrets(tmp_path: Pa
         "generation": None,
     }
     assert daemon.readiness() is False
+
+
+def test_scheduler_daemon_service_acquires_and_releases_lease_on_lifecycle(
+    tmp_path: Path,
+) -> None:
+    leadership, schedules, events, backfills = _stores(tmp_path)
+    daemon = _daemon(
+        leadership_store=leadership,
+        schedule_store=schedules,
+        event_store=events,
+        backfill_store=backfills,
+        service=DurableExecutionService(InMemoryJobStore()),
+        owner="scheduler-service",
+        clock=MutableClock(_T0),
+        token="scheduler-service-token",  # noqa: S106
+    )
+    service = SchedulerDaemonService(
+        daemon,
+        work_provider=lambda: SchedulerDaemonWork(),
+        interval_seconds=0.01,
+        retry_seconds=0.01,
+    )
+
+    service.start()
+    deadline = time.monotonic() + 2
+    while daemon.lease is None and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert service.ready
+    assert daemon.lease is not None
+
+    service.stop()
+    assert not service.ready
+    assert daemon.lease is None
+    leader = leadership.get_scheduler_leader()
+    assert leader is not None
+    assert leader.lease_expires_at == _T0
+
+
+def test_scheduler_daemon_service_retries_transient_provider_errors(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    leadership, schedules, events, backfills = _stores(tmp_path)
+    daemon = _daemon(
+        leadership_store=leadership,
+        schedule_store=schedules,
+        event_store=events,
+        backfill_store=backfills,
+        service=DurableExecutionService(InMemoryJobStore()),
+        owner="scheduler-retry",
+        clock=MutableClock(_T0),
+        token="scheduler-retry-token",  # noqa: S106
+    )
+    calls = 0
+
+    def work_provider() -> SchedulerDaemonWork:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise RuntimeError("temporary storage outage")
+        return SchedulerDaemonWork()
+
+    service = SchedulerDaemonService(
+        daemon,
+        work_provider=work_provider,
+        interval_seconds=0.01,
+        retry_seconds=0.01,
+    )
+    caplog.set_level("ERROR", logger="studio_execution.scheduler_daemon")
+
+    service.start()
+    deadline = time.monotonic() + 2
+    while (calls < 2 or daemon.lease is None) and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert calls >= 2
+    assert daemon.lease is not None
+    assert service.last_error is None
+    assert "retrying in" in caplog.text
+    service.stop()
 
 
 def test_scheduler_daemon_dispatches_durable_notifications_when_configured(tmp_path: Path) -> None:

@@ -163,6 +163,62 @@ def test_postgres_ml_registry_round_trip_and_conflict_guards() -> None:
     assert store.record_evaluation(workspace_id, evaluation, now=NOW) == evaluation
     assert store.record_evaluation(workspace_id, evaluation, now=NOW) == evaluation
     assert store.list_evaluations(workspace_id, model.model_id, model.version) == (evaluation,)
+    for index in range(99):
+        store.record_evaluation(
+            workspace_id,
+            ModelEvaluation(
+                model.model_id,
+                model.version,
+                ref,
+                "unknown",
+                (MetricValue("accuracy", 0.98),),
+                f"execution://review-{index}",
+            ),
+            now=NOW,
+        )
+    assert len(store.list_evaluations(workspace_id, model.model_id, model.version)) == 100
+    assert store.record_evaluation(workspace_id, evaluation, now=NOW) == evaluation
+    with pytest.raises(MLConflict, match="at most 100 evaluations"):
+        store.record_evaluation(
+            workspace_id,
+            ModelEvaluation(
+                model.model_id,
+                model.version,
+                ref,
+                "unknown",
+                (MetricValue("accuracy", 0.98),),
+                "execution://review-overflow",
+            ),
+            now=NOW,
+        )
+
+    candidate = RegisteredModelVersion(
+        model.model_id,
+        ModelVersion("2"),
+        run.id,
+        "artifact://model-candidate",
+        "d" * 64,
+        "scikit-learn",
+        model.signature,
+        stage="candidate",
+    )
+    assert store.register_model(workspace_id, candidate, now=NOW) == candidate
+    with pytest.raises(MLConflict, match="no passed evaluation"):
+        store.promote_model(workspace_id, candidate.model_id, candidate.version, now=NOW)
+    candidate_evaluation = ModelEvaluation(
+        candidate.model_id,
+        candidate.version,
+        ref,
+        "passed",
+        (MetricValue("accuracy", 0.99),),
+        "execution://candidate-evaluation",
+    )
+    store.record_evaluation(workspace_id, candidate_evaluation, now=NOW)
+    promoted = store.promote_model(workspace_id, candidate.model_id, candidate.version, now=NOW)
+    assert promoted.stage == "champion"
+    assert store.get_champion_model(workspace_id, candidate.model_id) == promoted
+    assert store.get_model(workspace_id, model.model_id, model.version).stage == "archived"
+
     with pytest.raises(KeyError, match="missing-model@1"):
         store.record_evaluation(
             workspace_id,

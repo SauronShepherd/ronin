@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -91,7 +92,7 @@ class SqliteBranchDecisionStore:
 
     def __init__(self, path: str | Path) -> None:
         self._path = str(path)
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS scheduler_branch_decisions ("
                 "workflow_id TEXT NOT NULL, workflow_revision INTEGER NOT NULL, "
@@ -117,7 +118,7 @@ class SqliteBranchDecisionStore:
             decision,
             skipped_tasks,
         )
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
                 "SELECT snapshot_generation, decision_json, skipped_tasks_json "
@@ -153,7 +154,7 @@ class SqliteBranchDecisionStore:
     def get(
         self, workflow_id: str, workflow_revision: int, task_id: str
     ) -> PersistedBranchDecision | None:
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             row = connection.execute(
                 "SELECT snapshot_generation, decision_json, skipped_tasks_json "
                 "FROM scheduler_branch_decisions WHERE workflow_id=? "

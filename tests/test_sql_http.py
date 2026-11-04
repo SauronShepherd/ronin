@@ -1,12 +1,20 @@
 from __future__ import annotations
 
 import pytest
-from studio_sql import SqlColumn, SqlHTTPAdapter, SqlQueryResult
+from studio_sql import (
+    SqlColumn,
+    SqlExplainResult,
+    SqlExplainUnsupportedError,
+    SqlHTTPAdapter,
+    SqlQueryResult,
+    SqlValidationError,
+)
 
 
 class Engine:
     def __init__(self) -> None:
         self.request = None
+        self.explain_request = None
 
     def execute(
         self,
@@ -20,6 +28,69 @@ class Engine:
     ):
         self.request = (project_id, sql, parameters, max_rows, timeout_ms, max_result_bytes)
         return SqlQueryResult((SqlColumn("value", "INTEGER"),), ((1,),))
+
+    def explain(
+        self,
+        project_id,
+        sql,
+        parameters=(),
+        *,
+        max_bytes=262_144,
+        timeout_ms=5_000,
+    ):
+        self.explain_request = (project_id, sql, parameters, max_bytes, timeout_ms)
+        return SqlExplainResult((("physical_plan", "SCAN registered_events"),))
+
+
+def test_sql_http_adapter_explains_bounded_project_query() -> None:
+    engine = Engine()
+    result = SqlHTTPAdapter(engine).explain(
+        "project-1",
+        {
+            "sql": "SELECT id FROM registered_events WHERE id = ?",
+            "parameters": [7],
+            "max_bytes": 4096,
+            "timeout_ms": 250,
+        },
+    )
+    assert result == {
+        "rows": [["physical_plan", "SCAN registered_events"]],
+        "max_bytes": 4096,
+    }
+    assert engine.explain_request == (
+        "project-1",
+        "SELECT id FROM registered_events WHERE id = ?",
+        (7,),
+        4096,
+        250,
+    )
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {},
+        {"sql": "SELECT 1", "timeout_ms": True},
+        {"sql": "SELECT 1", "timeout_ms": 0},
+        {"sql": "SELECT 1", "timeout_ms": 60_001},
+        {"sql": "SELECT 1", "max_bytes": 1_048_577},
+        {"sql": "SELECT 1", "unknown": True},
+    ],
+)
+def test_sql_http_adapter_rejects_invalid_explain_requests(body: object) -> None:
+    engine = Engine()
+    with pytest.raises(SqlValidationError, match="SQL explain"):
+        SqlHTTPAdapter(engine).explain("project-1", body)
+    assert engine.explain_request is None
+
+
+def test_sql_http_adapter_reports_explain_as_unsupported_when_provider_lacks_capability() -> None:
+    class QueryOnlyEngine:
+        def execute(self, *_args, **_kwargs):
+            return SqlQueryResult((SqlColumn("value", "INTEGER"),), ((1,),))
+
+    with pytest.raises(SqlExplainUnsupportedError, match="does not support EXPLAIN"):
+        SqlHTTPAdapter(QueryOnlyEngine()).explain("project-1", {"sql": "SELECT 1"})
 
 
 def test_sql_http_adapter_validates_and_serializes_query() -> None:

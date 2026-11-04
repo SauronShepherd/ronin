@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 from collections.abc import Mapping
+from datetime import date
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -24,15 +26,24 @@ from .contracts import ConnectorReadResult, DiscoveryPage
 
 def _azure() -> Any:
     try:
-        from azure.storage.blob import BlobServiceClient  # type: ignore[import-not-found]
+        from azure.storage.blob import BlobServiceClient
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError("Azure Blob JSON connector requires azure-storage-blob") from exc
     return BlobServiceClient
 
 
+def _if_not_modified_match_condition() -> Any:
+    try:
+        from azure.core import MatchConditions
+    except ImportError as exc:  # pragma: no cover - Azure SDK extra is optional
+        raise RuntimeError("Azure Blob JSON connector requires azure-core") from exc
+    return MatchConditions.IfNotModified
+
+
 class AzureBlobJsonConnector:
     """Discover and read JSON or JSONL blobs from an Azure container."""
 
+    MAX_BLOB_BYTES = 10 * 1024 * 1024
     MAX_PAGE_SIZE = 1_000
     MAX_DISCOVERY_PAGES = 100
     MAX_DISCOVERED_ASSETS = 10_000
@@ -64,30 +75,58 @@ class AzureBlobJsonConnector:
         options = dict(connection.options)
         account_url = options.get("account_url", "").strip()
         parsed = urlsplit(account_url)
+        local_host = False
+        if parsed.hostname:
+            try:
+                local_host = ipaddress.ip_address(parsed.hostname).is_loopback
+            except ValueError:
+                local_host = parsed.hostname.casefold().rstrip(".") == "localhost"
+        local_http = (
+            parsed.scheme == "http"
+            and local_host
+            and options.get("allow_local_http", "false").casefold() == "true"
+        )
         credential_ref = dict(connection.secret_refs).get("credential")
+        api_version = options.get("api_version")
+        if api_version is not None:
+            try:
+                valid_api_version = date.fromisoformat(api_version).isoformat() == api_version
+            except ValueError:
+                valid_api_version = False
+            if not valid_api_version:
+                raise ValueError("Azure Blob api_version must be a YYYY-MM-DD date")
         if (
-            parsed.scheme != "https"
+            (parsed.scheme != "https" and not local_http)
             or not parsed.netloc
+            or parsed.username is not None
+            or parsed.password is not None
             or parsed.query
             or parsed.fragment
             or credential_ref is None
         ):
             raise ValueError(
-                "Azure Blob requires a clean HTTPS account_url and credential secret-ref"
+                "Azure Blob requires a clean HTTPS account_url and credential secret-ref; "
+                "HTTP is allowed only for an explicitly enabled loopback emulator"
             )
         credential = secrets.resolve(credential_ref).reveal_text()
-        return _azure()(account_url=account_url, credential=credential).get_container_client(
-            self._config(connection)[0]
-        )
+        client_options: dict[str, object] = {
+            "account_url": account_url,
+            "credential": credential,
+        }
+        if api_version is not None:
+            client_options["api_version"] = api_version
+        return _azure()(**client_options).get_container_client(self._config(connection)[0])
 
     def discover(
         self, connection: ConnectionDefinition, secrets: SecretResolver
     ) -> tuple[DiscoveredAsset, ...]:
         _, prefix = self._config(connection)
-        listing = self._container_client(connection, secrets).list_blobs(name_starts_with=prefix)
+        listing = self._container_client(connection, secrets).list_blobs(
+            name_starts_with=prefix, results_per_page=self.MAX_PAGE_SIZE
+        )
         if not hasattr(listing, "by_page"):
             raise RuntimeError("Azure Blob listing does not expose paginated iteration")
-        pages = listing.by_page(results_per_page=self.MAX_PAGE_SIZE)
+        pages = listing.by_page()
         page_iterator = iter(pages)
         assets: list[DiscoveredAsset] = []
         for page_number in range(1, self.MAX_DISCOVERY_PAGES + 1):
@@ -141,10 +180,12 @@ class AzureBlobJsonConnector:
                 f"Azure discovery page_size must be between 1 and {self.MAX_PAGE_SIZE}"
             )
         _, prefix = self._config(connection)
-        listing = self._container_client(connection, secrets).list_blobs(name_starts_with=prefix)
+        listing = self._container_client(connection, secrets).list_blobs(
+            name_starts_with=prefix, results_per_page=page_size
+        )
         if not hasattr(listing, "by_page"):
             raise RuntimeError("Azure Blob listing does not expose paginated iteration")
-        pages = listing.by_page(continuation_token=cursor, results_per_page=page_size)
+        pages = listing.by_page(continuation_token=cursor)
         iterator = iter(pages)
         try:
             page = tuple(next(iterator))
@@ -187,14 +228,29 @@ class AzureBlobJsonConnector:
         name = "/".join((*asset.namespace, asset.name))
         if prefix and not name.startswith(prefix.rstrip("/") + "/"):
             raise ValueError("Azure Blob asset is outside the configured prefix")
-        body = (
-            self._container_client(connection, secrets)
-            .get_blob_client(name)
-            .download_blob(max_concurrency=1)
-            .readall()
-        )
-        if len(body) > 10 * 1024 * 1024:
+        blob_client = self._container_client(connection, secrets).get_blob_client(name)
+        properties = blob_client.get_blob_properties()
+        expected_size = getattr(properties, "size", None)
+        etag = getattr(properties, "etag", None)
+        if not isinstance(expected_size, int) or isinstance(expected_size, bool) or not etag:
+            raise ValueError("Azure Blob properties must include a valid size and ETag")
+        if expected_size > self.MAX_BLOB_BYTES:
             raise ValueError("Azure Blob JSON object exceeds configured byte limit")
+        downloader = blob_client.download_blob(
+            max_concurrency=1,
+            etag=etag,
+            match_condition=_if_not_modified_match_condition(),
+        )
+        chunks: list[bytes] = []
+        downloaded_size = 0
+        for chunk in downloader.chunks():
+            downloaded_size += len(chunk)
+            if downloaded_size > self.MAX_BLOB_BYTES or downloaded_size > expected_size:
+                raise ValueError("Azure Blob JSON object exceeds configured byte limit")
+            chunks.append(chunk)
+        if downloaded_size != expected_size:
+            raise ValueError("Azure Blob changed while reading its bounded snapshot")
+        body = b"".join(chunks)
         try:
             payload: object = (
                 [json.loads(line) for line in body.decode("utf-8").splitlines() if line.strip()]

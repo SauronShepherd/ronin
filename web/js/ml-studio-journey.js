@@ -3,9 +3,9 @@ import {get, post} from './api.js';
 import {esc, json} from './dom.js';
 
 const workspace = () => encodeURIComponent(sessionStorage.getItem('ronin.workspace') || 'default');
-const output = (title, value) => {
+const output = (title, value, role = 'status') => {
   const target = document.querySelector('#ml-output');
-  if (target) target.innerHTML = `<h2>${title}</h2><pre class="code">${esc(json(value))}</pre>`;
+  if (target) target.innerHTML = `<div role="${role}" aria-live="${role === 'alert' ? 'assertive' : 'polite'}"><h2>${title}</h2><pre class="code">${esc(json(value))}</pre></div>`;
 };
 
 function injectJourneyControls() {
@@ -32,6 +32,17 @@ document.addEventListener('submit', async (event) => {
   if (event.target.id !== 'ml-quality-form' && event.target.id !== 'ml-search-form') return;
   event.preventDefault();
   const form = event.target;
+  const button = event.submitter;
+  const buttonLabel = button?.textContent;
+  const searching = form.id === 'ml-search-form';
+  if (button) {
+    button.disabled = true;
+    button.textContent = searching ? 'Searching trials…' : 'Checking rows…';
+  }
+  output(searching ? 'Searching trials' : 'Running quality check', {
+    state: 'running',
+    message: searching ? 'Evaluating the requested trial candidates.' : 'Profiling the supplied rows.',
+  });
   try {
     const data = Object.fromEntries(new FormData(form));
     const body = {rows: JSON.parse(data.rows)};
@@ -41,7 +52,12 @@ document.addEventListener('submit', async (event) => {
     if (event.target.id === 'ml-search-form') body.spec = JSON.parse(data.spec);
     output(event.target.id === 'ml-quality-form' ? 'Quality result' : 'Trial search', await post(path, body));
   } catch (error) {
-    output('ML request failed', {error: error.message});
+    output('ML request failed', {error: error.message}, 'alert');
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = buttonLabel;
+    }
   }
 });
 

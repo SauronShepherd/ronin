@@ -84,6 +84,18 @@ def _complete_one(store: SchedulerBackfillRuntimeStore, ordinal: int, now: Insta
     )
 
 
+def test_active_backfill_listing_is_bounded_and_excludes_terminal_requests(
+    tmp_path: Path,
+) -> None:
+    store = _store(tmp_path)
+    assert store.list_active_backfills(_WS) == (BackfillId("backfill-1"),)
+    with pytest.raises(ValueError, match="between 1 and 1000"):
+        store.list_active_backfills(_WS, limit=0)
+
+    store.cancel_backfill(_WS, BackfillId("backfill-1"), now=_T0)
+    assert store.list_active_backfills(_WS) == ()
+
+
 def test_backfill_generation_respects_active_run_cap_and_independent_cursor(
     tmp_path: Path,
 ) -> None:

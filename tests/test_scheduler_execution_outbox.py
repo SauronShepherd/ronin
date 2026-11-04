@@ -34,6 +34,8 @@ from studio_storage.scheduler_execution import SchedulerExecutionLinkStore
 from studio_storage.scheduler_fencing import TaskAttemptId
 from studio_storage.workspaces import SqliteWorkspaceStore
 
+from tools.artifact_qualification import _qualification_subprocess_environment
+
 NOW = "2026-09-12T20:00:00.000000Z"
 LATER = "2026-09-12T20:02:00.000000Z"
 
@@ -155,6 +157,13 @@ while True:
 """
     # Kill a separate dispatcher after its durable submit, before it can exit
     # normally; this exercises recovery across an actual process boundary.
+    child_environment = _qualification_subprocess_environment()
+    child_environment["PYTHONPATH"] = os.pathsep.join(
+        [
+            str(Path(__file__).resolve().parents[1] / "python"),
+            *([os.environ["PYTHONPATH"]] if os.environ.get("PYTHONPATH") else []),
+        ]
+    )
     process = subprocess.Popen(  # noqa: S603 - explicit Python executable and argument list
         [
             sys.executable,
@@ -166,15 +175,7 @@ while True:
             str(claim.attempt_id),
         ],
         cwd=Path(__file__).resolve().parents[1],
-        env={
-            **os.environ,
-            "PYTHONPATH": os.pathsep.join(
-                [
-                    str(Path(__file__).resolve().parents[1] / "python"),
-                    *([os.environ["PYTHONPATH"]] if os.environ.get("PYTHONPATH") else []),
-                ]
-            ),
-        },
+        env=child_environment,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -194,7 +195,11 @@ while True:
     finally:
         if process.poll() is None:
             process.kill()
-            process.wait(timeout=5)
+        try:
+            process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate(timeout=5)
 
     # Reopen both stores after forced termination. The persisted intent blocks
     # reclaim, and a replay resolves to the existing durable Job.

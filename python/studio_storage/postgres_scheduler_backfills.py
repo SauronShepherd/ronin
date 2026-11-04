@@ -37,6 +37,30 @@ class PostgresSchedulerBackfillMixin:
     def _require_backfill_workspace(self, cursor: Any, workspace_id: WorkspaceId) -> None:
         cast(Any, self)._require_active_workspace(cursor, workspace_id)
 
+    def list_active_backfills(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        limit: int = 100,
+    ) -> tuple[BackfillId, ...]:
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 1000:
+            raise ValueError("active backfill limit must be between 1 and 1000")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT b.backfill_id FROM ronin_scheduler_backfills b "
+                    "JOIN ronin_scheduler_backfill_plans p "
+                    "ON p.workspace_id=b.workspace_id AND p.backfill_id=b.backfill_id "
+                    "WHERE b.workspace_id=%s AND b.state IN ('pending','running') "
+                    "ORDER BY b.created_at,b.backfill_id LIMIT %s",
+                    (str(workspace_id), limit),
+                )
+                rows = cursor.fetchall()
+            return tuple(BackfillId(row["backfill_id"]) for row in rows)
+        finally:
+            connection.close()
+
     def create_backfill(
         self,
         workspace_id: WorkspaceId,

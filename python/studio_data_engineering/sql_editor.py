@@ -6,6 +6,7 @@ import csv
 import hashlib
 import io
 import json
+from contextlib import closing
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -44,7 +45,7 @@ class SqlExecutionRecord:
 class SqliteSqlEditorStore:
     def __init__(self, path: Path) -> None:
         self._path = path
-        with open_database(path) as connection:
+        with closing(open_database(path)) as connection, connection:
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS de_sql_revisions ("
                 "project_id TEXT NOT NULL, query_id TEXT NOT NULL, revision INTEGER NOT NULL,"
@@ -76,7 +77,7 @@ class SqliteSqlEditorStore:
             for value in (project_id, query_id, sql, profile, dialect, provider)
         ):
             raise ValueError("SQL editor identifiers and text must be non-empty and trimmed")
-        with open_database(self._path) as connection:
+        with closing(open_database(self._path)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
                 "SELECT COALESCE(MAX(revision),0) AS revision FROM de_sql_revisions "
@@ -98,7 +99,7 @@ class SqliteSqlEditorStore:
         return SqlQueryRevision(project_id, query_id, revision, sql, profile, dialect, provider)
 
     def latest(self, *, project_id: str, query_id: str) -> SqlQueryRevision | None:
-        with open_database(self._path) as connection:
+        with closing(open_database(self._path)) as connection, connection:
             row = connection.execute(
                 "SELECT project_id,query_id,revision,sql_text,profile,dialect,provider "
                 "FROM de_sql_revisions WHERE project_id=? AND query_id=? "
@@ -123,7 +124,7 @@ class SqliteSqlEditorStore:
             raise ValueError("SQL project_id must be non-empty and trimmed")
         if limit < 1 or limit > 1000:
             raise ValueError("SQL query list limit must be between 1 and 1000")
-        with open_database(self._path) as connection:
+        with closing(open_database(self._path)) as connection, connection:
             rows = connection.execute(
                 "SELECT r.project_id,r.query_id,r.revision,r.sql_text,r.profile,r.dialect,"
                 "r.provider "
@@ -152,7 +153,7 @@ class SqliteSqlEditorStore:
             raise ValueError("unsupported SQL execution status")
         if record.row_count < 0 or record.row_count > 1_000_000:
             raise ValueError("SQL execution row_count is outside the configured bound")
-        with open_database(self._path) as connection:
+        with closing(open_database(self._path)) as connection, connection:
             revision = connection.execute(
                 "SELECT provider FROM de_sql_revisions WHERE project_id=? AND query_id=? "
                 "AND revision=?",
@@ -184,7 +185,7 @@ class SqliteSqlEditorStore:
     ) -> tuple[SqlExecutionRecord, ...]:
         if limit < 1 or limit > 1000:
             raise ValueError("SQL history limit must be between 1 and 1000")
-        with open_database(self._path) as connection:
+        with closing(open_database(self._path)) as connection, connection:
             rows = connection.execute(
                 "SELECT execution_id,project_id,query_id,revision,provider,status,row_count,"
                 "result_digest,error_code FROM de_sql_history WHERE project_id=? AND query_id=? "

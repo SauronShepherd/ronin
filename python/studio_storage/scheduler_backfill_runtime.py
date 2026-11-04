@@ -51,6 +51,10 @@ class BackfillPlan:
 class SchedulerBackfillRuntimePort(Protocol):
     """Storage contract consumed by the backfill generation service."""
 
+    def list_active_backfills(
+        self, workspace_id: WorkspaceId, *, limit: int = 100
+    ) -> tuple[BackfillId, ...]: ...
+
     def get_backfill_plan(
         self, workspace_id: WorkspaceId, backfill_id: BackfillId
     ) -> BackfillPlan | None: ...
@@ -277,6 +281,28 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
         finally:
             connection.close()
         return BackfillPlan(request, schedule, workflow, None, max_concurrency, False)
+
+    def list_active_backfills(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        limit: int = 100,
+    ) -> tuple[BackfillId, ...]:
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 1000:
+            raise ValueError("active backfill limit must be between 1 and 1000")
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT b.backfill_id FROM scheduler_backfills b "
+                "JOIN scheduler_backfill_plans p ON p.workspace_id=b.workspace_id "
+                "AND p.backfill_id=b.backfill_id "
+                "WHERE b.workspace_id=? AND b.state IN ('pending','running') "
+                "ORDER BY b.created_at,b.backfill_id LIMIT ?",
+                (str(workspace_id), limit),
+            ).fetchall()
+            return tuple(BackfillId(row["backfill_id"]) for row in rows)
+        finally:
+            connection.close()
 
     def get_backfill_plan(
         self,

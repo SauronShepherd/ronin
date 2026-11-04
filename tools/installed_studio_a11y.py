@@ -27,6 +27,9 @@ VIEWPORTS = ((320, 800), (768, 1024), (1440, 900))
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("wheel", type=Path)
+    parser.add_argument(
+        "--output", type=Path, help="write the full accessibility report to this file"
+    )
     args = parser.parse_args()
     axe_path = next(
         (
@@ -122,7 +125,11 @@ def main() -> int:
             server.server_close()
             thread.join(timeout=2)
     result = {"violations": violations, "layout_failures": layout_failures}
-    print(json.dumps(result, indent=2))
+    report = json.dumps(result, indent=2) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(report, encoding="utf-8")
+    print(report, end="")
     if violations or layout_failures:
         return 1
     return 0

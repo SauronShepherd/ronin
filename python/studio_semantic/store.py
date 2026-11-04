@@ -139,6 +139,7 @@ class SqliteSemanticStore:
                     for model in sorted(models, key=lambda item: item.id)
                 ),
             )
+
             connection.executemany(
                 "INSERT OR IGNORE INTO semantic_dashboards("
                 "project_id,dashboard_id,dashboard_json) VALUES (?,?,?)",
@@ -147,6 +148,71 @@ class SqliteSemanticStore:
                     for dashboard in sorted(dashboards, key=lambda item: item.id)
                 ),
             )
+
+    def migrate_legacy_project_scope(
+        self, legacy_project_id: str, workspace_project_scope: str
+    ) -> dict[str, int]:
+        """Atomically move pre-workspace semantic rows into an explicit scoped key."""
+        self._validate_project(legacy_project_id)
+        self._validate_project(workspace_project_scope)
+        if legacy_project_id == workspace_project_scope:
+            raise ValueError("legacy and workspace-scoped semantic keys must differ")
+
+        with closing(sqlite3.connect(self._path, timeout=30.0)) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            model_rows = connection.execute(
+                "SELECT model_id,model_json FROM semantic_models "
+                "WHERE project_id=? ORDER BY model_id",
+                (legacy_project_id,),
+            ).fetchall()
+            dashboard_rows = connection.execute(
+                "SELECT dashboard_id,dashboard_json FROM semantic_dashboards "
+                "WHERE project_id=? ORDER BY dashboard_id",
+                (legacy_project_id,),
+            ).fetchall()
+            for identifier, payload in model_rows:
+                existing = connection.execute(
+                    "SELECT model_json FROM semantic_models WHERE project_id=? AND model_id=?",
+                    (workspace_project_scope, identifier),
+                ).fetchone()
+                if existing is not None and existing[0] != payload:
+                    raise SemanticModelConflict(
+                        f"semantic model scope migration conflicts: {identifier}"
+                    )
+            for identifier, payload in dashboard_rows:
+                existing = connection.execute(
+                    "SELECT dashboard_json FROM semantic_dashboards "
+                    "WHERE project_id=? AND dashboard_id=?",
+                    (workspace_project_scope, identifier),
+                ).fetchone()
+                if existing is not None and existing[0] != payload:
+                    raise SemanticModelConflict(
+                        f"semantic dashboard scope migration conflicts: {identifier}"
+                    )
+
+            connection.executemany(
+                "INSERT OR IGNORE INTO semantic_models(project_id,model_id,model_json) "
+                "VALUES (?,?,?)",
+                (
+                    (workspace_project_scope, identifier, payload)
+                    for identifier, payload in model_rows
+                ),
+            )
+            connection.executemany(
+                "INSERT OR IGNORE INTO semantic_dashboards("
+                "project_id,dashboard_id,dashboard_json) VALUES (?,?,?)",
+                (
+                    (workspace_project_scope, identifier, payload)
+                    for identifier, payload in dashboard_rows
+                ),
+            )
+            connection.execute(
+                "DELETE FROM semantic_models WHERE project_id=?", (legacy_project_id,)
+            )
+            connection.execute(
+                "DELETE FROM semantic_dashboards WHERE project_id=?", (legacy_project_id,)
+            )
+        return {"models": len(model_rows), "dashboards": len(dashboard_rows)}
 
     def get_dashboard(self, project_id: str, dashboard_id: str) -> DashboardDefinition | None:
         self._validate_project(project_id)

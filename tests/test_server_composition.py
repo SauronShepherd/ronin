@@ -42,6 +42,23 @@ class _FailingThread(Thread):
         raise RuntimeError("injected thread start failure")
 
 
+class _BackgroundService:
+    def __init__(self) -> None:
+        self._ready = False
+        self.stopped = False
+
+    @property
+    def ready(self) -> bool:
+        return self._ready
+
+    def start(self) -> None:
+        self._ready = True
+
+    def stop(self) -> None:
+        self._ready = False
+        self.stopped = True
+
+
 def test_local_server_composition_starts_and_stops_both_surfaces() -> None:
     jobs = _Server()
     control = _Server()
@@ -72,6 +89,24 @@ def test_local_server_composition_lifecycles_plugins_around_servers() -> None:
     assert plugin_host.stopped
     assert jobs.closed
     assert control.closed
+
+
+def test_local_server_composition_starts_and_stops_background_services() -> None:
+    jobs = _Server()
+    control = _Server()
+    scheduler = _BackgroundService()
+    composition = LocalServerComposition(jobs, control, background_services=(scheduler,))
+
+    composition.start()
+    assert jobs.started.wait(1)
+    assert control.started.wait(1)
+    assert scheduler.ready
+    assert composition.ready
+
+    composition.stop()
+    assert scheduler.stopped
+    assert not scheduler.ready
+    assert not composition.ready
 
 
 def test_local_server_composition_rolls_back_partial_startup() -> None:

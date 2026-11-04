@@ -1,9 +1,8 @@
-function post(path, payload) {
-  return fetch(path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)}).then(async response => {
-    const data = await response.json();
-    if (!response.ok) throw new Error(data?.error?.message || `HTTP ${response.status}`);
-    return data;
-  });
+import { post } from './api.js';
+
+function workspaceQuery() {
+  const workspace = sessionStorage.getItem('ronin.workspace') || 'default';
+  return `?workspace_id=${encodeURIComponent(workspace)}`;
 }
 
 document.addEventListener('submit', async event => {
@@ -12,7 +11,7 @@ document.addEventListener('submit', async event => {
     const output = document.querySelector('#debugger-result');
     try {
       const session = document.querySelector('#debugger-session').value;
-      const data = await post('/v1/data-engineering/debugger/sessions', {session_id: session, cells: JSON.parse(document.querySelector('#debugger-cells').value)});
+      const data = await post(`/v1/data-engineering/debugger/sessions${workspaceQuery()}`, {session_id: session, cells: JSON.parse(document.querySelector('#debugger-cells').value)});
       document.querySelector('#debugger-breakpoint-session').value = session;
       output.textContent = JSON.stringify(data, null, 2);
     } catch (error) { output.textContent = `Could not create debugger session: ${error.message}`; }
@@ -23,7 +22,7 @@ document.addEventListener('submit', async event => {
     try {
       const session = encodeURIComponent(document.querySelector('#debugger-breakpoint-session').value);
       const cell = encodeURIComponent(document.querySelector('#debugger-cell').value);
-      output.textContent = JSON.stringify(await post(`/v1/data-engineering/debugger/sessions/${session}/breakpoints/${cell}`, {}), null, 2);
+      output.textContent = JSON.stringify(await post(`/v1/data-engineering/debugger/sessions/${session}/breakpoints/${cell}${workspaceQuery()}`, {}), null, 2);
     } catch (error) { output.textContent = `Could not set breakpoint: ${error.message}`; }
   }
 });

@@ -7,7 +7,7 @@ import json
 import os
 import sqlite3
 import time
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from dataclasses import replace
 from threading import Event, Thread
 from types import SimpleNamespace
@@ -103,6 +103,10 @@ def test_ml_execution_uses_shared_sqlite_job_lifecycle_and_persists_result(tmp_p
             time.sleep(0.01)
         assert states == {"succeeded"}
         assert coordinator.status("workspace-a", "shared-id").result_payload == {"accuracy": 1.0}
+        assert coordinator.status("workspace-a", "shared-id").rows_json is None
+        assert coordinator.registration_snapshot("workspace-a", "shared-id").rows_json == (
+            encode_canonical_json([{"x": 1, "target": 1}]).decode("utf-8")
+        )
         with pytest.raises(ExecutionConflict, match="already exists"):
             coordinator.submit("workspace-a", "shared-id", lab, [{"x": 3, "target": 1}])
         first_id, _ = JobStoreExecutionStore._ids("workspace-a", "shared-id")
@@ -151,6 +155,11 @@ def test_large_async_execution_uses_artifact_input_and_completes(tmp_path) -> No
             time.sleep(0.01)
         assert result.state == "succeeded"
         assert result.result_payload == {"input_bytes": 1_100_000}
+        assert result.rows_json is None
+        registration = coordinator.registration_snapshot("workspace-a", "large-input")
+        assert registration.rows_json == encode_canonical_json(
+            [{"large": "x" * 1_100_000, "target": 1}]
+        ).decode("utf-8")
     finally:
         coordinator.close()
         import asyncio
@@ -849,7 +858,7 @@ def test_claim_rejects_pipeline_and_digest_rewritten_inside_job_parameters(tmp_p
                 {"lab": lab.to_payload(), "pipeline": changed_pipeline.to_payload(), "rows": rows}
             )
         ).hexdigest()
-        with sqlite3.connect(path) as connection:
+        with closing(sqlite3.connect(path)) as connection, connection:
             connection.execute(
                 "UPDATE jobs SET parameters_json=? WHERE job_id=?",
                 (encode_canonical_json(parameters).decode("utf-8"), str(job_id)),

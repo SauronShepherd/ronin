@@ -55,13 +55,46 @@ La parada conserva PostgreSQL y los artefactos:
 docker compose down
 ```
 
-Backup lógico del PostgreSQL del appliance:
+Backup solo de la base de datos PostgreSQL (no incluye artefactos locales):
 
 ```powershell
 python tools/ronin_postgres_backup.py --backup ./.ronin/backups/ronin.dump
 ```
 
-Restaurar reemplaza datos existentes y exige confirmación explícita:
+El comando crea `ronin.dump` y `ronin.dump.sha256`. Conserva ambos archivos;
+la restauración comprueba que el sidecar nombre el dump correcto y que su SHA-256
+coincida antes de invocar `pg_restore`. Si falta el checksum o no coincide, la
+operación se detiene antes de modificar PostgreSQL.
+
+Para un backup completo del appliance Compose (PostgreSQL y el volumen local
+`/var/lib/ronin`, incluidos artefactos y evidencias), usa el bundle:
+
+```powershell
+python -m tools.ronin_appliance_backup --backup-appliance ./.ronin/backups/appliance-2026-11-03
+```
+
+El comando detiene temporalmente los escritores, guarda el dump con checksum,
+copia el volumen y genera un manifiesto con inventario SHA-256. El destino debe
+ser nuevo. La API de backup PostgreSQL descrita arriba es solo un dump lógico y
+no debe confundirse con este bundle completo. Si `RONIN_ARTIFACT_BACKEND=s3`,
+el bundle falla antes de detener servicios: el object store se respalda con el
+procedimiento propio del proveedor y no se incluye en este archivo local.
+
+Restaurar un bundle reemplaza el volumen local y los datos de PostgreSQL. El
+CLI valida manifiesto, inventario, dump y sidecar antes de detener escritores;
+requiere confirmación explícita:
+
+```powershell
+python -m tools.ronin_appliance_backup --restore-appliance ./.ronin/backups/appliance-2026-11-03 --force
+```
+
+Si falla la restauración después de detener escritores, estos permanecen
+detenidos para evitar nuevas escrituras sobre un estado parcial. Revisa los
+logs, recupera desde el bundle verificado y vuelve a iniciar el appliance según
+el procedimiento operativo.
+
+Restaurar solo la base de datos mediante el helper anterior también reemplaza
+datos existentes y exige confirmación explícita:
 
 ```powershell
 python tools/ronin_postgres_backup.py --restore ./.ronin/backups/ronin.dump --force
@@ -92,8 +125,16 @@ La cualificación local del appliance se ejecuta manualmente: la imagen se const
 La misma cualificación Docker se puede repetir localmente con:
 
 ```powershell
-./tools/run_docker_qualification.ps1
+./tools/run_docker_qualification.ps1 -EvidenceDirectory "$env:TEMP/ronin-docker-full"
 ```
 
 El comando local equivalente ejecuta PostgreSQL real, la suite de storage y
-los escenarios Docker con una imagen identificada por digest.
+los escenarios Docker con una imagen identificada por digest y la acceptance
+estricta v0.1. Para una iteración focalizada, añade `-TestFilter` (expresión
+pytest `-k`); se arrancarán solo los fixtures de la familia indicada. Por
+ejemplo, `-TestFilter appliance_backup_restores_postgres_and_local_data_volume`
+usa PostgreSQL y el worker Docker, pero no Floci ni Azurite. Un filtro Azure
+Blob no inicia PostgreSQL ni Floci. `-ImageId sha256:<64 hex>` puede reutilizar
+una imagen ya construida únicamente en modo filtrado: ahorra el build, pero
+prueba esa imagen, no el código Docker del checkout actual. Los filtros nunca
+ejecutan la acceptance estricta ni cuentan como release qualification.

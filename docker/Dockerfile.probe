@@ -1,29 +1,25 @@
-FROM python:3.11.16-slim-bookworm@sha256:528257d48c1da0dcecc2e725d1ae34498d60c965f1241e39cd6a85a8859bdf84
+ARG PYTHON_IMAGE=python:3.11-alpine3.24@sha256:09d17d5e4c16d0a7a1eea690bcb7c6ab8616b211f8421e429e97c1bef5bd0ed2
 
-ARG DOCKER_CLI_VERSION=27.3.1
-ARG TARGETARCH
+FROM docker:29.9.2-cli-alpine3.24@sha256:5e6baf67325a79f64ed3bed6863954d5e05d0f3d4e57cbdb14809346814bbfdb AS docker-cli
 
+FROM ${PYTHON_IMAGE}
+COPY docker/apk-probe.lock /tmp/apk-probe.lock
 RUN set -eux; \
-    apt-get update; \
-    apt-get install --no-install-recommends -y ca-certificates curl git; \
-    case "${TARGETARCH:-amd64}" in \
-      amd64) docker_arch=x86_64 ;; \
-      arm64) docker_arch=aarch64 ;; \
-      *) echo "unsupported TARGETARCH=${TARGETARCH:-}" >&2; exit 1 ;; \
-    esac; \
-    curl -fsSL "https://download.docker.com/linux/static/stable/${docker_arch}/docker-${DOCKER_CLI_VERSION}.tgz" -o /tmp/docker.tgz; \
-    tar -xzf /tmp/docker.tgz -C /tmp docker/docker; \
-    install -m 0755 /tmp/docker/docker /usr/local/bin/docker; \
-    apt-get purge -y curl; \
-    apt-get autoremove -y; \
-    rm -rf /tmp/docker /tmp/docker.tgz /var/lib/apt/lists/*
+    apk add --no-cache $(cat /tmp/apk-probe.lock); \
+    rm /tmp/apk-probe.lock
+COPY docker/pip-bootstrap.lock /tmp/pip-bootstrap.lock
+RUN python -m pip install --no-cache-dir --require-hashes -r /tmp/pip-bootstrap.lock \
+    && python -m pip uninstall --yes pip setuptools wheel jaraco.context \
+    && rm -f /tmp/pip-bootstrap.lock
 
-ENV GIT_CONFIG_COUNT=1 \
-    GIT_CONFIG_KEY_0=safe.directory \
-    GIT_CONFIG_VALUE_0=* \
-    PYTHONUNBUFFERED=1
+COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 
-RUN useradd --create-home --uid 65532 ronin
+RUN git config --system --add safe.directory '*'
+
+ENV PYTHONUNBUFFERED=1
+
+RUN groupadd --gid 65532 ronin \
+    && adduser -D -h /home/ronin -u 65532 -G ronin -s /sbin/nologin ronin
 WORKDIR /app
 COPY docker/bootstrap_server.py /app/bootstrap_server.py
 USER 65532:65532

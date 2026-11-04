@@ -141,6 +141,19 @@ def test_stream_bundle_requires_bindings_and_reset_then_uses_fresh_checkpoint(
     )
 
 
+def test_stream_bundle_preserves_hierarchical_stream_ids(tmp_path: Path) -> None:
+    source = SqliteStreamCheckpointStore(tmp_path / "source.sqlite")
+    definition = _definition("events/main")
+    source.commit_stream_bundle_import("project-a", (definition,), {definition.id: "reset"})
+    bundle = tmp_path / "hierarchical.roninbundle"
+    export_stream_bundle("project-a", source, bundle)
+
+    plan = plan_stream_bundle_import(bundle)
+
+    assert plan.definitions == (definition,)
+    assert plan.definitions[0].id == "events/main"
+
+
 def test_stream_bundle_resume_requires_matching_definition_and_keeps_offsets(
     tmp_path: Path,
 ) -> None:

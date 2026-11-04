@@ -168,7 +168,7 @@
 .sidebar-collapsed .rail-toggle { position: static; width: 100%; }
 @media (max-width: 900px) {
   .app-shell, .app-shell.sidebar-collapsed { grid-template-columns: minmax(0, 1fr); height: 100dvh; }
-  .app-main { min-width: 0; height: 100dvh; }
+  .app-main { min-width: 0; height: calc(100dvh - 66px); }
   .rail { position: fixed; inset: auto 0 0; height: 66px; z-index: 3; padding: .42rem; }
   .rail-head, .rail-subtitle { display: none; }
   .nav-sections { display: flex; justify-content: flex-start; gap: .25rem; padding-inline: .1rem; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
@@ -177,5 +177,5 @@
   .nav-label { display: none !important; }
   .nav-icon { flex-basis: 1.35rem; width: 1.35rem; height: 1.35rem; }
   .nav-icon svg { width: 1.2rem; height: 1.2rem; }
-  .app-main main { max-height: calc(100dvh - 66px); padding: 1rem; }
+  .app-main main { max-height: calc(100dvh - 66px - 68px); padding: 1rem; }
 }

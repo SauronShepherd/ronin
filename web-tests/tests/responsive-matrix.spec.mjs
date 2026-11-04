@@ -35,6 +35,7 @@ for (const viewport of [
       const nav = rail.querySelector('.nav-sections');
       const main = document.querySelector('#main');
       const railBox = rail.getBoundingClientRect();
+      const mainBox = main.getBoundingClientRect();
       return {
         documentWidth: document.documentElement.scrollWidth,
         htmlOverflowY: getComputedStyle(document.documentElement).overflowY,
@@ -42,6 +43,8 @@ for (const viewport of [
         shellOverflow: getComputedStyle(document.querySelector('#app')).overflow,
         railPosition: getComputedStyle(rail).position,
         railBottom: railBox.bottom,
+        railTop: railBox.top,
+        mainBottom: mainBox.bottom,
         appColumns: getComputedStyle(document.querySelector('#app')).gridTemplateColumns,
         navHasInternalOverflow: nav.scrollWidth > nav.clientWidth,
         mainHasInternalScroll: main.scrollHeight > main.clientHeight,
@@ -58,6 +61,7 @@ for (const viewport of [
       expect(layout.railPosition).toBe('fixed');
       expect(layout.railBottom).toBeCloseTo(viewport.height, 0);
       expect(layout.navHasInternalOverflow).toBe(true);
+      expect(layout.mainBottom).toBeLessThanOrEqual(layout.railTop + 1);
       expect(layout.appColumns.split(' ').length).toBe(1);
     } else {
       expect(layout.railPosition).toBe('relative');

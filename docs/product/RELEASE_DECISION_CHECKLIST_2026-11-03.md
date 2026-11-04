@@ -1,0 +1,162 @@
+# Ronin Public v1 release decision checklist
+
+**Decision:** NO-GO / release not qualified
+
+**Last evidence review:** 4 November 2026
+
+**Candidate SHA:** none; current implementation worktree is dirty
+
+**Qualification progress:** 0/13 Public v1 capability families
+**Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
+
+This checklist is the short decision sheet for
+[`PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`](PLAN_FINAL_RONIN_RELEASE_2026-11-03.md).
+Historical test passes from earlier SHAs or dirty worktrees are diagnostic
+context only. Do not combine results across commits to produce a GO decision.
+The machine-readable ledger at `public-v1-status.json` links here. When its
+qualification status is `blocked`, `tools/capability_status.py` requires a
+non-empty set of uniquely identified blocking conditions, each with a valid
+status, explanation and evidence reference. A mere pending test is represented
+as `qualification_pending`; independent human and candidate blockers remain
+explicit rather than being collapsed into that test status.
+
+## Product scope guardrails
+
+- No integrated GenAI, RAG, model invocation, or in-product agent runtime in
+  any Ronin tier. Coding-agent skills remain external portable instructions.
+- No Public v1 multi-user identity or administration. Those capabilities are
+  Ronin Pro scope and are excluded from the public claims and acceptance set.
+- No CI. Release evidence is produced by the documented manual local gates.
+- Public v1 denominator is P1–P8 and P10–P14: 13 families.
+- A smaller MVP is a separate product decision with separate claims, profile,
+  acceptance journeys, evidence bundle and decision; it is not an automatic
+  way to turn a failed Public v1 into GO.
+
+## Maintainer product decision — must be signed before candidate freeze
+
+Choose exactly one release path. The present recommendation is **delay**;
+Public v1 vs. Local MVP and the public version remain unapproved.
+
+| Choice | Scope and consequence | Evidence threshold |
+| --- | --- | --- |
+| Ronin Public v1 | Keep the full local platform claim and all 13 active families. | All 13 family rows, all ten `release_required` gates, 15/15 strict v0.1 Docker acceptance, full manual UI review, clean-candidate evidence. |
+| Ronin Local MVP | Publish a separately named and scoped product; explicitly hide/defer excluded capabilities and use its own `local_mvp_required` profile. | 7/7 MVP journeys, at least 14 live cases over 12 routes, all ten MVP gates, clean-candidate evidence, approved MVP claims and manual UI review. |
+| Delay | Do not publish while any mandatory acceptance, human decision or candidate-bound gate remains open. | Keep the current NO-GO record; resume only with a new dated decision checkpoint and candidate plan. |
+
+| Decision field | Maintainer record |
+| --- | --- |
+| Selected path | **PENDING SIGN-OFF** |
+| Public product/version string | **PENDING MAINTAINER DECISION** (package metadata currently says `0.0.0`; this is not an approved release version) |
+| Tag and artifact naming policy | **PENDING MAINTAINER DECISION** |
+| Supported-platform matrix revision | **PENDING MAINTAINER DECISION** |
+| Claims ledger path + SHA-256 after approval | **PENDING MAINTAINER REVIEW** — current claims file is a draft |
+| Decision maker, date and signature/record link | **PENDING** |
+
+Do not start the final candidate freeze until this record is complete. Choosing
+an option does not waive its gates; choosing delay is a valid release outcome,
+not a failed test result.
+
+## Mandatory release gates
+
+Every row must identify the same candidate commit and, where relevant, the
+same image/package digests. “Implemented”, a historical pass, or a filtered
+diagnostic does not close a gate.
+
+| Gate | Evidence required to mark PASS | Current decision state | Closure owner |
+| --- | --- | --- | --- |
+| Candidate identity | Clean worktree, exact commit SHA, branch/tag policy recorded, immutable wheel/sdist/image digests. | **OPEN** — no clean release candidate. | Release operator |
+| Local quality | Full `make check`, complete Python/PostgreSQL suite, coverage thresholds, performance budgets, typing, formatting, architecture and status consistency; no unexplained skips/failures. | **OPEN** — historical dirty-worktree suite passed 4,467 with 26 skipped and 0 failed. The newer full rerun selected 4,558 and reconciled JUnit/timings exactly (4,531 passed, 26 skipped, 1 architecture failure); the undeclared existing `studio_server → studio_semantic` edge is now declared and the affected architecture/summary tests pass 25/25, but a full post-fix rerun is still required. Branch coverage and every Makefile coverage threshold passed (including storage per-file 53 files). The old v3 timing JSON omitted two module-level collection skips; reporter v4 now records them separately, and its focused contract test reconciles totals with JUnit. Mypy 437 source files; Ruff format/lint 899 files; OpenAPI snapshot; architecture and negative gates; 187 route operations; Studio surface 125/229; web audit 60 files with zero failures; web budget; canonical JSON/protocol; dependency surfaces; capability ledger; skills validate; performance 5/5. Full-suite evidence `%TEMP%\ronin-python-full-current-20261103`; static gate logs `%TEMP%\ronin-static-quality-current-20261103`; coverage logs `%TEMP%\ronin-coverage-gates-current-20261103`. Still **OPEN** because the tree is dirty and the full suite must rerun after the architecture fix. The optional SDP JSON-stdio provider adapter is not configured; its real subprocess protocol test passes locally, and the installed official CLI does not advertise a JSON-stdio compile command. Per Data Engineering docs this adapter is optional and does not replace or block the official CLI gate. SDP official CLI passed 1/1 and Spark Connect passed 1/1 against real Spark 4.2.0 in dirty diagnostic receipt `%TEMP%\ronin-spark-connect-qualification-20261103-ccbb305d`, and the full candidate-bound `make check` receipt does not exist. The 8 POSIX-specific Windows skips passed separately on Linux (8/8, read-only repo mount, receipt `%TEMP%\\ronin-posix-qualification-20261103-0841ce5d`); Trino 2/2 and OTLP 1/1 also passed against real local services. These are dirty-worktree diagnostics. | Engineering |
+| Security | Secret scan, dependency audit and image scan receipts for exact final artifacts; findings triaged with no unaccepted critical/high items. | **OPEN** — `pip-audit 2.10.1` found 0 advisories in the pinned test (101), runtime (3) and bootstrap (1) package locks. Gitleaks 8.30.1 current tree scan found 0 in 72.97 MB; history scan previously found 0 across 1,873 commits. Docker Scout 1.27.0 scanned image `sha256:fb9029dad0d8d5aade4bb5809c8a4e027f416a158fedc633c65667d0b21b01b8`: raw 1 `CVE-2026-107891` for Alpine musl `1.2.6-r3`, VEX-applied 0 using an exact-digest statement. The documented exception still requires reviewer acceptance. All scans are dirty-tree diagnostics; clean final artifact scans remain open. Evidence: `%TEMP%\ronin-docker-vex-full-current-20261103`, `%TEMP%\ronin-gitleaks-tree-final-20261103`, prior pip-audit/history receipts. | Security reviewer |
+| Docker qualification | Current-checkout image by digest; complete real Docker/PostgreSQL/Floci/Azurite suite, 0 skips/failures, strict v0.1 acceptance 15/15, cleanup receipt. | **OPEN** — latest dirty diagnostic passed 27/27 real Docker/PostgreSQL/Floci/Azurite cases, 0 skips/failures, strict acceptance 15/15 in 173.31 s pytest. Fresh image `sha256:fb9029dad0d8d5aade4bb5809c8a4e027f416a158fedc633c65667d0b21b01b8`; all temporary services cleaned. Candidate-bound rerun remains required. Evidence: `%TEMP%\ronin-docker-full-current-20261103`. | Engineering |
+| Live browser/API | All supported routes and required mutations exercised against Ronin API and real backing services; selected cases, HTTP status/body, persisted state, visible OK/WARN/ERROR and correlated logs agree. | **OPEN** — latest dirty diagnostic passed 33/33 Playwright cases across 25 routes (23 API-backed), using the same freshly built worker image `sha256:fb9029dad0d8d5aade4bb5809c8a4e027f416a158fedc633c65667d0b21b01b8`; 168 real HTTP events (158 OK, 10 expected WARN), all correlated to structured logs by request ID/status/outcome; no 5xx/network errors, in 163.43 s. Includes P1 project creation, secret-safe manifest/Bundle export, digest verification and UI reimport. Evidence: `%TEMP%\ronin-live-full-current-20261103`. Dirty worktree; rerun on clean release candidate and complete remaining family journeys. | Product QA |
+| Accessibility and visual review | Manual review on supported viewports: navigation, responsive layout, keyboard/focus, contrast, brown visual system, tutorials and screenshots/issues resolved. | **OPEN** — current dirty-tree static Chromium suite passed 101/101 (includes automated axe route checks, keyboard/navigation, UI behaviors and responsive matrix); route traversal was rerun after hardening resource checks: 26/26. Expected `/v1` 404s are limited to the static server; other HTTP resource failures and failed requests now fail those route tests. This is not the required candidate-bound manual visual/accessibility review. Evidence: generated Playwright report under `web-tests/test-results-html`; live UI/API receipt `%TEMP%\ronin-live-full-current-20261103`. | Product QA |
+| Installed artifacts | Build wheel and sdist from candidate; install in clean environments; smoke supported commands, assets, routes and upgrade path; save exact outputs and digests. | **OPEN** — dirty diagnostic built and separately installed wheel (`2a619eef3409d7b3df364242a4e28f5545a514925383f6b07332c1acc3caefb3`) and sdist (`3fa0cd033617251dc1f74360f3dc982c19e5d24ddada337e7f64435bdbea9c58`); CLI help and 4/4 required web assets passed for both. Neither artifact contains GenAI package paths; wheel contains 12 agent-skill files. Metadata is still `0.0.0`, no release version is approved, and same-clean-candidate route/upgrade/platform evidence is missing. Evidence: `%TEMP%\ronin-artifact-diagnostic-9f3006ca00e34b899bc085e3941dcf45`. | Release operator |
+| SBOM and provenance | Generate CycloneDX and provenance from exact final wheel/sdist/image; validate subject digests and source identity. | **OPEN** — implementation exists; final artifact-bound receipt absent. | Release operator |
+| License and NOTICE | Resolve every human review decision, validate dependency inventories for supported OS/Python profiles, approve NOTICE and redistributed assets. | **OPEN / HUMAN DECISION** — do not infer legal approval from inventory generation. | Maintainer/legal reviewer |
+| Artifact identity | Manifests and release receipts bind every published filename, digest, source SHA, profile, complete execution scope and gate result; aggregate verifier rehashes every file and returns `passed`. | **OPEN** — no complete same-candidate ten-gate bundle; the scope and unconditional rehash changes are unexecuted. | Release operator |
+| Capability journeys | Integrated end-to-end journeys and provider/security evidence for each Public v1 family P1–P8 and P10–P14. | **OPEN: 0/13** — every family remains unqualified as a release family. | Feature owners + Product QA |
+| Platform and support claims | Explicit supported OS, Python, Docker/Compose and local Kubernetes matrix; every claim has matching installed/runtime evidence. | **OPEN** — matrix incomplete. | Maintainer |
+| Docs and recovery | Clean installation, configuration/secrets, upgrade, rollback, local DB+artifact restore and external object-store recovery instructions reviewed against tested behavior. | **OPEN** — dirty-tree diagnostics exist for Compose DB+local-data restore, Helm/kind install/restart and Floci/Terraform lifecycle. Repeat the relevant paths on one clean candidate; upgrade/rollback rehearsal and external object-store recovery remain. | Documentation + Operations |
+
+## Family ledger
+
+No family receives partial release credit. Each needs a complete supported
+journey, its declared provider matrix, negative/failure behavior where
+specified, and evidence from the same candidate. The phase numbers point to
+the work plan's detailed phase table. In addition to the family-specific
+evidence below, every family inherits the cross-cutting gates: candidate
+identity, local quality, security, status consistency, Docker qualification
+where applicable, live browser/API, accessibility, installed artifacts,
+SBOM/provenance, license/NOTICE, and artifact identity. A family-specific test
+cannot replace any of those gates.
+
+| Family | Plan phase(s) | Minimum integrated proof for this family | State |
+| --- | --- | --- | --- |
+| P1 Workspace, projects, source control | 4, 11, 12 | UI/API/SDK operator journey; project export/import; secret-safe manifests; revision identity; audit. | **OPEN** |
+| P2 Connections and ingestion | 5, 12 | Supported provider/format matrix; preview, sync, incremental replay, failure/retry/recovery and persisted UI/API state. | **OPEN** |
+| P3 Lakehouse and SQL | 5 | Declared table formats, bounded SQL/bindings/pagination, persisted query result and provider error paths. | **OPEN** — the local-composed SQL and Semantic Studios now share a project-isolated DuckDB engine with refreshable Parquet relations under `RONIN_SQL_PARQUET_ROOT`; 59/59 focused DuckDB, local-composed SQL, semantic runtime/OpenAPI and HTTP tests passed, including root loading, same-name tenant isolation, replacement/removal and the authenticated dashboard API. The semantic live journey executes SQL from a real Parquet fixture and renders the five-row result (receipt `%TEMP%\ronin-live-semantic-dashboard-retry-20261103`). Also, two real-service Trino 484 tests pass (parameter binding and byte-budget boundaries) using image digest `sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f`; receipt `%TEMP%\ronin-trino-qualification-20261103-e7a48077`. These dirty-worktree diagnostics do not close the complete integrated P3 journey or candidate-bound provider matrix. |
+| P4 Data Engineering Studio | 6, 12 | Author/edit/run/publish through product surface; real worker, source revision, output/lineage and evidence. | **OPEN** |
+| P5 Durable DAG scheduler | 6, 10 | Trigger and ordering; retry/backfill/cancel; crash/restart recovery using supported persistence. | **OPEN** |
+| P6 Catalog, lineage, ontology and graph | 7 | Persisted inventory plus integrated query/import/replay/conflict rollback. | **OPEN** |
+| P7 Quality and contracts | 8, 9 | Built-in/custom checks, sandbox limits, severity transitions and evidence linked to assets/runs. | **OPEN** |
+| P8 Classic ML | 8 | Reproducible dataset/train/evaluate/register/infer/drift and artifact lifecycle; no GenAI runtime. | **OPEN** |
+| P10 Semantic models and dashboards | 9, 12 | Model/metric/filter/dashboard lifecycle, workspace-isolated API/Bundle roundtrip, legacy-scope migration and dashboard fan-out/cancellation budgets. | **OPEN** — project storage keys bind workspace and project, and identical project IDs remain isolated in real HTTP/SQLite tests. The current dirty-worktree live UI journey lists a model, exports/reviews/imports its Bundle and executes the dashboard against five real Parquet rows: 1/1 browser case, 7/7 API calls HTTP 200, all correlated to structured logs, 0 warning/error/network events in 34.73 s; receipt `%TEMP%\ronin-live-semantic-dashboard-retry-20261103`. PostgreSQL/Kafka were not started and route-wide audit was not run. Both SQL runtimes preflight up to 12 tiles and 100,000 aggregate requested rows, then enforce 15 s total SQL time and an 8 MiB response cap; combined runtime/OpenAPI/workspace HTTP regression passed 88/88, including 13 tiles rejected pre-query. Existing unscoped SQLite rows still need operator-selected workspace migration via `tools/migrate_semantic_project_scope.py`; PostgreSQL import and complete candidate-bound family journey remain open. |
+| P11 Streaming | 9, 10 | Ingest, offsets/checkpoint, backpressure, replay/sink, lag and failure recovery against local broker. | **OPEN** — dirty-worktree Redpanda+Ronin browser/API diagnostics pass: Bundle export/plan/reset-import, consume, resume-import and lag preservation; bounded 2/2/1 batches, idle replay and poison-message 422 with checkpoint/lag unchanged; plus a real JSON record over 1 MiB rejected with sanitized 422 and unchanged lag, followed by explicit stream repoint/reset, successful recovery-topic consume and lag 0. Latest overload/recovery run passed 1/1 Chromium; all 36 API calls correlated to structured logs (32 OK, 4 expected WARN), zero server/network errors, PostgreSQL not started and cleanup succeeded (60.07 s total). Exact receipt: `%TEMP%\\ronin-live-streaming-overload-final-7b49698233e9452c8954a8c5b1cc1ed8`. Focused Python/API/architecture/OpenAPI and Chromium Bundle selections passed earlier; full P11 family qualification still needs broader operational evidence and a clean candidate. |
+| P12 Observability, alerts and FinOps | 9, 12 | Real state transitions, redacted structured logs, metrics, alert delivery and budget/usage evidence. | **OPEN** — one real OTLP/HTTP Collector integration passed traces, metrics and logs (image digest `sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621`; 1/1, no skips/failures, cleanup succeeded; diagnostic receipt `%TEMP%\ronin-otlp-qualification-20261103-f933985d`). Alerts, FinOps journeys and same-candidate qualification remain open. |
+| P13 Security and governance | 4, 10, 13 | Single-operator auth, scope/secrets/audit and negative authorization tests; no multi-user claim. | **OPEN** |
+| P14 Deployment and operations | 3, 10, 13 | Prior dirty-tree diagnostics: Compose restored PostgreSQL plus local artifact/evidence files; Helm/kind exercised health, jobs API and queued-job persistence after pod restart; Floci qualification used Terraform 1.13.5 + AWS provider 6.65.0 and verified destroyed resources/state empty. Repeat candidate-bound Compose/Docker/Helm/Floci evidence, rehearse upgrade and rollback, state external object-store backup/recovery limits. The host's 1.16.2 Terraform executable does not satisfy the qualification pin; the archived 1.13.5 run proves that the required toolchain was used previously, but not for the current candidate. Do not relax the pin. See plan §§10 and 42–45. | **OPEN** |
+
+## Evidence ledger rules
+
+For every suite receipt, record these fields before changing any row to PASS:
+
+| Field | Required value |
+| --- | --- |
+| Candidate | Exact commit SHA, clean worktree declaration, branch/tag identity. |
+| Artifacts | Wheel, sdist, runtime/probe image digests and manifest paths, as applicable. |
+| Invocation | Exact command, tool versions, selected node IDs, deselected count and filter. |
+| Result | Passed/failed/skipped/xfail/error totals; skip reasons; elapsed wall time and test time. |
+| Scope | Receipt declares `execution_scope=complete`; filtered, selected, partial or exploratory runs declare `diagnostic` and cannot close a required gate. |
+| Runtime proof | Service/provider versions, HTTP request/response evidence, persisted-state assertion, visible UI state and correlated logs for live journeys. |
+| Receipt | Absolute evidence directory with JUnit, logs, screenshots/review notes, scans and cleanup result. |
+| Limitations | Excluded routes/providers/platforms, dirty-tree caveat, stale image caveat and the next required gate. |
+
+The local qualification runners may be used for iteration with a dirty tree,
+but label that output diagnostic. Before candidate qualification, first freeze
+the code and create a clean source candidate; then rerun every affected gate
+and the ten-gate release profile against that same candidate. A new source
+change invalidates the affected candidate-bound receipts; do not carry an old
+PASS forward by editing the evidence ledger.
+
+## Decision procedure
+
+1. Freeze scope and resolve package/product version, public claims, support
+   matrix, license/NOTICE decisions and tag policy.
+2. Finish implementation, then create one clean candidate. Record its SHA and
+   immutable artifact digests before qualification.
+3. Run the fast-to-full sequence in
+   [`TESTING_FAST_TO_FULL.md`](../testing/TESTING_FAST_TO_FULL.md). Filtered
+   tests are feedback only; they cannot close candidate-wide gates.
+4. Run each mandatory family and release gate against that same SHA. Preserve
+   JUnit, structured logs, API traffic, screenshots/manual checklist, scan
+   reports, SBOM/provenance and cleanup receipts.
+5. Reconcile the matrix and gate receipts. Resolve failures and repeat affected
+   gates; any source change creates a new candidate and invalidates old
+   candidate-bound evidence.
+6. Mark **GO** only when all gate rows and all 13 family rows are PASS, there
+   are no open P0/P1 issues or unaccepted critical/high findings, the ten-gate
+   aggregate is `passed`, and the maintainer signs the exact artifact manifest.
+7. Otherwise mark **NO-GO** and delay. If considering Local MVP, create and
+   qualify its separate 7-journey/10-gate profile before changing the launch
+   claim.
+
+## Current decision
+
+**NO-GO — delay the launch.** The planned 3 November 2026, 09:00 launch time
+has passed. The worktree is dirty and no common clean
+candidate binds the evidence. Recent diagnostics now exercise the broad Python/
+PostgreSQL suite, Docker/strict acceptance and live browser/API paths, but do
+not qualify every family or artifact on one clean candidate. The ledger remains
+0/13; human license/NOTICE and version/claims decisions remain open, and
+candidate-bound manual visual review and several family journeys are missing.
+These diagnostic passes cannot overturn those blockers.

@@ -88,6 +88,7 @@ ML_PLUGIN_ROUTES = frozenset(
         ("GET", "/v1/ml-studio/experiments/{experiment_id}"),
         ("GET", "/v1/ml-studio/models"),
         ("POST", "/v1/ml-studio/models/{model_id}/{version}/promote"),
+        ("POST", "/v1/ml-studio/models/{model_id}/{version}/evaluations"),
         ("POST", "/v1/ml-studio/models/{model_id}/{version}/predict"),
         ("POST", "/v1/ml-studio/models/{model_id}/{version}/batch-predict"),
         ("GET", "/v1/ml-studio/models/{model_id}/{version}/card"),
@@ -542,6 +543,15 @@ class RoninHTTPServer(ThreadingHTTPServer):
     """Supported HTTP server with one bearer credential and typed project grants."""
 
     daemon_threads = True
+
+    def handle_error(self, request: Any, client_address: Any) -> None:
+        """Ignore expected peer disconnects while retaining unexpected server traces."""
+        if isinstance(
+            sys.exception(),
+            (BrokenPipeError, ConnectionAbortedError, ConnectionResetError),
+        ):
+            return
+        super().handle_error(request, client_address)
 
     def __init__(
         self,

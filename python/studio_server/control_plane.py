@@ -5,15 +5,19 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import logging
 import mimetypes
+import re
+import sys
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Protocol, TypeVar, cast, runtime_checkable
+from typing import Any, Literal, Protocol, TypeVar, cast, runtime_checkable
 from urllib.parse import parse_qs, unquote, urlsplit
+from uuid import uuid4
 
 from studio_core import (
     AssetId,
@@ -74,10 +78,18 @@ from studio_execution import (
 )
 from studio_orchestrator import Instant
 from studio_quality.http import QualityHTTPAdapter
+from studio_quality.service import QualityExecutionBlocked
 from studio_security import Actor, Permission, PolicyDecision, PolicyRequirement
-from studio_sql import SqlResultLimitError, SqlTimeoutError
+from studio_sql import (
+    SqlExecutionError,
+    SqlExplainUnsupportedError,
+    SqlRelationUnavailableError,
+    SqlResultLimitError,
+    SqlTimeoutError,
+)
 from studio_storage.bundle import BundleFile, write_bundle
 from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.catalog import LineageLimitExceeded
 from studio_storage.scheduler_backfill import BackfillId, BackfillRequest
 from studio_storage.scheduler_events import EventDelivery, SchedulerEventRecord
 from studio_storage.scheduler_schedule import ScheduleFire
@@ -87,6 +99,7 @@ _MAX_LIST_LIMIT = 100
 _DEFAULT_LIST_LIMIT = 50
 _MAX_CURSOR_BYTES = 256
 _MAX_CATALOG_CURSOR_BYTES = 1024
+_ACCESS_LOGGER = logging.getLogger("studio_server.http.access")
 
 CONTROL_PLANE_ROUTES = frozenset(
     {
@@ -231,9 +244,19 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("POST", "/v1/workspaces/{workspace_id}/glossary/terms"),
         ("GET", "/v1/workspaces/{workspace_id}/glossary/terms/{term_id}/{version}"),
         ("GET", "/v1/workspaces/{workspace_id}/streams/{stream_id}/health"),
+        ("GET", "/v1/workspaces/{workspace_id}/streams"),
+        ("GET", "/v1/workspaces/{workspace_id}/streams/bundle"),
+        ("POST", "/v1/workspaces/{workspace_id}/streams/bundle/plan"),
+        ("POST", "/v1/workspaces/{workspace_id}/streams/bundle/import"),
+        ("PUT", "/v1/workspaces/{workspace_id}/streams/{stream_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/streams/{stream_id}/run"),
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/models"),
+        ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/bundle"),
+        ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/bundle/plan"),
+        ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/bundle/import"),
         ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/query"),
         ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/sql/query"),
+        ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/sql/explain"),
         ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/join"),
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/dashboards"),
         (
@@ -266,6 +289,7 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("POST", "/v1/ml-studio/labs/{lab_id}/search"),
         ("GET", "/v1/ml-studio/models"),
         ("POST", "/v1/ml-studio/models/{model_id}/{version}/promote"),
+        ("POST", "/v1/ml-studio/models/{model_id}/{version}/evaluations"),
         ("POST", "/v1/ml-studio/models/{model_id}/{version}/predict"),
         ("POST", "/v1/ml-studio/models/{model_id}/{version}/batch-predict"),
         ("GET", "/v1/ml-studio/models/{model_id}/{version}/artifact"),
@@ -448,9 +472,13 @@ class CatalogReader(Protocol):
 
     def get_revision(self, workspace_id: WorkspaceId, ref: AssetRef) -> AssetRevision | None: ...
 
-    def upstream(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[LineageEdge, ...]: ...
+    def upstream(
+        self, workspace_id: WorkspaceId, ref: AssetRef, *, limit: int = 100
+    ) -> tuple[LineageEdge, ...]: ...
 
-    def downstream(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[LineageEdge, ...]: ...
+    def downstream(
+        self, workspace_id: WorkspaceId, ref: AssetRef, *, limit: int = 100
+    ) -> tuple[LineageEdge, ...]: ...
 
     def downstream_for_execution(
         self,
@@ -564,6 +592,41 @@ class StreamingHealthReader(Protocol):
 
 
 @runtime_checkable
+class StreamingRunner(Protocol):
+    def list_definitions(self, workspace_id: WorkspaceId) -> dict[str, object]: ...
+
+    def export_bundle(self, workspace_id: WorkspaceId) -> bytes: ...
+
+    def plan_bundle(self, archive: bytes) -> dict[str, object]: ...
+
+    def import_bundle(
+        self,
+        workspace_id: WorkspaceId,
+        archive: bytes,
+        *,
+        binding_remaps: Mapping[str, str],
+        checkpoint_policies: Mapping[str, str],
+    ) -> dict[str, object]: ...
+
+    def put_definition(
+        self,
+        workspace_id: WorkspaceId,
+        definition: object,
+        *,
+        checkpoint_policy: str,
+    ) -> dict[str, object]: ...
+
+    def run_once(
+        self,
+        workspace_id: WorkspaceId,
+        stream_id: str,
+        *,
+        limit: int | None = None,
+        timeout_seconds: float | None = None,
+    ) -> dict[str, object]: ...
+
+
+@runtime_checkable
 class FinOpsReader(Protocol):
     def list_usage(
         self, workspace_id: WorkspaceId, *, period_start: str, period_end: str
@@ -603,12 +666,20 @@ class SemanticReader(Protocol):
 
     def put_dashboard(self, project_id: str, body: object) -> dict[str, object]: ...
 
+    def export_bundle(self, project_id: str) -> bytes: ...
+
+    def plan_bundle(self, archive: bytes) -> dict[str, object]: ...
+
+    def import_bundle(self, project_id: str, archive: bytes) -> dict[str, object]: ...
+
     def execute_dashboard(self, project_id: str, dashboard_id: str) -> dict[str, object]: ...
 
 
 @runtime_checkable
 class SqlReader(Protocol):
     def query(self, project_id: str, body: object) -> dict[str, object]: ...
+
+    def explain(self, project_id: str, body: object) -> dict[str, object]: ...
 
 
 @runtime_checkable
@@ -764,6 +835,13 @@ def _segments(path: str) -> tuple[str, ...]:
     return tuple(unquote(segment) for segment in raw if segment)
 
 
+def _semantic_project_scope(workspace_id: WorkspaceId, project_id: str) -> str:
+    """Build an unambiguous storage key for a workspace/project pair."""
+    from studio_semantic import semantic_project_scope
+
+    return semantic_project_scope(str(workspace_id), project_id)
+
+
 class FeatureDefinitionServicePort(Protocol):
     def list(self, workspace_id: WorkspaceId) -> tuple[Any, ...]: ...
 
@@ -780,6 +858,15 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
     """HTTP adapter with injected authentication/authorization policy boundaries."""
 
     daemon_threads = True
+
+    def handle_error(self, request: Any, client_address: Any) -> None:
+        """Ignore expected peer disconnects while retaining unexpected server traces."""
+        if isinstance(
+            sys.exception(),
+            (BrokenPipeError, ConnectionAbortedError, ConnectionResetError),
+        ):
+            return
+        super().handle_error(request, client_address)
 
     def __init__(
         self,
@@ -800,6 +887,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         notebook_reader: NotebookReader | None = None,
         glossary_reader: GlossaryReader | None = None,
         streaming_health_reader: StreamingHealthReader | None = None,
+        streaming_runner: StreamingRunner | None = None,
         semantic_reader: SemanticReader | None = None,
         sql_reader: SqlReader | None = None,
         quality_reader: QualityHTTPAdapter | None = None,
@@ -814,6 +902,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         ingestion_adapter: object | None = None,
         durable_jobs: object | None = None,
         plugin_routes_enabled: bool = False,
+        default_workspace_id: WorkspaceId | None = None,
         studio_root: Path | None = None,
         request_timeout_seconds: float = 15.0,
         audit_mutation: ControlPlaneAuditHook | None = None,
@@ -835,6 +924,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.notebook_reader = notebook_reader
         self.glossary_reader = glossary_reader
         self.streaming_health_reader = streaming_health_reader
+        self.streaming_runner = streaming_runner
         self.semantic_reader = semantic_reader
         self.sql_reader = sql_reader
         self.quality_reader = quality_reader
@@ -849,6 +939,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.ingestion_adapter = ingestion_adapter
         self.durable_jobs = durable_jobs
         self.plugin_routes_enabled = plugin_routes_enabled
+        self.default_workspace_id = default_workspace_id
         self.studio_root = studio_root.resolve() if studio_root is not None else None
         self.request_timeout_seconds = request_timeout_seconds
         self.audit_mutation = audit_mutation
@@ -869,14 +960,77 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
     # request on the same socket, especially on Windows.
     protocol_version = "HTTP/1.0"
 
+    def setup(self) -> None:
+        super().setup()
+        self._request_id = f"req-{uuid4().hex}"
+        self._response_bytes: int | None = None
+
     def log_message(self, _format: str, *args: object) -> None:
         del args
+
+    def log_request(self, code: int | str = "-", size: int | str = "-") -> None:
+        """Emit one redacted, correlated access event for each response."""
+        try:
+            status_code = int(code)
+        except (TypeError, ValueError):
+            status_code = 0
+        outcome = (
+            "ERROR"
+            if status_code >= 500 or status_code <= 0
+            else "WARN"
+            if status_code >= 400
+            else "OK"
+        )
+        level = (
+            logging.ERROR
+            if outcome == "ERROR"
+            else logging.WARNING
+            if outcome == "WARN"
+            else logging.INFO
+        )
+        request_path = urlsplit(self.path).path
+        if request_path == "/v1/workspaces":
+            request_path = "/v1/workspaces"
+        elif request_path.startswith("/v1/workspaces/"):
+            request_path = "/v1/workspaces/{workspace_id}"
+        elif request_path.startswith("/v1/platform/"):
+            request_path = "/v1/platform"
+        elif request_path.startswith("/v1/"):
+            request_path = "/v1/other"
+        elif request_path.startswith("/studio/"):
+            request_path = "/studio/{asset}"
+        response_bytes = getattr(self, "_response_bytes", None)
+        event = {
+            "timestamp": datetime.now(UTC)
+            .isoformat(timespec="milliseconds")
+            .replace("+00:00", "Z"),
+            "level": logging.getLevelName(level),
+            "outcome": outcome,
+            "event": "http.request",
+            "request_id": self._request_id,
+            "method": self.command,
+            "route": request_path,
+            "status_code": status_code,
+            "response_bytes": (
+                response_bytes
+                if response_bytes is not None
+                else size
+                if isinstance(size, int) and size >= 0
+                else None
+            ),
+        }
+        _ACCESS_LOGGER.log(level, json.dumps(event, separators=(",", ":"), ensure_ascii=False))
+
+    def send_response(self, code: int, message: str | None = None) -> None:
+        super().send_response(code, message)
+        self.send_header("X-Ronin-Request-Id", self._request_id)
 
     def _server(self) -> WorkspaceProjectHTTPServer:
         return cast(WorkspaceProjectHTTPServer, self.server)
 
     def _write_json(self, status: HTTPStatus, payload: object, *, etag: str | None = None) -> None:
         body = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        self._response_bytes = len(body)
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -888,9 +1042,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
     def _error(self, status: HTTPStatus, code: str, message: str) -> None:
         self._write_json(status, {"error": {"code": code, "message": message}})
 
-    def _write_plugin_result(self, payload: object) -> None:
+    def _write_plugin_result(
+        self, payload: object, *, success_status: HTTPStatus = HTTPStatus.OK
+    ) -> None:
         """Keep plugin error envelopes from being reported as successful HTTP 200s."""
-        status = HTTPStatus.OK
+        status = success_status
         if isinstance(payload, Mapping):
             error = payload.get("error")
             if isinstance(error, Mapping):
@@ -996,6 +1152,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         )
         return False
 
+    def _register_created_workspace(self, workspace_id: WorkspaceId) -> None:
+        register_workspace = getattr(self._server().authorizer, "register_workspace", None)
+        if callable(register_workspace):
+            register_workspace(workspace_id)
+
     def _connector_workspace(self, actor: Actor, query: str | None) -> WorkspaceId | None:
         params = parse_qs(query or "", keep_blank_values=True)
         workspace_values = params.pop("workspace_id", [])
@@ -1071,6 +1232,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             self.send_error(HTTPStatus.NOT_FOUND)
             return True
         body = candidate.read_bytes()
+        self._response_bytes = len(body)
         self.send_response(HTTPStatus.OK)
         content_type = mimetypes.guess_type(candidate.name)[0] or "application/octet-stream"
         self.send_header("Content-Type", content_type)
@@ -1107,6 +1269,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
 
             ml_dependency_errors = (MLDependencyError,)
             ml_backend_not_found = (BackendNotFound,)
+        elif exc.__class__.__module__ == "studio_storage.ml":
+            # Registry conflicts (for example, promotion without a passed
+            # evaluation) are expected business outcomes, not server errors.
+            from studio_storage.ml import MLConflict
+
+            ml_conflicts = (MLConflict,)
         if isinstance(
             exc,
             (
@@ -1128,6 +1296,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             + ml_conflicts,
         ):
             self._error(HTTPStatus.CONFLICT, "conflict", str(exc))
+        elif isinstance(exc, QualityExecutionBlocked):
+            self._error(
+                HTTPStatus.CONFLICT,
+                "quality_gate_blocked",
+                "blocking quality rules failed",
+            )
         elif isinstance(exc, ml_dependency_errors):
             self._error(
                 HTTPStatus.SERVICE_UNAVAILABLE,
@@ -1136,11 +1310,38 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             )
         elif isinstance(exc, ml_backend_not_found):
             self._error(HTTPStatus.NOT_FOUND, "ml_backend_not_found", str(exc))
+        elif isinstance(exc, SqlRelationUnavailableError):
+            self._error(
+                HTTPStatus.NOT_FOUND,
+                "sql_relation_unavailable",
+                "SQL relation is not registered for this project",
+            )
+        elif isinstance(exc, SqlExplainUnsupportedError):
+            self._error(
+                HTTPStatus.NOT_IMPLEMENTED,
+                "sql_explain_unsupported",
+                "The selected SQL provider does not support EXPLAIN",
+            )
+        elif isinstance(exc, SqlExecutionError):
+            self._error(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                "sql_execution_failed",
+                "SQL backend execution failed",
+            )
         elif isinstance(exc, SqlResultLimitError):
             self._error(
                 HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
                 "sql_result_too_large",
                 "SQL result exceeds the configured size limit",
+            )
+        elif (
+            exc.__class__.__module__ == "studio_semantic.bundle"
+            and exc.__class__.__name__ == "SemanticBundleTooLarge"
+        ):
+            self._error(
+                HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                "semantic_bundle_too_large",
+                "semantic Bundle exceeds the configured size limit",
             )
         elif isinstance(exc, TimeoutError):
             if isinstance(exc, SqlTimeoutError):
@@ -1156,7 +1357,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         elif isinstance(exc, (TypeError, ValueError)):
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
         else:
-            raise exc
+            self._error(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                "internal_error",
+                "request failed unexpectedly",
+            )
 
     def do_GET(self) -> None:  # noqa: N802
         if self._serve_studio():
@@ -1166,6 +1371,65 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:] == ("streams", "bundle")
+            ):
+                bundle_runner = self._server().streaming_runner
+                if bundle_runner is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "streaming_unavailable",
+                        "stream execution is not configured",
+                    )
+                    return
+                if (
+                    query
+                    or self.headers.get("Content-Length") not in {None, "0"}
+                    or self.headers.get("Transfer-Encoding") is not None
+                ):
+                    raise ValueError("stream Bundle export does not accept a query or request body")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                from studio_execution.bundle_streaming import MAX_STREAM_BUNDLE_BYTES
+
+                archive = bundle_runner.export_bundle(workspace_id)
+                if not isinstance(archive, bytes):
+                    raise TypeError("stream Bundle exporter returned an invalid archive")
+                if len(archive) > MAX_STREAM_BUNDLE_BYTES:
+                    raise ValueError("stream Bundle exceeds the 700 KiB export limit")
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "media_type": "application/vnd.ronin.bundle+zip",
+                        "digest": hashlib.sha256(archive).hexdigest(),
+                        "size_bytes": len(archive),
+                        "content_base64": base64.b64encode(archive).decode("ascii"),
+                    },
+                )
+                return
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "streams"
+            ):
+                streaming_runner = self._server().streaming_runner
+                if streaming_runner is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "streaming_unavailable",
+                        "stream execution is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("stream definition listing does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                self._write_json(HTTPStatus.OK, streaming_runner.list_definitions(workspace_id))
+                return
             if segments[:3] == ("v1", "ml-studio", "features"):
                 service = self._server().feature_definition_service
                 if service is None:
@@ -1301,11 +1565,21 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     )
                     return
                 params = parse_qs(query or "", keep_blank_values=True)
-                direction = params.get("direction", ["upstream"])[0]
-                if direction not in {"upstream", "downstream"} or any(
-                    key != "direction" for key in params
-                ):
+                if any(key not in {"direction", "limit"} for key in params):
+                    raise ValueError("lineage query accepts only direction and limit")
+                direction_values = params.get("direction", ["upstream"])
+                limit_values = params.get("limit", ["100"])
+                if len(direction_values) != 1 or len(limit_values) != 1:
+                    raise ValueError("lineage query parameters must not be repeated")
+                direction = direction_values[0]
+                if direction not in {"upstream", "downstream"}:
                     raise ValueError("lineage direction must be upstream or downstream")
+                try:
+                    limit = int(limit_values[0])
+                except ValueError as exc:
+                    raise ValueError("lineage limit must be an integer") from exc
+                if not 1 <= limit <= 100:
+                    raise ValueError("lineage limit must be between 1 and 100")
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
@@ -1318,7 +1592,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         "catalog lineage reader is not configured",
                     )
                     return
-                edges = method(workspace_id, ref)
+                try:
+                    edges = method(workspace_id, ref, limit=limit)
+                except LineageLimitExceeded as exc:
+                    self._error(
+                        HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                        "lineage_limit_exceeded",
+                        str(exc),
+                    )
+                    return
                 self._write_json(HTTPStatus.OK, {"items": [edge.to_payload() for edge in edges]})
                 return
             if segments == ("v1", "platform", "connectors"):
@@ -1412,7 +1694,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 plugin_host = self._server().plugin_host
                 if isinstance(plugin_host, PluginRouter):
                     resolved = plugin_host.resolve_route("GET", urlsplit(self.path).path)
-                    if resolved is not None:
+                    if (
+                        resolved is not None
+                        and getattr(resolved[0], "path", "") != "/v1/workspaces"
+                    ):
                         route, parameters = resolved
                         permission = getattr(route, "permission", "")
                         workspace_value = parameters.get("workspace_id")
@@ -1428,6 +1713,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             or permission.startswith("ml-studio:")
                         ):
                             workspace_value = parse_qs(query).get("workspace_id", [None])[0]
+                        if workspace_value is None and permission.startswith("cloud-studio:"):
+                            workspace_value = str(self._server().default_workspace_id or "") or None
                         if workspace_value is not None:
                             workspace_id = WorkspaceId(workspace_value)
                             mapped_permission = {
@@ -1442,6 +1729,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                                 "data-engineering:read": "project.read",
                                 "data-engineering:write": "project.write",
                                 "data-engineering:execute": "scheduler.write",
+                                "cloud-studio:read": "workspace.read",
+                                "cloud-studio:write": "workspace.write",
                             }.get(permission)
                             if mapped_permission is None:
                                 self._error(
@@ -1507,39 +1796,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
-                self._write_json(HTTPStatus.OK, semantic_reader.list_dashboards(project_id))
-                return
-            if (
-                len(segments) == 8
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3] == "projects"
-                and segments[5] == "notebooks"
-            ):
-                notebook_reader = self._server().notebook_reader
-                if notebook_reader is None:
-                    self._error(
-                        HTTPStatus.SERVICE_UNAVAILABLE,
-                        "notebook_unavailable",
-                        "Notebook service is not configured",
-                    )
-                    return
-                workspace_id = WorkspaceId(segments[2])
-                project_id = segments[4]
-                if not self._authorize(
-                    actor, workspace_id, "project.write", resource_ref=project_id
-                ):
-                    return
-                if query:
-                    raise ValueError("notebook replacement does not accept query parameters")
-                body = self._read_json()
-                if not isinstance(body, dict):
-                    raise ValueError("notebook body must be an object")
-                self._write_json(
-                    HTTPStatus.OK,
-                    notebook_reader.save(
-                        project_id=project_id, notebook_id=segments[7], payload=body
-                    ),
-                )
+                semantic_scope = _semantic_project_scope(workspace_id, project_id)
+                self._write_json(HTTPStatus.OK, semantic_reader.list_dashboards(semantic_scope))
                 return
             if (
                 len(segments) == 8
@@ -1564,43 +1822,14 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
-                dashboard_payload = semantic_reader.get_dashboard(project_id, dashboard_id)
+                semantic_scope = _semantic_project_scope(workspace_id, project_id)
+                dashboard_payload = semantic_reader.get_dashboard(semantic_scope, dashboard_id)
                 if dashboard_payload is None:
                     self._error(
                         HTTPStatus.NOT_FOUND, "not_found", "semantic dashboard does not exist"
                     )
                     return
                 self._write_json(HTTPStatus.OK, dashboard_payload)
-                return
-            if (
-                len(segments) == 8
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3] == "projects"
-                and segments[5] == "notebooks"
-            ):
-                notebook_reader = self._server().notebook_reader
-                if notebook_reader is None:
-                    self._error(
-                        HTTPStatus.SERVICE_UNAVAILABLE,
-                        "notebook_unavailable",
-                        "Notebook service is not configured",
-                    )
-                    return
-                workspace_id = WorkspaceId(segments[2])
-                project_id = segments[4]
-                if not self._authorize(
-                    actor, workspace_id, "project.write", resource_ref=project_id
-                ):
-                    return
-                if query or self.headers.get("Content-Length") not in {None, "0"}:
-                    raise ValueError("notebook delete does not accept query or body")
-                revision = self.headers.get("If-Match")
-                if revision is None or not revision.isdigit() or int(revision) < 1:
-                    raise ValueError("If-Match must contain the expected positive revision")
-                notebook_reader.delete(
-                    project_id=project_id, notebook_id=segments[7], expected_revision=int(revision)
-                )
-                self._write_json(HTTPStatus.OK, {"deleted": True, "id": segments[7]})
                 return
             if not self._registered_path(segments):
                 self._method_or_not_found("GET", segments)
@@ -1720,7 +1949,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 )
                 return
             if (
-                len(segments) in (7, 8)
+                len(segments) in (6, 7)
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "projects"
                 and segments[5] == "notebooks"
@@ -1741,12 +1970,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 if query:
                     raise ValueError("notebook reads do not accept query parameters")
-                if len(segments) == 7:
+                if len(segments) == 6:
                     self._write_json(HTTPStatus.OK, notebook_reader.list(project_id=project_id))
                 else:
                     self._write_json(
                         HTTPStatus.OK,
-                        notebook_reader.get(project_id=project_id, notebook_id=segments[7]),
+                        notebook_reader.get(project_id=project_id, notebook_id=segments[6]),
                     )
                 return
             if (
@@ -1860,7 +2089,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     self._write_json(HTTPStatus.OK, item)
                 return
             if (
-                len(segments) == 7
+                len(segments) == 6
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "schedules"
                 and segments[5] == "history"
@@ -1900,7 +2129,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 )
                 return
             if (
-                len(segments) == 7
+                len(segments) == 6
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "schedules"
                 and segments[5] == "next-runs"
@@ -1955,9 +2184,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
                 limit, offset = _list_query(query)
-                deliveries = workflow_reader.list_pending_deliveries(
-                    workspace_id, limit=min(limit + offset, 1000)
+                list_deliveries = getattr(
+                    workflow_reader,
+                    "list_event_deliveries",
+                    workflow_reader.list_pending_deliveries,
                 )
+                deliveries = list_deliveries(workspace_id, limit=min(limit + offset, 1000))
                 delivery_items: list[EventDelivery] = list(deliveries)
                 selected, next_cursor = _page(delivery_items, limit=limit, offset=offset)
                 selected_deliveries = cast(list[EventDelivery], selected)
@@ -1970,6 +2202,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                                 "trigger_id": delivery.trigger.id.value,
                                 "workflow_id": delivery.trigger.workflow_id.value,
                                 "state": delivery.state,
+                                "workflow_run_id": (
+                                    None
+                                    if delivery.workflow_run_id is None
+                                    else delivery.workflow_run_id.value
+                                ),
                             }
                             for delivery in selected_deliveries
                         ],
@@ -2160,7 +2397,60 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                self._write_json(HTTPStatus.OK, streaming_reader.health(workspace_id, segments[4]))
+                try:
+                    health = streaming_reader.health(workspace_id, segments[4])
+                except TimeoutError:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "streaming_unavailable",
+                        "Kafka broker health is unavailable",
+                    )
+                    return
+                self._write_json(HTTPStatus.OK, health)
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:] == ("semantic", "bundle")
+            ):
+                semantic_reader = self._server().semantic_reader
+                if semantic_reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "semantic_unavailable",
+                        "semantic service is not configured",
+                    )
+                    return
+                if query or self.headers.get("Content-Length") not in {None, "0"}:
+                    raise ValueError("semantic Bundle export does not accept a query or body")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                from studio_semantic import MAX_SEMANTIC_BUNDLE_BYTES
+
+                semantic_scope = _semantic_project_scope(workspace_id, project_id)
+                archive = semantic_reader.export_bundle(semantic_scope)
+                if not isinstance(archive, bytes):
+                    raise TypeError("semantic Bundle exporter returned an invalid archive")
+                if len(archive) > MAX_SEMANTIC_BUNDLE_BYTES:
+                    from studio_semantic import SemanticBundleTooLarge
+
+                    raise SemanticBundleTooLarge(
+                        "semantic Bundle exceeds the 700 KiB archive limit"
+                    )
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "media_type": "application/vnd.ronin.bundle+zip",
+                        "digest": hashlib.sha256(archive).hexdigest(),
+                        "size_bytes": len(archive),
+                        "content_base64": base64.b64encode(archive).decode("ascii"),
+                    },
+                )
                 return
             if (
                 len(segments) == 7
@@ -2184,7 +2474,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
-                self._write_json(HTTPStatus.OK, semantic_reader.list_models(project_id))
+                semantic_scope = _semantic_project_scope(workspace_id, project_id)
+                self._write_json(HTTPStatus.OK, semantic_reader.list_models(semantic_scope))
                 return
             if (
                 len(segments) == 6
@@ -2519,66 +2810,6 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not archived:
                     raise KeyError(f"{workspace_id}/{project_ref}")
                 self._write_json(HTTPStatus.OK, {"archived": True, "project_id": str(project_ref)})
-                return
-            if (
-                len(segments) == 7
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3] == "projects"
-                and segments[5:7] == ("bundle", "import")
-            ):
-                if query:
-                    raise ValueError("project Bundle import does not accept query parameters")
-                if not self.headers.get("Idempotency-Key", "").strip():
-                    raise ValueError("Idempotency-Key header is required")
-                workspace_id = WorkspaceId(segments[2])
-                project_ref = ProjectId(segments[4])
-                if not self._authorize(
-                    actor, workspace_id, "project.write", resource_ref=str(project_ref)
-                ):
-                    return
-                body = self._read_json()
-                if not isinstance(body, dict) or not isinstance(body.get("content_base64"), str):
-                    raise ValueError("Bundle import body must contain content_base64")
-                try:
-                    archive = base64.b64decode(body["content_base64"], validate=True)
-                except (ValueError, TypeError) as exc:
-                    raise ValueError("content_base64 must be valid Base64") from exc
-                if len(archive) > 8 * 1024 * 1024:
-                    raise ValueError("Bundle archive exceeds import limit")
-                with tempfile.TemporaryDirectory(prefix="ronin-bundle-import-") as directory:
-                    archive_path = Path(directory) / "import.roninbundle"
-                    archive_path.write_bytes(archive)
-                    verified = read_bundle_payload(archive_path, ".ronin/project.json")
-                imported = ProjectManifest.from_json(verified.file.data.decode("utf-8"))
-                if imported.project.id != project_ref:
-                    raise ValueError("Bundle project id must match the request path")
-                if not self._audit_mutation(
-                    actor, "project.bundle.import", workspace_id, {"resource": str(project_ref)}
-                ):
-                    return
-                existing = next(
-                    (
-                        item
-                        for item in self._server().project_service.list(workspace_id)
-                        if item.project.id == project_ref
-                    ),
-                    None,
-                )
-                if existing is not None:
-                    if existing.to_json() != imported.to_json():
-                        raise ValueError("project already exists with a different manifest")
-                    imported_project = existing
-                else:
-                    imported_project = self._server().project_service.register(
-                        workspace_id, imported, now=_now()
-                    )
-                self._write_json(
-                    HTTPStatus.OK,
-                    {
-                        "project": _manifest_payload(imported_project),
-                        "bundle_digest": hashlib.sha256(archive).hexdigest(),
-                    },
-                )
                 return
             if (
                 len(segments) == 8
@@ -3055,6 +3286,162 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         try:
             segments, query = self._split()
             if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:5] == ("streams", "bundle")
+                and segments[5] in {"plan", "import"}
+            ):
+                action = segments[5]
+                bundle_runner = self._server().streaming_runner
+                if bundle_runner is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "streaming_unavailable",
+                        "stream execution is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("stream Bundle operation does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                stream_permission: Literal["workspace.read", "workspace.write"] = (
+                    "workspace.read" if action == "plan" else "workspace.write"
+                )
+                if not self._authorize(actor, workspace_id, stream_permission):
+                    return
+                body = self._read_json()
+                expected_fields = (
+                    {"content_base64"}
+                    if action == "plan"
+                    else {
+                        "content_base64",
+                        "binding_remaps",
+                        "checkpoint_policies",
+                        "expected_digest",
+                    }
+                )
+                if not isinstance(body, dict) or set(body) != expected_fields:
+                    raise ValueError("stream Bundle request has an invalid shape")
+                if not isinstance(body["content_base64"], str):
+                    raise ValueError("content_base64 must be a string")
+                try:
+                    archive = base64.b64decode(body["content_base64"], validate=True)
+                except (ValueError, TypeError) as exc:
+                    raise ValueError("content_base64 must be valid Base64") from exc
+                from studio_execution.bundle_streaming import MAX_STREAM_BUNDLE_BYTES
+
+                if len(archive) > MAX_STREAM_BUNDLE_BYTES:
+                    raise ValueError("stream Bundle exceeds the 700 KiB import limit")
+                digest = hashlib.sha256(archive).hexdigest()
+                if action == "plan":
+                    result = bundle_runner.plan_bundle(archive)
+                    self._write_json(
+                        HTTPStatus.OK,
+                        {**result, "bundle_digest": digest, "size_bytes": len(archive)},
+                    )
+                    return
+                remaps = body["binding_remaps"]
+                policies = body["checkpoint_policies"]
+                if not isinstance(remaps, dict) or any(
+                    not isinstance(key, str) or not isinstance(value, str)
+                    for key, value in remaps.items()
+                ):
+                    raise ValueError("binding_remaps must map binding references to strings")
+                if not isinstance(policies, dict) or any(
+                    not isinstance(key, str) or not isinstance(value, str)
+                    for key, value in policies.items()
+                ):
+                    raise ValueError("checkpoint_policies must map stream IDs to policies")
+                expected_digest = body["expected_digest"]
+                if not isinstance(expected_digest, str) or not re.fullmatch(
+                    r"[0-9a-f]{64}", expected_digest
+                ):
+                    raise ValueError("expected_digest must be a lowercase SHA-256 digest")
+                if expected_digest != digest:
+                    raise ValueError("stream Bundle differs from the reviewed import plan")
+                if not self._audit_mutation(
+                    actor,
+                    "stream.bundle.import",
+                    workspace_id,
+                    {"bundle_digest": digest, "size_bytes": len(archive)},
+                ):
+                    return
+                try:
+                    result = bundle_runner.import_bundle(
+                        workspace_id,
+                        archive,
+                        binding_remaps=remaps,
+                        checkpoint_policies=policies,
+                    )
+                except Exception as exc:
+                    if exc.__class__.__name__ == "StreamDefinitionConflict":
+                        self._error(
+                            HTTPStatus.CONFLICT,
+                            "stream_definition_conflict",
+                            "stream Bundle cannot safely resume its checkpoints",
+                        )
+                        return
+                    raise
+                self._write_json(
+                    HTTPStatus.OK,
+                    {**result, "bundle_digest": digest, "size_bytes": len(archive)},
+                )
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "streams"
+                and segments[5] == "run"
+            ):
+                streaming_runner = self._server().streaming_runner
+                if streaming_runner is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "streaming_unavailable",
+                        "stream execution is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("stream run does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.write"):
+                    return
+                payload = self._read_json()
+                if not isinstance(payload, dict) or set(payload) - {"limit", "timeout_seconds"}:
+                    raise ValueError("stream run body accepts only limit and timeout_seconds")
+                if not self._audit_mutation(
+                    actor,
+                    "stream.run",
+                    workspace_id,
+                    {"stream_id": segments[4]},
+                ):
+                    return
+                try:
+                    result = streaming_runner.run_once(
+                        workspace_id,
+                        segments[4],
+                        limit=payload.get("limit"),
+                        timeout_seconds=payload.get("timeout_seconds"),
+                    )
+                except Exception as exc:
+                    if exc.__class__.__name__ == "StreamingInputRejected":
+                        self._error(
+                            HTTPStatus.UNPROCESSABLE_ENTITY,
+                            "stream_input_rejected",
+                            "stream input is invalid or exceeds local processing limits; "
+                            "checkpoint was not advanced",
+                        )
+                        return
+                    if exc.__class__.__name__ == "StreamingRunUnavailable":
+                        self._error(
+                            HTTPStatus.SERVICE_UNAVAILABLE,
+                            "streaming_unavailable",
+                            "stream execution is unavailable",
+                        )
+                        return
+                    raise
+                self._write_json(HTTPStatus.OK, result)
+                return
+            if (
                 len(segments) == 4
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "connections"
@@ -3133,6 +3520,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, connector_workspace_id, "scheduler.write"):
                     return
                 if not self.headers.get("Idempotency-Key", "").strip():
+                    self._discard_request_body()
                     raise ValueError("Idempotency-Key header is required")
                 payload = self._read_json()
                 if not isinstance(payload, dict) or set(payload) != {"project_id", "definition"}:
@@ -3368,6 +3756,20 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             or permission.startswith("ml-studio:")
                         ):
                             workspace_value = parse_qs(query).get("workspace_id", [None])[0]
+                        if workspace_value is None and permission.startswith("cloud-studio:"):
+                            workspace_value = str(self._server().default_workspace_id or "") or None
+                        if permission.startswith("performance:"):
+                            workspace_value = str(self._server().default_workspace_id or "") or None
+                        if (
+                            workspace_value is None
+                            and permission == "workspaces:write"
+                            and getattr(route, "path", "") == "/v1/workspaces"
+                        ):
+                            # Creating a workspace has no workspace ID in its route.
+                            # Gate the operator action against the configured local
+                            # workspace before the plugin validates and persists the
+                            # requested ID from the body.
+                            workspace_value = str(self._server().default_workspace_id or "") or None
                         mapped_permission = {
                             "projects:write": "project.write",
                             "workspaces:write": "workspace.write",
@@ -3378,8 +3780,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             "data-engineering:read": "project.read",
                             "data-engineering:write": "project.write",
                             "data-engineering:execute": "scheduler.write",
+                            "cloud-studio:read": "workspace.read",
+                            "cloud-studio:write": "workspace.write",
                             "synthetic:write": "project.write",
                             "synthetic:execute": "project.write",
+                            "performance:read": "project.read",
+                            "performance:analyze": "project.read",
                         }.get(permission)
                         if workspace_value is None and permission.startswith("synthetic:"):
                             workspace_value = parse_qs(query).get("workspace_id", [None])[0]
@@ -3441,12 +3847,25 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             body=body,
                             idempotency_key=self.headers.get("Idempotency-Key"),
                         )
-                        self._write_plugin_result(payload)
+                        workspace_create = (
+                            permission == "workspaces:write"
+                            and getattr(route, "path", "") == "/v1/workspaces"
+                        )
+                        if (
+                            workspace_create
+                            and isinstance(payload, Mapping)
+                            and "error" not in payload
+                            and isinstance(payload.get("id"), str)
+                        ):
+                            self._register_created_workspace(WorkspaceId(payload["id"]))
+                        success_status = HTTPStatus.CREATED if workspace_create else HTTPStatus.OK
+                        self._write_plugin_result(payload, success_status=success_status)
                         return
             if segments == ("v1", "workspaces"):
                 if query:
                     raise ValueError("workspace creation does not accept query parameters")
                 if not self.headers.get("Idempotency-Key", "").strip():
+                    self._discard_request_body()
                     raise ValueError("Idempotency-Key header is required")
                 payload = self._read_json()
                 if not isinstance(payload, dict) or set(payload) != {"id", "name", "description"}:
@@ -3457,7 +3876,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if description is not None and not isinstance(description, str):
                     raise ValueError("workspace description must be a string or null")
                 workspace_id = WorkspaceId(raw_id)
-                if not self._authorize(actor, workspace_id, "workspace.write"):
+                authorization_workspace_id = self._server().default_workspace_id or workspace_id
+                if not self._authorize(actor, authorization_workspace_id, "workspace.write"):
                     return
                 if not self._audit_mutation(
                     actor, "workspace.create", workspace_id, {"resource": str(workspace_id)}
@@ -3466,6 +3886,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace = self._server().workspace_service.create(
                     Workspace(workspace_id, name, description), now=_now()
                 )
+                self._register_created_workspace(workspace.id)
                 result = _workspace_payload(workspace)
                 self._write_json(HTTPStatus.CREATED, result, etag=_etag(result))
                 return
@@ -3563,7 +3984,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 self._write_json(HTTPStatus.CREATED, run.to_payload())
                 return
             if (
-                len(segments) in (7, 8)
+                len(segments) in (6, 8)
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "projects"
                 and segments[5] == "notebooks"
@@ -3585,7 +4006,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 body = self._read_json()
                 if not isinstance(body, dict):
                     raise ValueError("notebook body must be an object")
-                if len(segments) == 7:
+                if len(segments) == 6:
                     self._write_json(
                         HTTPStatus.CREATED,
                         notebook_reader.create(project_id=project_id, payload=body),
@@ -3604,6 +4025,92 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     )
                 else:
                     self._method_or_not_found("POST", segments)
+                return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:7] == ("semantic", "bundle")
+                and segments[7] in {"plan", "import"}
+            ):
+                semantic_reader = self._server().semantic_reader
+                if semantic_reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "semantic_unavailable",
+                        "semantic service is not configured",
+                    )
+                    return
+                action = segments[7]
+                if query:
+                    raise ValueError("semantic Bundle operation does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                semantic_permission: Literal["project.read", "project.write"] = (
+                    "project.read" if action == "plan" else "project.write"
+                )
+                if not self._authorize(
+                    actor, workspace_id, semantic_permission, resource_ref=project_id
+                ):
+                    return
+                semantic_scope = _semantic_project_scope(workspace_id, project_id)
+                body = self._read_json()
+                expected_fields = (
+                    {"content_base64"}
+                    if action == "plan"
+                    else {"content_base64", "expected_digest"}
+                )
+                if not isinstance(body, dict) or set(body) != expected_fields:
+                    raise ValueError("semantic Bundle request has an invalid shape")
+                if not isinstance(body["content_base64"], str):
+                    raise ValueError("content_base64 must be a string")
+                try:
+                    archive = base64.b64decode(body["content_base64"], validate=True)
+                except (ValueError, TypeError) as exc:
+                    raise ValueError("content_base64 must be valid Base64") from exc
+                from studio_semantic import MAX_SEMANTIC_BUNDLE_BYTES
+
+                if len(archive) > MAX_SEMANTIC_BUNDLE_BYTES:
+                    from studio_semantic import SemanticBundleTooLarge
+
+                    raise SemanticBundleTooLarge("semantic Bundle exceeds the 700 KiB import limit")
+                digest = hashlib.sha256(archive).hexdigest()
+                if action == "plan":
+                    result = semantic_reader.plan_bundle(archive)
+                    self._write_json(
+                        HTTPStatus.OK,
+                        {**result, "bundle_digest": digest, "size_bytes": len(archive)},
+                    )
+                    return
+                expected_digest = body["expected_digest"]
+                if not isinstance(expected_digest, str) or not re.fullmatch(
+                    r"[0-9a-f]{64}", expected_digest
+                ):
+                    raise ValueError("expected_digest must be a lowercase SHA-256 digest")
+                if expected_digest != digest:
+                    raise ValueError("semantic Bundle differs from the reviewed import plan")
+                if not self._audit_mutation(
+                    actor,
+                    "semantic.bundle.import",
+                    workspace_id,
+                    {"bundle_digest": digest, "size_bytes": len(archive)},
+                ):
+                    return
+                try:
+                    result = semantic_reader.import_bundle(semantic_scope, archive)
+                except Exception as exc:
+                    if exc.__class__.__name__ == "SemanticModelConflict":
+                        self._error(
+                            HTTPStatus.CONFLICT,
+                            "semantic_bundle_conflict",
+                            "semantic Bundle conflicts with existing definitions",
+                        )
+                        return
+                    raise
+                self._write_json(
+                    HTTPStatus.OK,
+                    {**result, "bundle_digest": digest, "size_bytes": len(archive)},
+                )
                 return
             if (
                 len(segments) == 7
@@ -3628,14 +4135,18 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     return
                 self._write_json(
-                    HTTPStatus.OK, semantic_reader.query(project_id, self._read_json())
+                    HTTPStatus.OK,
+                    semantic_reader.query(
+                        _semantic_project_scope(workspace_id, project_id), self._read_json()
+                    ),
                 )
                 return
             if (
                 len(segments) == 7
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "projects"
-                and segments[5:] == ("sql", "query")
+                and segments[5:6] == ("sql",)
+                and segments[6] in {"query", "explain"}
             ):
                 sql_reader = self._server().sql_reader
                 if sql_reader is None:
@@ -3655,7 +4166,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     return
                 self._server().project_service.get(workspace_id, ProjectId(project_id))
-                self._write_json(HTTPStatus.OK, sql_reader.query(project_id, self._read_json()))
+                body = self._read_json()
+                operation = sql_reader.query if segments[6] == "query" else sql_reader.explain
+                self._write_json(
+                    HTTPStatus.OK,
+                    operation(_semantic_project_scope(workspace_id, project_id), body),
+                )
                 return
             if (
                 len(segments) == 7
@@ -3680,7 +4196,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     return
                 self._write_json(
-                    HTTPStatus.OK, semantic_reader.join_query(project_id, self._read_json())
+                    HTTPStatus.OK,
+                    semantic_reader.join_query(
+                        _semantic_project_scope(workspace_id, project_id), self._read_json()
+                    ),
                 )
                 return
             if (
@@ -3705,6 +4224,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
+                semantic_scope = _semantic_project_scope(workspace_id, project_id)
                 if self.headers.get("Content-Length") not in {
                     None,
                     "0",
@@ -3718,7 +4238,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     return
                 self._write_json(
-                    HTTPStatus.OK, semantic_reader.execute_dashboard(project_id, dashboard_id)
+                    HTTPStatus.OK,
+                    semantic_reader.execute_dashboard(semantic_scope, dashboard_id),
                 )
                 return
             if (
@@ -4409,6 +4930,67 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 self._write_json(HTTPStatus.OK, _workspace_payload(workspace))
                 return
             if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:7] == ("bundle", "import")
+            ):
+                if query:
+                    raise ValueError("project Bundle import does not accept query parameters")
+                if not self.headers.get("Idempotency-Key", "").strip():
+                    self._discard_request_body()
+                    raise ValueError("Idempotency-Key header is required")
+                workspace_id = WorkspaceId(segments[2])
+                project_ref = ProjectId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=str(project_ref)
+                ):
+                    return
+                body = self._read_json()
+                if not isinstance(body, dict) or not isinstance(body.get("content_base64"), str):
+                    raise ValueError("Bundle import body must contain content_base64")
+                try:
+                    archive = base64.b64decode(body["content_base64"], validate=True)
+                except (ValueError, TypeError) as exc:
+                    raise ValueError("content_base64 must be valid Base64") from exc
+                if len(archive) > 8 * 1024 * 1024:
+                    raise ValueError("Bundle archive exceeds import limit")
+                with tempfile.TemporaryDirectory(prefix="ronin-bundle-import-") as directory:
+                    archive_path = Path(directory) / "import.roninbundle"
+                    archive_path.write_bytes(archive)
+                    verified = read_bundle_payload(archive_path, ".ronin/project.json")
+                imported = ProjectManifest.from_json(verified.file.data.decode("utf-8"))
+                if imported.project.id != project_ref:
+                    raise ValueError("Bundle project id must match the request path")
+                if not self._audit_mutation(
+                    actor, "project.bundle.import", workspace_id, {"resource": str(project_ref)}
+                ):
+                    return
+                existing = next(
+                    (
+                        item
+                        for item in self._server().project_service.list(workspace_id)
+                        if item.project.id == project_ref
+                    ),
+                    None,
+                )
+                if existing is not None:
+                    if existing.to_json() != imported.to_json():
+                        raise ValueError("project already exists with a different manifest")
+                    imported_project = existing
+                else:
+                    imported_project = self._server().project_service.register(
+                        workspace_id, imported, now=_now()
+                    )
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "project": _manifest_payload(imported_project),
+                        "bundle_digest": hashlib.sha256(archive).hexdigest(),
+                    },
+                )
+                return
+            if (
                 len(segments) == 4
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "projects"
@@ -4507,6 +5089,64 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "streams"
+            ):
+                runner = self._server().streaming_runner
+                if runner is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "streaming_unavailable",
+                        "stream execution is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("stream definition update does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.write"):
+                    return
+                payload = self._read_json()
+                if not isinstance(payload, dict) or set(payload) != {
+                    "definition",
+                    "checkpoint_policy",
+                }:
+                    raise ValueError(
+                        "stream definition request requires definition and checkpoint_policy"
+                    )
+                from studio_execution.bundle_streaming import StreamDefinition
+
+                definition = StreamDefinition.from_payload(payload["definition"])
+                if definition.id != segments[4]:
+                    raise ValueError("stream definition id must match the request path")
+                policy = payload["checkpoint_policy"]
+                if not isinstance(policy, str) or policy not in {"reset", "resume"}:
+                    raise ValueError("checkpoint_policy must be reset or resume")
+                if not self._audit_mutation(
+                    actor,
+                    "stream.definition.put",
+                    workspace_id,
+                    {"stream_id": definition.id, "checkpoint_policy": policy},
+                ):
+                    return
+                try:
+                    result = runner.put_definition(
+                        workspace_id,
+                        definition,
+                        checkpoint_policy=policy,
+                    )
+                except Exception as exc:
+                    if exc.__class__.__name__ == "StreamDefinitionConflict":
+                        self._error(
+                            HTTPStatus.CONFLICT,
+                            "stream_definition_conflict",
+                            "stream definition cannot safely resume its checkpoint",
+                        )
+                        return
+                    raise
+                self._write_json(HTTPStatus.OK, result)
+                return
             if (
                 len(segments) == 7
                 and segments[:2] == ("v1", "workspaces")
@@ -4729,6 +5369,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.write", resource_ref=project_id
                 ):
                     return
+                semantic_scope = _semantic_project_scope(workspace_id, project_id)
                 body = self._read_json()
                 if not isinstance(body, dict) or body.get("id") != dashboard_id:
                     raise ValueError("dashboard body id must match dashboard_id path parameter")
@@ -4739,7 +5380,40 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": f"{project_id}/{dashboard_id}"},
                 ):
                     return
-                self._write_json(HTTPStatus.OK, semantic_reader.put_dashboard(project_id, body))
+                self._write_json(HTTPStatus.OK, semantic_reader.put_dashboard(semantic_scope, body))
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "notebooks"
+            ):
+                notebook_reader = self._server().notebook_reader
+                if notebook_reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "notebook_unavailable",
+                        "Notebook service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("notebook replacement does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                notebook_id = unquote(segments[6])
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=project_id
+                ):
+                    return
+                body = self._read_json()
+                if not isinstance(body, dict):
+                    raise ValueError("notebook body must be an object")
+                self._write_json(
+                    HTTPStatus.OK,
+                    notebook_reader.save(
+                        project_id=project_id, notebook_id=notebook_id, payload=body
+                    ),
+                )
                 return
             if not self._registered_path(segments):
                 self._method_or_not_found("PUT", segments)
@@ -5060,6 +5734,39 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         )
                         self._write_plugin_result(payload)
                         return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "notebooks"
+            ):
+                notebook_reader = self._server().notebook_reader
+                if notebook_reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "notebook_unavailable",
+                        "Notebook service is not configured",
+                    )
+                    return
+                if query or self.headers.get("Content-Length") not in {None, "0"}:
+                    raise ValueError("notebook delete does not accept query or body")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                notebook_id = unquote(segments[6])
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=project_id
+                ):
+                    return
+                revision = self.headers.get("If-Match")
+                if revision is None or not revision.isdigit() or int(revision) < 1:
+                    raise ValueError("If-Match must contain the expected positive revision")
+                notebook_reader.delete(
+                    project_id=project_id,
+                    notebook_id=notebook_id,
+                    expected_revision=int(revision),
+                )
+                self._write_json(HTTPStatus.OK, {"deleted": True, "id": notebook_id})
+                return
             if not self._registered_path(segments):
                 self._method_or_not_found("DELETE", segments)
                 return

@@ -16,11 +16,17 @@ class FakeRemoteBackend:
         tasks=("regression",), algorithms=("spark.gbt",), supports_artifacts=True
     )
 
-    def submit(self, _request: RemoteTrainingRequest) -> RemoteTrainingResult:
+    def submit(
+        self,
+        _request: RemoteTrainingRequest,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> RemoteTrainingResult:
+        del timeout_seconds
         return RemoteTrainingResult("run-1", "artifact://run-1", "sha256:test", "queued")
 
     def poll(self, run_id: str) -> RemoteTrainingResult:
-        return RemoteTrainingResult(run_id, "artifact://run-1", "sha256:test", "succeeded")
+        return RemoteTrainingResult(run_id, "artifact://run-1", "sha256:" + "b" * 64, "succeeded")
 
     def cancel(self, run_id: str) -> RemoteTrainingResult:
         return RemoteTrainingResult(run_id, "artifact://run-1", "sha256:test", "cancelled")

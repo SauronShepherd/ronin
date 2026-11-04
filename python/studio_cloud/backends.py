@@ -12,7 +12,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
@@ -32,6 +32,8 @@ class EmulatorBackend(Protocol):
     def refresh(self) -> dict[str, object]: ...
 
     def destroy(self) -> dict[str, object]: ...
+
+    def state_list(self) -> dict[str, object]: ...
 
 
 @dataclass
@@ -54,6 +56,9 @@ class InMemoryBackend:
 
     def destroy(self) -> dict[str, object]:
         return self.emulator.destroy()
+
+    def state_list(self) -> dict[str, object]:
+        return {"returncode": 0, "stdout": ""}
 
 
 @dataclass
@@ -84,6 +89,9 @@ class HttpEmulatorBackend:
     def destroy(self) -> dict[str, object]:
         return {"status": "delegated", "backend": self.name}
 
+    def state_list(self) -> dict[str, object]:
+        return {"status": "unsupported", "backend": self.name}
+
     def health(self) -> dict[str, object]:
         result: dict[str, object] = {
             "backend": self.name,
@@ -100,6 +108,10 @@ class HttpEmulatorBackend:
             with urlopen(request, timeout=self.timeout_seconds) as response:  # noqa: S310
                 result["available"] = 200 <= response.status < 500
                 result["status_code"] = response.status
+        except HTTPError as exc:
+            exc.close()
+            result["available"] = 200 <= exc.code < 500
+            result["status_code"] = exc.code
         except (OSError, URLError, TimeoutError) as exc:
             result["error"] = str(exc)
         return result
@@ -150,7 +162,16 @@ class TerraformEmulatorBackend(HttpEmulatorBackend):
         root = Path(self.workspace_dir)
         root.mkdir(parents=True, exist_ok=True)
         (root / "main.tf").write_text(
-            terraform_provider_config(self) + "\n" + export_terraform(topology), encoding="utf-8"
+            "terraform {\n"
+            '  required_version = "= 1.13.5"\n'
+            "  required_providers {\n"
+            "    aws = {\n"
+            '      source  = "hashicorp/aws"\n'
+            '      version = "= 6.65.0"\n'
+            "    }\n"
+            "  }\n"
+            "}\n\n" + terraform_provider_config(self) + "\n" + export_terraform(topology),
+            encoding="utf-8",
         )
 
     def _ensure_initialized(self) -> None:
@@ -175,6 +196,10 @@ class TerraformEmulatorBackend(HttpEmulatorBackend):
     def destroy(self) -> dict[str, object]:
         self._ensure_initialized()
         return self._run("destroy", "-auto-approve", "-input=false", "-no-color")
+
+    def state_list(self) -> dict[str, object]:
+        self._ensure_initialized()
+        return self._run("state", "list", "-no-color")
 
 
 def terraform_provider_config(

@@ -47,7 +47,9 @@ def sanitize_sql_explain_text(value: str) -> str:
         raise ValueError("SQL explain text must be text")
     sanitized = _EXPLAIN_URL.sub("<external>", value)
     sanitized = _EXPLAIN_PATH.sub("<path>", sanitized)
-    return _EXPLAIN_SECRET.sub(lambda match: match.group(0).split("=")[0] + "=<redacted>", sanitized)
+    return _EXPLAIN_SECRET.sub(
+        lambda match: match.group(0).split("=")[0] + "=<redacted>", sanitized
+    )
 
 
 def normalize_sql_parameters(value: object) -> tuple[object, ...]:
@@ -121,10 +123,10 @@ def normalize_sql_parameters(value: object) -> tuple[object, ...]:
 
 
 def validate_read_only_select(sql: str) -> None:
-    """Enforce the supported statement subset on every SQL execution path.
+    """Enforce the supported user statement subset on every SQL execution path.
 
-    CTEs, VALUES and EXPLAIN can be added when the shared contract and all
-    exposed engines implement the same semantics.
+    EXPLAIN is exposed as a separate bounded metadata operation. Its wrapped
+    statement still has to pass this shared read-only SELECT contract.
     """
     if not sql or sql != sql.strip():
         raise SqlValidationError("SQL text must be non-empty and trimmed")
@@ -159,14 +161,16 @@ class SqlQueryResult:
 class SqlExplainResult:
     """Bounded, provider-neutral explain output.
 
-    Providers return already-sanitized textual plan rows. The contract never
-    exposes filesystem paths, credentials, or backend connection details.
+    Providers return sanitized textual plan rows. The contract never exposes
+    filesystem paths, credentials, or backend connection details.
     """
 
     rows: tuple[tuple[str, str], ...]
 
     def __post_init__(self) -> None:
-        if any(len(row) != 2 or any(not isinstance(value, str) for value in row) for row in self.rows):
+        if any(
+            len(row) != 2 or any(not isinstance(value, str) for value in row) for row in self.rows
+        ):
             raise ValueError("SQL explain rows must contain two text values")
 
 
@@ -196,6 +200,7 @@ class SqlEngine(Protocol):
         parameters: tuple[object, ...] = (),
         *,
         max_bytes: int = 262_144,
+        timeout_ms: int = 5_000,
     ) -> SqlExplainResult: ...
 
     def close(self) -> None: ...

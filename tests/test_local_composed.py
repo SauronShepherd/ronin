@@ -28,12 +28,13 @@ from studio_core import (
 )
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import PostgresWorkflowHTTPAdapter, SqliteWorkflowHTTPAdapter
+from studio_lakehouse import write_parquet_rows
 from studio_ml import FeatureSpec, Lab
 from studio_ml.domain import PipelineIR
 from studio_ml.orchestration import JobStoreExecutionStore
 from studio_orchestrator import Instant
 from studio_server import LocalServerComposition
-from studio_sql import SqlTimeoutError
+from studio_sql import SqlExplainUnsupportedError, SqlTimeoutError
 from studio_storage import (
     ArtifactRef,
     LocalArtifactStore,
@@ -88,6 +89,27 @@ def _sql_request(
         connection.close()
 
 
+def _sql_explain_request(
+    address: tuple[str, int], project_id: str, sql: str, **limits: object
+) -> tuple[int, object]:
+    connection = http.client.HTTPConnection(*address, timeout=5)
+    body = json.dumps({"sql": sql, **limits}, separators=(",", ":"))
+    try:
+        connection.request(
+            "POST",
+            f"/v1/workspaces/workspace-1/projects/{project_id}/sql/explain",
+            body=body,
+            headers={
+                "Authorization": "Bearer control-token",
+                "Content-Type": "application/json",
+            },
+        )
+        response = connection.getresponse()
+        return response.status, json.loads(response.read().decode("utf-8"))
+    finally:
+        connection.close()
+
+
 def test_workflow_routes_are_not_mounted_for_incomplete_postgres_scheduler_store() -> None:
     assert (
         _workflow_reader_for_backend(
@@ -109,10 +131,24 @@ def test_workflow_routes_mount_for_complete_postgres_scheduler_store() -> None:
     assert isinstance(reader, PostgresWorkflowHTTPAdapter)
 
 
-def test_workflow_routes_use_the_complete_sqlite_scheduler_contract(tmp_path) -> None:
+def test_workflow_routes_are_not_mounted_for_incomplete_sqlite_scheduler_store(tmp_path) -> None:
     from studio_storage.bundle_workflow_import import SqliteWorkflowBundleImportStore
 
     store = SqliteWorkflowBundleImportStore(
+        tmp_path / "scheduler.sqlite3", migration_now="2026-10-17T00:00:00.000000Z"
+    )
+    assert (
+        _workflow_reader_for_backend(
+            store, now=Instant("2026-10-17T00:00:00.000000Z"), postgres_dsn=None
+        )
+        is None
+    )
+
+
+def test_workflow_routes_mount_for_complete_sqlite_scheduler_contract(tmp_path) -> None:
+    from studio_storage.scheduler_backfill import SchedulerBackfillStore
+
+    store = SchedulerBackfillStore(
         tmp_path / "scheduler.sqlite3", migration_now="2026-10-17T00:00:00.000000Z"
     )
     reader = _workflow_reader_for_backend(
@@ -155,10 +191,80 @@ def test_build_local_composed_from_env_creates_two_surface_composition(
     assert composition.control_plane_server.ingestion_adapter is not None
     assert composition.control_plane_server.durable_jobs is composition.job_server.application
     assert composition.control_plane_server.alert_reader is not None
+    assert composition.control_plane_server.streaming_health_reader is not None
+    assert composition.control_plane_server.streaming_runner is not None
+    assert composition.control_plane_server.workflow_reader is not None
+    assert (
+        composition.control_plane_server.workflow_runner
+        is composition.control_plane_server.workflow_reader
+    )
+    assert composition.control_plane_server.workflow_canceller is not None
     workspace = composition.control_plane_server.workspace_service.get(WorkspaceId("workspace-1"))
     assert workspace.name == "Local workspace"
     assert composition.control_plane_server.plugin_routes_enabled
     composition.stop()
+
+
+def test_local_composed_data_engineering_health_and_debugger_routes_are_live(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    composition = build_local_composed_from_env()
+    server = composition.control_plane_server
+    assert composition.plugin_host is not None
+    assert composition.plugin_host.resolve_route("GET", "/v1/data-engineering/health") is not None
+
+    def request(method: str, path: str, body: object | None = None) -> tuple[int, object]:
+        connection = http.client.HTTPConnection(*server.server_address, timeout=5)
+        payload = None if body is None else json.dumps(body).encode("utf-8")
+        headers = {"Authorization": "Bearer control-token"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
+        try:
+            connection.request(method, path, body=payload, headers=headers)
+            response = connection.getresponse()
+            return response.status, json.loads(response.read().decode("utf-8"))
+        finally:
+            connection.close()
+
+    try:
+        composition.start()
+        health_status, health = request(
+            "GET", "/v1/data-engineering/health?workspace_id=workspace-1"
+        )
+        assert health_status == 200, health
+        assert health["status"] == "ready"
+
+        missing_stream_status, missing_stream = request(
+            "GET", "/v1/workspaces/workspace-1/streams/not-configured/health"
+        )
+        assert missing_stream_status == 404, missing_stream
+        assert missing_stream["error"]["code"] == "not_found"
+
+        create_status, created = request(
+            "POST",
+            "/v1/data-engineering/debugger/sessions?workspace_id=workspace-1",
+            {
+                "session_id": "local-composed-debug",
+                "cells": [{"cell_id": "cell-1", "source": "SELECT 1"}],
+            },
+        )
+        assert create_status == 200, created
+        assert created["session_id"] == "local-composed-debug"
+        assert created["cells"][0]["cell_id"] == "cell-1"
+
+        breakpoint_status, breakpoint = request(
+            "POST",
+            "/v1/data-engineering/debugger/sessions/local-composed-debug/breakpoints/cell-1?workspace_id=workspace-1",
+            {},
+        )
+        assert breakpoint_status == 200, breakpoint
+        assert breakpoint["cells"][0]["breakpoint"] is True
+    finally:
+        composition.stop()
 
 
 def test_local_composed_sql_route_executes_scoped_queries_and_closes_engine(
@@ -201,6 +307,46 @@ def test_local_composed_sql_route_executes_scoped_queries_and_closes_engine(
         assert result["rows"] == [[1], [2]]
         assert result["row_count"] == 2
 
+        parquet_path = tmp_path / "registered-events.parquet"
+        write_parquet_rows(parquet_path, ({"id": 1}, {"id": 2}))
+        from studio_semantic import semantic_project_scope
+
+        engine.register_parquet(
+            semantic_project_scope("workspace-1", "project-1"),
+            "registered_events",
+            str(parquet_path),
+        )
+        status, explained = _sql_explain_request(
+            server.server_address,
+            "project-1",
+            "SELECT id FROM registered_events WHERE id = ?",
+            parameters=[2],
+        )
+        assert status == 200
+        assert explained["rows"]
+        assert explained["max_bytes"] == 262_144
+        assert str(parquet_path) not in json.dumps(explained)
+
+        status, unavailable_explain = _sql_explain_request(
+            server.server_address, "project-1", "SELECT * FROM not_registered"
+        )
+        assert status == 404
+        assert unavailable_explain["error"]["code"] == "sql_relation_unavailable"
+        status, unavailable_query = _sql_request(
+            server.server_address, "project-1", "SELECT * FROM not_registered"
+        )
+        assert status == 404
+        assert unavailable_query["error"]["code"] == "sql_relation_unavailable"
+
+        status, explain_too_large = _sql_explain_request(
+            server.server_address,
+            "project-1",
+            "SELECT id FROM registered_events",
+            max_bytes=1,
+        )
+        assert status == 413
+        assert explain_too_large["error"]["code"] == "sql_result_too_large"
+
         status, typed = _sql_request(
             server.server_address, "project-1", "SELECT CAST(12.34 AS DECIMAL(5, 2)) AS amount"
         )
@@ -222,6 +368,9 @@ def test_local_composed_sql_route_executes_scoped_queries_and_closes_engine(
             def query(self, _project_id: str, _body: object) -> dict[str, object]:
                 raise SqlTimeoutError("SQL query exceeded its execution time limit")
 
+            def explain(self, _project_id: str, _body: object) -> dict[str, object]:
+                raise SqlTimeoutError("SQL query exceeded its execution time limit")
+
             def close(self) -> None:
                 return None
 
@@ -233,9 +382,70 @@ def test_local_composed_sql_route_executes_scoped_queries_and_closes_engine(
             assert timed_out["error"]["message"] == "SQL query exceeded its execution time limit"
         finally:
             server.sql_reader = original_reader
+
+        class UnsupportedSqlReader:
+            def query(self, _project_id: str, _body: object) -> dict[str, object]:
+                return {}
+
+            def explain(self, _project_id: str, _body: object) -> dict[str, object]:
+                raise SqlExplainUnsupportedError("unsupported")
+
+            def close(self) -> None:
+                return None
+
+        server.sql_reader = UnsupportedSqlReader()
+        try:
+            status, unsupported = _sql_explain_request(
+                server.server_address, "project-1", "SELECT 1"
+            )
+            assert status == 501
+            assert unsupported["error"]["code"] == "sql_explain_unsupported"
+        finally:
+            server.sql_reader = original_reader
     finally:
         composition.stop()
     assert engine._closed
+
+
+def test_local_composed_migration_route_is_authenticated_and_persists_sessions(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    path = "/v1/workspaces/workspace-1/projects/project-1/migration/sessions"
+    composition = build_local_composed_from_env()
+    try:
+        composition.start()
+        connection = http.client.HTTPConnection(*composition.job_server.server_address, timeout=5)
+        connection.request(
+            "POST",
+            path,
+            body="{}",
+            headers={"Authorization": "Bearer job-token", "Content-Type": "application/json"},
+        )
+        created_response = connection.getresponse()
+        created = json.loads(created_response.read().decode("utf-8"))
+        connection.close()
+        assert created_response.status == 201, created
+        assert created["workspace_id"] == "workspace-1"
+
+        composition.stop()
+        restarted = build_local_composed_from_env()
+        try:
+            restarted.start()
+            connection = http.client.HTTPConnection(*restarted.job_server.server_address, timeout=5)
+            connection.request("GET", path, headers={"Authorization": "Bearer job-token"})
+            listed_response = connection.getresponse()
+            listed = json.loads(listed_response.read().decode("utf-8"))
+            connection.close()
+            assert listed_response.status == 200, listed
+            assert [item["id"] for item in listed["items"]] == [created["id"]]
+        finally:
+            restarted.stop()
+    finally:
+        composition.stop()
 
 
 def test_local_composition_injects_the_shared_durable_job_service(

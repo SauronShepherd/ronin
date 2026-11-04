@@ -18,7 +18,11 @@ from studio_core import (
 )
 from studio_orchestrator import Instant
 from studio_storage import PostgresMetadataStore
-from studio_storage.catalog import CatalogAssetNotFound, CatalogConflict
+from studio_storage.catalog import (
+    CatalogAssetNotFound,
+    CatalogConflict,
+    LineageLimitExceeded,
+)
 
 _DSN = os.environ.get("RONIN_TEST_POSTGRES_DSN")
 if not _DSN:
@@ -127,11 +131,18 @@ def test_postgres_catalog_assets_governance_revisions_and_lineage() -> None:
             )
 
         edge = LineageEdge(source_revision.ref, target_revision.ref, "transform", "declared")
+        observed_edge = LineageEdge(source_revision.ref, target_revision.ref, "read", "observed")
         assert store.put_lineage(workspace.id, edge, now=_NOW) == edge
         assert store.put_lineage(workspace.id, edge, now=_NOW) == edge
-        assert store.list_lineage(workspace.id) == (edge,)
-        assert store.upstream(workspace.id, target_revision.ref) == (edge,)
-        assert store.downstream(workspace.id, source_revision.ref) == (edge,)
+        assert store.put_lineage(workspace.id, observed_edge, now=_NOW) == observed_edge
+        ordered_edges = tuple(sorted((edge, observed_edge), key=lambda item: item.digest))
+        assert store.list_lineage(workspace.id) == ordered_edges
+        assert store.upstream(workspace.id, target_revision.ref) == ordered_edges
+        assert store.downstream(workspace.id, source_revision.ref) == ordered_edges
+        with pytest.raises(LineageLimitExceeded, match="exceeds requested limit of 1"):
+            store.upstream(workspace.id, target_revision.ref, limit=1)
+        with pytest.raises(LineageLimitExceeded, match="exceeds requested limit of 1"):
+            store.downstream(workspace.id, source_revision.ref, limit=1)
         for invalid in (0, 10_001):
             with pytest.raises(ValueError, match="lineage limit"):
                 store.list_lineage(workspace.id, limit=invalid)

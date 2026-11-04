@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import hashlib
 import http.client
 import json
+import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from threading import Thread
 
+from ronin_plugin_performance.plugin import PerformancePlugin
 from studio_connectors import (
     ArtifactDestinationWriter,
     ConnectorRegistry,
@@ -34,18 +38,35 @@ from studio_core import (
     Project,
     ProjectId,
     ProjectManifest,
+    QualityResult,
+    QualityRuleId,
+    QualityRun,
+    QualityRunId,
     RepositoryBinding,
     RuntimeProfileRef,
+    Schedule,
+    ScheduleId,
     SensitivityMetadata,
     SourceCheckpoint,
+    WorkflowId,
+    WorkflowRunId,
     Workspace,
     WorkspaceId,
 )
 from studio_core.plugins import PluginManager, PluginRecord
 from studio_execution import DurableExecutionService, ProjectService, WorkspaceService
+from studio_notebook import (
+    CellIdentityAnchor,
+    Notebook,
+    NotebookCell,
+    NotebookDocument,
+    ProjectNotebookHTTPAdapter,
+    allocate_cell_ids,
+)
 from studio_orchestrator import AttemptId, Instant, LeaseToken
 from studio_plugin_observability import LocalObservabilityBuffer, LoggingPlugin, MonitoringPlugin
 from studio_plugin_workspaces import WorkspacesPlugin
+from studio_quality.service import QualityExecutionBlocked
 from studio_runtime import PluginHost
 from studio_security import Actor, PolicyDecision, Principal, PrincipalId
 from studio_server import (
@@ -54,8 +75,9 @@ from studio_server import (
     WorkspaceProjectHTTPServer,
 )
 from studio_server.http import DurableHTTPApplication
-from studio_storage import LocalArtifactStore, SqliteJobStore
-from studio_storage.catalog import SqliteCatalogStore
+from studio_storage import BundleFile, LocalArtifactStore, SqliteJobStore, write_bundle
+from studio_storage.catalog import LineageLimitExceeded, SqliteCatalogStore
+from studio_storage.scheduler_schedule import ScheduleFire
 from studio_storage.workspaces import SqliteWorkspaceStore
 from studio_synthetic_data.plugin import SyntheticDataStudioPlugin
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
@@ -65,6 +87,56 @@ _WS_B = WorkspaceId("workspace-b")
 _WS_C = WorkspaceId("workspace-c")
 _PROJECT = ProjectId("project-1")
 _NOW = "2026-09-14T08:45:00.000000Z"
+
+
+def test_control_plane_access_logs_ok_warn_and_error_with_redacted_correlation(
+    caplog,
+) -> None:
+    class FailingCatalog(_CatalogGovernance):
+        def list_assets_page(self, workspace_id, *, limit=50, cursor=None):
+            del workspace_id, limit, cursor
+            raise RuntimeError("database password=fixture-secret")
+
+    caplog.set_level(logging.INFO, logger="studio_server.http.access")
+    with _server(_Store(), _Authorizer(), catalog_reader=FailingCatalog()) as address:
+        connection = http.client.HTTPConnection(*address, timeout=10)
+        connection.request("GET", "/v1/workspaces", headers={"Authorization": "Bearer good"})
+        response = connection.getresponse()
+        success_request_id = response.getheader("X-Ronin-Request-Id")
+        assert response.status == 200
+        response.read()
+        connection.close()
+
+        unauthorized_status, _ = _request(address, "GET", "/v1/workspaces", authorization=None)
+        invalid_status, _ = _request(address, "GET", "/v1/workspaces?limit=101")
+        error_status, error_payload = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/catalog/assets",
+        )
+
+    assert unauthorized_status == 401
+    assert invalid_status == 400
+    assert error_status == 500
+    assert error_payload["error"]["code"] == "internal_error"
+    assert "fixture-secret" not in json.dumps(error_payload)
+
+    records = [record for record in caplog.records if record.name == "studio_server.http.access"]
+    events = [json.loads(record.getMessage()) for record in records]
+    assert {event["status_code"] for event in events} == {200, 400, 401, 500}
+    assert {event["outcome"] for event in events} == {"OK", "WARN", "ERROR"}
+    assert {event["level"] for event in events} == {"INFO", "WARNING", "ERROR"}
+    assert all(event["event"] == "http.request" for event in events)
+    assert {event["route"] for event in events} == {
+        "/v1/workspaces",
+        "/v1/workspaces/{workspace_id}",
+    }
+    assert all(event["request_id"].startswith("req-") for event in events)
+    assert any(event["request_id"] == success_request_id for event in events)
+    assert all(isinstance(event["response_bytes"], int) for event in events)
+    assert "Bearer good" not in caplog.text
+    assert "workspace-a" not in caplog.text
+    assert "fixture-secret" not in caplog.text
 
 
 class _Store:
@@ -77,7 +149,7 @@ class _Store:
         self.calls[name] = self.calls.get(name, 0) + 1
 
     def create_workspace(self, workspace, *, now):
-        del now
+        Instant(str(now))
         self._called("create_workspace")
         self.workspaces[workspace.id] = workspace
         return workspace
@@ -89,19 +161,19 @@ class _Store:
         return tuple(sorted(self.workspaces.values(), key=lambda item: item.id.value))
 
     def update_workspace(self, workspace, *, now):
-        del now
+        Instant(str(now))
         self._called("update_workspace")
         self.workspaces[workspace.id] = workspace
         return workspace
 
     def register_project(self, workspace_id, manifest, *, now):
-        del now
+        Instant(str(now))
         self._called("register_project")
         self.projects[(workspace_id, manifest.project.id)] = manifest
         return manifest
 
     def replace_project(self, workspace_id, manifest, *, now):
-        del now
+        Instant(str(now))
         self._called("replace_project")
         self.projects[(workspace_id, manifest.project.id)] = manifest
         return manifest
@@ -311,6 +383,8 @@ class _CatalogGovernance:
         self.assets = {}
         self.last_asset_limit = None
         self.last_asset_cursor = None
+        self.last_lineage_limit = None
+        self.overflow_lineage = False
 
     def list_assets(self, workspace_id, *, limit=None):
         del workspace_id
@@ -353,12 +427,18 @@ class _CatalogGovernance:
         self.assets[(workspace_id, asset.id)] = asset
         return asset
 
-    def upstream(self, workspace_id, ref):
+    def upstream(self, workspace_id, ref, *, limit=100):
         del workspace_id
+        self.last_lineage_limit = limit
+        if self.overflow_lineage:
+            raise LineageLimitExceeded(f"lineage result exceeds requested limit of {limit}")
         return (_LineagePayload({"direction": "upstream", "asset_id": str(ref.asset_id)}),)
 
-    def downstream(self, workspace_id, ref):
+    def downstream(self, workspace_id, ref, *, limit=100):
         del workspace_id
+        self.last_lineage_limit = limit
+        if self.overflow_lineage:
+            raise LineageLimitExceeded(f"lineage result exceeds requested limit of {limit}")
         return (_LineagePayload({"direction": "downstream", "asset_id": str(ref.asset_id)}),)
 
 
@@ -438,8 +518,14 @@ def _server(
     catalog_reader=None,
     feature_definition_service=None,
     data_engineering_reader=None,
+    streaming_health_reader=None,
+    streaming_runner=None,
     ingestion_adapter=None,
     durable_jobs=None,
+    default_workspace_id: WorkspaceId | None = None,
+    notebook_reader=None,
+    quality_reader=None,
+    semantic_reader=None,
 ) -> Iterator[tuple[str, int]]:
     server = WorkspaceProjectHTTPServer(
         ("127.0.0.1", 0),
@@ -458,9 +544,15 @@ def _server(
         catalog_reader=catalog_reader,
         feature_definition_service=feature_definition_service,
         data_engineering_reader=data_engineering_reader,
+        streaming_health_reader=streaming_health_reader,
+        streaming_runner=streaming_runner,
         ingestion_adapter=ingestion_adapter,
         durable_jobs=durable_jobs,
-        request_timeout_seconds=1.0,
+        default_workspace_id=default_workspace_id,
+        notebook_reader=notebook_reader,
+        quality_reader=quality_reader,
+        semantic_reader=semantic_reader,
+        request_timeout_seconds=5.0,
     )
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -482,7 +574,10 @@ def _request(
     authorization: str | None = "Bearer good",
     headers: dict[str, str] | None = None,
 ) -> tuple[int, dict[str, object]]:
-    conn = http.client.HTTPConnection(*address, timeout=3)
+    # The server fixture allows five seconds for a service call. Leave extra
+    # time for a busy Windows host to schedule the handler before the client
+    # closes the socket and turns a slow-but-valid response into a reset.
+    conn = http.client.HTTPConnection(*address, timeout=10)
     request_headers = dict(headers or {})
     if authorization is not None:
         request_headers["Authorization"] = authorization
@@ -498,6 +593,785 @@ def _request(
 
 def _json_body(value: object) -> bytes:
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+
+
+def test_semantic_bundle_http_export_review_import_integrity_and_authorization(tmp_path) -> None:
+    from studio_semantic import (
+        DashboardDefinition,
+        DashboardTile,
+        MetricQuery,
+        SemanticHTTPAdapter,
+        SemanticMeasure,
+        SemanticModel,
+        SemanticRuntime,
+        SqliteSemanticStore,
+    )
+
+    class NoopEngine:
+        def execute(self, _sql, _parameters=(), *, _max_rows=10_000):
+            raise AssertionError("Bundle import/export must not execute SQL")
+
+    semantic_store = SqliteSemanticStore(tmp_path / "semantic.sqlite")
+    semantic_reader = SemanticHTTPAdapter(semantic_store, SemanticRuntime(NoopEngine()))
+    source_scope = f"{len(str(_WS_A))}:{_WS_A}source"
+    target_scope = f"{len(str(_WS_A))}:{_WS_A}target/project"
+    other_workspace_scope = f"{len(str(_WS_B))}:{_WS_B}target/project"
+    semantic_reader.put_model(
+        source_scope,
+        SemanticModel(
+            "sales", "Sales", "orders", measures=(SemanticMeasure("orders", "count"),)
+        ).to_payload(),
+    )
+    semantic_reader.put_dashboard(
+        source_scope,
+        DashboardDefinition(
+            "overview",
+            "Overview",
+            (DashboardTile("orders", "Orders", "number", MetricQuery("sales", ("orders",))),),
+        ).to_payload(),
+    )
+    audit_events: list[tuple[str, dict[str, object]]] = []
+
+    def audit(_actor, action, _workspace_id, metadata):
+        audit_events.append((action, metadata))
+        return True
+
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    store.projects[(_WS_A, _PROJECT)] = _manifest()
+    store.workspaces[_WS_B] = Workspace(_WS_B, "B")
+    other_project_id = ProjectId("target/project")
+    store.projects[(_WS_B, other_project_id)] = _manifest("Other project", other_project_id)
+    semantic_reader.put_model(
+        other_workspace_scope,
+        SemanticModel("private", "B only", "private_table").to_payload(),
+    )
+    source_path = f"/v1/workspaces/{_WS_A}/projects/source/semantic/bundle"
+    target_path = f"/v1/workspaces/{_WS_A}/projects/target%2Fproject/semantic/bundle"
+    with _server(
+        store,
+        _Authorizer(),
+        semantic_reader=semantic_reader,
+        audit_mutation=audit,
+    ) as address:
+        status, exported = _request(address, "GET", source_path)
+        assert status == 200, exported
+        archive = base64.b64decode(exported["content_base64"], validate=True)
+        digest = hashlib.sha256(archive).hexdigest()
+        assert exported["digest"] == digest
+        assert exported["size_bytes"] == len(archive)
+
+        status, plan = _request(
+            address,
+            "POST",
+            f"{target_path}/plan",
+            body=_json_body({"content_base64": base64.b64encode(archive).decode("ascii")}),
+        )
+        assert status == 200, plan
+        assert plan["bundle_digest"] == digest
+        assert [item["id"] for item in plan["models"]] == ["sales"]
+        assert [item["id"] for item in plan["dashboards"]] == ["overview"]
+
+        request_body = {
+            "content_base64": base64.b64encode(archive).decode("ascii"),
+            "expected_digest": digest,
+        }
+        status, imported = _request(
+            address, "POST", f"{target_path}/import", body=_json_body(request_body)
+        )
+        assert status == 200, imported
+        assert imported["bundle_digest"] == digest
+        assert [item["id"] for item in semantic_reader.list_models(target_scope)["items"]] == [
+            "sales"
+        ]
+        assert [item["id"] for item in semantic_reader.list_dashboards(target_scope)["items"]] == [
+            "overview"
+        ]
+        status, replayed = _request(
+            address, "POST", f"{target_path}/import", body=_json_body(request_body)
+        )
+        assert status == 200, replayed
+        assert replayed["bundle_digest"] == digest
+        assert audit_events == [
+            ("semantic.bundle.import", {"bundle_digest": digest, "size_bytes": len(archive)}),
+            ("semantic.bundle.import", {"bundle_digest": digest, "size_bytes": len(archive)}),
+        ]
+
+        status, mismatch = _request(
+            address,
+            "POST",
+            f"{target_path}/import",
+            body=_json_body({**request_body, "expected_digest": "0" * 64}),
+        )
+        assert status == 400
+        assert mismatch["error"]["code"] == "invalid_request"
+        assert len(audit_events) == 2
+
+        oversized_archive = base64.b64encode(b"x" * (700 * 1024 + 1)).decode("ascii")
+        status, oversized = _request(
+            address,
+            "POST",
+            f"{target_path}/plan",
+            body=_json_body({"content_base64": oversized_archive}),
+        )
+        assert status == 413
+        assert oversized["error"]["code"] == "semantic_bundle_too_large"
+
+        from studio_semantic.bundle import export_semantic_bundle
+
+        semantic_store.put_model(
+            f"{len(str(_WS_A))}:{_WS_A}conflicting-source",
+            SemanticModel("sales", "Different Sales", "orders"),
+        )
+        conflicting_archive_path = tmp_path / "conflicting.roninbundle"
+        export_semantic_bundle(
+            f"{len(str(_WS_A))}:{_WS_A}conflicting-source",
+            semantic_store,
+            conflicting_archive_path,
+        )
+        conflicting_archive = conflicting_archive_path.read_bytes()
+        conflicting_request = {
+            "content_base64": base64.b64encode(conflicting_archive).decode("ascii"),
+            "expected_digest": hashlib.sha256(conflicting_archive).hexdigest(),
+        }
+        status, conflict = _request(
+            address, "POST", f"{target_path}/import", body=_json_body(conflicting_request)
+        )
+        assert status == 409
+        assert conflict["error"]["code"] == "semantic_bundle_conflict"
+        assert len(semantic_reader.list_dashboards(target_scope)) == 1
+
+        dashboard_path_a = (
+            f"/v1/workspaces/{_WS_A}/projects/target%2Fproject/semantic/dashboards/tenant"
+        )
+        dashboard_path_b = (
+            f"/v1/workspaces/{_WS_B}/projects/target%2Fproject/semantic/dashboards/tenant"
+        )
+        dashboard_a = {
+            "id": "tenant",
+            "name": "A dashboard",
+            "tiles": [
+                {
+                    "id": "orders",
+                    "title": "Orders",
+                    "chart": "number",
+                    "query": {
+                        "model_id": "sales",
+                        "measures": ["orders"],
+                        "dimensions": [],
+                        "filters": [],
+                        "limit": 10,
+                    },
+                }
+            ],
+        }
+        dashboard_b = {
+            **dashboard_a,
+            "name": "B dashboard",
+            "tiles": [
+                {
+                    **dashboard_a["tiles"][0],
+                    "query": {**dashboard_a["tiles"][0]["query"], "model_id": "private"},
+                }
+            ],
+        }
+        status, _ = _request(address, "PUT", dashboard_path_a, body=_json_body(dashboard_a))
+        assert status == 200
+        status, _ = _request(address, "PUT", dashboard_path_b, body=_json_body(dashboard_b))
+        assert status == 200
+
+        status, workspace_a_models = _request(
+            address, "GET", f"/v1/workspaces/{_WS_A}/projects/target%2Fproject/semantic/models"
+        )
+        assert status == 200
+        assert [item["id"] for item in workspace_a_models["items"]] == ["sales"]
+        status, workspace_b_models = _request(
+            address, "GET", f"/v1/workspaces/{_WS_B}/projects/target%2Fproject/semantic/models"
+        )
+        assert status == 200
+        assert [item["id"] for item in workspace_b_models["items"]] == ["private"]
+        status, workspace_a_dashboards = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/projects/target%2Fproject/semantic/dashboards",
+        )
+        assert status == 200
+        assert {item["id"] for item in workspace_a_dashboards["items"]} == {
+            "overview",
+            "tenant",
+        }
+        status, workspace_b_dashboards = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_B}/projects/target%2Fproject/semantic/dashboards",
+        )
+        assert status == 200
+        assert [item["name"] for item in workspace_b_dashboards["items"]] == ["B dashboard"]
+
+        denied = _Authorizer(allowed={(str(_WS_A), "project.read")})
+        with _server(store, denied, semantic_reader=semantic_reader) as denied_address:
+            status, forbidden = _request(
+                denied_address,
+                "POST",
+                f"{target_path}/import",
+                body=_json_body(request_body),
+            )
+        assert status == 403
+        assert forbidden["error"]["code"] == "forbidden"
+
+
+def test_semantic_dashboard_execution_http_runs_bounded_project_scoped_sql(tmp_path) -> None:
+    from urllib.parse import quote
+
+    import pytest
+
+    pytest.importorskip("pyarrow")
+    from studio_lakehouse import write_parquet_rows
+    from studio_semantic import (
+        DashboardDefinition,
+        DashboardTile,
+        MetricQuery,
+        ProjectScopedSemanticRuntime,
+        SemanticDimension,
+        SemanticHTTPAdapter,
+        SemanticMeasure,
+        SemanticModel,
+        SqliteSemanticStore,
+        semantic_project_scope,
+    )
+    from studio_sql import ProjectScopedDuckDbSqlEngine, SqlQueryResult
+
+    class RecordingDuckDbEngine(ProjectScopedDuckDbSqlEngine):
+        def __init__(self, parquet_root: Path) -> None:
+            super().__init__(parquet_root=parquet_root)
+            self.queries = 0
+
+        def execute(
+            self,
+            project: str,
+            sql: str,
+            parameters: tuple[object, ...] = (),
+            *,
+            max_rows: int = 10_000,
+            timeout_ms: int = 5_000,
+            max_result_bytes: int = 1_048_576,
+        ) -> SqlQueryResult:
+            self.queries += 1
+            return super().execute(
+                project,
+                sql,
+                parameters,
+                max_rows=max_rows,
+                timeout_ms=timeout_ms,
+                max_result_bytes=max_result_bytes,
+            )
+
+    semantic_scope = semantic_project_scope(str(_WS_A), str(_PROJECT))
+    parquet_root = tmp_path / "sql-parquet"
+    parquet = parquet_root / quote(semantic_scope, safe="") / "orders.parquet"
+    write_parquet_rows(
+        parquet,
+        (
+            {"country": "ES", "amount": 5},
+            {"country": "US", "amount": 7},
+        ),
+    )
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    store.projects[(_WS_A, _PROJECT)] = _manifest()
+    semantic_store = SqliteSemanticStore(tmp_path / "semantic.sqlite")
+    model = SemanticModel(
+        "sales",
+        "Sales",
+        "orders",
+        (SemanticDimension("country", "country"),),
+        (SemanticMeasure("revenue", "sum", "amount"),),
+    )
+    dashboard = DashboardDefinition(
+        "overview",
+        "Overview",
+        (
+            DashboardTile(
+                "revenue_by_country",
+                "Revenue by country",
+                "bar",
+                MetricQuery("sales", ("revenue",), ("country",), limit=10),
+            ),
+        ),
+    )
+    semantic_store.put_model(semantic_scope, model)
+    semantic_store.put_dashboard(semantic_scope, dashboard)
+    too_many_tiles = DashboardDefinition(
+        "too_many",
+        "Too many tiles",
+        tuple(
+            DashboardTile(
+                f"tile_{index}",
+                f"Tile {index}",
+                "number",
+                MetricQuery("sales", ("revenue",), limit=1),
+            )
+            for index in range(13)
+        ),
+    )
+    semantic_store.put_dashboard(semantic_scope, too_many_tiles)
+
+    with RecordingDuckDbEngine(parquet_root) as engine:
+        semantic_reader = SemanticHTTPAdapter(semantic_store, ProjectScopedSemanticRuntime(engine))
+        with _server(store, _Authorizer(), semantic_reader=semantic_reader) as address:
+            status, result = _request(
+                address,
+                "POST",
+                f"/v1/workspaces/{_WS_A}/projects/{_PROJECT}/semantic/dashboards/overview/execute",
+            )
+            assert engine.queries == 1
+            status_limit, limit_error = _request(
+                address,
+                "POST",
+                f"/v1/workspaces/{_WS_A}/projects/{_PROJECT}/semantic/dashboards/too_many/execute",
+            )
+            assert status_limit == 400
+            assert limit_error["error"]["code"] == "invalid_request"
+            assert engine.queries == 1
+
+    assert status == 200, result
+    assert result["dashboard_id"] == "overview"
+    assert result["tiles"] == [
+        {
+            "tile_id": "revenue_by_country",
+            "columns": [
+                {"name": "country", "type": "VARCHAR"},
+                {"name": "revenue", "type": "HUGEINT"},
+            ],
+            "rows": [["ES", 5], ["US", 7]],
+        }
+    ]
+
+
+def test_notebook_http_routes_create_read_save_and_list_revision_history() -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    store.projects[(_WS_A, _PROJECT)] = _manifest()
+    notebook_reader = ProjectNotebookHTTPAdapter()
+    notebook_id = "http-notebook"
+    anchor = CellIdentityAnchor("authoring", f"{_PROJECT}/notebooks/{notebook_id}", "cell-1")
+    cell_id = allocate_cell_ids((anchor,))[0]
+
+    def document(source: str) -> dict[str, object]:
+        cell = NotebookCell(cell_id, "code", source, language="python")
+        return NotebookDocument(Notebook((cell,)), (anchor,)).to_data()
+
+    base_path = f"/v1/workspaces/{_WS_A}/projects/{_PROJECT}/notebooks"
+    with _server(store, _Authorizer(), notebook_reader=notebook_reader) as address:
+        status, created = _request(
+            address,
+            "POST",
+            base_path,
+            body=_json_body({"id": notebook_id, "document": document("print('v1')")}),
+        )
+        assert status == 201
+        assert created["revision"] == 1
+
+        status, loaded = _request(address, "GET", f"{base_path}/{notebook_id}")
+        assert status == 200, loaded
+        assert loaded["revision"] == 1
+
+        status, saved = _request(
+            address,
+            "PUT",
+            f"{base_path}/{notebook_id}",
+            body=_json_body({"expected_revision": 1, "document": document("print('v2')")}),
+        )
+        assert status == 200
+        assert saved["revision"] == 2
+        assert saved["document"] == document("print('v2')")
+
+        status, history = _request(address, "GET", f"{base_path}/{notebook_id}/revisions")
+        assert status == 200
+        assert [item["revision"] for item in history["items"]] == [1, 2]
+
+        status, deleted = _request(
+            address,
+            "DELETE",
+            f"{base_path}/{notebook_id}",
+            headers={"If-Match": "2"},
+        )
+        assert status == 200
+        assert deleted == {"deleted": True, "id": notebook_id}
+
+        status, listed = _request(address, "GET", base_path)
+        assert status == 200
+        assert listed["items"] == []
+
+
+def test_stream_health_translates_broker_timeout_to_redacted_service_unavailable() -> None:
+    class _UnavailableStreamingReader:
+        def health(self, workspace_id, stream_id):
+            del workspace_id, stream_id
+            raise TimeoutError("broker password=must-not-be-returned")
+
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    with _server(
+        store,
+        _Authorizer(),
+        streaming_health_reader=_UnavailableStreamingReader(),
+    ) as address:
+        status, body = _request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-a/streams/orders/health",
+        )
+
+    assert status == 503
+    assert body["error"]["code"] == "streaming_unavailable"
+    assert body["error"]["message"] == "Kafka broker health is unavailable"
+    assert "must-not-be-returned" not in json.dumps(body)
+
+
+def test_stream_run_requires_write_permission_and_returns_batch_receipt() -> None:
+    class _Runner:
+        def __init__(self):
+            self.calls = []
+
+        def run_once(self, workspace_id, stream_id, *, limit=None, timeout_seconds=None):
+            self.calls.append((workspace_id, stream_id, limit, timeout_seconds))
+            return {"stream_id": stream_id, "status": "succeeded", "records": 2, "rows": 2}
+
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    runner = _Runner()
+    authorizer = _Authorizer({(str(_WS_A), "workspace.write")})
+    with _server(store, authorizer, streaming_runner=runner) as address:
+        status, body = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/streams/events%2Fmain/run",
+            body=_json_body({"limit": 2, "timeout_seconds": 0}),
+        )
+
+    assert status == 200
+    assert body["status"] == "succeeded"
+    assert runner.calls == [(_WS_A, "events/main", 2, 0)]
+    assert [item.permission for item in authorizer.requirements] == ["workspace.write"]
+
+
+def test_stream_run_rejects_unrecognized_request_fields() -> None:
+    class _Runner:
+        def run_once(self, *_args, **_kwargs):
+            pytest.fail("runner must not be called for an invalid request")
+
+    import pytest
+
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    authorizer = _Authorizer({(str(_WS_A), "workspace.write")})
+    with _server(store, authorizer, streaming_runner=_Runner()) as address:
+        status, body = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/streams/events%2Fmain/run",
+            body=_json_body({"limit": 1, "unsafe": True}),
+        )
+
+    assert status == 400
+    assert body["error"]["code"] == "invalid_request"
+
+
+def test_stream_run_redacts_broker_failure_and_returns_service_unavailable() -> None:
+    from studio_streaming import StreamingRunUnavailable
+
+    class _Runner:
+        def run_once(self, *_args, **_kwargs):
+            raise StreamingRunUnavailable("broker password=must-not-be-returned")
+
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    authorizer = _Authorizer({(str(_WS_A), "workspace.write")})
+    with _server(store, authorizer, streaming_runner=_Runner()) as address:
+        status, body = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/streams/orders/run",
+            body=_json_body({}),
+        )
+
+    assert status == 503
+    assert body["error"]["code"] == "streaming_unavailable"
+    assert "must-not-be-returned" not in json.dumps(body)
+
+
+def test_stream_run_reports_poison_input_without_exposing_record_content() -> None:
+    from studio_streaming import StreamingInputRejected
+
+    class _Runner:
+        def run_once(self, *_args, **_kwargs):
+            raise StreamingInputRejected("poison password=must-not-be-returned")
+
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    authorizer = _Authorizer({(str(_WS_A), "workspace.write")})
+    with _server(store, authorizer, streaming_runner=_Runner()) as address:
+        status, body = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/streams/orders/run",
+            body=_json_body({"limit": 1}),
+        )
+
+    assert status == 422
+    assert body["error"]["code"] == "stream_input_rejected"
+    assert "checkpoint was not advanced" in body["error"]["message"]
+    assert "must-not-be-returned" not in json.dumps(body)
+    assert [item.permission for item in authorizer.requirements] == ["workspace.write"]
+
+
+def test_stream_definition_listing_uses_workspace_read_permission() -> None:
+    class _Runner:
+        def list_definitions(self, workspace_id):
+            return {"items": [{"id": "events/main", "workspace_id": str(workspace_id)}]}
+
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    authorizer = _Authorizer({(str(_WS_A), "workspace.read")})
+    with _server(store, authorizer, streaming_runner=_Runner()) as address:
+        status, body = _request(address, "GET", f"/v1/workspaces/{_WS_A}/streams")
+
+    assert status == 200
+    assert body["items"] == [{"id": "events/main", "workspace_id": str(_WS_A)}]
+    assert [item.permission for item in authorizer.requirements] == ["workspace.read"]
+
+
+def test_stream_bundle_api_export_plan_import_reset_and_resume_are_audited(tmp_path: Path) -> None:
+    from studio_streaming import (
+        KafkaStreamingRuntime,
+        SqliteStreamCheckpointStore,
+        StreamCheckpoint,
+        StreamDefinition,
+        StreamPosition,
+        StreamRuntimeBinding,
+        StreamSchemaField,
+        StreamSinkDefinition,
+        StreamSourceDefinition,
+    )
+
+    checkpoints = SqliteStreamCheckpointStore(tmp_path / "stream-bundles.sqlite")
+    definition = StreamDefinition(
+        "orders",
+        "Orders",
+        StreamSourceDefinition("kafka-source", "orders.v1", (0,)),
+        StreamSinkDefinition("table", "table.orders"),
+        (StreamSchemaField("event", "json", nullable=False),),
+        StreamRuntimeBinding("local", batch_limit=10, timeout_seconds=1),
+    )
+    checkpoints.commit_stream_bundle_import("workspace-a", (definition,), {"orders": "reset"})
+    runner = KafkaStreamingRuntime(
+        checkpoints,
+        lambda *_args: None,
+        lambda _reference: "unused",
+        tmp_path / "data",
+    )
+    audit_events = []
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    store.workspaces[_WS_B] = Workspace(_WS_B, "B")
+    authorizer = _Authorizer(
+        {
+            (str(_WS_A), "workspace.read"),
+            (str(_WS_B), "workspace.read"),
+            (str(_WS_B), "workspace.write"),
+        }
+    )
+    with _server(
+        store,
+        authorizer,
+        streaming_runner=runner,
+        audit_mutation=lambda *event: audit_events.append(event),
+    ) as address:
+        status, exported = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/streams/bundle",
+        )
+        assert status == 200
+        archive = base64.b64decode(exported["content_base64"], validate=True)
+        assert len(archive) == exported["size_bytes"]
+        assert hashlib.sha256(archive).hexdigest() == exported["digest"]
+
+        encoded = base64.b64encode(archive).decode("ascii")
+        status, plan = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_B}/streams/bundle/plan",
+            body=_json_body({"content_base64": encoded}),
+        )
+        assert status == 200
+        assert [item["id"] for item in plan["items"]] == ["orders"]
+        assert {item["source_ref"] for item in plan["unresolved_bindings"]} == {
+            "connection:kafka-source",
+            "runtime-profile:local",
+            "storage-target:table.orders",
+        }
+        remaps = {
+            "connection:kafka-source": "connection:kafka-target",
+            "runtime-profile:local": "runtime-profile:local",
+            "storage-target:table.orders": "storage-target:table.orders-imported",
+        }
+        request = {
+            "content_base64": encoded,
+            "binding_remaps": remaps,
+            "checkpoint_policies": {"orders": "reset"},
+            "expected_digest": plan["bundle_digest"],
+        }
+        status, imported = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_B}/streams/bundle/import",
+            body=_json_body(request),
+        )
+        assert status == 200
+        assert imported["bundle_digest"] == plan["bundle_digest"]
+        assert imported["checkpoint_policies"] == {"orders": "reset"}
+        imported_definition = checkpoints.get_definition("workspace-b", "orders")
+        assert imported_definition is not None
+        assert imported_definition.source.connection_id == "kafka-target"
+        assert imported_definition.sink.target_ref == "table.orders-imported"
+
+        runtime_id = checkpoints.runtime_stream_id("workspace-b", "orders")
+        advanced = StreamCheckpoint((StreamPosition(0, 17),))
+        assert checkpoints.compare_and_set(runtime_id, StreamCheckpoint(), advanced)
+        request["checkpoint_policies"] = {"orders": "resume"}
+        status, resumed = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_B}/streams/bundle/import",
+            body=_json_body(request),
+        )
+        assert status == 200
+        assert resumed["checkpoint_policies"] == {"orders": "resume"}
+        assert checkpoints.get(runtime_id) == advanced
+
+    assert [item.permission for item in authorizer.requirements] == [
+        "workspace.read",
+        "workspace.read",
+        "workspace.write",
+        "workspace.write",
+    ]
+    assert [event[1] for event in audit_events] == [
+        "stream.bundle.import",
+        "stream.bundle.import",
+    ]
+
+
+def test_stream_bundle_import_rejects_changed_plan_digest_before_mutation() -> None:
+    import pytest
+
+    class _Runner:
+        def import_bundle(self, *_args, **_kwargs):
+            pytest.fail("changed Bundle must not reach the importer")
+
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    authorizer = _Authorizer({(str(_WS_A), "workspace.write")})
+    with _server(store, authorizer, streaming_runner=_Runner()) as address:
+        status, body = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/streams/bundle/import",
+            body=_json_body(
+                {
+                    "content_base64": base64.b64encode(b"some archive").decode("ascii"),
+                    "binding_remaps": {},
+                    "checkpoint_policies": {},
+                    "expected_digest": "0" * 64,
+                }
+            ),
+        )
+
+    assert status == 400
+    assert body["error"]["message"] == "stream Bundle differs from the reviewed import plan"
+    assert [item.permission for item in authorizer.requirements] == ["workspace.write"]
+
+
+def test_stream_definition_put_requires_matching_path_and_explicit_offset_policy() -> None:
+    class _Runner:
+        def __init__(self):
+            self.calls = []
+
+        def put_definition(self, workspace_id, definition, *, checkpoint_policy):
+            self.calls.append((workspace_id, definition, checkpoint_policy))
+            return {
+                "definition": definition.to_payload(),
+                "checkpoint_policy": checkpoint_policy,
+            }
+
+    from studio_streaming import StreamDefinition
+
+    definition = {
+        "id": "events/main",
+        "name": "Events",
+        "source": {
+            "connection_id": "kafka-local",
+            "resource": "events",
+            "partitions": [0],
+            "format": "json",
+        },
+        "sink": {"kind": "table", "target_ref": "events-table", "mode": "append"},
+        "schema": [{"name": "event", "data_type": "json", "nullable": True}],
+        "runtime": {"profile_id": "local", "batch_limit": 10, "timeout_seconds": 1},
+    }
+    runner = _Runner()
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    authorizer = _Authorizer({(str(_WS_A), "workspace.write")})
+    with _server(store, authorizer, streaming_runner=runner) as address:
+        status, body = _request(
+            address,
+            "PUT",
+            f"/v1/workspaces/{_WS_A}/streams/events%2Fmain",
+            body=_json_body({"definition": definition, "checkpoint_policy": "reset"}),
+        )
+
+    assert status == 200
+    assert body["checkpoint_policy"] == "reset"
+    assert runner.calls == [(_WS_A, StreamDefinition.from_payload(definition), "reset")]
+    assert [item.permission for item in authorizer.requirements] == ["workspace.write"]
+
+
+def test_stream_definition_put_rejects_ambiguous_resume_conflict() -> None:
+    class _Runner:
+        def put_definition(self, *_args, **_kwargs):
+            from studio_streaming import StreamDefinitionConflict
+
+            raise StreamDefinitionConflict("private checkpoint details")
+
+    definition = {
+        "id": "events",
+        "name": "Events",
+        "source": {
+            "connection_id": "kafka-local",
+            "resource": "events",
+            "partitions": [0],
+            "format": "json",
+        },
+        "sink": {"kind": "table", "target_ref": "events-table", "mode": "append"},
+        "schema": [{"name": "event", "data_type": "json", "nullable": True}],
+        "runtime": {"profile_id": "local", "batch_limit": 10, "timeout_seconds": 1},
+    }
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    authorizer = _Authorizer({(str(_WS_A), "workspace.write")})
+    with _server(store, authorizer, streaming_runner=_Runner()) as address:
+        status, body = _request(
+            address,
+            "PUT",
+            f"/v1/workspaces/{_WS_A}/streams/events",
+            body=_json_body({"definition": definition, "checkpoint_policy": "resume"}),
+        )
+
+    assert status == 409
+    assert body["error"]["code"] == "stream_definition_conflict"
+    assert "private checkpoint details" not in json.dumps(body)
 
 
 def test_plugin_project_route_dispatches_after_authorization() -> None:
@@ -522,14 +1396,136 @@ def test_plugin_project_route_dispatches_after_authorization() -> None:
             plugin_host=host,
             plugin_routes_enabled=True,
         ) as address:
+            workspace_status, workspace_page = _request(address, "GET", "/v1/workspaces")
             status, payload = _request(
                 address,
                 "GET",
                 f"/v1/workspaces/{_WS_A}/projects?limit=1",
             )
+        assert workspace_status == 200
+        assert [item["id"] for item in workspace_page["items"]] == [str(_WS_A)]
         assert status == 200
         assert payload["items"][0]["project"]["id"] == str(_PROJECT)
         assert payload["next_cursor"] is None
+    finally:
+        manager.stop(plan)
+
+
+def test_plugin_workspace_creation_uses_configured_operator_write_scope() -> None:
+    store = _Store()
+    authorizer = _Authorizer({(str(_WS_A), "workspace.write")})
+    plugin = WorkspacesPlugin()
+    manager = PluginManager()
+    plan = manager.compose(
+        (PluginRecord(plugin.manifest, plugin, "test"),),
+        services={"workspace_service": WorkspaceService(store)},
+    )
+    host = PluginHost(manager, plan)
+    manager.start(plan)
+    try:
+        with _server(
+            store,
+            authorizer,
+            plugin_host=host,
+            plugin_routes_enabled=True,
+            default_workspace_id=_WS_A,
+        ) as address:
+            status, payload = _request(
+                address,
+                "POST",
+                "/v1/workspaces",
+                body=_json_body(
+                    {"id": "workspace-created", "name": "Created", "description": None}
+                ),
+                headers={"Idempotency-Key": "workspace-create-live"},
+            )
+        assert status == 201
+        assert payload["id"] == "workspace-created"
+        assert len(authorizer.requirements) == 1
+        assert authorizer.requirements[0].workspace_id == _WS_A
+        assert authorizer.requirements[0].permission == "workspace.write"
+        assert WorkspaceId("workspace-created") in store.workspaces
+    finally:
+        manager.stop(plan)
+
+
+def test_blocked_quality_run_is_a_domain_conflict_not_an_internal_error() -> None:
+    class BlockingQualityReader:
+        def run(self, workspace_id, payload, *, now):
+            assert workspace_id == _WS_A
+            assert payload["enforce_blocking"] is True
+            assert now
+            raise QualityExecutionBlocked(
+                QualityRun(
+                    QualityRunId("run-blocked"),
+                    AssetRef(AssetId("live-quality"), AssetVersion("v1")),
+                    "fixture-execution",
+                    (
+                        QualityResult(
+                            QualityRuleId("minimum-rows"),
+                            "failed",
+                            (),
+                            "blocking quality rule failed",
+                        ),
+                    ),
+                )
+            )
+
+    with _server(
+        _Store(),
+        _Authorizer(),
+        quality_reader=BlockingQualityReader(),
+    ) as address:
+        status, payload = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/quality/runs",
+            body=_json_body(
+                {
+                    "asset": {"asset_id": "live-quality", "version": "v1"},
+                    "rows": [{"id": 1}],
+                    "run_id": "run-blocked",
+                    "enforce_blocking": True,
+                }
+            ),
+        )
+
+    assert status == 409
+    assert payload == {
+        "error": {
+            "code": "quality_gate_blocked",
+            "message": "blocking quality rules failed",
+        }
+    }
+
+
+def test_performance_plugin_route_uses_local_workspace_read_permission() -> None:
+    store = _Store()
+    authorizer = _Authorizer({(str(_WS_A), "project.read")})
+    plugin = PerformancePlugin()
+    manager = PluginManager()
+    plan = manager.compose((PluginRecord(plugin.manifest, plugin, "test"),))
+    host = PluginHost(manager, plan)
+    manager.start(plan)
+    try:
+        with _server(
+            store,
+            authorizer,
+            plugin_host=host,
+            plugin_routes_enabled=True,
+            default_workspace_id=_WS_A,
+        ) as address:
+            status, payload = _request(
+                address,
+                "POST",
+                "/api/v1/performance/analyze",
+                body=_json_body({"run": {"run_id": "live", "stages": []}}),
+            )
+        assert status == 200
+        assert payload["run_id"] == "live"
+        assert len(authorizer.requirements) == 1
+        assert authorizer.requirements[0].workspace_id == _WS_A
+        assert authorizer.requirements[0].permission == "project.read"
     finally:
         manager.stop(plan)
 
@@ -1323,17 +2319,48 @@ def test_catalog_lineage_route_requires_explicit_supported_direction() -> None:
         status, payload = _request(
             address,
             "GET",
-            f"/v1/workspaces/{_WS_A}/catalog/lineage/asset-1/v1?direction=downstream",
+            f"/v1/workspaces/{_WS_A}/catalog/lineage/asset-1/v1?direction=downstream&limit=7",
         )
         assert status == 200
         assert payload == {"items": [{"direction": "downstream", "asset_id": "asset-1"}]}
+        assert catalog.last_lineage_limit == 7
         status, payload = _request(
             address,
             "GET",
             f"/v1/workspaces/{_WS_A}/catalog/lineage/asset-1/v1?direction=sideways",
         )
+        assert status == 400
+        assert payload["error"]["code"] == "invalid_request"
+        status, payload = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/catalog/lineage/asset-1/v1?limit=101",
+        )
     assert status == 400
     assert payload["error"]["code"] == "invalid_request"
+
+
+def test_catalog_lineage_route_rejects_partial_results_and_invalid_limits() -> None:
+    store = _Store()
+    catalog = _CatalogGovernance()
+    with _server(store, _Authorizer(), catalog_reader=catalog) as address:
+        for query in ("limit=abc", "limit=0", "limit=101", "limit=1&limit=2"):
+            status, payload = _request(
+                address,
+                "GET",
+                f"/v1/workspaces/{_WS_A}/catalog/lineage/asset-1/v1?{query}",
+            )
+            assert status == 400
+            assert payload["error"]["code"] == "invalid_request"
+
+        catalog.overflow_lineage = True
+        status, payload = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/catalog/lineage/asset-1/v1?direction=upstream&limit=1",
+        )
+    assert status == 413
+    assert payload["error"]["code"] == "lineage_limit_exceeded"
 
 
 def test_plugin_project_read_replace_delete_routes_use_project_port() -> None:
@@ -1462,6 +2489,63 @@ def test_scheduler_routes_list_start_read_and_cancel() -> None:
         assert payload == {"workflow_run_id": "run-1", "cancelled_jobs": 2}
 
 
+def test_schedule_history_and_next_runs_routes_match_their_declared_paths() -> None:
+    schedule = Schedule(ScheduleId("daily"), WorkflowId("workflow-1"), "0 0 * * *")
+
+    class ScheduleReader:
+        def list_schedules(self, workspace_id):
+            assert workspace_id == _WS_A
+            return (schedule,)
+
+        def get_schedule(self, workspace_id, schedule_id):
+            assert workspace_id == _WS_A
+            return schedule if schedule_id == schedule.id else None
+
+        def preview_schedule_next_runs(self, workspace_id, schedule_id, *, after, count=10):
+            assert workspace_id == _WS_A
+            assert schedule_id == schedule.id
+            assert Instant(after) == Instant(_NOW)
+            assert count == 2
+            return (Instant("2026-09-15T00:00:00.000000Z"),)
+
+        def list_schedule_fires(self, workspace_id, schedule_id):
+            assert workspace_id == _WS_A
+            assert schedule_id == schedule.id
+            return (
+                ScheduleFire(
+                    _WS_A,
+                    schedule.id,
+                    Instant("2026-09-14T00:00:00.000000Z"),
+                    WorkflowRunId("scheduled-run-1"),
+                ),
+            )
+
+    with _server(_Store(), _Authorizer(), ScheduleReader()) as address:
+        status, payload = _request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-a/schedules/daily/next-runs"
+            "?after=2026-09-14T08%3A45%3A00.000000Z&count=2",
+        )
+        assert status == 200
+        assert payload == {"items": ["2026-09-15T00:00:00.000000Z"]}
+
+        status, payload = _request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-a/schedules/daily/history?limit=10",
+        )
+        assert status == 200
+        assert payload == {
+            "items": [
+                {
+                    "scheduled_for": "2026-09-14T00:00:00.000000Z",
+                    "workflow_run_id": "scheduled-run-1",
+                }
+            ]
+        }
+
+
 def test_scheduler_route_with_unsupported_method_is_not_method_not_found() -> None:
     store = _Store()
     authorizer = _Authorizer()
@@ -1568,6 +2652,54 @@ def test_workspace_update_archive_and_method_mapping() -> None:
         )
         assert status == 409
         assert payload["error"]["code"] == "conflict"
+
+
+def test_project_bundle_import_is_post_only_authenticated_and_idempotent(tmp_path: Path) -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    project_id = ProjectId("bundle-import-project")
+    manifest = _manifest("Portable import", project_id)
+    archive_path = tmp_path / "project.roninbundle"
+    write_bundle(
+        archive_path,
+        (BundleFile(".ronin/project.json", "application/json", manifest.to_json().encode()),),
+    )
+    archive = archive_path.read_bytes()
+    request_body = _json_body({"content_base64": base64.b64encode(archive).decode("ascii")})
+    import_path = f"/v1/workspaces/{_WS_A}/projects/{project_id}/bundle/import"
+
+    with _server(store, _Authorizer()) as address:
+        status, method_error = _request(address, "GET", import_path)
+        assert status == 405
+        assert method_error["error"]["code"] == "method_not_allowed"
+
+        status, idempotency_error = _request(address, "POST", import_path, body=request_body)
+        assert status == 400
+        assert idempotency_error["error"]["code"] == "invalid_request"
+        assert store.projects.get((_WS_A, project_id)) is None
+
+        status, imported = _request(
+            address,
+            "POST",
+            import_path,
+            body=request_body,
+            headers={"Idempotency-Key": "project-bundle-import-1"},
+        )
+        assert status == 200, imported
+        assert imported["project"] == manifest.to_data()
+        assert imported["bundle_digest"] == hashlib.sha256(archive).hexdigest()
+        assert store.projects[(_WS_A, project_id)] == manifest
+
+        status, replay = _request(
+            address,
+            "POST",
+            import_path,
+            body=request_body,
+            headers={"Idempotency-Key": "project-bundle-import-1"},
+        )
+        assert status == 200, replay
+        assert replay == imported
+        assert store.calls.get("register_project") == 1
 
 
 def test_project_http_lifecycle_uses_canonical_manifest_and_resource_ref() -> None:

@@ -69,6 +69,11 @@ class WorkspacesPlugin:
         self._environment_service: object | None = None
         self._event_dispatcher: object | None = None
 
+    @staticmethod
+    def _now() -> str:
+        """Return the canonical instant required by durable lifecycle stores."""
+        return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
     def register(self, context: PluginContext) -> None:
         self.context = context
         self._application = WorkspaceApplication(
@@ -434,7 +439,7 @@ class WorkspacesPlugin:
         if description is not None and not isinstance(description, str):
             raise ValueError("workspace description must be a string or null")
         workspace = self._application.create(
-            Workspace(WorkspaceId(raw_id), raw_name, description), now="plugin"
+            Workspace(WorkspaceId(raw_id), raw_name, description), now=self._now()
         )
         return {
             "id": str(workspace.id),
@@ -460,7 +465,7 @@ class WorkspacesPlugin:
         ):
             raise ValueError("workspace body requires string name and description")
         workspace = self._application.update(
-            WorkspaceId(workspace_id), name=name, description=description, now="plugin"
+            WorkspaceId(workspace_id), name=name, description=description, now=self._now()
         )
         return {
             "id": str(workspace.id),
@@ -472,7 +477,7 @@ class WorkspacesPlugin:
     def archive_workspace(self, workspace_id: str, **_kwargs: Any) -> dict[str, object]:
         if not self.started or self._application is None:
             raise RuntimeError("workspace service is unavailable")
-        workspace = self._application.archive(WorkspaceId(workspace_id), now="plugin")
+        workspace = self._application.archive(WorkspaceId(workspace_id), now=self._now())
         return {
             "id": str(workspace.id),
             "name": workspace.name,
@@ -524,7 +529,7 @@ class WorkspacesPlugin:
         if not self.started:
             raise RuntimeError("workspaces plugin is not ready")
         item = self._environment_service_or_raise().create(
-            WorkspaceId(workspace_id), self._parse_environment(body), now="plugin"
+            WorkspaceId(workspace_id), self._parse_environment(body), now=self._now()
         )
         return self._environment_payload(item)
 
@@ -539,7 +544,9 @@ class WorkspacesPlugin:
         if not self.started:
             raise RuntimeError("workspaces plugin is not ready")
         item = self._environment_service_or_raise().replace(
-            WorkspaceId(workspace_id), self._parse_environment(body, environment_id), now="plugin"
+            WorkspaceId(workspace_id),
+            self._parse_environment(body, environment_id),
+            now=self._now(),
         )
         return self._environment_payload(item)
 
@@ -549,7 +556,7 @@ class WorkspacesPlugin:
         if not self.started:
             raise RuntimeError("workspaces plugin is not ready")
         item = self._environment_service_or_raise().disable(
-            WorkspaceId(workspace_id), EnvironmentId(environment_id), now="plugin"
+            WorkspaceId(workspace_id), EnvironmentId(environment_id), now=self._now()
         )
         return self._environment_payload(item)
 
@@ -559,7 +566,7 @@ class WorkspacesPlugin:
         if not self.started:
             raise RuntimeError("workspaces plugin is not ready")
         item = self._environment_service_or_raise().enable(
-            WorkspaceId(workspace_id), EnvironmentId(environment_id), now="plugin"
+            WorkspaceId(workspace_id), EnvironmentId(environment_id), now=self._now()
         )
         return self._environment_payload(item)
 
@@ -595,7 +602,7 @@ class WorkspacesPlugin:
         if projects is None:
             raise RuntimeError("project service is unavailable")
         manifest = ProjectManifest.from_data(body)
-        stored = projects.register(WorkspaceId(workspace_id), manifest, now="plugin")
+        stored = projects.register(WorkspaceId(workspace_id), manifest, now=self._now())
         self._publish(
             "projects.project-created.v1",
             WorkspaceId(workspace_id),
@@ -629,7 +636,7 @@ class WorkspacesPlugin:
         manifest = ProjectManifest.from_data(body)
         if str(manifest.project.id) != project_id:
             raise ValueError("project body id does not match path")
-        stored = self._projects.replace(WorkspaceId(workspace_id), manifest, now="plugin")
+        stored = self._projects.replace(WorkspaceId(workspace_id), manifest, now=self._now())
         self._publish(
             "projects.project-updated.v1",
             WorkspaceId(workspace_id),

@@ -286,6 +286,7 @@ class HttpJsonConnector:
         deadline = time.monotonic() + max_elapsed_seconds
         digest = hashlib.sha256()
         next_url = url
+        requested_urls: set[str] = set()
         with httpx.Client(follow_redirects=False, timeout=timeout_seconds) as client:
             for page in range(max_pages):
                 if page and rate_limit:
@@ -298,6 +299,9 @@ class HttpJsonConnector:
                 if page_param and next_field is None:
                     separator = "&" if "?" in request_url else "?"
                     request_url = f"{request_url}{separator}{quote(page_param)}={page + 1}"
+                if request_url in requested_urls:
+                    raise ValueError("HTTP pagination URL repeated before completion")
+                requested_urls.add(request_url)
                 _validate_request_url(
                     request_url, allow_http=allow_http, allow_private=allow_private
                 )
@@ -396,6 +400,8 @@ class HttpJsonConnector:
                 if next_field is None:
                     if not page_param or len(page_records) < page_size:
                         break
+                    if page == max_pages - 1:
+                        raise ValueError("HTTP JSON pagination reached max_pages before completion")
                 else:
                     if not isinstance(payload, Mapping):
                         raise ValueError("HTTP next_url_field requires a JSON object response")
@@ -411,6 +417,8 @@ class HttpJsonConnector:
                     )
                     if _origin(candidate) != _origin(base_url):
                         raise ValueError("HTTP pagination URL must remain on the base_url origin")
+                    if page == max_pages - 1:
+                        raise ValueError("HTTP JSON pagination reached max_pages before completion")
                     next_url = candidate
         rows = tuple(rows_list)
         fields = _infer_fields(rows)

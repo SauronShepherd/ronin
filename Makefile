@@ -1,17 +1,18 @@
-.PHONY: check format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget browser-audit ui-installed ui-a11y ui-e2e-headed test \
+.PHONY: check format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget browser-audit web-test-deps ui-installed ui-a11y ui-e2e-headed ui-e2e-debug test \
 	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-storage-files-full coverage-tools coverage-release-gates performance \
-	canonical-json-check runner-protocol-check dependency-surfaces-check agent-skills-validate agent-skills-package
+	canonical-json-check runner-protocol-check dependency-surfaces-check agent-skills-validate agent-skills-package \
+	release-sbom release-provenance
 
-ui-e2e:
-	npm --prefix web-tests ci
+web-test-deps:
+	node web-tests/ensure-dependencies.mjs
+
+ui-e2e: web-test-deps
 	npm --prefix web-tests test
 
-ui-e2e-headed:
-	npm --prefix web-tests ci
+ui-e2e-headed: web-test-deps
 	npm --prefix web-tests run test:headed
 
-ui-e2e-debug:
-	npm --prefix web-tests ci
+ui-e2e-debug: web-test-deps
 	npm --prefix web-tests run test:debug
 
 release-evidence-validate:
@@ -23,6 +24,12 @@ release-evidence-merge:
 release-evidence-verdict:
 	$(PYTHON) -m tools.release_evidence verdict $(BUNDLE) $(REQUIRED_GATES)
 
+release-sbom:
+	$(PYTHON) -m tools.generate_release_sbom --artifact-identity "$(ARTIFACT_IDENTITY)" --requirements-lock "$(REQUIREMENTS_LOCK)" --project-file pyproject.toml --output "$(SBOM)"
+
+release-provenance:
+	$(PYTHON) -m tools.generate_release_provenance --artifact-identity "$(ARTIFACT_IDENTITY)" --build-command "$(BUILD_COMMAND)" --started-on "$(BUILD_STARTED_ON)" --finished-on "$(BUILD_FINISHED_ON)" --toolchain-json "$(TOOLCHAIN_JSON)" --output "$(PROVENANCE)"
+
 cloud-studio-floci:
 	$(PYTHON) -m tools.cloud_studio_floci_qualification $(ARGS)
 
@@ -33,7 +40,10 @@ agent-skills-validate:
 	PYTHONPATH=python $(PYTHON) -m studio_cli.entrypoint skills validate --json
 
 agent-skills-package:
-	PYTHONPATH=python $(PYTHON) -m studio_cli.entrypoint skills package --output .tmp-agent-skills-dist
+	PYTHONPATH=python $(PYTHON) -m studio_cli.entrypoint skills package --output "$(AGENT_SKILLS_OUTPUT)"
+
+AGENT_SKILLS_OUTPUT ?= .tmp-agent-skills-dist
+RONIN_QUALIFICATION_OUTPUT ?= .tmp-qualification
 
 CODE_PATHS := python tests tools packages docker
 
@@ -46,7 +56,7 @@ else
 PYTHON ?= python3
 endif
 
-check: format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget canonical-json-check runner-protocol-check capability-status-check test performance
+check: format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget canonical-json-check runner-protocol-check dependency-surfaces-check capability-status-check agent-skills-validate test performance
 
 lint-openapi:
 	$(PYTHON) -m tools.openapi_snapshot
@@ -68,13 +78,14 @@ browser-audit:
 	$(PYTHON) tools/browser_audit.py $${RONIN_STUDIO_AUDIT_URL:-http://127.0.0.1:8080/studio/}
 
 ui-installed:
-	$(PYTHON) -m build --wheel --outdir .tmp-govern-wheel
-	$(PYTHON) tools/installed_studio_browser_smoke.py .tmp-govern-wheel/*.whl
+	$(PYTHON) -c "from pathlib import Path; Path(r'$(RONIN_QUALIFICATION_OUTPUT)/installed-artifact').mkdir(parents=True, exist_ok=True)"
+	$(PYTHON) -m build --wheel --outdir "$(RONIN_QUALIFICATION_OUTPUT)/installed-artifact"
+	$(PYTHON) tools/installed_studio_browser_smoke.py "$(RONIN_QUALIFICATION_OUTPUT)"/installed-artifact/*.whl --output "$(RONIN_QUALIFICATION_OUTPUT)/installed-artifact/browser-smoke.json"
 
-ui-a11y:
-	npm ci
-	$(PYTHON) -m build --wheel --outdir .tmp-govern-wheel
-	$(PYTHON) -m tools.installed_studio_a11y .tmp-govern-wheel/*.whl
+ui-a11y: web-test-deps
+	$(PYTHON) -c "from pathlib import Path; Path(r'$(RONIN_QUALIFICATION_OUTPUT)/a11y').mkdir(parents=True, exist_ok=True)"
+	$(PYTHON) -m build --wheel --outdir "$(RONIN_QUALIFICATION_OUTPUT)/a11y"
+	$(PYTHON) -m tools.installed_studio_a11y "$(RONIN_QUALIFICATION_OUTPUT)"/a11y/*.whl --output "$(RONIN_QUALIFICATION_OUTPUT)/a11y/accessibility.json"
 
 format:
 	ruff format --check $(CODE_PATHS)
@@ -144,7 +155,7 @@ coverage-tools:
 
 coverage-release-gates:
 	# Keep all release-decision and candidate-evidence tools at the T2 90% line-coverage floor.
-	coverage report --fail-under=90 --include="*/tools/v01_acceptance_gate.py,*/tools/aggregate_release_evidence.py,*/tools/artifact_qualification.py,*/tools/license_qualification.py,*/tools/generate_sbom.py,*/tools/supply_chain_evidence.py,*/tools/mutation_gate.py,*/tools/release_evidence.py,*/tools/emit_release_evidence.py,*/tools/installed_artifact_evidence.py,*/tools/artifact_identity.py"
+	coverage report --fail-under=90 --include="*/tools/v01_acceptance_gate.py,*/tools/aggregate_release_evidence.py,*/tools/artifact_qualification.py,*/tools/license_qualification.py,*/tools/generate_sbom.py,*/tools/generate_release_sbom.py,*/tools/generate_release_provenance.py,*/tools/normalize_release_sdist.py,*/tools/supply_chain_evidence.py,*/tools/bind_container_sbom.py,*/tools/mutation_gate.py,*/tools/release_evidence.py,*/tools/emit_release_evidence.py,*/tools/artifact_identity.py"
 
 coverage-storage-files:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
@@ -165,7 +176,7 @@ coverage-storage-files:
 		--baseline=connections.py=64.44 \
 		--baseline=environments.py=75.51 \
 		--baseline=local_files.py=77.22 \
-		--baseline=ml.py=73.30 \
+		--baseline=ml.py=76.68 \
 		--baseline=ontology.py=76.35 \
 		--baseline=s3_artifacts.py=74.20 \
 		--baseline=scheduler_backfill.py=65.91 \
@@ -191,8 +202,8 @@ coverage-storage-files-full:
 		--baseline=connections.py=64.44 \
 		--baseline=environments.py=75.51 \
 		--baseline=local_files.py=77.22 \
-		--baseline=ml.py=73.30 \
-		--baseline=postgres_ml.py=74.07 \
+		--baseline=ml.py=76.68 \
+		--baseline=postgres_ml.py=77.77 \
 		--baseline=ontology.py=76.35 \
 		--baseline=postgres_core.py=67.28 \
 		--baseline=postgres_jobs.py=73.01 \

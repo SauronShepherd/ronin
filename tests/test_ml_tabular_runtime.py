@@ -1,3 +1,6 @@
+import json
+import subprocess
+import sys
 from pathlib import Path
 from statistics import median
 
@@ -56,6 +59,31 @@ def _classification_rows():
 
 def _regression_rows(count: int):
     return tuple({"x": float(index), "target": float(index * 2 + 1)} for index in range(count))
+
+
+def test_logistic_runtime_does_not_import_unused_ensemble_estimators() -> None:
+    source = (
+        "import json, sys; "
+        "from studio_ml.runtime import TrainingSpec, _sklearn; "
+        "spec = TrainingSpec('classification', 'logistic_regression', ('x',), 'target'); "
+        "runtime = _sklearn(spec); "
+        "print(json.dumps({'keys': sorted(runtime), "
+        "'ensemble_loaded': 'sklearn.ensemble' in sys.modules, "
+        "'tree_loaded': 'sklearn.tree' in sys.modules}))"
+    )
+    result = subprocess.run(  # noqa: S603 - fixed source and executable, no user input
+        [sys.executable, "-c", source],
+        capture_output=True,
+        check=True,
+        text=True,
+        timeout=120,
+    )
+    payload = json.loads(result.stdout.strip().splitlines()[-1])
+    assert payload == {
+        "keys": ["LogisticRegression", "accuracy_score", "train_test_split"],
+        "ensemble_loaded": False,
+        "tree_loaded": False,
+    }
 
 
 def test_classification_training_and_prediction() -> None:

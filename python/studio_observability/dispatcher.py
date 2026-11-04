@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from collections.abc import Callable
+from contextlib import closing
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -88,7 +89,7 @@ class SqliteNotificationIntentStore:
 
     def __init__(self, path: Path) -> None:
         self._path = path
-        with sqlite3.connect(path) as connection:
+        with closing(sqlite3.connect(path)) as connection, connection:
             connection.row_factory = sqlite3.Row
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS notification_intents ("
@@ -109,7 +110,7 @@ class SqliteNotificationIntentStore:
             sort_keys=True,
             separators=(",", ":"),
         )
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             cursor = connection.execute(
                 "INSERT OR IGNORE INTO notification_intents(id,payload,state,created_at) "
                 "VALUES (?,?,?,?)",
@@ -122,7 +123,7 @@ class SqliteNotificationIntentStore:
     ) -> tuple[NotificationIntent, ...]:
         if limit < 1 or limit > 1000:
             raise ValueError("notification dispatch limit must be between 1 and 1000")
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             connection.row_factory = sqlite3.Row
             rows = connection.execute(
                 "SELECT payload FROM notification_intents WHERE state='pending' "
@@ -143,7 +144,7 @@ class SqliteNotificationIntentStore:
         )
 
     def mark_notification_delivered(self, intent_id: str, *, delivered_at: str) -> bool:
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             connection.row_factory = sqlite3.Row
             cursor = connection.execute(
                 "UPDATE notification_intents SET state='delivered',delivered_at=? "
@@ -155,7 +156,7 @@ class SqliteNotificationIntentStore:
     def record_notification_failure(
         self, notification_id: str, *, error: str, retry_at: str
     ) -> bool:
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             cursor = connection.execute(
                 "UPDATE notification_intents SET last_error=?,retry_at=? "
                 "WHERE id=? AND state='pending'",

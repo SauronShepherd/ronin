@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from studio_core import ActionExecution, KnowledgeGraph, KnowledgeObject, KnowledgeObjectRef
@@ -17,7 +18,7 @@ class SqliteKnowledgeGraphStore:
     def __init__(self, path: Path) -> None:
         self._path = path
         path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(path) as connection:
+        with closing(sqlite3.connect(path)) as connection, connection:
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS knowledge_graphs ("
                 "graph_id TEXT PRIMARY KEY, graph_json TEXT NOT NULL)"
@@ -73,7 +74,7 @@ class SqliteKnowledgeGraphStore:
         if not graph_id or graph_id != graph_id.strip() or "\x00" in graph_id:
             raise ValueError("graph_id must be non-empty and trimmed")
         payload = self._payload(graph)
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             existing = connection.execute(
                 "SELECT graph_json FROM knowledge_graphs WHERE graph_id=?", (graph_id,)
             ).fetchone()
@@ -88,14 +89,14 @@ class SqliteKnowledgeGraphStore:
         return graph
 
     def get(self, graph_id: str) -> KnowledgeGraph | None:
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             row = connection.execute(
                 "SELECT graph_json FROM knowledge_graphs WHERE graph_id=?", (graph_id,)
             ).fetchone()
         return None if row is None else self._graph(str(row[0]))
 
     def get_action_replay(self, idempotency_key: str) -> ActionExecution | None:
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             row = connection.execute(
                 "SELECT execution_json FROM ontology_action_replays WHERE idempotency_key=?",
                 (idempotency_key,),
@@ -122,7 +123,7 @@ class SqliteKnowledgeGraphStore:
             sort_keys=True,
             separators=(",", ":"),
         )
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             existing = connection.execute(
                 "SELECT action_name,target_json,execution_json "
                 "FROM ontology_action_replays WHERE idempotency_key=?",

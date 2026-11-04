@@ -13,7 +13,18 @@ from tools.dependency_surfaces import (
 
 
 def test_qualification_manifest_accepts_hash_continuations() -> None:
-    requirements = qualification_tool_requirements(Path.cwd())
+    root = Path.cwd()
+    requirements = qualification_tool_requirements(root)
+    source_requirements = [
+        line.strip()
+        for line in (root / "third_party/qualification-tools-v1.in")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    assert _exact_requirements(source_requirements, surface="qualification-tools-v1.in") == (
+        requirements
+    )
     assert {
         "build": "1.6.0",
         "pip-audit": "2.10.1",

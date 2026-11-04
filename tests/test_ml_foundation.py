@@ -761,6 +761,46 @@ def test_model_promotion_archives_previous_champion_atomically(tmp_path: Path) -
         ),
         now=_NOW,
     )
+    for index in range(99):
+        store.record_evaluation(
+            _WS,
+            ModelEvaluation(
+                second.model_id,
+                second.version,
+                _DATA,
+                "unknown",
+                (MetricValue("accuracy", 0.95),),
+                f"review-{index}",
+            ),
+            now=_NOW,
+        )
+    assert len(store.list_evaluations(_WS, second.model_id, second.version)) == 100
+    # Exact retries remain idempotent even after the per-model evidence cap.
+    store.record_evaluation(
+        _WS,
+        ModelEvaluation(
+            second.model_id,
+            second.version,
+            _DATA,
+            "passed",
+            (MetricValue("accuracy", 0.95),),
+            "job-evaluation/run-1",
+        ),
+        now=_NOW,
+    )
+    with pytest.raises(MLConflict, match="at most 100 evaluations"):
+        store.record_evaluation(
+            _WS,
+            ModelEvaluation(
+                second.model_id,
+                second.version,
+                _DATA,
+                "unknown",
+                (MetricValue("accuracy", 0.95),),
+                "review-overflow",
+            ),
+            now=_NOW,
+        )
 
     promoted = store.promote_model(_WS, second.model_id, second.version, now=_NOW)
 

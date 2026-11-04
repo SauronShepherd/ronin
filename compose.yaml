@@ -7,6 +7,38 @@ x-ronin-environment: &ronin-environment
   RONIN_TOKEN_SCOPES: '{"version":1,"grants":[{"version":1,"actions":["read","list","events","submit","execute","cancel","evidence:read"],"resource":{"kind":"project","identifier":"examples/demo"},"constraints":{}}]}'
 
 services:
+  streaming-broker:
+    image: redpandadata/redpanda:v24.2.18@sha256:0270951e8793c77f0dd9178d137198018fa7ffd920e5a2a3b02a050ec76195b8
+    profiles: ["qualification-streaming"]
+    command:
+      - redpanda
+      - start
+      - --mode
+      - dev-container
+      - --smp
+      - "1"
+      - --memory
+      - 1G
+      - --reserve-memory
+      - 0M
+      - --overprovisioned
+      - --node-id
+      - "0"
+      - --check=false
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://streaming-broker:9092,external://127.0.0.1:${RONIN_KAFKA_PORT:-19092}
+    ports:
+      - "127.0.0.1:${RONIN_KAFKA_PORT:-19092}:19092"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health --exit-when-healthy"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    restart: "no"
+
   postgres:
     image: postgres:16.4-alpine
     environment:
@@ -30,8 +62,11 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+    init: true
     command: ["ronin", "serve"]
     user: "0:0"
+    security_opt:
+      - no-new-privileges:true
     environment:
       <<: *ronin-environment
       RONIN_DATA_DIR: /var/lib/ronin
@@ -60,8 +95,11 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+    init: true
     command: ["ronin-runner-broker"]
     user: "0:0"
+    security_opt:
+      - no-new-privileges:true
     environment:
       RONIN_DATA_DIR: /var/lib/ronin
       RONIN_IMAGE_REF: ${RONIN_IMAGE_REF:-ronin:local}
@@ -84,8 +122,11 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+    init: true
     command: ["ronin-broker-worker"]
     user: "0:0"
+    security_opt:
+      - no-new-privileges:true
     environment:
       <<: *ronin-environment
       RONIN_DATA_DIR: /var/lib/ronin
@@ -115,6 +156,8 @@ services:
     image: ${RONIN_IMAGE_REF:-ronin:local}
     profiles: ["tools"]
     command: ["ronin", "--help"]
+    security_opt:
+      - no-new-privileges:true
     environment:
       <<: *ronin-environment
       RONIN_URL: http://server:8080

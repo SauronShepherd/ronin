@@ -145,6 +145,8 @@ class ExecutionStore(Protocol):
 
     def get(self, workspace_id: str, run_id: str) -> ExecutionSnapshot | None: ...
 
+    def get_for_registration(self, workspace_id: str, run_id: str) -> ExecutionSnapshot | None: ...
+
     def list_runnable(self, now: Instant, *, limit: int) -> tuple[ExecutionSnapshot, ...]: ...
 
     def claim(
@@ -255,6 +257,9 @@ class InMemoryExecutionStore:
     def get(self, workspace_id: str, run_id: str) -> ExecutionSnapshot | None:
         with self._lock:
             return self._items.get((workspace_id, run_id))
+
+    def get_for_registration(self, workspace_id: str, run_id: str) -> ExecutionSnapshot | None:
+        return self.get(workspace_id, run_id)
 
     def list_runnable(self, now: Instant, *, limit: int) -> tuple[ExecutionSnapshot, ...]:
         if limit < 1:
@@ -638,6 +643,29 @@ class JobStoreExecutionStore:
             retry_of_run_id=cast(str | None, parameters.get("retry_of_run_id")),
             retry_from_stage=cast(str | None, parameters.get("retry_from_stage")),
         )
+
+    def get_for_registration(self, workspace_id: str, run_id: str) -> ExecutionSnapshot | None:
+        """Restore private training rows only for terminal model registration."""
+        snapshot = self.get(workspace_id, run_id)
+        if snapshot is None or snapshot.state != "succeeded" or snapshot.rows_json is not None:
+            return snapshot
+        job_id, _ = self._ids(workspace_id, run_id)
+        job = asyncio.run(self._service.status(job_id))
+        if job is None:
+            return snapshot
+        parameters = self._parameters(job)
+        if (
+            job.project_id != workspace_id
+            or job.target != self.target
+            or parameters.get("workspace_id") != workspace_id
+            or parameters.get("run_id") != run_id
+            or parameters.get("request_digest") != snapshot.request_digest
+        ):
+            return snapshot
+        rows_json = parameters.get("rows_json")
+        if rows_json is None and parameters.get("rows_artifact") is not None:
+            rows_json = self._load_rows_artifact(parameters["rows_artifact"])
+        return replace(snapshot, rows_json=rows_json if isinstance(rows_json, str) else None)
 
     def claim_next(self, owner: str) -> ExecutionSnapshot | None:
         result = asyncio.run(
@@ -1485,6 +1513,12 @@ class LocalExecutionCoordinator:
 
     def status(self, workspace_id: str, run_id: str) -> ExecutionSnapshot:
         snapshot = self._store.get(workspace_id, run_id)
+        if snapshot is None:
+            raise KeyError(run_id)
+        return snapshot
+
+    def registration_snapshot(self, workspace_id: str, run_id: str) -> ExecutionSnapshot:
+        snapshot = self._store.get_for_registration(workspace_id, run_id)
         if snapshot is None:
             raise KeyError(run_id)
         return snapshot

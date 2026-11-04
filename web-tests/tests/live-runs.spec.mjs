@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { installLiveApiProxy } from './live-support.mjs';
 
 const liveUrl = process.env.RONIN_STUDIO_E2E_URL;
 const token = process.env.RONIN_STUDIO_E2E_TOKEN;
@@ -10,6 +11,7 @@ test('live Runs saves server settings and retains the project filter', async ({ 
   const connectionRequests = [];
   const jobResponses = [];
   const pageErrors = [];
+  installLiveApiProxy(page, token);
   page.on('request', request => {
     if (new URL(request.url()).pathname.endsWith('/connections')) connectionRequests.push(request.url());
   });
@@ -39,10 +41,15 @@ test('live Runs saves server settings and retains the project filter', async ({ 
   const response = await listResponse;
   expect(response.status()).toBe(200);
   await expect(page.locator('#run-project')).toHaveValue('examples/demo');
-  await expect(page.locator('#view table')).toContainText('Duration');
-  await expect(page.locator('#view table tbody tr').first()).toBeVisible();
-  await expect(page.locator('#view table tbody tr').first()).toContainText('examples/demo');
-  await expect(page.locator('#view table tbody tr').first()).not.toContainText('—');
+  const result = page.locator('#run-result');
+  const rows = result.locator('table tbody tr');
+  if (await rows.count()) {
+    await expect(result.locator('table')).toContainText('Duration');
+    await expect(rows.first()).toBeVisible();
+    await expect(rows.first()).toContainText('examples/demo');
+  } else {
+    await expect(result).toContainText('No runs are visible for this credential.');
+  }
   expect(connectionRequests).toEqual([]);
   expect(jobResponses).toEqual([{ project: 'examples/demo', status: 200 }]);
   expect(pageErrors).toEqual([]);

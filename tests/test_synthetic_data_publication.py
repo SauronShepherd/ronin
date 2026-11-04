@@ -122,7 +122,9 @@ def test_service_generation_automatically_publishes_catalog_and_lineage(tmp_path
     assert len(catalog.upstream(workspace_id, output_ref)) == 1
 
 
-def test_composed_runtime_smoke_flow_generates_and_queries_governed_output(tmp_path: Path) -> None:
+def test_composed_runtime_smoke_flow_generates_and_queries_governed_output(
+    tmp_path: Path, request
+) -> None:
     now = NOW
     database = tmp_path / "ronin.sqlite3"
     catalog, workspace_id = _catalog(database, "workspace-a")
@@ -141,6 +143,7 @@ def test_composed_runtime_smoke_flow_generates_and_queries_governed_output(tmp_p
             now=now,
         ),
     )
+    request.addfinalizer(service.close)
     plugin = SyntheticDataStudioPlugin(service)
     manager = PluginManager()
     plan = manager.compose(

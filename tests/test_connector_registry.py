@@ -448,7 +448,12 @@ def test_http_connector_paginates_and_retries_transient_responses() -> None:
                 self.send_header("Content-Length", "0")
                 self.end_headers()
                 return
-            payload = '[{"id": 1}]' if page == "1" else '[{"id": 2}]'
+            if page == "1":
+                payload = '[{"id": 1}]'
+            elif page == "2":
+                payload = '[{"id": 2}]'
+            else:
+                payload = "[]"
             body = payload.encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -473,7 +478,7 @@ def test_http_connector_paginates_and_retries_transient_responses() -> None:
                 ("base_url", f"http://127.0.0.1:{server.server_port}"),
                 ("page_param", "page"),
                 ("page_size", "1"),
-                ("max_pages", "2"),
+                ("max_pages", "3"),
                 ("max_retries", "1"),
                 ("retry_backoff_seconds", "0"),
             ),
@@ -485,7 +490,7 @@ def test_http_connector_paginates_and_retries_transient_responses() -> None:
             limit=2,
         )
         assert [row["id"] for row in result.rows] == [1, 2]
-        assert calls == ["1", "1", "2"]
+        assert calls == ["1", "1", "2", "3"]
     finally:
         server.shutdown()
         server.server_close()
@@ -655,8 +660,11 @@ def test_http_connector_enforces_deadline_before_retry_sleep() -> None:
                 ("allow_private_network", "true"),
                 ("base_url", f"http://127.0.0.1:{server.server_port}"),
                 ("max_retries", "3"),
-                ("retry_backoff_seconds", "5"),
-                ("max_elapsed_seconds", "3"),
+                # Leave ample time for the first local request even when the
+                # full suite is under load; the first retry delay still
+                # exceeds the whole operation budget and must not sleep.
+                ("retry_backoff_seconds", "60"),
+                ("max_elapsed_seconds", "30"),
             ),
         )
         with pytest.raises(ValueError, match="operation exceeded its time budget"):

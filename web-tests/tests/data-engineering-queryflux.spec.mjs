@@ -40,6 +40,7 @@ test('Data Engineering Studio executes QueryFlux and reads stable result pages',
   await page.locator('#de-sql-form [name="workspace"]').fill('workspace-a');
   await page.locator('#de-sql-form [name="project"]').fill('project-1');
   await page.locator('#de-sql-form [name="profile"]').selectOption('queryflux');
+  await expect(page.getByRole('button', { name: 'Explain query plan' })).toBeHidden();
   await expect(page.locator('#de-sql-form [name="queryflux_engine"]')).toHaveValue('duckdb');
   await page.locator('#de-sql-form [name="page_size"]').fill('1');
   await page.locator('#de-sql-form [name="sql"]').fill('SELECT 1 AS id');
@@ -113,4 +114,29 @@ test('Data Engineering Studio keeps local SQL requests within the documented con
   });
   await page.getByRole('button', { name: 'Export CSV' }).click();
   await expect(page.locator('#de-sql-result')).toHaveText(/id\s+7/);
+});
+
+test('Data Engineering Studio explains a bounded local SQL plan', async ({ page }) => {
+  let postedBody;
+  await page.route('**/v1/data-engineering/queryflux/capabilities', async route => {
+    await route.fulfill({ json: { status: 'not_configured', allowed_engines: [], translation_policies: [] } });
+  });
+  await page.route('**/v1/workspaces/workspace-a/projects/project-1/sql/explain', async route => {
+    postedBody = route.request().postDataJSON();
+    await route.fulfill({ json: { rows: [['physical_plan', 'SEQ_SCAN registered_events']], max_bytes: 2048 } });
+  });
+
+  await page.goto('./#data');
+  await page.locator('#de-sql-form [name="workspace"]').fill('workspace-a');
+  await page.locator('#de-sql-form [name="project"]').fill('project-1');
+  await page.locator('#de-sql-form [name="sql"]').fill('SELECT id FROM registered_events');
+  await page.locator('#de-sql-form [name="max_explain_bytes"]').fill('2048');
+  await page.getByRole('button', { name: 'Explain query plan' }).click();
+
+  await expect.poll(() => postedBody).toEqual({
+    sql: 'SELECT id FROM registered_events',
+    max_bytes: 2048,
+    timeout_ms: 5000,
+  });
+  await expect(page.locator('#de-sql-result')).toContainText('SEQ_SCAN registered_events');
 });

@@ -20,7 +20,17 @@ def _fixtures(tmp_path: Path) -> tuple[Path, Path, Path]:
     )
     sbom = tmp_path / "sbom.json"
     sbom.write_text(
-        json.dumps({"spdxVersion": "SPDX-2.3", "packages": [{"name": "ronin.whl"}]}),
+        json.dumps(
+            {
+                "spdxVersion": "SPDX-2.3",
+                "packages": [
+                    {
+                        "name": "ronin.whl",
+                        "checksums": [{"algorithm": "SHA256", "checksumValue": "a" * 64}],
+                    }
+                ],
+            }
+        ),
         encoding="utf-8",
     )
     provenance = tmp_path / "provenance.json"
@@ -64,7 +74,19 @@ def test_supply_chain_evidence_accepts_cyclonedx_and_hashes_every_sbom(tmp_path:
     identity, _, provenance = _fixtures(tmp_path)
     sbom = tmp_path / "bom.json"
     sbom.write_text(
-        json.dumps({"bomFormat": "CycloneDX", "components": [{"name": "ronin.whl"}]}),
+        json.dumps(
+            {
+                "bomFormat": "CycloneDX",
+                "specVersion": "1.6",
+                "components": [
+                    {
+                        "type": "file",
+                        "name": "ronin.whl",
+                        "hashes": [{"alg": "SHA-256", "content": "a" * 64}],
+                    }
+                ],
+            }
+        ),
         encoding="utf-8",
     )
     result = validate(commit="abc", artifact_identity=identity, sboms=[sbom], provenance=provenance)
@@ -109,7 +131,19 @@ def test_supply_chain_evidence_rejects_invalid_sbom_and_missing_evidence(tmp_pat
     sbom.write_text(json.dumps({"spdxVersion": "SPDX-2.3", "packages": [None]}), encoding="utf-8")
     with pytest.raises(SupplyChainEvidenceError, match="invalid component"):
         validate(commit="abc", artifact_identity=identity, sboms=[sbom], provenance=provenance)
-    sbom.write_text(json.dumps({"spdxVersion": "SPDX-2.3", "packages": [{"name": "ronin.whl"}]}))
+    sbom.write_text(
+        json.dumps(
+            {
+                "spdxVersion": "SPDX-2.3",
+                "packages": [
+                    {
+                        "name": "ronin.whl",
+                        "checksums": [{"algorithm": "SHA256", "checksumValue": "a" * 64}],
+                    }
+                ],
+            }
+        )
+    )
     with pytest.raises(SupplyChainEvidenceError, match="provenance evidence is required"):
         validate(commit="abc", artifact_identity=identity, sboms=[sbom])
 

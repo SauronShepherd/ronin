@@ -23,6 +23,11 @@ from .contracts import DashboardDefinition, SemanticModel
 INVENTORY_MEDIA_TYPE = "application/vnd.ronin.bundle-inventory+json"
 MODEL_MEDIA_TYPE = "application/vnd.ronin.semantic-model+json"
 DASHBOARD_MEDIA_TYPE = "application/vnd.ronin.semantic-dashboard+json"
+MAX_SEMANTIC_BUNDLE_BYTES = 700 * 1024
+
+
+class SemanticBundleTooLarge(ValueError):
+    """Raised when a semantic archive exceeds the public import/export limit."""
 
 
 class SemanticBundleStore(Protocol):
@@ -81,10 +86,16 @@ def build_semantic_bundle(
 def export_semantic_bundle(
     project_id: str, store: SemanticBundleStore, path: Path
 ) -> RoninBundleManifest:
-    return write_bundle(path, build_semantic_bundle(project_id, store)[1])
+    manifest = write_bundle(path, build_semantic_bundle(project_id, store)[1])
+    if path.stat().st_size > MAX_SEMANTIC_BUNDLE_BYTES:
+        path.unlink(missing_ok=True)
+        raise SemanticBundleTooLarge("semantic Bundle exceeds the 700 KiB archive limit")
+    return manifest
 
 
 def plan_semantic_bundle_import(path: Path) -> SemanticBundleImportPlan:
+    if path.stat().st_size > MAX_SEMANTIC_BUNDLE_BYTES:
+        raise ValueError("semantic Bundle exceeds the 700 KiB archive limit")
     with BundlePayloadReader(path) as reader:
         inventory_payload = reader.read_payload(BUNDLE_INVENTORY_PATH)
         if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
@@ -114,6 +125,8 @@ def commit_semantic_bundle_import(
 
 
 __all__ = (
+    "MAX_SEMANTIC_BUNDLE_BYTES",
+    "SemanticBundleTooLarge",
     "SemanticBundleImportPlan",
     "SemanticBundleImportStore",
     "build_semantic_bundle",

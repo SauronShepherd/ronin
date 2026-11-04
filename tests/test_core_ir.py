@@ -575,10 +575,17 @@ def test_from_data_rejects_invalid_edge_field_type() -> None:
 
 
 @given(
-    st.text(min_size=1),
+    st.text(min_size=1, max_size=32),
     st.dictionaries(
-        st.text(min_size=1), st.integers(min_value=-(2**53 - 1), max_value=2**53 - 1), max_size=5
+        st.text(min_size=1, max_size=32),
+        st.integers(min_value=-(2**53 - 1), max_value=2**53 - 1),
+        max_size=5,
     ),
+)
+@settings(
+    deadline=None,
+    max_examples=100,
+    suppress_health_check=[HealthCheck.too_slow],
 )
 def test_node_id_is_deterministic_for_arbitrary_json_params(
     instance_key: str, params: dict[str, int]

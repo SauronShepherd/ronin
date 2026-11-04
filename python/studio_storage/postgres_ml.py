@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from dataclasses import replace
 from typing import Any
 
 from studio_core import AssetRef, WorkspaceId
@@ -20,7 +21,7 @@ from studio_core.ml import (
 from studio_orchestrator import Instant
 
 from .catalog import CatalogAssetNotFound
-from .ml import MLConflict, _evaluation_from_json, _model_from_json
+from .ml import MAX_MODEL_EVALUATIONS, MLConflict, _evaluation_from_json, _model_from_json
 from .postgres_core import PostgresMetadataStore
 from .workspaces import WorkspaceNotFound
 
@@ -516,6 +517,93 @@ class PostgresMLStore(PostgresMetadataStore):
         finally:
             connection.close()
 
+    def promote_model(
+        self,
+        workspace_id: WorkspaceId,
+        model_id: ModelId,
+        version: ModelVersion,
+        *,
+        now: Instant | str,
+    ) -> RegisteredModelVersion:
+        """Promote an evaluated candidate and archive its previous champion atomically."""
+
+        now = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                # Serialize champion changes within a workspace, including the first
+                # promotion where no previous champion row exists to lock.
+                cursor.execute(
+                    "SELECT workspace_id FROM ronin_workspaces WHERE workspace_id=%s FOR UPDATE",
+                    (str(workspace_id),),
+                )
+                if cursor.fetchone() is None:
+                    raise WorkspaceNotFound(str(workspace_id))
+                self._active(cursor, workspace_id)
+                cursor.execute(
+                    "SELECT model_json FROM ronin_ml_models "
+                    "WHERE workspace_id=%s AND model_id=%s AND version=%s FOR UPDATE",
+                    (str(workspace_id), str(model_id), str(version)),
+                )
+                target_row = cursor.fetchone()
+                if target_row is None:
+                    raise KeyError(f"{model_id}@{version}")
+                target = _model_from_json(target_row["model_json"])
+                cursor.execute(
+                    "SELECT evaluation_json FROM ronin_ml_evaluations "
+                    "WHERE workspace_id=%s AND model_id=%s AND version=%s",
+                    (str(workspace_id), str(model_id), str(version)),
+                )
+                evaluations = cursor.fetchall()
+                if not any(
+                    _evaluation_from_json(row["evaluation_json"]).status == "passed"
+                    for row in evaluations
+                ):
+                    raise MLConflict(
+                        f"model version has no passed evaluation: {model_id}@{version}"
+                    )
+
+                promoted = replace(target, stage="champion")
+                cursor.execute(
+                    "SELECT model_json FROM ronin_ml_models "
+                    "WHERE workspace_id=%s AND model_id=%s AND stage='champion' FOR UPDATE",
+                    (str(workspace_id), str(model_id)),
+                )
+                for row in cursor.fetchall():
+                    current = _model_from_json(row["model_json"])
+                    archived = replace(current, stage="archived")
+                    cursor.execute(
+                        "UPDATE ronin_ml_models SET stage=%s,model_json=%s,updated_at=%s "
+                        "WHERE workspace_id=%s AND model_id=%s AND version=%s",
+                        (
+                            archived.stage,
+                            archived.to_json(),
+                            str(now),
+                            str(workspace_id),
+                            str(model_id),
+                            str(current.version),
+                        ),
+                    )
+                cursor.execute(
+                    "UPDATE ronin_ml_models SET stage=%s,model_json=%s,updated_at=%s "
+                    "WHERE workspace_id=%s AND model_id=%s AND version=%s",
+                    (
+                        promoted.stage,
+                        promoted.to_json(),
+                        str(now),
+                        str(workspace_id),
+                        str(model_id),
+                        str(version),
+                    ),
+                )
+            connection.commit()
+            return promoted
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
     def list_models(
         self,
         workspace_id: WorkspaceId,
@@ -556,11 +644,26 @@ class PostgresMLStore(PostgresMetadataStore):
                 self._active(cursor, workspace_id)
                 self._asset(cursor, workspace_id, evaluation.dataset)
                 cursor.execute(
-                    "SELECT 1 FROM ronin_ml_models WHERE workspace_id=%s AND model_id=%s AND version=%s",
+                    "SELECT 1 FROM ronin_ml_models WHERE workspace_id=%s AND model_id=%s AND version=%s FOR UPDATE",
                     (str(workspace_id), str(evaluation.model_id), str(evaluation.version)),
                 )
                 if cursor.fetchone() is None:
                     raise KeyError(f"{evaluation.model_id}@{evaluation.version}")
+                cursor.execute(
+                    "SELECT 1 FROM ronin_ml_evaluations WHERE workspace_id=%s AND model_id=%s AND version=%s AND evaluation_digest=%s",
+                    (str(workspace_id), str(evaluation.model_id), str(evaluation.version), digest),
+                )
+                is_duplicate = cursor.fetchone() is not None
+                if not is_duplicate:
+                    cursor.execute(
+                        "SELECT COUNT(*) AS total FROM ronin_ml_evaluations WHERE workspace_id=%s AND model_id=%s AND version=%s",
+                        (str(workspace_id), str(evaluation.model_id), str(evaluation.version)),
+                    )
+                    evaluation_count = cursor.fetchone()["total"]
+                    if evaluation_count >= MAX_MODEL_EVALUATIONS:
+                        raise MLConflict(
+                            f"model versions may contain at most {MAX_MODEL_EVALUATIONS} evaluations"
+                        )
                 cursor.execute(
                     "INSERT INTO ronin_ml_evaluations VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
                     (

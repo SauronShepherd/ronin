@@ -408,9 +408,42 @@ def test_json_loader_and_cli_report_errors_and_success(tmp_path: Path, monkeypat
     assert "license qualification: ok (1 locked distributions)" in capsys.readouterr().out
 
 
+def test_license_cli_reports_policy_mismatch_without_traceback(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    _project(tmp_path)
+    inventory, policy = _valid_inventory()
+    inventory["lock_sha256"] = license_tool.lock_sha256(tmp_path / "requirements-dev.lock")
+    policy["reviews"] = {}
+    (tmp_path / "inventory.json").write_text(json.dumps(inventory), encoding="utf-8")
+    (tmp_path / "policy.json").write_text(json.dumps(policy), encoding="utf-8")
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "license_qualification",
+            "--root",
+            str(tmp_path),
+            "--inventory",
+            "inventory.json",
+            "--policy",
+            "policy.json",
+        ],
+    )
+
+    assert license_tool.main() == 1
+    captured = capsys.readouterr()
+    assert "license qualification: failed:" in captured.err
+    assert "missing review decisions: alpha==1.0" in captured.err
+    assert "Traceback" not in captured.err
+
+
 def test_cli_generates_inventory_to_requested_path(tmp_path: Path, monkeypatch) -> None:
     _project(tmp_path)
-    monkeypatch.setattr(license_tool, "generate_inventory", lambda root: {"schema_version": 1})
+    monkeypatch.setattr(
+        license_tool,
+        "generate_inventory",
+        lambda root, **_kwargs: {"schema_version": 1},
+    )
     output = tmp_path / "nested/inventory.json"
     monkeypatch.setattr(
         "sys.argv",

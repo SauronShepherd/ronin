@@ -1,21 +1,56 @@
 #!/usr/bin/env python3
-import argparse, json, pathlib, sys
+"""Validate that an OpenAPI document contains the Ronin ML Studio routes."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
 
 REQUIRED_PREFIXES = ("/v1/ml-studio",)
+HTTP_METHODS = {"get", "post", "put", "delete", "patch", "options", "head", "trace"}
+
+
+def _emit(result: dict[str, Any], json_output: bool) -> None:
+    print(json.dumps(result, sort_keys=True) if json_output else result)
+
 
 def main() -> int:
-    ap=argparse.ArgumentParser(); ap.add_argument("--openapi", required=True); ap.add_argument("--json", action="store_true"); args=ap.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--openapi", required=True)
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args()
+
     try:
-        doc=json.loads(pathlib.Path(args.openapi).read_text(encoding="utf-8"))
-    except Exception as e:
-        print(json.dumps({"ok":False,"error":"invalid_openapi","detail":str(e)}) if args.json else f"invalid_openapi: {e}")
+        document = json.loads(Path(args.openapi).read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        result = {"ok": False, "error": "invalid_openapi", "detail": str(error)}
+        _emit(result, args.json)
         return 2
-    paths=doc.get("paths") if isinstance(doc,dict) else None
-    if not isinstance(paths,dict):
-        print(json.dumps({"ok":False,"error":"missing_paths"})); return 2
-    matched=sorted(p for p in paths if p.startswith(REQUIRED_PREFIXES))
-    ops=sum(sum(1 for m in v if m.lower() in {"get","post","put","delete","patch"}) for p,v in paths.items() if p.startswith(REQUIRED_PREFIXES) and isinstance(v,dict))
-    result={"ok":bool(matched),"ml_paths":len(matched),"ml_operations":ops,"sample":matched[:10]}
-    print(json.dumps(result,sort_keys=True) if args.json else result)
+
+    paths = document.get("paths") if isinstance(document, dict) else None
+    if not isinstance(paths, dict):
+        _emit({"ok": False, "error": "missing_paths"}, args.json)
+        return 2
+
+    matched = sorted(path for path in paths if path.startswith(REQUIRED_PREFIXES))
+    if any(not isinstance(paths[path], dict) for path in matched):
+        _emit({"ok": False, "error": "invalid_path_item"}, args.json)
+        return 2
+
+    operation_count = sum(
+        method.lower() in HTTP_METHODS for path in matched for method in paths[path]
+    )
+    result = {
+        "ok": bool(matched),
+        "ml_paths": len(matched),
+        "ml_operations": operation_count,
+        "sample": matched[:10],
+    }
+    _emit(result, args.json)
     return 0 if result["ok"] else 3
-if __name__=="__main__": raise SystemExit(main())
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

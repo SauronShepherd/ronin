@@ -1,6 +1,7 @@
 import json
 import sqlite3
 from concurrent.futures import Future
+from contextlib import closing
 
 from studio_synthetic_data import ColumnSpec, GenerationPlan, TableSpec, async_generation
 from studio_synthetic_data.application import GovernStudioService, _plan_payload
@@ -47,7 +48,7 @@ def test_recovery_commits_queued_state_before_dispatch(tmp_path, monkeypatch) ->
             pass
 
         def submit(self, _function, *_args):
-            with sqlite3.connect(database) as observer:
+            with closing(sqlite3.connect(database)) as observer, observer:
                 status = observer.execute(
                     "SELECT status FROM synthetic_jobs WHERE job_id='recovered-job'"
                 ).fetchone()[0]
@@ -102,7 +103,7 @@ def test_close_preserves_queued_durable_job_for_recovery(tmp_path, monkeypatch) 
     jobs.close()
 
     assert executor_instances[0].future.cancelled() is False
-    with sqlite3.connect(database) as connection:
+    with closing(sqlite3.connect(database)) as connection, connection:
         status = connection.execute(
             "SELECT status FROM synthetic_jobs WHERE job_id=?", (submitted.job_id,)
         ).fetchone()[0]

@@ -27,6 +27,19 @@ class ArtifactQualificationError(ValueError):
     """Raised when artifact identity or installed-origin qualification fails."""
 
 
+def _qualification_subprocess_environment(*, pythonpath: Path | None = None) -> dict[str, str]:
+    """Build an isolated child environment without inheriting pytest-cov hooks."""
+    environment = dict(os.environ)
+    for name in tuple(environment):
+        if name.startswith("COV_CORE_"):
+            environment.pop(name, None)
+    for name in ("COVERAGE_FILE", "COVERAGE_PROCESS_START"):
+        environment.pop(name, None)
+    if pythonpath is not None:
+        environment["PYTHONPATH"] = str(pythonpath)
+    return environment
+
+
 def sha256_file(path: Path) -> str:
     """Return the SHA-256 digest of exact file bytes."""
     digest = hashlib.sha256()
@@ -180,7 +193,12 @@ def bind_license_evidence(
 
 
 def _run(argv: list[str], *, cwd: Path | None = None) -> None:
-    completed = subprocess.run(argv, cwd=cwd, check=False)  # noqa: S603  # controlled argv
+    completed = subprocess.run(  # noqa: S603  # controlled argv
+        argv,
+        cwd=cwd,
+        env=_qualification_subprocess_environment(),
+        check=False,
+    )
     if completed.returncode != 0:
         raise ArtifactQualificationError(
             f"command failed with exit code {completed.returncode}: {argv!r}"
@@ -224,7 +242,7 @@ def qualify_pyronin(checkout: Path, work_root: Path) -> dict[str, object]:
             ("import pathlib,pyronin; print(pathlib.Path(pyronin.__file__).resolve())"),
         ],
         cwd=work_root,
-        env={**os.environ, "PYTHONPATH": str(target)},
+        env=_qualification_subprocess_environment(pythonpath=target),
         text=True,
         capture_output=True,
         check=False,
@@ -253,7 +271,7 @@ def qualify_pyronin(checkout: Path, work_root: Path) -> dict[str, object]:
             "--import-mode=importlib",
         ],
         cwd=work_root,
-        env={**os.environ, "PYTHONPATH": str(target)},
+        env=_qualification_subprocess_environment(pythonpath=target),
         check=False,
     )
     if test_run.returncode != 0:

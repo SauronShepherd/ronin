@@ -42,10 +42,27 @@ class FileInventory:
 
 
 def _package_for(path: Path, source_root: Path) -> str | None:
+    normalized_source = Path(os.path.normpath(source_root.absolute()))
+    normalized_path = Path(os.path.normpath(path.absolute()))
     try:
-        relative = path.resolve().relative_to(source_root.resolve())
+        relative = normalized_path.relative_to(normalized_source)
     except ValueError:
-        return None
+        # Keep the boundary check safe for callers that pass paths containing
+        # symlinks, while avoiding filesystem resolution for normal paths.
+        try:
+            relative = path.resolve().relative_to(source_root.resolve())
+        except ValueError:
+            return None
+    current = normalized_source
+    contains_symlink = current.is_symlink()
+    for part in relative.parts:
+        current /= part
+        contains_symlink = contains_symlink or current.is_symlink()
+    if contains_symlink:
+        try:
+            relative = normalized_path.resolve().relative_to(normalized_source.resolve())
+        except ValueError:
+            return None
     if not relative.parts:
         return None
     package = relative.parts[0]
@@ -80,11 +97,15 @@ def _route_info(node: ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[dict[str,
 def inspect_python_file(path: Path, source_root: Path, tests_root: Path) -> FileInventory:
     source = path.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(path))
+    is_test = path.is_relative_to(tests_root)
+    is_source = path.is_relative_to(source_root)
     imports: set[str] = set()
     classes: list[str] = []
     functions: list[str] = []
     routes: list[dict[str, str]] = []
-    for node in ast.walk(tree):
+    pending: list[ast.AST] = [tree]
+    while pending:
+        node = pending.pop()
         if isinstance(node, ast.Import):
             imports.update(alias.name.split(".", 1)[0] for alias in node.names)
         elif isinstance(node, ast.ImportFrom) and node.module:
@@ -117,13 +138,17 @@ def inspect_python_file(path: Path, source_root: Path, tests_root: Path) -> File
                         "function": handler_name,
                     }
                 )
+        pending.extend(ast.iter_child_nodes(node))
+    lowered_source = source.lower()
     markers = {
-        category: sum(source.lower().count(marker.lower()) for marker in marker_set)
+        category: sum(lowered_source.count(marker.lower()) for marker in marker_set)
         for category, marker_set in _TEXT_MARKERS.items()
     }
     return FileInventory(
         path=path.relative_to(source_root.parent).as_posix(),
-        package=_package_for(path, source_root),
+        # Test files live outside the product source tree. Avoid resolving
+        # their paths against source_root for every file in a full inventory.
+        package=None if is_test and not is_source else _package_for(path, source_root),
         imports=tuple(sorted(imports)),
         classes=tuple(sorted(classes)),
         functions=tuple(sorted(functions)),
@@ -131,7 +156,7 @@ def inspect_python_file(path: Path, source_root: Path, tests_root: Path) -> File
             sorted(routes, key=lambda item: (item["path"], item["method"], item["function"]))
         ),
         markers=markers,
-        test=path.is_relative_to(tests_root),
+        test=is_test,
     )
 
 

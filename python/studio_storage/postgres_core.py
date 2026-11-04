@@ -35,7 +35,7 @@ from studio_orchestrator import Instant
 
 from .bundle_catalog_import_port import CatalogBundleImportCommit, CatalogBundleImportConflict
 from .bundle_multi_import_port import MultiObjectBundleImportCommit, MultiObjectBundleImportConflict
-from .catalog import CatalogAssetNotFound, CatalogConflict
+from .catalog import CatalogAssetNotFound, CatalogConflict, LineageLimitExceeded
 from .connections import ConnectionConflict, ConnectionNotFound
 from .environments import EnvironmentConflict, EnvironmentNotFound
 from .pagination import (
@@ -1667,29 +1667,59 @@ class PostgresMetadataStore:
         finally:
             connection.close()
 
-    def upstream(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[LineageEdge, ...]:
-        connection = self._connect()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "SELECT edge_json FROM ronin_lineage_edges WHERE workspace_id=%s "
-                    "AND target_asset_id=%s AND target_version=%s ORDER BY edge_digest",
-                    (str(workspace_id), str(ref.asset_id), str(ref.version)),
-                )
-                return tuple(LineageEdge.from_json(row["edge_json"]) for row in cursor.fetchall())
-        finally:
-            connection.close()
+    def upstream(
+        self, workspace_id: WorkspaceId, ref: AssetRef, *, limit: int = 100
+    ) -> tuple[LineageEdge, ...]:
+        return self._lineage_for_ref(
+            workspace_id,
+            ref,
+            asset_column="target_asset_id",
+            limit=limit,
+        )
 
-    def downstream(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[LineageEdge, ...]:
+    def downstream(
+        self, workspace_id: WorkspaceId, ref: AssetRef, *, limit: int = 100
+    ) -> tuple[LineageEdge, ...]:
+        return self._lineage_for_ref(
+            workspace_id,
+            ref,
+            asset_column="source_asset_id",
+            limit=limit,
+        )
+
+    def _lineage_for_ref(
+        self,
+        workspace_id: WorkspaceId,
+        ref: AssetRef,
+        *,
+        asset_column: str,
+        limit: int,
+    ) -> tuple[LineageEdge, ...]:
+        if not 1 <= limit <= 100:
+            raise ValueError("lineage limit must be between 1 and 100")
+        if asset_column not in {"source_asset_id", "target_asset_id"}:
+            raise ValueError("invalid lineage endpoint")
+        if asset_column == "target_asset_id":
+            query = (
+                "SELECT edge_json FROM ronin_lineage_edges WHERE workspace_id=%s "
+                "AND target_asset_id=%s AND target_version=%s ORDER BY edge_digest LIMIT %s"
+            )
+        else:
+            query = (
+                "SELECT edge_json FROM ronin_lineage_edges WHERE workspace_id=%s "
+                "AND source_asset_id=%s AND source_version=%s ORDER BY edge_digest LIMIT %s"
+            )
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT edge_json FROM ronin_lineage_edges WHERE workspace_id=%s "
-                    "AND source_asset_id=%s AND source_version=%s ORDER BY edge_digest",
-                    (str(workspace_id), str(ref.asset_id), str(ref.version)),
+                    query,
+                    (str(workspace_id), str(ref.asset_id), str(ref.version), limit + 1),
                 )
-                return tuple(LineageEdge.from_json(row["edge_json"]) for row in cursor.fetchall())
+                rows = cursor.fetchall()
+                if len(rows) > limit:
+                    raise LineageLimitExceeded(f"lineage result exceeds requested limit of {limit}")
+                return tuple(LineageEdge.from_json(row["edge_json"]) for row in rows)
         finally:
             connection.close()
 

@@ -44,6 +44,10 @@ class CatalogAssetNotFound(KeyError):
     """Raised when a governed asset is absent."""
 
 
+class LineageLimitExceeded(ValueError):
+    """Raised when a bounded lineage query would otherwise return partial data."""
+
+
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
     execute_migration_script(connection, script)
 
@@ -660,26 +664,56 @@ class SqliteCatalogStore:
         finally:
             connection.close()
 
-    def upstream(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[LineageEdge, ...]:
-        connection = self._connect()
-        try:
-            rows = connection.execute(
-                "SELECT edge_json FROM lineage_edges WHERE workspace_id=? "
-                "AND target_asset_id=? AND target_version=? ORDER BY edge_digest",
-                (str(workspace_id), str(ref.asset_id), str(ref.version)),
-            ).fetchall()
-            return tuple(LineageEdge.from_json(row["edge_json"]) for row in rows)
-        finally:
-            connection.close()
+    def upstream(
+        self, workspace_id: WorkspaceId, ref: AssetRef, *, limit: int = 100
+    ) -> tuple[LineageEdge, ...]:
+        return self._lineage_for_ref(
+            workspace_id,
+            ref,
+            asset_column="target_asset_id",
+            limit=limit,
+        )
 
-    def downstream(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[LineageEdge, ...]:
+    def downstream(
+        self, workspace_id: WorkspaceId, ref: AssetRef, *, limit: int = 100
+    ) -> tuple[LineageEdge, ...]:
+        return self._lineage_for_ref(
+            workspace_id,
+            ref,
+            asset_column="source_asset_id",
+            limit=limit,
+        )
+
+    def _lineage_for_ref(
+        self,
+        workspace_id: WorkspaceId,
+        ref: AssetRef,
+        *,
+        asset_column: str,
+        limit: int,
+    ) -> tuple[LineageEdge, ...]:
+        if not 1 <= limit <= 100:
+            raise ValueError("lineage limit must be between 1 and 100")
+        if asset_column not in {"source_asset_id", "target_asset_id"}:
+            raise ValueError("invalid lineage endpoint")
+        if asset_column == "target_asset_id":
+            query = (
+                "SELECT edge_json FROM lineage_edges WHERE workspace_id=? "
+                "AND target_asset_id=? AND target_version=? ORDER BY edge_digest LIMIT ?"
+            )
+        else:
+            query = (
+                "SELECT edge_json FROM lineage_edges WHERE workspace_id=? "
+                "AND source_asset_id=? AND source_version=? ORDER BY edge_digest LIMIT ?"
+            )
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT edge_json FROM lineage_edges WHERE workspace_id=? "
-                "AND source_asset_id=? AND source_version=? ORDER BY edge_digest",
-                (str(workspace_id), str(ref.asset_id), str(ref.version)),
+                query,
+                (str(workspace_id), str(ref.asset_id), str(ref.version), limit + 1),
             ).fetchall()
+            if len(rows) > limit:
+                raise LineageLimitExceeded(f"lineage result exceeds requested limit of {limit}")
             return tuple(LineageEdge.from_json(row["edge_json"]) for row in rows)
         finally:
             connection.close()

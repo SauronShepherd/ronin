@@ -56,6 +56,9 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_quality",
             "studio_data_engineering",
             "studio_ml",
+            # The control-plane adapter exposes semantic model/dashboard APIs
+            # and delegates their bounded runtime and Bundle operations here.
+            "studio_semantic",
         }
     ),
     "studio_worker": frozenset(
@@ -94,6 +97,7 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_semantic",
             "studio_data_engineering",
             "studio_connectors",
+            "studio_streaming",
         }
     ),
 }
@@ -121,7 +125,7 @@ PROJECT_DEPENDENCIES.update(
         "studio_security": frozenset({"studio_core", "studio_orchestrator"}),
         "studio_semantic": frozenset({"studio_core", "studio_sql", "studio_storage"}),
         "studio_sql": frozenset(),
-        "studio_streaming": frozenset({"studio_core", "studio_lakehouse"}),
+        "studio_streaming": frozenset({"studio_core", "studio_lakehouse", "studio_storage"}),
         "studio_runtime": frozenset(
             {
                 "studio_core",

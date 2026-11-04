@@ -2,7 +2,13 @@ from studio_ml.remote import MLflowBackend, SparkBackend
 
 
 def test_provider_adapters_have_stable_ids_and_capabilities() -> None:
-    def transport(_operation: str, _payload: dict[str, object]) -> dict[str, object]:
+    def transport(
+        _operation: str,
+        _payload: dict[str, object],
+        *,
+        timeout_seconds: float | None = None,
+    ) -> dict[str, object]:
+        del timeout_seconds
         return {"run_id": "r", "status": "queued"}
 
     mlflow = MLflowBackend(transport)

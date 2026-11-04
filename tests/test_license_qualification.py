@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+from packaging.markers import default_environment
 
 from tools.license_qualification import (
     LicenseQualificationError,
@@ -21,6 +22,7 @@ def _inventory(
     packages: list[dict[str, object]],
     *,
     lock_sha256: str = _LOCK_SHA,
+    lock_file: str = "requirements-dev.lock",
 ) -> dict[str, object]:
     enriched: list[dict[str, object]] = []
     for package in packages:
@@ -29,7 +31,7 @@ def _inventory(
         enriched.append(entry)
     return {
         "schema_version": 1,
-        "lock_file": "requirements-dev.lock",
+        "lock_file": lock_file,
         "lock_sha256": lock_sha256,
         "packages": enriched,
     }
@@ -94,11 +96,13 @@ def _qualify(
     graph: dict[str, str],
     *,
     expected_direct: set[str] | None = None,
+    expected_lock_file: str = "requirements-dev.lock",
 ) -> None:
     qualify(
         inventory,
         policy,
         graph,
+        expected_lock_file=expected_lock_file,
         expected_lock_sha256=_LOCK_SHA,
         expected_direct=set(graph) if expected_direct is None else expected_direct,
     )
@@ -135,6 +139,22 @@ def test_locked_graph_accepts_pep508_environment_markers(tmp_path: Path) -> None
         encoding="utf-8",
     )
     assert locked_graph(lock) == {"demo": "1.0.0"}
+
+
+def test_locked_graph_selects_only_the_active_marker_variant(tmp_path: Path) -> None:
+    lock = tmp_path / "requirements-test.lock"
+    lock.write_text(
+        f'demo==1.0.0 ; python_version < "3.13" {chr(92)}\n'
+        f"    --hash=sha256:{_HASH}\n"
+        f'demo==2.0.0 ; python_version >= "3.13" {chr(92)}\n'
+        f"    --hash=sha256:{_HASH}\n",
+        encoding="utf-8",
+    )
+    python_312 = default_environment() | {"python_version": "3.12"}
+    python_313 = default_environment() | {"python_version": "3.13"}
+
+    assert locked_graph(lock, marker_environment=python_312) == {"demo": "1.0.0"}
+    assert locked_graph(lock, marker_environment=python_313) == {"demo": "2.0.0"}
 
 
 def test_locked_graph_fails_closed_on_conflicting_versions(tmp_path: Path) -> None:
@@ -228,12 +248,53 @@ dependencies = [\"http-client>=1,<2\"]
     assert direct_requirements(tmp_path) == {"http-client", "pytest", "runtime"}
 
 
+def test_direct_requirements_covers_multiple_optional_extras(tmp_path: Path) -> None:
+    (tmp_path / "packages/pyronin").mkdir(parents=True)
+    (tmp_path / "pyproject.toml").write_text(
+        """[project]
+name = "root"
+version = "0.0.0"
+dependencies = ["runtime>=1,<2"]
+
+[project.optional-dependencies]
+dev = ["pytest>=9,<10"]
+data-plane = ["pyarrow>=15,<24"]
+ml = ["numpy>=1.23,<2.4"]
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "packages/pyronin/pyproject.toml").write_text(
+        """[project]
+name = "pyronin"
+version = "0.1.0"
+dependencies = ["http-client>=1,<2"]
+""",
+        encoding="utf-8",
+    )
+
+    assert direct_requirements(tmp_path, extras=("dev", "data-plane", "ml")) == {
+        "http-client",
+        "numpy",
+        "pyarrow",
+        "pytest",
+        "runtime",
+    }
+
+
 def test_qualify_accepts_exact_reviewed_locked_graph() -> None:
     graph = {"alpha": "1.0", "beta": "2.0"}
     inventory = _inventory([_entry("alpha", "1.0"), _entry("beta", "2.0", "Apache-2.0")])
     policy = _policy(inventory, "alpha==1.0", "beta==2.0")
 
     _qualify(inventory, policy, graph)
+
+
+def test_qualify_accepts_non_default_lock_file_identity() -> None:
+    graph = {"alpha": "1.0"}
+    inventory = _inventory([_entry("alpha", "1.0")], lock_file="requirements-test.lock")
+    policy = _policy(inventory, "alpha==1.0")
+
+    _qualify(inventory, policy, graph, expected_lock_file="requirements-test.lock")
 
 
 @pytest.mark.parametrize(
@@ -262,20 +323,36 @@ def test_qualify_fails_closed_on_incomplete_or_ambiguous_inventory(
 
 def test_qualify_requires_exact_lock_file_identity() -> None:
     graph = {"alpha": "1.0"}
-    inventory = _inventory([_entry("alpha", "1.0")], lock_sha256="f" * 64)
-    with pytest.raises(LicenseQualificationError, match="lock_sha256"):
-        _qualify(inventory, _policy(inventory, "alpha==1.0"), graph)
+    inventory = _inventory(
+        [_entry("alpha", "1.0")],
+        lock_sha256="f" * 64,
+        lock_file="requirements-test.lock",
+    )
+    with pytest.raises(LicenseQualificationError, match="requirements-test.lock"):
+        _qualify(
+            inventory,
+            _policy(inventory, "alpha==1.0"),
+            graph,
+            expected_lock_file="requirements-test.lock",
+        )
 
 
 def test_qualify_rejects_direct_dependency_missing_from_lock() -> None:
     graph = {"alpha": "1.0"}
-    inventory = _inventory([_entry("alpha", "1.0")])
-    with pytest.raises(LicenseQualificationError, match="direct project dependencies missing"):
+    inventory = _inventory(
+        [_entry("alpha", "1.0")],
+        lock_file="requirements-test.lock",
+    )
+    with pytest.raises(
+        LicenseQualificationError,
+        match="requirements-test.lock: beta",
+    ):
         _qualify(
             inventory,
             _policy(inventory, "alpha==1.0"),
             graph,
             expected_direct={"alpha", "beta"},
+            expected_lock_file="requirements-test.lock",
         )
 
 
@@ -303,6 +380,44 @@ def test_qualify_requires_exact_policy_key_set() -> None:
     inventory = _inventory([_entry("alpha", "1.0"), _entry("beta", "2.0")])
     with pytest.raises(LicenseQualificationError, match="exactly match"):
         _qualify(inventory, _policy(inventory, "alpha==1.0"), graph)
+
+
+def test_qualify_lists_missing_and_stale_policy_keys() -> None:
+    graph = {"alpha": "1.0", "beta": "2.0"}
+    inventory = _inventory([_entry("alpha", "1.0"), _entry("beta", "2.0")])
+    policy = _policy(inventory, "alpha==1.0")
+    reviews = policy["reviews"]
+    assert isinstance(reviews, dict)
+    reviews["old-package==9.9"] = {
+        "decision": "allow",
+        "evidence_sha256": "b" * 64,
+        "notice_required": False,
+        "attribution_required": False,
+        "rationale": "stale fixture entry",
+    }
+
+    with pytest.raises(LicenseQualificationError) as error:
+        _qualify(inventory, policy, graph)
+
+    message = str(error.value)
+    assert "missing review decisions: beta==2.0" in message
+    assert "stale policy entries: old-package==9.9" in message
+
+
+def test_qualify_reports_missing_decisions_and_stale_evidence_together() -> None:
+    graph = {"alpha": "1.0", "beta": "2.0"}
+    inventory = _inventory([_entry("alpha", "1.0"), _entry("beta", "2.0")])
+    policy = _policy(inventory, "alpha==1.0")
+    reviews = policy["reviews"]
+    assert isinstance(reviews, dict)
+    reviews["alpha==1.0"]["evidence_sha256"] = "b" * 64
+
+    with pytest.raises(LicenseQualificationError) as error:
+        _qualify(inventory, policy, graph)
+
+    message = str(error.value)
+    assert "missing review decisions: beta==2.0" in message
+    assert "review evidence is stale or mismatched: alpha==1.0" in message
 
 
 def test_qualify_rejects_stale_review_when_installed_evidence_changes() -> None:

@@ -7,9 +7,10 @@ from collections.abc import Mapping
 from typing import Protocol
 
 from .contracts import (
-    SqlExplainResult,
+    SqlExplainUnsupportedError,
     SqlQueryResult,
     SqlResultLimitError,
+    SqlValidationError,
     normalize_sql_parameters,
     validate_read_only_select,
 )
@@ -27,15 +28,6 @@ class SqlQueryEngine(Protocol):
         timeout_ms: int = 5_000,
         max_result_bytes: int = 1_048_576,
     ) -> SqlQueryResult: ...
-
-    def explain(
-        self,
-        project_id: str,
-        sql: str,
-        parameters: tuple[object, ...] = (),
-        *,
-        max_bytes: int = 262_144,
-    ) -> SqlExplainResult: ...
 
 
 class SqlHTTPAdapter:
@@ -112,21 +104,41 @@ class SqlHTTPAdapter:
     def explain(self, project_id: str, body: object) -> dict[str, object]:
         """Return sanitized provider-neutral plan rows, failing closed by capability."""
         if not project_id or project_id != project_id.strip():
-            raise ValueError("SQL project_id must be non-empty and trimmed")
-        if not isinstance(body, Mapping) or set(body) - {"sql", "parameters", "max_bytes"}:
-            raise ValueError("SQL explain body contains unknown fields")
+            raise SqlValidationError("SQL project_id must be non-empty and trimmed")
+        if not isinstance(body, Mapping) or set(body) - {
+            "sql",
+            "parameters",
+            "max_bytes",
+            "timeout_ms",
+        }:
+            raise SqlValidationError("SQL explain body contains unknown fields")
         sql = body.get("sql")
         if not isinstance(sql, str):
-            raise ValueError("SQL explain body requires non-empty sql")
+            raise SqlValidationError("SQL explain body requires non-empty sql")
         validate_read_only_select(sql)
         max_bytes = body.get("max_bytes", 262_144)
-        if isinstance(max_bytes, bool) or not isinstance(max_bytes, int) or not 1 <= max_bytes <= 1_048_576:
-            raise ValueError("SQL explain max_bytes is outside the configured bound")
-        result = self._engine.explain(
+        if (
+            isinstance(max_bytes, bool)
+            or not isinstance(max_bytes, int)
+            or not 1 <= max_bytes <= 1_048_576
+        ):
+            raise SqlValidationError("SQL explain max_bytes is outside the configured bound")
+        timeout_ms = body.get("timeout_ms", 5_000)
+        if (
+            isinstance(timeout_ms, bool)
+            or not isinstance(timeout_ms, int)
+            or not 1 <= timeout_ms <= 60_000
+        ):
+            raise SqlValidationError("SQL explain timeout_ms must be between 1 and 60000")
+        explain = getattr(self._engine, "explain", None)
+        if not callable(explain):
+            raise SqlExplainUnsupportedError("SQL provider does not support EXPLAIN")
+        result = explain(
             project_id,
             sql,
             normalize_sql_parameters(body.get("parameters", [])),
             max_bytes=max_bytes,
+            timeout_ms=timeout_ms,
         )
         return {"rows": [[key, value] for key, value in result.rows], "max_bytes": max_bytes}
 

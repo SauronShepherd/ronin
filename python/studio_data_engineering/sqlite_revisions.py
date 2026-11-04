@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from collections.abc import Mapping
+from contextlib import closing
 from hashlib import sha256
 from pathlib import Path
 from typing import cast
@@ -155,7 +156,7 @@ class SqliteRevisionStore:
     ) -> dict[str, object] | None:
         if revision < 1:
             raise ValueError("pipeline revision must be positive")
-        with self._connect() as connection:
+        with closing(self._connect()) as connection:
             row = connection.execute(
                 "SELECT * FROM de_revisions WHERE project_id=? AND pipeline_id=? AND revision=?",
                 (project_id, pipeline_id, revision),
@@ -194,7 +195,7 @@ class SqliteRevisionStore:
         return sha256(payload).hexdigest()
 
     def list_revisions(self, *, project_id: str, pipeline_id: str) -> tuple[dict[str, object], ...]:
-        with self._connect() as connection:
+        with closing(self._connect()) as connection:
             revisions = connection.execute(
                 "SELECT revision FROM de_revisions WHERE project_id=? AND pipeline_id=? "
                 "ORDER BY revision DESC",
@@ -214,7 +215,7 @@ class SqliteRevisionStore:
         """List every project and pipeline revision up to a strict inventory bound."""
         if max_revisions < 1 or max_revisions > 100_000:
             raise ValueError("max_revisions must be between 1 and 100000")
-        with self._connect() as connection:
+        with closing(self._connect()) as connection:
             rows = connection.execute(
                 "SELECT * FROM de_revisions ORDER BY project_id,pipeline_id,revision LIMIT ?",
                 (max_revisions + 1,),
@@ -239,7 +240,7 @@ class SqliteRevisionStore:
         return tuple(records)
 
     def list_pipelines(self, *, project_id: str) -> tuple[str, ...]:
-        with self._connect() as connection:
+        with closing(self._connect()) as connection:
             rows = connection.execute(
                 "SELECT DISTINCT pipeline_id FROM de_revisions "
                 "WHERE project_id=? ORDER BY pipeline_id",
@@ -269,7 +270,7 @@ class SqliteRevisionStore:
         }
 
     def archive(self, *, project_id: str, pipeline_id: str) -> bool:
-        with self._connect() as connection:
+        with closing(self._connect()) as connection:
             cursor = connection.execute(
                 "INSERT INTO de_pipeline_state(project_id,pipeline_id,archived) VALUES (?,?,1) "
                 "ON CONFLICT(project_id,pipeline_id) DO UPDATE SET archived=1 "
@@ -279,7 +280,7 @@ class SqliteRevisionStore:
         return cursor.rowcount == 1
 
     def is_archived(self, *, project_id: str, pipeline_id: str) -> bool:
-        with self._connect() as connection:
+        with closing(self._connect()) as connection:
             row = connection.execute(
                 "SELECT archived FROM de_pipeline_state WHERE project_id=? AND pipeline_id=?",
                 (project_id, pipeline_id),

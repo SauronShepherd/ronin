@@ -4,9 +4,22 @@ from __future__ import annotations
 import http.client
 import json
 import time
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
+from studio_core.catalog import AssetId, AssetRef, AssetVersion
+from studio_core.ml import (
+    ExperimentId,
+    MetricValue,
+    MLRunId,
+    MLRunRecord,
+    ModelEvaluation,
+    ModelId,
+    ModelSignature,
+    ModelVersion,
+    RegisteredModelVersion,
+)
 from studio_core.plugins import PluginManager, PluginRecord
 from studio_ml import FeatureDefinitionService
 from studio_ml.orchestration import LocalExecutionCoordinator
@@ -15,6 +28,7 @@ from studio_ml.sqlite import SqliteMLLabStore
 from studio_orchestrator import Instant
 from studio_plugin_workspaces import WorkspacesPlugin
 from studio_runtime import PluginHost
+from studio_storage.ml import MLConflict
 from test_workspace_project_http_api import _Authorizer, _server, _Store
 
 
@@ -90,6 +104,14 @@ def test_ml_studio_http_lab_quality_and_execution_flow() -> None:
                 },
             )
             assert status == 200, created
+            list_status, listed = _request(
+                address,
+                "GET",
+                "/v1/ml-studio/labs?workspace_id=workspace-a",
+                {},
+            )
+            assert list_status == 200, listed
+            assert [item["id"] for item in listed["items"]] == ["http-lab"]
             rows = [{"x": n, "target": n % 2} for n in range(1, 21)]
             quality_status, quality = _request(
                 address,
@@ -174,6 +196,142 @@ def test_ml_studio_http_lab_quality_and_execution_flow() -> None:
                 {},
             )
             assert unknown_status == 404, unknown
+    finally:
+        host.stop()
+
+
+def test_ml_model_evaluation_review_gates_promotion_over_http() -> None:
+    manager = PluginManager()
+    workspaces = WorkspacesPlugin()
+    ml = MachineLearningStudioPlugin()
+    model = RegisteredModelVersion(
+        ModelId("review-model"),
+        ModelVersion("candidate-1"),
+        MLRunId("review-run"),
+        "artifact://review-model/candidate-1",
+        "a" * 64,
+        "scikit-learn",
+        ModelSignature((("x", "number"),), (("target", "number"),)),
+    )
+    run = MLRunRecord(
+        MLRunId("review-run"),
+        ExperimentId("review-experiment"),
+        "execution:review-run",
+        "revision:review",
+        (AssetRef(AssetId("customers"), AssetVersion("v1")),),
+        metrics=(MetricValue("accuracy", 0.9),),
+    )
+
+    class Registry:
+        def __init__(self) -> None:
+            self.model = model
+            self.evaluations: list[ModelEvaluation] = []
+
+        def get_model(self, _workspace, model_id, version):
+            return self.model if (model_id, version) == (model.model_id, model.version) else None
+
+        def get_run(self, _workspace, run_id):
+            return run if run_id == run.id else None
+
+        def record_evaluation(self, _workspace, evaluation, *, now):
+            assert now
+            if evaluation not in self.evaluations:
+                self.evaluations.append(evaluation)
+            return evaluation
+
+        def list_evaluations(self, _workspace, model_id, version):
+            if (model_id, version) != (model.model_id, model.version):
+                return ()
+            return tuple(self.evaluations)
+
+        def promote_model(self, _workspace, model_id, version, *, now):
+            assert now
+            if (model_id, version) != (self.model.model_id, self.model.version):
+                raise KeyError(f"{model_id}@{version}")
+            if not any(item.status == "passed" for item in self.evaluations):
+                raise MLConflict("promotion requires a passed model evaluation")
+            self.model = replace(self.model, stage="champion")
+            return self.model
+
+    registry = Registry()
+    plan = manager.compose(
+        (
+            PluginRecord(workspaces.manifest, workspaces, "test"),
+            PluginRecord(ml.manifest, ml, "test"),
+        )
+    )
+    host = PluginHost(manager, plan)
+    host.start()
+    ml._registry = registry
+    try:
+        with _server(
+            _Store(),
+            _Authorizer(),
+            plugin_host=host,
+            plugin_routes_enabled=True,
+            studio_root=Path(__file__).parents[2] / "web",
+        ) as address:
+            model_path = "/v1/ml-studio/models/review-model/candidate-1"
+            workspace = "?workspace_id=workspace-a"
+            status, blocked = _request(
+                address,
+                "POST",
+                f"{model_path}/promote{workspace}",
+                {"reason": "review is required"},
+            )
+            assert status == 409, blocked
+            assert blocked["error"]["code"] == "conflict"
+            assert "passed model evaluation" in blocked["error"]["message"]
+
+            invalid_status, invalid = _request(
+                address,
+                "POST",
+                f"{model_path}/evaluations{workspace}",
+                {"status": "passed", "review_ref": "review-1", "metrics": []},
+            )
+            assert invalid_status == 400, invalid
+
+            status, unknown = _request(
+                address,
+                "POST",
+                f"{model_path}/evaluations{workspace}",
+                {"status": "unknown", "review_ref": "manual-review-unknown"},
+            )
+            assert status == 200, unknown
+            assert unknown["evaluation"]["metrics"] == [
+                {"name": "accuracy", "value": 0.9, "step": 0}
+            ]
+            status, still_blocked = _request(
+                address,
+                "POST",
+                f"{model_path}/promote{workspace}",
+                {"reason": "unknown review does not permit promotion"},
+            )
+            assert status == 409, still_blocked
+
+            status, passed = _request(
+                address,
+                "POST",
+                f"{model_path}/evaluations{workspace}",
+                {"status": "passed", "review_ref": "manual-review-passed"},
+            )
+            assert status == 200, passed
+            status, card = _request(address, "GET", f"{model_path}/card{workspace}", {})
+            assert status == 200, card
+            assert {item["status"] for item in card["evaluations"]} == {"passed", "unknown"}
+            assert card["evaluations"][0]["dataset"] == {
+                "asset_id": "customers",
+                "version": "v1",
+            }
+
+            status, promoted = _request(
+                address,
+                "POST",
+                f"{model_path}/promote{workspace}",
+                {"reason": "passed operator review"},
+            )
+            assert status == 200, promoted
+            assert promoted["stage"] == "champion"
     finally:
         host.stop()
 

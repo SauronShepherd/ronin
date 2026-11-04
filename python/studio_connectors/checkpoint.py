@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import secrets
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
@@ -72,7 +73,7 @@ class SqliteConnectorCheckpointStore:
     def __init__(self, path: Path) -> None:
         self._path = path
         path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(path) as connection:
+        with closing(sqlite3.connect(path)) as connection, connection:
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS connector_checkpoints ("
                 "identity TEXT PRIMARY KEY, strategy TEXT NOT NULL, value TEXT NOT NULL, "
@@ -97,7 +98,7 @@ class SqliteConnectorCheckpointStore:
 
     def get_or_create_discovery_cursor_key(self) -> bytes:
         """Return the database-shared HMAC key used to authenticate discovery cursors."""
-        with sqlite3.connect(self._path, isolation_level=None) as connection:
+        with closing(sqlite3.connect(self._path, isolation_level=None)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
                 "SELECT signing_key FROM connector_discovery_cursor_keys WHERE key_id=1"
@@ -118,7 +119,7 @@ class SqliteConnectorCheckpointStore:
 
     def get_evidence(self, identity: str) -> CheckpointEvidence | None:
         self._validate_identity(identity)
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             row = connection.execute(
                 "SELECT strategy,value,digest,previous_digest,fence,output_id,output_digest "
                 "FROM connector_checkpoints WHERE identity=?",
@@ -130,7 +131,7 @@ class SqliteConnectorCheckpointStore:
 
     def health(self, identity: str) -> CheckpointHealth:
         self._validate_identity(identity)
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             row = connection.execute(
                 "SELECT digest,fence,output_digest FROM connector_checkpoints WHERE identity=?",
                 (identity,),
@@ -146,7 +147,7 @@ class SqliteConnectorCheckpointStore:
         """List committed output locators and digests within an explicit bound."""
         if max_outputs < 1 or max_outputs > 100_000:
             raise ValueError("max_outputs must be between 1 and 100000")
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             rows = connection.execute(
                 "SELECT output_id,output_digest FROM connector_checkpoints "
                 "WHERE output_id IS NOT NULL OR output_digest IS NOT NULL "
@@ -164,7 +165,7 @@ class SqliteConnectorCheckpointStore:
 
     def acquire(self, identity: str) -> int:
         self._validate_identity(identity)
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
                 "SELECT fence FROM connector_checkpoints WHERE identity=?", (identity,)
@@ -209,7 +210,7 @@ class SqliteConnectorCheckpointStore:
             raise CheckpointFenceConflict(
                 "checkpoint cannot advance before output commit is acknowledged"
             )
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
                 "SELECT strategy,value,digest,previous_digest,fence,output_id,output_digest "
@@ -376,7 +377,7 @@ class SqliteConnectorCheckpointStore:
 
     def _row(self, identity: str) -> tuple[str, str] | None:
         self._validate_identity(identity)
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             row = connection.execute(
                 "SELECT strategy,value,output_digest FROM connector_checkpoints WHERE identity=?",
                 (identity,),

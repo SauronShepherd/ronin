@@ -26,6 +26,20 @@ def _plan():
     )
 
 
+@pytest.fixture
+def sqlite_service_factory():
+    services: list[GovernStudioService] = []
+
+    def create(path: str) -> GovernStudioService:
+        service = GovernStudioService(SqliteRunStore(path))
+        services.append(service)
+        return service
+
+    yield create
+    for service in reversed(services):
+        service.close()
+
+
 def test_service_is_idempotent_and_has_explicit_lifecycle() -> None:
     service = GovernStudioService()
     first = service.create_run(_plan(), idempotency_key="same")
@@ -85,12 +99,14 @@ def test_run_rejects_a_different_plan_during_generation_and_validation() -> None
         service.validate(run.run_id, changed)
 
 
-def test_sqlite_idempotency_is_safe_across_concurrent_services(tmp_path) -> None:
+def test_sqlite_idempotency_is_safe_across_concurrent_services(
+    tmp_path, sqlite_service_factory
+) -> None:
     database = str(tmp_path / "concurrent.sqlite3")
     plan = _plan()
 
     def create() -> str:
-        service = GovernStudioService(SqliteRunStore(database))
+        service = sqlite_service_factory(database)
         return service.create_run(plan, idempotency_key="concurrent-key").run_id
 
     with ThreadPoolExecutor(max_workers=4) as executor:
@@ -98,33 +114,35 @@ def test_sqlite_idempotency_is_safe_across_concurrent_services(tmp_path) -> None
     assert set(run_ids) == {run_ids[0]}
 
 
-def test_sqlite_artifact_sequences_are_safe_concurrently(tmp_path) -> None:
+def test_sqlite_artifact_sequences_are_safe_concurrently(tmp_path, sqlite_service_factory) -> None:
     database = str(tmp_path / "artifact-concurrent.sqlite3")
     plan = _plan()
-    seed_service = GovernStudioService(SqliteRunStore(database))
+    seed_service = sqlite_service_factory(database)
     run = seed_service.create_run(plan, idempotency_key="artifact-concurrent")
     seed_service.generate(run.run_id, plan)
 
     def export() -> str:
-        service = GovernStudioService(SqliteRunStore(database))
+        service = sqlite_service_factory(database)
         service.export(run.run_id, format_id="jsonl", table_name="customers")
         return run.run_id
 
     with ThreadPoolExecutor(max_workers=4) as executor:
         list(executor.map(lambda _item: export(), range(4)))
-    reopened = GovernStudioService(SqliteRunStore(database))
+    reopened = sqlite_service_factory(database)
     assert len(reopened.artifacts(run.run_id)) == 4
 
 
-def test_sqlite_store_survives_service_restart_and_preserves_idempotency(tmp_path) -> None:
+def test_sqlite_store_survives_service_restart_and_preserves_idempotency(
+    tmp_path, sqlite_service_factory
+) -> None:
     database = str(tmp_path / "govern.sqlite3")
     plan = _plan()
-    first_service = GovernStudioService(SqliteRunStore(database))
+    first_service = sqlite_service_factory(database)
     created = first_service.create_run(plan, idempotency_key="durable")
     generated = first_service.generate(created.run_id, plan)
     assert generated.status is RunStatus.GENERATED
 
-    restarted = GovernStudioService(SqliteRunStore(database))
+    restarted = sqlite_service_factory(database)
     same = restarted.create_run(plan, idempotency_key="durable")
     assert same == generated
     validated = restarted.validate(created.run_id, plan)
@@ -132,15 +150,15 @@ def test_sqlite_store_survives_service_restart_and_preserves_idempotency(tmp_pat
     assert restarted.get_run(created.run_id).validation.evidence_id.startswith("validation-")
 
 
-def test_sqlite_store_persists_export_artifact_metadata(tmp_path) -> None:
+def test_sqlite_store_persists_export_artifact_metadata(tmp_path, sqlite_service_factory) -> None:
     database = str(tmp_path / "artifacts.sqlite3")
     plan = _plan()
-    service = GovernStudioService(SqliteRunStore(database))
+    service = sqlite_service_factory(database)
     run = service.create_run(plan, idempotency_key="artifact-run")
     service.generate(run.run_id, plan)
     content = service.export(run.run_id, format_id="jsonl", table_name="customers")
     assert content.count("\n") == 2
-    reopened = GovernStudioService(SqliteRunStore(database))
+    reopened = sqlite_service_factory(database)
     artifacts = reopened.artifacts(run.run_id)
     assert artifacts[0]["format_id"] == "jsonl"
     assert artifacts[0]["size_bytes"] == len(content.encode())
@@ -150,8 +168,10 @@ def test_sqlite_store_persists_export_artifact_metadata(tmp_path) -> None:
     }
 
 
-def test_synthetic_run_inventory_is_bounded_before_materializing_all_runs(tmp_path) -> None:
-    service = GovernStudioService(SqliteRunStore(str(tmp_path / "bounded-runs.sqlite3")))
+def test_synthetic_run_inventory_is_bounded_before_materializing_all_runs(
+    tmp_path, sqlite_service_factory
+) -> None:
+    service = sqlite_service_factory(str(tmp_path / "bounded-runs.sqlite3"))
     service.create_run(_plan(), idempotency_key="run-one")
     service.create_run(plan_from_payload({"seed": 99, "tables": []}), idempotency_key="run-two")
 
@@ -160,8 +180,8 @@ def test_synthetic_run_inventory_is_bounded_before_materializing_all_runs(tmp_pa
         discover_synthetic_data_artifact_references(service, max_runs=1)
 
 
-def test_synthetic_artifact_inventory_is_bounded_per_run(tmp_path) -> None:
-    service = GovernStudioService(SqliteRunStore(str(tmp_path / "bounded-artifacts.sqlite3")))
+def test_synthetic_artifact_inventory_is_bounded_per_run(tmp_path, sqlite_service_factory) -> None:
+    service = sqlite_service_factory(str(tmp_path / "bounded-artifacts.sqlite3"))
     plan = _plan()
     run = service.create_run(plan, idempotency_key="bounded-artifacts")
     service.generate(run.run_id, plan)

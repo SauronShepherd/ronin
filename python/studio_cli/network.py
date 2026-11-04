@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from contextlib import closing
 from dataclasses import dataclass, field
 from typing import cast
 from urllib.error import HTTPError, URLError
@@ -158,15 +159,16 @@ class ControlPlaneClient:
             with self._opener.open(request, timeout=self.timeout) as response:  # noqa: S310
                 data = response.read(_MAX_RESPONSE_BYTES + 1)
         except HTTPError as exc:
-            try:
-                error_body = exc.read(_MAX_ERROR_BYTES + 1)
-                if len(error_body) > _MAX_ERROR_BYTES:
+            with closing(exc):
+                try:
+                    error_body = exc.read(_MAX_ERROR_BYTES + 1)
+                    if len(error_body) > _MAX_ERROR_BYTES:
+                        parsed_error = None
+                    else:
+                        parsed_error = json.loads(error_body) if error_body else None
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
                     parsed_error = None
-                else:
-                    parsed_error = json.loads(error_body) if error_body else None
-            except (OSError, json.JSONDecodeError, UnicodeDecodeError):
-                parsed_error = None
-            code = _error_code(parsed_error)
+                code = _error_code(parsed_error)
             suffix = f" [{code}]" if code else ""
             raise ControlPlaneError(f"Ronin API error {exc.code}{suffix}") from exc
         except URLError as exc:

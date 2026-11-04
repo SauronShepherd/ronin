@@ -22,7 +22,7 @@ try:
 except ModuleNotFoundError as exc:
     if exc.name != "studio_cli":
         raise
-    # CI runs this artifact checker before installing the built wheel. Use the
+    # The qualification runner checks the built wheel before installing it. Use the
     # repository validator against the skill files extracted from the artifact.
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
     from studio_cli.agent_skills import discover_skills
@@ -260,8 +260,15 @@ def qualify(artifact: Path) -> dict[str, object]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("artifact", type=Path)
+    parser.add_argument(
+        "--output", type=Path, help="write the full qualification report to this file"
+    )
     args = parser.parse_args()
-    print(json.dumps(qualify(args.artifact), indent=2))
+    report = json.dumps(qualify(args.artifact), indent=2) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(report, encoding="utf-8")
+    print(report, end="")
     return 0
 
 

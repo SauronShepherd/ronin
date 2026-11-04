@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import date, datetime, time
+from decimal import Decimal
 from typing import Any
 
 from studio_core import (
@@ -23,6 +26,11 @@ from studio_storage.secrets import SecretResolver
 from .contracts import ConnectorReadResult, DiscoveryPage
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_JDBC_CREDENTIAL_PARAMETER = re.compile(
+    r"(?i)(?:[?;&]|//[^/;?]*)(?:user(?:name|[\s_-]*id)?|password|pwd|pass|login)\s*="
+)
+_JDBC_URI_USERINFO = re.compile(r"(?i)//[^/?#;]+:[^/?#;]+@")
+_ORACLE_THIN_USERINFO = re.compile(r"(?i)^jdbc:oracle:thin:[^/@;]+/[^@;]+@")
 
 
 class JdbcDependencyError(RuntimeError):
@@ -60,19 +68,109 @@ class JdbcIncrementalCheckpointV2:
     def __post_init__(self) -> None:
         if not self.source_asset_id or not self.incremental_column:
             raise ValueError("JDBC checkpoint identity is required")
+        columns = (self.incremental_column, *self.tie_breaker_columns)
+        if any(
+            not isinstance(column, str) or not _IDENTIFIER.fullmatch(column) for column in columns
+        ):
+            raise ValueError("JDBC checkpoint columns must be safe identifiers")
+        if len(set(columns)) != len(columns):
+            raise ValueError("JDBC checkpoint columns must be unique")
         if len(self.tie_breaker_columns) != len(self.tie_breaker_values):
             raise ValueError("JDBC checkpoint tie-breaker columns and values must match")
-        if self.checkpoint_generation < 0:
+        if self.incremental_value is None:
+            if any(value is not None for value in self.tie_breaker_values):
+                raise ValueError("JDBC empty checkpoint must have null tie-breaker values")
+        elif any(value is None for value in self.tie_breaker_values):
+            raise ValueError("JDBC checkpoint cursor values must not be null")
+        if not isinstance(self.schema_fingerprint, str) or not re.fullmatch(
+            r"[0-9a-f]{64}", self.schema_fingerprint
+        ):
+            raise ValueError("JDBC checkpoint schema fingerprint must be a SHA-256 digest")
+        self._encode_scalar(self.incremental_value)
+        for value in self.tie_breaker_values:
+            self._encode_scalar(value)
+        if (
+            not isinstance(self.checkpoint_generation, int)
+            or isinstance(self.checkpoint_generation, bool)
+            or self.checkpoint_generation < 0
+        ):
             raise ValueError("JDBC checkpoint generation must be non-negative")
+
+    @staticmethod
+    def _encode_scalar(value: object) -> dict[str, object]:
+        if value is None:
+            return {"type": "null", "value": None}
+        if isinstance(value, bool):
+            return {"type": "bool", "value": value}
+        if isinstance(value, int):
+            return {"type": "int", "value": str(value)}
+        if isinstance(value, Decimal):
+            if not value.is_finite():
+                raise ValueError("JDBC checkpoint decimal values must be finite")
+            return {"type": "decimal", "value": str(value)}
+        if isinstance(value, float):
+            if not (float("-inf") < value < float("inf")):
+                raise ValueError("JDBC checkpoint float values must be finite")
+            return {"type": "float", "value": value.hex()}
+        if isinstance(value, datetime):
+            return {"type": "datetime", "value": value.isoformat()}
+        if isinstance(value, date):
+            return {"type": "date", "value": value.isoformat()}
+        if isinstance(value, time):
+            return {"type": "time", "value": value.isoformat()}
+        if isinstance(value, bytes):
+            return {"type": "bytes", "value": base64.urlsafe_b64encode(value).decode("ascii")}
+        if isinstance(value, str):
+            return {"type": "str", "value": value}
+        raise ValueError(f"unsupported JDBC checkpoint scalar type: {type(value).__name__}")
+
+    @staticmethod
+    def _decode_scalar(value: object) -> object:
+        if not isinstance(value, dict) or set(value) != {"type", "value"}:
+            raise ValueError("invalid JDBC typed checkpoint scalar")
+        kind, raw = value["type"], value["value"]
+        if not isinstance(kind, str):
+            raise ValueError("invalid JDBC typed checkpoint scalar")
+        try:
+            if kind == "null" and raw is None:
+                return None
+            if kind == "bool" and isinstance(raw, bool):
+                return raw
+            if kind == "int" and isinstance(raw, str):
+                return int(raw)
+            if kind == "decimal" and isinstance(raw, str):
+                decimal_result = Decimal(raw)
+                if decimal_result.is_finite():
+                    return decimal_result
+            if kind == "float" and isinstance(raw, str):
+                float_result = float.fromhex(raw)
+                if float("-inf") < float_result < float("inf"):
+                    return float_result
+            if kind == "datetime" and isinstance(raw, str):
+                return datetime.fromisoformat(raw)
+            if kind == "date" and isinstance(raw, str):
+                return date.fromisoformat(raw)
+            if kind == "time" and isinstance(raw, str):
+                return time.fromisoformat(raw)
+            if kind == "bytes" and isinstance(raw, str):
+                return base64.b64decode(raw, altchars=b"-_", validate=True)
+            if kind == "str" and isinstance(raw, str):
+                return raw
+        except (ValueError, ArithmeticError) as exc:
+            raise ValueError("invalid JDBC typed checkpoint scalar") from exc
+        raise ValueError("invalid JDBC typed checkpoint scalar")
 
     def encode(self) -> str:
         return json.dumps(
             {
+                "schema": "ronin.jdbc-watermark/v2",
                 "source_asset_id": self.source_asset_id,
                 "incremental_column": self.incremental_column,
-                "incremental_value": self.incremental_value,
+                "incremental_value": self._encode_scalar(self.incremental_value),
                 "tie_breaker_columns": self.tie_breaker_columns,
-                "tie_breaker_values": self.tie_breaker_values,
+                "tie_breaker_values": tuple(
+                    self._encode_scalar(value) for value in self.tie_breaker_values
+                ),
                 "schema_fingerprint": self.schema_fingerprint,
                 "checkpoint_generation": self.checkpoint_generation,
             },
@@ -90,14 +188,37 @@ class JdbcIncrementalCheckpointV2:
         if not isinstance(payload, dict):
             raise ValueError("invalid JDBC V2 checkpoint")
         try:
+            typed = payload.get("schema") == "ronin.jdbc-watermark/v2"
+            if payload.get("schema") not in {None, "ronin.jdbc-watermark/v2"}:
+                raise ValueError("unsupported JDBC checkpoint schema")
+            source_asset_id = payload["source_asset_id"]
+            incremental_column = payload["incremental_column"]
+            tie_breaker_columns = payload["tie_breaker_columns"]
+            generation = payload["checkpoint_generation"]
+            if (
+                not isinstance(source_asset_id, str)
+                or not isinstance(incremental_column, str)
+                or not isinstance(tie_breaker_columns, (list, tuple))
+                or not all(isinstance(column, str) for column in tie_breaker_columns)
+                or not isinstance(generation, int)
+                or isinstance(generation, bool)
+            ):
+                raise ValueError("invalid JDBC V2 checkpoint")
+            incremental_value = payload["incremental_value"]
+            tie_breaker_values = payload["tie_breaker_values"]
+            if not isinstance(tie_breaker_values, (list, tuple)):
+                raise ValueError("invalid JDBC V2 checkpoint")
+            if typed:
+                incremental_value = cls._decode_scalar(incremental_value)
+                tie_breaker_values = tuple(cls._decode_scalar(item) for item in tie_breaker_values)
             return cls(
-                str(payload["source_asset_id"]),
-                str(payload["incremental_column"]),
-                payload["incremental_value"],
-                tuple(payload["tie_breaker_columns"]),
-                tuple(payload["tie_breaker_values"]),
+                source_asset_id,
+                incremental_column,
+                incremental_value,
+                tuple(tie_breaker_columns),
+                tuple(tie_breaker_values),
                 str(payload["schema_fingerprint"]),
-                int(payload["checkpoint_generation"]),
+                generation,
             )
         except (KeyError, TypeError, ValueError) as exc:
             raise ValueError("invalid JDBC V2 checkpoint") from exc
@@ -156,6 +277,14 @@ class JdbcConnector:
         options = dict(connection.options)
         if not options.get("url", "").strip():
             raise ValueError("JDBC connection requires a non-empty url")
+        url = options["url"]
+        if (
+            not url.startswith("jdbc:")
+            or _JDBC_CREDENTIAL_PARAMETER.search(url)
+            or _JDBC_URI_USERINFO.search(url)
+            or _ORACLE_THIN_USERINFO.search(url)
+        ):
+            raise ValueError("JDBC URL must use jdbc: and must not embed credentials")
         return options
 
     def _database(self, connection: ConnectionDefinition, secrets: SecretResolver) -> Any:
@@ -287,10 +416,14 @@ class JdbcConnector:
             cursor = database.cursor()
             predicate = ""
             params: tuple[object, ...] = ()
-            if checkpoint_v2 is not None:
+            if checkpoint_v2 is not None and checkpoint_v2.incremental_value is not None:
                 predicate, params = checkpoint_v2.predicate()
                 predicate = f" WHERE {predicate}"
-            elif checkpoint is not None and checkpoint.strategy == "watermark":
+            elif (
+                checkpoint_v2 is None
+                and checkpoint is not None
+                and checkpoint.strategy == "watermark"
+            ):
                 if incremental_column is None:
                     raise ValueError("JDBC watermark checkpoints require incremental_column")
                 predicate = f' WHERE "{incremental_column}" > ?'
@@ -316,10 +449,20 @@ class JdbcConnector:
             )
         finally:
             database.close()
+        schema_fingerprint = hashlib.sha256(repr(fields).encode()).hexdigest()
+        if checkpoint_v2 is not None and checkpoint_v2.schema_fingerprint != schema_fingerprint:
+            raise ValueError("JDBC checkpoint schema fingerprint does not match the source")
         if incremental_column is not None:
             names = [field.name for field in fields]
-            if incremental_column not in names:
-                raise ValueError("JDBC incremental_column is not present in the result")
+            missing_watermark_columns = {
+                incremental_column,
+                *tie_breaker_columns,
+            } - set(names)
+            if missing_watermark_columns:
+                raise ValueError("JDBC watermark columns are not present in the result")
+            cursor_columns = (incremental_column, *tie_breaker_columns)
+            if any(row[column] is None for row in rows for column in cursor_columns):
+                raise ValueError("JDBC watermark and tie-breaker values must not be null")
             if checkpoint_v2 is not None or tie_breaker_columns:
                 if not rows:
                     next_checkpoint = checkpoint or SourceCheckpoint(
@@ -330,7 +473,7 @@ class JdbcConnector:
                             None,
                             tie_breaker_columns,
                             tuple(None for _ in tie_breaker_columns),
-                            hashlib.sha256(repr(fields).encode()).hexdigest(),
+                            schema_fingerprint,
                             0,
                         ).encode(),
                     )
@@ -344,7 +487,7 @@ class JdbcConnector:
                             last[incremental_column],
                             tie_breaker_columns,
                             tuple(last[column] for column in tie_breaker_columns),
-                            hashlib.sha256(repr(fields).encode()).hexdigest(),
+                            schema_fingerprint,
                             (checkpoint_v2.checkpoint_generation + 1) if checkpoint_v2 else 1,
                         ).encode(),
                     )

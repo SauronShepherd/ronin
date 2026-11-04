@@ -363,6 +363,25 @@ class SchedulerEventStore(SchedulerScheduleStore):
         finally:
             connection.close()
 
+    def list_event_deliveries(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        limit: int = 100,
+    ) -> tuple[EventDelivery, ...]:
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 1000:
+            raise ValueError("event delivery limit must be between 1 and 1000")
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT * FROM scheduler_event_deliveries WHERE workspace_id=? "
+                "ORDER BY created_at,event_id,event_trigger_id LIMIT ?",
+                (str(workspace_id), limit),
+            ).fetchall()
+            return tuple(_delivery_from_row(row) for row in rows)
+        finally:
+            connection.close()
+
     def deliver_event(
         self,
         delivery: EventDelivery,

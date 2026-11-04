@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import logging
+import math
 import signal
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from threading import Event, Thread
 from typing import Protocol
 
 from studio_core import WorkspaceId
@@ -40,6 +43,7 @@ TaskLeaseTokenFactory = Callable[[], LeaseToken]
 WorkProvider = Callable[[], "SchedulerDaemonWork"]
 StopRequested = Callable[[], bool]
 AsyncSleep = Callable[[float], Awaitable[None]]
+_LOGGER = logging.getLogger(__name__)
 
 
 def install_scheduler_stop_signals(stop: Callable[[], None]) -> Callable[[], None]:
@@ -374,6 +378,104 @@ class SchedulerDaemon:
         self._lease = None
 
 
+class SchedulerDaemonService:
+    """Own a scheduler daemon on a managed background thread.
+
+    Transient provider/storage errors are logged and retried after a bounded
+    delay. Shutdown signals the active loop and waits for its fenced lease to
+    be released before returning.
+    """
+
+    def __init__(
+        self,
+        daemon: SchedulerDaemon,
+        *,
+        work_provider: WorkProvider,
+        interval_seconds: float = 1.0,
+        retry_seconds: float = 2.0,
+        join_timeout_seconds: float = 30.0,
+        thread_factory: Callable[..., Thread] = Thread,
+    ) -> None:
+        if not math.isfinite(interval_seconds) or interval_seconds <= 0:
+            raise ValueError("scheduler service interval_seconds must be positive")
+        if not math.isfinite(retry_seconds) or retry_seconds <= 0:
+            raise ValueError("scheduler service retry_seconds must be positive")
+        if not math.isfinite(join_timeout_seconds) or join_timeout_seconds <= 0:
+            raise ValueError("scheduler service join_timeout_seconds must be positive")
+        self._daemon = daemon
+        self._work_provider = work_provider
+        self._interval_seconds = interval_seconds
+        self._retry_seconds = retry_seconds
+        self._join_timeout_seconds = join_timeout_seconds
+        self._thread_factory = thread_factory
+        self._stop = Event()
+        self._thread: Thread | None = None
+        self._last_error: str | None = None
+
+    @property
+    def ready(self) -> bool:
+        thread = self._thread
+        return thread is not None and thread.is_alive()
+
+    @property
+    def last_error(self) -> str | None:
+        return self._last_error
+
+    def start(self) -> None:
+        if self._thread is not None:
+            raise RuntimeError("scheduler service is already started")
+        self._stop.clear()
+        self._last_error = None
+        thread = self._thread_factory(
+            target=self._run,
+            name="ronin-scheduler",
+            daemon=True,
+        )
+        self._thread = thread
+        try:
+            thread.start()
+        except Exception:
+            self._thread = None
+            raise
+
+    def stop(self) -> None:
+        thread = self._thread
+        if thread is None:
+            return
+        self._stop.set()
+        thread.join(timeout=self._join_timeout_seconds)
+        if thread.is_alive():
+            raise RuntimeError("scheduler service did not stop before its deadline")
+        self._thread = None
+
+    def _run(self) -> None:
+        asyncio.run(self._run_async())
+
+    async def _run_async(self) -> None:
+        while not self._stop.is_set():
+            try:
+                await self._daemon.run_forever(
+                    work_provider=self._provide_work,
+                    stop_requested=self._stop.is_set,
+                    interval_seconds=self._interval_seconds,
+                )
+                self._last_error = None
+                return
+            except Exception as exc:
+                self._last_error = f"{type(exc).__name__}: {exc}"
+                _LOGGER.exception(
+                    "scheduler daemon cycle failed; retrying in %.1f seconds",
+                    self._retry_seconds,
+                )
+                if self._stop.wait(self._retry_seconds):
+                    return
+
+    def _provide_work(self) -> SchedulerDaemonWork:
+        work = self._work_provider()
+        self._last_error = None
+        return work
+
+
 __all__ = (
     "AsyncSleep",
     "BackfillTarget",
@@ -382,6 +484,7 @@ __all__ = (
     "SchedulerDaemon",
     "SchedulerDaemonCycle",
     "SchedulerDaemonLoopResult",
+    "SchedulerDaemonService",
     "SchedulerDaemonWork",
     "StopRequested",
     "TaskAttemptFactory",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from .contracts import Principal, PrincipalId
@@ -16,7 +17,7 @@ class SqliteServiceIdentityStore:
     def __init__(self, path: Path) -> None:
         self._path = path
         path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as connection:
+        with closing(self._connect()) as connection, connection:
             connection.execute(
                 """CREATE TABLE IF NOT EXISTS security_service_identities (
                     identity_id TEXT PRIMARY KEY,
@@ -75,7 +76,7 @@ class SqliteServiceIdentityStore:
             connection.close()
 
     def get_service_identity(self, identity_id: PrincipalId) -> Principal | None:
-        with self._connect() as connection:
+        with closing(self._connect()) as connection, connection:
             row = connection.execute(
                 """SELECT identity_id,display_name,issuer,subject,active
                    FROM security_service_identities WHERE identity_id=?""",

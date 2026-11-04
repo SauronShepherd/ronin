@@ -7,6 +7,9 @@ canonical JSON data required for prediction; no executable model objects are loa
 
 from __future__ import annotations
 
+import json
+import logging
+import time
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
@@ -38,6 +41,7 @@ _PREVIOUS_ARTIFACT_SCHEMA = "ronin.sklearn.tabular/v2"
 _MAX_ONE_HOT_CATEGORIES = 256
 _MAX_PREPROCESSED_FEATURES = 4096
 _MAX_CATEGORY_CHARS = 1024
+_LOGGER = logging.getLogger(__name__)
 
 ALGORITHM_CAPABILITIES: dict[str, frozenset[str]] = {
     "logistic_regression": frozenset({"classification"}),
@@ -61,48 +65,96 @@ class MLDependencyError(RuntimeError):
     """Raised when optional ML runtime dependencies are unavailable."""
 
 
-def _sklearn() -> dict[str, Any]:
+def _sklearn(spec: TrainingSpec) -> dict[str, Any]:
+    started_at = time.perf_counter()
+    import_durations_ms: dict[str, float] = {}
+    runtime: dict[str, Any] = {}
     try:
-        from sklearn.ensemble import (  # type: ignore[import-untyped]
-            GradientBoostingClassifier,
-            GradientBoostingRegressor,
-            RandomForestClassifier,
-            RandomForestRegressor,
-        )
-        from sklearn.linear_model import (  # type: ignore[import-untyped]
-            LinearRegression,
-            LogisticRegression,
-        )
-        from sklearn.metrics import (  # type: ignore[import-untyped]
-            accuracy_score,
-            mean_absolute_error,
-            mean_squared_error,
-            r2_score,
-        )
+        phase_started_at = time.perf_counter()
+        if spec.algorithm == "logistic_regression":
+            from sklearn.linear_model import LogisticRegression  # type: ignore[import-untyped]
+
+            runtime["LogisticRegression"] = LogisticRegression
+        elif spec.algorithm == "linear_regression":
+            from sklearn.linear_model import LinearRegression
+
+            runtime["LinearRegression"] = LinearRegression
+        elif spec.algorithm in {"decision_tree_classifier", "decision_tree_regressor"}:
+            from sklearn.tree import (  # type: ignore[import-untyped]
+                DecisionTreeClassifier,
+                DecisionTreeRegressor,
+            )
+
+            runtime.update(
+                {
+                    "DecisionTreeClassifier": DecisionTreeClassifier,
+                    "DecisionTreeRegressor": DecisionTreeRegressor,
+                }
+            )
+        else:
+            from sklearn.ensemble import (  # type: ignore[import-untyped]
+                GradientBoostingClassifier,
+                GradientBoostingRegressor,
+                RandomForestClassifier,
+                RandomForestRegressor,
+            )
+
+            runtime.update(
+                {
+                    "RandomForestClassifier": RandomForestClassifier,
+                    "RandomForestRegressor": RandomForestRegressor,
+                    "GradientBoostingRegressor": GradientBoostingRegressor,
+                    "GradientBoostingClassifier": GradientBoostingClassifier,
+                }
+            )
+        import_durations_ms["estimator"] = round((time.perf_counter() - phase_started_at) * 1000, 3)
+        phase_started_at = time.perf_counter()
         from sklearn.model_selection import train_test_split  # type: ignore[import-untyped]
-        from sklearn.tree import (  # type: ignore[import-untyped]
-            DecisionTreeClassifier,
-            DecisionTreeRegressor,
+
+        import_durations_ms["model_selection"] = round(
+            (time.perf_counter() - phase_started_at) * 1000, 3
         )
+        phase_started_at = time.perf_counter()
+        if spec.task == "classification":
+            from sklearn.metrics import accuracy_score  # type: ignore[import-untyped]
+
+            runtime["accuracy_score"] = accuracy_score
+        else:
+            from sklearn.metrics import (
+                mean_absolute_error,
+                mean_squared_error,
+                r2_score,
+            )
+
+            runtime.update(
+                {
+                    "mean_absolute_error": mean_absolute_error,
+                    "mean_squared_error": mean_squared_error,
+                    "r2_score": r2_score,
+                }
+            )
+        import_durations_ms["metrics"] = round((time.perf_counter() - phase_started_at) * 1000, 3)
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise MLDependencyError(
             "tabular ML support requires the optional Ronin ml dependencies"
         ) from exc
-    return {
-        "LinearRegression": LinearRegression,
-        "LogisticRegression": LogisticRegression,
-        "DecisionTreeClassifier": DecisionTreeClassifier,
-        "DecisionTreeRegressor": DecisionTreeRegressor,
-        "RandomForestClassifier": RandomForestClassifier,
-        "RandomForestRegressor": RandomForestRegressor,
-        "GradientBoostingRegressor": GradientBoostingRegressor,
-        "GradientBoostingClassifier": GradientBoostingClassifier,
-        "accuracy_score": accuracy_score,
-        "mean_absolute_error": mean_absolute_error,
-        "mean_squared_error": mean_squared_error,
-        "r2_score": r2_score,
-        "train_test_split": train_test_split,
-    }
+    total_duration_ms = (time.perf_counter() - started_at) * 1000
+    if total_duration_ms >= 5:
+        _LOGGER.info(
+            json.dumps(
+                {
+                    "event": "ml.runtime.initialized",
+                    "duration_ms": round(total_duration_ms, 3),
+                    "algorithm": spec.algorithm,
+                    "task": spec.task,
+                    "import_group_duration_ms": import_durations_ms,
+                },
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+        )
+    runtime["train_test_split"] = train_test_split
+    return runtime
 
 
 def _text(value: str, name: str) -> str:
@@ -549,7 +601,7 @@ def train_tabular(
 ) -> TrainedTabularModel:
     """Fit one deterministic baseline and return a non-executable canonical artifact."""
 
-    sk = _sklearn()
+    sk = _sklearn(spec)
     x, y = _matrix(rows, spec)
     _validate_split_feasibility(y, spec)
     stratify = y if spec.task == "classification" else None

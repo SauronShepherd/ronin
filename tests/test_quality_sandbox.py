@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 
 import pytest
 from studio_quality import PredicateSandboxError, evaluate_python_predicate
@@ -25,7 +26,18 @@ def test_quality_python_predicate_rejects_unbounded_input() -> None:
         evaluate_python_predicate("True", ({"x": 1},) * 3, max_rows=2)
 
 
-def test_quality_python_predicate_timeout_terminates_worker_process() -> None:
+def test_quality_python_predicate_timeout_terminates_worker_process(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The timed-out worker is deliberately terminated before coverage.py can
+    # flush its data. Do not inherit pytest-cov's subprocess hooks into it.
+    for name in tuple(os.environ):
+        if name.startswith("COV_CORE_") or name in {
+            "COVERAGE_FILE",
+            "COVERAGE_PROCESS_START",
+        }:
+            monkeypatch.delenv(name)
+
     rows = tuple({"amount": 1} for _ in range(10_000))
 
     with pytest.raises(PredicateSandboxError, match="timed out"):

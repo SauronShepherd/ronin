@@ -23,9 +23,13 @@ from studio_storage import EnvironmentSecretResolver
 class _Body:
     def __init__(self, value: bytes) -> None:
         self.value = value
+        self.closed = False
 
     def read(self, limit: int) -> bytes:
         return self.value[:limit]
+
+    def close(self) -> None:
+        self.closed = True
 
 
 class _S3:
@@ -34,6 +38,7 @@ class _S3:
         self.puts: list[dict[str, object]] = []
         self.list_requests: list[dict[str, object]] = []
         self.put_response = {"ETag": '"committed-etag"'} if put_response is None else put_response
+        self.last_body: _Body | None = None
 
     def list_objects_v2(self, **kwargs: object) -> dict[str, object]:
         self.list_requests.append(dict(kwargs))
@@ -44,7 +49,8 @@ class _S3:
         body = saved["Body"] if saved else b'[{"id": 1}]'
         if not isinstance(body, bytes):
             raise TypeError("stored fake S3 body must be bytes")
-        return {"Body": _Body(body)}
+        self.last_body = _Body(body)
+        return {"Body": self.last_body}
 
     def put_object(self, **kwargs: object) -> dict[str, str]:
         self.puts.append(dict(kwargs))
@@ -59,7 +65,8 @@ def _connection() -> ConnectionDefinition:
 
 
 def test_s3_json_discovers_and_snapshot_reads() -> None:
-    connector = S3JsonConnector(client=_S3())
+    client = _S3()
+    connector = S3JsonConnector(client=client)
     connection = _connection()
     assets = connector.discover(connection, EnvironmentSecretResolver({}))
     assert [asset.handle.name for asset in assets] == ["events.json"]
@@ -69,6 +76,25 @@ def test_s3_json_discovers_and_snapshot_reads() -> None:
     )
     assert result.rows == ({"id": 1},)
     assert unchanged.rows == ()
+    assert client.last_body is not None
+    assert client.last_body.closed
+
+
+def test_s3_json_read_closes_stream_when_object_exceeds_byte_limit() -> None:
+    client = _S3()
+    client.objects[("data", "raw/large.json")] = {
+        "Body": b" " * (S3JsonConnector.MAX_OBJECT_BYTES + 1)
+    }
+
+    with pytest.raises(ValueError, match="configured byte limit"):
+        S3JsonConnector(client=client).read(
+            _connection(),
+            AssetHandle(ConnectionId("s3"), ("raw",), "large.json"),
+            EnvironmentSecretResolver({}),
+        )
+
+    assert client.last_body is not None
+    assert client.last_body.closed
 
 
 def test_s3_json_discovery_obeys_provider_page_limit() -> None:

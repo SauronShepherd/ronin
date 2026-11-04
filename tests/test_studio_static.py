@@ -64,14 +64,20 @@ def test_studio_assets_are_allowlisted_and_served(tmp_path) -> None:
                     assert response.headers["Cache-Control"] == "no-cache"
         with pytest.raises(urllib.error.HTTPError) as error_info:
             urllib.request.urlopen(f"{base_url}/studio/../pyproject.toml", timeout=2)  # noqa: S310
-        assert error_info.value.code == 404
+        try:
+            assert error_info.value.code == 404
+        finally:
+            error_info.value.close()
         request = urllib.request.Request(  # noqa: S310
             f"{base_url}/studio/secret.txt",
             headers={"Authorization": "Bearer test-token"},
         )
         with pytest.raises(urllib.error.HTTPError) as error_info:
             urllib.request.urlopen(request, timeout=2)  # noqa: S310
-        assert error_info.value.code == 404
+        try:
+            assert error_info.value.code == 404
+        finally:
+            error_info.value.close()
     finally:
         server.shutdown()
         server.server_close()

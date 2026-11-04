@@ -41,6 +41,30 @@ def test_compose_provides_private_persistent_postgres_for_appliance_profile() ->
     assert "condition: service_healthy" in server
 
 
+def test_long_running_compose_services_forward_shutdown_signals() -> None:
+    compose = (_ROOT / "compose.yaml").read_text(encoding="utf-8")
+    blocks = (
+        _service_block(compose, "server", "runner-broker"),
+        _service_block(compose, "runner-broker", "worker"),
+        _service_block(compose, "worker", "cli"),
+    )
+
+    assert all("\n    init: true\n" in block for block in blocks)
+
+
+def test_ronin_compose_services_disable_privilege_gains() -> None:
+    compose = (_ROOT / "compose.yaml").read_text(encoding="utf-8")
+    blocks = (
+        _service_block(compose, "server", "runner-broker"),
+        _service_block(compose, "runner-broker", "worker"),
+        _service_block(compose, "worker", "cli"),
+        _service_block(compose, "cli", None),
+    )
+
+    assert len(blocks) == 4
+    assert all("- no-new-privileges:true" in block for block in blocks)
+
+
 def test_postgres_schema_contains_workflow_and_schedule_persistence() -> None:
     from studio_storage.postgres_core import _SCHEMA
 
@@ -64,9 +88,9 @@ def test_runner_broker_keeps_docker_socket_supplementary_group_after_privilege_d
     script = (_ROOT / "docker" / "container-entrypoint.sh").read_text(encoding="utf-8")
 
     assert "groupadd --gid 65532 ronin;" in dockerfile
-    assert "useradd --create-home --uid 65532 --gid 65532" in dockerfile
+    assert "adduser -D -h /home/ronin -u 65532 -G ronin -s /sbin/nologin ronin" in dockerfile
     assert 'usermod --append --groups "$socket_gid" ronin' in script
-    assert 'exec gosu "$RONIN_UID" "$@"' in script
+    assert 'exec su-exec "$RONIN_UID" "$@"' in script
 
 
 def test_broker_processes_are_installed_as_distinct_entrypoints() -> None:

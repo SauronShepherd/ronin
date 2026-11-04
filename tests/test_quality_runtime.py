@@ -1,4 +1,6 @@
+import os
 from datetime import UTC, datetime
+from typing import cast
 
 import pytest
 from studio_core import (
@@ -8,6 +10,7 @@ from studio_core import (
     DataContract,
     QualityRule,
     QualityRuleId,
+    QualityRun,
     QualityRunId,
     WorkspaceId,
 )
@@ -19,6 +22,7 @@ from studio_quality import (
     quality_gate,
     quality_state_summary,
 )
+from studio_quality.service import QualityExecutionStore
 
 _REF = AssetRef(AssetId("asset-1"), AssetVersion("v1"))
 
@@ -196,7 +200,8 @@ def test_quality_state_uses_persisted_order_instead_of_sorting_run_ids() -> None
     state = quality_state_summary((older, newer))
 
     assert state["latest_run_id"] == "a-newer"
-    assert [run["run_id"] for run in state["history"]] == ["z-older", "a-newer"]
+    history = cast(list[dict[str, object]], state["history"])
+    assert [cast(str, run["run_id"]) for run in history] == ["z-older", "a-newer"]
 
 
 def test_freshness_uses_contract_default() -> None:
@@ -222,7 +227,20 @@ def test_freshness_uses_contract_default() -> None:
     assert run.status == "passed"
 
 
-def test_custom_python_expression_uses_bounded_sandbox() -> None:
+def test_custom_python_expression_uses_bounded_sandbox(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # pytest-cov's multiprocessing bootstrap can consume the sandbox's full
+    # execution budget before this tiny predicate starts. Coverage of the
+    # parent evaluator remains active; the isolated worker is outside this
+    # test's coverage contract.
+    for name in tuple(os.environ):
+        if name.startswith("COV_CORE_") or name in {
+            "COVERAGE_FILE",
+            "COVERAGE_PROCESS_START",
+        }:
+            monkeypatch.delenv(name)
+
     contract = DataContract(
         _REF,
         "exact",
@@ -262,12 +280,14 @@ def test_quality_history_is_exposed_through_service_boundary() -> None:
     )
 
     class Store:
-        def list_runs(self, workspace_id: WorkspaceId, ref: AssetRef):
+        def list_runs(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[QualityRun, ...]:
             assert workspace_id == WorkspaceId("workspace-1")
             assert ref == _REF
             return (run,)
 
-    assert list_quality_runs(Store(), WorkspaceId("workspace-1"), _REF) == (run,)
+    assert list_quality_runs(
+        cast(QualityExecutionStore, Store()), WorkspaceId("workspace-1"), _REF
+    ) == (run,)
 
 
 def test_referential_rule_uses_injected_reference_values() -> None:

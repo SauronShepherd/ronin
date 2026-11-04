@@ -7,11 +7,10 @@ name = "pyronin"
 version = "0.0.1a0"
 description = "Official Python SDK for the Ronin control plane."
 requires-python = ">=3.11"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 readme = "README.md"
 classifiers = [
   "Development Status :: 3 - Alpha",
-  "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",

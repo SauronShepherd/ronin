@@ -41,9 +41,14 @@ def _add_seconds(value: Instant | str, seconds: int) -> Instant:
     return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
-def open_database(path: Path) -> sqlite3.Connection:
+def open_database(path: Path, *, check_same_thread: bool = True) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(path, isolation_level=None, timeout=5.0)
+    connection = sqlite3.connect(
+        path,
+        isolation_level=None,
+        timeout=5.0,
+        check_same_thread=check_same_thread,
+    )
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys=ON")
     connection.execute("PRAGMA journal_mode=WAL")
@@ -141,7 +146,7 @@ class _SqliteLifecycleStore:
             connection.close()
 
     def _connect(self) -> sqlite3.Connection:
-        return open_database(self._path)
+        return open_database(self._path, check_same_thread=False)
 
     def create_job(self, job: Job, run: Run) -> Job:
         connection = self._connect()

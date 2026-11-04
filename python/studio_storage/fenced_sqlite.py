@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Sequence
+from contextlib import suppress
 from pathlib import Path
-from threading import local
+from threading import Lock, local
 from typing import cast, overload
 
 from studio_orchestrator import (
@@ -50,6 +51,20 @@ class _BorrowedConnection:
         return None
 
 
+class _ThreadLocalConnection:
+    """Own one cached SQLite connection and close it when its thread-local dies."""
+
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self.connection = connection
+
+    def close(self) -> None:
+        self.connection.close()
+
+    def __del__(self) -> None:
+        with suppress(sqlite3.Error):
+            self.close()
+
+
 class SqliteJobStore(_SqliteLifecycleStore):
     """Supported SQLite JobStore with all worker writes and service paging.
 
@@ -61,16 +76,41 @@ class SqliteJobStore(_SqliteLifecycleStore):
     def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
         super().__init__(path, migration_now=migration_now)
         self._connections = local()
+        self._connection_lock = Lock()
+        self._owned_connections: set[_ThreadLocalConnection] = set()
+        self._closed = False
 
     def _connect(self) -> sqlite3.Connection:
-        connection = cast(
-            sqlite3.Connection | None,
-            getattr(self._connections, "connection", None),
-        )
-        if connection is None:
-            connection = super()._connect()
-            self._connections.connection = connection
-        return cast(sqlite3.Connection, _BorrowedConnection(connection))
+        with self._connection_lock:
+            if self._closed:
+                raise RuntimeError("SQLite JobStore is closed")
+            connection = cast(
+                _ThreadLocalConnection | None,
+                getattr(self._connections, "connection", None),
+            )
+            if connection is None:
+                connection = _ThreadLocalConnection(super()._connect())
+                self._connections.connection = connection
+                self._owned_connections.add(connection)
+        return cast(sqlite3.Connection, _BorrowedConnection(connection.connection))
+
+    def close(self) -> None:
+        """Close all cached connections after the store stops accepting work."""
+
+        with self._connection_lock:
+            if self._closed:
+                return
+            self._closed = True
+            connections = tuple(self._owned_connections)
+            self._owned_connections.clear()
+            self._connections.connection = None
+        for connection in connections:
+            with suppress(sqlite3.Error):
+                connection.close()
+
+    def __del__(self) -> None:
+        with suppress(Exception):
+            self.close()
 
     @staticmethod
     def _active_attempt_row(

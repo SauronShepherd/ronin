@@ -7,6 +7,7 @@
     },
     "ronin.plugins.v1": {
       "cloud_studio": "studio_cloud.plugin:factory",
+      "data_engineering": "studio_data_engineering.plugin:factory",
       "data_science_studio": "studio_ml.plugin:factory",
       "govern_studio": "studio_synthetic_data.plugin:factory",
       "logging": "studio_plugin_observability.plugins:logging_factory",
@@ -111,7 +112,7 @@
       ],
       "markers": {
         "events": 11,
-        "jobs": 137,
+        "jobs": 149,
         "migrations": 113,
         "permissions": 20,
         "stores": 81
@@ -190,8 +191,10 @@
       ],
       "functions": [
         "__init__",
+        "_catalog_reader_for_backend",
         "_env",
         "_port",
+        "_seconds",
         "_workflow_reader_for_backend",
         "archive",
         "build_local_composed_from_env",
@@ -200,19 +203,31 @@
         "import_sdp",
         "list_pipelines",
         "list_revisions",
+        "record_quality_alerts",
         "resolve_asset",
-        "resolve_connection"
+        "resolve_connection",
+        "scheduler_clock",
+        "scheduler_work",
+        "telemetry_for_workspace"
       ],
       "imports": [
         "__future__",
+        "contextlib",
+        "datetime",
+        "hashlib",
+        "math",
         "os",
         "pathlib",
+        "secrets",
         "studio_connectors",
         "studio_core",
         "studio_data_engineering",
         "studio_execution",
         "studio_finops",
+        "studio_migration",
         "studio_ml",
+        "studio_notebook",
+        "studio_observability",
         "studio_orchestrator",
         "studio_plugin_observability",
         "studio_runtime",
@@ -221,14 +236,16 @@
         "studio_server",
         "studio_sql",
         "studio_storage",
+        "studio_streaming",
+        "threading",
         "typing"
       ],
       "markers": {
-        "events": 4,
-        "jobs": 55,
-        "migrations": 10,
-        "permissions": 27,
-        "stores": 171
+        "events": 10,
+        "jobs": 124,
+        "migrations": 20,
+        "permissions": 34,
+        "stores": 231
       },
       "package": "studio_cli",
       "path": "python/studio_cli/local_composed.py",
@@ -256,6 +273,9 @@
         "connector_discover",
         "connector_plan",
         "connector_preview",
+        "connector_sync_cancel",
+        "connector_sync_status",
+        "connector_sync_submit",
         "events",
         "evidence",
         "jobs",
@@ -266,17 +286,19 @@
       ],
       "imports": [
         "__future__",
+        "contextlib",
         "dataclasses",
         "json",
         "os",
         "re",
         "studio_core",
         "studio_server",
+        "typing",
         "urllib"
       ],
       "markers": {
-        "events": 16,
-        "jobs": 76,
+        "events": 17,
+        "jobs": 116,
         "migrations": 0,
         "permissions": 6,
         "stores": 0
@@ -373,6 +395,10 @@
         "refresh",
         "refresh",
         "refresh",
+        "state_list",
+        "state_list",
+        "state_list",
+        "state_list",
         "terraform_provider_config"
       ],
       "imports": [
@@ -447,6 +473,7 @@
       ],
       "functions": [
         "__init__",
+        "_request_payload",
         "_topology",
         "apply",
         "backend_info",
@@ -559,7 +586,7 @@
         "events": 0,
         "jobs": 0,
         "migrations": 0,
-        "permissions": 0,
+        "permissions": 2,
         "stores": 11
       },
       "package": "studio_connectors",
@@ -576,6 +603,7 @@
         "_azure",
         "_config",
         "_container_client",
+        "_if_not_modified_match_condition",
         "discover",
         "discover_page",
         "read"
@@ -585,7 +613,9 @@
         "azure",
         "collections",
         "contracts",
+        "datetime",
         "hashlib",
+        "ipaddress",
         "json",
         "studio_core",
         "studio_storage",
@@ -615,6 +645,8 @@
       "functions": [
         "__init__",
         "__init__",
+        "_commit_catalog_records",
+        "_commit_catalog_records",
         "_connect",
         "_digest",
         "_digest",
@@ -632,6 +664,8 @@
         "get",
         "get_evidence",
         "get_evidence",
+        "get_or_create_discovery_cursor_key",
+        "get_or_create_discovery_cursor_key",
         "health",
         "health",
         "list_committed_outputs",
@@ -641,9 +675,11 @@
       ],
       "imports": [
         "__future__",
+        "contextlib",
         "dataclasses",
         "hashlib",
         "pathlib",
+        "secrets",
         "sqlite3",
         "studio_core",
         "studio_storage",
@@ -652,9 +688,9 @@
       "markers": {
         "events": 0,
         "jobs": 0,
-        "migrations": 2,
+        "migrations": 4,
         "permissions": 0,
-        "stores": 31
+        "stores": 35
       },
       "package": "studio_connectors",
       "path": "python/studio_connectors/checkpoint.py",
@@ -719,10 +755,12 @@
         "capabilities",
         "checkpoint_health",
         "discover",
+        "get_or_create_discovery_cursor_key",
         "health",
         "plan",
         "preview",
-        "to_payload"
+        "to_payload",
+        "validate_definition"
       ],
       "imports": [
         "__future__",
@@ -730,6 +768,7 @@
         "binascii",
         "collections",
         "hashlib",
+        "hmac",
         "registry",
         "studio_core",
         "studio_storage",
@@ -738,9 +777,9 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 0,
+        "jobs": 2,
         "migrations": 0,
-        "permissions": 1,
+        "permissions": 5,
         "stores": 2
       },
       "package": "studio_connectors",
@@ -809,6 +848,8 @@
         "__post_init__",
         "__post_init__",
         "_database",
+        "_decode_scalar",
+        "_encode_scalar",
         "_identifier",
         "_options",
         "bridge_provenance",
@@ -822,9 +863,12 @@
       ],
       "imports": [
         "__future__",
+        "base64",
         "collections",
         "contracts",
         "dataclasses",
+        "datetime",
+        "decimal",
         "hashlib",
         "json",
         "re",
@@ -841,6 +885,31 @@
       },
       "package": "studio_connectors",
       "path": "python/studio_connectors/jdbc.py",
+      "routes": [],
+      "test": false
+    },
+    {
+      "classes": [],
+      "functions": [
+        "json_compatible"
+      ],
+      "imports": [
+        "__future__",
+        "base64",
+        "datetime",
+        "decimal",
+        "math",
+        "uuid"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": "studio_connectors",
+      "path": "python/studio_connectors/json_compatible.py",
       "routes": [],
       "test": false
     },
@@ -874,35 +943,50 @@
     {
       "classes": [
         "PostgresConnector",
-        "PostgresConnectorDependencyError"
+        "PostgresConnectorDependencyError",
+        "PostgresWatermarkCheckpoint"
       ],
       "functions": [
+        "__post_init__",
         "_connection_kwargs",
         "_decode_discovery_cursor",
+        "_decode_watermark_value",
         "_encode_discovery_cursor",
+        "_encode_watermark_value",
         "_field_type",
         "_psycopg",
+        "_require_unique_tie_breaker",
+        "_schema_fingerprint",
         "_validate",
+        "_watermark_configuration",
+        "decode",
         "discover",
         "discover_page",
+        "encode",
         "read"
       ],
       "imports": [
         "__future__",
         "base64",
         "contracts",
+        "dataclasses",
+        "datetime",
+        "decimal",
         "hashlib",
+        "math",
         "psycopg",
+        "re",
         "studio_core",
         "studio_storage",
-        "typing"
+        "typing",
+        "uuid"
       ],
       "markers": {
         "events": 0,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 24
+        "stores": 62
       },
       "package": "studio_connectors",
       "path": "python/studio_connectors/postgres.py",
@@ -924,6 +1008,7 @@
         "ids",
         "plan_sync",
         "preview",
+        "read",
         "require",
         "to_payload",
         "write"
@@ -966,9 +1051,11 @@
         "_client_for",
         "_config",
         "_fields",
+        "append_text",
         "discover",
         "discover_page",
-        "read"
+        "read",
+        "write"
       ],
       "imports": [
         "__future__",
@@ -977,6 +1064,7 @@
         "contracts",
         "hashlib",
         "json",
+        "json_compatible",
         "studio_core",
         "studio_storage",
         "typing"
@@ -986,7 +1074,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 0
+        "stores": 1
       },
       "package": "studio_connectors",
       "path": "python/studio_connectors/s3_json.py",
@@ -996,6 +1084,7 @@
     {
       "classes": [
         "ArtifactDestinationWriter",
+        "IngestionSyncCancelled",
         "IngestionSyncDefinition",
         "IngestionSyncPlan",
         "IngestionSyncService",
@@ -1016,6 +1105,8 @@
         "acquire",
         "commit_output_then_checkpoint",
         "digest",
+        "digest",
+        "ensure_not_cancelled",
         "execute",
         "from_bytes",
         "get",
@@ -1026,6 +1117,8 @@
         "preview",
         "put_bytes",
         "read",
+        "scoped_checkpoint_identity",
+        "storage_ref",
         "to_bytes",
         "to_payload",
         "to_payload",
@@ -1036,11 +1129,13 @@
       ],
       "imports": [
         "__future__",
+        "collections",
         "contextlib",
         "contracts",
         "dataclasses",
         "hashlib",
         "json",
+        "json_compatible",
         "studio_core",
         "studio_storage",
         "typing"
@@ -1049,7 +1144,7 @@
         "events": 0,
         "jobs": 0,
         "migrations": 0,
-        "permissions": 4,
+        "permissions": 14,
         "stores": 4
       },
       "package": "studio_connectors",
@@ -1091,7 +1186,7 @@
         "workspaces"
       ],
       "markers": {
-        "events": 4,
+        "events": 6,
         "jobs": 14,
         "migrations": 2,
         "permissions": 26,
@@ -1253,10 +1348,12 @@
         "AssetRevision",
         "AssetVersion",
         "CatalogAsset",
+        "CatalogAssetPage",
         "ColumnMapping",
         "LineageEdge"
       ],
       "functions": [
+        "__post_init__",
         "__post_init__",
         "__post_init__",
         "__post_init__",
@@ -1771,6 +1868,7 @@
         "catalog",
         "collections",
         "dataclasses",
+        "math",
         "typing"
       ],
       "markers": {
@@ -1853,16 +1951,18 @@
     {
       "classes": [],
       "functions": [
+        "_is_valid_iso8601_timestamp",
         "lineage_event_payload"
       ],
       "imports": [
         "__future__",
         "catalog",
+        "re",
         "typing"
       ],
       "markers": {
-        "events": 15,
-        "jobs": 6,
+        "events": 25,
+        "jobs": 24,
         "migrations": 0,
         "permissions": 0,
         "stores": 0
@@ -1882,6 +1982,11 @@
       "functions": [
         "__init__",
         "_digest",
+        "_valid_uri",
+        "_validate_dataset",
+        "_validate_datasets",
+        "_validate_facets",
+        "_validate_lineage_inputs",
         "publish",
         "publish",
         "validate_openlineage_event"
@@ -1893,11 +1998,12 @@
         "dataclasses",
         "hashlib",
         "openlineage",
-        "typing"
+        "typing",
+        "urllib"
       ],
       "markers": {
-        "events": 40,
-        "jobs": 16,
+        "events": 69,
+        "jobs": 24,
         "migrations": 5,
         "permissions": 0,
         "stores": 0
@@ -2024,9 +2130,9 @@
         "typing"
       ],
       "markers": {
-        "events": 138,
+        "events": 142,
         "jobs": 0,
-        "migrations": 13,
+        "migrations": 18,
         "permissions": 0,
         "stores": 1
       },
@@ -2059,7 +2165,7 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 38,
+        "jobs": 42,
         "migrations": 0,
         "permissions": 0,
         "stores": 0
@@ -2626,7 +2732,7 @@
       ],
       "markers": {
         "events": 3,
-        "jobs": 47,
+        "jobs": 49,
         "migrations": 0,
         "permissions": 0,
         "stores": 0
@@ -2898,7 +3004,7 @@
         "worker"
       ],
       "markers": {
-        "events": 4,
+        "events": 8,
         "jobs": 7,
         "migrations": 0,
         "permissions": 0,
@@ -2936,7 +3042,7 @@
         "typing"
       ],
       "markers": {
-        "events": 39,
+        "events": 84,
         "jobs": 0,
         "migrations": 2,
         "permissions": 0,
@@ -3127,23 +3233,32 @@
     },
     {
       "classes": [
-        "LineageCatalog"
+        "LineageCatalog",
+        "LineageOutbox"
       ],
       "functions": [
+        "enqueue",
+        "enqueue_lineage_event",
+        "mark_published",
+        "pending_events",
         "publish_lineage_event",
+        "publish_pending_lineage_events",
         "put_lineage",
-        "record_pipeline_lineage"
+        "record_pipeline_lineage",
+        "record_pipeline_lineage_and_enqueue"
       ],
       "imports": [
         "__future__",
         "collections",
+        "hashlib",
+        "json",
         "studio_core",
         "studio_orchestrator",
         "typing"
       ],
       "markers": {
-        "events": 9,
-        "jobs": 6,
+        "events": 76,
+        "jobs": 18,
         "migrations": 0,
         "permissions": 0,
         "stores": 0
@@ -3194,6 +3309,7 @@
       "functions": [
         "__init__",
         "_assert_ready",
+        "_plugin_error",
         "debugger_breakpoint",
         "debugger_create",
         "debugger_get",
@@ -3206,6 +3322,7 @@
         "preview_pipeline",
         "queryflux_capabilities",
         "queryflux_execute",
+        "queryflux_results",
         "register",
         "run_pipeline",
         "shutdown",
@@ -3224,20 +3341,22 @@
         "json",
         "previews",
         "query_execution",
+        "result_paging",
         "revisions",
         "runtimes",
         "sdp_adapter",
         "studio_core",
         "studio_query_engine",
         "typing",
+        "urllib",
         "worker"
       ],
       "markers": {
         "events": 8,
         "jobs": 26,
         "migrations": 2,
-        "permissions": 24,
-        "stores": 36
+        "permissions": 26,
+        "stores": 49
       },
       "package": "studio_data_engineering",
       "path": "python/studio_data_engineering/plugin.py",
@@ -3294,11 +3413,6 @@
         },
         {
           "function": "context.plugin_id",
-          "method": "POST",
-          "path": "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute"
-        },
-        {
-          "function": "context.plugin_id",
           "method": "GET",
           "path": "/v1/data-engineering/runtimes"
         },
@@ -3306,6 +3420,16 @@
           "function": "context.plugin_id",
           "method": "POST",
           "path": "/v1/data-engineering/sdp/import"
+        },
+        {
+          "function": "context.plugin_id",
+          "method": "POST",
+          "path": "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute"
+        },
+        {
+          "function": "context.plugin_id",
+          "method": "GET",
+          "path": "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/results"
         }
       ],
       "test": false
@@ -3397,6 +3521,8 @@
         "_connect",
         "_migrate",
         "_validate_identity",
+        "get_evidence_reference",
+        "get_evidence_reference",
         "list_evidence_references",
         "list_evidence_references",
         "migrate",
@@ -3431,6 +3557,7 @@
       "functions": [
         "cancel",
         "execute_query",
+        "get_evidence_reference",
         "poll",
         "record",
         "submit"
@@ -3442,6 +3569,9 @@
         "dataclasses",
         "evidence",
         "hashlib",
+        "json",
+        "logging",
+        "result_paging",
         "runtimes",
         "studio_query_engine",
         "studio_storage",
@@ -3457,6 +3587,35 @@
       },
       "package": "studio_data_engineering",
       "path": "python/studio_data_engineering/query_execution.py",
+      "routes": [],
+      "test": false
+    },
+    {
+      "classes": [
+        "QueryResultPagePayload"
+      ],
+      "functions": [
+        "decode_result_cursor",
+        "encode_result_cursor",
+        "page_query_result"
+      ],
+      "imports": [
+        "__future__",
+        "base64",
+        "json",
+        "re",
+        "studio_query_engine",
+        "typing"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 4
+      },
+      "package": "studio_data_engineering",
+      "path": "python/studio_data_engineering/result_paging.py",
       "routes": [],
       "test": false
     },
@@ -3507,6 +3666,7 @@
       ],
       "functions": [
         "__init__",
+        "allowed_engines",
         "authorize",
         "capability_values",
         "evidence_context",
@@ -3515,6 +3675,7 @@
         "is_healthy",
         "local_runtime_handshake",
         "negotiate_runtime",
+        "profiles",
         "supports"
       ],
       "imports": [
@@ -3624,6 +3785,7 @@
       ],
       "imports": [
         "__future__",
+        "contextlib",
         "csv",
         "dataclasses",
         "hashlib",
@@ -3666,6 +3828,7 @@
       "imports": [
         "__future__",
         "collections",
+        "contextlib",
         "hashlib",
         "json",
         "pathlib",
@@ -3732,6 +3895,7 @@
         "events",
         "evidence",
         "list_jobs",
+        "run_id_for_job",
         "status",
         "submit",
         "worker_append_events",
@@ -3749,6 +3913,7 @@
         "branch_state",
         "collections",
         "connection_service",
+        "connector_sync",
         "dataclasses",
         "environment_service",
         "git_source",
@@ -3763,10 +3928,10 @@
       ],
       "markers": {
         "events": 14,
-        "jobs": 126,
+        "jobs": 140,
         "migrations": 0,
         "permissions": 0,
-        "stores": 60
+        "stores": 61
       },
       "package": "studio_execution",
       "path": "python/studio_execution/__init__.py",
@@ -3844,6 +4009,7 @@
       "imports": [
         "__future__",
         "branching",
+        "contextlib",
         "dataclasses",
         "json",
         "pathlib",
@@ -4377,6 +4543,39 @@
     },
     {
       "classes": [
+        "ConnectorSyncDependencies"
+      ],
+      "functions": [
+        "build_connector_sync_dependencies",
+        "resolve_asset",
+        "resolve_connection",
+        "resolve_secrets"
+      ],
+      "imports": [
+        "__future__",
+        "collections",
+        "connection_service",
+        "dataclasses",
+        "pathlib",
+        "studio_connectors",
+        "studio_core",
+        "studio_orchestrator",
+        "studio_storage"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 5,
+        "migrations": 7,
+        "permissions": 3,
+        "stores": 40
+      },
+      "package": "studio_execution",
+      "path": "python/studio_execution/connector_sync.py",
+      "routes": [],
+      "test": false
+    },
+    {
+      "classes": [
         "DeploymentBindingService",
         "EnvironmentDiff",
         "EnvironmentService",
@@ -4570,6 +4769,7 @@
     },
     {
       "classes": [
+        "SchedulerWorkloadCancelled",
         "SchedulerWorkloadResult",
         "UnsupportedSchedulerWorkload"
       ],
@@ -4579,10 +4779,12 @@
       ],
       "imports": [
         "__future__",
+        "collections",
         "dataclasses",
         "json",
         "scheduler_sql",
         "studio_connectors",
+        "studio_core",
         "studio_observability",
         "studio_orchestrator",
         "studio_quality",
@@ -4592,9 +4794,9 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 114,
+        "jobs": 118,
         "migrations": 0,
-        "permissions": 0,
+        "permissions": 2,
         "stores": 8
       },
       "package": "studio_execution",
@@ -4694,9 +4896,9 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 74,
+        "jobs": 78,
         "migrations": 0,
-        "permissions": 0,
+        "permissions": 1,
         "stores": 0
       },
       "package": "studio_execution",
@@ -4782,7 +4984,8 @@
         "evaluated_minutes",
         "matches_local",
         "parse",
-        "schedule_matches"
+        "schedule_matches",
+        "validate_schedule"
       ],
       "imports": [
         "__future__",
@@ -4794,7 +4997,7 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 17,
+        "jobs": 25,
         "migrations": 0,
         "permissions": 0,
         "stores": 0
@@ -4811,30 +5014,41 @@
         "SchedulerDaemon",
         "SchedulerDaemonCycle",
         "SchedulerDaemonLoopResult",
+        "SchedulerDaemonService",
         "SchedulerDaemonWork"
       ],
       "functions": [
         "__init__",
+        "__init__",
         "_acquire_or_renew",
         "_dispatch_notifications",
+        "_provide_work",
+        "_run",
+        "_run_async",
         "dispatch_once",
         "handle",
         "health",
         "install_scheduler_stop_signals",
+        "last_error",
         "lease",
         "readiness",
+        "ready",
         "release",
         "request_stop",
         "restore",
         "run_forever",
         "run_once",
-        "run_until_signalled"
+        "run_until_signalled",
+        "start",
+        "stop"
       ],
       "imports": [
         "__future__",
         "asyncio",
         "collections",
         "dataclasses",
+        "logging",
+        "math",
         "scheduler_backfill",
         "scheduler_controller",
         "scheduler_dispatch",
@@ -4845,11 +5059,12 @@
         "studio_core",
         "studio_orchestrator",
         "studio_storage",
+        "threading",
         "typing"
       ],
       "markers": {
-        "events": 21,
-        "jobs": 130,
+        "events": 23,
+        "jobs": 142,
         "migrations": 0,
         "permissions": 1,
         "stores": 34
@@ -4948,6 +5163,8 @@
         "get_schedule",
         "ingest_event",
         "ingest_event",
+        "list_event_deliveries",
+        "list_event_deliveries",
         "list_event_triggers",
         "list_event_triggers",
         "list_pending_deliveries",
@@ -4978,6 +5195,7 @@
         "hashlib",
         "scheduler_backfill",
         "scheduler_cancellation",
+        "scheduler_cron",
         "scheduler_schedule_service",
         "studio_core",
         "studio_orchestrator",
@@ -4985,11 +5203,11 @@
         "typing"
       ],
       "markers": {
-        "events": 40,
-        "jobs": 101,
+        "events": 45,
+        "jobs": 106,
         "migrations": 0,
         "permissions": 0,
-        "stores": 39
+        "stores": 41
       },
       "package": "studio_execution",
       "path": "python/studio_execution/scheduler_http.py",
@@ -6626,6 +6844,7 @@
       ],
       "imports": [
         "__future__",
+        "contextlib",
         "json",
         "pathlib",
         "session",
@@ -7182,6 +7401,9 @@
         "get",
         "get",
         "get",
+        "get_for_registration",
+        "get_for_registration",
+        "get_for_registration",
         "heartbeat",
         "heartbeat",
         "heartbeat_claim",
@@ -7189,6 +7411,7 @@
         "list_runnable",
         "load_plugin_stage_artifact",
         "node_checkpoints",
+        "registration_snapshot",
         "retry",
         "retry",
         "save_node_checkpoint",
@@ -7227,10 +7450,10 @@
       ],
       "markers": {
         "events": 4,
-        "jobs": 188,
+        "jobs": 202,
         "migrations": 0,
         "permissions": 30,
-        "stores": 116
+        "stores": 118
       },
       "package": "studio_ml",
       "path": "python/studio_ml/orchestration.py",
@@ -7316,6 +7539,7 @@
         "promote_model",
         "quality_check",
         "query_int",
+        "record_model_evaluation",
         "register",
         "register_execution_model",
         "retry_execution",
@@ -7341,6 +7565,7 @@
         "drift",
         "hashlib",
         "json",
+        "logging",
         "optimization",
         "orchestration",
         "ports",
@@ -7352,14 +7577,15 @@
         "studio_core",
         "studio_orchestrator",
         "studio_storage",
+        "time",
         "typing",
         "urllib"
       ],
       "markers": {
-        "events": 0,
-        "jobs": 45,
+        "events": 3,
+        "jobs": 51,
         "migrations": 0,
-        "permissions": 48,
+        "permissions": 49,
         "stores": 47
       },
       "package": "studio_ml",
@@ -7534,6 +7760,11 @@
           "function": "context.plugin_id",
           "method": "GET",
           "path": "/v1/ml-studio/models/{model_id}/{version}/card"
+        },
+        {
+          "function": "context.plugin_id",
+          "method": "POST",
+          "path": "/v1/ml-studio/models/{model_id}/{version}/evaluations"
         },
         {
           "function": "context.plugin_id",
@@ -7816,10 +8047,12 @@
         "JsonRemoteBackend",
         "MLflowBackend",
         "RemoteExecutionController",
+        "RemoteJsonTransport",
         "SparkBackend",
         "_NoRedirectHandler"
       ],
       "functions": [
+        "__call__",
         "__init__",
         "__init__",
         "__init__",
@@ -7965,16 +8198,19 @@
         "__future__",
         "collections",
         "dataclasses",
+        "json",
+        "logging",
         "math",
         "numpy",
         "sklearn",
         "statistics",
         "studio_core",
+        "time",
         "typing"
       ],
       "markers": {
-        "events": 0,
-        "jobs": 38,
+        "events": 1,
+        "jobs": 41,
         "migrations": 0,
         "permissions": 0,
         "stores": 0
@@ -8567,6 +8803,7 @@
       "imports": [
         "__future__",
         "collections",
+        "contextlib",
         "dataclasses",
         "datetime",
         "json",
@@ -8595,6 +8832,7 @@
       ],
       "functions": [
         "__init__",
+        "_store_for_workspace",
         "acknowledge",
         "acknowledge_alert",
         "evaluate",
@@ -8607,6 +8845,7 @@
       "imports": [
         "__future__",
         "alerts",
+        "collections",
         "contracts",
         "studio_orchestrator",
         "typing"
@@ -8615,8 +8854,8 @@
         "events": 0,
         "jobs": 0,
         "migrations": 0,
-        "permissions": 0,
-        "stores": 11
+        "permissions": 1,
+        "stores": 25
       },
       "package": "studio_observability",
       "path": "python/studio_observability/http.py",
@@ -8769,12 +9008,24 @@
     },
     {
       "classes": [
+        "_AssetRef",
+        "_Identifier",
         "_QualityResult",
         "_QualityRun"
       ],
       "functions": [
+        "_identity_part",
+        "asset",
+        "asset_id",
         "evaluate_quality_alerts",
-        "record_quality_metrics"
+        "id",
+        "record_quality_metrics",
+        "results",
+        "rule_id",
+        "status",
+        "status",
+        "value",
+        "version"
       ],
       "imports": [
         "__future__",
@@ -8876,7 +9127,8 @@
         "put_notification_intent",
         "record_event",
         "record_metric",
-        "record_notification_failure"
+        "record_notification_failure",
+        "record_quality_metrics_once"
       ],
       "imports": [
         "__future__",
@@ -8893,8 +9145,8 @@
       "markers": {
         "events": 33,
         "jobs": 0,
-        "migrations": 5,
-        "permissions": 0,
+        "migrations": 6,
+        "permissions": 1,
         "stores": 10
       },
       "package": "studio_observability",
@@ -9335,6 +9587,7 @@
         "__init__",
         "_environment_payload",
         "_environment_service_or_raise",
+        "_now",
         "_parse_environment",
         "_publish",
         "archive_workspace",
@@ -9374,7 +9627,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 32,
-        "stores": 7
+        "stores": 8
       },
       "package": "studio_plugin_workspaces",
       "path": "python/studio_plugin_workspaces/plugin.py",
@@ -9595,8 +9848,11 @@
       "test": false
     },
     {
-      "classes": [],
+      "classes": [
+        "QualityEvaluationBudget"
+      ],
       "functions": [
+        "__post_init__",
         "_decimal",
         "_error",
         "_evaluate_domain",
@@ -9614,16 +9870,21 @@
         "_unique_key",
         "blocking_failures",
         "evaluate_contract",
-        "evaluate_rule"
+        "evaluate_rule",
+        "validate",
+        "validate_rows"
       ],
       "imports": [
         "__future__",
         "collections",
+        "dataclasses",
         "datetime",
         "decimal",
+        "json",
         "math",
         "sandbox",
         "studio_core",
+        "time",
         "typing"
       ],
       "markers": {
@@ -9653,6 +9914,7 @@
       "imports": [
         "__future__",
         "collections",
+        "evaluator",
         "service",
         "studio_core",
         "studio_orchestrator",
@@ -9663,7 +9925,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 10
+        "stores": 11
       },
       "package": "studio_quality",
       "path": "python/studio_quality/http.py",
@@ -9707,16 +9969,19 @@
         "QualityContractDigestMismatch",
         "QualityContractNotFound",
         "QualityExecutionBlocked",
+        "QualityExecutionOutcome",
         "QualityExecutionStore"
       ],
       "functions": [
         "__init__",
         "execute_quality",
+        "execute_quality_with_gate",
         "get_contract",
         "list_quality_runs",
         "list_runs",
         "quality_alert_signals",
         "quality_gate",
+        "quality_run_payload",
         "quality_state_summary",
         "record_run"
       ],
@@ -9735,7 +10000,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 10
+        "stores": 13
       },
       "package": "studio_quality",
       "path": "python/studio_quality/service.py",
@@ -9788,6 +10053,7 @@
         "__post_init__",
         "_digest",
         "_json",
+        "_parameter_payload",
         "_text",
         "cancel",
         "canonical_json",
@@ -9804,6 +10070,7 @@
         "dataclasses",
         "re",
         "studio_core",
+        "studio_sql",
         "typing"
       ],
       "markers": {
@@ -9897,7 +10164,7 @@
         "events": 0,
         "jobs": 0,
         "migrations": 0,
-        "permissions": 9,
+        "permissions": 10,
         "stores": 0
       },
       "package": "studio_query_engine",
@@ -9945,6 +10212,8 @@
       "functions": [
         "__init__",
         "__post_init__",
+        "_forget",
+        "_prepared_select",
         "_result_page",
         "_safe_uri",
         "_text",
@@ -9955,6 +10224,7 @@
       ],
       "imports": [
         "__future__",
+        "base64",
         "collections",
         "contracts",
         "dataclasses",
@@ -10738,6 +11008,7 @@
       ],
       "imports": [
         "__future__",
+        "contextlib",
         "contracts",
         "pathlib",
         "sqlite3"
@@ -11078,18 +11349,24 @@
     },
     {
       "classes": [
+        "BackgroundLifecycle",
         "LocalServerComposition",
         "PluginLifecycle",
         "StoppableServer"
       ],
       "functions": [
         "__init__",
+        "attempt",
+        "attempt_cleanup",
+        "ready",
         "ready",
         "serve_forever",
         "server_close",
         "shutdown",
         "start",
         "start",
+        "start",
+        "stop",
         "stop",
         "stop"
       ],
@@ -11101,10 +11378,10 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 18,
+        "jobs": 20,
         "migrations": 0,
         "permissions": 0,
-        "stores": 0
+        "stores": 3
       },
       "package": "studio_server",
       "path": "python/studio_server/composition.py",
@@ -11158,6 +11435,7 @@
         "_now",
         "_page",
         "_read_json",
+        "_register_created_workspace",
         "_registered_path",
         "_registered_path_matches",
         "_segments",
@@ -11189,19 +11467,25 @@
         "do_POST",
         "do_PUT",
         "downstream",
+        "downstream_for_execution",
         "evaluate",
         "execute_action_payload",
         "execute_dashboard",
+        "explain",
         "get",
         "get",
         "get",
+        "get_asset",
         "get_backfill",
         "get_dashboard",
+        "get_ownership",
         "get_revision",
         "get_revision",
         "get_run",
         "get_schedule",
         "get_schema",
+        "get_sensitivity",
+        "handle_error",
         "health",
         "history",
         "import_sdp",
@@ -11212,6 +11496,7 @@
         "list",
         "list_all",
         "list_assets",
+        "list_assets_page",
         "list_budgets",
         "list_costs",
         "list_dashboards",
@@ -11221,6 +11506,7 @@
         "list_lineage",
         "list_models",
         "list_objects",
+        "list_ownership_versions",
         "list_pending_deliveries",
         "list_pipelines",
         "list_revisions",
@@ -11229,10 +11515,12 @@
         "list_schedule_fires",
         "list_schedules",
         "list_schema_versions",
+        "list_sensitivity_versions",
         "list_task_runs",
         "list_usage",
         "list_workflows",
         "log_message",
+        "log_request",
         "neighbors",
         "preview_backfill",
         "preview_schedule_next_runs",
@@ -11252,6 +11540,10 @@
         "save",
         "search",
         "search_assets",
+        "search_assets_page",
+        "send_response",
+        "server_close",
+        "setup",
         "upstream"
       ],
       "imports": [
@@ -11262,6 +11554,7 @@
         "hashlib",
         "http",
         "json",
+        "logging",
         "mimetypes",
         "pathlib",
         "studio_core",
@@ -11271,16 +11564,19 @@
         "studio_orchestrator",
         "studio_quality",
         "studio_security",
+        "studio_sql",
         "studio_storage",
+        "sys",
         "tempfile",
         "typing",
-        "urllib"
+        "urllib",
+        "uuid"
       ],
       "markers": {
-        "events": 55,
-        "jobs": 178,
+        "events": 62,
+        "jobs": 321,
         "migrations": 2,
-        "permissions": 165,
+        "permissions": 186,
         "stores": 38
       },
       "package": "studio_server",
@@ -11337,10 +11633,12 @@
         "events",
         "evidence",
         "get_job",
+        "handle_error",
         "list_jobs",
         "log_message",
         "log_request",
         "permits_project",
+        "run_id_for_job",
         "server_close",
         "setup",
         "sql",
@@ -11373,7 +11671,7 @@
       ],
       "markers": {
         "events": 33,
-        "jobs": 334,
+        "jobs": 344,
         "migrations": 16,
         "permissions": 27,
         "stores": 10
@@ -11385,22 +11683,28 @@
     },
     {
       "classes": [
-        "HttpOpenLineageSink"
+        "HttpOpenLineageSink",
+        "_RejectRedirects"
       ],
       "functions": [
         "__init__",
-        "publish"
+        "_is_finite_timeout",
+        "_open_without_redirects",
+        "publish",
+        "redirect_request"
       ],
       "imports": [
         "__future__",
         "collections",
+        "contextlib",
         "hashlib",
-        "json",
+        "math",
         "studio_core",
+        "typing",
         "urllib"
       ],
       "markers": {
-        "events": 5,
+        "events": 9,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
@@ -11471,18 +11775,20 @@
         "__init__",
         "__init__",
         "authenticate",
-        "authorize"
+        "authorize",
+        "register_workspace"
       ],
       "imports": [
         "__future__",
         "studio_core",
-        "studio_security"
+        "studio_security",
+        "threading"
       ],
       "markers": {
         "events": 0,
         "jobs": 0,
         "migrations": 0,
-        "permissions": 17,
+        "permissions": 18,
         "stores": 0
       },
       "package": "studio_server",
@@ -11537,23 +11843,33 @@
         "SqlColumn",
         "SqlEngine",
         "SqlExecutionError",
+        "SqlExplainResult",
+        "SqlExplainUnsupportedError",
         "SqlQueryResult",
         "SqlRelationUnavailableError",
+        "SqlResultLimitError",
         "SqlTimeoutError",
         "SqlValidationError"
       ],
       "functions": [
         "__post_init__",
         "__post_init__",
+        "__post_init__",
         "close",
         "drop_relation",
         "execute",
+        "explain",
         "list_relations",
-        "register_parquet"
+        "normalize_sql_parameters",
+        "register_parquet",
+        "sanitize_sql_explain_text",
+        "validate_read_only_select"
       ],
       "imports": [
         "__future__",
         "dataclasses",
+        "math",
+        "re",
         "typing"
       ],
       "markers": {
@@ -11582,29 +11898,42 @@
         "__init__",
         "__init__",
         "_duckdb",
-        "_engine",
+        "_project_engine",
         "_require_open",
+        "_sql_tokens",
+        "_validate_relation_sources",
         "close",
         "close",
         "drop_relation",
         "drop_relation",
         "execute",
         "execute",
+        "explain",
+        "explain",
+        "interrupt_if_active",
+        "interrupt_if_active",
+        "is_keyword",
         "list_relations",
         "list_relations",
         "register_parquet",
-        "register_parquet"
+        "register_parquet",
+        "validate_source"
       ],
       "imports": [
         "__future__",
+        "collections",
+        "contextlib",
         "contracts",
         "duckdb",
+        "json",
         "pathlib",
         "re",
-        "typing"
+        "threading",
+        "typing",
+        "wire"
       ],
       "markers": {
-        "events": 0,
+        "events": 3,
         "jobs": 0,
         "migrations": 0,
         "permissions": 3,
@@ -11622,14 +11951,18 @@
       ],
       "functions": [
         "__init__",
+        "close",
         "execute",
+        "explain",
         "query"
       ],
       "imports": [
         "__future__",
         "collections",
         "contracts",
-        "typing"
+        "json",
+        "typing",
+        "wire"
       ],
       "markers": {
         "events": 0,
@@ -11680,7 +12013,7 @@
         "jobs": 37,
         "migrations": 16,
         "permissions": 0,
-        "stores": 125
+        "stores": 130
       },
       "package": "studio_storage",
       "path": "python/studio_storage/__init__.py",
@@ -11817,7 +12150,7 @@
         "jobs": 73,
         "migrations": 0,
         "permissions": 0,
-        "stores": 47
+        "stores": 48
       },
       "package": "studio_storage",
       "path": "python/studio_storage/async_store.py",
@@ -12256,21 +12589,26 @@
       "classes": [
         "CatalogAssetNotFound",
         "CatalogConflict",
+        "LineageLimitExceeded",
         "SqliteCatalogStore"
       ],
       "functions": [
         "__init__",
+        "_assets_page",
         "_connect",
         "_execute_script_in_transaction",
+        "_lineage_for_ref",
         "_require_workspace",
         "catalog_schema_version",
         "create_asset",
         "downstream",
+        "downstream_for_execution",
         "get_asset",
         "get_ownership",
         "get_revision",
         "get_sensitivity",
         "list_assets",
+        "list_assets_page",
         "list_lineage",
         "list_namespaces",
         "list_ownership_versions",
@@ -12284,11 +12622,13 @@
         "register_namespace",
         "replace_asset",
         "search_assets",
+        "search_assets_page",
         "upstream"
       ],
       "imports": [
         "__future__",
         "json",
+        "pagination",
         "pathlib",
         "sqlite",
         "sqlite3",
@@ -12391,10 +12731,14 @@
     {
       "classes": [
         "SqliteJobStore",
-        "_BorrowedConnection"
+        "_BorrowedConnection",
+        "_ThreadLocalConnection"
       ],
       "functions": [
+        "__del__",
+        "__del__",
         "__getattr__",
+        "__init__",
         "__init__",
         "__init__",
         "_active_attempt_row",
@@ -12403,6 +12747,8 @@
         "append_events",
         "append_events",
         "append_events",
+        "close",
+        "close",
         "close",
         "complete_attempt",
         "get_run_id_for_job",
@@ -12418,6 +12764,7 @@
       "imports": [
         "__future__",
         "collections",
+        "contextlib",
         "pathlib",
         "sqlite3",
         "studio_orchestrator",
@@ -12427,10 +12774,10 @@
       ],
       "markers": {
         "events": 42,
-        "jobs": 107,
+        "jobs": 109,
         "migrations": 4,
         "permissions": 2,
-        "stores": 38
+        "stores": 44
       },
       "package": "studio_storage",
       "path": "python/studio_storage/fenced_sqlite.py",
@@ -12732,6 +13079,7 @@
       ],
       "imports": [
         "__future__",
+        "contextlib",
         "json",
         "pathlib",
         "sqlite3",
@@ -12784,9 +13132,11 @@
       "classes": [],
       "functions": [
         "_job_state_value",
+        "decode_catalog_asset_cursor",
         "decode_cursor",
         "decode_event_cursor",
         "decode_job_cursor",
+        "encode_catalog_asset_cursor",
         "encode_cursor",
         "encode_event_cursor",
         "encode_job_cursor",
@@ -12834,6 +13184,7 @@
         "delete",
         "delete_connection",
         "downstream",
+        "downstream_for_execution",
         "get_asset",
         "get_bytes",
         "get_connection",
@@ -12843,6 +13194,7 @@
         "get_revision",
         "get_workspace",
         "list_assets",
+        "list_assets_page",
         "list_connections",
         "list_digests",
         "list_digests_page",
@@ -12860,6 +13212,7 @@
         "replace_connection",
         "replace_project",
         "search_assets",
+        "search_assets_page",
         "storage_ref_for_digest",
         "unregister_project",
         "update_workspace",
@@ -12926,8 +13279,13 @@
       ],
       "functions": [
         "__init__",
+        "_assets_page",
         "_connect",
+        "_get_versioned_catalog_metadata_json",
+        "_lineage_for_ref",
+        "_list_versioned_catalog_metadata_json",
         "_psycopg",
+        "_put_versioned_catalog_metadata",
         "_require_active_workspace",
         "_workspace_from_row",
         "archive_project",
@@ -12938,31 +13296,41 @@
         "create_workspace",
         "delete_connection",
         "downstream",
+        "downstream_for_execution",
         "get_asset",
         "get_connection",
         "get_environment",
+        "get_ownership",
         "get_project",
         "get_project_bindings",
         "get_revision",
+        "get_sensitivity",
         "get_workspace",
         "healthcheck",
         "list_assets",
+        "list_assets_page",
         "list_connections",
         "list_environments",
+        "list_lineage",
+        "list_ownership_versions",
         "list_projects",
         "list_revisions",
+        "list_sensitivity_versions",
         "list_workspaces",
         "migrate",
         "put_environment",
         "put_lineage",
+        "put_ownership",
         "put_project_bindings",
         "put_revision",
+        "put_sensitivity",
         "ready",
         "register_project",
         "replace_asset",
         "replace_connection",
         "replace_project",
         "search_assets",
+        "search_assets_page",
         "shares_database_with",
         "unregister_project",
         "update_workspace",
@@ -12975,6 +13343,7 @@
         "catalog",
         "connections",
         "environments",
+        "pagination",
         "psycopg",
         "studio_core",
         "studio_orchestrator",
@@ -12984,7 +13353,7 @@
       "markers": {
         "events": 3,
         "jobs": 20,
-        "migrations": 16,
+        "migrations": 18,
         "permissions": 1,
         "stores": 21
       },
@@ -13062,6 +13431,7 @@
         "list_models",
         "list_runs",
         "migrate",
+        "promote_model",
         "put_deployment",
         "put_experiment",
         "record_evaluation",
@@ -13073,6 +13443,7 @@
       "imports": [
         "__future__",
         "catalog",
+        "dataclasses",
         "hashlib",
         "ml",
         "postgres_core",
@@ -13090,6 +13461,46 @@
       },
       "package": "studio_storage",
       "path": "python/studio_storage/postgres_ml.py",
+      "routes": [],
+      "test": false
+    },
+    {
+      "classes": [
+        "PostgresQualityStore"
+      ],
+      "functions": [
+        "__init__",
+        "_connect",
+        "_migrate",
+        "_require_active_workspace",
+        "_require_revision",
+        "get_contract",
+        "get_run",
+        "get_run_created_at",
+        "list_contracts",
+        "list_runs",
+        "put_contract",
+        "put_contracts",
+        "record_run"
+      ],
+      "imports": [
+        "__future__",
+        "catalog",
+        "datetime",
+        "quality",
+        "studio_core",
+        "studio_orchestrator",
+        "typing"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 9,
+        "permissions": 0,
+        "stores": 14
+      },
+      "package": "studio_storage",
+      "path": "python/studio_storage/postgres_quality.py",
       "routes": [],
       "test": false
     },
@@ -13154,6 +13565,7 @@
         "get_workflow_deployment",
         "heartbeat_task",
         "ingest_event",
+        "list_event_deliveries",
         "list_event_triggers",
         "list_execution_intents",
         "list_pending_deliveries",
@@ -13199,8 +13611,8 @@
         "typing"
       ],
       "markers": {
-        "events": 162,
-        "jobs": 724,
+        "events": 168,
+        "jobs": 725,
         "migrations": 32,
         "permissions": 5,
         "stores": 47
@@ -13227,6 +13639,7 @@
         "create_snapshot_backfill_run",
         "get_backfill",
         "get_backfill_plan",
+        "list_active_backfills",
         "list_backfill_runs"
       ],
       "imports": [
@@ -13241,7 +13654,7 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 75,
+        "jobs": 77,
         "migrations": 0,
         "permissions": 0,
         "stores": 4
@@ -13368,6 +13781,7 @@
         "_require_revision",
         "get_contract",
         "get_run",
+        "get_run_created_at",
         "list_contracts",
         "list_runs",
         "migrate_quality",
@@ -13649,6 +14063,8 @@
         "create_snapshot_backfill_run",
         "get_backfill_plan",
         "get_backfill_plan",
+        "list_active_backfills",
+        "list_active_backfills",
         "list_backfill_runs",
         "migrate_scheduler_backfill_runtime",
         "scheduler_backfill_runtime_schema_version"
@@ -13667,7 +14083,7 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 88,
+        "jobs": 90,
         "migrations": 22,
         "permissions": 0,
         "stores": 18
@@ -13763,6 +14179,7 @@
         "deliver_event",
         "get_event",
         "ingest_event",
+        "list_event_deliveries",
         "list_event_triggers",
         "list_pending_deliveries",
         "migrate_scheduler_events",
@@ -13781,8 +14198,8 @@
         "studio_orchestrator"
       ],
       "markers": {
-        "events": 195,
-        "jobs": 59,
+        "events": 201,
+        "jobs": 60,
         "migrations": 22,
         "permissions": 0,
         "stores": 24
@@ -14319,20 +14736,30 @@
       "test": false
     },
     {
-      "classes": [],
+      "classes": [
+        "KafkaStreamingHealthReader",
+        "StreamingUnavailable"
+      ],
       "functions": [
+        "__init__",
+        "health",
         "stream_health"
       ],
       "imports": [
         "__future__",
-        "contracts"
+        "checkpoint",
+        "collections",
+        "contextlib",
+        "contracts",
+        "kafka",
+        "typing"
       ],
       "markers": {
         "events": 0,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 0
+        "stores": 5
       },
       "package": "studio_streaming",
       "path": "python/studio_streaming/health.py",
@@ -15226,12 +15653,15 @@
         "__init__",
         "__post_init__",
         "_abandon_claim",
+        "_complete_connector_sync_cancellation",
         "_execute_claim",
         "_fail_preparation",
         "_log_execution_outcome",
         "_poll",
         "_prepare",
+        "_stop_cancellation_watch",
         "_wait_for_shutdown_or_poll",
+        "_watch_connector_sync_cancellation",
         "aclose",
         "artifact_root",
         "artifact_store_from_environment",
@@ -15263,15 +15693,16 @@
         "studio_runners",
         "studio_sql",
         "studio_storage",
+        "threading",
         "time",
         "uuid"
       ],
       "markers": {
-        "events": 6,
-        "jobs": 203,
-        "migrations": 3,
+        "events": 10,
+        "jobs": 244,
+        "migrations": 5,
         "permissions": 0,
-        "stores": 53
+        "stores": 58
       },
       "package": "studio_worker",
       "path": "python/studio_worker/runtime.py",
@@ -15369,13 +15800,40 @@
       ],
       "markers": {
         "events": 23,
-        "jobs": 193,
+        "jobs": 189,
         "migrations": 7,
         "permissions": 16,
         "stores": 52
       },
       "package": null,
       "path": "tests/e2e/test_v01_journey.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite"
+      ],
+      "imports": [
+        "__future__",
+        "azure",
+        "os",
+        "pytest",
+        "studio_connectors",
+        "studio_core",
+        "studio_storage",
+        "uuid"
+      ],
+      "markers": {
+        "events": 2,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 1
+      },
+      "package": null,
+      "path": "tests/integration/test_azure_blob_connector_real.py",
       "routes": [],
       "test": true
     },
@@ -15412,14 +15870,20 @@
     },
     {
       "classes": [
-        "_PipelineWriter"
+        "_PipelineWriter",
+        "_QueryFluxTransport"
       ],
       "functions": [
         "__init__",
+        "__init__",
         "_request",
+        "cancel",
         "import_sdp",
+        "poll",
+        "submit",
         "test_data_engineering_routes_execute_through_real_control_plane",
-        "test_pipeline_save_route_persists_canonical_document_with_revision_fence"
+        "test_pipeline_save_route_persists_canonical_document_with_revision_fence",
+        "test_queryflux_execution_is_bound_to_an_existing_project_in_workspace"
       ],
       "imports": [
         "__future__",
@@ -15429,7 +15893,9 @@
         "studio_core",
         "studio_data_engineering",
         "studio_plugin_workspaces",
+        "studio_query_engine",
         "studio_runtime",
+        "studio_storage",
         "test_workspace_project_http_api",
         "types"
       ],
@@ -15437,8 +15903,8 @@
         "events": 0,
         "jobs": 0,
         "migrations": 0,
-        "permissions": 3,
-        "stores": 3
+        "permissions": 7,
+        "stores": 18
       },
       "package": null,
       "path": "tests/integration/test_data_engineering_http.py",
@@ -15475,7 +15941,7 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 5,
+        "jobs": 3,
         "migrations": 0,
         "permissions": 1,
         "stores": 4
@@ -15521,63 +15987,72 @@
     },
     {
       "classes": [
-        "_OneBlockedStatusSqliteStore"
+        "Handler"
       ],
       "functions": [
-        "__init__",
-        "_assert_p95_budget",
-        "_latency_summary",
-        "_p95_ms",
-        "_write_performance_artifact",
-        "block_one_store_worker",
-        "get_job",
-        "test_latency_budget_failure_reports_distribution_shape",
-        "test_real_http_submit_status_meet_p95_budgets_under_bounded_contention"
+        "_http_service",
+        "_json_response",
+        "_read",
+        "do_GET",
+        "log_message",
+        "responder",
+        "responder",
+        "responder",
+        "responder",
+        "responder",
+        "responder",
+        "responder",
+        "responder",
+        "test_http_json_does_not_report_next_url_limit_as_complete_snapshot",
+        "test_http_json_does_not_report_page_param_limit_as_complete_snapshot",
+        "test_http_json_enforces_response_byte_limit_from_real_service",
+        "test_http_json_reads_paginated_records_and_snapshot_replay",
+        "test_http_json_rejects_cross_origin_next_page_from_real_service",
+        "test_http_json_rejects_real_service_redirects",
+        "test_http_json_retries_real_service_503_and_succeeds",
+        "test_http_json_stops_repeated_next_url_before_repeating_the_request"
       ],
       "imports": [
         "__future__",
-        "datetime",
+        "collections",
+        "contextlib",
+        "http",
         "json",
-        "math",
-        "os",
-        "pathlib",
-        "pyronin",
         "pytest",
-        "statistics",
+        "studio_connectors",
         "studio_core",
-        "studio_execution",
-        "studio_orchestrator",
-        "studio_server",
         "studio_storage",
-        "subprocess",
         "threading",
-        "time",
-        "tools"
+        "urllib"
       ],
       "markers": {
-        "events": 4,
-        "jobs": 44,
-        "migrations": 3,
-        "permissions": 9,
-        "stores": 17
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
       },
       "package": null,
-      "path": "tests/integration/test_http_contention_budgets.py",
+      "path": "tests/integration/test_http_json_connector_real.py",
       "routes": [],
       "test": true
     },
     {
       "classes": [],
       "functions": [
+        "_consume_http_error",
+        "capture_limits",
         "test_healthz_is_available_without_bearer_authorization",
         "test_http_job_listing_rejects_project_outside_typed_grant",
         "test_http_server_rejects_invalid_static_token",
+        "test_http_sql_accepts_typed_bindings_and_rejects_type_mismatches",
         "test_http_sql_route_requires_project_read_and_returns_bounded_result",
         "test_openapi_routes_and_sdk_states_match_implemented_contract",
         "test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempotency"
       ],
       "imports": [
         "__future__",
+        "asyncio",
         "json",
         "pathlib",
         "pyronin",
@@ -15594,10 +16069,10 @@
       ],
       "markers": {
         "events": 45,
-        "jobs": 89,
-        "migrations": 11,
-        "permissions": 26,
-        "stores": 32
+        "jobs": 92,
+        "migrations": 13,
+        "permissions": 28,
+        "stores": 36
       },
       "package": null,
       "path": "tests/integration/test_http_submit_status.py",
@@ -15744,16 +16219,25 @@
     },
     {
       "classes": [
-        "FakeRunner"
+        "FakeRunner",
+        "Registry"
       ],
       "functions": [
+        "__init__",
         "_request",
+        "get_model",
+        "get_run",
+        "list_evaluations",
+        "promote_model",
+        "record_evaluation",
         "run",
         "test_ml_feature_definition_http_lifecycle_is_workspace_scoped",
+        "test_ml_model_evaluation_review_gates_promotion_over_http",
         "test_ml_studio_http_lab_quality_and_execution_flow"
       ],
       "imports": [
         "__future__",
+        "dataclasses",
         "http",
         "json",
         "pathlib",
@@ -15762,6 +16246,7 @@
         "studio_orchestrator",
         "studio_plugin_workspaces",
         "studio_runtime",
+        "studio_storage",
         "test_workspace_project_http_api",
         "time",
         "types"
@@ -15770,8 +16255,8 @@
         "events": 0,
         "jobs": 2,
         "migrations": 1,
-        "permissions": 7,
-        "stores": 11
+        "permissions": 8,
+        "stores": 12
       },
       "package": null,
       "path": "tests/integration/test_ml_studio_http.py",
@@ -15799,6 +16284,34 @@
       },
       "package": null,
       "path": "tests/integration/test_otlp_collector_real.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "_run",
+        "test_appliance_backup_restores_postgres_and_local_data_volume"
+      ],
+      "imports": [
+        "__future__",
+        "os",
+        "pathlib",
+        "pytest",
+        "secrets",
+        "subprocess",
+        "sys",
+        "time"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 1,
+        "permissions": 0,
+        "stores": 26
+      },
+      "package": null,
+      "path": "tests/integration/test_postgres_appliance_backup_real.py",
       "routes": [],
       "test": true
     },
@@ -15851,7 +16364,7 @@
         "jobs": 10,
         "migrations": 0,
         "permissions": 3,
-        "stores": 21
+        "stores": 22
       },
       "package": null,
       "path": "tests/integration/test_postgres_artifact_retention_barrier.py",
@@ -15920,31 +16433,66 @@
     {
       "classes": [],
       "functions": [
+        "_cleanup",
+        "_workspace",
+        "test_postgres_catalog_assets_governance_revisions_and_lineage"
+      ],
+      "imports": [
+        "__future__",
+        "os",
+        "pytest",
+        "studio_core",
+        "studio_orchestrator",
+        "studio_storage",
+        "uuid"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 47
+      },
+      "package": null,
+      "path": "tests/integration/test_postgres_catalog_store.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
         "_available_tcp_ports",
         "test_postgres_connector_checkpoint_fencing_inventory_and_restart",
+        "test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpoint",
         "test_postgres_local_composition_mounts_shared_connector_ingestion"
       ],
       "imports": [
         "__future__",
         "concurrent",
+        "http",
+        "json",
         "os",
         "pathlib",
+        "psycopg",
         "pytest",
         "socket",
         "studio_cli",
         "studio_connectors",
         "studio_core",
+        "studio_execution",
+        "studio_orchestrator",
         "studio_server",
         "studio_storage",
+        "studio_worker",
         "typing",
         "uuid"
       ],
       "markers": {
         "events": 1,
-        "jobs": 7,
-        "migrations": 0,
-        "permissions": 2,
-        "stores": 26
+        "jobs": 21,
+        "migrations": 2,
+        "permissions": 11,
+        "stores": 55
       },
       "package": null,
       "path": "tests/integration/test_postgres_connector_checkpoint_real.py",
@@ -15955,23 +16503,26 @@
       "classes": [],
       "functions": [
         "_dsn",
-        "test_postgres_connector_real_schema_null_timezone_and_large_value"
+        "test_postgres_connector_real_schema_null_timezone_and_large_value",
+        "test_postgres_connector_real_watermark_pages_same_timestamp_without_loss"
       ],
       "imports": [
         "__future__",
         "os",
+        "psycopg",
         "pytest",
         "studio_connectors",
         "studio_core",
         "studio_storage",
-        "urllib"
+        "urllib",
+        "uuid"
       ],
       "markers": {
         "events": 0,
         "jobs": 0,
-        "migrations": 1,
+        "migrations": 2,
         "permissions": 0,
-        "stores": 14
+        "stores": 22
       },
       "package": null,
       "path": "tests/integration/test_postgres_connector_real.py",
@@ -16030,6 +16581,38 @@
       "test": true
     },
     {
+      "classes": [],
+      "functions": [
+        "_request",
+        "_unused_port",
+        "test_postgres_composition_serves_catalog_and_governance_over_real_http"
+      ],
+      "imports": [
+        "__future__",
+        "http",
+        "json",
+        "os",
+        "pytest",
+        "socket",
+        "studio_cli",
+        "studio_core",
+        "studio_observability",
+        "studio_orchestrator",
+        "uuid"
+      ],
+      "markers": {
+        "events": 1,
+        "jobs": 4,
+        "migrations": 0,
+        "permissions": 3,
+        "stores": 14
+      },
+      "package": null,
+      "path": "tests/integration/test_postgres_local_composed_catalog_http.py",
+      "routes": [],
+      "test": true
+    },
+    {
       "classes": [
         "ImportCancelled"
       ],
@@ -16070,10 +16653,38 @@
         "jobs": 46,
         "migrations": 0,
         "permissions": 0,
-        "stores": 151
+        "stores": 161
       },
       "package": null,
       "path": "tests/integration/test_postgres_ml_real.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "test_postgres_quality_store_is_durable_scoped_and_chronological"
+      ],
+      "imports": [
+        "__future__",
+        "concurrent",
+        "os",
+        "pytest",
+        "studio_core",
+        "studio_orchestrator",
+        "studio_quality",
+        "studio_storage",
+        "uuid"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 1,
+        "migrations": 0,
+        "permissions": 1,
+        "stores": 28
+      },
+      "package": null,
+      "path": "tests/integration/test_postgres_quality_store.py",
       "routes": [],
       "test": true
     },
@@ -16137,17 +16748,52 @@
         "sys",
         "threading",
         "time",
+        "tools",
         "uuid"
       ],
       "markers": {
-        "events": 62,
+        "events": 63,
         "jobs": 790,
         "migrations": 13,
         "permissions": 7,
-        "stores": 531
+        "stores": 533
       },
       "package": null,
       "path": "tests/integration/test_postgres_workflow_store_real.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [
+        "_LocalTrinoHttpClient"
+      ],
+      "functions": [
+        "request",
+        "test_trino_real_prepared_scalar_bindings",
+        "test_trino_real_result_byte_budget_accepts_exact_limit_and_rejects_one_byte_less"
+      ],
+      "imports": [
+        "__future__",
+        "collections",
+        "http",
+        "json",
+        "os",
+        "pathlib",
+        "pytest",
+        "studio_data_engineering",
+        "studio_query_engine",
+        "studio_storage",
+        "urllib"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 3
+      },
+      "package": null,
+      "path": "tests/integration/test_query_engine_trino_real.py",
       "routes": [],
       "test": true
     },
@@ -16190,6 +16836,40 @@
     },
     {
       "classes": [
+        "_LoseFirstPutResponse"
+      ],
+      "functions": [
+        "__getattr__",
+        "__init__",
+        "put_object",
+        "test_s3_json_sink_put_read_and_retry_round_trip"
+      ],
+      "imports": [
+        "__future__",
+        "botocore",
+        "hashlib",
+        "os",
+        "pytest",
+        "studio_connectors",
+        "studio_core",
+        "studio_storage",
+        "typing",
+        "uuid"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 3
+      },
+      "package": null,
+      "path": "tests/integration/test_s3_json_connector_real.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [
         "_Clock",
         "_Runner",
         "_SlowPutArtifactStore",
@@ -16222,6 +16902,7 @@
       "imports": [
         "__future__",
         "asyncio",
+        "contextlib",
         "dataclasses",
         "os",
         "pathlib",
@@ -16279,10 +16960,10 @@
       ],
       "markers": {
         "events": 16,
-        "jobs": 180,
+        "jobs": 178,
         "migrations": 7,
         "permissions": 0,
-        "stores": 82
+        "stores": 83
       },
       "package": null,
       "path": "tests/integration/test_worker_runtime_real.py",
@@ -16291,19 +16972,31 @@
     },
     {
       "classes": [
+        "BlockingQualityReader",
+        "Catalog",
+        "Catalog",
+        "FailingCatalog",
+        "ScheduleReader",
         "_Authenticator",
         "_Authorizer",
         "_CatalogGovernance",
         "_DiscoveryAdapter",
+        "_DurableJobs",
         "_Glossary",
         "_LineagePayload",
         "_Scheduler",
         "_Store",
+        "_SyncAdapter",
         "_TaskRun",
+        "_UnavailableStreamingReader",
+        "_WorkerConnector",
         "_Workflow",
         "_WorkflowRun"
       ],
       "functions": [
+        "__init__",
+        "__init__",
+        "__init__",
         "__init__",
         "__init__",
         "__init__",
@@ -16319,46 +17012,82 @@
         "_server",
         "authenticate",
         "authorize",
+        "cancel",
         "cancel_workflow_run",
         "create_asset",
         "create_workflow_run",
         "create_workspace",
         "discover",
+        "document",
         "downstream",
+        "downstream_for_execution",
+        "events",
+        "evidence",
+        "execute_durable_job",
         "fail_audit",
         "fail_audit",
         "get",
+        "get_asset",
+        "get_asset",
+        "get_job",
         "get_project",
+        "get_revision",
+        "get_revision",
         "get_run",
+        "get_schedule",
         "get_workspace",
+        "health",
         "list_all",
         "list_assets",
+        "list_assets_page",
+        "list_assets_page",
         "list_latest",
         "list_projects",
+        "list_schedule_fires",
+        "list_schedules",
         "list_task_runs",
         "list_workflows",
         "list_workspaces",
+        "plan",
+        "preview_schedule_next_runs",
         "put",
         "put_ownership",
         "put_sensitivity",
         "put_workflow",
+        "read",
         "register_project",
         "replace_asset",
         "replace_project",
+        "run",
         "search",
         "search_assets",
+        "search_assets_page",
+        "status",
+        "submit",
         "test_authentication_and_denial_are_stable_json",
+        "test_blocked_quality_run_is_a_domain_conflict_not_an_internal_error",
         "test_catalog_asset_create_and_replace_routes_validate_path_identity",
+        "test_catalog_asset_listing_passes_cursor_and_rejects_invalid_query",
+        "test_catalog_asset_listing_passes_the_http_bound_to_storage",
         "test_catalog_governance_metadata_can_be_published_through_authenticated_routes",
+        "test_catalog_lineage_route_rejects_partial_results_and_invalid_limits",
         "test_catalog_lineage_route_requires_explicit_supported_direction",
         "test_connector_discovery_is_denied_before_adapter_side_effect",
         "test_connector_discovery_route_delegates_through_authenticated_control_plane",
+        "test_connector_sync_authorization_precedes_definition_validation_and_job_creation",
+        "test_connector_sync_is_persisted_by_the_real_durable_job_service",
+        "test_connector_sync_rejects_scope_and_missing_idempotency_before_job_creation",
+        "test_connector_sync_submits_validated_idempotent_durable_job_and_reads_evidence",
+        "test_control_plane_access_logs_ok_warn_and_error_with_redacted_correlation",
         "test_denied_and_unavailable_mutations_fail_before_body_parse_or_store_write",
         "test_glossary_term_can_be_published_through_authenticated_route",
         "test_govern_studio_routes_execute_through_real_http_server",
+        "test_governed_connector_sync_validates_and_persists_catalog_refs",
         "test_invalid_shapes_query_cursor_and_project_id_mismatch_are_400",
         "test_local_observability_plugins_are_readable_over_control_plane",
         "test_missing_and_archived_project_mutations_map_to_stable_errors",
+        "test_notebook_http_routes_create_read_save_and_list_revision_history",
+        "test_performance_plugin_route_uses_local_workspace_read_permission",
         "test_pipeline_run_materializes_workflow_and_validates_digest",
         "test_platform_capabilities_exposes_only_ready_plugin_capabilities",
         "test_platform_ui_manifest_exposes_ready_plugin_navigation",
@@ -16366,11 +17095,15 @@
         "test_plugin_project_mutation_fails_closed_when_audit_hook_is_unavailable",
         "test_plugin_project_read_replace_delete_routes_use_project_port",
         "test_plugin_project_route_dispatches_after_authorization",
+        "test_plugin_workspace_creation_uses_configured_operator_write_scope",
+        "test_project_bundle_import_is_post_only_authenticated_and_idempotent",
         "test_project_http_lifecycle_uses_canonical_manifest_and_resource_ref",
         "test_project_permission_inspection_fails_closed_without_project_read",
         "test_project_permission_inspection_is_resource_scoped",
+        "test_schedule_history_and_next_runs_routes_match_their_declared_paths",
         "test_scheduler_route_with_unsupported_method_is_not_method_not_found",
         "test_scheduler_routes_list_start_read_and_cancel",
+        "test_stream_health_translates_broker_timeout_to_redacted_service_unavailable",
         "test_workflow_cancellation_fails_closed_when_audit_is_unavailable",
         "test_workflow_routes_fail_closed_when_scheduler_is_not_configured",
         "test_workspace_list_filters_before_pagination",
@@ -16380,31 +17113,43 @@
         "to_payload",
         "unregister_project",
         "update_workspace",
-        "upstream"
+        "upstream",
+        "validate_definition"
       ],
       "imports": [
         "__future__",
+        "asyncio",
+        "base64",
         "collections",
         "contextlib",
+        "hashlib",
         "http",
         "json",
+        "logging",
         "pathlib",
+        "ronin_plugin_performance",
+        "studio_connectors",
         "studio_core",
         "studio_execution",
+        "studio_notebook",
+        "studio_orchestrator",
         "studio_plugin_observability",
         "studio_plugin_workspaces",
+        "studio_quality",
         "studio_runtime",
         "studio_security",
         "studio_server",
+        "studio_storage",
         "studio_synthetic_data",
+        "studio_worker",
         "threading"
       ],
       "markers": {
-        "events": 1,
-        "jobs": 35,
-        "migrations": 0,
-        "permissions": 78,
-        "stores": 130
+        "events": 29,
+        "jobs": 227,
+        "migrations": 4,
+        "permissions": 112,
+        "stores": 227
       },
       "package": null,
       "path": "tests/integration/test_workspace_project_http_api.py",
@@ -16434,6 +17179,96 @@
       },
       "package": null,
       "path": "tests/perf/test_budgets.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [
+        "_OneBlockedStatusSqliteStore"
+      ],
+      "functions": [
+        "__init__",
+        "_assert_p95_budget",
+        "_latency_summary",
+        "_p95_ms",
+        "_write_performance_artifact",
+        "block_one_store_worker",
+        "get_job",
+        "test_latency_budget_failure_reports_distribution_shape",
+        "test_real_http_submit_status_meet_p95_budgets_under_bounded_contention"
+      ],
+      "imports": [
+        "__future__",
+        "datetime",
+        "json",
+        "math",
+        "os",
+        "pathlib",
+        "pyronin",
+        "pytest",
+        "statistics",
+        "studio_core",
+        "studio_execution",
+        "studio_orchestrator",
+        "studio_server",
+        "studio_storage",
+        "subprocess",
+        "threading",
+        "time",
+        "tools"
+      ],
+      "markers": {
+        "events": 4,
+        "jobs": 44,
+        "migrations": 3,
+        "permissions": 9,
+        "stores": 17
+      },
+      "package": null,
+      "path": "tests/perf/test_http_contention_budgets.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "_completed",
+        "_load_script",
+        "core_preflight",
+        "engineering_preflight",
+        "ml_openapi_verifier",
+        "run",
+        "run",
+        "test_core_preflight_reports_all_required_commands",
+        "test_core_preflight_reports_timeout_without_traceback",
+        "test_core_preflight_returns_structured_missing_executable",
+        "test_data_engineering_preflight_checks_top_level_and_connector_commands",
+        "test_data_engineering_preflight_reports_missing_connector_surface",
+        "test_ml_openapi_verifier_counts_only_http_operations",
+        "test_ml_openapi_verifier_rejects_non_object_ml_path_item",
+        "test_ml_openapi_verifier_reports_invalid_documents",
+        "timeout"
+      ],
+      "imports": [
+        "__future__",
+        "importlib",
+        "json",
+        "pathlib",
+        "pytest",
+        "subprocess",
+        "sys",
+        "types",
+        "typing"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_agent_skill_scripts.py",
       "routes": [],
       "test": true
     },
@@ -16529,7 +17364,9 @@
     {
       "classes": [],
       "functions": [
+        "dirty",
         "fail",
+        "test_artifact_identity_cli_refuses_dirty_worktree_without_writing_manifest",
         "test_artifact_identity_cli_writes_manifest_and_uses_git_fallback",
         "test_artifact_manifest_classifies_json_text_and_other_files",
         "test_artifact_manifest_is_candidate_bound_and_hashed",
@@ -16598,6 +17435,7 @@
         "test_origin_must_be_site_packages_and_outside_checkout",
         "test_qualification_record_is_machine_path_independent",
         "test_qualification_record_rejects_module_outside_site_packages",
+        "test_qualification_subprocess_environment_drops_parent_coverage_hooks",
         "test_qualify_pyronin_builds_installs_and_runs_isolated_contract_tests",
         "test_qualify_pyronin_fails_closed_when_installed_import_probe_fails",
         "test_qualify_pyronin_fails_when_installed_contract_tests_fail",
@@ -16895,11 +17733,11 @@
         "typing"
       ],
       "markers": {
-        "events": 5,
-        "jobs": 100,
+        "events": 6,
+        "jobs": 103,
         "migrations": 0,
         "permissions": 0,
-        "stores": 72
+        "stores": 73
       },
       "package": null,
       "path": "tests/test_async_job_store.py",
@@ -16994,34 +17832,63 @@
     },
     {
       "classes": [
+        "GrowingBlob",
+        "OversizedBlob",
+        "Service",
         "_BlobClient",
         "_Container",
-        "_Downloader"
+        "_Downloader",
+        "_EndlessContainer",
+        "_Listing",
+        "_PageIterator"
       ],
       "functions": [
         "__init__",
+        "__init__",
+        "__init__",
+        "__init__",
+        "__init__",
+        "__iter__",
+        "__next__",
         "_connection",
+        "_stub_azure_match_condition",
+        "by_page",
+        "chunks",
+        "condition",
+        "download_blob",
         "download_blob",
         "get_blob_client",
+        "get_blob_properties",
+        "get_blob_properties",
+        "get_blob_properties",
+        "get_container_client",
         "list_blobs",
-        "readall",
+        "list_blobs",
+        "test_azure_blob_allows_explicit_loopback_http_emulator_only",
+        "test_azure_blob_discovery_is_page_bounded_and_rejects_oversized_page_size",
         "test_azure_blob_json_discovers_and_reads_snapshot",
         "test_azure_blob_json_rejects_cursor_checkpoint",
-        "test_azure_blob_rejects_persisted_credential_and_requires_secret_ref"
+        "test_azure_blob_legacy_discover_stops_after_bounded_provider_requests",
+        "test_azure_blob_read_binds_download_to_etag_and_streams_chunks",
+        "test_azure_blob_rejects_oversized_object_before_download",
+        "test_azure_blob_rejects_persisted_credential_and_requires_secret_ref",
+        "test_azure_blob_rejects_plaintext_http_outside_explicit_loopback",
+        "test_azure_blob_rejects_size_growth_during_streamed_download"
       ],
       "imports": [
         "__future__",
         "pytest",
         "studio_connectors",
         "studio_core",
-        "studio_storage"
+        "studio_storage",
+        "types"
       ],
       "markers": {
-        "events": 2,
+        "events": 6,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 0
+        "stores": 4
       },
       "package": null,
       "path": "tests/test_azure_blob_json_connector.py",
@@ -17641,7 +18508,10 @@
       "classes": [],
       "functions": [
         "manifest",
+        "test_blocked_qualification_requires_traceable_blocking_conditions",
+        "test_rejects_blocked_qualification_without_reason",
         "test_rejects_duplicate_or_unknown_status",
+        "test_rejects_incomplete_blocking_condition",
         "test_repository_public_v1_ledger_is_valid",
         "test_validates_public_manifest_shape"
       ],
@@ -17724,7 +18594,8 @@
     {
       "classes": [],
       "functions": [
-        "test_catalog_ownership_is_versioned_and_idempotent"
+        "test_catalog_ownership_is_versioned_and_idempotent",
+        "test_ownership_metadata_rejects_boolean_version"
       ],
       "imports": [
         "pathlib",
@@ -17778,6 +18649,8 @@
     {
       "classes": [],
       "functions": [
+        "test_catalog_asset_pages_are_bounded_ordered_and_filter_bound",
+        "test_catalog_directional_lineage_queries_never_return_partial_results",
         "test_catalog_lineage_listing_is_deterministic_and_bounded",
         "test_catalog_search_is_project_scoped_and_matches_governance_metadata",
         "test_catalog_sensitivity_is_versioned_idempotent_and_latest_is_effective"
@@ -17790,11 +18663,11 @@
         "studio_storage"
       ],
       "markers": {
-        "events": 0,
+        "events": 3,
         "jobs": 0,
-        "migrations": 6,
+        "migrations": 10,
         "permissions": 1,
-        "stores": 19
+        "stores": 29
       },
       "package": null,
       "path": "tests/test_catalog_search.py",
@@ -17852,16 +18725,23 @@
       "classes": [
         "_Client",
         "_Client",
+        "_Client",
+        "_Client",
         "_Client"
       ],
       "functions": [
         "connector_capabilities",
         "connector_discover",
         "connector_discover",
+        "connector_sync_cancel",
+        "connector_sync_status",
+        "connector_sync_submit",
         "test_connectors_capabilities_uses_control_plane_client",
         "test_connectors_discover_emits_assets",
         "test_connectors_discover_passes_page_cursor_and_size",
         "test_connectors_plan_requires_complete_definition",
+        "test_connectors_sync_status_and_cancel_forward_resource_scope",
+        "test_connectors_sync_submit_reads_bounded_definition_and_requires_key",
         "test_doctor_all_still_requires_docker",
         "test_doctor_core_succeeds_without_docker_but_reports_verdict",
         "test_doctor_fails_closed_when_required_tool_is_missing",
@@ -17883,10 +18763,10 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 6,
+        "jobs": 38,
         "migrations": 1,
-        "permissions": 0,
-        "stores": 0
+        "permissions": 1,
+        "stores": 1
       },
       "package": null,
       "path": "tests/test_cli.py",
@@ -17896,6 +18776,7 @@
     {
       "classes": [],
       "functions": [
+        "test_cloud_api_route_passes_http_body_to_plugin_handler",
         "test_emulator_applies_and_snapshots_state",
         "test_external_backend_accepts_plugin_cache_configuration",
         "test_external_backend_workspace_is_injected",
@@ -17909,6 +18790,7 @@
         "test_resource_property_schema_rejects_non_scalar_types",
         "test_snapshot_can_be_imported",
         "test_snapshot_store_round_trips_workspace",
+        "test_terraform_backend_writes_exact_pinned_tool_versions",
         "test_terraform_provider_config_is_endpoint_based_and_secret_free",
         "test_topology_validates_and_exports_hcl",
         "test_unknown_resource_is_rejected",
@@ -17917,7 +18799,9 @@
       "imports": [
         "pytest",
         "studio_cloud",
-        "studio_core"
+        "studio_core",
+        "studio_plugin_workspaces",
+        "studio_runtime"
       ],
       "markers": {
         "events": 0,
@@ -17928,6 +18812,51 @@
       },
       "package": null,
       "path": "tests/test_cloud_studio.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [
+        "FakeBackend",
+        "FlociFakeBackend"
+      ],
+      "functions": [
+        "__init__",
+        "apply",
+        "bad_plan",
+        "destroy",
+        "health",
+        "plan",
+        "refresh",
+        "state_list",
+        "test_floci_compose_is_version_pinned_and_loopback_only",
+        "test_floci_qualification_attempts_cleanup_after_apply_failure",
+        "test_floci_qualification_checks_applied_resources_and_removal",
+        "test_floci_qualification_fails_if_apply_does_not_create_fixture",
+        "test_floci_qualification_fails_if_fixture_resources_survive_destroy",
+        "test_floci_qualification_fails_when_destroy_leaves_resources",
+        "test_floci_qualification_never_passes_without_terraform",
+        "test_floci_qualification_rejects_nonzero_terraform_command",
+        "test_floci_qualification_requires_all_terraform_stages_and_empty_state",
+        "test_floci_qualification_verifies_selected_terraform_binary",
+        "test_floci_terraform_qualification_rejects_non_loopback_before_health_check"
+      ],
+      "imports": [
+        "__future__",
+        "json",
+        "pathlib",
+        "tools",
+        "types"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_cloud_studio_floci_qualification.py",
       "routes": [],
       "test": true
     },
@@ -18014,7 +18943,8 @@
         "__init__",
         "test_capabilities_validate_incremental_and_bounds",
         "test_capability_payload_is_deterministic_and_json_ready",
-        "test_capability_registry_returns_deterministic_normalized_records"
+        "test_capability_registry_returns_deterministic_normalized_records",
+        "test_connector_contract_version_rejects_booleans"
       ],
       "imports": [
         "__future__",
@@ -18037,6 +18967,8 @@
     {
       "classes": [],
       "functions": [
+        "test_checkpoint_catalog_failure_rolls_back_revision_lineage_and_checkpoint",
+        "test_checkpoint_catalog_lineage_and_destination_revision_commit_atomically",
         "test_checkpoint_commit_is_fenced_and_records_output",
         "test_checkpoint_fence_placeholder_is_not_an_incremental_checkpoint",
         "test_checkpoint_health_reports_output_commit",
@@ -18045,7 +18977,8 @@
         "test_checkpoint_replay_of_same_output_is_idempotent",
         "test_checkpoint_replay_survives_process_restart",
         "test_checkpoint_requires_output_commit_acknowledgement",
-        "test_committed_connector_artifacts_are_discovered_with_digest_validation"
+        "test_committed_connector_artifacts_are_discovered_with_digest_validation",
+        "test_sqlite_discovery_cursor_signing_key_is_persistent_and_shared"
       ],
       "imports": [
         "__future__",
@@ -18053,14 +18986,15 @@
         "pytest",
         "studio_connectors",
         "studio_core",
+        "studio_orchestrator",
         "studio_storage"
       ],
       "markers": {
         "events": 0,
         "jobs": 0,
-        "migrations": 0,
+        "migrations": 4,
         "permissions": 0,
-        "stores": 65
+        "stores": 97
       },
       "package": null,
       "path": "tests/test_connector_checkpoint.py",
@@ -18298,6 +19232,93 @@
     {
       "classes": [],
       "functions": [
+        "_application_sbom",
+        "_bound_sboms",
+        "_candidate",
+        "_provenance",
+        "_refresh_identity_digest",
+        "_tar_member",
+        "_write_image_archive",
+        "_write_trivy_sbom",
+        "test_binder_cli_reports_invalid_input_without_traceback",
+        "test_binder_cli_writes_candidate_bound_cyclonedx",
+        "test_binder_module_entrypoint_shows_help",
+        "test_binder_records_exact_archive_identity_and_verifies_unchanged_inventory",
+        "test_binder_rejects_archives_or_scan_sboms_changed_after_identity",
+        "test_binder_rejects_bad_identity_expected_commit_and_unbound_scan",
+        "test_binder_rejects_incomplete_candidate_sbom",
+        "test_binder_rejects_inconsistent_or_incomplete_trivy_inventory",
+        "test_bound_sbom_verifier_rejects_invalid_root_unsafe_name_and_missing_subject",
+        "test_supply_chain_cli_requires_and_writes_two_container_inventories",
+        "test_supply_chain_rejects_container_bom_without_artifact_directory",
+        "test_supply_chain_rejects_tampered_bound_sbom_and_missing_second_image",
+        "test_supply_chain_requires_and_reports_two_reverified_container_inventories"
+      ],
+      "imports": [
+        "__future__",
+        "hashlib",
+        "io",
+        "json",
+        "pathlib",
+        "pytest",
+        "runpy",
+        "tarfile",
+        "tools"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_container_sbom.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "_write_tar",
+        "test_archive_identity_rejects_bad_config_paths_and_tags",
+        "test_archive_identity_rejects_config_digest_mismatch_and_unreadable_member",
+        "test_archive_identity_rejects_invalid_manifest_inputs",
+        "test_archive_identity_rejects_missing_duplicate_large_and_non_file_config_blobs",
+        "test_archive_identity_rejects_unreadable_manifest_stream",
+        "test_archive_identity_wraps_non_tar_input",
+        "test_load_json_rejects_missing_malformed_and_non_object_documents",
+        "test_one_property_requires_one_nonempty_value",
+        "test_os_package_inventory_ignores_non_os_records_and_rejects_duplicate_refs",
+        "test_os_package_inventory_rejects_missing_component_identity",
+        "test_properties_reject_invalid_shapes",
+        "unreadable_config"
+      ],
+      "imports": [
+        "__future__",
+        "hashlib",
+        "io",
+        "json",
+        "pathlib",
+        "pytest",
+        "tarfile",
+        "tools"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_container_sbom_boundaries.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
         "test_bundle_inventory_safe_path_accepts_only_relative_forward_slash_paths",
         "test_bundle_inventory_safe_path_rejects_all_unsafe_forms",
         "test_canonical_json_accepts_supported_values",
@@ -18356,6 +19377,38 @@
     },
     {
       "classes": [
+        "_State"
+      ],
+      "functions": [
+        "test_control_plane_cursor_rejects_malformed_values",
+        "test_control_plane_finops_payload_preserves_and_normalizes_values",
+        "test_control_plane_list_query_decodes_page_parameters",
+        "test_control_plane_list_query_rejects_invalid_parameters",
+        "test_control_plane_page_and_cursor_round_trip",
+        "test_control_plane_path_rejects_empty_internal_segments"
+      ],
+      "imports": [
+        "__future__",
+        "datetime",
+        "enum",
+        "pytest",
+        "studio_server",
+        "types"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_control_plane_pagination.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [
         "Plugin",
         "Plugin"
       ],
@@ -18383,7 +19436,7 @@
         "studio_core"
       ],
       "markers": {
-        "events": 39,
+        "events": 41,
         "jobs": 22,
         "migrations": 3,
         "permissions": 10,
@@ -18391,6 +19444,29 @@
       },
       "package": null,
       "path": "tests/test_core_contract_boundaries.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "test_numeric_domain_fields_reject_booleans_as_integers",
+        "test_worker_limits_reject_boolean_integer_fields"
+      ],
+      "imports": [
+        "__future__",
+        "pytest",
+        "studio_core"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 19,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_core_integer_invariants.py",
       "routes": [],
       "test": true
     },
@@ -18547,21 +19623,25 @@
         "publish",
         "test_compilation_report_survives_reopen",
         "test_latest_report_query_returns_ir_digest",
+        "test_outbox_filters_multiple_event_types_with_a_shared_limit",
         "test_outbox_is_idempotent_and_publishable",
+        "test_outbox_pending_queries_use_bounded_lookup_indexes",
         "test_outbox_publisher_acknowledges_only_after_transport_success",
-        "test_outbox_publisher_leaves_event_pending_on_failure"
+        "test_outbox_publisher_leaves_event_pending_on_failure",
+        "test_outbox_rejects_invalid_event_type_filters"
       ],
       "imports": [
         "pathlib",
         "pytest",
-        "studio_data_engineering"
+        "studio_data_engineering",
+        "typing"
       ],
       "markers": {
-        "events": 35,
+        "events": 84,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 34
+        "stores": 48
       },
       "package": null,
       "path": "tests/test_data_engineering_compilations.py",
@@ -18698,8 +19778,12 @@
       ],
       "functions": [
         "__init__",
+        "fail",
+        "publish",
         "publish",
         "put_lineage",
+        "test_failed_lineage_delivery_keeps_event_pending",
+        "test_lineage_outbox_is_durable_idempotent_and_acknowledged_after_delivery",
         "test_publish_lineage_event_emits_openlineage_payload",
         "test_record_pipeline_lineage_uses_governed_catalog_contract"
       ],
@@ -18710,11 +19794,11 @@
         "studio_orchestrator"
       ],
       "markers": {
-        "events": 8,
-        "jobs": 2,
+        "events": 42,
+        "jobs": 4,
         "migrations": 0,
         "permissions": 0,
-        "stores": 0
+        "stores": 10
       },
       "package": null,
       "path": "tests/test_data_engineering_lineage.py",
@@ -18726,6 +19810,7 @@
         "_QueryFluxTransport"
       ],
       "functions": [
+        "__init__",
         "cancel",
         "poll",
         "submit",
@@ -18756,7 +19841,7 @@
         "events": 2,
         "jobs": 12,
         "migrations": 0,
-        "permissions": 24,
+        "permissions": 25,
         "stores": 27
       },
       "package": null,
@@ -18808,7 +19893,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 2,
-        "stores": 18
+        "stores": 20
       },
       "package": null,
       "path": "tests/test_data_engineering_query_engine_evidence.py",
@@ -18843,25 +19928,40 @@
     {
       "classes": [
         "Barrier",
+        "_FailedAfterRowsTransport",
         "_MismatchedTransport",
+        "_OversizedRunningTransport",
         "_PagedTransport",
+        "_ThreeRowTransport",
         "_Transport"
       ],
       "functions": [
         "__init__",
         "__init__",
+        "__init__",
+        "__init__",
+        "__init__",
         "_provider",
         "cancel",
+        "cancel",
+        "poll",
+        "poll",
+        "poll",
         "poll",
         "poll",
         "put_bytes",
         "record",
         "submit",
         "submit",
+        "test_execute_query_accepts_result_at_exact_serialized_byte_budget",
         "test_execute_query_accumulates_bounded_pages",
         "test_execute_query_cancels_when_poll_budget_is_exhausted",
+        "test_execute_query_cancels_when_result_byte_budget_is_exceeded",
+        "test_execute_query_does_not_return_or_persist_partial_rows_on_failure",
+        "test_execute_query_fails_instead_of_silently_truncating_rows",
         "test_execute_query_holds_writer_lease_through_durable_reference_commit",
         "test_execute_query_persists_final_attempt_evidence",
+        "test_execute_query_persists_full_result_and_returns_a_durable_page_cursor",
         "test_execute_query_persists_monotonic_lifecycle_timings",
         "test_execute_query_rejects_transport_provider_mismatch",
         "writer"
@@ -18869,6 +19969,7 @@
       "imports": [
         "__future__",
         "contextlib",
+        "hashlib",
         "json",
         "pathlib",
         "pytest",
@@ -18881,7 +19982,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 1,
-        "stores": 24
+        "stores": 41
       },
       "package": null,
       "path": "tests/test_data_engineering_query_execution.py",
@@ -19199,6 +20300,8 @@
         "scanner",
         "slice",
         "test_delta_delete_removes_only_a_table_inside_the_warehouse",
+        "test_delta_inspect_fails_closed_without_metadata_schema",
+        "test_delta_inspect_reads_schema_from_log_without_materializing_rows",
         "test_delta_profile_declares_supported_boundary",
         "test_delta_read_applies_row_limit_during_streaming_scan",
         "test_delta_read_enforces_byte_budget_before_row_conversion",
@@ -19217,11 +20320,11 @@
         "types"
       ],
       "markers": {
-        "events": 7,
+        "events": 11,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 22
+        "stores": 24
       },
       "package": null,
       "path": "tests/test_delta_profile.py",
@@ -19338,23 +20441,37 @@
     {
       "classes": [],
       "functions": [
-        "test_ci_docker_qualification_declares_postgres_and_real_worker_gate",
-        "test_ci_docker_qualification_fans_out_and_aggregates_every_lane",
+        "test_browser_test_targets_validate_locked_dependencies_without_clean_reinstall",
+        "test_ci_docker_qualification_workflow_is_removed",
+        "test_docker_and_postgres_qualifications_share_the_hash_locked_test_environment",
         "test_docker_image_normalizes_windows_line_endings_for_linux_entrypoint",
+        "test_docker_vex_scan_is_digest_bound_and_uses_an_explicit_author",
         "test_dockerhub_publisher_restricts_mutable_aliases",
+        "test_live_browser_suite_requires_real_services_and_emits_api_evidence",
+        "test_live_postgres_seed_is_repeatable_and_keeps_existing_database_data",
+        "test_live_product_runner_isolated_and_reports_all_active_routes",
+        "test_live_runner_reuses_only_locked_dependencies_and_keeps_services_per_run",
+        "test_local_docker_qualification_runs_real_azure_blob_profile_with_azurite",
+        "test_local_docker_qualification_runs_real_s3_profiles_with_isolated_cleanup",
         "test_local_docker_qualification_script_uses_immutable_image_and_real_suites",
-        "test_release_acceptance_runs_on_tag_commit_without_cross_workflow_artifact_assumptions"
+        "test_playwright_outputs_are_candidate_scoped_and_ci_is_not_required",
+        "test_postgres_runner_isolates_container_and_externalizes_evidence",
+        "test_release_artifact_targets_accept_external_evidence_paths",
+        "test_release_runners_distinguish_dirty_diagnostics_from_candidate_evidence",
+        "test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies"
       ],
       "imports": [
         "__future__",
-        "pathlib"
+        "json",
+        "pathlib",
+        "re"
       ],
       "markers": {
-        "events": 0,
-        "jobs": 5,
-        "migrations": 0,
-        "permissions": 0,
-        "stores": 6
+        "events": 1,
+        "jobs": 6,
+        "migrations": 1,
+        "permissions": 3,
+        "stores": 33
       },
       "package": null,
       "path": "tests/test_docker_qualification_contract.py",
@@ -19601,21 +20718,27 @@
         "test_fenced_sqlite_rejects_cross_run_result_and_evidence",
         "test_fenced_sqlite_rejects_nonterminal_completion",
         "test_fenced_sqlite_terminal_completion_variants",
-        "test_request_cancel_still_delegates_atomically"
+        "test_request_cancel_still_delegates_atomically",
+        "test_store_close_releases_connections_created_by_worker_threads",
+        "test_store_close_releases_current_thread_connection_and_prevents_reuse",
+        "test_store_destruction_closes_its_thread_local_connection"
       ],
       "imports": [
         "__future__",
+        "concurrent",
+        "gc",
         "pathlib",
         "pytest",
+        "sqlite3",
         "studio_orchestrator",
         "studio_storage"
       ],
       "markers": {
-        "events": 0,
-        "jobs": 112,
+        "events": 1,
+        "jobs": 132,
         "migrations": 1,
         "permissions": 0,
-        "stores": 55
+        "stores": 81
       },
       "package": null,
       "path": "tests/test_fenced_sqlite_job_store.py",
@@ -19782,7 +20905,9 @@
       "functions": [
         "_plan",
         "create",
+        "create",
         "export",
+        "sqlite_service_factory",
         "test_generation_invokes_publication_hook_before_commit",
         "test_idempotency_key_cannot_be_reused_for_another_plan",
         "test_plan_fingerprint_includes_schema_and_relationships",
@@ -19807,7 +20932,7 @@
         "jobs": 2,
         "migrations": 0,
         "permissions": 0,
-        "stores": 34
+        "stores": 33
       },
       "package": null,
       "path": "tests/test_govern_studio_application.py",
@@ -20037,6 +21162,7 @@
         "test_native_provider_batches_neighbors_and_applies_result_limit",
         "test_native_provider_counts_edges_even_when_result_limit_is_one",
         "test_native_provider_enforces_node_budget_during_traversal",
+        "test_native_provider_equality_filters_preserve_scalar_types",
         "test_native_provider_executes_filters_and_bounded_traversal",
         "test_native_provider_hard_stops_when_node_scan_exceeds_budget",
         "test_native_provider_interrupts_sqlite_work_at_query_deadline",
@@ -20059,7 +21185,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 99
+        "stores": 105
       },
       "package": null,
       "path": "tests/test_graph_runtime.py",
@@ -20069,6 +21195,7 @@
     {
       "classes": [],
       "functions": [
+        "test_helm_qualification_runner_isolated_and_checks_restart_persistence",
         "test_reference_helm_chart_has_safe_single_replica_baseline"
       ],
       "imports": [
@@ -20077,7 +21204,7 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 0,
+        "jobs": 2,
         "migrations": 0,
         "permissions": 1,
         "stores": 1
@@ -20093,6 +21220,7 @@
         "_request",
         "test_http_access_logs_are_structured_redacted_and_correlated",
         "test_http_server_failures_are_logged_as_errors",
+        "test_http_servers_suppress_expected_client_disconnect_traces",
         "test_scoped_runs_authenticate_before_requiring_a_project_filter"
       ],
       "imports": [
@@ -20235,11 +21363,19 @@
     },
     {
       "classes": [
+        "Checkpoints",
+        "Destination",
+        "Destination",
+        "Evidence",
+        "Registry",
+        "Registry",
         "_Barrier",
         "_Checkpoints",
         "_Checkpoints",
         "_Checkpoints",
+        "_Checkpoints",
         "_Connector",
+        "_Destination",
         "_Destination",
         "_DiscoveringConnector",
         "_Evidence",
@@ -20251,6 +21387,7 @@
         "_Plan",
         "_Registry",
         "_Registry",
+        "_Registry",
         "_RepeatingConnector",
         "_Service"
       ],
@@ -20259,23 +21396,39 @@
         "__init__",
         "__init__",
         "acquire",
+        "acquire",
+        "acquire",
         "collector",
+        "commit_output_then_checkpoint",
+        "commit_output_then_checkpoint",
         "commit_output_then_checkpoint",
         "discover",
         "discover_page",
         "discover_page",
         "discover_page",
         "get",
+        "get",
         "health",
         "health",
         "health",
+        "health",
+        "plan_sync",
+        "plan_sync",
+        "plan_sync",
         "plan_sync",
         "plan_sync",
         "preview",
         "preview",
         "read",
+        "read",
+        "read",
+        "read",
         "test_checkpoint_scope_encoding_cannot_alias_slash_delimited_pairs",
+        "test_checkpoint_scope_encoding_rejects_untrimmed_components",
+        "test_connector_json_projection_preserves_database_scalar_precision",
         "test_discovery_page_requires_cursor_when_truncated",
+        "test_discovery_rejects_foreign_cursor_before_secret_resolution_or_provider_io",
+        "test_governed_sync_commits_destination_revision_lineage_and_checkpoint",
         "test_incremental_plan_rejects_checkpoint_fence_without_durable_output",
         "test_incremental_sync_plan_requires_capability_and_checkpoint",
         "test_ingestion_http_adapter_discovers_bounded_assets",
@@ -20284,65 +21437,49 @@
         "test_ingestion_http_adapter_scopes_checkpoint_health_by_workspace",
         "test_ingestion_http_adapter_validates_and_delegates_preview",
         "test_ingestion_preview_scopes_checkpoint_read_and_hides_internal_identity",
+        "test_ingestion_sync_commits_bounded_batches_and_resumes_after_page_budget",
         "test_ingestion_sync_rejects_invalid_mode",
+        "test_ingestion_sync_rejects_unbounded_or_invalid_batch_configuration",
         "test_ingestion_sync_round_trips_canonically",
         "test_registry_derives_incremental_capability_from_descriptor",
+        "test_sync_cancellation_does_not_advance_checkpoint",
         "test_sync_holds_reference_barrier_through_artifact_and_checkpoint_commit",
         "to_payload",
         "to_payload",
         "to_payload",
         "to_payload",
         "to_payload",
+        "to_payload",
+        "write",
+        "write",
+        "write",
         "write",
         "writer"
       ],
       "imports": [
+        "base64",
         "contextlib",
+        "datetime",
+        "decimal",
+        "hashlib",
         "pytest",
         "studio_connectors",
-        "studio_core"
+        "studio_core",
+        "studio_orchestrator",
+        "studio_storage",
+        "threading",
+        "types",
+        "uuid"
       ],
       "markers": {
-        "events": 6,
+        "events": 8,
         "jobs": 0,
-        "migrations": 0,
-        "permissions": 6,
-        "stores": 22
+        "migrations": 2,
+        "permissions": 8,
+        "stores": 37
       },
       "package": null,
       "path": "tests/test_ingestion_sync.py",
-      "routes": [],
-      "test": true
-    },
-    {
-      "classes": [],
-      "functions": [
-        "test_artifact_identity_binds_names_to_existing_content",
-        "test_artifact_identity_rejects_duplicate_or_non_hex_entries",
-        "test_artifact_identity_rejects_malformed_manifests",
-        "test_artifact_identity_rejects_path_traversal_names",
-        "test_installed_artifact_bundle_contains_only_executed_job_gates",
-        "test_installed_artifact_bundle_rejects_untyped_sbom",
-        "test_installed_artifact_evidence_cli_writes_bundle_and_verdict",
-        "test_installed_artifact_evidence_validates_sbom_inputs_and_optional_path"
-      ],
-      "imports": [
-        "__future__",
-        "json",
-        "pathlib",
-        "pytest",
-        "sys",
-        "tools"
-      ],
-      "markers": {
-        "events": 0,
-        "jobs": 2,
-        "migrations": 0,
-        "permissions": 0,
-        "stores": 0
-      },
-      "package": null,
-      "path": "tests/test_installed_artifact_evidence.py",
       "routes": [],
       "test": true
     },
@@ -20418,7 +21555,7 @@
         "test_openlineage_transport_does_not_mark_failed_events_and_preserves_cause",
         "test_openlineage_transport_retries_exactly_and_deduplicates_only_after_success",
         "test_openlineage_validator_requires_each_top_level_field",
-        "test_openlineage_validator_requires_utc_string_ending_in_z",
+        "test_openlineage_validator_requires_timezone_aware_timestamp",
         "test_rql_ast_requires_object_payload",
         "test_rql_ast_round_trip_preserves_null_optional_clauses_and_rejects_type_errors",
         "test_rql_execution_applies_limit_after_traversal_and_join",
@@ -20431,7 +21568,7 @@
         "studio_core"
       ],
       "markers": {
-        "events": 34,
+        "events": 35,
         "jobs": 6,
         "migrations": 0,
         "permissions": 0,
@@ -20475,20 +21612,34 @@
     },
     {
       "classes": [
+        "ChangedCursor",
+        "ChangedDatabase",
         "Cursor",
+        "Cursor",
+        "Database",
         "Database",
         "EmptyCursor",
         "EmptyDatabase",
+        "NullableCursor",
+        "NullableDatabase",
         "_Cursor",
         "_Db"
       ],
       "functions": [
         "_connection",
         "close",
+        "close",
+        "cursor",
+        "cursor",
+        "cursor",
         "cursor",
         "cursor",
         "cursor",
         "execute",
+        "execute",
+        "fetchall",
+        "fetchall",
+        "fetchall",
         "fetchall",
         "fetchall",
         "fetchall",
@@ -20496,25 +21647,35 @@
         "test_jdbc_bridge_supports_discovery_and_snapshot_read",
         "test_jdbc_discovery_page_is_bounded_and_returns_opaque_cursor",
         "test_jdbc_discovery_validates_and_applies_row_limit",
+        "test_jdbc_empty_v2_checkpoint_reads_rows_added_after_empty_snapshot",
         "test_jdbc_incremental_watermark_is_ordered_and_advanced",
+        "test_jdbc_rejects_urls_with_embedded_credentials_or_non_jdbc_scheme",
+        "test_jdbc_v2_checkpoint_decodes_legacy_untyped_payload",
+        "test_jdbc_v2_checkpoint_rejects_inconsistent_null_cursor",
+        "test_jdbc_v2_checkpoint_rejects_schema_change",
+        "test_jdbc_v2_checkpoint_round_trip_preserves_database_scalar_types",
         "test_jdbc_v2_checkpoint_round_trip_preserves_typed_cursor",
         "test_jdbc_v2_empty_source_does_not_create_empty_string_cursor",
         "test_jdbc_v2_read_binds_lexicographic_cursor",
+        "test_jdbc_watermark_rejects_null_cursor_values_in_any_returned_row",
         "test_jdbc_without_bridge_fails_closed"
       ],
       "imports": [
         "__future__",
+        "datetime",
+        "decimal",
+        "hashlib",
         "pytest",
         "studio_connectors",
         "studio_core",
         "studio_storage"
       ],
       "markers": {
-        "events": 5,
+        "events": 11,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 2
+        "stores": 4
       },
       "package": null,
       "path": "tests/test_jdbc_connector.py",
@@ -20932,10 +22093,40 @@
     {
       "classes": [],
       "functions": [
+        "_inventory",
+        "_policy",
+        "test_profile_can_explicitly_omit_stale_reviews",
+        "test_profile_does_not_create_a_review_for_unreviewed_package",
+        "test_profile_keeps_only_matching_existing_reviews",
+        "test_profile_refuses_stale_evidence_in_matching_package",
+        "test_profile_rejects_duplicate_inventory_identity",
+        "test_profile_requires_project_notice_rationale"
+      ],
+      "imports": [
+        "__future__",
+        "pytest",
+        "tools"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 2,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_license_policy_profile.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
         "_entry",
         "_inventory",
         "_policy",
         "_qualify",
+        "test_direct_requirements_covers_multiple_optional_extras",
         "test_direct_requirements_excludes_build_backend_not_present_in_resolved_lock",
         "test_locked_graph_accepts_pep508_environment_markers",
         "test_locked_graph_fails_closed_on_conflicting_versions",
@@ -20945,9 +22136,12 @@
         "test_locked_graph_rejects_requirement_without_hash",
         "test_locked_graph_rejects_unsupported_active_dependency_syntax",
         "test_locked_graph_rejects_unterminated_hash_continuation",
+        "test_locked_graph_selects_only_the_active_marker_variant",
         "test_policy_and_inventory_are_machine_readable_json_fixtures",
         "test_qualify_accepts_exact_reviewed_locked_graph",
+        "test_qualify_accepts_non_default_lock_file_identity",
         "test_qualify_fails_closed_on_incomplete_or_ambiguous_inventory",
+        "test_qualify_lists_missing_and_stale_policy_keys",
         "test_qualify_rejects_denied_dependency",
         "test_qualify_rejects_direct_dependency_missing_from_lock",
         "test_qualify_rejects_invalid_declared_license_file_path",
@@ -20955,6 +22149,7 @@
         "test_qualify_rejects_stale_review_when_installed_evidence_changes",
         "test_qualify_rejects_tampered_license_file_digest",
         "test_qualify_rejects_wrong_direct_classification",
+        "test_qualify_reports_missing_decisions_and_stale_evidence_together",
         "test_qualify_requires_attribution_decision",
         "test_qualify_requires_boolean_direct_classification",
         "test_qualify_requires_exact_lock_file_identity",
@@ -20966,6 +22161,7 @@
       "imports": [
         "__future__",
         "json",
+        "packaging",
         "pathlib",
         "pytest",
         "tools"
@@ -20999,6 +22195,7 @@
         "test_inventory_rejects_invalid_declared_file_lists",
         "test_inventory_rejects_invalid_installed_file_evidence",
         "test_json_loader_and_cli_report_errors_and_success",
+        "test_license_cli_reports_policy_mismatch_without_traceback",
         "test_license_file_discovery_fails_for_missing_declared_or_unreadable_files",
         "test_license_file_discovery_matches_pep639_legacy_and_declared_paths",
         "test_locked_distributions_filters_missing_names_and_rejects_duplicates",
@@ -21052,10 +22249,22 @@
     },
     {
       "classes": [
-        "CapturingRunner"
+        "CapturingRunner",
+        "TimedOutSqlReader",
+        "UnsupportedSqlReader"
       ],
       "functions": [
         "_environment",
+        "_sql_explain_request",
+        "_sql_request",
+        "_unused_port",
+        "close",
+        "close",
+        "explain",
+        "explain",
+        "query",
+        "query",
+        "request",
         "run",
         "test_build_local_composed_accepts_explicit_legacy_plugin_rollout",
         "test_build_local_composed_accepts_workspace_write_permission",
@@ -21065,36 +22274,46 @@
         "test_build_local_composed_rejects_unknown_permission",
         "test_build_local_composed_rejects_unknown_plugin_rollout",
         "test_build_local_composed_validates_configured_plugin_lock",
+        "test_catalog_routes_require_the_complete_store_contract",
+        "test_local_composed_data_engineering_health_and_debugger_routes_are_live",
+        "test_local_composed_migration_route_is_authenticated_and_persists_sessions",
+        "test_local_composed_sql_route_executes_scoped_queries_and_closes_engine",
         "test_local_composition_injects_the_shared_durable_job_service",
         "test_local_composition_persists_synthetic_export_references_across_restart",
         "test_local_composition_queues_large_assetref_input_as_verified_artifact",
         "test_workflow_routes_are_not_mounted_for_incomplete_postgres_scheduler_store",
+        "test_workflow_routes_are_not_mounted_for_incomplete_sqlite_scheduler_store",
         "test_workflow_routes_mount_for_complete_postgres_scheduler_store",
-        "test_workflow_routes_use_the_complete_sqlite_scheduler_contract"
+        "test_workflow_routes_mount_for_complete_sqlite_scheduler_contract"
       ],
       "imports": [
         "__future__",
         "asyncio",
         "csv",
+        "http",
+        "json",
         "pytest",
+        "socket",
         "studio_cli",
         "studio_core",
         "studio_execution",
+        "studio_lakehouse",
         "studio_ml",
         "studio_orchestrator",
         "studio_runtime",
         "studio_server",
+        "studio_sql",
         "studio_storage",
         "studio_synthetic_data",
         "time",
         "types"
       ],
       "markers": {
-        "events": 1,
-        "jobs": 30,
-        "migrations": 1,
-        "permissions": 7,
-        "stores": 63
+        "events": 5,
+        "jobs": 48,
+        "migrations": 5,
+        "permissions": 9,
+        "stores": 87
       },
       "package": null,
       "path": "tests/test_local_composed.py",
@@ -21360,6 +22579,7 @@
         "test_storage_registry_has_a_valid_public_order"
       ],
       "imports": [
+        "contextlib",
         "pytest",
         "sqlite3",
         "studio_storage"
@@ -21384,6 +22604,7 @@
       ],
       "imports": [
         "__future__",
+        "contextlib",
         "pytest",
         "sqlite3",
         "studio_storage"
@@ -22268,10 +23489,10 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 23,
+        "jobs": 25,
         "migrations": 13,
         "permissions": 0,
-        "stores": 163
+        "stores": 167
       },
       "package": null,
       "path": "tests/test_ml_foundation.py",
@@ -22339,11 +23560,28 @@
       "test": true
     },
     {
-      "classes": [],
+      "classes": [
+        "Opener",
+        "Opener",
+        "Response",
+        "Response"
+      ],
       "functions": [
-        "test_http_transport_rejects_unsafe_base_urls"
+        "__enter__",
+        "__enter__",
+        "__exit__",
+        "__exit__",
+        "open",
+        "open",
+        "read",
+        "read",
+        "test_http_transport_caps_io_timeout_at_the_controller_deadline",
+        "test_http_transport_rejects_invalid_controller_deadlines",
+        "test_http_transport_rejects_unsafe_base_urls",
+        "test_remote_controller_deadline_reaches_the_http_transport"
       ],
       "imports": [
+        "json",
         "pytest",
         "studio_ml"
       ],
@@ -22362,10 +23600,13 @@
     {
       "classes": [],
       "functions": [
+        "missing_prediction",
         "test_json_remote_backend_maps_provider_neutral_lifecycle",
+        "test_remote_prediction_requires_exactly_one_result_per_input_row",
         "transport"
       ],
       "imports": [
+        "pytest",
         "studio_ml"
       ],
       "markers": {
@@ -22686,6 +23927,7 @@
         "asyncio",
         "dataclasses",
         "json",
+        "logging",
         "pytest",
         "studio_core",
         "studio_execution",
@@ -22697,8 +23939,8 @@
         "types"
       ],
       "markers": {
-        "events": 3,
-        "jobs": 24,
+        "events": 14,
+        "jobs": 26,
         "migrations": 1,
         "permissions": 1,
         "stores": 52
@@ -22850,7 +24092,9 @@
     {
       "classes": [],
       "functions": [
-        "test_remote_training_contract_validates_limits_and_identity"
+        "test_remote_training_contract_validates_limits_and_identity",
+        "test_succeeded_remote_result_accepts_full_lowercase_sha256",
+        "test_succeeded_remote_result_requires_full_lowercase_sha256"
       ],
       "imports": [
         "pytest",
@@ -22877,10 +24121,13 @@
         "poll",
         "predict",
         "submit",
+        "test_remote_controller_passes_the_remaining_deadline_to_each_attempt",
+        "test_remote_controller_rejects_a_result_returned_after_its_deadline",
         "test_remote_controller_retries_only_transient_submit_failures"
       ],
       "imports": [
         "dataclasses",
+        "pytest",
         "studio_ml"
       ],
       "markers": {
@@ -23028,6 +24275,7 @@
         "test_classification_split_rejects_insufficient_test_rows",
         "test_classification_training_and_prediction",
         "test_combined_preprocessing_fits_numeric_medians_and_categories_on_training_rows",
+        "test_logistic_runtime_does_not_import_unused_ensemble_estimators",
         "test_median_imputation_artifact_rejects_invalid_medians",
         "test_median_imputation_is_fit_on_training_rows_and_reused_for_inference",
         "test_median_imputation_rejects_all_missing_training_feature",
@@ -23051,7 +24299,9 @@
         "statistics",
         "studio_core",
         "studio_ml",
-        "studio_storage"
+        "studio_storage",
+        "subprocess",
+        "sys"
       ],
       "markers": {
         "events": 0,
@@ -23198,6 +24448,42 @@
       },
       "package": null,
       "path": "tests/test_mutation_gate.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "_write_sdist",
+        "test_normalized_sdists_have_stable_bytes_and_metadata",
+        "test_normalizer_cli_normalizes_and_returns_usage_error",
+        "test_normalizer_refuses_symlink_and_non_regular_input",
+        "test_normalizer_rejects_dot_member_and_non_file_members",
+        "test_normalizer_rejects_duplicate_member_paths",
+        "test_normalizer_rejects_gzip_epochs_outside_uint32",
+        "test_normalizer_rejects_non_tar_gz",
+        "test_normalizer_rejects_unsafe_member_paths",
+        "test_normalizer_reports_unreadable_member_without_replacing_source",
+        "test_normalizer_wraps_invalid_archive_and_cleans_temporary_file"
+      ],
+      "imports": [
+        "__future__",
+        "gzip",
+        "io",
+        "pathlib",
+        "pytest",
+        "tarfile",
+        "tools"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_normalize_release_sdist.py",
       "routes": [],
       "test": true
     },
@@ -23356,6 +24642,7 @@
         "test_alert_cooldown_rejects_clock_rollback",
         "test_alert_cooldown_suppresses_reopen_until_window_expires",
         "test_alert_http_adapter_acknowledges_active_instance",
+        "test_alert_http_adapter_keeps_workspace_state_separate",
         "test_alert_http_adapter_lists_and_evaluates_rules",
         "test_alert_instances_are_listed_with_a_bound",
         "test_alert_opens_and_resolves_from_latest_metric",
@@ -23382,7 +24669,7 @@
         "jobs": 15,
         "migrations": 0,
         "permissions": 0,
-        "stores": 103
+        "stores": 118
       },
       "package": null,
       "path": "tests/test_observability_finops.py",
@@ -23598,20 +24885,57 @@
       "test": true
     },
     {
-      "classes": [],
+      "classes": [
+        "Connection",
+        "Connection",
+        "Connection",
+        "Cursor",
+        "Cursor",
+        "Cursor",
+        "RecordingEngine"
+      ],
       "functions": [
+        "__init__",
+        "close",
+        "close",
+        "close",
+        "close",
+        "execute",
+        "execute",
+        "execute",
+        "fetchall",
+        "fetchall",
+        "fetchall",
+        "fetchmany",
+        "fetchone",
+        "fetchone",
+        "interrupt",
+        "interrupt",
+        "test_duckdb_accepts_normalized_sql_scalar_bindings",
+        "test_duckdb_engine_interrupts_a_query_at_its_execution_deadline",
+        "test_duckdb_engine_interrupts_explain_at_its_execution_deadline",
+        "test_duckdb_engine_stops_fetching_when_serialized_result_exceeds_budget",
+        "test_duckdb_explain_rejects_boolean_budgets",
         "test_duckdb_reference_engine_queries_registered_parquet",
         "test_governed_parquet_write_commits_content_addressed_catalog_revision",
         "test_parquet_reads_enforce_bounds_and_projection_shape",
         "test_parquet_round_trip_and_content_metadata",
         "test_parquet_round_trip_preserves_temporal_decimal_nested_and_null_values",
         "test_parquet_write_atomically_replaces_existing_file",
+        "test_project_scoped_sql_engine_reuses_and_closes_each_connection",
         "test_project_scoped_sql_engines_isolate_relation_collisions",
+        "test_sql_engine_explain_rejects_unbounded_output",
+        "test_sql_engine_explain_returns_bounded_plan_rows",
+        "test_sql_explain_stops_fetching_when_serialized_plan_exceeds_budget",
+        "test_sql_explain_text_sanitizes_paths_urls_and_secret_assignments",
         "test_sql_reference_engine_bounds_materialized_results",
         "test_sql_reference_engine_bounds_query_text",
+        "test_sql_reference_engine_ignores_relation_keywords_in_literals_and_comments",
+        "test_sql_reference_engine_rejects_direct_and_nested_file_relations",
         "test_sql_reference_engine_rejects_mutating_or_multiple_statements"
       ],
       "imports": [
+        "concurrent",
         "datetime",
         "decimal",
         "pathlib",
@@ -23620,13 +24944,15 @@
         "studio_execution",
         "studio_lakehouse",
         "studio_sql",
-        "studio_storage"
+        "studio_storage",
+        "threading",
+        "types"
       ],
       "markers": {
-        "events": 17,
-        "jobs": 0,
+        "events": 31,
+        "jobs": 1,
         "migrations": 3,
-        "permissions": 3,
+        "permissions": 5,
         "stores": 10
       },
       "package": null,
@@ -23658,10 +24984,13 @@
     {
       "classes": [],
       "functions": [
+        "test_catalog_lineage_openapi_documents_direction_and_fail_closed_limit",
+        "test_ml_evaluation_review_contract_exposes_promotion_gate_and_card_evidence",
         "test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape",
         "test_ml_lab_openapi_schema_matches_v1_contract",
         "test_openapi_snapshot_rejects_drift",
-        "test_public_openapi_snapshot_is_current"
+        "test_public_openapi_snapshot_is_current",
+        "test_queryflux_execution_route_and_result_budgets_are_documented"
       ],
       "imports": [
         "json",
@@ -23684,21 +25013,22 @@
     {
       "classes": [],
       "functions": [
-        "test_declared_edge_uses_other_event_and_digest_run_id",
+        "test_declared_edge_uses_dataset_event_and_lineage_facet",
+        "test_declared_lineage_uses_dataset_event_and_ignores_run_job_name",
         "test_lineage_event_defaults_job_to_operation_and_omits_empty_column_lineage",
         "test_lineage_event_is_standard_shaped_and_deterministic",
         "test_lineage_event_rejects_invalid_event_time",
         "test_lineage_event_rejects_invalid_namespace",
         "test_lineage_event_renders_all_column_mapping_fields",
-        "test_lineage_event_uses_digest_fallback_and_operation_for_blank_job_name"
+        "test_observed_lineage_rejects_untrimmed_or_controlled_job_name"
       ],
       "imports": [
         "pytest",
         "studio_core"
       ],
       "markers": {
-        "events": 50,
-        "jobs": 14,
+        "events": 62,
+        "jobs": 32,
         "migrations": 0,
         "permissions": 0,
         "stores": 0
@@ -23740,36 +25070,50 @@
       ],
       "functions": [
         "__init__",
+        "close",
         "failing_opener",
         "opener",
         "publish",
+        "test_dataset_lineage_facets_are_rejected_on_run_and_job_entities",
+        "test_http_sink_does_not_follow_redirects",
         "test_http_sink_posts_canonical_json_with_bounded_configuration",
+        "test_http_sink_rejects_ambiguous_or_credential_bearing_urls",
         "test_http_sink_rejects_insecure_remote_endpoint_and_sanitizes_failure",
+        "test_http_sink_rejects_invalid_timeout_bounds",
+        "test_openlineage_event_payload_has_a_hard_byte_limit",
+        "test_openlineage_facets_require_schema_and_producer_metadata",
         "test_openlineage_invalid_shape_messages_are_exact",
+        "test_openlineage_known_facet_names_require_their_schema_url",
         "test_openlineage_validation_messages_are_stable",
         "test_schema_validator_accepts_every_supported_event_type",
+        "test_schema_validator_accepts_iso8601_offsets_and_requires_valid_run_event_uri",
         "test_schema_validator_accepts_supported_explicit_version",
         "test_schema_validator_rejects_empty_required_values",
         "test_schema_validator_rejects_incompatible_events",
         "test_schema_validator_rejects_invalid_event_shapes",
+        "test_schema_validator_rejects_mixed_run_and_dataset_event_shapes",
+        "test_schema_validator_rejects_schema_urls_for_the_wrong_event_kind",
         "test_schema_validator_requires_every_top_level_contract_field",
         "test_transport_attempt_bounds_are_inclusive_and_message_is_stable",
         "test_transport_deduplicates_only_after_successful_publish",
+        "test_transport_deduplication_cache_is_bounded_and_evicts_oldest_entries",
         "test_transport_digest_is_canonical_and_invalid_events_are_not_published",
         "test_transport_fails_after_bounded_attempts",
         "test_transport_preserves_last_sink_error_as_cause",
         "test_transport_receipt_is_stable_and_digest_changes_with_event_content",
         "test_transport_rejects_invalid_attempt_bounds",
+        "test_transport_rejects_invalid_deduplication_cache_bounds",
         "test_transport_retries_and_deduplicates"
       ],
       "imports": [
         "pytest",
         "studio_core",
-        "studio_server"
+        "studio_server",
+        "urllib"
       ],
       "markers": {
-        "events": 135,
-        "jobs": 48,
+        "events": 201,
+        "jobs": 52,
         "migrations": 0,
         "permissions": 0,
         "stores": 0
@@ -24055,13 +25399,42 @@
     {
       "classes": [],
       "functions": [
+        "test_otlp_runner_is_digest_pinned_and_loopback_only",
+        "test_otlp_runner_requires_the_real_telemetry_acceptance_test",
+        "test_otlp_runner_retains_timing_and_cleanup_evidence"
+      ],
+      "imports": [
+        "__future__",
+        "pathlib"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_otlp_qualification_contract.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [
+        "_OzoneS3"
+      ],
+      "functions": [
+        "__init__",
+        "put_object",
         "test_ozone_profile_accepts_http_gateway_for_private_deployment",
+        "test_ozone_profile_inherits_fail_closed_at_least_once_sink_contract",
         "test_ozone_profile_requires_gateway_endpoint"
       ],
       "imports": [
         "pytest",
         "studio_connectors",
-        "studio_core"
+        "studio_core",
+        "studio_storage"
       ],
       "markers": {
         "events": 0,
@@ -24612,9 +25985,9 @@
         "studio_core"
       ],
       "markers": {
-        "events": 185,
+        "events": 189,
         "jobs": 0,
-        "migrations": 5,
+        "migrations": 7,
         "permissions": 0,
         "stores": 0
       },
@@ -24626,9 +25999,10 @@
     {
       "classes": [],
       "functions": [
+        "test_inventory_contains_repository_plugin_surfaces",
+        "test_inventory_does_not_assign_package_to_path_escaping_source_root",
         "test_inventory_extracts_routes_without_importing_application_modules",
-        "test_inventory_is_deterministic_and_contains_plugin_surfaces",
-        "test_inventory_json_is_serializable"
+        "test_inventory_generation_is_deterministic"
       ],
       "imports": [
         "__future__",
@@ -24641,7 +26015,7 @@
         "jobs": 0,
         "migrations": 1,
         "permissions": 0,
-        "stores": 0
+        "stores": 2
       },
       "package": null,
       "path": "tests/test_plugin_inventory.py",
@@ -24987,6 +26361,7 @@
         "CriticalPlugin",
         "EntryPoint",
         "EntryPoints",
+        "EnvironmentService",
         "FailingPlugin",
         "First",
         "FirstPlugin",
@@ -25005,7 +26380,11 @@
         "__init__",
         "__init__",
         "__init__",
+        "__init__",
         "__str__",
+        "create",
+        "disable",
+        "enable",
         "list",
         "load",
         "register",
@@ -25019,6 +26398,7 @@
         "register",
         "register",
         "register_without_permission",
+        "replace",
         "select",
         "shutdown",
         "shutdown",
@@ -25045,6 +26425,7 @@
         "test_critical_startup_failure_rolls_back_previous_plugins",
         "test_discovery_loads_entry_points_in_deterministic_order",
         "test_duplicate_routes_are_rejected",
+        "test_environment_plugin_mutations_pass_canonical_instants",
         "test_failed_composition_is_atomic_and_can_be_retried",
         "test_host_requirement_checks_all_comma_separated_bounds",
         "test_host_requirement_parser_rejects_malformed_host_versions",
@@ -25071,6 +26452,7 @@
         "__future__",
         "pytest",
         "studio_core",
+        "studio_orchestrator",
         "studio_plugin_workspaces",
         "studio_runtime"
       ],
@@ -25188,6 +26570,29 @@
       "test": true
     },
     {
+      "classes": [],
+      "functions": [
+        "test_posix_runner_is_digest_pinned_and_mounts_checkout_read_only",
+        "test_posix_runner_retains_junit_timing_git_version_and_cleanup_evidence",
+        "test_posix_runner_selects_the_complete_previously_skipped_platform_set"
+      ],
+      "imports": [
+        "__future__",
+        "pathlib"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 1,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_posix_qualification_contract.py",
+      "routes": [],
+      "test": true
+    },
+    {
       "classes": [
         "_Connection",
         "_Cursor"
@@ -25234,10 +26639,15 @@
       "functions": [
         "fake_run",
         "fake_run",
+        "fake_run",
+        "fake_run",
         "test_postgres_backup_writes_atomic_dump_and_checksum",
-        "test_postgres_restore_rejects_corrupt_dump_before_compose"
+        "test_postgres_restore_accepts_checksum_for_dump_name_with_spaces",
+        "test_postgres_restore_rejects_corrupt_dump_before_compose",
+        "test_postgres_restore_rejects_missing_dump_checksum_before_compose"
       ],
       "imports": [
+        "hashlib",
         "pytest",
         "tools"
       ],
@@ -25246,7 +26656,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 13
+        "stores": 25
       },
       "package": null,
       "path": "tests/test_postgres_backup.py",
@@ -25275,6 +26685,12 @@
     },
     {
       "classes": [
+        "Cursor",
+        "Database",
+        "NonUniqueCursor",
+        "NonUniqueDatabase",
+        "NullCursor",
+        "NullDatabase",
         "_Cursor",
         "_Database",
         "_PagedCursor",
@@ -25286,11 +26702,20 @@
       "functions": [
         "Identifier",
         "SQL",
+        "__add__",
         "__enter__",
         "__enter__",
         "__enter__",
         "__enter__",
         "__enter__",
+        "__enter__",
+        "__enter__",
+        "__enter__",
+        "__enter__",
+        "__exit__",
+        "__exit__",
+        "__exit__",
+        "__exit__",
         "__exit__",
         "__exit__",
         "__exit__",
@@ -25300,40 +26725,59 @@
         "__init__",
         "__init__",
         "__init__",
+        "__init__",
+        "__init__",
+        "__init__",
+        "__str__",
         "_connection",
         "close",
         "cursor",
         "cursor",
         "cursor",
+        "cursor",
+        "cursor",
+        "cursor",
         "execute",
         "execute",
         "execute",
+        "execute",
+        "execute",
+        "fetchall",
+        "fetchall",
+        "fetchall",
         "fetchall",
         "fetchall",
         "fetchone",
         "format",
+        "join",
         "test_postgres_descriptor_advertises_schema_discovery",
         "test_postgres_discovery_rejects_invalid_cursor",
+        "test_postgres_incremental_read_uses_bounded_composite_watermark",
         "test_postgres_metadata_readiness_is_fail_closed",
-        "test_postgres_rejects_non_snapshot_checkpoint",
+        "test_postgres_rejects_unsupported_checkpoint",
         "test_postgres_snapshot_checkpoint_suppresses_unchanged_rows",
         "test_postgres_table_discovery_uses_keyset_pages",
+        "test_postgres_watermark_checkpoint_round_trips_typed_values",
+        "test_postgres_watermark_rejects_invalid_columns_nulls_and_source_reuse",
         "unavailable"
       ],
       "imports": [
         "__future__",
+        "datetime",
+        "decimal",
         "pytest",
         "studio_connectors",
         "studio_core",
         "studio_storage",
-        "types"
+        "types",
+        "uuid"
       ],
       "markers": {
-        "events": 2,
+        "events": 11,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 28
+        "stores": 66
       },
       "package": null,
       "path": "tests/test_postgres_connector.py",
@@ -25636,7 +27080,7 @@
       "functions": [
         "_rows",
         "test_matrix_does_not_claim_release_qualification_while_ledger_is_incomplete",
-        "test_matrix_observed_candidate_matches_status_ledger",
+        "test_matrix_observed_source_baseline_matches_status_ledger",
         "test_public_matrix_covers_stable_family_ids_and_excludes_p9_from_release_scope"
       ],
       "imports": [
@@ -25701,19 +27145,24 @@
       "test": true
     },
     {
-      "classes": [],
+      "classes": [
+        "Result"
+      ],
       "functions": [
         "_status_tool",
+        "run",
         "test_public_v1_ledgers_share_observed_sha",
+        "test_pull_request_status_check_uses_base_sha_not_synthetic_merge_head",
         "test_status_check_is_fail_closed_for_divergence"
       ],
       "imports": [
         "__future__",
         "importlib",
+        "json",
         "pathlib"
       ],
       "markers": {
-        "events": 0,
+        "events": 6,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
@@ -25727,8 +27176,7 @@
     {
       "classes": [],
       "functions": [
-        "test_docker_hub_publisher_defends_mutable_alias_allowlist_at_runtime",
-        "test_prerelease_promotes_the_qualified_digest_without_rebuilding"
+        "test_docker_hub_publisher_defends_mutable_alias_allowlist_at_runtime"
       ],
       "imports": [
         "pathlib"
@@ -25749,27 +27197,93 @@
       "classes": [],
       "functions": [
         "_workflow",
-        "test_ci_mutation_job_is_permanently_disabled",
-        "test_ci_retains_changed_surface_manifest_for_review",
         "test_dockerhub_publisher_only_accepts_explicit_mutable_aliases",
         "test_duplicate_reservation_workflow_is_removed",
-        "test_name_reservation_requires_explicit_non_release_confirmation",
-        "test_prerelease_publishing_actions_are_immutable",
-        "test_release_evidence_does_not_require_historical_mutation_run",
-        "test_tag_publication_requires_exact_aggregate_release_verdict"
+        "test_validation_workflows_are_removed_from_the_repository"
       ],
       "imports": [
         "pathlib"
       ],
       "markers": {
-        "events": 1,
-        "jobs": 2,
+        "events": 0,
+        "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 0
+        "stores": 2
       },
       "package": null,
       "path": "tests/test_publication_workflows.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [
+        "Result"
+      ],
+      "functions": [
+        "_write_report",
+        "fake_run",
+        "test_load_tests_accepts_v4_collection_skip_reports",
+        "test_load_tests_rejects_duplicate_node_ids",
+        "test_load_tests_rejects_invalid_or_negative_duration",
+        "test_load_tests_rejects_non_finite_duration",
+        "test_load_tests_rejects_non_text_outcome",
+        "test_load_tests_rejects_unrepresentably_large_duration",
+        "test_main_refuses_to_run_service_backed_timings_without_family_runner",
+        "test_main_runs_exact_node_ids_as_individual_arguments",
+        "test_main_writes_slowest_exact_node_ids_in_stable_order"
+      ],
+      "imports": [
+        "__future__",
+        "json",
+        "math",
+        "pathlib",
+        "pytest",
+        "tools",
+        "typing"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 2
+      },
+      "package": null,
+      "path": "tests/test_pytest_slowest_selection.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "test_pytest_plugin_writes_scope_outcomes_and_skip_reasons",
+        "test_skip_reason_keeps_pytest_skip_explanation",
+        "test_skip_reason_reports_missing_reason_explicitly",
+        "test_skip_reason_uses_expected_failure_reason",
+        "test_test_summary_distinguishes_selected_outcomes_and_unexecuted_items"
+      ],
+      "imports": [
+        "__future__",
+        "json",
+        "os",
+        "pathlib",
+        "subprocess",
+        "sys",
+        "tools",
+        "types",
+        "typing",
+        "xml"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 1,
+        "stores": 4
+      },
+      "package": null,
+      "path": "tests/test_pytest_timing_report.py",
       "routes": [],
       "test": true
     },
@@ -25859,9 +27373,12 @@
         "put_contract",
         "record_run",
         "test_quality_contract_digest_is_canonical_and_http_pin_accepts_current_contract",
+        "test_quality_http_gate_fails_closed_for_unknown_and_incomplete_runs",
+        "test_quality_http_gate_uses_blocking_policy_not_overall_run_status",
         "test_quality_http_persists_contract",
         "test_quality_http_rejects_ambiguous_boolean_and_identifiers",
         "test_quality_http_rejects_contract_drift_before_recording_evidence",
+        "test_quality_http_rejects_over_budget_rows_before_recording",
         "test_quality_http_runs_and_lists_evidence"
       ],
       "imports": [
@@ -25874,7 +27391,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 27
+        "stores": 43
       },
       "package": null,
       "path": "tests/test_quality_http.py",
@@ -25891,10 +27408,13 @@
         "list_runs",
         "record_run",
         "test_quality_alert_adapter_returns_matching_transition_and_resolves",
+        "test_quality_metric_batches_are_idempotent_and_workspace_scoped",
         "test_quality_run_is_consumable_by_common_alert_engine"
       ],
       "imports": [
+        "dataclasses",
         "pathlib",
+        "pytest",
         "studio_core",
         "studio_observability",
         "studio_quality"
@@ -25903,8 +27423,8 @@
         "events": 0,
         "jobs": 0,
         "migrations": 0,
-        "permissions": 0,
-        "stores": 16
+        "permissions": 1,
+        "stores": 22
       },
       "package": null,
       "path": "tests/test_quality_observability.py",
@@ -25926,10 +27446,13 @@
         "test_freshness_uses_contract_default",
         "test_quality_contract_and_result_round_trip_preserves_sorted_pairs",
         "test_quality_contract_rejects_duplicate_or_invalid_sensitive_parameters",
+        "test_quality_evaluator_enforces_rule_and_row_byte_budgets",
+        "test_quality_gate_fails_closed_when_a_declared_rule_has_no_result",
         "test_quality_history_is_exposed_through_service_boundary",
         "test_quality_observed_values_reject_sensitive_keys_case_insensitively",
         "test_quality_pair_contract_sorts_and_preserves_distinct_keys",
         "test_quality_parameters_reject_each_credential_marker_case_insensitively",
+        "test_quality_state_uses_persisted_order_instead_of_sorting_run_ids",
         "test_quality_text_rejects_carriage_returns_and_nul_bytes",
         "test_range_rule_rejects_inverted_bounds_as_a_typed_error",
         "test_range_rule_rejects_non_finite_observed_values",
@@ -25938,16 +27461,18 @@
       ],
       "imports": [
         "datetime",
+        "os",
         "pytest",
         "studio_core",
-        "studio_quality"
+        "studio_quality",
+        "typing"
       ],
       "markers": {
         "events": 3,
-        "jobs": 0,
+        "jobs": 1,
         "migrations": 0,
         "permissions": 0,
-        "stores": 2
+        "stores": 4
       },
       "package": null,
       "path": "tests/test_quality_runtime.py",
@@ -25965,18 +27490,51 @@
       ],
       "imports": [
         "multiprocessing",
+        "os",
         "pytest",
         "studio_quality"
       ],
       "markers": {
         "events": 0,
-        "jobs": 1,
+        "jobs": 2,
         "migrations": 0,
         "permissions": 0,
         "stores": 0
       },
       "package": null,
       "path": "tests/test_quality_sandbox.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "_contract",
+        "_store",
+        "test_contract_batch_rolls_back_and_rejects_inactive_or_missing_scope",
+        "test_contracts_round_trip_update_and_list_in_stable_asset_order",
+        "test_quality_migration_is_idempotent_and_rejects_newer_schema",
+        "test_quality_runs_are_durable_idempotent_scoped_and_ordered",
+        "test_record_run_rejects_missing_revision_workspace_and_archived_workspace"
+      ],
+      "imports": [
+        "__future__",
+        "pathlib",
+        "pytest",
+        "studio_core",
+        "studio_orchestrator",
+        "studio_quality",
+        "studio_storage"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 16,
+        "permissions": 2,
+        "stores": 75
+      },
+      "package": null,
+      "path": "tests/test_quality_store.py",
       "routes": [],
       "test": true
     },
@@ -25995,6 +27553,9 @@
         "test_query_evidence_rejects_duplicate_routing_trace_keys",
         "test_query_evidence_rejects_duplicate_timings",
         "test_query_evidence_rejects_non_sha256_digests",
+        "test_query_request_canonicalizes_and_validates_scalar_parameters",
+        "test_query_request_rejects_unsupported_or_mismatched_parameters",
+        "test_query_request_result_byte_budget_is_part_of_canonical_identity",
         "test_query_result_and_status_are_bounded_and_shape_checked"
       ],
       "imports": [
@@ -26053,6 +27614,9 @@
         "execute",
         "register_parquet",
         "test_duckdb_relation_lifecycle_is_bounded_to_registered_views",
+        "test_local_transport_accepts_exact_serialized_result_byte_budget",
+        "test_local_transport_binds_typed_scalar_in_duckdb",
+        "test_local_transport_enforces_result_byte_budget_in_duckdb",
         "test_local_transport_executes_shared_contract",
         "test_local_transport_normalizes_sql_failures_and_cancellation",
         "test_local_transport_rejects_handles_from_another_provider",
@@ -26060,6 +27624,7 @@
       ],
       "imports": [
         "__future__",
+        "json",
         "pyarrow",
         "pytest",
         "studio_query_engine",
@@ -26083,6 +27648,7 @@
         "test_query_policy_fails_closed",
         "test_query_policy_rejects_ambiguous_profile_identifiers",
         "test_query_policy_rejects_non_text_required_capability",
+        "test_query_policy_requires_engine_parameter_binding_capability",
         "test_query_policy_requires_explicit_profile_engine_and_capability"
       ],
       "imports": [
@@ -26093,7 +27659,7 @@
         "events": 0,
         "jobs": 0,
         "migrations": 0,
-        "permissions": 1,
+        "permissions": 2,
         "stores": 0
       },
       "package": null,
@@ -26134,13 +27700,17 @@
       "functions": [
         "__init__",
         "request",
+        "test_query_request_rejects_non_select_before_remote_io",
         "test_queryflux_trino_transport_preserves_lifecycle_and_provider_identity",
+        "test_trino_transport_counts_initial_page_in_the_request_row_limit",
+        "test_trino_transport_encodes_typed_parameters_using_prepared_execution",
         "test_trino_transport_enforces_request_row_bound",
         "test_trino_transport_enforces_request_row_bound_across_pages",
         "test_trino_transport_normalizes_provider_errors_and_provider_mismatch",
         "test_trino_transport_rejects_cancel_response_without_explicit_boolean",
         "test_trino_transport_rejects_provider_uri_escape",
         "test_trino_transport_rejects_unsafe_base_url",
+        "test_trino_transport_returns_initial_post_result_page_before_polling",
         "test_trino_transport_submits_polls_pages_and_cancels"
       ],
       "imports": [
@@ -26156,6 +27726,32 @@
       },
       "package": null,
       "path": "tests/test_query_engine_trino.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "test_invalid_cursors_fail_closed",
+        "test_page_size_must_be_a_bounded_integer",
+        "test_pages_are_stable_and_cursor_is_bound_to_the_result_digest",
+        "test_result_digest_must_be_a_lowercase_sha256",
+        "test_rows_must_match_the_persisted_column_shape"
+      ],
+      "imports": [
+        "__future__",
+        "pytest",
+        "studio_data_engineering"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_queryflux_result_paging.py",
       "routes": [],
       "test": true
     },
@@ -26203,19 +27799,59 @@
     {
       "classes": [],
       "functions": [
+        "test_acceptance_is_extracted_from_an_explicit_pass_fail_label",
+        "test_acceptance_supports_explicit_source_label_variants",
+        "test_later_source_metadata_variants_are_read_without_inference",
+        "test_parse_cases_preserves_source_metadata_and_section",
+        "test_parse_cases_rejects_duplicate_identifiers",
+        "test_parse_routes_marks_retired_routes_and_rejects_duplicates",
+        "test_priority_is_not_inferred_from_procedure_text",
+        "test_render_inventory_writes_counts_hash_and_traceable_rows",
+        "test_scope_mapping_applies_product_boundaries_and_local_no_ci_policy"
+      ],
+      "imports": [
+        "pathlib",
+        "pytest",
+        "tools"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 3,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_release_case_inventory.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "_emitter_time_args",
         "record",
+        "test_aggregate_release_evidence_cli_rejects_diagnostic_gate",
         "test_aggregate_release_evidence_cli_rejects_mismatched_expected_commit",
         "test_aggregate_release_evidence_cli_writes_exact_candidate_verdict",
         "test_aggregate_release_evidence_requires_exact_commit",
         "test_cli_profile_verdict_uses_named_gate_set",
         "test_emit_release_evidence_hashes_artifacts",
+        "test_failed_gate_requires_archived_logs_and_digests",
         "test_gate_profiles_keep_release_strictly_broader_than_merge",
         "test_load_rejects_duplicate_gate_ids",
         "test_merge_is_deterministic_and_rejects_mixed_commits",
         "test_release_evidence_cli_validates_merges_and_verifies_exact_candidate",
         "test_release_evidence_emitter_direct_api_and_cli",
         "test_release_evidence_rejects_invalid_input_shapes_and_merge_duplicates",
+        "test_release_evidence_rejects_unknown_execution_scope",
+        "test_release_profile_rejects_missing_or_modified_archived_artifacts",
+        "test_release_profile_rejects_stale_or_future_evidence",
+        "test_release_profile_rejects_wrong_profile_and_gate_set",
         "test_release_verdict_fails_closed_for_missing_or_skipped_gate",
+        "test_release_verdict_labels_profile_subset_as_custom_gate_set",
+        "test_release_verdict_rehashes_artifacts_without_named_profile",
+        "test_release_verdict_rejects_diagnostic_or_unscoped_passed_gate",
         "test_release_verdict_rejects_empty_or_invalid_gate_sets",
         "test_release_verdict_rejects_root_commit_drift",
         "test_release_verdict_rejects_stale_expected_commit",
@@ -26228,11 +27864,57 @@
       ],
       "imports": [
         "__future__",
+        "datetime",
+        "hashlib",
         "json",
         "pathlib",
         "pytest",
         "subprocess",
         "sys",
+        "tempfile",
+        "tools"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 19,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_release_evidence.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "_generated_evidence",
+        "_identity",
+        "_lock",
+        "test_provenance_cli_writes_normalized_statement_and_handles_input_errors",
+        "test_provenance_rejects_invalid_command_source_toolchain_and_time",
+        "test_release_provenance_rejects_incomplete_or_sensitive_build_context",
+        "test_release_provenance_requires_valid_artifact_identity",
+        "test_release_sbom_is_cyclonedx_and_binds_artifact_and_locked_dependencies",
+        "test_release_sbom_verification_rejects_tampering_and_drift",
+        "test_sbom_builder_rejects_empty_or_conflicting_lock_inventory",
+        "test_sbom_builder_rejects_malformed_artifact_identity",
+        "test_sbom_builder_rejects_missing_or_invalid_project_metadata",
+        "test_sbom_builder_reports_missing_identity_and_lock_files",
+        "test_sbom_cli_generates_and_verifies_a_candidate_bound_document",
+        "test_sbom_cli_reports_invalid_identity_as_usage_error",
+        "test_sbom_verifier_rejects_invalid_document_shapes",
+        "test_sbom_verifier_rejects_unbound_or_malformed_components",
+        "test_slsa_provenance_rejects_wrong_candidate_and_identity_digest",
+        "test_supply_chain_validator_accepts_generated_cyclonedx_and_slsa_provenance",
+        "test_supply_chain_validator_rejects_name_only_and_wrong_digest_sboms"
+      ],
+      "imports": [
+        "__future__",
+        "hashlib",
+        "json",
+        "pytest",
         "tools"
       ],
       "markers": {
@@ -26243,7 +27925,7 @@
         "stores": 0
       },
       "package": null,
-      "path": "tests/test_release_evidence.py",
+      "path": "tests/test_release_supply_chain_generators.py",
       "routes": [],
       "test": true
     },
@@ -26332,6 +28014,41 @@
     {
       "classes": [],
       "functions": [
+        "_valid_bundle",
+        "fail_restore",
+        "fake_run",
+        "fake_run",
+        "forbidden",
+        "test_compose_config_rejects_external_s3_artifacts",
+        "test_compose_resume_order_restores_dependencies_before_worker",
+        "test_failed_appliance_restore_keeps_writers_stopped",
+        "test_invalid_appliance_dump_sidecar_is_rejected_before_quiescing"
+      ],
+      "imports": [
+        "__future__",
+        "hashlib",
+        "json",
+        "pathlib",
+        "pytest",
+        "tools",
+        "types",
+        "typing"
+      ],
+      "markers": {
+        "events": 6,
+        "jobs": 6,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 22
+      },
+      "package": null,
+      "path": "tests/test_ronin_appliance_backup.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
         "test_published_openapi_matches_all_registered_routes",
         "test_route_gate_fails_closed_for_an_unpublished_operation"
       ],
@@ -26366,6 +28083,7 @@
         "test_rql_enforces_positive_execution_limits_and_preserves_empty_results",
         "test_rql_execution_applies_where_before_traversal_and_join",
         "test_rql_execution_honors_default_max_limit_and_join_no_match",
+        "test_rql_join_requires_same_non_null_typed_value",
         "test_rql_parser_and_ast_diagnostics_are_exact",
         "test_rql_parser_exposes_versioned_canonical_ast",
         "test_rql_parser_preserves_all_clauses_and_canonical_ast",
@@ -26400,7 +28118,9 @@
         "test_broker_worker_does_not_trigger_container_entrypoint_socket_setup",
         "test_compose_mounts_docker_socket_only_in_runner_broker",
         "test_compose_provides_private_persistent_postgres_for_appliance_profile",
+        "test_long_running_compose_services_forward_shutdown_signals",
         "test_postgres_schema_contains_workflow_and_schedule_persistence",
+        "test_ronin_compose_services_disable_privilege_gains",
         "test_runner_broker_keeps_docker_socket_supplementary_group_after_privilege_drop"
       ],
       "imports": [
@@ -26410,7 +28130,7 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 16,
+        "jobs": 20,
         "migrations": 2,
         "permissions": 0,
         "stores": 15
@@ -26463,7 +28183,7 @@
         "events": 2,
         "jobs": 1,
         "migrations": 0,
-        "permissions": 2,
+        "permissions": 3,
         "stores": 0
       },
       "package": null,
@@ -26697,30 +28417,47 @@
     {
       "classes": [
         "_Body",
+        "_EndlessS3",
         "_S3"
       ],
       "functions": [
         "__init__",
+        "__init__",
         "_connection",
+        "close",
         "get_object",
         "list_objects_v2",
+        "list_objects_v2",
+        "put_object",
         "read",
         "test_s3_json_discovers_and_snapshot_reads",
-        "test_s3_json_rejects_unsafe_prefix_and_checkpoint"
+        "test_s3_json_discovery_obeys_provider_page_limit",
+        "test_s3_json_legacy_discover_stops_after_bounded_provider_requests",
+        "test_s3_json_read_closes_stream_when_object_exceeds_byte_limit",
+        "test_s3_json_rejects_unsafe_prefix_and_checkpoint",
+        "test_s3_json_sink_enforces_row_and_byte_limits_before_put",
+        "test_s3_json_sink_fails_closed_for_bad_targets_and_transactional_writes",
+        "test_s3_json_sink_rejects_unrepresentable_receipt_and_utf8_before_put",
+        "test_s3_json_sink_reports_at_least_once_for_changed_payload_reusing_key",
+        "test_s3_json_sink_uses_digest_as_commit_id_when_provider_receipt_is_invalid",
+        "test_s3_json_sink_writes_bounded_at_least_once_and_round_trips",
+        "test_s3_jsonl_sink_and_empty_json_payload_are_valid"
       ],
       "imports": [
         "__future__",
+        "hashlib",
         "pytest",
         "studio_connectors",
         "studio_core",
-        "studio_storage"
+        "studio_storage",
+        "typing"
       ],
       "markers": {
-        "events": 3,
+        "events": 4,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 0
+        "stores": 1
       },
       "package": null,
       "path": "tests/test_s3_json_connector.py",
@@ -26774,12 +28511,16 @@
         "Runner",
         "Runner",
         "Runner",
-        "Runner"
+        "Runner",
+        "SyncService",
+        "SyncService"
       ],
       "functions": [
         "_compiled_ml_pipeline",
         "_job",
         "_ml_lab",
+        "execute",
+        "execute",
         "execute",
         "execute_pipeline",
         "execute_pipeline",
@@ -26791,6 +28532,8 @@
         "run",
         "run",
         "run",
+        "test_connector_sync_scheduler_maps_cooperative_cancellation",
+        "test_connector_sync_scheduler_requires_and_forwards_workspace_scope",
         "test_scheduler_dispatch_passes_custom_pinned_pipeline_to_runner",
         "test_scheduler_dispatch_pins_ml_pipeline_and_records_its_digest",
         "test_scheduler_dispatch_rejects_blank_ml_identifiers",
@@ -26811,6 +28554,7 @@
         "__future__",
         "json",
         "pytest",
+        "studio_connectors",
         "studio_core",
         "studio_execution",
         "studio_ml",
@@ -26821,10 +28565,10 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 121,
+        "jobs": 141,
         "migrations": 0,
-        "permissions": 1,
-        "stores": 8
+        "permissions": 3,
+        "stores": 11
       },
       "package": null,
       "path": "tests/test_scheduler_adapters.py",
@@ -26862,10 +28606,36 @@
     {
       "classes": [],
       "functions": [
+        "test_http_backfill_creation_persists_immutable_runtime_plan"
+      ],
+      "imports": [
+        "__future__",
+        "pathlib",
+        "studio_core",
+        "studio_execution",
+        "studio_orchestrator",
+        "studio_storage"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 16,
+        "migrations": 2,
+        "permissions": 0,
+        "stores": 15
+      },
+      "package": null,
+      "path": "tests/test_scheduler_backfill_http.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
         "_complete_one",
         "_store",
         "_workflow",
         "reserve_then_cancel",
+        "test_active_backfill_listing_is_bounded_and_excludes_terminal_requests",
         "test_backfill_generation_respects_active_run_cap_and_independent_cursor",
         "test_backfill_preview_is_pure_and_bounded",
         "test_backfill_runs_use_workflow_snapshot_from_plan_creation",
@@ -26889,7 +28659,7 @@
         "jobs": 47,
         "migrations": 4,
         "permissions": 0,
-        "stores": 61
+        "stores": 67
       },
       "package": null,
       "path": "tests/test_scheduler_backfill_runtime.py",
@@ -27068,6 +28838,7 @@
         "test_cron_rejects_invalid_shape_ranges_and_steps",
         "test_disabled_schedule_advances_cursor_without_backfilling_disabled_minute",
         "test_evaluated_minutes_catches_up_and_fails_closed_on_large_gap",
+        "test_schedule_definition_validation_rejects_invalid_cron_and_timezone",
         "test_schedule_matches_iana_timezone",
         "test_schedule_preview_excludes_exact_after_boundary_and_stops_at_count",
         "test_schedule_preview_next_runs_is_bounded_and_non_mutating",
@@ -27088,7 +28859,7 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 95,
+        "jobs": 104,
         "migrations": 2,
         "permissions": 0,
         "stores": 33
@@ -27127,14 +28898,18 @@
         "test_daemon_schedule_work_runs_under_durable_leadership",
         "test_immediate_release_remains_readable_and_next_acquire_increments_generation",
         "test_scheduler_daemon_dispatches_durable_notifications_when_configured",
+        "test_scheduler_daemon_service_acquires_and_releases_lease_on_lifecycle",
+        "test_scheduler_daemon_service_retries_transient_provider_errors",
         "test_scheduler_health_and_readiness_do_not_expose_lease_secrets",
         "test_scheduler_stop_signals_request_stop_and_restore",
+        "work_provider",
         "work_provider"
       ],
       "imports": [
         "__future__",
         "asyncio",
         "pathlib",
+        "pytest",
         "signal",
         "studio_core",
         "studio_execution",
@@ -27142,14 +28917,15 @@
         "studio_orchestrator",
         "studio_storage",
         "threading",
+        "time",
         "types"
       ],
       "markers": {
-        "events": 37,
-        "jobs": 140,
+        "events": 43,
+        "jobs": 164,
         "migrations": 5,
         "permissions": 0,
-        "stores": 98
+        "stores": 110
       },
       "package": null,
       "path": "tests/test_scheduler_daemon.py",
@@ -27186,11 +28962,11 @@
         "studio_storage"
       ],
       "markers": {
-        "events": 101,
+        "events": 102,
         "jobs": 23,
         "migrations": 2,
         "permissions": 0,
-        "stores": 63
+        "stores": 64
       },
       "package": null,
       "path": "tests/test_scheduler_events.py",
@@ -27248,6 +29024,7 @@
         "__future__",
         "asyncio",
         "dataclasses",
+        "os",
         "pathlib",
         "studio_core",
         "studio_execution",
@@ -27255,7 +29032,8 @@
         "studio_storage",
         "subprocess",
         "sys",
-        "time"
+        "time",
+        "tools"
       ],
       "markers": {
         "events": 0,
@@ -27730,19 +29508,35 @@
     },
     {
       "classes": [
+        "OrderedPluginHost",
+        "OrderedServer",
+        "_BackgroundService",
+        "_FailingThread",
         "_PluginHost",
         "_Server"
       ],
       "functions": [
         "__init__",
         "__init__",
+        "__init__",
+        "__init__",
+        "ready",
         "serve_forever",
+        "server_close",
         "server_close",
         "shutdown",
         "start",
+        "start",
+        "start",
+        "stop",
+        "stop",
         "stop",
         "test_local_server_composition_lifecycles_plugins_around_servers",
-        "test_local_server_composition_starts_and_stops_both_surfaces"
+        "test_local_server_composition_rolls_back_partial_startup",
+        "test_local_server_composition_starts_and_stops_background_services",
+        "test_local_server_composition_starts_and_stops_both_surfaces",
+        "test_plugins_stop_before_server_close_releases_their_services",
+        "thread_factory"
       ],
       "imports": [
         "pytest",
@@ -27750,8 +29544,8 @@
         "threading"
       ],
       "markers": {
-        "events": 3,
-        "jobs": 10,
+        "events": 7,
+        "jobs": 43,
         "migrations": 0,
         "permissions": 0,
         "stores": 0
@@ -28018,13 +29812,30 @@
     },
     {
       "classes": [
-        "Engine"
+        "Engine",
+        "LargeResultEngine",
+        "QueryOnlyEngine"
       ],
       "functions": [
         "__init__",
         "execute",
+        "execute",
+        "execute",
+        "explain",
+        "test_sql_http_adapter_accepts_exact_parameter_count_and_text_limits",
+        "test_sql_http_adapter_enforces_parameter_count_and_text_limits",
+        "test_sql_http_adapter_explains_bounded_project_query",
+        "test_sql_http_adapter_normalizes_explicitly_typed_bindings",
+        "test_sql_http_adapter_passes_a_valid_execution_timeout",
+        "test_sql_http_adapter_rejects_ambiguous_or_unsupported_typed_bindings",
+        "test_sql_http_adapter_rejects_invalid_explain_requests",
         "test_sql_http_adapter_rejects_invalid_requests",
         "test_sql_http_adapter_rejects_mutating_statements",
+        "test_sql_http_adapter_rejects_results_over_the_serialized_byte_budget",
+        "test_sql_http_adapter_rejects_statement_forms_outside_shared_engine_contract",
+        "test_sql_http_adapter_rejects_unimplemented_profile_fields",
+        "test_sql_http_adapter_rejects_untrimmed_or_multi_statement_sql",
+        "test_sql_http_adapter_reports_explain_as_unsupported_when_provider_lacks_capability",
         "test_sql_http_adapter_validates_and_serializes_query"
       ],
       "imports": [
@@ -28033,7 +29844,7 @@
         "studio_sql"
       ],
       "markers": {
-        "events": 0,
+        "events": 4,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
@@ -28078,6 +29889,7 @@
         "test_sqlite_backup_and_restore_are_consistent"
       ],
       "imports": [
+        "contextlib",
         "pytest",
         "sqlite3",
         "studio_storage"
@@ -28130,7 +29942,7 @@
     {
       "classes": [],
       "functions": [
-        "test_static_control_plane_is_explicit_and_workspace_scoped",
+        "test_static_control_plane_is_explicit_and_registered_workspace_scoped",
         "test_static_control_plane_rejects_empty_configuration"
       ],
       "imports": [
@@ -28141,9 +29953,9 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 4,
+        "jobs": 6,
         "migrations": 0,
-        "permissions": 12,
+        "permissions": 17,
         "stores": 0
       },
       "package": null,
@@ -28248,6 +30060,7 @@
       "classes": [],
       "functions": [
         "test_local_artifact_store_satisfies_artifact_port",
+        "test_sqlite_catalog_filters_lineage_by_execution_with_a_bound",
         "test_sqlite_catalog_lists_every_asset_revision",
         "test_sqlite_catalog_retention_limits_fail_closed",
         "test_sqlite_catalog_store_satisfies_catalog_port",
@@ -28264,9 +30077,9 @@
       "markers": {
         "events": 0,
         "jobs": 0,
-        "migrations": 7,
+        "migrations": 9,
         "permissions": 0,
-        "stores": 47
+        "stores": 52
       },
       "package": null,
       "path": "tests/test_storage_ports.py",
@@ -28378,8 +30191,22 @@
       "test": true
     },
     {
-      "classes": [],
+      "classes": [
+        "Consumer",
+        "Consumer"
+      ],
       "functions": [
+        "__init__",
+        "__init__",
+        "_stream_definition",
+        "close",
+        "close",
+        "factory",
+        "get_watermark_offsets",
+        "get_watermark_offsets",
+        "test_kafka_health_reader_redacts_broker_exception",
+        "test_kafka_health_reader_reports_unknown_stream_as_not_found",
+        "test_kafka_health_reader_uses_persisted_definition_and_live_watermarks",
         "test_stream_health_counts_unseen_partition_from_offset_minus_one",
         "test_stream_health_rejects_invalid_latest_offsets",
         "test_stream_health_reports_partition_lag",
@@ -28387,14 +30214,16 @@
       ],
       "imports": [
         "pytest",
-        "studio_streaming"
+        "studio_core",
+        "studio_streaming",
+        "types"
       ],
       "markers": {
-        "events": 0,
+        "events": 11,
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 0
+        "stores": 17
       },
       "package": null,
       "path": "tests/test_streaming_health.py",
@@ -28729,6 +30558,7 @@
       ],
       "imports": [
         "concurrent",
+        "contextlib",
         "json",
         "sqlite3",
         "studio_synthetic_data"
@@ -28984,7 +30814,7 @@
         "studio_core"
       ],
       "markers": {
-        "events": 33,
+        "events": 34,
         "jobs": 6,
         "migrations": 1,
         "permissions": 0,
@@ -28992,6 +30822,29 @@
       },
       "package": null,
       "path": "tests/test_transport_runtime_survivor_boundaries.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "test_trino_runner_requires_exact_live_test_manifest_and_no_skips",
+        "test_trino_runner_retains_evidence_and_checks_cleanup",
+        "test_trino_runner_uses_a_pinned_image_and_loopback_only"
+      ],
+      "imports": [
+        "__future__",
+        "pathlib"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_trino_qualification_contract.py",
       "routes": [],
       "test": true
     },
@@ -29445,6 +31298,7 @@
     },
     {
       "classes": [
+        "_BlockingSync",
         "_Clock",
         "_Runner"
       ],
@@ -29454,6 +31308,7 @@
         "_job",
         "_run",
         "_seed",
+        "execute",
         "fake_poll",
         "run",
         "scenario",
@@ -29464,8 +31319,11 @@
         "scenario",
         "scenario",
         "scenario",
+        "scenario",
         "test_artifact_backend_selection_fails_closed",
         "test_attempt_limit_does_not_stop_worker",
+        "test_connector_sync_cancellation_is_projected_to_durable_job_and_run",
+        "test_connector_worker_dependencies_are_limited_to_configured_workspace",
         "test_execution_failure_is_logged_as_error_and_persisted",
         "test_preparation_failure_is_logged_and_does_not_escape_worker",
         "test_restart_reclaims_same_run_and_reuses_persisted_cells",
@@ -29481,19 +31339,24 @@
         "dataclasses",
         "pathlib",
         "pytest",
+        "studio_connectors",
+        "studio_core",
+        "studio_execution",
         "studio_kernel",
         "studio_orchestrator",
         "studio_runners",
         "studio_server",
         "studio_storage",
-        "studio_worker"
+        "studio_worker",
+        "threading",
+        "time"
       ],
       "markers": {
-        "events": 13,
-        "jobs": 157,
-        "migrations": 17,
-        "permissions": 0,
-        "stores": 46
+        "events": 19,
+        "jobs": 191,
+        "migrations": 23,
+        "permissions": 1,
+        "stores": 65
       },
       "package": null,
       "path": "tests/test_worker_runtime.py",
@@ -29644,19 +31507,19 @@
     }
   ],
   "marker_counts": {
-    "events": 3469,
-    "jobs": 13786,
-    "migrations": 1802,
-    "permissions": 2626,
-    "stores": 9880
+    "events": 3983,
+    "jobs": 14708,
+    "migrations": 1895,
+    "permissions": 2785,
+    "stores": 10864
   },
   "packages": {
     "studio_cli": 6,
     "studio_cloud": 4,
-    "studio_connectors": 12,
+    "studio_connectors": 13,
     "studio_core": 42,
-    "studio_data_engineering": 22,
-    "studio_execution": 39,
+    "studio_data_engineering": 23,
+    "studio_execution": 40,
     "studio_finops": 4,
     "studio_graph": 6,
     "studio_kernel": 5,
@@ -29679,14 +31542,14 @@
     "studio_semantic": 8,
     "studio_server": 8,
     "studio_sql": 5,
-    "studio_storage": 61,
+    "studio_storage": 62,
     "studio_streaming": 9,
     "studio_synthetic_data": 9,
     "studio_vcs": 3,
     "studio_worker": 5
   },
   "python_source": "python",
-  "root": "repo-analysis",
+  "root": ".build-plan-implementation",
   "routes": [
     {
       "file": "python/studio_cloud/plugin.py",
@@ -29838,13 +31701,6 @@
     {
       "file": "python/studio_data_engineering/plugin.py",
       "function": "context.plugin_id",
-      "method": "POST",
-      "package": "studio_data_engineering",
-      "path": "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute"
-    },
-    {
-      "file": "python/studio_data_engineering/plugin.py",
-      "function": "context.plugin_id",
       "method": "GET",
       "package": "studio_data_engineering",
       "path": "/v1/data-engineering/runtimes"
@@ -29855,6 +31711,20 @@
       "method": "POST",
       "package": "studio_data_engineering",
       "path": "/v1/data-engineering/sdp/import"
+    },
+    {
+      "file": "python/studio_data_engineering/plugin.py",
+      "function": "context.plugin_id",
+      "method": "POST",
+      "package": "studio_data_engineering",
+      "path": "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute"
+    },
+    {
+      "file": "python/studio_data_engineering/plugin.py",
+      "function": "context.plugin_id",
+      "method": "GET",
+      "package": "studio_data_engineering",
+      "path": "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/results"
     },
     {
       "file": "python/studio_ml/plugin.py",
@@ -30093,6 +31963,13 @@
       "method": "GET",
       "package": "studio_ml",
       "path": "/v1/ml-studio/models/{model_id}/{version}/card"
+    },
+    {
+      "file": "python/studio_ml/plugin.py",
+      "function": "context.plugin_id",
+      "method": "POST",
+      "package": "studio_ml",
+      "path": "/v1/ml-studio/models/{model_id}/{version}/evaluations"
     },
     {
       "file": "python/studio_ml/plugin.py",
@@ -30406,8 +32283,8 @@
   "schema_version": 1,
   "summary": {
     "packages": 33,
-    "python_files": 815,
-    "routes": 102,
-    "test_files": 439
+    "python_files": 845,
+    "routes": 104,
+    "test_files": 465
   }
 }

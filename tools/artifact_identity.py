@@ -21,6 +21,18 @@ def git_commit() -> str:
     ).stdout.strip()
 
 
+def require_clean_worktree() -> None:
+    """Refuse to label dirty source artifacts with the current commit SHA."""
+    status = subprocess.run(  # noqa: S603, S607 - fixed git command
+        ["git", "status", "--porcelain=v1", "--untracked-files=all"],  # noqa: S607
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    if status.strip():
+        raise ValueError("artifact identity requires a clean worktree")
+
+
 def digest(path: Path) -> tuple[str, int]:
     hasher = hashlib.sha256()
     size = 0
@@ -67,6 +79,10 @@ def main() -> int:
     parser.add_argument("--commit", default=None)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    try:
+        require_clean_worktree()
+    except (OSError, subprocess.CalledProcessError, ValueError) as exc:
+        parser.error(str(exc))
     manifest = build_manifest(args.artifacts, commit=args.commit or git_commit())
     rendered = json.dumps(manifest, indent=2, sort_keys=True) + "\n"
     if args.output:

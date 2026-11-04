@@ -83,7 +83,7 @@ document.addEventListener('submit', async event => {
   if (!(form instanceof HTMLFormElement) || form.id !== 'catalog-lineage-form') return;
   event.preventDefault();
   const data = new FormData(form);
-  const workspace = encodeURIComponent(String(document.querySelector('#glossary-form [name="workspace"]')?.value || '').trim());
+  const workspace = encodeURIComponent(String(document.querySelector('#catalog-search-form [name="workspace"]')?.value || '').trim());
   const asset = encodeURIComponent(String(data.get('asset_id') || '').trim());
   const version = encodeURIComponent(String(data.get('version') || '').trim());
   const direction = encodeURIComponent(String(data.get('direction') || 'upstream'));

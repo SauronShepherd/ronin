@@ -66,6 +66,7 @@ def test_artifact_identity_cli_writes_manifest_and_uses_git_fallback(
         "argv",
         ["artifact_identity", "--commit", "abc123", "--output", str(output), str(artifact)],
     )
+    monkeypatch.setattr(artifact_identity, "require_clean_worktree", lambda: None)
     assert artifact_identity.main() == 0
     assert json.loads(output.read_text(encoding="utf-8"))["commit"] == "abc123"
     assert '"commit": "abc123"' in capsys.readouterr().out
@@ -74,6 +75,30 @@ def test_artifact_identity_cli_writes_manifest_and_uses_git_fallback(
     monkeypatch.setattr(artifact_identity, "git_commit", lambda: "fallback-commit")
     assert artifact_identity.main() == 0
     assert json.loads(output.read_text(encoding="utf-8"))["commit"] == "fallback-commit"
+
+
+def test_artifact_identity_cli_refuses_dirty_worktree_without_writing_manifest(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    artifact = tmp_path / "ronin.whl"
+    artifact.write_bytes(b"wheel")
+    output = tmp_path / "identity.json"
+    output.write_text("preserve existing evidence", encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["artifact_identity", "--commit", "abc123", "--output", str(output), str(artifact)],
+    )
+
+    def dirty() -> None:
+        raise ValueError("artifact identity requires a clean worktree")
+
+    monkeypatch.setattr(artifact_identity, "require_clean_worktree", dirty)
+    with pytest.raises(SystemExit, match="2"):
+        artifact_identity.main()
+
+    assert "artifact identity requires a clean worktree" in capsys.readouterr().err
+    assert output.read_text(encoding="utf-8") == "preserve existing evidence"
 
 
 def test_git_commit_calls_fixed_git_revision_command(monkeypatch) -> None:

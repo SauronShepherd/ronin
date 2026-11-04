@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 from datetime import UTC, datetime
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from studio_core import (
     Schedule,
@@ -21,11 +21,13 @@ from studio_core import (
 from studio_core.scheduler_events import EventTriggerDefinition, SchedulerEventId
 from studio_orchestrator import Instant
 from studio_storage.scheduler_backfill import BackfillId, BackfillRequest
+from studio_storage.scheduler_backfill_runtime import BackfillPlan
 from studio_storage.scheduler_events import EventDelivery, SchedulerEventRecord
 from studio_storage.scheduler_schedule import ScheduleFire
 
 from .scheduler_backfill import preview_backfill
 from .scheduler_cancellation import CancellableJobService, cancel_workflow_run
+from .scheduler_cron import validate_schedule
 from .scheduler_schedule_service import SchedulerScheduleService
 
 
@@ -74,6 +76,10 @@ class WorkflowStore(Protocol):
     def ingest_event(self, event: SchedulerEventRecord) -> tuple[EventDelivery, ...]: ...
 
     def list_pending_deliveries(
+        self, workspace_id: WorkspaceId, *, limit: int = 100
+    ) -> tuple[EventDelivery, ...]: ...
+
+    def list_event_deliveries(
         self, workspace_id: WorkspaceId, *, limit: int = 100
     ) -> tuple[EventDelivery, ...]: ...
 
@@ -138,6 +144,7 @@ class SqliteWorkflowHTTPAdapter:
         return self._store.get_schedule(workspace_id, schedule_id)
 
     def put_schedule(self, workspace_id: WorkspaceId, schedule: Schedule) -> Schedule:
+        validate_schedule(schedule)
         return self._store.put_schedule(workspace_id, schedule, now=self._now)
 
     def preview_schedule_next_runs(
@@ -168,6 +175,11 @@ class SqliteWorkflowHTTPAdapter:
     ) -> tuple[EventDelivery, ...]:
         return self._store.list_pending_deliveries(workspace_id, limit=limit)
 
+    def list_event_deliveries(
+        self, workspace_id: WorkspaceId, *, limit: int = 100
+    ) -> tuple[EventDelivery, ...]:
+        return self._store.list_event_deliveries(workspace_id, limit=limit)
+
     def preview_backfill(
         self,
         workspace_id: WorkspaceId,
@@ -196,6 +208,15 @@ class SqliteWorkflowHTTPAdapter:
     def create_backfill(
         self, workspace_id: WorkspaceId, request: BackfillRequest
     ) -> BackfillRequest:
+        create_plan = getattr(self._store, "create_backfill_plan", None)
+        if callable(create_plan):
+            plan = create_plan(
+                workspace_id,
+                request,
+                max_concurrency=4,
+                now=self._now,
+            )
+            return cast(BackfillPlan, plan).request
         return self._store.create_backfill(workspace_id, request, now=self._now)
 
     def get_backfill(

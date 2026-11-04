@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from threading import RLock
+
 from studio_core import WorkspaceId
 from studio_security import (
     Actor,
@@ -32,17 +34,25 @@ class StaticControlPlaneAuthenticator:
 
 
 class StaticControlPlaneAuthorizer:
-    """Authorize only the configured workspace and explicit permission set."""
+    """Authorize known local workspaces using one operator's explicit permissions."""
 
     def __init__(self, workspace_id: WorkspaceId, permissions: frozenset[Permission]) -> None:
         if not permissions:
             raise ValueError("control-plane permissions must not be empty")
-        self._workspace_id = workspace_id
+        self._workspace_ids = {workspace_id}
         self._permissions = permissions
+        self._lock = RLock()
+
+    def register_workspace(self, workspace_id: WorkspaceId) -> None:
+        """Add a workspace created in this local installation to the operator scope."""
+        with self._lock:
+            self._workspace_ids.add(workspace_id)
 
     def authorize(self, actor: Actor, requirement: PolicyRequirement) -> PolicyDecision:
         del actor
-        if requirement.workspace_id != self._workspace_id:
+        with self._lock:
+            workspace_is_known = requirement.workspace_id in self._workspace_ids
+        if not workspace_is_known:
             return PolicyDecision(False, "workspace_not_configured")
         if requirement.permission not in self._permissions:
             return PolicyDecision(False, "permission_not_configured")

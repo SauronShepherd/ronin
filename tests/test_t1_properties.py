@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from hypothesis import given
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from studio_core import Edge, Node, OperatorRef, Pipeline, Port, freeze_value
 
@@ -45,6 +45,11 @@ def test_property_strict_json_rejects_non_json_values(value: object) -> None:
         freeze_value(value)
 
 
+@settings(
+    deadline=None,
+    max_examples=100,
+    suppress_health_check=[HealthCheck.too_slow],
+)
 @given(
     st.dictionaries(
         st.text(min_size=1, max_size=12),

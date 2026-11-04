@@ -1,6 +1,6 @@
 # Contributing to Ronin
 
-Ronin is currently a single-maintainer alpha project with an autonomous build pipeline. Contributions from external participants are welcome. Automation may implement accepted work, but it does not create human governance authority, replace contributor authorship, or substitute for public technical discussion.
+Ronin is currently a single-maintainer alpha project. Contributions from external participants are welcome. Automation may implement accepted work, but it does not create human governance authority, replace contributor authorship, or substitute for public technical discussion.
 
 ## Before you start
 
@@ -13,7 +13,29 @@ python -m pip install --require-hashes -r requirements-dev.lock
 python -m pip install -e . --no-deps
 ```
 
-Docker is required for the supported local container journey. Go 1.22 or newer is required for the independent cross-language checkers: run `make canonical-json-check` and `make runner-protocol-check`. Runtime product packages intentionally add no third-party runtime dependencies.
+`requirements-dev.lock` contains repository tooling. To collect and run the
+complete Python suite, install the broader hash-locked set instead; it also
+includes every declared optional runtime extra so tests for those adapters can
+be collected:
+
+```bash
+python -m pip install --require-hashes -r requirements-test.lock
+python -m pip install -e . --no-deps
+python -m pytest --ignore=tests/perf
+python -m pytest tests/perf -q
+```
+
+Docker is required for the supported local container journey. Go 1.22 or newer is required for the independent cross-language checkers: run `make canonical-json-check` and `make runner-protocol-check`. The core package has a minimal runtime dependency set; provider libraries are installed through their named optional extras.
+
+Regenerate the all-extras test lock after changing `pyproject.toml` dependency
+metadata or the development lock:
+
+```bash
+uv pip compile pyproject.toml \
+  --extra dev --extra data-plane --extra open-tables --extra ml --extra streaming \
+  --universal --python-version 3.11 --generate-hashes \
+  --constraint requirements-dev.lock --output-file requirements-test.lock
+```
 
 Storage coverage has two explicit modes: `make coverage-storage-files` is the portable gate and excludes only PostgreSQL adapter files; `make coverage-storage-files-full` runs the same unchanged baselines for PostgreSQL-backed qualification. The portable gate does not lower or replace the infrastructure-backed baselines.
 

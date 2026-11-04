@@ -111,6 +111,8 @@ from studio_storage.scheduler_timeout import (
     timeout_requested,
 )
 
+from tools.artifact_qualification import _qualification_subprocess_environment
+
 pytestmark = pytest.mark.skipif(
     not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
     reason="real PostgreSQL qualification requires RONIN_POSTGRES_TEST_DSN",
@@ -1018,6 +1020,7 @@ asyncio.run(daemon.run_once(SchedulerDaemonWork(controller_workspaces=(workspace
             str(ready),
         ],
         cwd=Path(__file__).resolve().parents[2],
+        env=_qualification_subprocess_environment(),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -1033,11 +1036,14 @@ asyncio.run(daemon.run_once(SchedulerDaemonWork(controller_workspaces=(workspace
                 f"stdout={stdout!r}, stderr={stderr!r}"
             )
         process.kill()
-        process.wait(timeout=5)
     finally:
         if process.poll() is None:
             process.kill()
-            process.wait(timeout=5)
+        try:
+            process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate(timeout=5)
 
     intents = store.list_execution_intents()
     assert len(intents) == 1
@@ -1733,6 +1739,7 @@ while True:
             str(ready),
         ],
         cwd=Path(__file__).resolve().parents[2],
+        env=_qualification_subprocess_environment(),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -1748,11 +1755,14 @@ while True:
                 f"stderr={stderr!r}"
             )
         process.kill()
-        process.wait(timeout=5)
     finally:
         if process.poll() is None:
             process.kill()
-            process.wait(timeout=5)
+        try:
+            process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate(timeout=5)
 
     store = PostgresSchedulerSnapshotStore(
         schema_dsn, application_name="ronin-postgres-dispatcher-restart"
@@ -1936,6 +1946,7 @@ def test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries(
     assert delivered_results == (delivered, delivered)
     assert store.deliver_event(deliveries[0], now=NOW) == delivered
     assert store.list_pending_deliveries(workspace_id) == ()
+    assert store.list_event_deliveries(workspace_id) == (delivered,)
     assert store.get_run(workspace_id, delivered.workflow_run_id) is not None
 
     unmatched = replace(
@@ -2072,6 +2083,7 @@ def test_postgres_scheduler_backfill_runs_through_the_service_and_survives_reope
     )
     plan = store.create_backfill_plan(workspace_id, backfill, max_concurrency=1, now=NOW)
     assert store.create_backfill_plan(workspace_id, backfill, max_concurrency=1, now=NOW) == plan
+    assert store.list_active_backfills(workspace_id) == (backfill.id,)
     with pytest.raises(BackfillConflict, match="generation is not complete"):
         store.complete_backfill(workspace_id, backfill.id, now=NOW)
     with pytest.raises(BackfillConflict, match="different content"):

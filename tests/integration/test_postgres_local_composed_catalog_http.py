@@ -15,6 +15,7 @@ from studio_core import (
     AssetVersion,
     CatalogAsset,
     DataContract,
+    LineageEdge,
     OwnershipMetadata,
     QualityRule,
     QualityRuleId,
@@ -201,6 +202,38 @@ def test_postgres_composition_serves_catalog_and_governance_over_real_http(
         catalog_reader.put_revision(
             workspace_id, revision, now=Instant("2026-10-24T00:00:00.000000Z")
         )
+        archive_revision = AssetRevision(
+            AssetRef(following_asset.id, AssetVersion("1")), schema_digest="orders-archive-v1"
+        )
+        catalog_reader.put_revision(
+            workspace_id, archive_revision, now=Instant("2026-10-24T00:00:00.000000Z")
+        )
+        lineage_edges = (
+            LineageEdge(revision.ref, archive_revision.ref, "transform", "declared"),
+            LineageEdge(revision.ref, archive_revision.ref, "query", "observed"),
+        )
+        for edge in lineage_edges:
+            catalog_reader.put_lineage(
+                workspace_id, edge, now=Instant("2026-10-24T00:00:00.000000Z")
+            )
+        status, payload = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{workspace_text}/catalog/lineage/orders-archive/1?direction=upstream&limit=100",
+        )
+        assert status == 200, payload
+        assert payload == {
+            "items": [
+                edge.to_payload() for edge in sorted(lineage_edges, key=lambda item: item.digest)
+            ]
+        }
+        status, payload = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{workspace_text}/catalog/lineage/orders-archive/1?direction=upstream&limit=1",
+        )
+        assert status == 413, payload
+        assert payload["error"]["code"] == "lineage_limit_exceeded"
         status, payload = _request(
             address,
             "PUT",
