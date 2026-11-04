@@ -218,6 +218,11 @@ function placeDialog(target, placement = 'bottom') {
   if (placement === 'right') { left = rect.right + gap; top = rect.top + rect.height / 2 - dialogHeight / 2; }
   if (placement === 'left') { left = rect.left - width - gap; top = rect.top + rect.height / 2 - dialogHeight / 2; }
   if (placement === 'top') top = rect.top - dialogHeight - gap;
+  if (window.innerWidth <= 700 && (placement === 'right' || placement === 'left')) {
+    left = (window.innerWidth - width) / 2;
+    top = rect.bottom + gap;
+    if (top + dialogHeight > window.innerHeight - margin) top = rect.top - dialogHeight - gap;
+  }
   const maxLeft = Math.max(margin, window.innerWidth - width - margin);
   const maxTop = Math.max(margin, window.innerHeight - dialogHeight - margin);
   left = Math.max(margin, Math.min(maxLeft, left));
