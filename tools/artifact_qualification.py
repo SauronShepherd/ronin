@@ -217,7 +217,10 @@ def qualify_pyronin(checkout: Path, work_root: Path) -> dict[str, object]:
     outdir.mkdir(parents=True, exist_ok=False)
     target.mkdir(parents=True, exist_ok=False)
     package_root = checkout / "packages" / "pyronin"
-    _run([sys.executable, "-m", "build", "--outdir", str(outdir), str(package_root)])
+    _run(
+        [sys.executable, "-m", "build", "--outdir", str(outdir), str(package_root)],
+        cwd=work_root,
+    )
     wheel = _single_artifact(outdir, ".whl")
     sdist = _single_artifact(outdir, ".tar.gz")
     record = artifact_record(wheel, sdist)
@@ -233,7 +236,8 @@ def qualify_pyronin(checkout: Path, work_root: Path) -> dict[str, object]:
             "--target",
             str(target),
             str(wheel),
-        ]
+        ],
+        cwd=work_root,
     )
     probe = subprocess.run(
         [

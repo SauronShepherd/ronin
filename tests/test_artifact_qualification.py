@@ -250,14 +250,16 @@ def test_run_raises_with_command_and_exit_code(
 
 def _mock_successful_qualification(
     monkeypatch: pytest.MonkeyPatch, checkout: Path
-) -> list[list[str]]:
+) -> tuple[list[list[str]], list[Path | None]]:
     package_root = checkout / "packages" / "pyronin"
     (package_root / "tests").mkdir(parents=True)
     (package_root / "tests" / "test_contract.py").write_text("def test_contract(): pass\n")
     commands: list[list[str]] = []
+    command_directories: list[Path | None] = []
 
-    def fake_run(argv: list[str], *, _cwd: Path | None = None) -> None:
+    def fake_run(argv: list[str], *, cwd: Path | None = None) -> None:
         commands.append(argv)
+        command_directories.append(cwd)
         if "build" in argv:
             outdir = Path(argv[argv.index("--outdir") + 1])
             _wheel(outdir / "pyronin-0.1.0a2-py3-none-any.whl")
@@ -275,7 +277,7 @@ def _mock_successful_qualification(
         return SimpleNamespace(returncode=0)
 
     monkeypatch.setattr(module.subprocess, "run", fake_subprocess_run)
-    return commands
+    return commands, command_directories
 
 
 def test_qualify_pyronin_builds_installs_and_runs_isolated_contract_tests(
@@ -285,7 +287,7 @@ def test_qualify_pyronin_builds_installs_and_runs_isolated_contract_tests(
     checkout.mkdir()
     work_root = tmp_path / "qualification"
     work_root.mkdir()
-    commands = _mock_successful_qualification(monkeypatch, checkout)
+    commands, command_directories = _mock_successful_qualification(monkeypatch, checkout)
 
     result = module.qualify_pyronin(checkout, work_root)
 
@@ -294,6 +296,7 @@ def test_qualify_pyronin_builds_installs_and_runs_isolated_contract_tests(
     assert len(commands) == 2
     assert "--no-index" in commands[1]
     assert "--no-deps" in commands[1]
+    assert command_directories == [work_root, work_root]
     assert (work_root / "contract-tests" / "test_contract.py").is_file()
 
 
