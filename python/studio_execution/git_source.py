@@ -32,11 +32,24 @@ class GitSourceAdapter:
             raise ValueError("Git timeout must be positive")
         self._timeout = timeout_seconds
 
-    def _run(self, worktree: Path, *args: str) -> str:
+    def _run(
+        self,
+        worktree: Path,
+        *args: str,
+        allowed_returncodes: tuple[int, ...] = (0,),
+    ) -> str:
+        return self._run_result(worktree, *args, allowed_returncodes=allowed_returncodes)[1]
+
+    def _run_result(
+        self,
+        worktree: Path,
+        *args: str,
+        allowed_returncodes: tuple[int, ...] = (0,),
+    ) -> tuple[int, str]:
         try:
             result = subprocess.run(  # noqa: S603
                 ("git", "-C", str(worktree), *args),  # noqa: S607
-                check=True,
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=self._timeout,
@@ -44,7 +57,9 @@ class GitSourceAdapter:
             )
         except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
             raise GitSourceError(f"git operation failed: {' '.join(args)}") from exc
-        return result.stdout.strip()
+        if result.returncode not in allowed_returncodes:
+            raise GitSourceError(f"git operation failed: {' '.join(args)}")
+        return result.returncode, result.stdout.strip()
 
     def is_dirty(self, worktree: Path) -> bool:
         return bool(self._run(worktree, "status", "--porcelain", "--untracked-files=all"))
@@ -52,6 +67,14 @@ class GitSourceAdapter:
     def fetch(self, worktree: Path, repository: SourceRepository) -> str:
         self._run(worktree, "fetch", "--no-tags", "--prune", repository.uri, repository.revision)
         return self._resolve_commit(worktree, "FETCH_HEAD")
+
+    def fetch_revision(self, worktree: Path, repository: SourceRepository) -> str:
+        """Fetch and resolve a source commit without changing the current checkout."""
+
+        root = worktree.resolve()
+        if self.is_dirty(root):
+            raise GitSourceError("refusing source fetch in a dirty worktree")
+        return self.fetch(root, repository)
 
     def _resolve_commit(self, worktree: Path, revision: str) -> str:
         commit = self._run(
@@ -64,6 +87,72 @@ class GitSourceAdapter:
         if not _COMMIT_ID.fullmatch(commit):
             raise GitSourceError("git revision did not resolve to an immutable commit id")
         return commit
+
+    def fast_forward(
+        self,
+        worktree: Path,
+        repository: SourceRepository,
+        *,
+        subdirectory: str = "",
+    ) -> GitCheckoutResult:
+        """Fetch and fast-forward the current local branch without rewriting history."""
+
+        root = worktree.resolve()
+        if self.is_dirty(root):
+            raise GitSourceError("refusing fast-forward in a dirty worktree")
+        branch_status, branch = self._run_result(
+            root,
+            "symbolic-ref",
+            "--quiet",
+            "--short",
+            "HEAD",
+            allowed_returncodes=(0, 1),
+        )
+        if branch_status == 1 or not branch:
+            raise GitSourceError("refusing fast-forward from a detached HEAD")
+        current = self._resolve_commit(root, "HEAD")
+        target = self.fetch(root, repository)
+        ancestor_status, _ = self._run_result(
+            root,
+            "merge-base",
+            "--is-ancestor",
+            current,
+            target,
+            allowed_returncodes=(0, 1),
+        )
+        if ancestor_status == 1 and current != target:
+            # The local branch may already be ahead of the declared source.
+            # Keep it unchanged; never rewind it to the source commit.
+            target_is_ancestor, _ = self._run_result(
+                root,
+                "merge-base",
+                "--is-ancestor",
+                target,
+                current,
+                allowed_returncodes=(0, 1),
+            )
+            if target_is_ancestor == 0:
+                return GitCheckoutResult(
+                    repository,
+                    safe_checkout_path(root, subdirectory),
+                    current,
+                    False,
+                )
+            raise GitSourceError(
+                "refusing fast-forward because local and source histories diverged"
+            )
+        if current == target:
+            return GitCheckoutResult(
+                repository,
+                safe_checkout_path(root, subdirectory),
+                current,
+                False,
+            )
+        self._run(root, "merge", "--ff-only", target)
+        actual = self._resolve_commit(root, "HEAD")
+        if actual != target:
+            raise GitSourceError("fast-forward did not reach the fetched source revision")
+        return GitCheckoutResult(repository, safe_checkout_path(root, subdirectory), actual, False)
 
     def checkout_detached(
         self,

@@ -455,3 +455,27 @@ Por tanto P1 continúa **OPEN**; tampoco se cierra P4 ni ninguna familia. Releas
 **0/13 (0%, NO-GO)**; progreso global de implementación **no calculable**;
 revisiones limpias integrales **0/10**. No se añadió ni ejecutó CI, GenAI
 integrado ni multiusuario en Public v1.
+
+## 55. Operaciones Git fast-forward con protección contra pérdida (2026-11-04)
+
+El adapter Git de ejecución incorpora ahora `fetch_revision`, que obtiene y
+resuelve el ref remoto sin mover `HEAD`, y `fast_forward`, que sólo opera sobre
+una rama local simbólica limpia. Antes de avanzar compara la historia local con
+el commit obtenido; rechaza divergencias, detached HEAD y worktrees sucios. Si
+la rama ya apunta al mismo commit, la operación es idempotente; si la rama ya
+está por delante del ref remoto, conserva el HEAD local sin rebobinarlo. Todo
+fetch y comando Git sigue limitado por timeout y no usa un shell.
+
+Validación focalizada en repositorios bare/locales reales:
+
+- `tests/test_git_source.py tests/test_vcs_source.py`: **23 passed, 1 skipped**;
+  el skip es creación de symlink que requiere privilegios de Windows.
+- Ruff check, formato y `git diff --check`: pasan.
+
+Esto endurece el adapter, pero no conecta todavía las políticas del manifiesto
+con la preparación/ejecución durable del worker. `auth_ref` aún no dispone de
+un resolver de credenciales en esa composición y no se crea un checkout aislado
+por proyecto para ejecutar revisiones remotas. Por tanto `manual/fetch/fast-
+forward` no está cualificado como flujo vertical; P1 permanece **OPEN**, sin
+cierre de familia ni cambio de release **0/13 (0%, NO-GO)**. No se añade CI,
+GenAI integrado ni multiusuario en Public v1.
