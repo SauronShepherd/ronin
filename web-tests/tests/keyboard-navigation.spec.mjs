@@ -14,3 +14,10 @@ test('keyboard users can skip navigation and activate a route', async ({ page })
   await expect(page).toHaveURL(/#workspaces$/);
   await expect(page.locator('#breadcrumb')).toHaveText('Workspaces');
 });
+
+test('navigation opens the current Machine Learning Studio instead of a stale placeholder', async ({ page }) => {
+  await page.goto('./', { waitUntil: 'domcontentloaded' });
+  await page.locator('#rail a[href="#mlstudio"]').click();
+  await expect(page.locator('#breadcrumb')).toHaveText('Machine Learning Studio');
+  await expect(page.locator('#view')).not.toContainText('Data Science Studio');
+});

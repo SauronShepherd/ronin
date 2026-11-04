@@ -291,10 +291,12 @@ def test_semantic_live_diagnostic_skips_unrelated_postgres_and_kafka_containers(
     )
     assert "$postgresStarted = -not ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)" in script
     assert "$kafkaStarted = -not $sqliteOnlyDiagnostic" in script
-    assert "if (-not $sqliteOnlyDiagnostic) {\n        & $python -m tools.seed_live_streaming" in script
     assert (
-        "$env:RONIN_LIVE_REQUIRE_POSTGRES = if "
-        "($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)"
+        "if (-not $sqliteOnlyDiagnostic) {\n        & $python -m tools.seed_live_streaming"
+        in script
+    )
+    assert (
+        "$env:RONIN_LIVE_REQUIRE_POSTGRES = if ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)"
     ) in script
     assert "& $python -m tools.seed_live_studio --semantic-only" in script
     assert '"RONIN_SQL_PARQUET_ROOT"' in script
@@ -311,7 +313,7 @@ def test_ml_live_diagnostic_skips_unrelated_postgres_and_kafka_containers() -> N
     live = (ROOT / "web-tests" / "tests" / "product-live.spec.mjs").read_text(encoding="utf-8")
 
     assert '$mlOnlyDiagnostic = $TestGrep -eq "mlstudio"' in script
-    assert '$composeStarted = -not $sqliteOnlyDiagnostic' in script
+    assert "$composeStarted = -not $sqliteOnlyDiagnostic" in script
     assert '"Machine Learning Studio"' in script
     assert (
         "run Machine Learning Studio browser journey against isolated SQLite and real Ronin APIs"
@@ -326,11 +328,14 @@ def test_synthetic_live_diagnostic_uses_sqlite_and_exercises_real_generation_exp
     live = (ROOT / "web-tests" / "tests" / "product-live.spec.mjs").read_text(encoding="utf-8")
 
     assert '$syntheticOnlyDiagnostic = $TestGrep -eq "synthetic"' in script
-    assert '$composeStarted = -not $sqliteOnlyDiagnostic' in script
-    assert '$postgresStarted = -not ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)' in script
-    assert '$kafkaStarted = -not $sqliteOnlyDiagnostic' in script
-    assert '& $python -m tools.seed_live_studio --workspace-only' in script
-    assert 'Synthetic Data Studio generation/export against isolated SQLite and real Ronin APIs' in script
+    assert "$composeStarted = -not $sqliteOnlyDiagnostic" in script
+    assert "$postgresStarted = -not ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)" in script
+    assert "$kafkaStarted = -not $sqliteOnlyDiagnostic" in script
+    assert "& $python -m tools.seed_live_studio --workspace-only" in script
+    assert (
+        "Synthetic Data Studio generation/export against isolated SQLite and real Ronin APIs"
+        in script
+    )
     assert "} else if (route.id === 'synthetic') {" in live
     assert "const generatePath = '/v1/synthetic-data-studio/generate';" in live
     assert "const exportPath = '/v1/synthetic-data-studio/export';" in live
