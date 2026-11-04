@@ -86,18 +86,32 @@ class GitSourceAdapter:
         executable = shutil.which("git")
         if executable is None:
             raise GitSourceError("Git executable is unavailable")
+        return self._invoke(
+            (
+                executable,
+                "-c",
+                "credential.helper=",
+                "-c",
+                f"core.hooksPath={os.devnull}",
+                "-C",
+                str(worktree),
+                *args,
+            ),
+            allowed_returncodes=allowed_returncodes,
+        )
+
+    def _invoke(
+        self,
+        command: tuple[str, ...],
+        *,
+        allowed_returncodes: tuple[int, ...] = (0,),
+    ) -> tuple[int, str]:
+        executable = shutil.which("git")
+        if executable is None:
+            raise GitSourceError("Git executable is unavailable")
         try:
             result = subprocess.run(  # noqa: S603
-                (
-                    executable,
-                    "-c",
-                    "credential.helper=",
-                    "-c",
-                    f"core.hooksPath={os.devnull}",
-                    "-C",
-                    str(worktree),
-                    *args,
-                ),
+                command,
                 check=False,
                 capture_output=True,
                 text=True,
@@ -106,10 +120,58 @@ class GitSourceAdapter:
                 env=_git_environment(),
             )
         except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
-            raise GitSourceError(f"git operation failed: {' '.join(args)}") from exc
+            raise GitSourceError("git operation failed") from exc
         if result.returncode not in allowed_returncodes:
-            raise GitSourceError(f"git operation failed: {' '.join(args)}")
+            raise GitSourceError("git operation failed")
         return result.returncode, result.stdout.strip()
+
+    def clone_checkout(
+        self,
+        repository: SourceRepository,
+        destination: Path,
+        *,
+        subdirectory: str = "",
+    ) -> GitCheckoutResult:
+        """Create an isolated detached checkout of an explicit remote revision."""
+
+        target = destination.resolve()
+        safe_checkout_path(target, subdirectory)
+        if target.exists():
+            raise GitSourceError("checkout destination already exists")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            target.mkdir()
+        except FileExistsError as exc:
+            raise GitSourceError("checkout destination already exists") from exc
+        executable = shutil.which("git")
+        if executable is None:
+            shutil.rmtree(target, ignore_errors=True)
+            raise GitSourceError("Git executable is unavailable")
+        try:
+            self._invoke(
+                (
+                    executable,
+                    "-c",
+                    "credential.helper=",
+                    "-c",
+                    f"core.hooksPath={os.devnull}",
+                    "clone",
+                    "--no-checkout",
+                    "--no-tags",
+                    "--",
+                    repository.uri,
+                    str(target),
+                )
+            )
+            return self.checkout_detached(
+                target,
+                repository,
+                subdirectory=subdirectory,
+                fetch=True,
+            )
+        except Exception:
+            shutil.rmtree(target, ignore_errors=True)
+            raise
 
     def is_dirty(self, worktree: Path) -> bool:
         return bool(self._run(worktree, "status", "--porcelain", "--untracked-files=all"))

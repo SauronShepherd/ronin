@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+import shutil
+import subprocess
 from dataclasses import replace
 from pathlib import Path
 
@@ -56,6 +59,16 @@ def _job(
     )
 
 
+def _git(path: Path, *args: str) -> str:
+    result = subprocess.run(  # noqa: S603
+        (shutil.which("git") or "git", "-C", str(path), *args),  # noqa: S607
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
 def _load_demo(monkeypatch: pytest.MonkeyPatch) -> LoadedProject:
     monkeypatch.setattr(
         "studio_worker.preparation.capture_source_revision",
@@ -99,6 +112,55 @@ def test_load_project_fails_closed_when_declared_source_cannot_be_verified(
 
     with pytest.raises(WorkerPreparationError, match="source binding is invalid"):
         load_project(WorkerPaths(Path.cwd(), Path(".ronin-data")), _job())
+
+
+def test_fetch_policy_loads_and_records_exact_remote_notebook_snapshot(tmp_path: Path) -> None:
+    fixture = Path(__file__).parents[1] / "examples" / "demo"
+    remote = tmp_path / "remote.git"
+    remote.mkdir()
+    _git(remote, "init", "--bare", "-q")
+    author = tmp_path / "author"
+    author.mkdir()
+    _git(author, "init", "-q")
+    _git(author, "config", "user.name", "Ronin Test")
+    _git(author, "config", "user.email", "ronin@example.invalid")
+    shutil.copytree(fixture, author / "examples" / "demo")
+    manifest_path = author / "examples" / "demo" / ".ronin" / "project.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    repository = manifest["project"]["repositories"][0]
+    repository["uri"] = remote.as_uri()
+    repository["default_ref"] = "refs/heads/main"
+    repository["subdirectory"] = "examples/demo"
+    repository["sync_policy"] = "fetch"
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    _git(author, "add", ".")
+    _git(author, "commit", "-qm", "initial remote project")
+    _git(author, "branch", "-M", "main")
+    _git(author, "remote", "add", "origin", remote.as_uri())
+    _git(author, "push", "-q", "origin", "main")
+
+    workspace = tmp_path / "workspace"
+    _git(tmp_path, "clone", "-q", "--branch", "main", remote.as_uri(), str(workspace))
+    remote_notebook = author / "examples" / "demo" / "notebooks" / "etl.ronin.json"
+    payload = json.loads(remote_notebook.read_text(encoding="utf-8"))
+    payload["cells"][1]["source"] += "\n# Remote fetch snapshot."
+    remote_notebook.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    _git(author, "add", "examples/demo/notebooks/etl.ronin.json")
+    _git(author, "commit", "-qm", "update remote notebook")
+    expected_commit = _git(author, "rev-parse", "HEAD")
+    _git(author, "push", "-q", "origin", "main")
+
+    data_dir = tmp_path / "worker-data"
+    local_project_dir = workspace / "examples" / "demo"
+    loaded = load_project(WorkerPaths(workspace, data_dir), _job())
+    runtime = resolve_runtime_snapshot(loaded.manifest, RuntimeCatalog((LOCAL_DOCKER_PROFILE,)))
+    request = build_request(loaded, runtime, AttemptId("attempt-fetch-source"))
+
+    assert loaded.revision.commit == expected_commit
+    assert "Remote fetch snapshot." in loaded.document.notebook.cells[1].source
+    assert "Remote fetch snapshot." in request.cells[0].authored_source
+    assert loaded.project_dir == local_project_dir.resolve()
+    assert not tuple(data_dir.glob("ronin-source-*"))
 
 
 def test_inline_cell_execution_selects_only_requested_cell(

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
+import tempfile
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from studio_core import (
@@ -18,6 +19,8 @@ from studio_core import (
 )
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.canonical_json import encode as encode_canonical_json
+from studio_core.source_control import SourceRepository
+from studio_execution import GitSourceAdapter, GitSourceError
 from studio_kernel import (
     CellExecutionRequest,
     ExecutionAttemptId,
@@ -98,12 +101,14 @@ def _read_text(path: Path, name: str) -> str:
         raise WorkerPreparationError(f"cannot read {name}: {path}") from exc
 
 
-def load_project(paths: WorkerPaths, job: Job) -> LoadedProject:
-    """Load portable project/notebook intent and capture the exact local Git revision."""
+def _load_project_content(
+    project_dir: Path,
+    job: Job,
+    manifest: ProjectManifest,
+) -> LoadedProject:
+    """Read a project snapshot and capture its exact Git revision."""
 
-    project_dir = paths.project_dir(job.project_id)
-    manifest_path = project_dir / ".ronin" / "project.json"
-    manifest = ProjectManifest.from_json(_read_text(manifest_path, "project manifest"))
+    repository = manifest.project.primary_repository
     if not job.target:
         raise WorkerPreparationError("job target is required for worker execution")
     execution_mode = "all"
@@ -132,13 +137,12 @@ def load_project(paths: WorkerPaths, job: Job) -> LoadedProject:
     else:
         target_path = _contained_path(project_dir, job.target, "notebook target")
         document = NotebookDocument.from_json(_read_text(target_path, "notebook target"))
-    source = manifest.project.primary_repository
     try:
         source_evidence = capture_source_revision(
-            source.uri,
+            repository.uri,
             project_dir,
-            subdirectory=source.subdirectory,
-            allow_dirty=True,
+            subdirectory=repository.subdirectory,
+            allow_dirty=repository.sync_policy == "manual",
         )
     except SourcePolicyError as exc:
         raise WorkerPreparationError(f"project Git source binding is invalid: {exc}") from exc
@@ -148,14 +152,78 @@ def load_project(paths: WorkerPaths, job: Job) -> LoadedProject:
         revision=RepositoryRevision(
             source_evidence.revision.commit,
             source_evidence.revision.dirty_patch_sha256,
-            source_uri=source.uri,
-            source_default_ref=source.default_ref,
-            source_subdirectory=source.subdirectory,
+            source_uri=repository.uri,
+            source_default_ref=repository.default_ref,
+            source_subdirectory=repository.subdirectory,
         ),
         project_dir=project_dir,
         execution_mode=execution_mode,
         selected_cell_id=selected_cell_id,
     )
+
+
+def load_project(
+    paths: WorkerPaths,
+    job: Job,
+    *,
+    git_source: GitSourceAdapter | None = None,
+) -> LoadedProject:
+    """Load project intent and apply its source policy before reading notebooks."""
+
+    local_project_dir = paths.project_dir(job.project_id)
+    local_manifest = ProjectManifest.from_json(
+        _read_text(local_project_dir / ".ronin" / "project.json", "project manifest")
+    )
+    repository = local_manifest.project.primary_repository
+    if repository.sync_policy == "manual":
+        return _load_project_content(
+            local_project_dir,
+            job,
+            local_manifest,
+        )
+    if repository.sync_policy == "fast-forward":
+        raise WorkerPreparationError(
+            "fast-forward source policy requires a managed worker checkout"
+        )
+    if repository.auth_ref is not None:
+        raise WorkerPreparationError(
+            "authenticated Git source is unavailable in the portable project manifest"
+        )
+
+    adapter = git_source or GitSourceAdapter()
+    paths.data_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        with tempfile.TemporaryDirectory(prefix="ronin-source-", dir=paths.data_dir) as temporary:
+            checkout_root = Path(temporary) / "checkout"
+            result = adapter.clone_checkout(
+                SourceRepository(repository.uri, repository.default_ref),
+                checkout_root,
+                subdirectory=repository.subdirectory or "",
+            )
+            remote_project_dir = result.worktree
+            remote_manifest = ProjectManifest.from_json(
+                _read_text(remote_project_dir / ".ronin" / "project.json", "project manifest")
+            )
+            if remote_manifest.project.id != local_manifest.project.id:
+                raise WorkerPreparationError("remote project identity does not match local binding")
+            remote_repository = remote_manifest.project.primary_repository
+            if (
+                remote_repository.uri != repository.uri
+                or remote_repository.default_ref != repository.default_ref
+                or remote_repository.subdirectory != repository.subdirectory
+                or remote_repository.sync_policy != repository.sync_policy
+            ):
+                raise WorkerPreparationError("remote project source binding changed during fetch")
+            loaded = _load_project_content(
+                remote_project_dir,
+                job,
+                remote_manifest,
+            )
+            if loaded.revision.commit != result.commit:
+                raise WorkerPreparationError("captured Git revision does not match fetched source")
+            return replace(loaded, project_dir=local_project_dir)
+    except GitSourceError as exc:
+        raise WorkerPreparationError(f"Git source fetch failed: {exc}") from exc
 
 
 def resolve_runtime_snapshot(

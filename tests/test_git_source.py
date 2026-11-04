@@ -174,6 +174,54 @@ def test_git_fast_forward_advances_only_when_current_commit_is_ancestor(tmp_path
     assert _git(root, "rev-parse", "--abbrev-ref", "HEAD") == "main"
 
 
+def test_git_clone_checkout_uses_remote_revision_in_isolated_directory(tmp_path: Path) -> None:
+    source = _repository(tmp_path / "source")
+    _git(source, "branch", "-M", "main")
+    remote = tmp_path / "remote.git"
+    remote.mkdir()
+    _git(remote, "init", "--bare", "-q")
+    _git(source, "remote", "add", "origin", str(remote))
+    _git(source, "push", "-q", "origin", "main")
+    (source / "src" / "version.txt").write_text("remote revision\n", encoding="utf-8")
+    _git(source, "add", "src/version.txt")
+    _git(source, "commit", "-qm", "remote revision")
+    expected = _git(source, "rev-parse", "HEAD")
+    _git(source, "push", "-q", "origin", "main")
+    _git(source, "reset", "--hard", "HEAD~1")
+    destination = tmp_path / "isolated-checkout"
+
+    result = GitSourceAdapter().clone_checkout(
+        SourceRepository(remote.as_uri(), "refs/heads/main"),
+        destination,
+        subdirectory="src",
+    )
+
+    assert result.commit == expected
+    assert result.worktree == (destination / "src").resolve()
+    assert _git(destination, "rev-parse", "HEAD") == expected
+    assert _git(destination, "rev-parse", "--abbrev-ref", "HEAD") == "HEAD"
+    assert (result.worktree / "version.txt").read_text(encoding="utf-8") == "remote revision\n"
+
+
+def test_git_clone_checkout_rejects_existing_destination(tmp_path: Path) -> None:
+    destination = _repository(tmp_path / "destination")
+    with pytest.raises(GitSourceError, match="already exists"):
+        GitSourceAdapter().clone_checkout(
+            SourceRepository("file:///unreachable/repository", "main"),
+            destination,
+        )
+
+
+def test_git_clone_checkout_cleans_partial_destination_on_failure(tmp_path: Path) -> None:
+    destination = tmp_path / "partial-checkout"
+    with pytest.raises(GitSourceError):
+        GitSourceAdapter().clone_checkout(
+            SourceRepository("file:///unreachable/repository", "main"),
+            destination,
+        )
+    assert not destination.exists()
+
+
 def test_git_fast_forward_is_noop_when_already_at_source(tmp_path: Path) -> None:
     root = _repository(tmp_path / "repo")
     _git(root, "branch", "-M", "main")
