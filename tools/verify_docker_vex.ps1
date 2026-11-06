@@ -20,9 +20,13 @@ if (Test-Path -LiteralPath $evidenceRoot) {
     New-Item -ItemType Directory -Force -Path $evidenceRoot | Out-Null
 }
 
-$vexFullPath = [IO.Path]::GetFullPath((Join-Path $repoRoot $VexPath))
-if (-not $vexFullPath.StartsWith($repoPrefix, [StringComparison]::OrdinalIgnoreCase) -or -not (Test-Path -LiteralPath $vexFullPath -PathType Leaf)) {
-    throw "-VexPath must name an existing file inside the checkout."
+$vexFullPath = if ([IO.Path]::IsPathRooted($VexPath)) {
+    [IO.Path]::GetFullPath($VexPath)
+} else {
+    [IO.Path]::GetFullPath((Join-Path $repoRoot $VexPath))
+}
+if (-not (Test-Path -LiteralPath $vexFullPath -PathType Leaf)) {
+    throw "-VexPath must name an existing VEX file."
 }
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw "Docker CLI is required." }
 $scoutVersionOutput = (& docker scout version 2>&1 | Out-String)

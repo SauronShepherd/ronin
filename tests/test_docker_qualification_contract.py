@@ -124,6 +124,8 @@ def test_docker_vex_scan_is_digest_bound_and_uses_an_explicit_author() -> None:
         for product in sqlite["products"]
     )
     assert "--vex-author $author" in script
+    assert "[IO.Path]::IsPathRooted($VexPath)" in script
+    assert '"-VexPath must name an existing VEX file."' in script
     assert "valid immutable registry digest or local image ID" in script
     assert "Docker Scout version" in script
     assert "worktree_clean = ($gitStatus.Count -eq 0)" in script

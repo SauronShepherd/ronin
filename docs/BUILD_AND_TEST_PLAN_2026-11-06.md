@@ -61,6 +61,12 @@ imágenes runtime y probe, se actualizaron los dos productos al digest exacto y
 el gate VEX debe repetirse después del commit; un VEX válido para otro digest
 no es evidencia transferible.
 
+Para imágenes locales, BuildKit puede variar el image-config ID entre builds
+aunque las capas sean iguales. Por eso la VEX final se genera después de
+construir runtime y probe, se guarda fuera del checkout y se pasa al verificador
+mediante `-VexPath` absoluto; el verificador sigue exigiendo digest exacto,
+findings revisados y VEX aplicado sin vulnerabilidades residuales.
+
 ## 4. Streams de construcción
 
 ### A. Shell y experiencia
