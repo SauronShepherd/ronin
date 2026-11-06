@@ -127,10 +127,10 @@ coverage-t1:
 
 coverage-t2:
 	# PostgreSQL adapters are qualified by the PostgreSQL-backed per-file gate.
-	# Keep the service-free package floor independent from this adapter.
+	# Keep the service-free package floor independent from these adapters.
 	coverage report --fail-under=70 \
 		--include="*/studio_kernel/*,*/studio_runners/*,*/studio_storage/*,*/studio_vcs/*,*/studio_worker/*" \
-		--omit="*/studio_storage/postgres_scheduler.py,*/studio_storage/postgres_scheduler_backfills.py"
+		--omit="*/studio_storage/postgres_*.py"
 
 coverage-t3:
 	# Keep package-specific floors for the three distinct platform layers.
@@ -193,6 +193,9 @@ coverage-storage-files:
 		--baseline=workspaces.py=65.10
 
 coverage-storage-files-full:
+	# Opt-in provider-backed lane: this includes PostgreSQL adapters and requires
+	# real PostgreSQL integration coverage; the service-free local gate above
+	# deliberately excludes those files and is the lane used by make test.
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
 	$(PYTHON) -m tools.coverage_file_gate coverage-storage.json python/studio_storage \
 		--threshold=80 \

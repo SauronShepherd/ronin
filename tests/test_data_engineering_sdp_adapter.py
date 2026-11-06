@@ -54,6 +54,9 @@ def test_sdp_provider_executes_real_json_subprocess() -> None:
         "print(json.dumps({'valid': p['action']=='validate'}))",
     )
     source = SdpProjectSource("retail", b"name: retail\n", ())
-    result = SdpStudioProvider(command, timeout_seconds=5).validate(source)
+    # Spawning a fresh Python process is materially slower on Windows while
+    # the full branch-coverage suite is active; keep this provider-path test
+    # strict without making it order-dependent.
+    result = SdpStudioProvider(command, timeout_seconds=15).validate(source)
     assert result["status"] == "valid"
     assert result["compiled"] == {"valid": True}

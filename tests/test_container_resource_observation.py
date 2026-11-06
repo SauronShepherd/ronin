@@ -207,7 +207,10 @@ def test_control_channel_is_private_bounded_and_preserves_diagnostics() -> None:
             (sys.executable, "-c", script),
             input_text="",
             cancellation=CancellationToken(),
-            timeout_seconds=2.0,
+            # A fresh Python child can take several seconds on Windows while
+            # the full branch-coverage suite is active; this test exercises
+            # channel framing, not the runner's timeout path.
+            timeout_seconds=15.0,
             cancellation_args=(sys.executable, "-c", "pass"),
         )
     )
