@@ -560,11 +560,13 @@ pwsh -NoProfile -File tools/verify_docker_vex.ps1 `
 The runner verifies that the image digest matches the product PURL in
 `docker/qualification-image-vex.openvex.json`, records raw and VEX-applied
 SARIF reports, and rejects any raw finding except the specifically reviewed
-Alpine musl backport. It passes the document author via `--vex-author` because
+Alpine musl backport, the SQLite CLI-only finding, and the GDAL-embedded-zlib
+finding. It passes the document author via `--vex-author` because
 Docker Scout defaults that allow-list to Docker authors. For the recorded
-image, the raw report contained 1 finding (`CVE-2026-107891` on
-`pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24`) and the VEX
-report contained 0. Evidence:
+image, the raw report contained 3 findings (`CVE-2026-107891`,
+`CVE-2026-119586`, and `CVE-2026-4738`) and the VEX report contained 0. The
+zlib finding is mapped to GDAL's embedded copy and is not evidence that Ronin
+ships GDAL. Evidence:
 `$env:TEMP/ronin-docker-vex-current-20261103`.
 This applies only to image
 `sha256:3cffbb1acd492a0d8ccd290232edfb8526055924ede4d4ee78702f8d192d7158`;

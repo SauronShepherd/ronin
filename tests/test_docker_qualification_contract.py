@@ -95,7 +95,7 @@ def test_docker_vex_scan_is_digest_bound_and_uses_an_explicit_author() -> None:
     statements = {item["vulnerability"]["name"]: item for item in vex["statements"]}
 
     assert vex["author"] == "Ronin release qualification"
-    assert set(statements) == {"CVE-2026-107891", "CVE-2026-119586"}
+    assert set(statements) == {"CVE-2026-107891", "CVE-2026-119586", "CVE-2026-4738"}
     for statement in statements.values():
         assert statement["status"] == "not_affected"
         assert statement["justification"] == "vulnerable_code_not_present"
@@ -123,6 +123,14 @@ def test_docker_vex_scan_is_digest_bound_and_uses_an_explicit_author() -> None:
         == [{"@id": "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"}]
         for product in sqlite["products"]
     )
+    zlib = statements["CVE-2026-4738"]
+    assert "GDAL" in zlib["impact_statement"]
+    assert "libgdal" in zlib["impact_statement"]
+    assert all(
+        product["subcomponents"]
+        == [{"@id": "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"}]
+        for product in zlib["products"]
+    )
     assert "--vex-author $author" in script
     assert "[IO.Path]::IsPathRooted($VexPath)" in script
     assert '"-VexPath must name an existing VEX file."' in script
@@ -133,9 +141,10 @@ def test_docker_vex_scan_is_digest_bound_and_uses_an_explicit_author() -> None:
     assert "Copy-Item -LiteralPath $vexFullPath -Destination $vexEvidence" in script
     assert "vex_sha256 = $vexSha256" in script
     assert "local-image-config-digest" in script
-    assert '"CVE-2026-107891", "CVE-2026-119586"' in script
+    assert '"CVE-2026-107891", "CVE-2026-119586", "CVE-2026-4738"' in script
     assert "if ($productMatches.Count -ne 1)" in script
     assert "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24" in script
+    assert "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24" in script
     assert "if ($rawFindings.Count -ne $expectedFindings.Count)" in script
     assert "if ($vexFindings.Count -ne 0)" in script
     assert "security_review_required = $true" in script

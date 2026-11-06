@@ -58,6 +58,33 @@
       "status": "not_affected",
       "justification": "vulnerable_code_not_present",
       "impact_statement": "The advisory is specific to command injection in the SQLite command-line shell's .recover output. Both images contain sqlite-libs but no sqlite package or sqlite3 executable; Python's SQLite library remains available. The CLI-only vulnerable code is absent. This exact-image assessment requires security reviewer acceptance. Sources: https://github.com/sqlite/sqlite/blob/version-3.54.1/src/shell.c.in and https://www.sqlite.org/cli.html"
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-4738"
+      },
+      "timestamp": "2026-11-06T19:59:11Z",
+      "products": [
+        {
+          "@id": "pkg:docker/ronin@sha256:ed5d39661b43a53b8f946ea58aa455bb4a88c45f093f72d40e74f7b5fe335f79",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"
+            }
+          ]
+        },
+        {
+          "@id": "pkg:docker/ronin-probe@sha256:9c674e0edfdd3930028f80f71637b6294c667d6f0fb80873359ae964a7087acd",
+          "subcomponents": [
+            {
+              "@id": "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "The CVE concerns GDAL's embedded zlib copy in contrib/infback9, not Alpine's shared zlib package. Both images contain no GDAL runtime or libgdal; the vulnerable embedded code is absent. This exact-image assessment requires security reviewer acceptance. Sources: https://github.com/OSGeo/gdal/pull/12244 and https://www.zlib.net/"
     }
   ]
 }

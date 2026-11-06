@@ -67,6 +67,15 @@ construir runtime y probe, se guarda fuera del checkout y se pasa al verificador
 mediante `-VexPath` absoluto; el verificador sigue exigiendo digest exacto,
 findings revisados y VEX aplicado sin vulnerabilidades residuales.
 
+En la repetición del candidato `1c263735ab4d71a11aee03922595c363ec369d34`,
+Docker Scout 1.27.0 añadió un tercer finding: `CVE-2026-4738` sobre
+`zlib@1.3.2-r1`. La revisión de aplicabilidad confirma que el CVE describe la
+copia embebida de zlib en GDAL (`contrib/infback9`), mientras que las imágenes
+no contienen GDAL ni `libgdal`; se incorporó una declaración VEX explícita para
+ese paquete y la comprobación sigue exigiendo revisión humana. No se convierte
+un finding crítico en verde por contar con VEX: el gate de seguridad permanece
+abierto hasta la aceptación formal del reviewer.
+
 ## 4. Streams de construcción
 
 ### A. Shell y experiencia

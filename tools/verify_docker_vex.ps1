@@ -56,7 +56,7 @@ $imagePurl = "pkg:docker/$imageName@$imageDigest"
 $vex = Get-Content -Raw -LiteralPath $vexFullPath | ConvertFrom-Json
 $author = [string]$vex.author
 if (-not $author) { throw "OpenVEX document must name its author." }
-$expectedVulnerabilities = @("CVE-2026-107891", "CVE-2026-119586")
+$expectedVulnerabilities = @("CVE-2026-107891", "CVE-2026-119586", "CVE-2026-4738")
 $vexStatements = @($vex.statements)
 $statementVulnerabilities = @($vexStatements | ForEach-Object { [string]$_.vulnerability.name })
 if (
@@ -115,6 +115,10 @@ $expectedFindings = @(
     [pscustomobject]@{
         id = "CVE-2026-119586"
         package = "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"
+    }
+    [pscustomobject]@{
+        id = "CVE-2026-4738"
+        package = "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"
     }
 )
 if ($rawFindings.Count -ne $expectedFindings.Count) {
