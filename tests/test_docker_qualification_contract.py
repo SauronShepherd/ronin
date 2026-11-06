@@ -507,8 +507,11 @@ def test_postgres_runner_isolates_container_and_externalizes_evidence() -> None:
 
 def test_docker_image_normalizes_windows_line_endings_for_linux_entrypoint() -> None:
     dockerfile = (ROOT / "docker" / "Dockerfile").read_text(encoding="utf-8")
+    probe = (ROOT / "docker" / "Dockerfile.probe").read_text(encoding="utf-8")
 
     assert "sed -i 's/\\r$//' /usr/local/bin/ronin-container-entrypoint" in dockerfile
+    assert "sed -i 's/\\r$//' /tmp/apk-runtime.lock" in dockerfile
+    assert "sed -i 's/\\r$//' /tmp/apk-probe.lock" in probe
 
 
 def test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies() -> None:

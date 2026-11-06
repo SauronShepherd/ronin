@@ -1,0 +1,2 @@
+docker/*.lock text eol=lf
+docker/*.sh text eol=lf

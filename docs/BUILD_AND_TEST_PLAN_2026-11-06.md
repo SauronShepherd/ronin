@@ -46,6 +46,15 @@ La home ahora es un control plane de entrada con contexto `default / examples/de
 
 El control de presupuesto se recalibró después de medir el cambio aprobado: `asset_bytes` pasa de `1,972,562` a `1,984,396` (+0,6 %), sin añadir requests, módulos ni hojas de estilo. El nuevo baseline es una ratcheting point del candidato; no sustituye la revisión de tamaño ni autoriza crecimiento ilimitado.
 
+### Hallazgo de la qualification exact-SHA
+
+La primera qualification Docker del commit `243fe2b6` fue detenida durante el
+build: los locks APK llegaban con CRLF desde Windows y Alpine interpretaba el
+`\r` como parte del nombre de paquete. La corrección normaliza ambos locks en
+los Dockerfiles y fija LF mediante `.gitattributes`; la qualification completa
+debe repetirse sobre el nuevo commit y no se reutiliza evidencia del intento
+fallido.
+
 ## 4. Streams de construcción
 
 ### A. Shell y experiencia

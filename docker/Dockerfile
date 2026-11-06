@@ -19,6 +19,7 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 COPY docker/apk-runtime.lock /tmp/apk-runtime.lock
 RUN set -eux; \
+    sed -i 's/\r$//' /tmp/apk-runtime.lock; \
     apk add --no-cache $(cat /tmp/apk-runtime.lock); \
     rm /tmp/apk-runtime.lock; \
     groupadd --gid 65532 ronin; \
