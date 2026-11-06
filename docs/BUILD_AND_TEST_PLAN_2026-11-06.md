@@ -55,6 +55,12 @@ los Dockerfiles y fija LF mediante `.gitattributes`; la qualification completa
 debe repetirse sobre el nuevo commit y no se reutiliza evidencia del intento
 fallido.
 
+La revisión de supply-chain del mismo candidato encontró además que el OpenVEX
+versionado apuntaba a imágenes de una candidate anterior. Se construyeron las
+imágenes runtime y probe, se actualizaron los dos productos al digest exacto y
+el gate VEX debe repetirse después del commit; un VEX válido para otro digest
+no es evidencia transferible.
+
 ## 4. Streams de construcción
 
 ### A. Shell y experiencia
