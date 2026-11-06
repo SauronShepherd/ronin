@@ -295,6 +295,11 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert '$env:npm_config_color = "false"' in script
     assert "$env:NO_COLOR = $null" in script
     assert '$env:DEBUG_COLORS = "0"' in script
+    assert '$env:OMP_NUM_THREADS = "1"' in script
+    assert '$env:OPENBLAS_NUM_THREADS = "1"' in script
+    assert '$env:MKL_NUM_THREADS = "1"' in script
+    assert '$env:BLIS_NUM_THREADS = "1"' in script
+    assert '$env:NUMEXPR_NUM_THREADS = "1"' in script
     assert "tests/live-runs.spec.mjs" in script
     assert "Get-Command pwsh -ErrorAction SilentlyContinue" in script
     assert "Get-Command powershell -ErrorAction Stop" in script

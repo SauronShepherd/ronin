@@ -76,6 +76,11 @@ ese paquete y la comprobación sigue exigiendo revisión humana. No se convierte
 un finding crítico en verde por contar con VEX: el gate de seguridad permanece
 abierto hasta la aceptación formal del reviewer.
 
+La live lane fija `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS`,
+`BLIS_NUM_THREADS` y `NUMEXPR_NUM_THREADS` a `1` para que la qualification de
+trabajos ML pequeños sea repetible y no convierta el número de CPUs del host
+en una variable de resultado. Los valores originales se restauran al terminar.
+
 ## 4. Streams de construcción
 
 ### A. Shell y experiencia

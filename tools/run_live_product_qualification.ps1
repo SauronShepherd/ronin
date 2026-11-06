@@ -189,7 +189,8 @@ $envNames = @(
     "RONIN_LIVE_PG_DATABASE", "RONIN_LIVE_REQUIRE_POSTGRES", "RONIN_LIVE_STREAMING_BOOTSTRAP", "RONIN_LIVE_API_TRAFFIC_OUTPUT", "RONIN_STUDIO_E2E_URL", "RONIN_STUDIO_E2E_TOKEN",
     "PLAYWRIGHT_OUTPUT_DIR", "PLAYWRIGHT_HTML_OUTPUT_DIR", "PLAYWRIGHT_JUNIT_OUTPUT_FILE",
     "RONIN_IMAGE", "RONIN_WORKSPACE", "RONIN_WORKER_OWNER", "RONIN_LIVE_WORKER_ENABLED",
-    "PYTHONPATH", "RONIN_LIVE_PYTHON", "FORCE_COLOR", "npm_config_color", "NO_COLOR", "DEBUG_COLORS"
+    "PYTHONPATH", "RONIN_LIVE_PYTHON", "FORCE_COLOR", "npm_config_color", "NO_COLOR", "DEBUG_COLORS",
+    "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "BLIS_NUM_THREADS", "NUMEXPR_NUM_THREADS"
 )
 $savedEnvironment = @{}
 foreach ($name in $envNames) {
@@ -229,6 +230,13 @@ try {
     $env:npm_config_color = "false"
     $env:NO_COLOR = $null
     $env:DEBUG_COLORS = "0"
+    # Keep small local ML qualification runs deterministic on hosts whose BLAS
+    # default otherwise expands to every logical CPU and starves the HTTP lane.
+    $env:OMP_NUM_THREADS = "1"
+    $env:OPENBLAS_NUM_THREADS = "1"
+    $env:MKL_NUM_THREADS = "1"
+    $env:BLIS_NUM_THREADS = "1"
+    $env:NUMEXPR_NUM_THREADS = "1"
     New-Item -ItemType Directory -Path $liveDataDir | Out-Null
     $liveDataCreated = $true
 
