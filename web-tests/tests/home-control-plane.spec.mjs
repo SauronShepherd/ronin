@@ -98,6 +98,7 @@ test.describe('home control plane', () => {
   });
 
   test('shows bounded recent activity for the active project without inventing telemetry', async ({ page }) => {
+    await page.addInitScript(() => sessionStorage.setItem('ronin.session', 'static-home-token'));
     await page.route('**/v1/jobs**', async route => {
       const url = new URL(route.request().url());
       expect(url.searchParams.get('project')).toBe('examples/demo');

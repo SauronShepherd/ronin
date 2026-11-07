@@ -1,4 +1,4 @@
-import {get} from './api.js';
+import {config, get} from './api.js';
 import {esc, fmt, status} from './dom.js';
 
 function activityRow(run) {
@@ -15,6 +15,11 @@ function activityRow(run) {
 export async function loadHomeActivity(project) {
   const target = document.querySelector('#home-activity');
   if (!target) return;
+  if (!config.token) {
+    target.className = 'home-activity';
+    target.innerHTML = '<div class="home-activity-empty"><strong>Connect a server to see activity.</strong><p>Recent runs stay hidden until this tab has an authenticated session.</p><button class="button" data-action="open-connection">Connect server</button></div>';
+    return;
+  }
   if (!project) {
     target.className = 'home-activity';
     target.innerHTML = '<div class="home-activity-empty"><strong>Choose a project to see activity.</strong><p>The run trail stays scoped to the active project.</p><a href="#projects">Open projects</a></div>';
