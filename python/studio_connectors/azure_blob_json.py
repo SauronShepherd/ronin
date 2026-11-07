@@ -26,7 +26,7 @@ from .contracts import ConnectorReadResult, DiscoveryPage
 
 def _azure() -> Any:
     try:
-        from azure.storage.blob import BlobServiceClient
+        from azure.storage.blob import BlobServiceClient  # type: ignore[import-not-found]
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError("Azure Blob JSON connector requires azure-storage-blob") from exc
     return BlobServiceClient
@@ -34,7 +34,7 @@ def _azure() -> Any:
 
 def _if_not_modified_match_condition() -> Any:
     try:
-        from azure.core import MatchConditions
+        from azure.core import MatchConditions  # type: ignore[import-not-found]
     except ImportError as exc:  # pragma: no cover - Azure SDK extra is optional
         raise RuntimeError("Azure Blob JSON connector requires azure-core") from exc
     return MatchConditions.IfNotModified
