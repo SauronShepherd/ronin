@@ -51,36 +51,52 @@ def _lock_components(lock_path: Path) -> list[dict[str, Any]]:
         lines = lock_path.read_text(encoding="utf-8").splitlines()
     except OSError as exc:
         raise ValueError(f"cannot read dependency lock: {lock_path}") from exc
-    packages: dict[str, str] = {}
+    packages: dict[str, dict[str, set[str]]] = {}
     for line in lines:
         candidate = line.strip().removesuffix("\\").strip()
         if not candidate or candidate.startswith(("#", "--")):
             continue
-        candidate = candidate.split(" ", 1)[0]
-        match = _LOCKED_REQUIREMENT.fullmatch(candidate)
+        requirement, _, marker = candidate.partition(";")
+        requirement = requirement.strip().split(" ", 1)[0]
+        marker = re.sub(r"\\s+", " ", marker.strip())
+        match = _LOCKED_REQUIREMENT.fullmatch(requirement)
         if match is None:
             continue
         raw_name, version = match.groups()
         name = re.sub(r"[-_.]+", "-", raw_name).lower()
-        previous = packages.get(name)
-        if previous is not None and previous != version:
-            raise ValueError(f"dependency lock contains conflicting versions for {name}")
-        packages[name] = version
+        versions = packages.setdefault(name, {})
+        previous_versions = set(versions)
+        if previous_versions - {version}:
+            previous_markers = {
+                previous_marker
+                for previous_version in previous_versions
+                for previous_marker in versions[previous_version]
+            }
+            if not marker or not previous_markers or "" in previous_markers:
+                raise ValueError(f"dependency lock contains conflicting versions for {name}")
+        versions.setdefault(version, set()).add(marker)
     if not packages:
         raise ValueError(f"dependency lock contains no exact name==version entries: {lock_path}")
-    return [
-        {
-            "type": "library",
-            "name": name,
-            "version": version,
-            "bom-ref": f"pkg:pypi/{name}@{version}",
-            "purl": f"pkg:pypi/{name}@{version}",
-            "properties": [
-                {"name": "ronin:inventory-source", "value": lock_path.name},
-            ],
-        }
-        for name, version in sorted(packages.items())
-    ]
+    components = []
+    for name, versions in sorted(packages.items()):
+        for version, markers in sorted(versions.items()):
+            properties = [{"name": "ronin:inventory-source", "value": lock_path.name}]
+            properties.extend(
+                {"name": "ronin:environment-marker", "value": marker}
+                for marker in sorted(markers)
+                if marker
+            )
+            components.append(
+                {
+                    "type": "library",
+                    "name": name,
+                    "version": version,
+                    "bom-ref": f"pkg:pypi/{name}@{version}",
+                    "purl": f"pkg:pypi/{name}@{version}",
+                    "properties": properties,
+                }
+            )
+    return components
 
 
 def build_sbom(

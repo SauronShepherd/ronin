@@ -422,6 +422,43 @@ def test_sbom_builder_rejects_empty_or_conflicting_lock_inventory(tmp_path, cont
         build_sbom(identity, lock, project_file=project)
 
 
+def test_sbom_builder_preserves_conditional_lock_versions(tmp_path):
+    identity = _identity(tmp_path)
+    lock = tmp_path / "requirements.lock"
+    lock.write_text(
+        "\n".join(
+            [
+                "demo==1.0 ; python_full_version < '3.12'",
+                "demo==2.0 ; python_full_version >= '3.12'",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    project = tmp_path / "pyproject.toml"
+    project.write_text('[project]\nname = "ronin"\nversion = "1.0"\n', encoding="utf-8")
+
+    components = build_sbom(identity, lock, project_file=project)["components"]
+    library_components = [item for item in components if item["type"] == "library"]
+
+    assert {(item["name"], item["version"]) for item in library_components} == {
+        ("demo", "1.0"),
+        ("demo", "2.0"),
+    }
+    markers = {
+        item["version"]: {
+            prop["value"]
+            for prop in item["properties"]
+            if prop["name"] == "ronin:environment-marker"
+        }
+        for item in library_components
+    }
+    assert markers == {
+        "1.0": {"python_full_version < '3.12'"},
+        "2.0": {"python_full_version >= '3.12'"},
+    }
+
+
 @pytest.mark.parametrize(
     "project_text",
     [
