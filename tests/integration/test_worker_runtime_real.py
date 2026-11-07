@@ -94,7 +94,7 @@ async def main() -> None:
             cpus="0.5",
             memory="128m",
             pids=32,
-            timeout_seconds=45.0 if os.name == "nt" else 10.0,
+            timeout_seconds=45.0 if sys.platform == "win32" else 10.0,
         ),
         heartbeat_interval_seconds=10.0,
     )
