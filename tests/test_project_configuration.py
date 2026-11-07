@@ -67,6 +67,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
             "environment-studio",
             "finops-studio",
             "graph-studio",
+            "home-activity",
             "i18n",
             "quality-studio",
             "ingestion-studio",

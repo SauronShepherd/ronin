@@ -116,6 +116,7 @@ studio_storage = ["migrations/*.sql"]
   "web/js/features.js",
   "web/js/finops-studio.js",
   "web/js/graph-studio.js",
+  "web/js/home-activity.js",
   "web/js/i18n.js",
   "web/js/ingestion-studio.js",
   "web/js/ml-studio-journey.js",
