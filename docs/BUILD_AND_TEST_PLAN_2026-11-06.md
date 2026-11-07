@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-07 (Europe/Madrid)
-**Fuente de código:** worktree `.build-plan-implementation`, `main@9419edbd`
+**Fuente de código:** worktree `.build-plan-implementation`, `main@a64748d7`
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -44,13 +44,13 @@ Principios de diseño:
 
 La home ahora es un control plane de entrada con contexto `default / examples/demo`, cuatro checkpoints de workflow, una ruta guiada de tres pasos, notas operativas y accesos rápidos a Runs, Migration Studio y SQL. Los textos son orientativos y no inventan métricas ni resultados. Se conservan las rutas, el tour, la command palette, el botón de conexión y los selectores existentes.
 
-La iteración del 2026-11-07 hizo accionable ese shell: el context bar abre un diálogo accesible para cambiar workspace, proyecto, entorno y runtime; el contexto queda en la URL, se conserva al navegar y se sincroniza con los formularios de la superficie activa. La command palette ya navega al hacer click en una opción y el shell compacto permanece usable a 320 px. La cobertura de journey incluye cambio de contexto, deep-link, propagación a SQL, navegación de palette y responsive.
+La iteración del 2026-11-07 hizo accionable ese shell: el context bar abre un diálogo accesible para cambiar workspace, proyecto, entorno y runtime; el contexto queda en la URL, se conserva al navegar y se sincroniza con los formularios de la superficie activa. La selección de workspace/proyecto desde las listas también actualiza el contexto canónico. La home incorpora actividad reciente real y acotada por proyecto, con estados loading/empty/error honestos y enlace directo al run. La command palette ya navega al hacer click en una opción y el shell compacto permanece usable a 320 px.
 
-El control de presupuesto se recalibró después de medir el cambio aprobado: `asset_bytes` queda en `1,993,811`, con `59` requests, `34` módulos, `6` hojas de estilo y `4,871` bytes HTML. El nuevo baseline es una ratcheting point del candidato; no sustituye la revisión de tamaño ni autoriza crecimiento ilimitado.
+El control de presupuesto se recalibró después de medir el cambio aprobado: `asset_bytes` queda en `1,999,090`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento frente al corte anterior es `+5,279` bytes, `+1` request y `+1` módulo (`+0,26 %` de bytes), medido y cubierto por una prueba de actividad; no sustituye la revisión de tamaño ni autoriza crecimiento ilimitado.
 
 ### Verificación exacta del corte 2026-11-07
 
-En `9419edbd` pasan `npm test` del paquete web (`121/121`), la prueba focalizada de control plane (`10/10`), la matriz responsive/conexión (`12/12`), i18n (`34` mensajes), presupuesto, auditoría web (`0` fallos), consistencia de rutas (`196` operaciones), superficie Studio, Ruff, mypy, `git diff --check` y la selección Python focalizada (`30/30`). La suite completa de Python, Docker, Helm, proveedores reales, seguridad VEX y live qualification no se reutiliza automáticamente desde el commit anterior: debe repetirse sobre este SHA si se pretende un expediente de release.
+En `a64748d7` pasan `npm test` del paquete web (`122/122`), la prueba focalizada de control plane/contexto (`12/12`), i18n (`34` mensajes), presupuesto, auditoría web (`0` fallos), consistencia de rutas (`196` operaciones), superficie Studio, Ruff, mypy, `git diff --check`, el capability ledger y la sincronización de los dos ledgers de Public v1. La suite completa de Python, Docker, Helm, proveedores reales, seguridad VEX y live qualification no se reutiliza automáticamente desde commits anteriores: debe repetirse sobre este SHA si se pretende un expediente de release.
 
 ### Hallazgo de la qualification exact-SHA
 
