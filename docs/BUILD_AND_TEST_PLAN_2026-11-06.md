@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-07 (Europe/Madrid)
-**Fuente de código:** worktree `.build-plan-implementation`, `main@5a32f01eb816b2cbf3e88fce5351b6467f56f621` (código candidato; el commit posterior sólo sincroniza documentación y receipts)
+**Fuente de código:** worktree exacto de qualification en `d18b31a69778be0841c5b7ccdb931ae0327b989f` (código candidato; la documentación final se sincronizará después sin cambiar el SHA de código)
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -50,13 +50,32 @@ El control de presupuesto se recalibró después de medir los cambios aprobados:
 
 ### Verificación exacta del corte 2026-11-07
 
-En `5a32f01eb816b2cbf3e88fce5351b6467f56f621` pasan `npm test` (`122/122`), la suite focalizada de Home/Studio (`25/25`), presupuesto (`1,999,522` bytes), auditoría web (`61` archivos, `0` fallos), consistencia de rutas (`196` operaciones), superficie Studio (`129/238` operaciones publicadas), capability ledger, Ruff (`926` archivos), mypy (`354` archivos), `git diff --check` y la sincronización de los dos ledgers de Public v1. La suite Python/PostgreSQL exacta pasa `4.560/4.587` casos: `4.560 passed`, `27 skipped`, `0 failed`; los skips corresponden a servicios externos, Docker opt-in o límites del host y no se convierten en soporte anunciado.
+En `d18b31a69778be0841c5b7ccdb931ae0327b989f` la suite estática Chromium pasa
+`123/123`; la suite focalizada de Home/Studio, presupuesto, auditoría web,
+consistencia de rutas, capability ledger, Ruff, mypy, `git diff --check` y la
+sincronización de ledgers quedan verdes. La suite Python/PostgreSQL inicial de
+este corte ejecutó `4.588` casos: `4.560 passed`, `27 skipped` y un único fallo
+de sincronización documental; la matriz se corrigió y el contrato de estado
+pasó `3/3`. Los skips corresponden a servicios externos, Docker opt-in o límites
+del host y no se convierten en soporte anunciado.
 
 ### Qualification exact-SHA final del candidato
 
-La repetición completa del candidato limpio quedó verde y está ligada al mismo SHA de código: Docker `27/27` y acceptance v0.1 estricta `15/15`, con PostgreSQL, worker Docker, Floci/S3 y Azurite/Blob; imagen runtime `sha256:9ed2fac35cec0618ff5656de0812c495b8920e178fddc3e494445a20ec730da5`. Helm/kind pasó lint, boundary de Secret, instalación, rollout, health, Studio/API autorizado, job persistente tras restart y cleanup. La qualification live pasó `33/33` casos, `25` rutas (`23` API-backed), `246` eventos correlacionados, `0` gaps de autorización inesperados y `0` errores de servidor/red. Evidencia: `%TEMP%\\ronin-python-full-5a32f01e-20261107`, `%TEMP%\\ronin-docker-5a32f01e-20261107`, `%TEMP%\\ronin-helm-5a32f01e-20261107` y `%TEMP%\\ronin-live-5a32f01e-20261107`.
+La qualification exacta disponible para `d18b31a` queda ligada al mismo árbol de
+código: Docker `27/27` y acceptance v0.1 estricta `15/15`, con runtime digest
+`sha256:002fde272f38e10850b63771e9e9f207a0fa77f46eefbd9fdb720a811f94ca8d`;
+Helm/kind pasó lint, boundary de Secret, instalación, rollout, health,
+Studio/API autorizado, job persistente tras restart y cleanup; live pasó `33/33`
+casos, `25` rutas, `246` eventos correlacionados, `0` gaps de autorización
+inesperados y `0` errores de servidor/red. Evidencia: `%TEMP%\\ronin-docker-d18b31a-20261107`,
+`%TEMP%\\ronin-helm-d18b31a-20261107` y `%TEMP%\\ronin-live-d18b31a-20261107`.
 
-Docker Scout `1.27.0` encontró `3` findings raw y `0` tras el VEX exacto para runtime y probe (`sha256:958899caa9f648589af4cf1c3f50a060bc850cfe3026d31acc2b733690f0b774`); el receipt externo está en `%TEMP%\\ronin-vex-final-5a32f01e-20261107`. Gitleaks `8.30.1` encontró `0` leaks en el árbol limpio exacto; `pip-audit 2.10.1` encontró `0` advisories en dev/test/runtime/bootstrap. Trivy no está instalado en el host y por tanto sigue siendo un gate abierto, al igual que la aceptación humana del VEX y la revisión legal/claims.
+Docker Scout `1.27.0` encontró `3` findings raw y `0` tras el VEX exacto para
+runtime `sha256:002fde...` y probe `sha256:2fd481...`; el receipt está en
+`%TEMP%\\ronin-vex-d18b31a-20261107`. Gitleaks `8.30.1` encontró `0` leaks en
+52.74 MB; `pip-audit 2.10.1` encontró `0` advisories en los locks dev y test.
+Trivy no está instalado en el host y por tanto sigue siendo un gate abierto, al
+igual que la aceptación humana del VEX y la revisión legal/claims.
 
 ### Hallazgo de la qualification exact-SHA
 
@@ -182,7 +201,7 @@ El candidato de código queda **implementado y verde en los gates técnicos loca
 Esta iteración no se considera cerrada por pasar el código local. Para convertir el
 NO-GO en GO deben cerrarse, en este orden, los siguientes gates:
 
-1. **Custodia exacta del release:** exportar desde `5a32f01e` un source bundle y
+1. **Custodia exacta del release:** exportar desde `d18b31a` un source bundle y
    un artifact-identity manifest reproducibles; regenerar wheel, sdist, runtime,
    probe, SBOM y provenance contra esos bytes; verificar que el commit documental
    no cambie el SHA de código ni desacople los receipts.
