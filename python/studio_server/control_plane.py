@@ -964,6 +964,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         super().setup()
         self._request_id = f"req-{uuid4().hex}"
         self._response_bytes: int | None = None
+        self._request_body_consumed = False
 
     def log_message(self, _format: str, *args: object) -> None:
         del args
@@ -1077,20 +1078,27 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         bytes remain buffered. Early auth/readiness failures must still avoid
         parsing the body, but they can safely drain its declared bytes.
         """
+        if self._request_body_consumed:
+            return
         raw_length = self.headers.get("Content-Length")
         if raw_length is None:
+            self._request_body_consumed = True
             return
         try:
             length = int(raw_length)
         except ValueError:
             return
         if length <= 0 or length > _MAX_REQUEST_BYTES:
+            if length == 0:
+                self._request_body_consumed = True
             return
         self.connection.settimeout(self._server().request_timeout_seconds)
         try:
-            self.rfile.read(length)
+            body = self.rfile.read(length)
         except (OSError, TimeoutError):
             return
+        if len(body) == length:
+            self._request_body_consumed = True
 
     def _check_if_match(self, current: object) -> bool:
         expected = self.headers.get("If-Match")
@@ -1205,6 +1213,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             body = self.rfile.read(length)
         except TimeoutError as exc:
             raise TimeoutError("request body read timed out") from exc
+        self._request_body_consumed = True
         if len(body) != length:
             raise ValueError("request body ended before Content-Length bytes were received")
         try:
@@ -1242,6 +1251,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         return True
 
     def _handle_failure(self, exc: Exception) -> None:
+        self._discard_request_body()
         ml_conflicts: tuple[type[Exception], ...] = ()
         ml_dependency_errors: tuple[type[Exception], ...] = ()
         ml_backend_not_found: tuple[type[Exception], ...] = ()
