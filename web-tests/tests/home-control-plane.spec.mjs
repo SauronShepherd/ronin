@@ -9,7 +9,7 @@ test.describe('home control plane', () => {
     await expect(page.locator('.home-context-card')).toContainText('default / examples/demo');
     await expect(page.locator('.home-context-source')).toContainText('Example context');
     await expect(page.locator('.context-bar')).toContainText('Workspacedefault');
-    await expect(page.locator('.context-change')).toHaveAttribute('href', '#workspaces');
+    await expect(page.locator('.context-change')).toHaveAttribute('data-action', 'open-context');
     await expect(page.locator('.home-status-card')).toHaveCount(4);
     await expect(page.locator('.home-journey-list li')).toHaveCount(3);
     await expect(page.locator('.home-shortcut')).toHaveCount(3);
@@ -24,6 +24,8 @@ test.describe('home control plane', () => {
     await page.goto('./?workspace=team-a&project=project-z#home', { waitUntil: 'load' });
 
     await expect(page.locator('.home-context-card')).toContainText('team-a / project-z');
+    await expect(page.locator('.context-bar')).toContainText('team-a');
+    await expect(page.locator('.context-bar')).toContainText('project-z');
     await expect(page.locator('.home-context-source')).toContainText('Launch context');
     await expect(page.locator('.home-status-grid')).toHaveAttribute(
       'aria-label',
@@ -62,6 +64,34 @@ test.describe('home control plane', () => {
     await expect(page.locator('.command-option')).toContainText('Quality Studio');
     await page.keyboard.press('Escape');
     await expect(page.locator('.command-palette')).not.toBeVisible();
+  });
+
+  test('opens a context picker and carries the selected boundary through the shell', async ({ page }) => {
+    await page.goto('./#home', { waitUntil: 'load' });
+    await page.locator('.context-change').click();
+    await expect(page.locator('#context-dialog')).toBeVisible();
+    await page.locator('#context-form [name="workspace"]').fill('team-a');
+    await page.locator('#context-form [name="project"]').fill('project-z');
+    await page.locator('#context-form [name="environment"]').fill('staging');
+    await page.locator('#context-form [name="runtime"]').fill('container');
+    await page.locator('#context-form button[type="submit"]').click();
+    await expect(page.locator('#context-dialog')).not.toBeVisible();
+    await expect(page.locator('.home-context-card')).toContainText('team-a / project-z');
+    await expect(page.locator('.context-bar')).toContainText('team-a');
+    await expect(page.locator('.context-bar')).toContainText('project-z');
+    await expect(page).toHaveURL(/workspace=team-a.*project=project-z.*environment=staging.*runtime=container/);
+    await page.locator('a[href="#sql"]').first().click();
+    await expect(page.locator('#sql-workspace')).toHaveValue('team-a');
+    await expect(page.locator('#sql-project')).toHaveValue('project-z');
+  });
+
+  test('opens a surface when a command palette option is clicked', async ({ page }) => {
+    await page.goto('./#home', { waitUntil: 'load' });
+    await page.keyboard.press(process.platform === 'darwin' ? 'Meta+K' : 'Control+K');
+    await page.locator('#ronin-command-search').fill('quality');
+    await page.locator('.command-option').first().click();
+    await expect(page).toHaveURL(/#quality$/);
+    await expect(page.locator('#quality-form')).toBeVisible();
   });
 
   test('has no serious home accessibility violations', async ({ page }) => {

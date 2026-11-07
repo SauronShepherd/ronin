@@ -51,7 +51,7 @@ function ensure() {
   });
   dialog.addEventListener('click', (event) => {
     const option = event.target.closest('[data-command-route]');
-    if (option) open(commands.find(([, route]) => route === option.dataset.commandRoute));
+    if (option) open(commands.find((command) => command.route === option.dataset.commandRoute));
   });
 }
 
