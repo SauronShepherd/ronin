@@ -11,6 +11,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager, suppress
 from dataclasses import replace
 from datetime import UTC, datetime
+from threading import Lock, Thread
 from typing import Any, Literal, cast
 from urllib.parse import parse_qs, unquote
 
@@ -59,6 +60,8 @@ from .services import InMemoryMLLabStore, LabService
 MAX_PREDICTION_ROWS = 100_000
 MAX_PREDICTION_ARTIFACT_BYTES = 64 * 1024 * 1024
 _LOGGER = logging.getLogger(__name__)
+_ML_WARMUP_LOCK = Lock()
+_ML_WARMUP_STARTED = False
 
 
 @contextmanager
@@ -88,6 +91,28 @@ def _bounded_local_ml_threads() -> Iterator[None]:
                 os.environ.pop(name, None)
             else:
                 os.environ[name] = value
+
+
+def _start_local_ml_runtime_warmup() -> None:
+    """Load the optional sklearn runtime outside the first HTTP request."""
+    global _ML_WARMUP_STARTED
+    with _ML_WARMUP_LOCK:
+        if _ML_WARMUP_STARTED:
+            return
+        _ML_WARMUP_STARTED = True
+
+    def warm() -> None:
+        try:
+            with _bounded_local_ml_threads():
+                from sklearn.linear_model import LogisticRegression  # type: ignore[import-untyped]
+
+                del LogisticRegression
+        except ImportError:
+            return
+        except Exception:
+            _LOGGER.debug("ML runtime warmup failed", exc_info=True)
+
+    Thread(target=warm, name="ronin-ml-runtime-warmup", daemon=True).start()
 
 
 def _plugin_now() -> Instant:
@@ -246,6 +271,7 @@ class MachineLearningStudioPlugin:
             from studio_storage.ports import CatalogStore
 
             self._dataset_resolver = DatasetResolver(cast(CatalogStore, catalog), self._artifacts)
+        _start_local_ml_runtime_warmup()
         context.contributions.add_ui(
             context.plugin_id,
             {
