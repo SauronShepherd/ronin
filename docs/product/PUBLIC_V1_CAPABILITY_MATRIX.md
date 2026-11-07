@@ -1,6 +1,26 @@
 # Ronin Public v1 capability matrix
 
-## Current snapshot — 3 November 2026
+## Current exact-SHA snapshot — 7 November 2026
+
+The code candidate is `5a32f01eb816b2cbf3e88fce5351b6467f56f621`. Its clean
+candidate receipts are now green for the available local scope: Python/PostgreSQL
+`4,560 passed, 27 skipped, 0 failed`; static Chromium `122/122`; live browser/API
+`33/33` across 25 routes with 246 correlated events, no unexpected authorization
+gaps and no server/network errors; Docker `27/27` plus strict v0.1 `15/15`;
+Helm/kind install, authorized API, persisted queued job after restart and cleanup;
+Ruff/format/mypy, web audit, route consistency and capability/status checks. The
+runtime digest is `sha256:9ed2fac35cec0618ff5656de0812c495b8920e178fddc3e494445a20ec730da5`.
+Docker Scout reports 3 raw findings and 0 after the exact external VEX receipt;
+Gitleaks tree and pip-audit lock checks are clean. These receipts establish a
+strong technical candidate, not release approval: the ledger remains **0/13
+families qualified** because mandatory family journeys, provider matrix, manual
+visual review, legal/claims decisions, Trivy, Terraform pin and security
+acceptance are still open. The UI target remains a deliberate next phase: unify
+authoring, evidence, lineage, operations and progressive disclosure to approach
+the usability/depth bar of Databricks, Dataiku, Palantir and Fabric while keeping
+Ronin's charcoal/copper/gold identity.
+
+## Historical snapshot — 3 November 2026
 
 Use [`RELEASE_DECISION_CHECKLIST_2026-11-03.md`](RELEASE_DECISION_CHECKLIST_2026-11-03.md)
 for the concise GO/NO-GO gate ledger; this matrix retains capability detail

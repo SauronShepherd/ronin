@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-07 (Europe/Madrid)
-**Fuente de código:** worktree `.build-plan-implementation`, `main@e9cd32af4477b5e2a1871cbbaa1eb347da03b67e`
+**Fuente de código:** worktree `.build-plan-implementation`, `main@5a32f01eb816b2cbf3e88fce5351b6467f56f621` (código candidato; el commit posterior sólo sincroniza documentación y receipts)
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -46,11 +46,17 @@ La home ahora es un control plane de entrada con contexto `default / examples/de
 
 La iteración del 2026-11-07 hizo accionable ese shell: el context bar abre un diálogo accesible para cambiar workspace, proyecto, entorno y runtime; el contexto queda en la URL, se conserva al navegar y se sincroniza con los formularios de la superficie activa. La selección de workspace/proyecto desde las listas también actualiza el contexto canónico. La home incorpora actividad reciente real y acotada por proyecto, con estados loading/empty/error honestos y enlace directo al run. La command palette ya navega al hacer click en una opción y el shell compacto permanece usable a 320 px.
 
-El control de presupuesto se recalibró después de medir el cambio aprobado: `asset_bytes` queda en `1,999,090`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento frente al corte anterior es `+5,279` bytes, `+1` request y `+1` módulo (`+0,26 %` de bytes), medido y cubierto por una prueba de actividad; no sustituye la revisión de tamaño ni autoriza crecimiento ilimitado.
+El control de presupuesto se recalibró después de medir el cambio aprobado: `asset_bytes` queda en `1,999,522`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento de esta iteración es `+432` bytes sobre el baseline anterior; requests, módulos, CSS y HTML permanecen constantes. El aumento está ligado al guard de autenticación y al contexto de Runs, cubierto por los tests de actividad/contexto; no sustituye la revisión de tamaño ni autoriza crecimiento ilimitado.
 
 ### Verificación exacta del corte 2026-11-07
 
-En `e9cd32af4477b5e2a1871cbbaa1eb347da03b67e` pasan `npm test` del paquete web (`122/122`), la prueba focalizada de control plane/contexto (`13/13`), i18n (`34` mensajes), presupuesto, auditoría web (`0` fallos), consistencia de rutas (`196` operaciones), superficie Studio, Ruff, mypy, `git diff --check`, el capability ledger y la sincronización de los dos ledgers de Public v1. La suite Python/PostgreSQL completa también pasa en este candidato: `4.560 passed`, `27 skipped` por dependencias externas o límites del host y `0 failed`; los skips no se convierten en soporte anunciado. Docker, Helm, proveedores reales, seguridad VEX y live qualification no se reutilizan automáticamente desde commits anteriores: deben repetirse sobre este SHA si se pretende un expediente de release.
+En `5a32f01eb816b2cbf3e88fce5351b6467f56f621` pasan `npm test` (`122/122`), la suite focalizada de Home/Studio (`25/25`), presupuesto (`1,999,522` bytes), auditoría web (`61` archivos, `0` fallos), consistencia de rutas (`196` operaciones), superficie Studio (`129/238` operaciones publicadas), capability ledger, Ruff (`926` archivos), mypy (`354` archivos), `git diff --check` y la sincronización de los dos ledgers de Public v1. La suite Python/PostgreSQL exacta pasa `4.560/4.587` casos: `4.560 passed`, `27 skipped`, `0 failed`; los skips corresponden a servicios externos, Docker opt-in o límites del host y no se convierten en soporte anunciado.
+
+### Qualification exact-SHA final del candidato
+
+La repetición completa del candidato limpio quedó verde y está ligada al mismo SHA de código: Docker `27/27` y acceptance v0.1 estricta `15/15`, con PostgreSQL, worker Docker, Floci/S3 y Azurite/Blob; imagen runtime `sha256:9ed2fac35cec0618ff5656de0812c495b8920e178fddc3e494445a20ec730da5`. Helm/kind pasó lint, boundary de Secret, instalación, rollout, health, Studio/API autorizado, job persistente tras restart y cleanup. La qualification live pasó `33/33` casos, `25` rutas (`23` API-backed), `246` eventos correlacionados, `0` gaps de autorización inesperados y `0` errores de servidor/red. Evidencia: `%TEMP%\\ronin-python-full-5a32f01e-20261107`, `%TEMP%\\ronin-docker-5a32f01e-20261107`, `%TEMP%\\ronin-helm-5a32f01e-20261107` y `%TEMP%\\ronin-live-5a32f01e-20261107`.
+
+Docker Scout `1.27.0` encontró `3` findings raw y `0` tras el VEX exacto para runtime y probe (`sha256:958899caa9f648589af4cf1c3f50a060bc850cfe3026d31acc2b733690f0b774`); el receipt externo está en `%TEMP%\\ronin-vex-final-5a32f01e-20261107`. Gitleaks `8.30.1` encontró `0` leaks en el árbol limpio exacto; `pip-audit 2.10.1` encontró `0` advisories en dev/test/runtime/bootstrap. Trivy no está instalado en el host y por tanto sigue siendo un gate abierto, al igual que la aceptación humana del VEX y la revisión legal/claims.
 
 ### Hallazgo de la qualification exact-SHA
 
@@ -166,4 +172,4 @@ Matriz web obligatoria: Chromium como base, Firefox/WebKit cuando el runner est�
 
 ## 8. Decisión de salida de este ciclo
 
-El slice de UI queda **implementado y verde en sus gates locales exactos**, pero no es todavía release-qualified. La decisión global sigue siendo **NO-GO**: la UI aún no alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric, el ledger Public v1 mantiene `0/13` familias cualificadas, faltan revisión visual/manual, revisión legal/NOTICE, aceptación de seguridad/VEX, qualification de proveedores y un expediente completo exact-SHA para este commit. La siguiente iteración debe cerrar el primer bloqueo de qualification real y continuar con las superficies de autoría, evidencia y operación; no debe maquillar el ledger.
+El candidato de código queda **implementado y verde en los gates técnicos locales y en la qualification exact-SHA disponible**, pero no es todavía release-qualified. La decisión global sigue siendo **NO-GO**: la UI ha mejorado hacia un control plane más claro y original, pero aún no alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric; el ledger Public v1 mantiene `0/13` familias cualificadas; faltan revisión visual/manual formal, revisión legal/NOTICE/claims, aceptación humana de seguridad/VEX, Trivy, Terraform `1.13.5`, qualification de proveedores y gobernanza CI/branch/release. Los skips externos y la ausencia de Trivy no se presentan como verde. La siguiente iteración debe cerrar estos gates y ampliar las superficies de autoría, evidencia y operación; no debe maquillar el ledger.
