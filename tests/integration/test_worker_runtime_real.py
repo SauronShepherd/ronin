@@ -409,7 +409,11 @@ def test_real_process_sigkill_reclaims_same_run_and_reuses_three_cells(tmp_path:
         text=True,
     )
     try:
-        _wait_for_path(marker, first, timeout=20.0)
+        # Docker Desktop on Windows can take materially longer to cold-start
+        # the first isolated cell than the Linux qualification host. Keep the
+        # behavioral assertion strict while allowing that documented startup
+        # envelope, matching the E2E restart journey below.
+        _wait_for_path(marker, first, timeout=120.0 if os.name == "nt" else 20.0)
         store = SqliteJobStore(config.database_path, migration_now=_NOW)
         before_crash = store.read_cell_results(RunId("run-process-crash"))
         assert len(before_crash) == 3
