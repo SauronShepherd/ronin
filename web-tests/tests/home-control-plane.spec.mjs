@@ -8,6 +8,8 @@ test.describe('home control plane', () => {
     await expect(page.locator('#home-overview-title')).toHaveText('One clear path from data to decision.');
     await expect(page.locator('.home-context-card')).toContainText('default / examples/demo');
     await expect(page.locator('.home-context-source')).toContainText('Example context');
+    await expect(page.locator('.context-bar')).toContainText('Workspacedefault');
+    await expect(page.locator('.context-change')).toHaveAttribute('href', '#workspaces');
     await expect(page.locator('.home-status-card')).toHaveCount(4);
     await expect(page.locator('.home-journey-list li')).toHaveCount(3);
     await expect(page.locator('.home-shortcut')).toHaveCount(3);
@@ -54,6 +56,9 @@ test.describe('home control plane', () => {
     await page.keyboard.press(process.platform === 'darwin' ? 'Meta+K' : 'Control+K');
     await expect(page.locator('.command-palette')).toBeVisible();
     await page.locator('#ronin-command-search').fill('quality');
+    await expect(page.locator('.command-option')).toContainText('Quality Studio');
+    await expect(page.locator('.command-option-copy small')).toContainText('Run checks and review promotion gates.');
+    await page.locator('#ronin-command-search').fill('promotion gates');
     await expect(page.locator('.command-option')).toContainText('Quality Studio');
     await page.keyboard.press('Escape');
     await expect(page.locator('.command-palette')).not.toBeVisible();

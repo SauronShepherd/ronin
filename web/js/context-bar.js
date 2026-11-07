@@ -5,6 +5,12 @@ const labels = Object.freeze({
   dataset: 'Dataset', run: 'Run', compare: 'Compare',
 });
 
+const defaultContext = Object.freeze({workspace: 'default', project: 'examples/demo', runtime: 'local'});
+
+function escape(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+}
+
 export function renderContextBar(context = globalThis.roninStudioContext || {}) {
   const topbar = document.querySelector('.topbar');
   if (!topbar) return;
@@ -14,11 +20,12 @@ export function renderContextBar(context = globalThis.roninStudioContext || {}) 
     bar.className = 'context-bar';
     bar.setAttribute('role', 'region');
     bar.setAttribute('aria-label', 'Studio context');
-    topbar.append(bar);
+    topbar.insertBefore(bar, topbar.querySelector('.connection-open'));
   }
-  const items = studioContextKeys().filter((key) => context[key]);
-  bar.innerHTML = items.map((key) => `<span class="context-chip"><b>${labels[key]}</b><span>${String(context[key]).replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]))}</span></span>`).join('');
-  bar.hidden = items.length === 0;
+  const resolved = {...defaultContext, ...context};
+  const items = studioContextKeys().filter((key) => resolved[key]);
+  bar.innerHTML = `${items.map((key) => `<span class="context-chip"><b>${labels[key]}</b><span>${escape(resolved[key])}</span></span>`).join('')}<a class="context-change" href="#workspaces">Change context</a>`;
+  bar.hidden = false;
 }
 
 if (document.readyState === 'loading') {

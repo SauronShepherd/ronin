@@ -1,7 +1,32 @@
 import {t} from './i18n.js';
 import routesManifest from '../routes.json' with {type: 'json'};
 
-const commands = routesManifest.map(({id}) => [`nav.${id}`, id]);
+const groupByRoute = Object.freeze({
+  home: 'Overview', runs: 'Operate', workspaces: 'Workspace', projects: 'Workspace', environments: 'Workspace',
+  data: 'Build', ingestion: 'Build', notebooks: 'Build', workflows: 'Build', streaming: 'Build',
+  migration: 'Studios', synthetic: 'Studios', mlstudio: 'Studios', cloud: 'Studios',
+  sql: 'Explore', semantic: 'Explore', catalog: 'Explore', graphs: 'Explore',
+  quality: 'Operate', alerts: 'Operate', finops: 'Operate', deployments: 'Operate', performance: 'Operate', debugger: 'Operate',
+  settings: 'Settings',
+});
+
+const descriptions = Object.freeze({
+  home: 'See the current boundary and the next governed action.', runs: 'Follow status, events and evidence for durable work.',
+  workspaces: 'Choose the workspace boundary for your work.', projects: 'Create, inspect and move project revisions safely.',
+  environments: 'Compare and bind execution environments.', data: 'Shape pipelines, SQL and connector intent.',
+  ingestion: 'Discover sources, preview data and plan syncs.', notebooks: 'Author, version and execute notebooks.',
+  workflows: 'Schedule and recover durable workflows.', streaming: 'Inspect streams, checkpoints and lag.',
+  migration: 'Discover, validate and promote migration candidates.', synthetic: 'Generate governed synthetic data.',
+  mlstudio: 'Train, compare and qualify classical ML assets.', cloud: 'Review infrastructure plans without applying them.',
+  sql: 'Run bounded, read-only SQL.', semantic: 'Model metrics and execute dashboards.',
+  catalog: 'Find governed assets and lineage.', graphs: 'Query relationships and dispatch governed actions.',
+  quality: 'Run checks and review promotion gates.', alerts: 'Monitor signals and acknowledge incidents.',
+  finops: 'Inspect usage, budgets and cost evidence.', deployments: 'Bind projects to runtime environments.',
+  performance: 'Analyze measured runtime evidence.', debugger: 'Inspect bounded sessions and breakpoints.',
+  settings: 'Configure connection and navigation preferences.',
+});
+
+const commands = routesManifest.map(({id}) => ({id, route: id, label: t(`nav.${id}`), description: descriptions[id] || 'Open this Ronin Studio surface.', group: groupByRoute[id] || 'More'}));
 
 let dialog;
 let input;
@@ -32,19 +57,24 @@ function ensure() {
 
 function filtered() {
   const query = (input?.value || '').toLowerCase().trim();
-  return commands.filter(([id, route]) => t(id).toLowerCase().includes(query) || route.toLowerCase().includes(query));
+  return commands.filter((command) => [command.label, command.route, command.description, command.group].some((value) => value.toLowerCase().includes(query)));
 }
 
 function render() {
   const visible = filtered();
   selected = Math.min(selected, Math.max(visible.length - 1, 0));
-  list.innerHTML = visible.map(([id, route], index) => `<button type="button" class="command-option" role="option" aria-selected="${index === selected}" data-command-route="${route}">${t(id)}</button>`).join('') || `<p class="muted">${t('command.empty')}</p>`;
+  let previousGroup = '';
+  list.innerHTML = visible.map((command, index) => {
+    const heading = command.group !== previousGroup ? `<p class="command-group" role="presentation">${command.group}</p>` : '';
+    previousGroup = command.group;
+    return `${heading}<button type="button" class="command-option" role="option" aria-selected="${index === selected}" aria-label="${command.label}: ${command.description}" data-command-route="${command.route}"><span class="command-option-copy"><strong>${command.label}</strong><small>${command.description}</small></span><kbd>${command.route}</kbd></button>`;
+  }).join('') || `<p class="muted">${t('command.empty')}</p>`;
 }
 
 function open(command) {
   if (!command) return;
   dialog.close();
-  window.location.hash = command[1];
+  window.location.hash = command.route;
 }
 
 export function openCommandPalette() {

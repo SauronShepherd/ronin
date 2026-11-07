@@ -5,7 +5,7 @@ test('hash navigation supports deep links and browser back/forward', async ({ pa
   await expect(page.locator('#breadcrumb')).toHaveText('Runs');
   await expect(page.locator('#view')).toBeVisible();
 
-  await page.locator('a[href="#workspaces"]').click();
+  await page.getByRole('link', { name: 'Workspaces', exact: true }).click();
   await expect(page).toHaveURL(/#workspaces$/);
   await expect(page.locator('#breadcrumb')).toHaveText('Workspaces');
 
