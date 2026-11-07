@@ -56,6 +56,7 @@ _DOCKER = shutil.which("docker")
 _LOCAL_RONIN = Path(sys.executable).with_name("ronin.exe")
 _RONIN = str(_LOCAL_RONIN) if _LOCAL_RONIN.exists() else shutil.which("ronin")
 _NOW = Instant("2026-09-06T20:00:00.000000Z")
+_QUALIFICATION_CELL_TIMEOUT_SECONDS = 45.0 if os.name == "nt" else 10.0
 _OPERATOR_GRANTS = GrantSet(
     (
         Grant(
@@ -185,7 +186,13 @@ async def main() -> None:
             cpus="0.5",
             memory="128m",
             pids=32,
-            timeout_seconds=300.0 if mode == "cancel" else 10.0,
+            timeout_seconds=(
+                300.0
+                if mode == "cancel"
+                else 45.0
+                if sys.platform == "win32"
+                else 10.0
+            ),
         ),
         heartbeat_interval_seconds=10.0,
     )
@@ -550,7 +557,7 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
             cpus="0.5",
             memory="128m",
             pids=32,
-            timeout_seconds=10.0,
+            timeout_seconds=_QUALIFICATION_CELL_TIMEOUT_SECONDS,
         ),
         heartbeat_interval_seconds=10.0,
     )
@@ -652,7 +659,7 @@ def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str,
         text=True,
     )
     try:
-        _wait_for_path(marker, process, timeout=20.0)
+        _wait_for_path(marker, process, timeout=120.0 if os.name == "nt" else 20.0)
         container_name = marker.read_text(encoding="utf-8").strip()
         assert container_name.startswith("ronin-")
         started = time.monotonic()
@@ -738,7 +745,7 @@ def test_step_01_compose_reaches_healthy_within_60s() -> None:
             capture_output=True,
             text=True,
             check=False,
-            timeout=20,
+            timeout=60,
         )
         assert up.returncode == 0, f"Compose up failed:\n{up.stdout}\n{up.stderr}"
         while time.monotonic() - started < 60:

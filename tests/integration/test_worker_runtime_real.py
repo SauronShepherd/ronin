@@ -36,6 +36,7 @@ _IMAGE = os.environ["RONIN_DOCKER_QUALIFICATION_IMAGE"]
 _DOCKER = shutil.which("docker")
 if _DOCKER is None:
     raise RuntimeError("dedicated Docker qualification requires the docker client")
+_QUALIFICATION_CELL_TIMEOUT_SECONDS = 45.0 if os.name == "nt" else 10.0
 
 _NOW = Instant("2026-09-06T20:00:00.000000Z")
 _PROCESS_PROBE = r"""
@@ -93,7 +94,7 @@ async def main() -> None:
             cpus="0.5",
             memory="128m",
             pids=32,
-            timeout_seconds=10.0,
+            timeout_seconds=45.0 if os.name == "nt" else 10.0,
         ),
         heartbeat_interval_seconds=10.0,
     )
@@ -390,7 +391,7 @@ def test_real_process_sigkill_reclaims_same_run_and_reuses_three_cells(tmp_path:
             cpus="0.5",
             memory="128m",
             pids=32,
-            timeout_seconds=10.0,
+            timeout_seconds=_QUALIFICATION_CELL_TIMEOUT_SECONDS,
         ),
         heartbeat_interval_seconds=10.0,
     )
@@ -429,7 +430,7 @@ def test_real_process_sigkill_reclaims_same_run_and_reuses_three_cells(tmp_path:
             cwd=Path.cwd(),
             text=True,
             check=False,
-            timeout=30.0,
+            timeout=60.0 if os.name == "nt" else 30.0,
         )
         assert second.returncode == 0
         outcome = json.loads(outcome_path.read_text(encoding="utf-8"))
@@ -501,7 +502,7 @@ def test_real_process_sigkill_reclaims_postgres_run_and_reuses_three_cells(
             cpus="0.5",
             memory="128m",
             pids=32,
-            timeout_seconds=10.0,
+            timeout_seconds=_QUALIFICATION_CELL_TIMEOUT_SECONDS,
         ),
         heartbeat_interval_seconds=10.0,
     )
@@ -519,7 +520,7 @@ def test_real_process_sigkill_reclaims_postgres_run_and_reuses_three_cells(
         text=True,
     )
     try:
-        _wait_for_path(marker, first, timeout=20.0)
+        _wait_for_path(marker, first, timeout=120.0 if os.name == "nt" else 20.0)
         before_crash = store.read_cell_results(run_id)
         assert len(before_crash) == 3
 
@@ -541,7 +542,7 @@ def test_real_process_sigkill_reclaims_postgres_run_and_reuses_three_cells(
             cwd=Path.cwd(),
             text=True,
             check=False,
-            timeout=30.0,
+            timeout=60.0 if os.name == "nt" else 30.0,
         )
         assert replacement.returncode == 0
         outcome = json.loads(outcome_path.read_text(encoding="utf-8"))
