@@ -7,16 +7,20 @@
 
 ## Current exact-SHA qualification — 7 November 2026
 
-Code candidate `d18b31a69778be0841c5b7ccdb931ae0327b989f` is technically green in
-the available local qualification scope: live UI/API `33/33` over 25 routes and
-246 correlated API events; Docker `27/27` plus strict acceptance `15/15`; Helm/
-kind rollout, authorized API, queued-job persistence after restart and cleanup;
-the corrected capability-matrix contract `3/3`; and exact VEX, Gitleaks and
-pip-audit dev/test-lock checks. The runtime image is
+Code candidate `d18b31a69778be0841c5b7ccdb931ae0327b989f` is green in the
+available service-backed and focused qualification scope: live UI/API `33/33`
+over 25 routes and 246 correlated API events; Docker `27/27` plus strict
+acceptance `15/15`; Helm/kind rollout, authorized API, queued-job persistence
+after restart and cleanup; the corrected capability-matrix contract `3/3`;
+static Chromium `123/123`; and exact VEX, Gitleaks and pip-audit dev/test-lock
+checks. The runtime image is
 `sha256:002fde272f38e10850b63771e9e9f207a0fa77f46eefbd9fdb720a811f94ca8d`.
 Docker Scout's 3 raw findings reduce to 0 with the candidate-bound exact-digest
-VEX. The first full Python run exposed one stale documentation baseline; after
-synchronization, the targeted contract passed.
+VEX. The full Python/PostgreSQL lane is not yet a stable zero-failure receipt on
+this Windows host: randomized order hit one PostgreSQL composition timeout and
+natural order hit three subprocess timeout assertions, while isolated reruns
+passed the affected lanes. The first stale documentation baseline was corrected
+and the targeted status contract passed.
 
 This does not change the release decision: Public v1 remains **0/13 (0%,
 NO-GO)**. Manual visual/product signoff, legal/NOTICE/claims, security reviewer

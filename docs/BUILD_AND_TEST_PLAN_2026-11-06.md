@@ -53,11 +53,13 @@ El control de presupuesto se recalibró después de medir los cambios aprobados:
 En `d18b31a69778be0841c5b7ccdb931ae0327b989f` la suite estática Chromium pasa
 `123/123`; la suite focalizada de Home/Studio, presupuesto, auditoría web,
 consistencia de rutas, capability ledger, Ruff, mypy, `git diff --check` y la
-sincronización de ledgers quedan verdes. La suite Python/PostgreSQL inicial de
-este corte ejecutó `4.588` casos: `4.560 passed`, `27 skipped` y un único fallo
-de sincronización documental; la matriz se corrigió y el contrato de estado
-pasó `3/3`. Los skips corresponden a servicios externos, Docker opt-in o límites
-del host y no se convierten en soporte anunciado.
+sincronización de ledgers quedan verdes. La suite Python/PostgreSQL completa
+todavía no es un receipt cero-fallos estable en este host: el orden aleatorio
+registró `4.560 passed`, `27 skipped` y un timeout de composición PostgreSQL;
+el orden natural registró `4.558 passed`, `27 skipped` y tres timeouts de
+subprocesos. Las repeticiones aisladas pasaron la jornada PostgreSQL `1/1` y la
+lane de procesos `22/22`. Los skips corresponden a servicios externos, Docker
+opt-in o límites del host y no se convierten en soporte anunciado.
 
 ### Qualification exact-SHA final del candidato
 
@@ -194,7 +196,7 @@ Matriz web obligatoria: Chromium como base, Firefox/WebKit cuando el runner est�
 
 ## 8. Decisión de salida de este ciclo
 
-El candidato de código queda **implementado y verde en los gates técnicos locales y en la qualification exact-SHA disponible**, pero no es todavía release-qualified. La decisión global sigue siendo **NO-GO**: la UI ha mejorado hacia un control plane más claro y original, pero aún no alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric; el ledger Public v1 mantiene `0/13` familias cualificadas; faltan revisión visual/manual formal, revisión legal/NOTICE/claims, aceptación humana de seguridad/VEX, Trivy, Terraform `1.13.5`, qualification de proveedores y gobernanza CI/branch/release. Los skips externos y la ausencia de Trivy no se presentan como verde. La siguiente iteración debe cerrar estos gates y ampliar las superficies de autoría, evidencia y operación; no debe maquillar el ledger.
+El candidato de código queda **implementado y con las lanes live/Docker/Helm/web y los contratos focalizados verdes**, pero la lane Python/PostgreSQL completa aún necesita una repetición estable sin timeouts inducidos por carga del host; por eso no se declara todo el verde técnico. Tampoco es release-qualified. La decisión global sigue siendo **NO-GO**: la UI ha mejorado hacia un control plane más claro y original, pero aún no alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric; el ledger Public v1 mantiene `0/13` familias cualificadas; faltan revisión visual/manual formal, revisión legal/NOTICE/claims, aceptación humana de seguridad/VEX, Trivy, Terraform `1.13.5`, qualification de proveedores y gobernanza CI/branch/release. Los skips externos y la ausencia de Trivy no se presentan como verde. La siguiente iteración debe cerrar primero la estabilidad de la suite completa y después estos gates y las superficies de autoría, evidencia y operación; no debe maquillar el ledger.
 
 ## 9. Plan de iteración 2 hacia GO
 
@@ -230,6 +232,12 @@ NO-GO en GO deben cerrarse, en este orden, los siguientes gates:
    aplicable, el security/legal/product sign-off y el expediente exact-SHA tengan
    receipts consistentes. En caso contrario, mantener `0/13` y publicar el
    siguiente bloqueo concreto.
+7. **Estabilidad de qualification:** repetir la suite Python/PostgreSQL completa
+   en un host estable, con el mismo SHA, y conservar el orden y el seed usados.
+   Los timeouts observados en composición PostgreSQL y en tres contratos de
+   subprocesos no se convierten en `pass` por haber pasado en aislamiento; si
+   reaparecen, aislar la fuga de recursos o la presión de procesos antes de
+   promocionar el candidato.
 
 **Criterio de salida de la iteración 2:** todos los gates anteriores en `pass`,
 ningún `skip` usado como soporte anunciado, `progress.complete = 13`, revisión

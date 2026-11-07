@@ -2,18 +2,19 @@
 
 ## Current exact-SHA snapshot — 7 November 2026
 
-The code candidate is `d18b31a69778be0841c5b7ccdb931ae0327b989f`. Its exact
-qualification receipts are green for the available local scope: live browser/API
-`33/33` across 25 routes with 246 correlated events, no unexpected authorization
-gaps and no server/network errors; Docker `27/27` plus strict v0.1 `15/15`;
+The code candidate is `d18b31a69778be0841c5b7ccdb931ae0327b989f`. Its service-
+backed and focused qualification receipts are green: live browser/API `33/33`
+across 25 routes with 246 correlated events, no unexpected authorization gaps
+and no server/network errors; Docker `27/27` plus strict v0.1 `15/15`;
 Helm/kind install, authorized API, persisted queued job after restart and cleanup;
-the corrected capability-matrix contract `3/3`; and VEX, Gitleaks and pip-audit
-dev/test-lock scans. The runtime digest is
+static Chromium `123/123`; the corrected capability-matrix contract `3/3`; and
+VEX, Gitleaks and pip-audit dev/test-lock scans. The runtime digest is
 `sha256:002fde272f38e10850b63771e9e9f207a0fa77f46eefbd9fdb720a811f94ca8d`.
 Docker Scout reports 3 raw findings and 0 after the exact candidate-bound VEX.
-The first full Python run exposed one stale documentation baseline; after the
-matrix was synchronized to this SHA, its targeted contract passed. These receipts
-establish a strong technical candidate, not release approval: the ledger remains
+The full Python/PostgreSQL lane is not yet a stable zero-failure receipt on this
+Windows host: one randomized run hit a PostgreSQL composition timeout and one
+natural-order run hit three subprocess timeout assertions; isolated reruns pass.
+These receipts establish a strong but not fully closed technical candidate, not release approval: the ledger remains
 **0/13 families qualified** because mandatory family journeys, provider matrix,
 manual visual review, legal/claims decisions, Trivy, Terraform pin and security
 acceptance are still open. The UI target remains a deliberate next phase: unify
