@@ -2,9 +2,9 @@
 
 **Decision:** NO-GO / release not qualified
 
-**Last evidence review:** 4 November 2026
+**Last evidence review:** 7 November 2026
 
-**Candidate SHA:** none; current implementation baseline is `bf9d0f732e53705b37a847177d1729b53e688294` on `20261029` (not a frozen release candidate)
+**Candidate SHA:** code candidate `1daa6c5f63b75a08bcd15c06c243870bad169199`; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -19,6 +19,26 @@ non-empty set of uniquely identified blocking conditions, each with a valid
 status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
+
+## 7 November exact-candidate refresh
+
+The exact code candidate `1daa6c5f63b75a08bcd15c06c243870bad169199` now has a
+complete local technical receipt: Python/PostgreSQL `4562 passed, 27 skipped,
+0 failed` of `4589`; static Chromium `124/124`; Docker `27/27` with strict
+v0.1 `15/15`; Helm/kind install, health, authorized Studio/API, persistence
+after restart and cleanup; and live `33/33` across 25 active routes with 242
+correlated events, 0 server/network errors and 0 unexpected authorization
+gaps. Runtime image digest is
+`sha256:2095881cdaad054ddf0361cad48f0d99d19e9b1b9a777d32fb88b6aeb0ad4a70`.
+The exact VEX receipt reports 3 raw findings and 0 after the documented
+digest-bound exception; Gitleaks reports 0 findings in 90.62 MB and pip-audit
+reports no known vulnerabilities in the hash-pinned dev/test locks.
+
+This closes local technical host-stability evidence, but not release: the 13
+family ledger remains 0/13, the VEX exception needs security-reviewer sign-off,
+Trivy is unavailable on this host, the artifact/SBOM/provenance and rollback
+bundle is incomplete, and maintainer/legal/product, provider and manual visual
+decisions remain open. The decision is therefore still **NO-GO**.
 
 ## 4 November clean-source diagnostic refresh
 

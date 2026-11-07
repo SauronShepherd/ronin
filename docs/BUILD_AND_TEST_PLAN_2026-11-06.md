@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-07 (Europe/Madrid)
-**Fuente de código:** worktree exacto de qualification en `d18b31a69778be0841c5b7ccdb931ae0327b989f` (código candidato; la documentación final se sincronizará después sin cambiar el SHA de código)
+**Fuente de código:** worktree exacto de qualification en `1daa6c5f63b75a08bcd15c06c243870bad169199` (código candidato; la documentación final se sincroniza después sin cambiar el SHA de código)
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -50,34 +50,45 @@ El control de presupuesto se recalibró después de medir los cambios aprobados:
 
 ### Verificación exacta del corte 2026-11-07
 
-En `d18b31a69778be0841c5b7ccdb931ae0327b989f` la suite estática Chromium pasa
-`123/123`; la suite focalizada de Home/Studio, presupuesto, auditoría web,
-consistencia de rutas, capability ledger, Ruff, mypy, `git diff --check` y la
-sincronización de ledgers quedan verdes. La suite Python/PostgreSQL completa
-todavía no es un receipt cero-fallos estable en este host: el orden aleatorio
-registró `4.560 passed`, `27 skipped` y un timeout de composición PostgreSQL;
-el orden natural registró `4.558 passed`, `27 skipped` y tres timeouts de
-subprocesos. Las repeticiones aisladas pasaron la jornada PostgreSQL `1/1` y la
-lane de procesos `22/22`. Los skips corresponden a servicios externos, Docker
-opt-in o límites del host y no se convierten en soporte anunciado.
+En `1daa6c5f63b75a08bcd15c06c243870bad169199` la suite estática Chromium
+actualizada pasa `124/124`; la suite focalizada de Home/Studio, presupuesto,
+auditoría web, consistencia de rutas, capability ledger, Ruff, mypy,
+`git diff --check` y la sincronización de ledgers quedan verdes. La suite
+Python/PostgreSQL completa queda verde sobre este candidato: `4562 passed`,
+`27 skipped`, `0 failed` de `4589` en 618,35 s. Los skips son explícitos y
+corresponden a Docker/servicios externos opt-in o limitaciones POSIX/Windows;
+no se convierten en soporte anunciado.
+
+La iteración encontró y corrigió dos problemas de robustez de qualification,
+no del producto: drenaje de cuerpos HTTP rechazados en Windows y tolerancias
+de arranque frío de Docker Desktop sólo en pruebas de integración Windows. La
+cuarta qualification Docker exacta queda verde: `27/27` y acceptance v0.1
+estricta `15/15`; las pasadas previas expusieron timeouts ambientales y un
+error del probe de test, corregidos antes del recibo final.
 
 ### Qualification exact-SHA final del candidato
 
-La qualification exacta disponible para `d18b31a` queda ligada al mismo árbol de
-código: Docker `27/27` y acceptance v0.1 estricta `15/15`, con runtime digest
-`sha256:002fde272f38e10850b63771e9e9f207a0fa77f46eefbd9fdb720a811f94ca8d`;
-Helm/kind pasó lint, boundary de Secret, instalación, rollout, health,
-Studio/API autorizado, job persistente tras restart y cleanup; live pasó `33/33`
-casos, `25` rutas, `246` eventos correlacionados, `0` gaps de autorización
-inesperados y `0` errores de servidor/red. Evidencia: `%TEMP%\\ronin-docker-d18b31a-20261107`,
-`%TEMP%\\ronin-helm-d18b31a-20261107` y `%TEMP%\\ronin-live-d18b31a-20261107`.
+La qualification exacta de `1daa6c5` está ligada al mismo árbol de código:
 
-Docker Scout `1.27.0` encontró `3` findings raw y `0` tras el VEX exacto para
-runtime `sha256:002fde...` y probe `sha256:2fd481...`; el receipt está en
-`%TEMP%\\ronin-vex-d18b31a-20261107`. Gitleaks `8.30.1` encontró `0` leaks en
-52.74 MB; `pip-audit 2.10.1` encontró `0` advisories en los locks dev y test.
-Trivy no está instalado en el host y por tanto sigue siendo un gate abierto, al
-igual que la aceptación humana del VEX y la revisión legal/claims.
+- Docker: `27/27`, strict v0.1 `15/15`, runtime
+  `sha256:2095881cdaad054ddf0361cad48f0d99d19e9b1b9a777d32fb88b6aeb0ad4a70`.
+- Helm/kind: lint, boundary de Secret, instalación, rollout, health,
+  Studio/API autorizado, job persistente tras restart y cleanup, todo verde.
+- Live: `33/33`, `25` rutas activas, `24` contratos API, `242` eventos
+  correlacionados, `0` gaps de autorización inesperados y `0` errores de
+  servidor/red.
+- Python/PostgreSQL: `4562/4589` passed, `27` skips explícitos y `0` fallos en
+  `%TEMP%\\ronin-python-full-1daa6c5-natural-20261107`.
+- VEX exacto: Docker Scout `1.27.0`, `3` findings raw y `0` aplicados para
+  runtime `sha256:209588...` y probe
+  `sha256:27d604bf696f490cec95668b31bdfb8207c50f4cdaca17aa0b1cd64587c54a62`.
+
+Evidencia: `%TEMP%\\ronin-python-full-1daa6c5-natural-20261107`,
+`%TEMP%\\ronin-docker-e1c501a-r4-20261107`,
+`%TEMP%\\ronin-helm-e1c501a-r4-20261107`,
+`%TEMP%\\ronin-live-e1c501a-r4b-20261107` y
+`%TEMP%\\ronin-vex-1daa6c5-r4c-20261107`. El VEX sigue requiriendo aceptación
+del security reviewer; Trivy no está instalado en el host y permanece abierto.
 
 ### Hallazgo de la qualification exact-SHA
 
@@ -173,9 +184,12 @@ servicios. En este entorno Windows sin DSN esa lane queda explícitamente
 pendiente; no se cuenta como cobertura certificada ni como motivo para marcar la
 release en verde.
 
-Los dos tests que lanzan un proceso Python auxiliar usan un margen de 15 s sólo
-para tolerar el coste de Windows bajo branch coverage; los tests de timeout,
-cancelación y finalización siguen siendo independientes y no se relajan.
+Los probes de qualification que lanzan procesos Python auxiliares mantienen
+10 s por celda en Linux y usan 45 s por celda sólo en Windows, además de 120 s
+para observar el arranque frío de Docker Desktop. Los tests de timeout,
+cancelación, aislamiento y finalización siguen siendo independientes y no se
+relajan; estos márgenes sólo evitan falsos negativos de infraestructura del
+host.
 
 Matriz web obligatoria: Chromium como base, Firefox/WebKit cuando el runner esté disponible; 320×720, 390×844, 520×900, 768×1024, 900×900, 1024×900, 1280×900 y 1440×900. Cada ruta debe tener: carga, navegación, foco, empty/loading/error, no `undefined`, no errores de consola y overflow acotado.
 

@@ -2,19 +2,18 @@
 
 ## Current exact-SHA snapshot — 7 November 2026
 
-The code candidate is `d18b31a69778be0841c5b7ccdb931ae0327b989f`. Its service-
-backed and focused qualification receipts are green: live browser/API `33/33`
-across 25 routes with 246 correlated events, no unexpected authorization gaps
+The code candidate is `1daa6c5f63b75a08bcd15c06c243870bad169199`. Its
+service-backed qualification receipts are green: live browser/API `33/33`
+across 25 routes with 242 correlated events, no unexpected authorization gaps
 and no server/network errors; Docker `27/27` plus strict v0.1 `15/15`;
 Helm/kind install, authorized API, persisted queued job after restart and cleanup;
-static Chromium `123/123`; the corrected capability-matrix contract `3/3`; and
-VEX, Gitleaks and pip-audit dev/test-lock scans. The runtime digest is
-`sha256:002fde272f38e10850b63771e9e9f207a0fa77f46eefbd9fdb720a811f94ca8d`.
+static Chromium `124/124`; and exact VEX checks. The runtime digest is
+`sha256:2095881cdaad054ddf0361cad48f0d99d19e9b1b9a777d32fb88b6aeb0ad4a70`.
 Docker Scout reports 3 raw findings and 0 after the exact candidate-bound VEX.
-The full Python/PostgreSQL lane is not yet a stable zero-failure receipt on this
-Windows host: one randomized run hit a PostgreSQL composition timeout and one
-natural-order run hit three subprocess timeout assertions; isolated reruns pass.
-These receipts establish a strong but not fully closed technical candidate, not release approval: the ledger remains
+The full Python/PostgreSQL receipt is green on this candidate: `4562 passed`,
+`27 skipped`, `0 failed` of `4589`; explicit skips remain environment evidence,
+not support claims. These receipts establish a strong but not fully closed
+technical candidate, not release approval: the ledger remains
 **0/13 families qualified** because mandatory family journeys, provider matrix,
 manual visual review, legal/claims decisions, Trivy, Terraform pin and security
 acceptance are still open. The UI target remains a deliberate next phase: unify
@@ -133,7 +132,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `424be364c0e2599db3c66b87cdbc635ccf0ad2f8` (documentation-synchronized candidate snapshot, 2026-11-07; worktree branch `main`). The implementation evidence remains bound to code candidate `d18b31a69778be0841c5b7ccdb931ae0327b989f`; this is not a release qualification claim, the capability-family ledger remains conservative and the required human/provider gates are open.
+**Observed source baseline:** `1daa6c5f63b75a08bcd15c06c243870bad169199` (documentation-synchronized candidate snapshot, 2026-11-07; worktree branch `main`). The implementation evidence remains bound to code candidate `1daa6c5f63b75a08bcd15c06c243870bad169199`; this is not a release qualification claim, the capability-family ledger remains conservative and the required human/provider gates are open.
 
 **Historical qualification evidence (pre-current no-CI release policy; not a current gate):** `94d8ae2eb9d73f1e367cb7437873650381e90ad2` (`main`, after PR #546 on 2026-10-24; all six exact-head post-merge workflows passed; mutation skipped by policy). The historical workflow references below record repository history only; they do not mean CI is enabled, required, or part of this release. PR #436 executes the supported six-stage PipelineIR in stable topological order; PR #438/#439 add durable checkpoints and PostgreSQL resume pagination; PR #441 stores verified tabular and K-Means model outputs in `ArtifactStore`; PR #443 registers successful durable runs as candidate models after digest verification; PR #445 integrates registration into Studio; PR #446 adds authorized chunked artifact retrieval and a bounded UI download flow; PR #447 binds checkpoints/results to executable source, Python/dependency versions, backend identity, execution options and upstream outputs; PR #448 adds promotion after execution registration; PR #449 adds selective retry from an explicitly selected ML pipeline stage; PR #450 qualifies artifact lifecycle behavior against S3-compatible LocalStack; PR #451 passes the exact pinned PipelineIR to scheduled runners; PR #452 exposes algorithm selection; PR #453 adds standard scaling; PR #454 adds categorical one-hot encoding; PR #455 adds median imputation; PR #456 composes one-hot encoding and median imputation for mixed features; PR #457 adds a non-destructive retention preview, while global deletion remains disabled; PR #458 adds catalog and ML artifact reference discovery; PR #459 adds bounded durable job evidence and checkpoint discovery; PR #460 discovers all nine reference families and combines them into a fail-closed snapshot; PR #461 bounds workspace/catalog/ML enumeration and fails closed when any inventory exceeds its limit; PR #462 bounds local artifact pagination memory with stable digest cursors; PR #464 bounds manual stale-artifact collection and completes the inventory before deleting, while global cleanup remains disabled; PR #466 bounds durable job evidence and cell-result reads across SQLite, PostgreSQL and memory; PR #470 adds candidate DAGs for classification/regression; PR #471 adds K-Means candidate selection; PR #472 exposes candidate selection in Studio; PR #473 bounds search-space memory; PR #475 gives trials stable identities and derived seeds; PR #476 validates complete search domains before training; PR #477 applies Bayesian stopping by recent improvement; PR #478 adds ordered, directional ML trial tie-breakers; PR #480 caps tie-breaker count at eight and rejects unknown keys to match OpenAPI; PR #482 requires explicit opt-in before an empty live set may delete every artifact; PR #501 records the exact-head artifact-writer inventory audit and its six passing post-merge workflows; PR #502 exposes bounded custom PipelineIR v2 candidate submissions; PR #503 adds independently configured prepare branches and checkpoint recovery; PR #505 adds bounded algorithm×preprocessor candidate grids (maximum eight combinations); PR #509 adds durable selected-model registration after artifact identity revalidation; PR #515 closes the runbook, shell regression and candidate-hardening audit; PR #522 adds exact rollback evidence for a late PostgreSQL multi-object Bundle conflict; PRs #523/#524 reuse a single verified archive across project/connection and remaining multi-object importers; PR #525 adds atomic, exact-replay semantic model/dashboard Bundle import; PR #526 adds portable streaming-definition Bundles with explicit remaps and checkpoint reset/resume identity. PR #527 adds atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends atomic, exact-replay ML Registry Bundle import to PostgreSQL, including same-transaction feature definitions. PR #529 fixes POSIX subprocess return-code collection; CI 3.11/3.12, Docker/PostgreSQL and all six exact-head post-merge workflows passed. PR #531 reconciles ML release wording. PR #532 makes ontology Bundle imports atomic and exact-replay in SQLite; late missing assets and definition conflicts roll back the full batch. CI, Docker/PostgreSQL storage coverage and all six exact-head workflows passed. No Public v1 family is release-qualified.
 

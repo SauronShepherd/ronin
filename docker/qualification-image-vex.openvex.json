@@ -1,18 +1,18 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/SauronShepherd/ronin/blob/ac2649e7f50949085818c5abb68e038c69d0c23b/docker/qualification-image-vex.openvex.json",
+  "@id": "https://github.com/SauronShepherd/ronin/blob/1daa6c5f63b75a08bcd15c06c243870bad169199/docker/qualification-image-vex.openvex.json",
   "author": "Ronin release qualification",
-  "timestamp": "2026-11-07T10:09:31Z",
+  "timestamp": "2026-11-07T19:22:13Z",
   "version": 2,
   "statements": [
     {
       "vulnerability": {
         "name": "CVE-2026-107891"
       },
-      "timestamp": "2026-11-07T10:09:31Z",
+      "timestamp": "2026-11-07T19:22:13Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:002fde272f38e10850b63771e9e9f207a0fa77f46eefbd9fdb720a811f94ca8d",
+          "@id": "pkg:docker/ronin@sha256:2095881cdaad054ddf0361cad48f0d99d19e9b1b9a777d32fb88b6aeb0ad4a70",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"
@@ -20,7 +20,7 @@
           ]
         },
         {
-          "@id": "pkg:docker/ronin-probe@sha256:2fd481e5690f109d9536574a208b92c39318fd4430b888132396f68012264188",
+          "@id": "pkg:docker/ronin-probe@sha256:27d604bf696f490cec95668b31bdfb8207c50f4cdaca17aa0b1cd64587c54a62",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"
@@ -36,10 +36,10 @@
       "vulnerability": {
         "name": "CVE-2026-119586"
       },
-      "timestamp": "2026-11-07T10:09:31Z",
+      "timestamp": "2026-11-07T19:22:13Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:002fde272f38e10850b63771e9e9f207a0fa77f46eefbd9fdb720a811f94ca8d",
+          "@id": "pkg:docker/ronin@sha256:2095881cdaad054ddf0361cad48f0d99d19e9b1b9a777d32fb88b6aeb0ad4a70",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"
@@ -47,7 +47,7 @@
           ]
         },
         {
-          "@id": "pkg:docker/ronin-probe@sha256:2fd481e5690f109d9536574a208b92c39318fd4430b888132396f68012264188",
+          "@id": "pkg:docker/ronin-probe@sha256:27d604bf696f490cec95668b31bdfb8207c50f4cdaca17aa0b1cd64587c54a62",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"
@@ -63,10 +63,10 @@
       "vulnerability": {
         "name": "CVE-2026-4738"
       },
-      "timestamp": "2026-11-07T10:09:31Z",
+      "timestamp": "2026-11-07T19:22:13Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:002fde272f38e10850b63771e9e9f207a0fa77f46eefbd9fdb720a811f94ca8d",
+          "@id": "pkg:docker/ronin@sha256:2095881cdaad054ddf0361cad48f0d99d19e9b1b9a777d32fb88b6aeb0ad4a70",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"
@@ -74,7 +74,7 @@
           ]
         },
         {
-          "@id": "pkg:docker/ronin-probe@sha256:2fd481e5690f109d9536574a208b92c39318fd4430b888132396f68012264188",
+          "@id": "pkg:docker/ronin-probe@sha256:27d604bf696f490cec95668b31bdfb8207c50f4cdaca17aa0b1cd64587c54a62",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"
