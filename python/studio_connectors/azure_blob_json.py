@@ -7,6 +7,7 @@ import ipaddress
 import json
 from collections.abc import Mapping
 from datetime import date
+from importlib import import_module
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -26,7 +27,7 @@ from .contracts import ConnectorReadResult, DiscoveryPage
 
 def _azure() -> Any:
     try:
-        from azure.storage.blob import BlobServiceClient  # type: ignore[import-not-found]
+        BlobServiceClient = import_module("azure.storage.blob").BlobServiceClient
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError("Azure Blob JSON connector requires azure-storage-blob") from exc
     return BlobServiceClient
@@ -34,7 +35,7 @@ def _azure() -> Any:
 
 def _if_not_modified_match_condition() -> Any:
     try:
-        from azure.core import MatchConditions  # type: ignore[import-not-found]
+        MatchConditions = import_module("azure.core").MatchConditions
     except ImportError as exc:  # pragma: no cover - Azure SDK extra is optional
         raise RuntimeError("Azure Blob JSON connector requires azure-core") from exc
     return MatchConditions.IfNotModified
