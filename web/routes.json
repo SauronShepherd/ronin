@@ -1,5 +1,5 @@
 [
-  {"id":"home","title":"Home","state":"active","smoke_selector":"#view"},
+  {"id":"home","title":"Home","state":"active","required_api":["/v1/jobs"],"smoke_selector":"#view"},
   {"id":"runs","title":"Runs","state":"active","required_api":["/v1/jobs"],"smoke_selector":"#run-result"},
   {"id":"workspaces","title":"Workspaces","state":"active","required_api":["/v1/workspaces"],"smoke_selector":"#workspace-result"},
   {"id":"projects","title":"Projects","state":"active","required_api":["/v1/workspaces/{workspace_id}/projects","/v1/workspaces/{workspace_id}/projects/{project_id}","/v1/workspaces/{workspace_id}/projects/{project_id}/bundle","/v1/workspaces/{workspace_id}/projects/{project_id}/archive","/v1/workspaces/{workspace_id}/projects/{project_id}/permissions","/v1/workspaces/{workspace_id}/projects/{project_id}/environments/{environment_id}/bindings","/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/runs"],"smoke_selector":"#project-journey-form"},

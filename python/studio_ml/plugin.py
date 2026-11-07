@@ -5,8 +5,10 @@ import base64
 import hashlib
 import json
 import logging
+import os
 import time
-from contextlib import suppress
+from collections.abc import Iterator
+from contextlib import contextmanager, suppress
 from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any, Literal, cast
@@ -57,6 +59,35 @@ from .services import InMemoryMLLabStore, LabService
 MAX_PREDICTION_ROWS = 100_000
 MAX_PREDICTION_ARTIFACT_BYTES = 64 * 1024 * 1024
 _LOGGER = logging.getLogger(__name__)
+
+
+@contextmanager
+def _bounded_local_ml_threads() -> Iterator[None]:
+    """Keep small interactive trial searches from starving the HTTP server."""
+    names = (
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "BLIS_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    )
+    previous = {name: os.environ.get(name) for name in names}
+    for name in names:
+        os.environ[name] = "1"
+    try:
+        try:
+            from threadpoolctl import threadpool_limits  # type: ignore[import-untyped]
+        except ImportError:
+            yield
+        else:
+            with threadpool_limits(limits=1):
+                yield
+    finally:
+        for name, value in previous.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
 
 
 def _plugin_now() -> Instant:
@@ -2106,7 +2137,8 @@ class MachineLearningStudioPlugin:
                 effective_values.append((name, value))
             effective = tuple(effective_values)
             trial_started_at = time.perf_counter()
-            result = self._runner.run(candidate, rows, effective)
+            with _bounded_local_ml_threads():
+                result = self._runner.run(candidate, rows, effective)
             trial_duration_ms = (time.perf_counter() - trial_started_at) * 1000
             training_duration_ms += trial_duration_ms
             _LOGGER.info(
