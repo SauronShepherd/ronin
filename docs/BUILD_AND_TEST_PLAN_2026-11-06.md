@@ -173,3 +173,43 @@ Matriz web obligatoria: Chromium como base, Firefox/WebKit cuando el runner est�
 ## 8. Decisión de salida de este ciclo
 
 El candidato de código queda **implementado y verde en los gates técnicos locales y en la qualification exact-SHA disponible**, pero no es todavía release-qualified. La decisión global sigue siendo **NO-GO**: la UI ha mejorado hacia un control plane más claro y original, pero aún no alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric; el ledger Public v1 mantiene `0/13` familias cualificadas; faltan revisión visual/manual formal, revisión legal/NOTICE/claims, aceptación humana de seguridad/VEX, Trivy, Terraform `1.13.5`, qualification de proveedores y gobernanza CI/branch/release. Los skips externos y la ausencia de Trivy no se presentan como verde. La siguiente iteración debe cerrar estos gates y ampliar las superficies de autoría, evidencia y operación; no debe maquillar el ledger.
+
+## 9. Plan de iteración 2 hacia GO
+
+Esta iteración no se considera cerrada por pasar el código local. Para convertir el
+NO-GO en GO deben cerrarse, en este orden, los siguientes gates:
+
+1. **Custodia exacta del release:** exportar desde `5a32f01e` un source bundle y
+   un artifact-identity manifest reproducibles; regenerar wheel, sdist, runtime,
+   probe, SBOM y provenance contra esos bytes; verificar que el commit documental
+   no cambie el SHA de código ni desacople los receipts.
+2. **Seguridad reproducible:** ejecutar Trivy fijado en el toolchain sobre runtime
+   y probe, repetir Gitleaks de árbol e historial desde un repositorio bare
+   montable, revisar los 3 hallazgos VEX con un Security owner y registrar la
+   decisión (aceptar, corregir o retirar la excepción). Un `0` automatizado sin
+   esa firma no cierra el gate.
+3. **Toolchain y operación:** usar exactamente Terraform `1.13.5`, completar la
+   matriz Windows/Linux y Python soportada, verificar rollback y migraciones, y
+   probar CI, protección de `main`, artifacts retenidos, expiración y acceso al
+   expediente. Si no existe runner o credencial de laboratorio, el claim se
+   mantiene `qualification_pending`.
+4. **Familias y proveedores:** convertir cada familia activa en una journey
+   candidate-bound con API/CLI/SDK/Studio, límites, errores, recuperación,
+   evidencia y cleanup. Completar las lanes reales de Databricks, Dataiku,
+   Foundry, Fabric, Kafka/streaming y cualquier driver anunciado; fixtures locales
+   sólo pueden certificar el contrato que ejercitan.
+5. **Producto/UI:** hacer una revisión manual firmada en 320 px, tablet y desktop
+   de cada ruta; después iterar authoring, lineage, run/evidence, quality,
+   migration y operations con progressive disclosure, búsqueda/command palette,
+   estados honestos y una acción primaria clara. El objetivo es alcanzar la
+   sencillez y potencia de Databricks/Dataiku/Palantir/Fabric sin perder la
+   identidad Ronin, no añadir formularios por volumen.
+6. **Decisión:** actualizar el ledger sólo cuando las 13 familias, el proveedor
+   aplicable, el security/legal/product sign-off y el expediente exact-SHA tengan
+   receipts consistentes. En caso contrario, mantener `0/13` y publicar el
+   siguiente bloqueo concreto.
+
+**Criterio de salida de la iteración 2:** todos los gates anteriores en `pass`,
+ningún `skip` usado como soporte anunciado, `progress.complete = 13`, revisión
+humana registrada y rollback ensayado. Hasta entonces, la plataforma queda en
+`NO-GO` aunque las suites locales sean verdes.
