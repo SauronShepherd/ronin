@@ -245,6 +245,35 @@ def test_runtime_config_and_catalog_fail_closed(tmp_path: Path) -> None:
     assert image_capability.value == IMAGE
 
 
+def test_generic_worker_does_not_claim_plugin_owned_ml_runs(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        config = _config(tmp_path)
+        ml_job = replace(_job(), target="ml-studio.execute")
+        store = SqliteJobStore(config.database_path, migration_now=START)
+        store.create_job(ml_job, _run())
+
+        async with LocalWorkerRuntime(
+            config,
+            migration_now=START,
+            engine_path="docker",
+            now=_Clock(START),
+        ) as runtime:
+            outcome = await runtime.run_once(
+                attempt_id=AttemptId("attempt-runtime-ml-owned"),
+                lease_token=LeaseToken("lease-runtime-ml-owned"),
+            )
+
+        assert outcome.attempt_id is None
+        assert outcome.execution is None
+        persisted = SqliteJobStore(config.database_path, migration_now=START)
+        current = persisted.get_job(ml_job.id)
+        assert current is not None
+        assert current.state is JobState.QUEUED
+        assert persisted.get_run_id_for_job(ml_job.id) == RunId("run-runtime")
+
+    asyncio.run(scenario())
+
+
 def test_run_once_executes_claim_through_sqlite_and_container_boundary(
     tmp_path: Path, caplog
 ) -> None:

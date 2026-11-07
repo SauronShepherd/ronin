@@ -266,6 +266,7 @@ class JobStore(Protocol):
         lease_seconds: int,
         now: Instant,
         target: str | None = None,
+        excluded_targets: Sequence[str] = (),
     ) -> ClaimedRun | None: ...
 
     def heartbeat(

@@ -867,6 +867,13 @@ def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
         raise CliError("RONIN_POSTGRES_DSN must be non-empty and trimmed")
     database = _database()
     workspace = Path(_env("RONIN_WORKSPACE", ".")).expanduser().resolve()
+    excluded_targets = tuple(
+        target.strip()
+        for target in os.environ.get("RONIN_WORKER_EXCLUDED_TARGETS", "ml-studio.execute").split(
+            ","
+        )
+        if target.strip()
+    )
     return LocalWorkerRuntimeConfig(
         paths=WorkerPaths(workspace, database.parent),
         owner=_env("RONIN_WORKER_OWNER", f"worker-{os.getpid()}"),
@@ -874,6 +881,7 @@ def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
         database_name=database.name,
         postgres_dsn=postgres_dsn,
         connector_workspace_id=os.environ.get("RONIN_WORKSPACE_ID"),
+        excluded_targets=excluded_targets,
     )
 
 

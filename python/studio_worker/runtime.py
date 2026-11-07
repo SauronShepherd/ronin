@@ -117,6 +117,7 @@ class LocalWorkerRuntimeConfig:
     ml_rows: object | None = None
     semantic_refresh_runner: object | None = None
     pipeline_runner: object | None = None
+    excluded_targets: tuple[str, ...] = ("ml-studio.execute",)
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
@@ -132,6 +133,18 @@ class LocalWorkerRuntimeConfig:
             or self.connector_workspace_id != self.connector_workspace_id.strip()
         ):
             raise ValueError("connector_workspace_id must be non-empty and trimmed")
+        if (
+            len(self.excluded_targets) > 32
+            or len(set(self.excluded_targets)) != len(self.excluded_targets)
+            or any(
+                not isinstance(target, str)
+                or not target
+                or target != target.strip()
+                or len(target) > 256
+                for target in self.excluded_targets
+            )
+        ):
+            raise ValueError("excluded_targets must contain unique trimmed target names")
         if self.lease_seconds < 2:
             raise ValueError("lease_seconds must be at least 2")
         if not 0 < self.heartbeat_interval_seconds < self.lease_seconds:
@@ -394,6 +407,7 @@ class LocalWorkerRuntime:
             attempt_id=attempt_id,
             lease_seconds=self.config.lease_seconds,
             now=self._now(),
+            excluded_targets=self.config.excluded_targets,
         )
 
     async def _execute_claim(self, claim: ClaimedRun) -> WorkerExecutionOutcome:

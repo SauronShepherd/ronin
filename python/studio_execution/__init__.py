@@ -209,6 +209,7 @@ class DurableExecutionService:
         lease_seconds: int,
         now: Instant,
         target: str | None = None,
+        excluded_targets: Sequence[str] = (),
     ) -> WorkerPollResult:
         """Reclaim expired leases, then attempt one claim."""
 
@@ -220,6 +221,7 @@ class DurableExecutionService:
             lease_seconds=lease_seconds,
             now=now,
             target=target,
+            excluded_targets=excluded_targets,
         )
         return WorkerPollResult(reclaimed, claim)
 

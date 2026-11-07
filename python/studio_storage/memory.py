@@ -207,6 +207,7 @@ class InMemoryJobStore:
         lease_seconds: int,
         now: Instant | str,
         target: str | None = None,
+        excluded_targets: Sequence[str] = (),
     ) -> ClaimedRun | None:
         if lease_seconds < 1:
             raise ValueError("lease_seconds must be positive")
@@ -219,6 +220,7 @@ class InMemoryJobStore:
                     if run.state is RunState.PENDING
                     and run.not_before <= now
                     and (target is None or self._jobs[run.job_id].target == target)
+                    and self._jobs[run.job_id].target not in excluded_targets
                 ),
                 key=lambda run: (run.not_before, str(run.id)),
             )

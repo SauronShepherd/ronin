@@ -277,6 +277,7 @@ class PostgresJobReadPort:
         lease_seconds: int,
         now: Instant | str,
         target: str | None = None,
+        excluded_targets: Sequence[str] = (),
     ) -> ClaimedRun | None:
         """Claim one pending run with PostgreSQL row-lock concurrency semantics."""
         if lease_seconds < 1:
@@ -285,24 +286,26 @@ class PostgresJobReadPort:
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
-                if target is None:
-                    cursor.execute(
-                        "SELECT j.job_id,r.run_id FROM ronin_jobs j "
-                        "JOIN ronin_runs r ON r.job_id=j.job_id "
-                        "WHERE r.state='pending' AND r.not_before<=%s "
-                        "AND j.state IN ('queued','running') "
-                        "ORDER BY r.not_before,r.run_id LIMIT 1 FOR UPDATE OF j SKIP LOCKED",
-                        (str(current),),
-                    )
-                else:
-                    cursor.execute(
-                        "SELECT j.job_id,r.run_id FROM ronin_jobs j "
-                        "JOIN ronin_runs r ON r.job_id=j.job_id "
-                        "WHERE r.state='pending' AND r.not_before<=%s "
-                        "AND j.state IN ('queued','running') AND j.target=%s "
-                        "ORDER BY r.not_before,r.run_id LIMIT 1 FOR UPDATE OF j SKIP LOCKED",
-                        (str(current), target),
-                    )
+                clauses = [
+                    "r.state='pending'",
+                    "r.not_before<=%s",
+                    "j.state IN ('queued','running')",
+                ]
+                parameters: list[object] = [str(current)]
+                if target is not None:
+                    clauses.append("j.target=%s")
+                    parameters.append(target)
+                if excluded_targets:
+                    placeholders = ",".join("%s" for _ in excluded_targets)
+                    clauses.append(f"j.target NOT IN ({placeholders})")
+                    parameters.extend(excluded_targets)
+                cursor.execute(
+                    "SELECT j.job_id,r.run_id FROM ronin_jobs j "  # noqa: S608
+                    "JOIN ronin_runs r ON r.job_id=j.job_id WHERE "
+                    + " AND ".join(clauses)
+                    + " ORDER BY r.not_before,r.run_id LIMIT 1 FOR UPDATE OF j SKIP LOCKED",
+                    parameters,
+                )
                 candidate = cursor.fetchone()
                 if candidate is None:
                     connection.commit()

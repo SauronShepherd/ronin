@@ -150,6 +150,7 @@ class BoundedAsyncJobStore:
         lease_seconds: int,
         now: Instant,
         target: str | None = None,
+        excluded_targets: Sequence[str] = (),
     ) -> ClaimedRun | None:
         return await self._call(
             partial(
@@ -160,6 +161,7 @@ class BoundedAsyncJobStore:
                 lease_seconds=lease_seconds,
                 now=now,
                 target=target,
+                excluded_targets=excluded_targets,
             )
         )
 

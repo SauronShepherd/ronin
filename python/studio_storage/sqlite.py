@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -311,6 +312,7 @@ class _SqliteLifecycleStore:
         lease_seconds: int,
         now: Instant | str,
         target: str | None = None,
+        excluded_targets: Sequence[str] = (),
     ) -> ClaimedRun | None:
         if lease_seconds < 1:
             raise ValueError("lease_seconds must be positive")
@@ -318,12 +320,24 @@ class _SqliteLifecycleStore:
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
-            run_row = connection.execute(
-                "SELECT r.* FROM runs r JOIN jobs j ON j.job_id=r.job_id "
-                "WHERE r.state='pending' AND r.not_before<=? "
-                "AND j.state IN ('queued','running') AND (? IS NULL OR j.target=?) "
-                "ORDER BY r.not_before,r.run_id LIMIT 1",
-                (now, target, target),
+            clauses = [
+                "r.state='pending'",
+                "r.not_before<=?",
+                "j.state IN ('queued','running')",
+            ]
+            parameters: list[object] = [now]
+            if target is not None:
+                clauses.append("j.target=?")
+                parameters.append(target)
+            if excluded_targets:
+                placeholders = ",".join("?" for _ in excluded_targets)
+                clauses.append(f"j.target NOT IN ({placeholders})")
+                parameters.extend(excluded_targets)
+            run_row = connection.execute(  # noqa: S608
+                "SELECT r.* FROM runs r JOIN jobs j ON j.job_id=r.job_id WHERE "  # noqa: S608
+                + " AND ".join(clauses)
+                + " ORDER BY r.not_before,r.run_id LIMIT 1",
+                parameters,
             ).fetchone()
             if run_row is None:
                 connection.execute("COMMIT")
