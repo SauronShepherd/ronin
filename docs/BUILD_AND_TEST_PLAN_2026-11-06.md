@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
-**Corte:** 2026-11-06 (Europe/Madrid)
-**Fuente de código:** worktree `.build-plan-implementation`, `main@40aad309`
+**Corte:** 2026-11-07 (Europe/Madrid)
+**Fuente de código:** worktree `.build-plan-implementation`, `main@9419edbd`
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -44,7 +44,13 @@ Principios de diseño:
 
 La home ahora es un control plane de entrada con contexto `default / examples/demo`, cuatro checkpoints de workflow, una ruta guiada de tres pasos, notas operativas y accesos rápidos a Runs, Migration Studio y SQL. Los textos son orientativos y no inventan métricas ni resultados. Se conservan las rutas, el tour, la command palette, el botón de conexión y los selectores existentes.
 
-El control de presupuesto se recalibró después de medir el cambio aprobado: `asset_bytes` pasa de `1,972,562` a `1,984,396` (+0,6 %), sin añadir requests, módulos ni hojas de estilo. El nuevo baseline es una ratcheting point del candidato; no sustituye la revisión de tamaño ni autoriza crecimiento ilimitado.
+La iteración del 2026-11-07 hizo accionable ese shell: el context bar abre un diálogo accesible para cambiar workspace, proyecto, entorno y runtime; el contexto queda en la URL, se conserva al navegar y se sincroniza con los formularios de la superficie activa. La command palette ya navega al hacer click en una opción y el shell compacto permanece usable a 320 px. La cobertura de journey incluye cambio de contexto, deep-link, propagación a SQL, navegación de palette y responsive.
+
+El control de presupuesto se recalibró después de medir el cambio aprobado: `asset_bytes` queda en `1,993,811`, con `59` requests, `34` módulos, `6` hojas de estilo y `4,871` bytes HTML. El nuevo baseline es una ratcheting point del candidato; no sustituye la revisión de tamaño ni autoriza crecimiento ilimitado.
+
+### Verificación exacta del corte 2026-11-07
+
+En `9419edbd` pasan `npm test` del paquete web (`121/121`), la prueba focalizada de control plane (`10/10`), la matriz responsive/conexión (`12/12`), i18n (`34` mensajes), presupuesto, auditoría web (`0` fallos), consistencia de rutas (`196` operaciones), superficie Studio, Ruff, mypy, `git diff --check` y la selección Python focalizada (`30/30`). La suite completa de Python, Docker, Helm, proveedores reales, seguridad VEX y live qualification no se reutiliza automáticamente desde el commit anterior: debe repetirse sobre este SHA si se pretende un expediente de release.
 
 ### Hallazgo de la qualification exact-SHA
 
@@ -160,4 +166,4 @@ Matriz web obligatoria: Chromium como base, Firefox/WebKit cuando el runner est�
 
 ## 8. Decisión de salida de este ciclo
 
-El slice de UI se considera **implementado**, no release-qualified, hasta ejecutar la suite tras el cambio. La decisión global seguirá siendo **NO-GO** si la suite local falla o si el expediente exact-SHA, el scope de producto, la CI obligatoria o las lanes externas siguen incompletos. La siguiente iteración debe atacar el primer bloqueo reproducible, no maquillar el ledger.
+El slice de UI queda **implementado y verde en sus gates locales exactos**, pero no es todavía release-qualified. La decisión global sigue siendo **NO-GO**: la UI aún no alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric, el ledger Public v1 mantiene `0/13` familias cualificadas, faltan revisión visual/manual, revisión legal/NOTICE, aceptación de seguridad/VEX, qualification de proveedores y un expediente completo exact-SHA para este commit. La siguiente iteración debe cerrar el primer bloqueo de qualification real y continuar con las superficies de autoría, evidencia y operación; no debe maquillar el ledger.
