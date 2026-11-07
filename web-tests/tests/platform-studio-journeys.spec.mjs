@@ -158,6 +158,31 @@ test('Notebook Studio edits, creates and executes a bounded notebook', async ({ 
   await expect(page.locator('#notebook-run')).toContainText('cancelling');
 });
 
+test('Run detail keeps lifecycle actions and evidence review explicit', async ({ page }) => {
+  await page.route('**/v1/jobs/**', async route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith('/events')) {
+      await route.fulfill({ json: { items: [{ kind: 'completed', occurred_at: '2026-11-07T10:00:00Z', message: 'Run completed' }] } });
+      return;
+    }
+    if (path.endsWith('/evidence')) {
+      await route.fulfill({ json: { items: [{ id: 'evidence-1', state: 'verified' }] } });
+      return;
+    }
+    const id = path.split('/').pop();
+    await route.fulfill({ json: { id, state: id === 'job-terminal' ? 'succeeded' : 'running', project_id: 'examples/demo', created_at: '2026-11-07T09:59:00Z', updated_at: '2026-11-07T10:00:00Z' } });
+  });
+
+  await page.goto('./#run/job-terminal');
+  await expect(page.getByRole('button', { name: 'Review evidence' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cancel run' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Review evidence' }).click();
+  await expect(page.getByRole('heading', { name: 'Evidence health' })).toBeVisible();
+
+  await page.goto('./#run/job-active');
+  await expect(page.getByRole('button', { name: 'Cancel run' })).toBeVisible();
+});
+
 test('Ingestion Studio pages source discovery and keeps sync preview controls', async ({ page }) => {
   await page.route('**/v1/platform/connectors', async route => {
     await route.fulfill({ json: { items: [] } });
