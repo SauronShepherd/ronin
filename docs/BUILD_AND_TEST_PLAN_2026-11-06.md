@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-07 (Europe/Madrid)
-**Fuente de código:** worktree `.build-plan-implementation`, `main@a64748d7`
+**Fuente de código:** worktree `.build-plan-implementation`, `main@e9cd32af4477b5e2a1871cbbaa1eb347da03b67e`
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -50,7 +50,7 @@ El control de presupuesto se recalibró después de medir el cambio aprobado: `a
 
 ### Verificación exacta del corte 2026-11-07
 
-En `a64748d7` pasan `npm test` del paquete web (`122/122`), la prueba focalizada de control plane/contexto (`12/12`), i18n (`34` mensajes), presupuesto, auditoría web (`0` fallos), consistencia de rutas (`196` operaciones), superficie Studio, Ruff, mypy, `git diff --check`, el capability ledger y la sincronización de los dos ledgers de Public v1. La suite completa de Python, Docker, Helm, proveedores reales, seguridad VEX y live qualification no se reutiliza automáticamente desde commits anteriores: debe repetirse sobre este SHA si se pretende un expediente de release.
+En `e9cd32af4477b5e2a1871cbbaa1eb347da03b67e` pasan `npm test` del paquete web (`122/122`), la prueba focalizada de control plane/contexto (`13/13`), i18n (`34` mensajes), presupuesto, auditoría web (`0` fallos), consistencia de rutas (`196` operaciones), superficie Studio, Ruff, mypy, `git diff --check`, el capability ledger y la sincronización de los dos ledgers de Public v1. La suite Python/PostgreSQL completa también pasa en este candidato: `4.560 passed`, `27 skipped` por dependencias externas o límites del host y `0 failed`; los skips no se convierten en soporte anunciado. Docker, Helm, proveedores reales, seguridad VEX y live qualification no se reutilizan automáticamente desde commits anteriores: deben repetirse sobre este SHA si se pretende un expediente de release.
 
 ### Hallazgo de la qualification exact-SHA
 
