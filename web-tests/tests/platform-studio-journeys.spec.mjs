@@ -338,6 +338,16 @@ test('Migration Studio creates one session per submit', async ({ page }) => {
   expect(createCount).toBe(1);
 });
 
+test('Migration Studio keeps an unqualified review state visually gated', async ({ page }) => {
+  await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/migration/sessions', async route => {
+    await route.fulfill({ json: { items: [] } });
+  });
+  await page.goto('./#migration');
+  const qualification = page.locator('.migration-kpi').nth(4).locator('.goodtxt');
+  await expect(qualification).toHaveText('REVIEW');
+  await expect(qualification).toHaveCSS('color', 'rgb(149, 96, 31)');
+});
+
 test('SQL Studio sends one workspace-scoped request per submit', async ({ page }) => {
   let queryCount = 0;
   await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/sql/query', async route => {

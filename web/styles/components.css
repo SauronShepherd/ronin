@@ -273,3 +273,4 @@ kbd { display: inline-block; min-width: 1.25rem; padding: .08rem .3rem; border: 
   .home-activity-time { grid-column: 1; }
   .home-activity-state { grid-column: 2; grid-row: 1 / span 2; }
 }
+.migration-kpi .goodtxt { color: var(--amber); }

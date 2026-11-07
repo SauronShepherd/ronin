@@ -1,4 +1,4 @@
-.PHONY: check format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget browser-audit web-test-deps ui-installed ui-a11y ui-e2e-headed ui-e2e-debug test \
+.PHONY: check format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget browser-audit web-test-deps ui-installed ui-a11y ui-e2e-headed ui-e2e-debug test test-postgres \
 	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-storage-files-full coverage-tools coverage-release-gates performance \
 	canonical-json-check runner-protocol-check dependency-surfaces-check agent-skills-validate agent-skills-package \
 	release-sbom release-provenance
@@ -116,6 +116,12 @@ runner-protocol-check:
 test:
 	$(PYTHON) -m pytest --ignore=tests/perf --cov --cov-branch --cov-report=
 	$(MAKE) coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-tools coverage-release-gates
+
+test-postgres:
+	# Full local gate: run the same suite with the PostgreSQL service/DSN configured,
+	# then include the provider-backed storage adapters in the per-file ratchet.
+	$(PYTHON) -m pytest --ignore=tests/perf --cov --cov-branch --cov-report=
+	$(MAKE) coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files-full coverage-tools coverage-release-gates
 
 performance:
 	$(PYTHON) -m pytest tests/perf -q

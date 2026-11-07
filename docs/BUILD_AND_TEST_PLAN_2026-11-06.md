@@ -46,7 +46,7 @@ La home ahora es un control plane de entrada con contexto `default / examples/de
 
 La iteración del 2026-11-07 hizo accionable ese shell: el context bar abre un diálogo accesible para cambiar workspace, proyecto, entorno y runtime; el contexto queda en la URL, se conserva al navegar y se sincroniza con los formularios de la superficie activa. La selección de workspace/proyecto desde las listas también actualiza el contexto canónico. La home incorpora actividad reciente real y acotada por proyecto, con estados loading/empty/error honestos y enlace directo al run. La command palette ya navega al hacer click en una opción y el shell compacto permanece usable a 320 px.
 
-El control de presupuesto se recalibró después de medir el cambio aprobado: `asset_bytes` queda en `1,999,522`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento de esta iteración es `+432` bytes sobre el baseline anterior; requests, módulos, CSS y HTML permanecen constantes. El aumento está ligado al guard de autenticación y al contexto de Runs, cubierto por los tests de actividad/contexto; no sustituye la revisión de tamaño ni autoriza crecimiento ilimitado.
+El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `1,999,571`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento de esta iteración es `+481` bytes sobre el baseline anterior; requests, módulos, CSS y HTML permanecen constantes. La parte nueva de esta pasada son `+49` bytes para mantener el estado `REVIEW` de Migration Studio visualmente ámbar y no confundirlo con una aprobación. El incremento queda cubierto por una regresión de Playwright; no sustituye la revisión de tamaño ni autoriza crecimiento ilimitado.
 
 ### Verificación exacta del corte 2026-11-07
 
@@ -145,9 +145,12 @@ Kafka, Azure, Ozone, Databricks, Dataiku, Foundry, Fabric, Kubernetes, OIDC y mu
 
 La puerta local `make test` separa los adaptadores `postgres_*.py` del umbral
 service-free y los deja en la lane `coverage-storage-files-full`, que requiere
-una qualification real de PostgreSQL. En este entorno Windows sin DSN esa lane
-queda explícitamente pendiente; no se cuenta como cobertura certificada ni como
-motivo para marcar la release en verde.
+una qualification real de PostgreSQL. El nuevo target `make test-postgres`
+ejecuta la suite completa con el DSN/servicio configurado y aplica también el
+ratchet de esos adaptadores; `make test` sigue siendo la comprobación rápida sin
+servicios. En este entorno Windows sin DSN esa lane queda explícitamente
+pendiente; no se cuenta como cobertura certificada ni como motivo para marcar la
+release en verde.
 
 Los dos tests que lanzan un proceso Python auxiliar usan un margen de 15 s sólo
 para tolerar el coste de Windows bajo branch coverage; los tests de timeout,
