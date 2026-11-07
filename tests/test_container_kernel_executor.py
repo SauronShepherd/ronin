@@ -278,6 +278,30 @@ def test_asyncio_command_runner_times_out_and_kills_slow_cleanup() -> None:
     assert outcome.returncode != 0
 
 
+def test_asyncio_command_runner_cleans_up_timeout_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cleanup_calls: list[tuple[str, ...]] = []
+
+    async def fake_cleanup(_self: AsyncioCommandRunner, args: tuple[str, ...]) -> None:
+        cleanup_calls.append(args)
+
+    monkeypatch.setattr(AsyncioCommandRunner, "_cleanup", fake_cleanup)
+    cleanup_args = (sys.executable, "-c", "pass")
+    outcome = asyncio.run(
+        AsyncioCommandRunner(poll_seconds=0.005).run(
+            (sys.executable, "-c", "import time; time.sleep(10)"),
+            input_text="",
+            cancellation=CancellationToken(),
+            timeout_seconds=0.01,
+            cancellation_args=cleanup_args,
+        )
+    )
+
+    assert outcome.timed_out is True
+    assert cleanup_calls == [cleanup_args]
+
+
 def test_asyncio_command_runner_observes_cancellation() -> None:
     token = CancellationToken()
     timer = threading.Thread(target=lambda: (time.sleep(0.02), token.cancel()))

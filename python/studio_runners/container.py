@@ -309,11 +309,12 @@ class AsyncioCommandRunner:
                 timed_out = elapsed >= timeout_seconds
                 if cancelled or timed_out:
                     needs_cleanup = True
-                    await self._cleanup(cancellation_args)
-                    if process.returncode is None:
-                        process.kill()
                     break
                 await asyncio.sleep(self.poll_seconds)
+            if needs_cleanup:
+                await self._cleanup(cancellation_args)
+                if process.returncode is None:
+                    process.kill()
             returncode = await asyncio.shield(wait_task)
             raw_output, truncated = await asyncio.shield(output_task)
             control_output = ""
@@ -323,8 +324,6 @@ class AsyncioCommandRunner:
                     raw_output, raw_control, control_truncated
                 )
                 truncated = truncated or control_loss
-            if needs_cleanup:
-                await self._cleanup(cancellation_args)
             duration_ms = max(0, int((time.monotonic() - started) * 1000))
             output = self._format_output(raw_output, truncated)
             finished_unix_ns = time.time_ns()
