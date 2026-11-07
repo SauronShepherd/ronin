@@ -83,6 +83,9 @@ test.describe('home control plane', () => {
     await page.locator('a[href="#sql"]').first().click();
     await expect(page.locator('#sql-workspace')).toHaveValue('team-a');
     await expect(page.locator('#sql-project')).toHaveValue('project-z');
+    await page.locator('a[href="#migration"]').first().click();
+    await expect(page.locator('#migration-cockpit-workspace')).toHaveValue('team-a');
+    await expect(page.locator('#migration-cockpit-project')).toHaveValue('project-z');
   });
 
   test('opens a surface when a command palette option is clicked', async ({ page }) => {
@@ -92,6 +95,26 @@ test.describe('home control plane', () => {
     await page.locator('.command-option').first().click();
     await expect(page).toHaveURL(/#quality$/);
     await expect(page.locator('#quality-form')).toBeVisible();
+  });
+
+  test('shows bounded recent activity for the active project without inventing telemetry', async ({ page }) => {
+    await page.route('**/v1/jobs**', async route => {
+      const url = new URL(route.request().url());
+      expect(url.searchParams.get('project')).toBe('examples/demo');
+      await route.fulfill({
+        json: {
+          items: [
+            { id: 'run-42', project_id: 'examples/demo', state: 'running', created_at: '2026-11-07T04:00:00Z', updated_at: '2026-11-07T04:01:00Z' },
+            { id: 'run-41', project_id: 'examples/demo', state: 'succeeded', created_at: '2026-11-07T03:00:00Z', updated_at: '2026-11-07T03:03:00Z' },
+          ],
+        },
+      });
+    });
+    await page.goto('./#home', { waitUntil: 'load' });
+    await expect(page.locator('#home-activity')).toContainText('run-42');
+    await expect(page.locator('#home-activity')).toContainText('running');
+    await expect(page.locator('[data-home-activity-row]')).toHaveCount(2);
+    await expect(page.locator('#home-activity')).not.toContainText('undefined');
   });
 
   test('has no serious home accessibility violations', async ({ page }) => {

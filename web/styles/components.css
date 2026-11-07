@@ -232,6 +232,21 @@ code { background: var(--surface-muted); border-color: var(--line); color: var(-
 .home-attention-action { align-self: start; margin-top: auto; }
 kbd { display: inline-block; min-width: 1.25rem; padding: .08rem .3rem; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--surface-raised); color: var(--cocoa); font: 700 .68rem ui-monospace, SFMono-Regular, Consolas, monospace; text-align: center; }
 .home-shortcuts { margin-top: 1rem; padding-bottom: 1.5rem; }
+.home-activity-panel { max-width: 1320px; margin: 1rem auto 0; }
+.home-activity { min-height: 4.5rem; }
+.home-activity-list { display: grid; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.home-activity-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .9rem; align-items: center; padding: .7rem .2rem; border-top: 1px solid var(--line); }
+.home-activity-main { display: grid; gap: .18rem; min-width: 0; }
+.home-activity-id { overflow: hidden; color: var(--copper); font-weight: 800; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+.home-activity-id:hover { color: var(--cocoa); text-decoration: underline; }
+.home-activity-project, .home-activity-time { color: var(--muted); font-size: .78rem; }
+.home-activity-state { justify-self: end; }
+.home-activity-empty { display: grid; gap: .3rem; padding: .8rem .2rem; }
+.home-activity-empty strong { color: var(--cocoa); }
+.home-activity-empty p { margin: 0; color: var(--muted); font-size: .82rem; }
+.home-activity-empty a { color: var(--copper); font-size: .8rem; font-weight: 800; text-decoration: none; }
+.home-activity-empty a:hover { color: var(--cocoa); text-decoration: underline; }
+.home-activity-error { border-left: 3px solid var(--amber); padding-left: .8rem; }
 .home-shortcuts .grid { gap: .9rem; }
 .home-shortcut { position: relative; display: grid; gap: .45rem; min-height: 12rem; margin: 0; overflow: hidden; background: linear-gradient(180deg, var(--surface-raised), var(--surface)); }
 .home-shortcut::before { content: ''; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, var(--copper), var(--gold), transparent); }
@@ -254,4 +269,7 @@ kbd { display: inline-block; min-width: 1.25rem; padding: .08rem .3rem; border: 
   .home-section-note, .home-inline-link { display: inline-block; margin-top: .55rem; white-space: normal; }
   .home-journey-list li { grid-template-columns: 2rem minmax(0, 1fr); }
   .home-journey-list li a { grid-column: 2; }
+  .home-activity-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .home-activity-time { grid-column: 1; }
+  .home-activity-state { grid-column: 2; grid-row: 1 / span 2; }
 }

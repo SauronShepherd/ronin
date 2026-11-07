@@ -1,5 +1,6 @@
 import { get, post, put } from './api.js';
 import { esc, json } from './dom.js';
+import { setStudioContext } from './context-bar.js';
 
 function renderProjects() {
   if (location.hash.slice(1).split('/')[0] !== 'projects') return;
@@ -110,7 +111,7 @@ async function loadProjects(workspaceId) {
     const data = await get(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects`);
     const items = data.items || data;
     target.innerHTML = Array.isArray(items) && items.length
-      ? `<table><caption class="sr-only">Active projects</caption><thead><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead><tbody>${items.map((item) => { const id = item.project?.id || item.id || ''; return `<tr><td>${esc(id)}</td><td>${esc(item.project?.name || item.name || '')}</td><td><button class="button project-edit" data-project="${esc(id)}" type="button">Edit manifest</button> <button class="button project-bundle" data-project="${esc(id)}" type="button">Export manifest</button> <button class="button project-bundle-archive" data-project="${esc(id)}" type="button">Download Bundle</button> <button class="button project-archive" data-project="${esc(id)}" type="button">Archive</button></td></tr>`; }).join('')}</tbody></table>`
+      ? `<table><caption class="sr-only">Active projects</caption><thead><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead><tbody>${items.map((item) => { const id = item.project?.id || item.id || ''; return `<tr><td>${esc(id)}</td><td>${esc(item.project?.name || item.name || '')}</td><td><button class="button project-context" data-project="${esc(id)}" type="button">Use context</button> <button class="button project-edit" data-project="${esc(id)}" type="button">Edit manifest</button> <button class="button project-bundle" data-project="${esc(id)}" type="button">Export manifest</button> <button class="button project-bundle-archive" data-project="${esc(id)}" type="button">Download Bundle</button> <button class="button project-archive" data-project="${esc(id)}" type="button">Archive</button></td></tr>`; }).join('')}</tbody></table>`
       : '<div class="empty">No active projects are visible.</div>';
   } catch (error) {
     target.innerHTML = `<div class="error">${esc(error.message)}</div>`;
@@ -118,6 +119,12 @@ async function loadProjects(workspaceId) {
 }
 
 document.addEventListener('click', async (event) => {
+  const context = event.target.closest?.('.project-context');
+  if (context) {
+    const workspaceId = decodeURIComponent(location.hash.slice(1).split('/')[1] || '');
+    setStudioContext({ workspace: workspaceId, project: context.dataset.project });
+    return;
+  }
   const edit = event.target.closest?.('.project-edit');
   if (edit) {
     const workspaceId = decodeURIComponent(location.hash.slice(1).split('/')[1] || '');

@@ -37,14 +37,7 @@ function ensureDialog() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     try {
-      const context = createStudioContext(Object.fromEntries(editableFields.map(([key]) => [key, form.get(key)])));
-      const url = new URL(location.href);
-      for (const key of studioContextKeys()) url.searchParams.delete(key);
-      for (const [key,value] of Object.entries(context)) url.searchParams.set(key, value);
-      history.pushState({}, '', `${url.pathname}${url.search}${url.hash}`);
-      globalThis.roninStudioContext = context;
-      renderContextBar(context);
-      window.dispatchEvent(new CustomEvent('ronin-context-change', {detail: context}));
+      setStudioContext(Object.fromEntries(editableFields.map(([key]) => [key, form.get(key)])));
       dialog.close();
     } catch (error) {
       const message = document.createElement('p');
@@ -60,13 +53,26 @@ function ensureDialog() {
 
 function openContextPicker() {
   const picker = ensureDialog();
-  const resolved = {...defaultContext, ...(globalThis.roninStudioContext || {})};
+  const active = globalThis.roninStudioContext || {};
+  const resolved = Object.keys(active).length ? active : defaultContext;
   for (const [key] of editableFields) {
     const input = picker.querySelector(`[name="${key}"]`);
     if (input) input.value = resolved[key] || '';
   }
   picker.showModal();
   picker.querySelector('[name="workspace"]')?.focus();
+}
+
+export function setStudioContext(values = {}) {
+  const context = createStudioContext({...globalThis.roninStudioContext, ...values});
+  const url = new URL(location.href);
+  for (const key of studioContextKeys()) url.searchParams.delete(key);
+  for (const [key, value] of Object.entries(context)) url.searchParams.set(key, value);
+  history.pushState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  globalThis.roninStudioContext = context;
+  renderContextBar(context);
+  window.dispatchEvent(new CustomEvent('ronin-context-change', {detail: context}));
+  return context;
 }
 
 export function renderContextBar(context = globalThis.roninStudioContext || {}) {
@@ -80,7 +86,7 @@ export function renderContextBar(context = globalThis.roninStudioContext || {}) 
     bar.setAttribute('aria-label', 'Studio context');
     topbar.insertBefore(bar, topbar.querySelector('.connection-open'));
   }
-  const resolved = {...defaultContext, ...context};
+  const resolved = Object.keys(context).length ? context : defaultContext;
   const items = studioContextKeys().filter((key) => resolved[key]);
   bar.innerHTML = `${items.map((key) => `<span class="context-chip"><b>${labels[key]}</b><span title="${escape(resolved[key])}">${escape(resolved[key])}</span></span>`).join('')}<button class="context-change" type="button" data-action="open-context" aria-haspopup="dialog" aria-controls="context-dialog">Change context</button>`;
   bar.hidden = false;

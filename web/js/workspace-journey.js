@@ -1,5 +1,6 @@
 import { get, post } from './api.js';
 import { esc, json, status } from './dom.js';
+import { setStudioContext } from './context-bar.js';
 
 function enhanceWorkspaces() {
   if (location.hash.slice(1) !== 'workspaces') return;
@@ -48,6 +49,11 @@ async function loadWorkspaceJourney() {
 
 const observer = new MutationObserver(enhanceWorkspaces);
 observer.observe(document.body, { childList: true, subtree: true });
+document.addEventListener('click', (event) => {
+  const link = event.target.closest?.('[data-workspace-context]');
+  if (!link) return;
+  setStudioContext({ workspace: link.dataset.workspaceContext, project: null });
+});
 window.addEventListener('hashchange', () => setTimeout(enhanceWorkspaces, 0));
 setTimeout(enhanceWorkspaces, 0);
 

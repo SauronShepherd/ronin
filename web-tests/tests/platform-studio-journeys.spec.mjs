@@ -81,6 +81,9 @@ test('Workspace and project Studio journey covers environment, Bundle and archiv
   await page.getByRole('button', { name: 'Create' }).click();
   await page.getByRole('link', { name: 'Open projects' }).click();
   await expect(page.locator('#project-list')).toContainText('project-journey');
+  await page.getByRole('button', { name: 'Use context' }).click();
+  await expect(page).toHaveURL(/workspace=workspace-journey.*project=project-journey/);
+  await expect(page.locator('.context-bar')).toContainText('project-journey');
   await page.locator('#project-manifest').fill('{"project":{"id":"project-journey","name":"Project Journey"}}');
   await page.getByRole('button', { name: 'Create project' }).click();
   await page.locator('#project-environment-form input[name="project_id"]').fill('project-journey');
@@ -227,7 +230,7 @@ test('Ingestion Studio submits and monitors a scoped durable connector sync', as
   await page.route('**/v1/platform/connectors/syncs/job-sync-42/status?**', async route => {
     const url = new URL(route.request().url());
     expect(url.searchParams.get('workspace_id')).toBe('default');
-    expect(url.searchParams.get('project_id')).toBe('default');
+    expect(url.searchParams.get('project_id')).toBe('examples/demo');
     await route.fulfill({ json: {
       job: { id: 'job-sync-42', state: 'succeeded' },
       events: { items: [{ kind: 'worker.attempt.succeeded' }], next_since: null },
@@ -250,7 +253,7 @@ test('Ingestion Studio submits and monitors a scoped durable connector sync', as
   await expect(page.locator('#ingestion-sync-evidence')).toContainText('worker.attempt.succeeded');
   await expect(page.locator('#ingestion-sync-evidence')).toContainText('evidence-digest');
   await expect(page.locator('#ingestion-sync-lineage')).toContainText('run-sync-42', { timeout: 5000 });
-  expect(submitted.postDataJSON()).toEqual({ project_id: 'default', definition });
+  expect(submitted.postDataJSON()).toEqual({ project_id: 'examples/demo', definition });
   await page.screenshot({ path: 'test-results/ingestion-sync-desktop.png', fullPage: true });
 });
 
