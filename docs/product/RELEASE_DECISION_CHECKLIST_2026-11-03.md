@@ -2,9 +2,9 @@
 
 **Decision:** NO-GO / release not qualified
 
-**Last evidence review:** 7 November 2026
+**Last evidence review:** 8 November 2026
 
-**Candidate SHA:** code candidate `1daa6c5f63b75a08bcd15c06c243870bad169199`; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** code candidate `012979949accb971da5f28a5412f91f8a44a4976`; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,19 +20,16 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 7 November exact-candidate refresh
+## 8 November exact-candidate refresh
 
-The exact code candidate `1daa6c5f63b75a08bcd15c06c243870bad169199` now has a
-complete local technical receipt: Python/PostgreSQL `4562 passed, 27 skipped,
-0 failed` of `4589`; static Chromium `124/124`; Docker `27/27` with strict
-v0.1 `15/15`; Helm/kind install, health, authorized Studio/API, persistence
-after restart and cleanup; and live `33/33` across 25 active routes with 242
-correlated events, 0 server/network errors and 0 unexpected authorization
-gaps. Runtime image digest is
-`sha256:2095881cdaad054ddf0361cad48f0d99d19e9b1b9a777d32fb88b6aeb0ad4a70`.
-The exact VEX receipt reports 3 raw findings and 0 after the documented
-digest-bound exception; Gitleaks reports 0 findings in 90.62 MB and pip-audit
-reports no known vulnerabilities in the hash-pinned dev/test locks.
+The new code candidate `012979949accb971da5f28a5412f91f8a44a4976` has static
+Chromium `124/124` and the focused Run detail journey `16/16` against the
+public Event/Evidence contract. The first full Python/PostgreSQL run reached
+`4561 passed, 27 skipped, 1 failed` of `4589`; the only failure was stale
+status-ledger metadata, now synchronized, so that lane is being rerun. The
+previous candidate `1daa6c5` has the complete service-backed receipt recorded
+below, but its Docker/Helm/live/VEX/SBOM/Gitleaks evidence is not reassigned to
+the new SHA.
 
 This closes local technical host-stability evidence, but not release: the 13
 family ledger remains 0/13, the VEX exception needs security-reviewer sign-off,

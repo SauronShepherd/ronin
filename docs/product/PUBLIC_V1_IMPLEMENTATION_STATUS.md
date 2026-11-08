@@ -5,21 +5,18 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 
-## Current exact-SHA qualification — 7 November 2026
+## Current exact-SHA qualification — 8 November 2026
 
-Code candidate `1daa6c5f63b75a08bcd15c06c243870bad169199` is green in the
-service-backed qualification scope: live UI/API `33/33` over 25 routes and 242
-correlated API events; Docker `27/27` plus strict acceptance `15/15`; Helm/kind
-rollout, authorized API, queued-job persistence after restart and cleanup; the
-capability-matrix contract; static Chromium `124/124`; and exact VEX checks.
-The runtime image is
-`sha256:2095881cdaad054ddf0361cad48f0d99d19e9b1b9a777d32fb88b6aeb0ad4a70`.
-Docker Scout's 3 raw findings reduce to 0 with the candidate-bound exact-digest
-VEX. The full Python/PostgreSQL receipt is green on this candidate: `4562 passed`,
-`27 skipped`, `0 failed` of `4589`; explicit skips remain environment evidence,
-not support claims. The cycle also hardened Windows-only qualification startup
-margins and the rejected-request-body path without relaxing product runtime
-semantics.
+Code candidate `012979949accb971da5f28a5412f91f8a44a4976` is pushed and the
+static Chromium lane is green at `124/124`; the focused Studio journey is
+`16/16`, including the public Run/Event/Evidence contract. The visual smoke
+review at desktop and mobile widths found no horizontal overflow. The previous
+candidate `1daa6c5` had complete service-backed receipts, but those receipts are
+not silently reassigned to this new SHA. The first exact Python/PostgreSQL run
+on `0129799` reached `4561 passed`, `27 skipped`, `1 failed` of `4589`; the sole
+failure was stale status-ledger metadata, which has now been synchronized, so
+the full lane is pending one clean rerun. Docker, Helm, live, VEX and supply
+chain receipts likewise remain to be reissued for this SHA.
 
 This does not change the release decision: Public v1 remains **0/13 (0%,
 NO-GO)**. Manual visual/product signoff, legal/NOTICE/claims, security reviewer
@@ -61,7 +58,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `1daa6c5f63b75a08bcd15c06c243870bad169199` (2026-11-07 code candidate).
+**Observed source head:** `012979949accb971da5f28a5412f91f8a44a4976` (2026-11-08).
 
 **Current worktree update (2026-10-30; dirty diagnostic candidate):** P3 now includes a project-authorized local DuckDB `POST .../sql/explain` route and a SQL Studio action. The route reuses project-read authorization, validates the shared read-only SELECT contract and registered relation scope, forwards a bounded execution deadline, incrementally caps serialized plan rows, and redacts paths, URLs and inline secret assignments. Providers without the optional capability return an explicit 501. Targeted verification is recorded in `PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`; this does not qualify P3 or the release, and the historical notes below remain historical snapshots.
 

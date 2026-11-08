@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
-**Corte:** 2026-11-07 (Europe/Madrid)
-**Fuente de código:** worktree exacto de qualification en `1daa6c5f63b75a08bcd15c06c243870bad169199` (código candidato; la documentación final se sincroniza después sin cambiar el SHA de código)
+**Corte:** 2026-11-08 (Europe/Madrid)
+**Fuente de código:** candidato publicado en `012979949accb971da5f28a5412f91f8a44a4976` (la cualificación exact-SHA se repite después de cada cambio de código)
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -46,16 +46,20 @@ La home ahora es un control plane de entrada con contexto `default / examples/de
 
 La iteración del 2026-11-07 hizo accionable ese shell: el context bar abre un diálogo accesible para cambiar workspace, proyecto, entorno y runtime; el contexto queda en la URL, se conserva al navegar y se sincroniza con los formularios de la superficie activa. La selección de workspace/proyecto desde las listas también actualiza el contexto canónico. La home incorpora actividad reciente real y acotada por proyecto, con estados loading/empty/error honestos y enlace directo al run. La command palette ya navega al hacer click en una opción y el shell compacto permanece usable a 320 px.
 
+La iteración del 2026-11-08 convirtió Run detail en un espacio de decisión operativo: brief derivado del estado durable, identidad y failure code visibles, resumen de salud de evidencia, timeline con secuencia/intento/timestamp y tabla de referencias con disponibilidad, digest truncado, media type y celda. No se expone el locator privado de almacenamiento ni se infiere éxito por ausencia de evidencia. El journey Playwright usa ahora el contrato público real y cubre el cambio entre Summary, Evidence y Events.
+
 El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `1,999,571`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento de esta iteración es `+481` bytes sobre el baseline anterior; requests, módulos, CSS y HTML permanecen constantes. La parte nueva de esta pasada son `+49` bytes para mantener el estado `REVIEW` de Migration Studio visualmente ámbar y no confundirlo con una aprobación. El incremento queda cubierto por una regresión de Playwright; no sustituye la revisión de tamaño ni autoriza crecimiento ilimitado.
 
-### Verificación exacta del corte 2026-11-07
+### Verificación exacta del corte 2026-11-08
 
-En `1daa6c5f63b75a08bcd15c06c243870bad169199` la suite estática Chromium
-actualizada pasa `124/124`; la suite focalizada de Home/Studio, presupuesto,
+En `012979949accb971da5f28a5412f91f8a44a4976` la suite estática Chromium
+actualizada pasa `124/124`; el journey focalizado de Studio pasa `16/16`, la revisión visual automatizada en desktop/móvil no detecta overflow horizontal y la suite focalizada de Home/Studio, presupuesto,
 auditoría web, consistencia de rutas, capability ledger, Ruff, mypy,
-`git diff --check` y la sincronización de ledgers quedan verdes. La suite
-Python/PostgreSQL completa queda verde sobre este candidato: `4562 passed`,
-`27 skipped`, `0 failed` de `4589` en 618,35 s. Los skips son explícitos y
+`git diff --check` y la sincronización de ledgers quedan verdes. La primera
+repetición Python/PostgreSQL de este SHA terminó `4561 passed`, `27 skipped`,
+`1 failed` de `4589` en 648,46 s: el único fallo fue el ledger de status aún
+registrando `1daa6c5`, no código de producto. El ledger se sincronizó con
+`0129799` y esta lane debe repetirse para cerrar la evidencia exact-SHA. Los skips son explícitos y
 corresponden a Docker/servicios externos opt-in o limitaciones POSIX/Windows;
 no se convierten en soporte anunciado.
 
@@ -66,9 +70,10 @@ cuarta qualification Docker exacta queda verde: `27/27` y acceptance v0.1
 estricta `15/15`; las pasadas previas expusieron timeouts ambientales y un
 error del probe de test, corregidos antes del recibo final.
 
-### Qualification exact-SHA final del candidato
+### Qualification exact-SHA heredada y nueva repetición
 
-La qualification exacta de `1daa6c5` está ligada al mismo árbol de código:
+La qualification completa anterior de `1daa6c5` queda conservada como baseline
+de backend, pero no se mezcla con el nuevo candidato `0129799`:
 
 - Docker: `27/27`, strict v0.1 `15/15`, runtime
   `sha256:2095881cdaad054ddf0361cad48f0d99d19e9b1b9a777d32fb88b6aeb0ad4a70`.
@@ -210,7 +215,7 @@ Matriz web obligatoria: Chromium como base, Firefox/WebKit cuando el runner est�
 
 ## 8. Decisión de salida de este ciclo
 
-El candidato de código queda **implementado y con las lanes live/Docker/Helm/web y los contratos focalizados verdes**, pero la lane Python/PostgreSQL completa aún necesita una repetición estable sin timeouts inducidos por carga del host; por eso no se declara todo el verde técnico. Tampoco es release-qualified. La decisión global sigue siendo **NO-GO**: la UI ha mejorado hacia un control plane más claro y original, pero aún no alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric; el ledger Public v1 mantiene `0/13` familias cualificadas; faltan revisión visual/manual formal, revisión legal/NOTICE/claims, aceptación humana de seguridad/VEX, Trivy, Terraform `1.13.5`, qualification de proveedores y gobernanza CI/branch/release. Los skips externos y la ausencia de Trivy no se presentan como verde. La siguiente iteración debe cerrar primero la estabilidad de la suite completa y después estos gates y las superficies de autoría, evidencia y operación; no debe maquillar el ledger.
+El candidato de código queda **implementado y con las lanes web y los contratos focalizados verdes**; la repetición Python/PostgreSQL del nuevo SHA necesita una segunda ejecución después de sincronizar el ledger y las lanes Docker/Helm/live/VEX aún deben reemitirse para ese SHA. Por ello no se declara todo el verde técnico. Tampoco es release-qualified. La decisión global sigue siendo **NO-GO**: la UI ha mejorado hacia un control plane más claro y original, pero aún no alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric; el ledger Public v1 mantiene `0/13` familias cualificadas; faltan revisión visual/manual formal, revisión legal/NOTICE/claims, aceptación humana de seguridad/VEX, Trivy, Terraform `1.13.5`, qualification de proveedores y gobernanza CI/branch/release. Los skips externos y la ausencia de Trivy no se presentan como verde. La siguiente iteración debe cerrar la re-cualificación del SHA y después seguir con autoría, lineage, evidencia y operations; no debe maquillar el ledger.
 
 ## 9. Plan de iteración 2 hacia GO
 
