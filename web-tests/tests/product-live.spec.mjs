@@ -45,7 +45,7 @@ for (const route of routes) {
     // initial empty form as a successful functional journey.
     if (route.id === 'runs') {
       await page.getByLabel('Project filter').fill('examples/demo');
-      await page.getByRole('button', { name: 'Refresh', exact: true }).click();
+      await page.getByRole('button', { name: 'Refresh runs', exact: true }).click();
     } else if (route.id === 'projects') {
       await page.locator('#project-manifest').fill(JSON.stringify({
         schema: 'ronin.project/v1',
