@@ -7,14 +7,14 @@
 
 ## Current exact-SHA qualification — 8 November 2026
 
-Code candidate `012979949accb971da5f28a5412f91f8a44a4976` is pushed and its
-paperwork checkout `e19253083a5356c583b6f8dfe7deefc0d0659657` has a complete
-local technical receipt: Python/PostgreSQL `4562 passed`, `27 skipped`, `0
-failed` of `4589`; static Chromium `124/124`; focused Run/Event/Evidence
-journey `16/16`; Docker `27/27` plus strict acceptance `15/15`; Helm/kind;
-live `33/33` over 25 routes and 244 correlated events; and exact VEX `3 raw / 0
-applied`. The runtime image is
-`sha256:9a32146b59d567a4379e853de270b4d73a6a926fc15ad79526162cadc9f815f9`.
+Product code candidate `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf` is pushed;
+the final live qualification harness is `56e1668d38a5fab554d584d0ec508297919bb82c`.
+The complete local technical receipt is: Python/PostgreSQL `4562 passed`, `27
+skipped`, `0 failed` of `4589`; static Chromium `125/125`; focused
+Run/Event/Evidence and Runs explorer journey `17/17`; Docker `27/27` plus
+strict acceptance `15/15`; Helm/kind; live `33/33` over 25 routes and 244
+correlated events; and exact VEX `3 raw / 0 applied`. The runtime image is
+`sha256:5324b8f6d3e0a57ef5dcd9047ba988936761cdb7bce9a95d42b5cf6444cc2e85`.
 Gitleaks found 0 leaks and pip-audit found no known vulnerabilities in the
 hash-locked dev/test sets. The visual smoke review at desktop and mobile widths
 found no horizontal overflow. These local receipts do not silently close the
@@ -60,7 +60,8 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `012979949accb971da5f28a5412f91f8a44a4976` (2026-11-08).
+**Observed source head:** `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf` (2026-11-08).
+Final live qualification harness: `56e1668d38a5fab554d584d0ec508297919bb82c`.
 
 **Current worktree update (2026-10-30; dirty diagnostic candidate):** P3 now includes a project-authorized local DuckDB `POST .../sql/explain` route and a SQL Studio action. The route reuses project-read authorization, validates the shared read-only SELECT contract and registered relation scope, forwards a bounded execution deadline, incrementally caps serialized plan rows, and redacts paths, URLs and inline secret assignments. Providers without the optional capability return an explicit 501. Targeted verification is recorded in `PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`; this does not qualify P3 or the release, and the historical notes below remain historical snapshots.
 

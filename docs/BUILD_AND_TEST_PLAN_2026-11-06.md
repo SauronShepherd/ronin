@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-08 (Europe/Madrid)
-**Fuente de código:** candidato publicado en `012979949accb971da5f28a5412f91f8a44a4976` (la cualificación exact-SHA se repite después de cada cambio de código)
+**Fuente de código:** candidato de producto publicado en `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf`; harness de qualification live alineado en `56e1668d38a5fab554d584d0ec508297919bb82c` (la cualificación exact-SHA se repite después de cada cambio de código)
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -48,55 +48,59 @@ La iteración del 2026-11-07 hizo accionable ese shell: el context bar abre un d
 
 La iteración del 2026-11-08 convirtió Run detail en un espacio de decisión operativo: brief derivado del estado durable, identidad y failure code visibles, resumen de salud de evidencia, timeline con secuencia/intento/timestamp y tabla de referencias con disponibilidad, digest truncado, media type y celda. No se expone el locator privado de almacenamiento ni se infiere éxito por ausencia de evidencia. El journey Playwright usa ahora el contrato público real y cubre el cambio entre Summary, Evidence y Events.
 
-El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,008,065`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento de esta iteración es `+8,494` bytes sobre el baseline anterior y corresponde principalmente al espacio de decisión Run/Evidence, su responsive layout y el contrato público de eventos/evidencia. La regresión de Playwright y la auditoría estática cubren el cambio; el baseline no autoriza crecimiento ilimitado.
+El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,010,715`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento de esta iteración es `+2,650` bytes sobre el baseline anterior y corresponde al explorer de Runs, sus contadores de salud, filtros, reset explícito, estados de carga/error honestos, confinamiento responsive de tablas densas y el guard de navegación asíncrona de Ingestion. La regresión de Playwright y la auditoría estática cubren el cambio; el baseline no autoriza crecimiento ilimitado.
 
 ### Verificación exacta del corte 2026-11-08
 
-En el checkout exacto de qualification `e19253083a5356c583b6f8dfe7deefc0d0659657`
-(mismo código de producto `012979949accb971da5f28a5412f91f8a44a4976`) la suite
-estática Chromium pasa `124/124`; el journey focalizado de Studio pasa `16/16`,
-la revisión visual automatizada en desktop/móvil no detecta overflow horizontal y
-la suite de presupuesto (`asset_bytes=2,008,065`), auditoría web, consistencia de
-rutas y ledgers queda verde. La suite Python/PostgreSQL completa queda en
-`4562 passed`, `27 skipped`, `0 failed` de `4589` en 685,54 s. Los skips son
+En el checkout exacto de producto `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf`
+la suite estática Chromium pasa `125/125`; el journey focalizado de Studio pasa
+`17/17`, la revisión visual automatizada en desktop/móvil no detecta overflow
+horizontal y la suite de presupuesto (`asset_bytes=2,010,715`), auditoría web,
+consistencia de rutas y ledgers queda verde. La suite Python/PostgreSQL completa
+queda en `4562 passed`, `27 skipped`, `0 failed` de `4589`. Los skips son
 explícitos y corresponden a Docker/servicios externos opt-in o limitaciones
 POSIX/Windows; no se convierten en soporte anunciado.
 
-La iteración encontró y corrigió dos problemas de robustez de qualification,
-no del producto: drenaje de cuerpos HTTP rechazados en Windows y tolerancias
-de arranque frío de Docker Desktop sólo en pruebas de integración Windows. La
-cuarta qualification Docker exacta queda verde: `27/27` y acceptance v0.1
-estricta `15/15`; las pasadas previas expusieron timeouts ambientales y un
-error del probe de test, corregidos antes del recibo final.
+La iteración encontró y corrigió un race real de UI: Ingestion Studio podía
+escribir la respuesta de capacidades sobre un nodo desaparecido después de
+navegar. El guard de destino evita esa actualización tardía. También se hizo
+explorable la lista de Runs con alcance por proyecto, contadores de salud, reset
+explícito, estados honestos y scroll de tabla confinado en móvil. El candidato
+Docker exacto queda verde: `27/27` y acceptance v0.1 estricta `15/15`.
 
 ### Qualification exact-SHA del candidato y baseline histórico
 
 La qualification completa anterior de `1daa6c5` queda conservada sólo como
-baseline histórico. El checkout limpio `e192530` contiene el mismo código de
-producto `0129799` más el commit de paperwork y tiene la siguiente recepción:
+baseline histórico. El candidato de producto `91d37fe` tiene la siguiente
+recepción; el test harness live final se ejecutó desde `56e1668d` sin cambiar el
+artefacto runtime:
 
 - Docker: `27/27`, strict v0.1 `15/15`, runtime
-  `sha256:9a32146b59d567a4379e853de270b4d73a6a926fc15ad79526162cadc9f815f9`.
+  `sha256:5324b8f6d3e0a57ef5dcd9047ba988936761cdb7bce9a95d42b5cf6444cc2e85`.
 - Helm/kind: lint, boundary de Secret, instalación, rollout, health,
   Studio/API autorizado, job persistente tras restart y cleanup, todo verde.
 - Live: `33/33`, `25` rutas activas, `24` contratos API, `244` eventos
   correlacionados, `0` gaps de autorización inesperados y `0` errores de
   servidor/red.
 - Python/PostgreSQL: `4562/4589` passed, `27` skips explícitos y `0` fallos en
-  `%TEMP%\\ronin-python-full-e192530-20261108`.
+  `%TEMP%\\ronin-python-full-91d37fe-20261108`.
+- Web: estática Chromium `125/125`; Studio focalizado `17/17`; live final
+  `33/33`, `25` rutas, `244` eventos (`229` OK, `15` WARN esperados), todo
+  correlacionado y sin errores server/network. Evidencia live:
+  `%TEMP%\\ronin-live-56e1668-final2-20261108`.
 - VEX exacto: Docker Scout `1.27.0`, `3` findings raw y `0` aplicados para el
-  runtime `sha256:9a32146b59d567a4379e853de270b4d73a6a926fc15ad79526162cadc9f815f9`
-  y el probe exacto `sha256:f1bca46e23c256e81ba71f69cc3b081632cc1ac861238f192dabd2f5b3d52f70`.
-- Seguridad automatizada: Gitleaks fijado encontró `0` leaks en 52,76 MB y
+  runtime `sha256:5324b8f6d3e0a57ef5dcd9047ba988936761cdb7bce9a95d42b5cf6444cc2e85`
+  y el probe exacto `sha256:9dd91be3e3316186fda38f397a50abe36cba7d86123f4d8d317249904b9c8527`.
+- Seguridad automatizada: Gitleaks fijado encontró `0` leaks en 41,22 MB y
   pip-audit hash-locked encontró `0` vulnerabilidades conocidas en dev/test.
 
-Evidencia: `%TEMP%\\ronin-python-full-e192530-20261108`,
-`%TEMP%\\ronin-docker-e192530-20261108`,
-`%TEMP%\\ronin-helm-e192530-20261108`,
-`%TEMP%\\ronin-live-e192530-20261108`,
-`%TEMP%\\ronin-vex-e192530-20261108`,
-`%TEMP%\\ronin-gitleaks-e192530-20261108` y
-`%TEMP%\\ronin-pip-audit-e192530-20261108`. El VEX sigue requiriendo
+Evidencia: `%TEMP%\\ronin-python-full-91d37fe-20261108`,
+`%TEMP%\\ronin-docker-91d37fe-20261108`,
+`%TEMP%\\ronin-helm-91d37fe-20261108`,
+`%TEMP%\\ronin-live-56e1668-final2-20261108`,
+`%TEMP%\\ronin-vex-56e1668-final-20261108`,
+`%TEMP%\\ronin-gitleaks-56e1668-20261108` y
+`%TEMP%\\ronin-pip-audit-56e1668-20261108`. El VEX sigue requiriendo
 aceptación del security reviewer; Trivy no está instalado en el host y permanece
 abierto.
 
@@ -220,14 +224,15 @@ Matriz web obligatoria: Chromium como base, Firefox/WebKit cuando el runner est�
 
 ## 8. Decisión de salida de este ciclo
 
-El candidato de código queda **verde en las lanes técnicas locales disponibles**: Python/PostgreSQL `4562/4589`, web `124/124`, Docker `27/27` + strict `15/15`, Helm, live `33/33`, VEX aplicado `0` y scans automatizados sin hallazgos. Eso no equivale a release-qualified: la UI avanzó en Run/Evidence pero aún no alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric; el ledger Public v1 mantiene `0/13` familias cualificadas; faltan revisión visual/manual formal, revisión legal/NOTICE/claims, aceptación humana de seguridad/VEX, Trivy, Terraform `1.13.5`, qualification de proveedores y gobernanza CI/branch/release. Los skips externos y la ausencia de Trivy no se presentan como verde. La siguiente iteración debe avanzar en autoría, lineage, evidence y operations sin maquillar el ledger.
+El candidato de código queda **verde en las lanes técnicas locales disponibles**: Python/PostgreSQL `4562/4589`, web `125/125` con Studio focalizado `17/17`, Docker `27/27` + strict `15/15`, Helm, live `33/33` sobre 25 rutas, VEX aplicado `0` y scans automatizados sin hallazgos. Eso no equivale a release-qualified: la UI avanzó en Run/Evidence y Runs explorer, pero aún no alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric; el ledger Public v1 mantiene `0/13` familias cualificadas; faltan revisión visual/manual formal, revisión legal/NOTICE/claims, aceptación humana de seguridad/VEX, Trivy, Terraform `1.13.5`, qualification de proveedores y gobernanza CI/branch/release. Los skips externos y la ausencia de Trivy no se presentan como verde. La siguiente iteración debe avanzar en autoría, lineage, evidence y operations sin maquillar el ledger.
 
 ## 9. Plan de iteración 2 hacia GO
 
 Esta iteración no se considera cerrada por pasar el código local. Para convertir el
 NO-GO en GO deben cerrarse, en este orden, los siguientes gates:
 
-1. **Custodia exacta del release:** exportar desde `d18b31a` un source bundle y
+1. **Custodia exacta del release:** congelar el código de producto `91d37fe` y el
+   harness de qualification `56e1668d`, exportar un source bundle y
    un artifact-identity manifest reproducibles; regenerar wheel, sdist, runtime,
    probe, SBOM y provenance contra esos bytes; verificar que el commit documental
    no cambie el SHA de código ni desacople los receipts.
