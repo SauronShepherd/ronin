@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-08 (Europe/Madrid)
-**Fuente de código:** iteración UI publicada en `a01ed1baf7aa06146ec06c71d475c9484e19d000` (Catálogo); la qualification técnica amplia anterior sigue ligada a `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf` y al harness live `56e1668d38a5fab554d584d0ec508297919bb82c` (debe repetirse sobre el nuevo SHA antes de cualquier GO)
+**Fuente de código:** iteración UI publicada en `7ba446af9b97575f122943fe52ea3c450e874035` (Catálogo + Semantic); la qualification técnica amplia anterior sigue ligada a `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf` y al harness live `56e1668d38a5fab554d584d0ec508297919bb82c` (debe repetirse sobre el nuevo SHA antes de cualquier GO)
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -50,18 +50,13 @@ La iteración del 2026-11-08 convirtió Run detail en un espacio de decisión op
 
 La iteración del 2026-11-08 también convirtió Catálogo en un workbench gobernado: registro de activos con búsqueda por nombre/tag/clasificación, selección que prepara lineage, mapa source→target con versión/operación/mode/run, respuesta raw colapsable, glosario consultable y estados loading/error/empty honestos. La interacción conserva el alcance de workspace y evita inventar activos o términos.
 
-El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,024,969`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento de esta iteración de Catálogo es `+14,254` bytes sobre el corte anterior y queda documentado junto con la eliminación de líneas CSS innecesarias para respetar el máximo de 400 líneas. La regresión de Playwright, la barrida responsive y la auditoría estática cubren el cambio; el baseline no autoriza crecimiento ilimitado.
+La segunda pasada del 2026-11-08 convirtió Semantic Studio en un workbench de decisión: registro de modelos, dashboard con acciones explícitas, nota operativa, portabilidad Bundle separada y laboratorio de consultas/composición. Conserva los contratos API, la revisión digest-bound y el límite de 700 KiB, pero evita presentar cinco formularios planos como si fueran una experiencia de producto.
+
+El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,029,815`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento de esta iteración Semantic es `+4,846` bytes sobre el corte anterior; el CSS sigue en el máximo documentado de 400 líneas. La regresión de Playwright, la barrida responsive y la auditoría estática cubren el cambio; el baseline no autoriza crecimiento ilimitado.
 
 ### Verificación exacta del corte 2026-11-08
 
-Sobre `a01ed1baf7aa06146ec06c71d475c9484e19d000`, la suite web estática completa pasa `126/126` con Chromium y la
-regresión focalizada de Catálogo/journeys/traversal pasa `46/46`; la auditoría
-web reporta `61` archivos, `37` módulos, `180` invocaciones de ruta y cero
-fallos. El presupuesto pasa con `2,024,969` bytes y la prueba responsive de
-Catálogo confirma igualdad entre ancho visible y scrollable en 390 px. Esta es
-evidencia exacta de la iteración UI; no sustituye la qualification Python,
-Docker, Helm, live, VEX ni la matriz completa de familias, que siguen ligadas al
-candidato anterior hasta repetirse sobre este SHA.
+Sobre `7ba446af9b97575f122943fe52ea3c450e874035`, la suite web estática completa pasa `127/127` con Chromium y Semantic Studio pasa `4/4`; la auditoría web reporta `61` archivos, `37` módulos, `180` invocaciones de ruta y cero fallos. El presupuesto pasa con `2,029,815` bytes y las pruebas responsive de Catálogo y Semantic confirman igualdad entre ancho visible y scrollable en 390 px. Esta es evidencia exacta de la iteración UI; no sustituye la qualification Python, Docker, Helm, live, VEX ni la matriz completa de familias, que siguen ligadas al candidato anterior hasta repetirse sobre este SHA.
 
 En el checkout exacto de producto `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf`
 la suite estática Chromium pasa `125/125`; el journey focalizado de Studio pasa

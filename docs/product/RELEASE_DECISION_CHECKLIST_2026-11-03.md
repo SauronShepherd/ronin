@@ -4,7 +4,7 @@
 
 **Last evidence review:** 8 November 2026
 
-**Candidate SHA:** current product code candidate `a01ed1baf7aa06146ec06c71d475c9484e19d000`; the prior full qualification harness `56e1668d38a5fab554d584d0ec508297919bb82c` remains bound to product SHA `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf` and must be repeated; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** current product code candidate `7ba446af9b97575f122943fe52ea3c450e874035`; the prior full qualification harness `56e1668d38a5fab554d584d0ec508297919bb82c` remains bound to product SHA `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf` and must be repeated; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -22,10 +22,9 @@ explicit rather than being collapsed into that test status.
 
 ## 8 November exact-candidate refresh
 
-The current product code candidate `a01ed1baf7aa06146ec06c71d475c9484e19d000`
-has an exact UI receipt: static Chromium `126/126`, focused
-Catalog/journeys/traversal `46/46`, web audit `61` files with zero failures and
-budget `2,024,969` bytes. The prior complete local technical receipt belongs
+The current product code candidate `7ba446af9b97575f122943fe52ea3c450e874035`
+has an exact UI receipt: static Chromium `127/127`, focused Semantic `4/4`, web
+audit `61` files with zero failures and budget `2,029,815` bytes. The prior complete local technical receipt belongs
 to product SHA `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf`: Python/PostgreSQL
 `4562 passed, 27 skipped, 0 failed` of `4589`; static Chromium `125/125`;
 focused Studio `17/17`; Docker `27/27` with strict v0.1 `15/15`; Helm/kind;
@@ -33,7 +32,7 @@ live `33/33` over 25 active routes with 244 correlated events; exact VEX `3 raw
 / 0 applied`; Gitleaks `0`; and pip-audit with no known vulnerabilities in
 the hash-locked dev/test sets. Runtime digest is
 `sha256:5324b8f6d3e0a57ef5dcd9047ba988936761cdb7bce9a95d42b5cf6444cc2e85`.
-The broader receipt must be repeated on `a01ed1b` before it can be used for a
+The broader receipt must be repeated on `7ba446a` before it can be used for a
 release decision.
 
 This closes local technical host-stability evidence, but not release: the 13
