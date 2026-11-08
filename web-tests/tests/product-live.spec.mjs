@@ -16,6 +16,9 @@ const fixtureOrder = new Map([['projects', 0], ['environments', 1]]);
 routes.sort((left, right) => (fixtureOrder.get(left.id) ?? 2) - (fixtureOrder.get(right.id) ?? 2));
 const liveReady = liveConfigurationReady();
 const liveWorkerReady = liveReady && process.env.RONIN_LIVE_WORKER_ENABLED === '1';
+// The shell refreshes the shared jobs activity on every route. This is
+// published by the home/runs contracts but is not a settings-specific read.
+const routeIndependentApiPaths = new Set(['/v1/jobs']);
 
 function templatePattern(template) {
   const escaped = template.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -955,7 +958,8 @@ for (const route of routes) {
     }
 
     if (!route.required_api?.length) {
-      expect(calls.slice(before), `route ${route.id} has no published API contract`).toHaveLength(0);
+      const routeCalls = calls.slice(before).filter(call => !routeIndependentApiPaths.has(call.path));
+      expect(routeCalls, `route ${route.id} has no published API contract`).toHaveLength(0);
       await flushLiveTraffic();
       return;
     }
