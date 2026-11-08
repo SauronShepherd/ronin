@@ -4,7 +4,7 @@
 
 **Last evidence review:** 8 November 2026
 
-**Candidate SHA:** current product code candidate `40123ed32d53cc2537ce1e1a7086d0ad8e82920f`; the prior full qualification harness `56e1668d38a5fab554d584d0ec508297919bb82c` remains bound to product SHA `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf` and must be repeated; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `7026cd7c65e6581c38a3136bae4336bcc3dd40fc`; VEX artifact update `d1488a83`; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -22,20 +22,21 @@ explicit rather than being collapsed into that test status.
 
 ## 8 November exact-candidate refresh
 
-The current product code candidate `40123ed32d53cc2537ce1e1a7086d0ad8e82920f`
-has an exact UI receipt: static Chromium `128/128`, focused Scheduler `1/1`, web
-audit `61` files with zero failures and budget `2,034,189` bytes. The prior complete local technical receipt belongs
-to product SHA `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf`: Python/PostgreSQL
-`4562 passed, 27 skipped, 0 failed` of `4589`; static Chromium `125/125`;
-focused Studio `17/17`; Docker `27/27` with strict v0.1 `15/15`; Helm/kind;
-live `33/33` over 25 active routes with 244 correlated events; exact VEX `3 raw
-/ 0 applied`; Gitleaks `0`; and pip-audit with no known vulnerabilities in
-the hash-locked dev/test sets. Runtime digest is
-`sha256:5324b8f6d3e0a57ef5dcd9047ba988936761cdb7bce9a95d42b5cf6444cc2e85`.
-The broader receipt must be repeated on `40123ed` before it can be used for a
-release decision.
+The final runtime/test candidate `7026cd7c65e6581c38a3136bae4336bcc3dd40fc`
+has exact local technical receipts: static Chromium `128/128`; Python/PostgreSQL
+`4562 passed, 27 skipped, 0 failed` of `4589`; Docker `27/27` with strict v0.1
+`15/15`; Helm/kind fully passed with isolated cleanup; live `33/33` over 25
+active routes with 246 correlated events; and Docker Scout/OpenVEX `3 raw / 0
+applied` against runtime image
+`sha256:e4d6a39d040e5af9e337328f8521d1e4faf71cf53bf954e79c95e26c28953f52`.
+Receipts: `%TEMP%\\ronin-python-full-7026cd7-20261108`,
+`%TEMP%\\ronin-docker-7026cd7-20261108`,
+`%TEMP%\\ronin-helm-7026cd7-20261108`,
+`%TEMP%\\ronin-live-7026cd7-20261108`, and
+`%TEMP%\\ronin-vex-7026cd7-20261108-rerun`. The Catalog live selector was
+fixed and the full live lane was repeated after that change.
 
-This closes local technical host-stability evidence, but not release: the 13
+This closes local technical evidence for the candidate, but not release: the 13
 family ledger remains 0/13, the VEX exception needs security-reviewer sign-off,
 Trivy is unavailable on this host, the artifact/SBOM/provenance and rollback
 bundle is incomplete, and maintainer/legal/product, provider and manual visual
@@ -106,10 +107,10 @@ diagnostic does not close a gate.
 
 | Gate | Evidence required to mark PASS | Current decision state | Closure owner |
 | --- | --- | --- | --- |
-| Candidate identity | Clean worktree, exact commit SHA, branch/tag policy recorded, immutable wheel/sdist/image digests. | **OPEN** — no clean release candidate. | Release operator |
+| Candidate identity | Clean worktree, exact commit SHA, branch/tag policy recorded, immutable wheel/sdist/image digests. | **OPEN** — clean exact-SHA qualification checkout exists at `7026cd7c`, with runtime image `sha256:e4d6a39d040e5af9e337328f8521d1e4faf71cf53bf954e79c95e26c28953f52`; final branch/tag policy, artifact bundle and release freeze are not approved. | Release operator |
 | Local quality | Full `make check`, complete Python/PostgreSQL suite, coverage thresholds, performance budgets, typing, formatting, architecture and status consistency; no unexplained skips/failures. | **OPEN** — historical dirty-worktree suite passed 4,467 with 26 skipped and 0 failed. The newer full rerun selected 4,558 and reconciled JUnit/timings exactly (4,531 passed, 26 skipped, 1 architecture failure); the undeclared existing `studio_server → studio_semantic` edge is now declared and the affected architecture/summary tests pass 25/25, but a full post-fix rerun is still required. Branch coverage and every Makefile coverage threshold passed (including storage per-file 53 files). The old v3 timing JSON omitted two module-level collection skips; reporter v4 now records them separately, and its focused contract test reconciles totals with JUnit. Mypy 437 source files; Ruff format/lint 899 files; OpenAPI snapshot; architecture and negative gates; 187 route operations; Studio surface 125/229; web audit 60 files with zero failures; web budget; canonical JSON/protocol; dependency surfaces; capability ledger; skills validate; performance 5/5. Full-suite evidence `%TEMP%\ronin-python-full-current-20261103`; static gate logs `%TEMP%\ronin-static-quality-current-20261103`; coverage logs `%TEMP%\ronin-coverage-gates-current-20261103`. On 2026-11-04, the full Python diagnostic on dirty source `7b6c018` passed 4,487, skipped 76, failed 0; the coverage-configured suite passed 4,482, skipped 76, failed 0. All Makefile coverage floors passed, including the storage per-file gate (53 files); the separate performance suite passed 5/5. These runs predate clean HEAD `87f4e5b`; full `make check`, exact-candidate qualification and PostgreSQL/Docker remain **OPEN**. The optional SDP JSON-stdio provider adapter is not configured; its real subprocess protocol test passes locally, and the installed official CLI does not advertise a JSON-stdio compile command. Per Data Engineering docs this adapter is optional and does not replace or block the official CLI gate. SDP official CLI passed 1/1 and Spark Connect passed 1/1 against real Spark 4.2.0 in dirty diagnostic receipt `%TEMP%\ronin-spark-connect-qualification-20261103-ccbb305d`, and the full candidate-bound `make check` receipt does not exist. The 8 POSIX-specific Windows skips passed separately on Linux (8/8, read-only repo mount, receipt `%TEMP%\\ronin-posix-qualification-20261103-0841ce5d`); Trino 2/2 and OTLP 1/1 also passed against real local services. These are dirty-worktree diagnostics. | Engineering |
-| Security | Secret scan, dependency audit and image scan receipts for exact final artifacts; findings triaged with no unaccepted critical/high items. | **OPEN** — `pip-audit 2.10.1` found 0 advisories in the pinned test (101), runtime (3) and bootstrap (1) package locks. Gitleaks 8.30.1 current tree scan found 0 in 72.97 MB; history scan previously found 0 across 1,873 commits. Docker Scout 1.27.0 scanned image `sha256:fb9029dad0d8d5aade4bb5809c8a4e027f416a158fedc633c65667d0b21b01b8`: raw 1 `CVE-2026-107891` for Alpine musl `1.2.6-r3`, VEX-applied 0 using an exact-digest statement. The documented exception still requires reviewer acceptance. All scans are dirty-tree diagnostics; clean final artifact scans remain open. Evidence: `%TEMP%\ronin-docker-vex-full-current-20261103`, `%TEMP%\ronin-gitleaks-tree-final-20261103`, prior pip-audit/history receipts. | Security reviewer |
-| Docker qualification | Current-checkout image by digest; complete real Docker/PostgreSQL/Floci/Azurite suite, 0 skips/failures, strict v0.1 acceptance 15/15, cleanup receipt. | **OPEN** — latest dirty diagnostic passed 27/27 real Docker/PostgreSQL/Floci/Azurite cases, 0 skips/failures, strict acceptance 15/15 in 173.31 s pytest. Fresh image `sha256:fb9029dad0d8d5aade4bb5809c8a4e027f416a158fedc633c65667d0b21b01b8`; all temporary services cleaned. Candidate-bound rerun remains required. Evidence: `%TEMP%\ronin-docker-full-current-20261103`. | Engineering |
+| Security | Secret scan, dependency audit and image scan receipts for exact final artifacts; findings triaged with no unaccepted critical/high items. | **OPEN / HUMAN REVIEW** — exact candidate Docker Scout 1.27.0 found 3 raw reviewed findings and 0 after digest-bound OpenVEX for image `sha256:e4d6a39d040e5af9e337328f8521d1e4faf71cf53bf954e79c95e26c28953f52`; VEX receipt `%TEMP%\ronin-vex-7026cd7-20261108-rerun`. The exception still requires security-reviewer acceptance; Trivy is unavailable and final Gitleaks/SBOM/provenance receipts remain to be approved. | Security reviewer |
+| Docker qualification | Current-checkout image by digest; complete real Docker/PostgreSQL/Floci/Azurite suite, 0 skips/failures, strict v0.1 acceptance 15/15, cleanup receipt. | **TECHNICAL PASS / RELEASE OPEN** — candidate `7026cd7c` passed `27/27`, 0 skips/failures, strict acceptance `15/15`; image `sha256:e4d6a39d040e5af9e337328f8521d1e4faf71cf53bf954e79c95e26c28953f52`; cleanup succeeded. Evidence: `%TEMP%\ronin-docker-7026cd7-20261108`. | Engineering |
 | Live browser/API | All supported routes and required mutations exercised against Ronin API and real backing services; selected cases, HTTP status/body, persisted state, visible OK/WARN/ERROR and correlated logs agree. | **OPEN** — latest dirty diagnostic passed 33/33 Playwright cases across 25 routes (23 API-backed), using the same freshly built worker image `sha256:fb9029dad0d8d5aade4bb5809c8a4e027f416a158fedc633c65667d0b21b01b8`; 168 real HTTP events (158 OK, 10 expected WARN), all correlated to structured logs by request ID/status/outcome; no 5xx/network errors, in 163.43 s. Includes P1 project creation, secret-safe manifest/Bundle export, digest verification and UI reimport. Evidence: `%TEMP%\ronin-live-full-current-20261103`. On clean implementation SHA `87f4e5b`, four filtered SQLite live diagnostics passed: Quality 5 calls (4 OK, 1 expected WARN), ML Studio 36 (35 OK, 1 expected WARN), Semantic 7 OK and Synthetic 6 OK. All 54 calls correlated with structured HTTP logs; 0 server/network errors and 0 unexpected authorization gaps. Receipts: `%TEMP%\\ronin-live-quality-87f4e5b`, `%TEMP%\\ronin-live-mlstudio-87f4e5b`, `%TEMP%\\ronin-live-semantic-87f4e5b`, `%TEMP%\\ronin-live-synthetic-87f4e5b`. These are filtered diagnostics; full route audit, remaining family journeys and all real-service gates remain **OPEN**. | Product QA |
 | Accessibility and visual review | Manual review on supported viewports: navigation, responsive layout, keyboard/focus, contrast, brown visual system, tutorials and screenshots/issues resolved. | **OPEN** — current dirty-tree static Chromium suite passed 101/101 (includes automated axe route checks, keyboard/navigation, UI behaviors and responsive matrix); route traversal was rerun after hardening resource checks: 26/26. Expected `/v1` 404s are limited to the static server; other HTTP resource failures and failed requests now fail those route tests. The 109/109 run was a web-only diagnostic before current HEAD `87f4e5b`; it is not the required candidate-bound manual visual/accessibility review. Evidence: generated Playwright report under `web-tests/test-results-html`; live UI/API receipt `%TEMP%\ronin-live-full-current-20261103`. | Product QA |
 | Installed artifacts | Build wheel and sdist from candidate; install in clean environments; smoke supported commands, assets, routes and upgrade path; save exact outputs and digests. | **OPEN** — dirty diagnostic built and separately installed wheel (`2a619eef3409d7b3df364242a4e28f5545a514925383f6b07332c1acc3caefb3`) and sdist (`3fa0cd033617251dc1f74360f3dc982c19e5d24ddada337e7f64435bdbea9c58`); CLI help and 4/4 required web assets passed for both. Neither artifact contains GenAI package paths; wheel contains 12 agent-skill files. Metadata is still `0.0.0`, no release version is approved, and same-clean-candidate route/upgrade/platform evidence is missing. Evidence: `%TEMP%\ronin-artifact-diagnostic-9f3006ca00e34b899bc085e3941dcf45`. | Release operator |
@@ -119,6 +120,34 @@ diagnostic does not close a gate.
 | Capability journeys | Integrated end-to-end journeys and provider/security evidence for each Public v1 family P1–P8 and P10–P14. | **OPEN: 0/13** — every family remains unqualified as a release family. | Feature owners + Product QA |
 | Platform and support claims | Explicit supported OS, Python, Docker/Compose and local Kubernetes matrix; every claim has matching installed/runtime evidence. | **OPEN** — matrix incomplete. | Maintainer |
 | Docs and recovery | Clean installation, configuration/secrets, upgrade, rollback, local DB+artifact restore and external object-store recovery instructions reviewed against tested behavior. | **OPEN** — dirty-tree diagnostics exist for Compose DB+local-data restore, Helm/kind install/restart and Floci/Terraform lifecycle. Repeat the relevant paths on one clean candidate; upgrade/rollback rehearsal and external object-store recovery remain. | Documentation + Operations |
+
+## Candidate-bound technical receipt — `7026cd7c`
+
+The stale historical wording in the gate table above is retained for audit
+history; the current candidate-bound technical result is:
+
+- Python/PostgreSQL: `4562 passed`, `27 skipped`, `0 failed` of `4589` in
+  `%TEMP%\\ronin-python-full-7026cd7-20261108`.
+- Docker: `27/27`, strict v0.1 `15/15`, zero skips/failures, image
+  `sha256:e4d6a39d040e5af9e337328f8521d1e4faf71cf53bf954e79c95e26c28953f52`,
+  cleanup passed; `%TEMP%\\ronin-docker-7026cd7-20261108`.
+- Helm/kind: lint, Secret boundary, isolated cluster, install/readiness,
+  health/API, persistence across restart and cleanup passed;
+  `%TEMP%\\ronin-helm-7026cd7-20261108`.
+- Live: `33/33` Playwright, 25 active routes, 24 API-backed, 246 correlated
+  events, zero server/network errors and zero unexpected authorization gaps;
+  `%TEMP%\\ronin-live-7026cd7-20261108`.
+- Static UI: Chromium `128/128` on the final checkout; automated accessibility,
+  keyboard, route traversal and responsive checks passed. Manual visual and
+  accessibility sign-off is still open.
+- VEX: Docker Scout `3` raw findings and `0` after exact digest-bound OpenVEX;
+  `%TEMP%\\ronin-vex-7026cd7-20261108-rerun`. Security-reviewer acceptance is
+  still open.
+
+This is a **technical pass**, not a release GO. The family ledger remains
+`0/13`; provider credentials/matrix, legal/NOTICE/claims, manual review,
+artifact/SBOM/provenance, rollback, support matrix and release governance still
+prevent promotion.
 
 ## Family ledger
 

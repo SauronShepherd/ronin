@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-08 (Europe/Madrid)
-**Fuente de código:** iteración UI publicada en `40123ed32d53cc2537ce1e1a7086d0ad8e82920f` (Catálogo + Semantic + Scheduler); la qualification técnica amplia anterior sigue ligada a `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf` y al harness live `56e1668d38a5fab554d584d0ec508297919bb82c` (debe repetirse sobre el nuevo SHA antes de cualquier GO)
+**Fuente de código:** candidato runtime/test exacto `7026cd7c65e6581c38a3136bae4336bcc3dd40fc` (incluye el endurecimiento del selector live de Catalog); el OpenVEX del artefacto quedó actualizado y publicado en `d1488a83`. La qualification técnica final está ligada a este candidato y a sus recibos fechados; la decisión de release sigue separada de la cualificación técnica.
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -58,7 +58,38 @@ El control de presupuesto se recalibró después de medir los cambios aprobados:
 
 ### Verificación exacta del corte 2026-11-08
 
-Sobre `40123ed32d53cc2537ce1e1a7086d0ad8e82920f`, la suite web estática completa pasa `128/128` con Chromium y Scheduler Studio pasa `1/1`; la auditoría web reporta `61` archivos, `37` módulos, `180` invocaciones de ruta y cero fallos. El presupuesto pasa con `2,034,189` bytes y las pruebas responsive de Catálogo, Semantic y Scheduler confirman igualdad entre ancho visible y scrollable en 390 px. Esta es evidencia exacta de la iteración UI; no sustituye la qualification Python, Docker, Helm, live, VEX ni la matriz completa de familias, que siguen ligadas al candidato anterior hasta repetirse sobre este SHA.
+Sobre `7026cd7c65e6581c38a3136bae4336bcc3dd40fc`, la suite web estática completa pasa `128/128` con Chromium; la auditoría web exacta reporta `61` archivos, `37` módulos, `180` invocaciones de ruta y cero fallos, con presupuesto `2,034,189` bytes. Las pruebas responsive de Catálogo, Semantic y Scheduler confirman igualdad entre ancho visible y scrollable en 390 px. La corrección live de Catalog selecciona el formulario de lineage de forma determinista y la jornada live completa pasa `33/33`.
+
+### Qualification exact-SHA final del candidato `7026cd7c`
+
+El checkout limpio del candidato `7026cd7c65e6581c38a3136bae4336bcc3dd40fc`
+queda técnicamente verde en las lanes disponibles localmente:
+
+- Python/PostgreSQL: `4562 passed`, `27 skipped`, `0 failed` de `4589`; los
+  skips están razonados por Docker/servicios externos opt-in o limitaciones
+  POSIX/Windows y no se cuentan como soporte anunciado. Recibo:
+  `%TEMP%\\ronin-python-full-7026cd7-20261108`.
+- Docker: `27/27` casos reales, `0` skips/fallos; aceptación v0.1 estricta
+  `15/15`; imagen runtime local `sha256:e4d6a39d040e5af9e337328f8521d1e4faf71cf53bf954e79c95e26c28953f52`;
+  cleanup correcto. Recibo: `%TEMP%\\ronin-docker-7026cd7-20261108`.
+- Helm/kind: lint, frontera de Secret, cluster aislado, carga de imagen,
+  instalación, readiness, health, Studio/API, job persistente y supervivencia
+  tras restart; cleanup correcto. Recibo: `%TEMP%\\ronin-helm-7026cd7-20261108`.
+- Live: `33/33` Playwright, `25` rutas activas, `24` API-backed, `246`
+  llamadas/eventos reales, `0` errores de servidor/red y `0` gaps inesperados
+  de autorización; `15` WARN esperados registrados. Recibo:
+  `%TEMP%\\ronin-live-7026cd7-20261108`.
+- VEX: Docker Scout `1.27.0`, `3` findings raw y `0` tras OpenVEX ligado al
+  digest exacto; recibo `%TEMP%\\ronin-vex-7026cd7-20261108-rerun`. El VEX
+  sigue requiriendo aceptación formal del security reviewer.
+- UI estática: Chromium `128/128` sobre el checkout final; presupuesto y
+  auditoría deben permanecer como recibos separados del mismo corte de UI.
+
+Estos resultados cierran el bloque técnico local de este candidato, pero no
+cierran el release: el ledger de familias sigue en `0/13` y continúan abiertos
+la matriz de proveedores/credenciales, revisión humana de seguridad y VEX,
+legal/NOTICE/claims, review visual manual, artefactos/SBOM/provenance,
+rollback, Terraform/toolchain y gobierno de CI/branches.
 
 En el checkout exacto de producto `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf`
 la suite estática Chromium pasa `125/125`; el journey focalizado de Studio pasa
