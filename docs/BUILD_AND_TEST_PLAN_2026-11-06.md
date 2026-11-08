@@ -98,7 +98,7 @@ Evidencia: `%TEMP%\\ronin-python-full-91d37fe-20261108`,
 `%TEMP%\\ronin-docker-91d37fe-20261108`,
 `%TEMP%\\ronin-helm-91d37fe-20261108`,
 `%TEMP%\\ronin-live-56e1668-final2-20261108`,
-`%TEMP%\\ronin-vex-56e1668-final-20261108`,
+`%TEMP%\\ronin-vex-b4928d2-20261108`,
 `%TEMP%\\ronin-gitleaks-56e1668-20261108` y
 `%TEMP%\\ronin-pip-audit-56e1668-20261108`. El VEX sigue requiriendo
 aceptación del security reviewer; Trivy no está instalado en el host y permanece
