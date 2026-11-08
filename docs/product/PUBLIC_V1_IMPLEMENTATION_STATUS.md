@@ -7,10 +7,10 @@
 
 ## Current exact-SHA qualification — 8 November 2026
 
-The current product code candidate `7ba446af9b97575f122943fe52ea3c450e874035`
-is pushed. This UI iteration adds governed Catalog and Semantic workbenches;
-its exact receipt is static Chromium `127/127`, focused Semantic `4/4`, web
-audit `61` files with zero failures, and budget `2,029,815` bytes.
+The current product code candidate `40123ed32d53cc2537ce1e1a7086d0ad8e82920f`
+is pushed. This UI iteration adds governed Catalog, Semantic and Scheduler
+workbenches; its exact receipt is static Chromium `128/128`, focused Scheduler
+`1/1`, web audit `61` files with zero failures, and budget `2,034,189` bytes.
 The complete Python/PostgreSQL, Docker, Helm, live and VEX receipt remains bound
 to the previous product candidate
 `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf` and must be repeated on the current
@@ -59,7 +59,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `7ba446af9b97575f122943fe52ea3c450e874035` (2026-11-08).
+**Observed source head:** `40123ed32d53cc2537ce1e1a7086d0ad8e82920f` (2026-11-08).
 Final live qualification harness for the previous candidate:
 `56e1668d38a5fab554d584d0ec508297919bb82c`; it is not evidence for the new UI
 commit until rerun.

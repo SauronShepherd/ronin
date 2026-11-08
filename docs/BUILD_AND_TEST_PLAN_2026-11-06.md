@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-08 (Europe/Madrid)
-**Fuente de código:** iteración UI publicada en `7ba446af9b97575f122943fe52ea3c450e874035` (Catálogo + Semantic); la qualification técnica amplia anterior sigue ligada a `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf` y al harness live `56e1668d38a5fab554d584d0ec508297919bb82c` (debe repetirse sobre el nuevo SHA antes de cualquier GO)
+**Fuente de código:** iteración UI publicada en `40123ed32d53cc2537ce1e1a7086d0ad8e82920f` (Catálogo + Semantic + Scheduler); la qualification técnica amplia anterior sigue ligada a `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf` y al harness live `56e1668d38a5fab554d584d0ec508297919bb82c` (debe repetirse sobre el nuevo SHA antes de cualquier GO)
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -52,11 +52,13 @@ La iteración del 2026-11-08 también convirtió Catálogo en un workbench gober
 
 La segunda pasada del 2026-11-08 convirtió Semantic Studio en un workbench de decisión: registro de modelos, dashboard con acciones explícitas, nota operativa, portabilidad Bundle separada y laboratorio de consultas/composición. Conserva los contratos API, la revisión digest-bound y el límite de 700 KiB, pero evita presentar cinco formularios planos como si fueran una experiencia de producto.
 
-El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,029,815`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento de esta iteración Semantic es `+4,846` bytes sobre el corte anterior; el CSS sigue en el máximo documentado de 400 líneas. La regresión de Playwright, la barrida responsive y la auditoría estática cubren el cambio; el baseline no autoriza crecimiento ilimitado.
+La tercera pasada del 2026-11-08 convirtió Scheduler Studio en un control plane de operaciones: contexto de workspace/schedule/workflow/run visible, acciones agrupadas en Observe/Change/Execute/Recover, resultado de operador separado y ruta de recuperación presentada como primera clase. Se conservan los endpoints, payloads, idempotencia, cancelaciones y backfills existentes.
+
+El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,034,189`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento de esta iteración Scheduler es `+4,374` bytes sobre el corte anterior; el CSS queda en 400 líneas. La regresión de Playwright, la barrida responsive y la auditoría estática cubren el cambio; el baseline no autoriza crecimiento ilimitado.
 
 ### Verificación exacta del corte 2026-11-08
 
-Sobre `7ba446af9b97575f122943fe52ea3c450e874035`, la suite web estática completa pasa `127/127` con Chromium y Semantic Studio pasa `4/4`; la auditoría web reporta `61` archivos, `37` módulos, `180` invocaciones de ruta y cero fallos. El presupuesto pasa con `2,029,815` bytes y las pruebas responsive de Catálogo y Semantic confirman igualdad entre ancho visible y scrollable en 390 px. Esta es evidencia exacta de la iteración UI; no sustituye la qualification Python, Docker, Helm, live, VEX ni la matriz completa de familias, que siguen ligadas al candidato anterior hasta repetirse sobre este SHA.
+Sobre `40123ed32d53cc2537ce1e1a7086d0ad8e82920f`, la suite web estática completa pasa `128/128` con Chromium y Scheduler Studio pasa `1/1`; la auditoría web reporta `61` archivos, `37` módulos, `180` invocaciones de ruta y cero fallos. El presupuesto pasa con `2,034,189` bytes y las pruebas responsive de Catálogo, Semantic y Scheduler confirman igualdad entre ancho visible y scrollable en 390 px. Esta es evidencia exacta de la iteración UI; no sustituye la qualification Python, Docker, Helm, live, VEX ni la matriz completa de familias, que siguen ligadas al candidato anterior hasta repetirse sobre este SHA.
 
 En el checkout exacto de producto `91d37fe90b9e5413adf257cf6c326b1ff6dc2daf`
 la suite estática Chromium pasa `125/125`; el journey focalizado de Studio pasa
