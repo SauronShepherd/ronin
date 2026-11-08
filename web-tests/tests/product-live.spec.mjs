@@ -521,7 +521,7 @@ for (const route of routes) {
           requestUrl.searchParams.get('direction') === 'upstream' &&
           requestUrl.searchParams.get('limit') === '100';
       });
-      await page.getByRole('button', { name: 'Inspect lineage', exact: true }).click();
+      await page.locator('#catalog-lineage-form > .button').click();
       const lineage = await lineageResponse;
       expect(lineage.status(), await lineage.text()).toBe(200);
       const lineagePayload = await lineage.json();
