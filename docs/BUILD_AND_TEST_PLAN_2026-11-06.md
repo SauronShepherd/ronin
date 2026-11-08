@@ -308,18 +308,29 @@ Matriz web obligatoria: Chromium como base, Firefox/WebKit cuando el runner est�
 
 ## 8. Decisión de salida de este ciclo
 
-El candidato de código queda **verde en las lanes técnicas locales disponibles**: Python/PostgreSQL `4562/4589`, web `125/125` con Studio focalizado `17/17`, Docker `27/27` + strict `15/15`, Helm, live `33/33` sobre 25 rutas, VEX aplicado `0` y scans automatizados sin hallazgos. Eso no equivale a release-qualified: la UI avanzó en Run/Evidence y Runs explorer, pero aún no alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric; el ledger Public v1 mantiene `0/13` familias cualificadas; faltan revisión visual/manual formal, revisión legal/NOTICE/claims, aceptación humana de seguridad/VEX, Trivy, Terraform `1.13.5`, qualification de proveedores y gobernanza CI/branch/release. Los skips externos y la ausencia de Trivy no se presentan como verde. La siguiente iteración debe avanzar en autoría, lineage, evidence y operations sin maquillar el ledger.
+El runtime candidato `6012ed52` queda **verde en las lanes técnicas locales
+disponibles**: Python/PostgreSQL `4562/4589`, artefacto instalado `90/90`, web
+Chromium `128/128`, Docker `27/27` + strict `15/15`, Helm, live `33/33` sobre
+25 rutas y 247 eventos, VEX aplicado `0`, Gitleaks/pip-audit limpios y SDK
+SBOM/provenance verificados. Eso no equivale a release-qualified: la UI avanzó
+en Run/Evidence, Runs explorer, Catalog, Semantic y Scheduler, pero aún no
+alcanza la profundidad operativa completa de Databricks/Dataiku/Palantir/Fabric;
+el ledger Public v1 mantiene `0/13` familias cualificadas; faltan revisión
+visual/manual formal, revisión legal/NOTICE/claims, aceptación humana de
+seguridad/VEX, Trivy/SBOM de contenedor, Terraform `1.13.5`, qualification de
+proveedores, rollback y gobernanza CI/branch/release. Los skips externos y la
+ausencia de Trivy no se presentan como verde.
 
 ## 9. Plan de iteración 2 hacia GO
 
 Esta iteración no se considera cerrada por pasar el código local. Para convertir el
 NO-GO en GO deben cerrarse, en este orden, los siguientes gates:
 
-1. **Custodia exacta del release:** congelar el código de producto `91d37fe` y el
-   harness de qualification `56e1668d`, exportar un source bundle y
+1. **Custodia exacta del release:** tratar `6012ed52` como el runtime candidato y
+   `9b1d16ef` como el commit VEX/documental posterior; exportar un source bundle y
    un artifact-identity manifest reproducibles; regenerar wheel, sdist, runtime,
-   probe, SBOM y provenance contra esos bytes; verificar que el commit documental
-   no cambie el SHA de código ni desacople los receipts.
+   probe, SBOM y provenance contra esos bytes; verificar que los commits
+   documentales no cambien el SHA de código ni desacoplen los receipts.
 2. **Seguridad reproducible:** ejecutar Trivy fijado en el toolchain sobre runtime
    y probe, repetir Gitleaks de árbol e historial desde un repositorio bare
    montable, revisar los 3 hallazgos VEX con un Security owner y registrar la
@@ -345,8 +356,10 @@ NO-GO en GO deben cerrarse, en este orden, los siguientes gates:
    aplicable, el security/legal/product sign-off y el expediente exact-SHA tengan
    receipts consistentes. En caso contrario, mantener `0/13` y publicar el
    siguiente bloqueo concreto.
-7. **Estabilidad de qualification:** repetir la suite Python/PostgreSQL completa
-   en un host estable, con el mismo SHA, y conservar el orden y el seed usados.
+7. **Estabilidad de qualification:** la repetición exacta en `6012ed52` ya pasó
+   `4562/4589`; conservar el orden, el seed y los receipts. Repetirla en un host
+   estable o segundo sistema operativo antes de convertir el resultado local en
+   claim de plataforma.
    Los timeouts observados en composición PostgreSQL y en tres contratos de
    subprocesos no se convierten en `pass` por haber pasado en aislamiento; si
    reaparecen, aislar la fuga de recursos o la presión de procesos antes de
