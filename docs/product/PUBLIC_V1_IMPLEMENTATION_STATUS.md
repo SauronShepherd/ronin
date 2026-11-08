@@ -7,16 +7,16 @@
 
 ## Current exact-SHA qualification — 8 November 2026
 
-The current runtime/test candidate `1a9fd01ad50f39189389883e7804c6e78c9ac779`
-is pushed and adds a seventh UI pass: ML Studio becomes a Lab/Qualify/Govern/
-Serve decision workbench on top of the governed Catalog, Semantic, Scheduler,
-Quality, Data Engineering and Ingestion workbenches. Its exact receipt is static
-Chromium `130/130`, web audit `65` files with zero failures, and budget
-`2,069,139` bytes. Installed PyRonin artifact qualification is `90/90`; Docker
+The current runtime/test candidate `5476460c9bad05da2d47415d17a6edef6dc0abb2`
+is pushed and adds an eighth UI pass: Workspaces becomes an Observe/Create/
+Govern decision workbench on top of the governed Catalog, Semantic, Scheduler,
+Quality, Data Engineering, Ingestion and ML workbenches. Its exact receipt is
+static Chromium `131/131`, web audit `66` files with zero failures, and budget
+`2,077,634` bytes. Installed PyRonin artifact qualification is `90/90`; Docker
 is `27/27` and strict v0.1 `15/15` on image
-`sha256:e28c696201dda415668524c3c3cd21b55c3c28979b4574693953bfe65453abcb`;
+`sha256:927edc5516d9cebfe80351d265bebfab9680a8493630decf06f139acac948d27`;
 Helm/kind install/readiness/health/API/persistence/restart/cleanup pass; live
-is `33/33` over 25 active routes with 248 correlated events and no server or
+is `33/33` over 25 active routes with 247 correlated events and no server or
 network errors; and Docker Scout/OpenVEX is `3 raw / 0 applied` for that image.
 The diff from `8a85586` contains no Python or backend runtime changes, so its
 `4562 passed, 27 skipped, 0 failed` PostgreSQL receipt and coverage `53/53`,
@@ -70,7 +70,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `1a9fd01ad50f39189389883e7804c6e78c9ac779` (2026-11-08).
+**Observed source head:** `5476460c9bad05da2d47415d17a6edef6dc0abb2` (2026-11-08).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

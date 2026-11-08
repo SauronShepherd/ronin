@@ -4,7 +4,7 @@
 
 **Last evidence review:** 8 November 2026
 
-**Candidate SHA:** runtime/test candidate `1a9fd01ad50f39189389883e7804c6e78c9ac779`; exact-image VEX and qualification receipts are recorded in the documentation follow-up; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `5476460c9bad05da2d47415d17a6edef6dc0abb2`; exact-image VEX and qualification receipts are recorded in the documentation follow-up; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -22,18 +22,19 @@ explicit rather than being collapsed into that test status.
 
 ## 8 November exact-candidate refresh
 
-The current runtime/test candidate is `1a9fd01ad50f39189389883e7804c6e78c9ac779`,
-the seventh UI pass after the backend candidate `8a855866`. ML Studio now exposes
-Lab/Qualify/Govern/Serve decision modes while retaining the existing runtime
-contracts. The exact UI lane passes Chromium `130/130`; web audit reports `65`
-files with zero failures and the measured budget is `2,069,139` asset bytes,
-`64` requests, `35` modules, `10` stylesheets and `5,111` HTML bytes. Installed
-PyRonin artifacts pass `90/90` with wheel digest
-`d30de6d1a9b3c2f4ea5f7d505eaf1e4b88c92b8284dcf988f7ea530d69dc362c` and sdist
-digest `0c1032f9d0a4bbf9530a1e3b689945e016d360bd99f5c6e3bb28e29f5dcbd50e`.
+The current runtime/test candidate is `5476460c9bad05da2d47415d17a6edef6dc0abb2`,
+the eighth UI pass after the backend candidate `8a855866`. Workspaces now
+exposes Observe/Create/Govern decision modes while retaining the existing
+runtime contracts and the full project journey. The exact UI lane passes
+Chromium `131/131`; web audit reports `66` files with zero failures and the
+measured budget is `2,077,634` asset bytes, `65` requests, `35` modules,
+`11` stylesheets and `5,179` HTML bytes. Installed PyRonin artifacts pass
+`90/90` with wheel digest
+`728916042f8d63607093cdebcebbb87bb016ff3272acbae0cd1a8b69164df0da` and sdist
+digest `18390b21faef297b94d6e43f89efca1de9118c93fe231f0193c114b5a3fd697e`.
 Docker passes `27/27` plus strict v0.1 `15/15` on image
-`sha256:e28c696201dda415668524c3c3cd21b55c3c28979b4574693953bfe65453abcb`;
-Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 248
+`sha256:927edc5516d9cebfe80351d265bebfab9680a8493630decf06f139acac948d27`;
+Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 247
 correlated events; Docker Scout/OpenVEX is `3 raw / 0 applied` for that exact
 image. The backend Python/PostgreSQL receipt remains green on unchanged source
 code: `4562 passed, 27 skipped, 0 failed` of `4589`; coverage passes `53/53`

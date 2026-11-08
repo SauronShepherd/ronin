@@ -2,8 +2,8 @@
   "@context": "https://openvex.dev/ns/v0.2.0",
   "@id": "https://github.com/SauronShepherd/ronin/blob/main/docker/qualification-image-vex.openvex.json",
   "author": "Ronin release qualification",
-  "timestamp": "2026-11-08T16:47:00Z",
-  "version": 7,
+  "timestamp": "2026-11-08T16:42:36Z",
+  "version": 8,
   "statements": [
     {
       "vulnerability": {
@@ -12,7 +12,7 @@
       "timestamp": "2026-11-08T15:03:00Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:e28c696201dda415668524c3c3cd21b55c3c28979b4574693953bfe65453abcb",
+          "@id": "pkg:docker/ronin@sha256:927edc5516d9cebfe80351d265bebfab9680a8493630decf06f139acac948d27",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"
@@ -39,7 +39,7 @@
       "timestamp": "2026-11-08T16:12:00Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:e28c696201dda415668524c3c3cd21b55c3c28979b4574693953bfe65453abcb",
+          "@id": "pkg:docker/ronin@sha256:927edc5516d9cebfe80351d265bebfab9680a8493630decf06f139acac948d27",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"
@@ -66,7 +66,7 @@
       "timestamp": "2026-11-08T16:12:00Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:e28c696201dda415668524c3c3cd21b55c3c28979b4574693953bfe65453abcb",
+          "@id": "pkg:docker/ronin@sha256:927edc5516d9cebfe80351d265bebfab9680a8493630decf06f139acac948d27",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"

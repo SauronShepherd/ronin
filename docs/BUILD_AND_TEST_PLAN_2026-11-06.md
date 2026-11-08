@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-08 (Europe/Madrid)
-**Fuente de código:** candidato runtime/test exacto `1a9fd01ad50f39189389883e7804c6e78c9ac779` (séptima pasada de UI: ML Studio convertido en workbench de decisión con modos Lab/Qualify/Govern/Serve, sobre el backend ya cualificado de `8a855866`); el OpenVEX exacto queda ligado en esta iteración a la imagen `sha256:e28c696201dda415668524c3c3cd21b55c3c28979b4574693953bfe65453abcb`. La qualification técnica se separa entre la delta UI actual y los recibos backend heredados sin cambios Python; la decisión de release sigue separada de la cualificación técnica.
+**Fuente de código:** candidato runtime/test exacto `5476460c9bad05da2d47415d17a6edef6dc0abb2` (octava pasada de UI: Workspaces convertido en workbench de decisión con modos Observe/Create/Govern, sobre el backend ya cualificado de `8a855866`); el OpenVEX exacto queda ligado en esta iteración a la imagen `sha256:927edc5516d9cebfe80351d265bebfab9680a8493630decf06f139acac948d27`. La qualification técnica se separa entre la delta UI actual y los recibos backend heredados sin cambios Python; la decisión de release sigue separada de la cualificación técnica.
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -62,13 +62,30 @@ La sexta pasada del 2026-11-08 convirtió Ingestion Studio en un workbench de de
 
 La séptima pasada del 2026-11-08 convirtió ML Studio en un workbench de decisión: el flujo se organiza en Lab/Qualify/Govern/Serve, con contexto de workspace, acciones de refresco, preparación de calidad, comparación, registro, promoción, revisión y despliegue. Se conservaron los IDs, formularios, contratos, handlers de runtime e inyecciones dinámicas existentes; la regresión focalizada verifica la jerarquía, las rutas de decisión y la accesibilidad. La interfaz ahora comunica el siguiente paso operativo sin ocultar los controles avanzados.
 
-El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,069,139`, con `64` requests, `35` módulos, `10` hojas de estilo y `5,111` bytes HTML. La regresión de Playwright, la barrida responsive y la auditoría estática cubren el cambio; el baseline no autoriza crecimiento ilimitado.
+La octava pasada del 2026-11-08 convirtió Workspaces en un workbench de decisión: la entrada de la plataforma se organiza en Observe/Create/Govern, con contexto de workspace, inventario honesto, creación idempotente y handoff explícito a Projects. Se conservaron los IDs, endpoints, botones de selección/archivo, formularios de creación y journey de Bundle/permisos/operación; la regresión añade accesibilidad Axe, scroll de modos y responsive a 390 px. El control plane ahora explica la frontera operativa antes de mostrar las acciones avanzadas.
+
+El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,077,634`, con `65` requests, `35` módulos, `11` hojas de estilo y `5,179` bytes HTML. La regresión de Playwright, la barrida responsive y la auditoría estática cubren el cambio; el baseline no autoriza crecimiento ilimitado.
 
 ### Verificación exacta del corte UI 2026-11-08
 
-Sobre el árbol UI del candidato `1a9fd01`, la suite web estática completa pasa `130/130` con Chromium; la auditoría web exacta reporta `65` archivos, `37` módulos, `180` invocaciones de ruta y cero fallos, con presupuesto `2,069,139` bytes, `64` requests y `10` hojas de estilo. Las pruebas responsive de Data Engineering/Ingestion/ML Studio y las regresiones previas confirman igualdad entre ancho visible y scrollable en 390 px. La qualification live exacta del candidato pasa `33/33`.
+Sobre el árbol UI del candidato `5476460`, la suite web estática completa pasa `131/131` con Chromium; la auditoría web exacta reporta `66` archivos, `37` módulos, `180` invocaciones de ruta y cero fallos, con presupuesto `2,077,634` bytes, `65` requests y `11` hojas de estilo. Las pruebas responsive de Workspaces/Data Engineering/Ingestion/ML Studio y las regresiones previas confirman igualdad entre ancho visible y scrollable en 390 px. La qualification live exacta del candidato pasa `33/33`.
 
-### Qualification exact-SHA actual del candidato runtime `1a9fd01`
+### Qualification exact-SHA actual del candidato runtime `5476460`
+
+El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-5476460` queda ligado al runtime/test `5476460c9bad05da2d47415d17a6edef6dc0abb2`; la delta desde `1a9fd01` es UI/tests/presupuesto y no contiene Python ni runtime backend.
+
+- Web estática: Chromium `131/131`; auditoría `66` archivos, `37` módulos, `180` invocaciones, `0` fallos; presupuesto `2,077,634` bytes, `65` requests, `35` módulos, `11` hojas de estilo y `5,179` bytes HTML. Recibo reproducible mediante `node web-tests/node_modules/@playwright/test/cli.js test --config web-tests/playwright.config.mjs --grep-invert [Ll]ive --workers=2`.
+- Artefactos instalados: `90/90`; wheel `728916042f8d63607093cdebcebbb87bb016ff3272acbae0cd1a8b69164df0da`, sdist `18390b21faef297b94d6e43f89efca1de9118c93fe231f0193c114b5a3fd697e`; identidad exacta `%TEMP%\\ronin-artifact-identity-5476460.json`.
+- Docker: `27/27`, strict v0.1 `15/15`, cleanup correcto; imagen local `sha256:927edc5516d9cebfe80351d265bebfab9680a8493630decf06f139acac948d27`.
+- Helm/kind: lint, frontera de Secret, cluster aislado, carga de imagen, instalación, readiness, health, Studio/API, job persistente, restart y cleanup pasaron; `%TEMP%\\ronin-helm-5476460-20261108`.
+- Live: `33/33`, `25` rutas activas, `24` API-backed, `247` eventos correlacionados (`232` OK, `15` WARN esperados), `0` errores server/network y `0` gaps inesperados de autorización; `%TEMP%\\ronin-live-5476460-20261108`.
+- Seguridad: VEX Docker Scout `1.27.0`: `3` raw, `0` tras OpenVEX exacto para la imagen; `%TEMP%\\ronin-vex-5476460-20261108`. Trivy no está disponible y no se afirma SBOM de contenedor; el reviewer debe aceptar formalmente las justificaciones.
+- Supply chain SDK: SBOM CycloneDX, provenance y resumen de digests verificados para `5476460`; identidad `%TEMP%\\ronin-artifact-identity-5476460.json`, SBOM `%TEMP%\\ronin-release-sbom-5476460.json`, provenance `%TEMP%\\ronin-release-provenance-5476460.json` y resumen `%TEMP%\\ronin-supply-chain-5476460.json`. El inventario de contenedor queda vacío por falta de Trivy.
+- Python/PostgreSQL: `4562 passed`, `27 skipped`, `0 failed` de `4589` en `%TEMP%\\ronin-python-full-8a85586-20261108`; el diff desde `8a85586` hasta este candidato no toca Python/backend, por lo que este recibo se conserva como evidencia del código ejecutable sin cambios. Los skips son explícitos y están justificados por Docker/servicios opcionales, POSIX/symlinks o proveedores no configurados.
+
+El candidato es técnicamente defendible en las lanes completadas, pero la decisión sigue `NO-GO`: ledger de familias `0/13`, proveedores/credenciales, revisión humana de seguridad/VEX, legal/NOTICE/claims, review visual manual, Trivy/SBOM de contenedor, rollback, Terraform/toolchain y gobierno de CI/branches siguen abiertos.
+
+### Qualification exact-SHA histórica del candidato runtime `1a9fd01`
 
 El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-1a9fd01` queda ligado al runtime/test `1a9fd01ad50f39189389883e7804c6e78c9ac779`; la delta desde `6279ef7` es UI/tests/presupuesto y no contiene Python ni runtime backend.
 
