@@ -4,7 +4,7 @@
 
 **Last evidence review:** 8 November 2026
 
-**Candidate SHA:** runtime/test candidate `6012ed52deb5b5a449abc73944cd21293ac06d33`; VEX artifact update `9b1d16ef`; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `d8cb5f868e1cb229508e02d609b018f5d02ff574`; VEX artifact update `740ecf84`; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -22,7 +22,28 @@ explicit rather than being collapsed into that test status.
 
 ## 8 November exact-candidate refresh
 
-The final runtime/test candidate `6012ed52deb5b5a449abc73944cd21293ac06d33`
+The current runtime/test candidate is `d8cb5f868e1cb229508e02d609b018f5d02ff574`.
+The exact UI lane passes Chromium `129/129`; web audit reports `62` files with
+zero failures and the measured budget is `2,044,190` asset bytes, `61` requests,
+`35` modules, `7` stylesheets and `4,927` HTML bytes. Quality Studio's
+decision-first workbench is covered by its focused and full static tests. The
+candidate's installed PyRonin artifacts pass `90/90` with wheel digest
+`3bd6056bd00123b1a056079817bc001ef1563c7b751e9e8be6e88678180456ef` and sdist
+digest `2f44a9452cd568259fb1145b65bd0f9873e607779f9ee0e5095f69b200ca4c47`.
+Docker passes `27/27` plus strict v0.1 `15/15` on image
+`sha256:280a958bdfe4c795899bf9aeca391a28392101cb1ac48738878da1bb0e7a24fb`;
+Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 244
+correlated events; Gitleaks and pip-audit are clean; SDK SBOM/provenance verify;
+and Docker Scout/OpenVEX is `3 raw / 0 applied` for that exact image. The final
+Python/PostgreSQL receipt is being reconciled after this exact run; no release
+GO is claimed while any candidate receipt or human gate remains open.
+
+The release remains **NO-GO**: the 13-family ledger is 0/13, the VEX requires
+security-reviewer acceptance, Trivy/container SBOM is unavailable, and
+maintainer/legal/product, provider, rollback, support-matrix, governance and
+manual visual decisions remain open.
+
+The previous runtime/test candidate `6012ed52deb5b5a449abc73944cd21293ac06d33`
 has exact local technical receipts: static Chromium `128/128`; Python/PostgreSQL
 `4562 passed, 27 skipped, 0 failed` of `4589`; Docker `27/27` with strict v0.1
 `15/15`; Helm/kind fully passed with isolated cleanup; live `33/33` over 25
@@ -108,12 +129,12 @@ Every row must identify the same candidate commit and, where relevant, the
 same image/package digests. “Implemented”, a historical pass, or a filtered
 diagnostic does not close a gate.
 
-**Current-candidate override (runtime `6012ed52`, VEX `9b1d16ef`):** the
+**Current-candidate override (runtime `d8cb5f8`, VEX `740ecf84`):** the
 candidate-bound technical receipt below supersedes stale historical numbers in
 the long gate cells: installed artifact qualification is `90/90`; Docker is
 `27/27` with strict `15/15` on image
-`sha256:89b122401876ff1b82f06b9e1f20dab3fa077981fb9bf51e264d3bd00d5b6be0`;
-live is `33/33` with `247` correlated events; static Chromium is `128/128`;
+`sha256:280a958bdfe4c795899bf9aeca391a28392101cb1ac48738878da1bb0e7a24fb`;
+live is `33/33` with `244` correlated events; static Chromium is `129/129`;
 Gitleaks and pip-audit are clean; SDK SBOM/provenance verify; VEX is `3 raw / 0
 applied`; container SBOM, human VEX/security, manual visual, family/provider,
 legal, rollback and release-governance gates remain open.
@@ -134,7 +155,39 @@ legal, rollback and release-governance gates remain open.
 | Platform and support claims | Explicit supported OS, Python, Docker/Compose and local Kubernetes matrix; every claim has matching installed/runtime evidence. | **OPEN** — matrix incomplete. | Maintainer |
 | Docs and recovery | Clean installation, configuration/secrets, upgrade, rollback, local DB+artifact restore and external object-store recovery instructions reviewed against tested behavior. | **OPEN** — dirty-tree diagnostics exist for Compose DB+local-data restore, Helm/kind install/restart and Floci/Terraform lifecycle. Repeat the relevant paths on one clean candidate; upgrade/rollback rehearsal and external object-store recovery remain. | Documentation + Operations |
 
-## Candidate-bound technical receipt — runtime `6012ed52`
+## Candidate-bound technical receipt — runtime `d8cb5f8`
+
+The current receipt for the runtime candidate is:
+
+- Web: Chromium `129/129`; web audit `62` files with zero failures; budget
+  `2,044,190` asset bytes, `61` requests, `35` modules, `7` stylesheets and
+  `4,927` HTML bytes. Quality Studio's decision workbench is covered by the
+  focused and full suite.
+- Installed artifacts: `90/90`; wheel digest
+  `3bd6056bd00123b1a056079817bc001ef1563c7b751e9e8be6e88678180456ef`; sdist
+  digest `2f44a9452cd568259fb1145b65bd0f9873e607779f9ee0e5095f69b200ca4c47`.
+- Docker: `27/27`, strict v0.1 `15/15`, zero skips/failures, image
+  `sha256:280a958bdfe4c795899bf9aeca391a28392101cb1ac48738878da1bb0e7a24fb`;
+  `%TEMP%\\ronin-docker-d8cb5f8-20261108`.
+- Helm/kind: isolated lint, Secret boundary, install/readiness, health/API,
+  persistence, restart and cleanup passed; `%TEMP%\\ronin-helm-d8cb5f8-20261108`.
+- Live: `33/33`, `25` active routes, `24` API-backed, `244` correlated events,
+  zero server/network errors and zero unexpected authorization gaps;
+  `%TEMP%\\ronin-live-d8cb5f8-20261108`.
+- Security and supply chain: Gitleaks tree/history and pip-audit
+  test/runtime/bootstrap are clean; SDK SBOM/provenance verify; VEX has `3`
+  raw and `0` applied findings for the exact image; container SBOM remains
+  open because Trivy is unavailable.
+- Python/PostgreSQL: the exact receipt is still being reconciled; until its
+  final count and status-ledger contracts are recorded, this is not a complete
+  technical GO.
+
+This is a technical candidate receipt, not a release GO. The family ledger is
+still `0/13`, security/VEX acceptance, manual visual review, legal/NOTICE,
+provider/support matrix, rollback, governance and container SBOM gates remain
+open.
+
+## Historical candidate-bound technical receipt — runtime `6012ed52`
 
 The stale historical wording in the gate table above is retained for audit
 history; the current candidate-bound technical result is:
