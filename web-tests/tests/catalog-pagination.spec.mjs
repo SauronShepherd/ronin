@@ -44,3 +44,41 @@ test('catalog search follows the server cursor to the next bounded page', async 
   expect(requests[1].searchParams.get('cursor')).toBe('opaque-next-page');
   expect(requests[2].searchParams.get('cursor')).toBeNull();
 });
+
+test('catalog workbench turns governed assets into lineage and glossary review', async ({ page }) => {
+  await page.route('**/v1/workspaces/ws-a/catalog/assets**', route => route.fulfill({ json: {
+    items: [{ id: 'curated-orders', name: 'Curated orders', kind: 'table', tags: ['gold'], classifications: ['internal'] }],
+    next_cursor: null,
+  } }));
+  await page.route('**/v1/workspaces/ws-a/catalog/lineage/curated-orders/1**', route => route.fulfill({ json: {
+    items: [{ source: { asset_id: 'raw-orders', version: 'v2' }, target: { asset_id: 'curated-orders', version: '1' }, operation: 'write', mode: 'observed', execution_ref: 'run-42' }],
+    truncated: false,
+  } }));
+  await page.route('**/v1/workspaces/ws-a/glossary/terms**', async route => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({ json: { id: 'customer', version: '1', name: 'Customer', owner: 'data-team' } });
+      return;
+    }
+    await route.fulfill({ json: { items: [{ id: 'customer', version: '1', name: 'Customer', definition: 'A governed buyer identity.', owner: 'data-team', references: ['catalog:curated-orders'] }] } });
+  });
+
+  await page.goto('./#catalog');
+  await page.locator('#catalog-search-form [name="workspace"]').fill('ws-a');
+  await page.getByRole('button', { name: 'Search catalog' }).click();
+  await expect(page.locator('.catalog-table')).toContainText('Curated orders');
+  await expect(page.locator('.catalog-pill').filter({ hasText: 'gold' })).toHaveCount(1);
+  await page.locator('[data-action="catalog-select-asset"]').last().click();
+  await expect(page.locator('#catalog-lineage-form [name="asset_id"]')).toHaveValue('curated-orders');
+  await page.locator('#catalog-lineage-form').getByRole('button', { name: 'Inspect lineage' }).click();
+  await expect(page.locator('.catalog-lineage-map')).toContainText('raw-orders');
+  await expect(page.locator('.catalog-lineage-map')).toContainText('run-42');
+
+  await page.locator('#glossary-form [name="workspace"]').fill('ws-a');
+  await page.locator('#glossary-search-form').getByRole('button', { name: 'Load terms' }).click();
+  await expect(page.locator('.glossary-table')).toContainText('Customer');
+  await expect(page.locator('.glossary-table')).toContainText('data-team');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const widths = await page.locator('#main').evaluate(node => ({ client: node.clientWidth, scroll: node.scrollWidth }));
+  expect(widths.scroll).toBe(widths.client);
+});
