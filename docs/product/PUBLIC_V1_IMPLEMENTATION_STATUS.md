@@ -7,28 +7,28 @@
 
 ## Current exact-SHA qualification — 8 November 2026
 
-The current runtime/test candidate `d8cb5f868e1cb229508e02d609b018f5d02ff574`
-is pushed; the VEX metadata update is published in `740ecf84`. This UI
-iteration adds a Quality decision workbench on top of the governed Catalog,
-Semantic and Scheduler workbenches: explicit decision posture, scope/contract
-separation, playbook, KPI evidence and immutable history. Its exact receipt is
-static Chromium `129/129`, web audit `62` files with zero failures, and budget
-`2,044,190` bytes. Installed PyRonin artifact qualification is `90/90`; Docker
-is `27/27` and strict v0.1 `15/15` on image
-`sha256:280a958bdfe4c795899bf9aeca391a28392101cb1ac48738878da1bb0e7a24fb`;
+The current runtime/test candidate `8a8558661c8bdce82e39dc18c1587ecf61a0dd0a`
+is pushed; the VEX metadata update is published in `61d9135d`. This UI
+iteration adds a Data Engineering decision workbench with Query/Compose/Observe
+modes on top of the governed Catalog, Semantic, Scheduler and Quality
+workbenches: explicit scope, bounded query actions, versioned pipeline authoring
+and operating evidence. Its exact receipt is static Chromium `130/130`, web
+audit `63` files with zero failures, and budget `2,051,458` bytes. Installed
+PyRonin artifact qualification is `90/90`; Docker is `27/27` and strict v0.1
+`15/15` on image
+`sha256:cdf1957805932cf9742c3c23cc739bc6476f2388b8e88e160fc7c5c5276f705c`;
 Helm/kind install/readiness/health/API/persistence/restart/cleanup pass; live
-is `33/33` over 25 active routes with 244 correlated events and no server or
+is `33/33` over 25 active routes with 248 correlated events and no server or
 network errors; and Docker Scout/OpenVEX is `3 raw / 0 applied` for that image.
 Gitleaks tree/history and pip-audit test/runtime/bootstrap are clean; SDK SBOM
 and provenance generation/verification pass. Trivy is unavailable, so the
 container SBOM gate and human VEX/security review remain open. These local
 receipts do not silently close the release ledger or human-owned gates.
 
-The exact Python/PostgreSQL receipt is green on the final documentation tree
-that preserves runtime candidate d8: `4562 passed, 27 skipped, 0 failed` of
-`4589` in `%TEMP%\\ronin-python-full-f65772a3-20261108`; both status-ledger
-contracts pass. The 27 skips remain explicitly environment/provider/POSIX gates,
-not silently converted support claims.
+The exact Python/PostgreSQL receipt is being repeated on this documentation
+tree; it must close at `4562 passed, 27 skipped, 0 failed` of `4589`, with both
+status-ledger contracts passing. The 27 skips remain explicitly
+environment/provider/POSIX gates, not silently converted support claims.
 
 This does not change the release decision: Public v1 remains **0/13 (0%,
 NO-GO)**. Manual visual/product signoff, legal/NOTICE/claims, security reviewer
@@ -70,7 +70,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `d8cb5f868e1cb229508e02d609b018f5d02ff574` (2026-11-08).
+**Observed source head:** `8a8558661c8bdce82e39dc18c1587ecf61a0dd0a` (2026-11-08).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

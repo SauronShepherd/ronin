@@ -4,7 +4,7 @@
 
 **Last evidence review:** 8 November 2026
 
-**Candidate SHA:** runtime/test candidate `d8cb5f868e1cb229508e02d609b018f5d02ff574`; VEX artifact update `740ecf84`; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `8a8558661c8bdce82e39dc18c1587ecf61a0dd0a`; VEX artifact update `61d9135d`; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -22,22 +22,23 @@ explicit rather than being collapsed into that test status.
 
 ## 8 November exact-candidate refresh
 
-The current runtime/test candidate is `d8cb5f868e1cb229508e02d609b018f5d02ff574`.
-The exact UI lane passes Chromium `129/129`; web audit reports `62` files with
-zero failures and the measured budget is `2,044,190` asset bytes, `61` requests,
-`35` modules, `7` stylesheets and `4,927` HTML bytes. Quality Studio's
+The current runtime/test candidate is `8a8558661c8bdce82e39dc18c1587ecf61a0dd0a`.
+The exact UI lane passes Chromium `130/130`; web audit reports `63` files with
+zero failures and the measured budget is `2,051,458` asset bytes, `62` requests,
+`35` modules, `8` stylesheets and `4,992` HTML bytes. Data Engineering's
 decision-first workbench is covered by its focused and full static tests. The
 candidate's installed PyRonin artifacts pass `90/90` with wheel digest
-`3bd6056bd00123b1a056079817bc001ef1563c7b751e9e8be6e88678180456ef` and sdist
-digest `2f44a9452cd568259fb1145b65bd0f9873e607779f9ee0e5095f69b200ca4c47`.
+`07b3663fc2404bce918efff40a3aece66ac823778338a5b8ce044e93fe6cd5bd` and sdist
+digest `9ef193d18e60dac70e64f62b472ab62b64628224bdf427eba4d28db6599811e3`.
 Docker passes `27/27` plus strict v0.1 `15/15` on image
-`sha256:280a958bdfe4c795899bf9aeca391a28392101cb1ac48738878da1bb0e7a24fb`;
-Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 244
+`sha256:cdf1957805932cf9742c3c23cc739bc6476f2388b8e88e160fc7c5c5276f705c`;
+Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 248
 correlated events; Gitleaks and pip-audit are clean; SDK SBOM/provenance verify;
 and Docker Scout/OpenVEX is `3 raw / 0 applied` for that exact image. The final
-Python/PostgreSQL receipt is green on the final documentation tree:
-`4562 passed, 27 skipped, 0 failed` of `4589`; both status-ledger contracts
-pass. No release GO is claimed while any human gate remains open.
+Python/PostgreSQL receipt is being repeated against this documentation tree;
+the release remains NO-GO until it closes with `4562 passed, 27 skipped, 0
+failed` of `4589` and both status-ledger contracts pass. No release GO is
+claimed while any human gate remains open.
 
 The release remains **NO-GO**: the 13-family ledger is 0/13, the VEX requires
 security-reviewer acceptance, Trivy/container SBOM is unavailable, and
