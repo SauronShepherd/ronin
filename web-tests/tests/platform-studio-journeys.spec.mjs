@@ -83,6 +83,9 @@ test('Workspace and project Studio journey covers environment, Bundle and archiv
   await page.locator('#workspace-create-description').fill('P1-006');
   await page.getByRole('button', { name: 'Create' }).click();
   await page.getByRole('link', { name: 'Open projects' }).click();
+  await expect(page.locator('.project-hero')).toContainText('Build inside a governed project');
+  await expect(page.locator('.project-mode-nav')).toContainText('Author');
+  await expect(page.locator('.project-mode-nav')).toContainText('Govern');
   await expect(page.locator('#project-list')).toContainText('project-journey');
   await page.getByRole('button', { name: 'Use context' }).click();
   await expect(page).toHaveURL(/workspace=workspace-journey.*project=project-journey/);

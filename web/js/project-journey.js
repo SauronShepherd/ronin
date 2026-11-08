@@ -7,7 +7,17 @@ function renderProjects() {
   const view = document.querySelector('#view');
   if (!view || document.querySelector('#project-journey-form')) return;
   const workspaceId = decodeURIComponent(location.hash.slice(1).split('/')[1] || '');
-  view.innerHTML = `<section class="panel"><h1 id="view-title">Projects</h1>
+  view.innerHTML = `<section class="project-hero panel">
+    <div><p class="eyebrow">GOVERNANCE · PROJECT CONTROL PLANE</p><h2>Build inside a governed project.</h2><p>Keep the manifest, environment binding, operation and permission evidence connected to one workspace-scoped project.</p></div>
+    <div class="project-hero-aside"><span class="status blue">project → environment → operation</span><p>Ronin makes the project boundary explicit before a run, import or permission decision.</p></div>
+  </section>
+  <nav class="project-mode-nav" aria-label="Project workbench modes">
+    <button class="project-mode-card" type="button" data-project-scroll="project-authoring" aria-controls="project-journey-form" aria-label="Author project"><span class="project-mode-index">01</span><strong>Author</strong><span>Define or revise the project manifest.</span></button>
+    <button class="project-mode-card" type="button" data-project-scroll="project-connection" aria-controls="project-environment-form" aria-label="Connect project"><span class="project-mode-index">02</span><strong>Connect</strong><span>Bind a declared environment and runtime.</span></button>
+    <button class="project-mode-card" type="button" data-project-scroll="project-operation" aria-controls="project-operation-form" aria-label="Operate project"><span class="project-mode-index">03</span><strong>Operate</strong><span>Run a reviewed, idempotent pipeline operation.</span></button>
+    <button class="project-mode-card" type="button" data-project-scroll="project-govern" aria-controls="project-permissions-form" aria-label="Govern project"><span class="project-mode-index">04</span><strong>Govern</strong><span>Inspect permissions and move portable evidence.</span></button>
+  </nav>
+  <section class="panel project-workbench"><h1 id="view-title">Projects</h1>
     <p class="muted">Workspace: <code>${esc(workspaceId || 'select a workspace')}</code></p>
     <form id="project-journey-form" class="stack"><label>Project manifest JSON
       <textarea id="project-manifest" class="field" rows="8" required>{}</textarea></label>
@@ -34,6 +44,13 @@ function renderProjects() {
       <button class="button" type="submit">Inspect permissions</button>
       <pre id="project-permissions-result" class="code" aria-live="polite">No permission inspection performed.</pre></form>
     <div id="project-list" class="table-wrap" aria-live="polite">Loading projects…</div></section>`;
+  const projectAnchors = {
+    'project-journey-form': 'project-authoring',
+    'project-environment-form': 'project-connection',
+    'project-operation-form': 'project-operation',
+    'project-permissions-form': 'project-govern',
+  };
+  Object.entries(projectAnchors).forEach(([id, anchor]) => document.getElementById(id)?.setAttribute('data-project-anchor', anchor));
   const form = document.querySelector('#project-journey-form');
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -119,6 +136,12 @@ async function loadProjects(workspaceId) {
 }
 
 document.addEventListener('click', async (event) => {
+  const scroll = event.target.closest?.('[data-project-scroll]');
+  if (scroll) {
+    event.preventDefault();
+    document.querySelector(`[data-project-anchor="${scroll.dataset.projectScroll}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
   const context = event.target.closest?.('.project-context');
   if (context) {
     const workspaceId = decodeURIComponent(location.hash.slice(1).split('/')[1] || '');
