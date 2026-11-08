@@ -28,13 +28,26 @@ export async function ingestionStudio() {
   const view = document.querySelector('#view');
   const workspaceId = globalThis.roninStudioContext?.workspace || sessionStorage.getItem('ronin.workspace') || 'default';
   view.innerHTML = `${page('Ingestion Studio', 'DATA PLANE')}
-    <section class="panel">
-      <h2>Connector capabilities</h2>
-      <pre id="ingestion-capabilities" class="code" aria-live="polite">Loading…</pre>
+    <section class="ing-hero panel">
+      <div>
+        <p class="eyebrow">DATA PLANE · DECISION WORKBENCH</p>
+        <h2>Move source data with a clear decision at every step.</h2>
+        <p>Discover bounded assets, preview the contract, then run a governed sync. The page keeps scope, limits, recovery and evidence visible before anything durable starts.</p>
+      </div>
+      <div class="ing-hero-aside">
+        <span class="status blue">Discover → preview → sync → evidence</span>
+        <p>Read-only discovery is paged. Durable execution requires governed source and destination references.</p>
+      </div>
     </section>
-    <section class="panel" aria-labelledby="ingestion-discovery-title">
-      <h2 id="ingestion-discovery-title">Discover source assets</h2>
-      <p class="muted">Load one bounded page at a time. Ronin keeps only the current page and its continuation cursor.</p>
+    <nav class="ing-mode-nav" aria-label="Ingestion workbench modes">
+      <a class="ing-mode-card" href="#ingestion-discovery"><span class="ing-mode-index">01</span><strong>Discover</strong><span>Find source assets without loading an unbounded catalog.</span></a>
+      <a class="ing-mode-card" href="#ingestion-preview"><span class="ing-mode-index">02</span><strong>Preview</strong><span>Inspect the plan and source response before a write.</span></a>
+      <a class="ing-mode-card" href="#ingestion-sync"><span class="ing-mode-index">03</span><strong>Sync</strong><span>Submit a durable, idempotent job inside a project.</span></a>
+      <a class="ing-mode-card" href="#ingestion-observe"><span class="ing-mode-index">04</span><strong>Observe</strong><span>Follow state, evidence and recorded lineage after commit.</span></a>
+    </nav>
+    <section class="ing-workbench panel" id="ingestion-discovery" aria-labelledby="ingestion-discovery-title">
+      <div class="ing-section-heading"><div><span class="ing-section-index">01 · DISCOVER</span><h2 id="ingestion-discovery-title">Start with a governed source</h2><p>Use a bounded page to establish the source boundary before defining a sync.</p></div><span class="ing-boundary">workspace · connection · cursor</span></div>
+      <div class="ing-callout"><span class="status blue">Read-only</span><p>Ronin keeps only the current page and continuation cursor in this view. Stop safely if the provider is slow or the source settings change.</p></div>
       <form id="ingestion-discover-form">
         <div class="grid three">
           <label>Workspace ID<input class="field" id="ingestion-workspace" name="workspace_id" value="${esc(workspaceId)}" required></label>
@@ -51,24 +64,31 @@ export async function ingestionStudio() {
       <p id="ingestion-discovery-status" role="status" aria-live="polite">No discovery requested.</p>
       <pre id="ingestion-discovery-result" class="code" aria-label="Discovered asset page">No assets loaded.</pre>
     </section>
-    <section class="panel">
-      <h2>Ingestion sync</h2>
+    <section class="ing-workbench panel" id="ingestion-preview" aria-labelledby="ingestion-preview-title">
+      <div class="ing-section-heading"><div><span class="ing-section-index">02 · PREVIEW</span><h2 id="ingestion-preview-title">Make the write boundary explicit</h2><p>Use one definition for preview, planning, checkpoint health and the eventual durable run.</p></div><span class="ing-boundary">project · contract · checkpoint</span></div>
       <form id="ingestion-preview-form">
         <div class="grid three">
           <label>Project ID<input class="field" id="ingestion-project" value="${esc(globalThis.roninStudioContext?.project || 'default')}" required></label>
         </div>
-        <p class="muted">A sync runs as a durable background job. Keep a Ronin worker running with the same storage configuration to process queued jobs.</p>
-        <p class="muted">Durable sync also needs an existing governed source revision and destination asset. Bind the source catalog asset with the properties <code>ronin.connector_id</code>, <code>ronin.connection_ref</code> and <code>ronin.asset_ref</code>; the worker records observed lineage with its Run ID.</p>
+        <div class="ing-callout"><span class="status amber">Governed write</span><p>A durable sync needs an existing governed source revision and destination asset. Preview and plan are safe checks; only the explicit sync action submits work.</p></div>
         <label>Definition JSON<textarea id="ingestion-definition" class="field sql-editor" rows="10" required>{"id":"preview-1","connector_id":"http.json","connection_ref":"connection://demo","asset_ref":"connection://demo::orders","destination_ref":"asset://preview","checkpoint_identity":"preview-1","mode":"snapshot","source_revision_ref":{"asset_id":"governed-source","version":"v1"},"destination_asset_id":"governed-target"}</textarea></label>
-        <div class="toolbar">
-          <button class="button" type="button" id="ingestion-plan-button">Plan sync</button>
-          <button class="button" type="button" id="ingestion-health-button">Checkpoint health</button>
-          <button class="button primary" type="button" id="ingestion-sync-button">Run durable sync</button>
-          <button class="button primary">Preview source</button>
-        </div>
+        <details class="ing-advanced"><summary>What the worker records</summary><p class="muted">Bind catalog properties <code>ronin.connector_id</code>, <code>ronin.connection_ref</code> and <code>ronin.asset_ref</code>. A successful worker run records observed lineage with its Run ID and evidence digest.</p></details>
+        <div class="ing-form-actions"><p class="ing-form-note">Preview the provider response first, then inspect the plan and checkpoint before running.</p><div class="toolbar"><button class="button" type="button" id="ingestion-plan-button">Plan sync</button><button class="button" type="button" id="ingestion-health-button">Checkpoint health</button><button class="button primary" type="button" id="ingestion-sync-button">Run durable sync</button><button class="button">Preview source</button></div></div>
       </form>
       <pre id="ingestion-preview-result" class="code" aria-live="polite">No operation requested.</pre>
-      <section aria-labelledby="ingestion-sync-title"><h3 id="ingestion-sync-title">Sync job</h3><p id="ingestion-sync-status" role="status" aria-live="polite">No sync submitted.</p><button class="button" type="button" id="ingestion-sync-cancel" hidden>Cancel sync</button><h4>Run events and evidence</h4><pre id="ingestion-sync-evidence" class="code">Job events and evidence will appear here.</pre><h4>Recorded lineage</h4><pre id="ingestion-sync-lineage" class="code" aria-live="polite">Lineage will appear after the run commits.</pre></section>
+    </section>
+    <section class="ing-workbench panel" id="ingestion-sync" aria-labelledby="ingestion-sync-title">
+      <div class="ing-section-heading"><div><span class="ing-section-index">03 · SYNC</span><h2 id="ingestion-sync-title">Commit a durable sync</h2><p>The API applies project scope and an idempotency key before the worker processes the queued job.</p></div><span class="ing-boundary">queued · retryable · cancellable</span></div>
+      <div class="ing-sync-brief"><span class="status blue">Worker handoff</span><p>Keep a Ronin worker running with the same storage configuration. The browser monitors the durable job; it does not pretend a submission is a completed load.</p></div>
+      <p id="ingestion-sync-status" role="status" aria-live="polite">No sync submitted.</p><button class="button" type="button" id="ingestion-sync-cancel" hidden>Cancel sync</button>
+    </section>
+    <section class="ing-workbench panel" id="ingestion-observe" aria-labelledby="ingestion-observe-title">
+      <div class="ing-section-heading"><div><span class="ing-section-index">04 · OBSERVE</span><h2 id="ingestion-observe-title">Keep evidence with the outcome</h2><p>Capabilities, events, evidence and lineage make the result reviewable after the browser leaves.</p></div><span class="ing-boundary">capabilities · evidence · lineage</span></div>
+      <div class="ing-observe-grid">
+        <section class="ing-observe-card"><h3>Connector capabilities</h3><p class="muted">What the configured server can safely execute.</p><pre id="ingestion-capabilities" class="code" aria-live="polite">Loading…</pre></section>
+        <section class="ing-observe-card"><h3>Run events and evidence</h3><pre id="ingestion-sync-evidence" class="code">Job events and evidence will appear here.</pre></section>
+        <section class="ing-observe-card"><h3>Recorded lineage</h3><pre id="ingestion-sync-lineage" class="code" aria-live="polite">Lineage will appear after the run commits.</pre></section>
+      </div>
     </section>`;
 
   try {

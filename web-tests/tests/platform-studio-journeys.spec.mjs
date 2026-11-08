@@ -259,6 +259,10 @@ test('Ingestion Studio pages source discovery and keeps sync preview controls', 
     await route.fulfill({ json: { identity: 'preview-1', present: false } });
   });
   await page.goto('./#ingestion');
+  await expect(page.locator('.ing-hero')).toContainText('Move source data with a clear decision at every step.');
+  await expect(page.locator('.ing-mode-nav')).toContainText('Discover');
+  await expect(page.locator('.ing-mode-nav')).toContainText('Observe');
+  await expect(page.locator('#ingestion-observe')).toContainText('Keep evidence with the outcome');
   await page.locator('[name="connection_ref"]').fill('conn-1');
   await page.getByRole('button', { name: 'Discover assets' }).click();
   await expect(page.locator('#ingestion-discovery-status')).toContainText('Page 1 loaded');
