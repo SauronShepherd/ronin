@@ -2,14 +2,15 @@
 
 ## Current exact-SHA snapshot — 8 November 2026
 
-The code candidate is `012979949accb971da5f28a5412f91f8a44a4976`. Its static
-Chromium receipt is green at `124/124`, and the focused Run detail journey is
-`16/16` against the public event/evidence schema. The prior service-backed
-receipts belong to `1daa6c5` and are retained as historical baseline evidence;
-they are not reassigned to this candidate. The new exact Python lane is pending
-rerun after status-ledger synchronization; Docker/Helm/live/VEX must likewise
-be reissued for this SHA. These receipts establish a strong but not fully closed
-technical candidate, not release approval: the ledger remains
+The code candidate is `012979949accb971da5f28a5412f91f8a44a4976`, with paperwork
+checkout `e19253083a5356c583b6f8dfe7deefc0d0659657`. Its local technical
+receipts are green: Python/PostgreSQL `4562/4589` with 27 explicit skips and 0
+failures; static Chromium `124/124`; focused Run detail `16/16`; Docker `27/27`
+plus strict v0.1 `15/15`; Helm/kind; live `33/33` over 25 routes and 244
+correlated events; and VEX `3 raw / 0 applied` for runtime digest
+`sha256:9a32146b59d567a4379e853de270b4d73a6a926fc15ad79526162cadc9f815f9`.
+Gitleaks and pip-audit are clean for their stated scopes. These receipts
+establish a strong but not fully closed technical candidate, not release approval: the ledger remains
 **0/13 families qualified** because mandatory family journeys, provider matrix,
 manual visual review, legal/claims decisions, Trivy, Terraform pin and security
 acceptance are still open. The UI target remains a deliberate next phase: unify

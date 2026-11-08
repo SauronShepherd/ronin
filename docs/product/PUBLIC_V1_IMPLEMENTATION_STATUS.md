@@ -7,16 +7,18 @@
 
 ## Current exact-SHA qualification — 8 November 2026
 
-Code candidate `012979949accb971da5f28a5412f91f8a44a4976` is pushed and the
-static Chromium lane is green at `124/124`; the focused Studio journey is
-`16/16`, including the public Run/Event/Evidence contract. The visual smoke
-review at desktop and mobile widths found no horizontal overflow. The previous
-candidate `1daa6c5` had complete service-backed receipts, but those receipts are
-not silently reassigned to this new SHA. The first exact Python/PostgreSQL run
-on `0129799` reached `4561 passed`, `27 skipped`, `1 failed` of `4589`; the sole
-failure was stale status-ledger metadata, which has now been synchronized, so
-the full lane is pending one clean rerun. Docker, Helm, live, VEX and supply
-chain receipts likewise remain to be reissued for this SHA.
+Code candidate `012979949accb971da5f28a5412f91f8a44a4976` is pushed and its
+paperwork checkout `e19253083a5356c583b6f8dfe7deefc0d0659657` has a complete
+local technical receipt: Python/PostgreSQL `4562 passed`, `27 skipped`, `0
+failed` of `4589`; static Chromium `124/124`; focused Run/Event/Evidence
+journey `16/16`; Docker `27/27` plus strict acceptance `15/15`; Helm/kind;
+live `33/33` over 25 routes and 244 correlated events; and exact VEX `3 raw / 0
+applied`. The runtime image is
+`sha256:9a32146b59d567a4379e853de270b4d73a6a926fc15ad79526162cadc9f815f9`.
+Gitleaks found 0 leaks and pip-audit found no known vulnerabilities in the
+hash-locked dev/test sets. The visual smoke review at desktop and mobile widths
+found no horizontal overflow. These local receipts do not silently close the
+release ledger or human-owned gates.
 
 This does not change the release decision: Public v1 remains **0/13 (0%,
 NO-GO)**. Manual visual/product signoff, legal/NOTICE/claims, security reviewer

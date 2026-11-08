@@ -22,14 +22,15 @@ explicit rather than being collapsed into that test status.
 
 ## 8 November exact-candidate refresh
 
-The new code candidate `012979949accb971da5f28a5412f91f8a44a4976` has static
-Chromium `124/124` and the focused Run detail journey `16/16` against the
-public Event/Evidence contract. The first full Python/PostgreSQL run reached
-`4561 passed, 27 skipped, 1 failed` of `4589`; the only failure was stale
-status-ledger metadata, now synchronized, so that lane is being rerun. The
-previous candidate `1daa6c5` has the complete service-backed receipt recorded
-below, but its Docker/Helm/live/VEX/SBOM/Gitleaks evidence is not reassigned to
-the new SHA.
+The new code candidate `012979949accb971da5f28a5412f91f8a44a4976` has paperwork
+checkout `e19253083a5356c583b6f8dfe7deefc0d0659657` and a complete local
+technical receipt: Python/PostgreSQL `4562 passed, 27 skipped, 0 failed` of
+`4589`; static Chromium `124/124`; focused Run detail `16/16`; Docker `27/27`
+with strict v0.1 `15/15`; Helm/kind; live `33/33` over 25 active routes with
+244 correlated events; exact VEX `3 raw / 0 applied`; Gitleaks `0`; and
+pip-audit with no known vulnerabilities in the hash-locked dev/test sets.
+Runtime digest is
+`sha256:9a32146b59d567a4379e853de270b4d73a6a926fc15ad79526162cadc9f815f9`.
 
 This closes local technical host-stability evidence, but not release: the 13
 family ledger remains 0/13, the VEX exception needs security-reviewer sign-off,
