@@ -1,6 +1,6 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/SauronShepherd/ronin/blob/65e04d3efe5aa222519fe437023c304ef39693d4/docker/qualification-image-vex.openvex.json",
+  "@id": "https://github.com/SauronShepherd/ronin/blob/6a568d5190c835f8b96d4addabf70d0cfbb2a27e/docker/qualification-image-vex.openvex.json",
   "author": "Ronin release qualification",
   "timestamp": "2026-11-08T06:55:00Z",
   "version": 2,
