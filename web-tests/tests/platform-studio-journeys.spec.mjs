@@ -162,11 +162,11 @@ test('Run detail keeps lifecycle actions and evidence review explicit', async ({
   await page.route('**/v1/jobs/**', async route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith('/events')) {
-      await route.fulfill({ json: { items: [{ kind: 'completed', occurred_at: '2026-11-07T10:00:00Z', message: 'Run completed' }] } });
+      await route.fulfill({ json: { items: [{ sequence: 1, attempt_id: 'attempt-1', attempt_sequence: 1, kind: 'completed', occurred_at: '2026-11-07T10:00:00.000000Z', message: 'Run completed' }], next_since: '1' } });
       return;
     }
     if (path.endsWith('/evidence')) {
-      await route.fulfill({ json: { items: [{ id: 'evidence-1', state: 'verified' }] } });
+      await route.fulfill({ json: { items: [{ version: 1, cell_id: 'cell-1', role: 'result', digest_algorithm: 'sha256', digest: 'a'.repeat(64), media_type: 'application/json', size_bytes: 128, availability: 'available', reason: null }] } });
       return;
     }
     const id = path.split('/').pop();
@@ -175,9 +175,15 @@ test('Run detail keeps lifecycle actions and evidence review explicit', async ({
 
   await page.goto('./#run/job-terminal');
   await expect(page.getByRole('button', { name: 'Review evidence' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Run completed/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Cancel run' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Review evidence' }).click();
   await expect(page.getByRole('heading', { name: 'Evidence health' })).toBeVisible();
+  await expect(page.locator('#run-panel')).toContainText('result');
+  await expect(page.locator('#run-panel')).toContainText('aaaaaaaaaaaa…');
+  await page.getByRole('tab', { name: 'Events' }).click();
+  await expect(page.locator('#run-panel')).toContainText('attempt-1');
+  await expect(page.locator('#run-panel')).toContainText('Run completed');
 
   await page.goto('./#run/job-active');
   await expect(page.getByRole('button', { name: 'Cancel run' })).toBeVisible();
