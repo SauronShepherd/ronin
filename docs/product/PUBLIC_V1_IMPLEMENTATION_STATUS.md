@@ -25,10 +25,11 @@ and provenance generation/verification pass. Trivy is unavailable, so the
 container SBOM gate and human VEX/security review remain open. These local
 receipts do not silently close the release ledger or human-owned gates.
 
-The exact Python/PostgreSQL receipt is being repeated on this documentation
-tree; it must close at `4562 passed, 27 skipped, 0 failed` of `4589`, with both
-status-ledger contracts passing. The 27 skips remain explicitly
-environment/provider/POSIX gates, not silently converted support claims.
+The exact Python/PostgreSQL receipt is green on the clean documentation tree:
+`4562 passed, 27 skipped, 0 failed` of `4589`; coverage passes `53/53` and
+`62/62`, with both status-ledger contracts passing. The 27 skips remain
+explicitly environment/provider/POSIX gates, not silently converted support
+claims.
 
 This does not change the release decision: Public v1 remains **0/13 (0%,
 NO-GO)**. Manual visual/product signoff, legal/NOTICE/claims, security reviewer

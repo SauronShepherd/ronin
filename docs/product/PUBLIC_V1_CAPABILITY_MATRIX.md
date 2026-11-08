@@ -12,9 +12,10 @@ qualification is `90/90`, Docker is `27/27` plus strict `15/15`, Helm/kind
 passes, live is `33/33` with 248 correlated events, and VEX is `3 raw / 0
 applied` for image
 `sha256:cdf1957805932cf9742c3c23cc739bc6476f2388b8e88e160fc7c5c5276f705c`.
-The exact Python/PostgreSQL receipt is being repeated on the documentation
-tree; the runtime code and artifact identity remain bound to `8a85586`, while
-the later VEX/documentation commits only record qualification evidence.
+The exact Python/PostgreSQL receipt is green on the clean documentation tree:
+`4562/4589` with 27 explicit skips and 0 failures; coverage passes `53/53` and
+`62/62`. The runtime code and artifact identity remain bound to `8a85586`,
+while the later VEX/documentation commits only record qualification evidence.
 The ledger remains **0/13 families qualified**: mandatory family journeys,
 provider matrix, manual visual review, legal/claims decisions, Trivy, Terraform
 pin and security acceptance are still open. The UI target remains a deliberate
