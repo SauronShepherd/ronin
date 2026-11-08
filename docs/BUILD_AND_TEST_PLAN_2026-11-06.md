@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-08 (Europe/Madrid)
-**Fuente de código:** candidato runtime/test exacto `8a8558661c8bdce82e39dc18c1587ecf61a0dd0a` (Data Engineering convertido en workbench de decisión con modos Query/Compose/Observe, CSS separado, editor SQL/pipeline conservado y prueba responsive); el OpenVEX exacto quedó actualizado y publicado en `61d9135d` para la imagen `sha256:cdf1957805932cf9742c3c23cc739bc6476f2388b8e88e160fc7c5c5276f705c`. La qualification técnica queda ligada al runtime `8a85586` y a sus recibos fechados; la decisión de release sigue separada de la cualificación técnica.
+**Fuente de código:** candidato runtime/test exacto `6279ef792d41a78a6e022f8193ed70bcf5ff7fc3` (sexta pasada de UI: Ingestion convertido en workbench de decisión con modos Discover/Preview/Sync/Observe, sobre el backend ya cualificado de `8a855866`); el OpenVEX exacto queda actualizado en esta iteración para la imagen `sha256:a6771cf1fa7dee4566f6fc298ea89d23ddf31c61233d5e25c3daac985c3e1aca`. La qualification técnica se separa entre la delta UI actual y los recibos backend heredados sin cambios Python; la decisión de release sigue separada de la cualificación técnica.
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -58,24 +58,26 @@ La cuarta pasada del 2026-11-08 convirtió Quality Studio en un workbench de dec
 
 La quinta pasada del 2026-11-08 convirtió Data Engineering en un workbench de decisión: hero con límites explícitos, modos Query/Compose/Observe, SQL bounded con historial/exportación, pipeline versionado con validación/preview/run/inspect y observabilidad separada. Se conservaron los IDs, payloads y APIs existentes, incluido el editor visual de nodos/aristas, y se añadió una regresión específica de modos, alcance y responsive a 390 px. El objetivo es que el operador entienda el siguiente paso antes de encontrarse con el formulario completo.
 
-El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,051,458`, con `62` requests, `35` módulos, `8` hojas de estilo y `4,992` bytes HTML. La regresión de Playwright, la barrida responsive y la auditoría estática cubren el cambio; el baseline no autoriza crecimiento ilimitado.
+La sexta pasada del 2026-11-08 convirtió Ingestion Studio en un workbench de decisión: hero con la frontera de escritura, navegación Discover/Preview/Sync/Observe, callouts de seguridad, definición JSON compartida, handoff explícito al worker y evidencia/lineage separados. Se conservaron todos los IDs, payloads, acciones y contratos live existentes; una regresión de journey comprueba la nueva jerarquía y la suite completa conserva accesibilidad y responsive.
+
+El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,059,874`, con `63` requests, `35` módulos, `9` hojas de estilo y `5,050` bytes HTML. La regresión de Playwright, la barrida responsive y la auditoría estática cubren el cambio; el baseline no autoriza crecimiento ilimitado.
 
 ### Verificación exacta del corte UI 2026-11-08
 
-Sobre el árbol UI que desemboca en el runtime candidato `8a85586`, la suite web estática completa pasa `130/130` con Chromium; la auditoría web exacta reporta `63` archivos, `37` módulos, `180` invocaciones de ruta y cero fallos, con presupuesto `2,051,458` bytes, `62` requests y `8` hojas de estilo. Las pruebas responsive de Data Engineering y las regresiones previas confirman igualdad entre ancho visible y scrollable en 390 px. La jornada live exacta del candidato pasa `33/33` en la repetición íntegra.
+Sobre el árbol UI del candidato `6279ef7`, la suite web estática completa pasa `130/130` con Chromium; la auditoría web exacta reporta `64` archivos, `37` módulos, `180` invocaciones de ruta y cero fallos, con presupuesto `2,059,874` bytes, `63` requests y `9` hojas de estilo. Las pruebas responsive de Data Engineering/Ingestion y las regresiones previas confirman igualdad entre ancho visible y scrollable en 390 px. La qualification live exacta del candidato pasa `33/33`.
 
-### Qualification exact-SHA actual del candidato runtime `8a85586`
+### Qualification exact-SHA actual del candidato runtime `6279ef7`
 
-El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-8a85586` queda ligado al runtime/test `8a8558661c8bdce82e39dc18c1587ecf61a0dd0a`; el commit `61d9135d` sólo actualiza el VEX digest-bound posterior a la construcción de la imagen.
+El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-6279ef7` queda ligado al runtime/test `6279ef792d41a78a6e022f8193ed70bcf5ff7fc3`; el commit de VEX/documentación posterior actualiza el binding digest-bound sin cambiar la delta de UI. El diff desde `8a85586` no contiene Python ni runtime backend.
 
-- Web estática: Chromium `130/130`; auditoría `63` archivos, `37` módulos, `180` invocaciones, `0` fallos; presupuesto `2,051,458` bytes, `62` requests, `35` módulos, `8` hojas de estilo y `4,992` bytes HTML. Recibo reproducible mediante `node web-tests/node_modules/@playwright/test/cli.js test --config web-tests/playwright.config.mjs --grep-invert [Ll]ive --workers=2`.
-- Artefactos instalados: `90/90`; wheel `07b3663fc2404bce918efff40a3aece66ac823778338a5b8ce044e93fe6cd5bd`, sdist `9ef193d18e60dac70e64f62b472ab62b64628224bdf427eba4d28db6599811e3`; identidad exacta `%TEMP%\\ronin-artifact-identity-8a85586.json`.
-- Docker: `27/27`, strict v0.1 `15/15`, cleanup correcto; imagen local `sha256:cdf1957805932cf9742c3c23cc739bc6476f2388b8e88e160fc7c5c5276f705c`.
-- Helm/kind: lint, frontera de Secret, cluster aislado, carga de imagen, instalación, readiness, health, Studio/API, job persistente, restart y cleanup pasaron.
-- Live: `33/33`, `25` rutas activas, `24` API-backed, `248` eventos correlacionados (`233` OK, `15` WARN esperados), `0` errores server/network y `0` gaps inesperados de autorización. Un primer run aisló una flakiness transitoria en Ingestion (`32/33`); el diagnóstico focal pasó `1/1` y la repetición íntegra pasó `33/33`.
-- Seguridad: Gitleaks `8.30.1` sin hallazgos en árbol ni historial; pip-audit `2.10.1` sin vulnerabilidades en test/runtime/bootstrap. VEX Docker Scout `1.27.0`: `3` raw, `0` tras OpenVEX exacto; el reviewer debe aceptar formalmente las justificaciones. Trivy no está disponible y no se afirma SBOM de contenedor.
-- Supply chain SDK: SBOM CycloneDX, provenance y resumen de digests verificados; no se confunden con una revisión humana ni con inventario del contenedor.
-- Python/PostgreSQL: `4562 passed`, `27 skipped`, `0 failed` de `4589` en `%TEMP%\\ronin-python-full-8a85586-20261108`; los contratos de estado público pasan `136/136` en la selección documental y las políticas de cobertura por archivo pasan `53/53` y `62/62`, junto con los floors globales definidos en `Makefile`. Los skips son explícitos y están justificados por Docker/servicios opcionales, POSIX/symlinks o proveedores no configurados.
+- Web estática: Chromium `130/130`; auditoría `64` archivos, `37` módulos, `180` invocaciones, `0` fallos; presupuesto `2,059,874` bytes, `63` requests, `35` módulos, `9` hojas de estilo y `5,050` bytes HTML. Recibo reproducible mediante `node web-tests/node_modules/@playwright/test/cli.js test --config web-tests/playwright.config.mjs --grep-invert [Ll]ive --workers=2`.
+- Artefactos instalados: `90/90`; wheel `aa8db3bc80c8356b2a05821655a58a14e8b86a46f9b1d15eab2a1311e70cbdda`, sdist `4ba0f8c5c92a29fcd87b9d18ba838412f080324bb0a718bb5ea30a85596ecc6d`; identidad exacta `%TEMP%\\ronin-artifact-identity-6279ef7.json`.
+- Docker: `27/27`, strict v0.1 `15/15`, cleanup correcto; imagen local `sha256:a6771cf1fa7dee4566f6fc298ea89d23ddf31c61233d5e25c3daac985c3e1aca`.
+- Helm/kind: lint, frontera de Secret, cluster aislado, carga de imagen, instalación, readiness, health, Studio/API, job persistente, restart y cleanup pasaron; `%TEMP%\\ronin-helm-6279ef7-20261108`.
+- Live: `33/33`, `25` rutas activas, `24` API-backed, `252` eventos correlacionados (`237` OK, `15` WARN esperados), `0` errores server/network y `0` gaps inesperados de autorización; `%TEMP%\\ronin-live-6279ef7-20261108`.
+- Seguridad: VEX Docker Scout `1.27.0`: `3` raw, `0` tras OpenVEX exacto para la imagen nueva; el reviewer debe aceptar formalmente las justificaciones. Trivy no está disponible y no se afirma SBOM de contenedor. Los recibos Gitleaks/pip-audit del backend sin cambios permanecen ligados al candidato previo `8a85586`.
+- Supply chain SDK: SBOM CycloneDX, provenance y resumen de digests verificados para `6279ef7`; el inventario de contenedor sigue vacío y no se confunde con revisión humana.
+- Python/PostgreSQL: `4562 passed`, `27 skipped`, `0 failed` de `4589` en `%TEMP%\\ronin-python-full-8a85586-20261108`; el diff `8a85586..6279ef7` no toca Python/backend, por lo que este recibo se conserva como evidencia del código ejecutable sin cambios. Los skips son explícitos y están justificados por Docker/servicios opcionales, POSIX/symlinks o proveedores no configurados.
 
 El candidato es técnicamente defendible en las lanes completadas, pero la decisión sigue `NO-GO`: ledger de familias `0/13`, proveedores/credenciales, revisión humana de seguridad/VEX, legal/NOTICE/claims, review visual manual, Trivy/SBOM de contenedor, rollback, Terraform/toolchain y gobierno de CI/branches siguen abiertos.
 

@@ -4,7 +4,7 @@
 
 **Last evidence review:** 8 November 2026
 
-**Candidate SHA:** runtime/test candidate `8a8558661c8bdce82e39dc18c1587ecf61a0dd0a`; VEX artifact update `61d9135d`; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `6279ef792d41a78a6e022f8193ed70bcf5ff7fc3`; VEX artifact update is pending in the documentation follow-up; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -22,28 +22,58 @@ explicit rather than being collapsed into that test status.
 
 ## 8 November exact-candidate refresh
 
-The current runtime/test candidate is `8a8558661c8bdce82e39dc18c1587ecf61a0dd0a`.
-The exact UI lane passes Chromium `130/130`; web audit reports `63` files with
-zero failures and the measured budget is `2,051,458` asset bytes, `62` requests,
-`35` modules, `8` stylesheets and `4,992` HTML bytes. Data Engineering's
-decision-first workbench is covered by its focused and full static tests. The
-candidate's installed PyRonin artifacts pass `90/90` with wheel digest
-`07b3663fc2404bce918efff40a3aece66ac823778338a5b8ce044e93fe6cd5bd` and sdist
-digest `9ef193d18e60dac70e64f62b472ab62b64628224bdf427eba4d28db6599811e3`.
+The current runtime/test candidate is `6279ef792d41a78a6e022f8193ed70bcf5ff7fc3`,
+the UI-only sixth pass after the backend candidate `8a855866`. The exact UI lane
+passes Chromium `130/130`; web audit reports `64` files with zero failures and
+the measured budget is `2,059,874` asset bytes, `63` requests, `35` modules,
+`9` stylesheets and `5,050` HTML bytes. Ingestion's Discover/Preview/Sync/Observe
+decision workbench is covered by focused, accessibility, responsive and full
+static tests. The current installed PyRonin artifacts pass `90/90` with wheel
+digest `aa8db3bc80c8356b2a05821655a58a14e8b86a46f9b1d15eab2a1311e70cbdda` and
+sdist digest `4ba0f8c5c92a29fcd87b9d18ba838412f080324bb0a718bb5ea30a85596ecc6d`.
 Docker passes `27/27` plus strict v0.1 `15/15` on image
-`sha256:cdf1957805932cf9742c3c23cc739bc6476f2388b8e88e160fc7c5c5276f705c`;
-Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 248
-correlated events; Gitleaks and pip-audit are clean; SDK SBOM/provenance verify;
-and Docker Scout/OpenVEX is `3 raw / 0 applied` for that exact image. The final
-Python/PostgreSQL receipt on the clean documentation tree is green:
-`4562 passed, 27 skipped, 0 failed` of `4589`; coverage passes `53/53` and
-`62/62`, and both status-ledger contracts pass. No release GO is claimed while
-any human gate remains open.
+`sha256:a6771cf1fa7dee4566f6fc298ea89d23ddf31c61233d5e25c3daac985c3e1aca`;
+Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 252
+correlated events; Docker Scout/OpenVEX is `3 raw / 0 applied` for that exact
+image. The backend Python/PostgreSQL receipt remains green on unchanged source
+code: `4562 passed, 27 skipped, 0 failed` of `4589`; coverage passes `53/53`
+and `62/62`. No release GO is claimed while any human or family gate remains
+open.
 
 The release remains **NO-GO**: the 13-family ledger is 0/13, the VEX requires
 security-reviewer acceptance, Trivy/container SBOM is unavailable, and
 maintainer/legal/product, provider, rollback, support-matrix, governance and
 manual visual decisions remain open.
+
+### Candidate-bound UI follow-up — runtime `6279ef7`
+
+This candidate changes only the web surface, its web regression and the measured
+static budget relative to `8a85586`; no Python or backend runtime file changed.
+The clean checkout `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-6279ef7`
+therefore reuses the unchanged backend receipt while binding the delivered UI
+to a new image and live qualification:
+
+- Static UI: Chromium `130/130`; audit `64` files, `37` modules, `180` route
+  invocations, `0` failures; budget `2,059,874` bytes, `63` requests,
+  `35` modules, `9` stylesheets and `5,050` HTML bytes.
+- Artifact qualification: `90/90`; wheel
+  `aa8db3bc80c8356b2a05821655a58a14e8b86a46f9b1d15eab2a1311e70cbdda`, sdist
+  `4ba0f8c5c92a29fcd87b9d18ba838412f080324bb0a718bb5ea30a85596ecc6d`.
+- Docker: `27/27`, strict v0.1 `15/15`, no skips/failures; image
+  `sha256:a6771cf1fa7dee4566f6fc298ea89d23ddf31c61233d5e25c3daac985c3e1aca`.
+- Helm/kind: lint, Secret boundary, isolated cluster, image load, install,
+  readiness, health, Studio/API, queued-job persistence, restart and cleanup.
+- Live: `33/33`, 25 active routes, 24 API-backed, 252 correlated events
+  (`237` OK, `15` expected WARN), 0 server/network errors and 0 unexpected
+  authorization gaps.
+- VEX: Docker Scout `1.27.0`, `3` raw and `0` after the exact digest-bound
+  OpenVEX; security reviewer acceptance is still required. Trivy remains
+  unavailable, so no container SBOM inventory is claimed.
+- SDK supply chain: artifact identity, CycloneDX SBOM, provenance and digest
+  summary verify for `6279ef7`; container inventory is still empty.
+
+These receipts qualify the current UI/image candidate technically in the
+available lanes; they do not close the release-family or human decision ledger.
 
 The previous runtime/test candidate `6012ed52deb5b5a449abc73944cd21293ac06d33`
 has exact local technical receipts: static Chromium `128/128`; Python/PostgreSQL
