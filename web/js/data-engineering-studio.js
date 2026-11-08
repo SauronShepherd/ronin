@@ -50,7 +50,7 @@ function addPipelineEditor() {
   panel.id = 'de-pipeline-visual';
   panel.className = 'panel';
   panel.innerHTML = '<h2>Pipeline visual editor</h2><p class="muted">Edit nodes and typed edges while keeping the canonical JSON representation synchronized.</p><div class="grid three"><label>Node ID<input class="field" id="de-node-id" value="node-1"></label><label>Node operator<input class="field" id="de-node-operator" value="source"></label><label>Node port<input class="field" id="de-node-port" value="out"></label></div><div class="grid three"><label>From node<select class="field" id="de-edge-from"></select></label><label>To node<select class="field" id="de-edge-to"></select></label><label>To port<input class="field" id="de-edge-port" value="in"></label></div><div class="toolbar"><button class="button" type="button" data-action="de-node-add">Add node</button><button class="button" type="button" data-action="de-node-update">Configure node</button><button class="button" type="button" data-action="de-edge-connect">Connect nodes</button><button class="button" type="button" data-action="de-edge-disconnect">Disconnect nodes</button><button class="button" type="button" data-action="de-visual-undo">Undo</button><button class="button" type="button" data-action="de-visual-redo">Redo</button><button class="button primary" type="button" data-action="de-save-revision">Save revision</button><button class="button" type="button" data-action="de-load-revision">Load revision</button></div><div id="de-pipeline-visual-result" class="code" aria-live="polite">No visual edit requested.</div>';
-  view.append(panel);
+  (view.querySelector('#de-pipeline-workbench') || view).append(panel);
   recordPipelineHistory();
   renderPipelineEditor();
   refreshPipelineEdgeSelectors();
@@ -114,7 +114,48 @@ function render() {
   if (location.hash.slice(1) !== 'data') return;
   const view = document.querySelector('#view');
   if (!view) return;
-  view.innerHTML = `${page('Data Engineering', 'PIPELINES')}<section class="panel"><div class="toolbar"><button class="button" data-action="de-health">Health</button><button class="button" data-action="de-runtimes">Runtimes</button></div><pre id="de-health-result" class="code">No health check requested.</pre></section><section class="panel"><h2>SQL editor</h2><form id="de-sql-form"><div class="grid three"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Project<input class="field" name="project" value="examples/demo" required></label><label>Profile<select class="field" name="profile"><option value="local">Local</option><option value="queryflux">QueryFlux</option></select></label></div><label>SQL<textarea class="field sql-editor" name="sql" rows="6" required>SELECT 1 AS value</textarea><button class="button primary" data-action="de-sql-execute" type="button">Execute bounded query</button><button class="button" data-action="de-sql-export" type="button">Export CSV</button></form><pre id="de-sql-result" class="code" aria-live="polite">No SQL operation requested.</pre></section><section class="panel"><form id="de-pipeline-form"><div class="grid three"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Project<input class="field" name="project" value="examples/demo" required></label><label>Pipeline<input class="field" name="pipeline_id" value="main" required></label><label>Revision<input class="field" name="revision" type="number" min="1"></label><label>Compare revision<input class="field" name="compare_revision" type="number" min="1"></label><label>Revision key<input class="field" name="revision_key" value="main/working"></label><label>IR digest<input class="field" name="ir_digest" minlength="64" maxlength="64"></label><label>Runtime<input class="field" name="runtime" value="local-preview"></label><label>Run ID<input class="field" name="run_id"></label></div><label>Pipeline JSON<textarea class="field sql-editor" name="pipeline" rows="8">${sample}</textarea></label><button class="button primary" data-action="de-validate" type="button">Validate</button><button class="button" data-action="de-preview" type="button">Preview</button><button class="button" data-action="de-pipelines" type="button">List pipelines</button><button class="button" data-action="de-revisions" type="button">List revisions</button><button class="button" data-action="de-compare" type="button">Compare revisions</button><button class="button" data-action="de-revision" type="button">Get revision</button><button class="button" data-action="de-run" type="button">Run pipeline</button><button class="button" data-action="de-run-inspect" type="button">Inspect run</button><button class="button" data-action="de-archive" type="button">Archive pipeline</button></form><pre id="de-pipeline-result" class="code" aria-live="polite">No pipeline operation requested.</pre></section>`;
+  view.innerHTML = `
+    ${page('Data Engineering', 'PIPELINES')}
+    <section class="de-hero panel">
+      <div>
+        <p class="eyebrow">DATA PLANE · DECISION WORKBENCH</p>
+        <h2>Shape, query and ship data with evidence attached.</h2>
+        <p>Choose the smallest useful move: inspect the runtime, explore a bounded result, or compose a durable pipeline. Scope and limits stay visible before execution.</p>
+      </div>
+      <div class="de-hero-aside">
+        <span class="status blue">Draft → preview → run</span>
+        <p>Every operation remains workspace/project scoped and produces an explicit result or an honest blocking state.</p>
+      </div>
+    </section>
+    <nav class="de-mode-nav" aria-label="Data Engineering workbench modes">
+      <a class="de-mode-card" href="#de-sql-workbench"><span class="de-mode-index">01</span><strong>Query</strong><span>Explore a bounded result or inspect its local plan.</span></a>
+      <a class="de-mode-card" href="#de-pipeline-workbench"><span class="de-mode-index">02</span><strong>Compose</strong><span>Validate, version and connect a governed pipeline.</span></a>
+      <a class="de-mode-card" href="#de-ops-workbench"><span class="de-mode-index">03</span><strong>Observe</strong><span>Check runtime health before committing work.</span></a>
+    </nav>
+    <section class="de-ops-workbench panel" id="de-ops-workbench">
+      <div class="de-section-heading"><div><span class="de-section-index">03 · OBSERVE</span><h2>Know the operating boundary</h2><p>Runtime health and provider capabilities are evidence, not decoration.</p></div><span class="de-boundary">workspace · project · runtime</span></div>
+      <div class="toolbar de-ops-actions"><button class="button" data-action="de-health">Health</button><button class="button" data-action="de-runtimes">Runtimes</button><span class="de-action-note">Start here when a query or pipeline is blocked.</span></div>
+      <pre id="de-health-result" class="code" aria-live="polite">No health check requested.</pre>
+    </section>
+    <section class="de-workbench panel" id="de-sql-workbench">
+      <div class="de-section-heading"><div><span class="de-section-index">01 · QUERY</span><h2>Explore a bounded dataset</h2><p>Use local SQL or QueryFlux, then keep result pages and query evidence together.</p></div><span class="de-boundary">read-only · bounded · exportable</span></div>
+      <form id="de-sql-form" class="de-sql-form">
+        <div class="grid three"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Project<input class="field" name="project" value="examples/demo" required></label><label>Profile<select class="field" name="profile"><option value="local">Local</option><option value="queryflux">QueryFlux</option></select></label></div>
+        <label>SQL<textarea class="field sql-editor" name="sql" rows="6" required>SELECT 1 AS value</textarea></label>
+        <div class="de-form-actions"><p class="de-form-note">The selected profile controls routing, paging and available explain evidence.</p><div><button class="button primary" data-action="de-sql-execute" type="button">Execute bounded query</button><button class="button" data-action="de-sql-export" type="button">Export CSV</button></div></div>
+      </form>
+      <pre id="de-sql-result" class="code" aria-live="polite">No SQL operation requested.</pre>
+    </section>
+    <section class="de-workbench panel" id="de-pipeline-workbench">
+      <div class="de-section-heading"><div><span class="de-section-index">02 · COMPOSE</span><h2>Compose a durable pipeline</h2><p>Keep the editable document, revision identity and run evidence in one operator flow.</p></div><span class="de-boundary">versioned · reviewable · reversible</span></div>
+      <form id="de-pipeline-form" class="de-pipeline-form">
+        <div class="grid three"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Project<input class="field" name="project" value="examples/demo" required></label><label>Pipeline<input class="field" name="pipeline_id" value="main" required></label><label>Revision<input class="field" name="revision" type="number" min="1"></label><label>Compare revision<input class="field" name="compare_revision" type="number" min="1"></label><label>Revision key<input class="field" name="revision_key" value="main/working"></label><label>IR digest<input class="field" name="ir_digest" minlength="64" maxlength="64"></label><label>Runtime<input class="field" name="runtime" value="local-preview"></label><label>Run ID<input class="field" name="run_id"></label></div>
+        <label>Pipeline JSON<textarea class="field sql-editor" name="pipeline" rows="8">${sample}</textarea></label>
+        <div class="de-form-actions"><p class="de-form-note">Validate before preview; save a revision before running anything durable.</p><div><button class="button primary" data-action="de-validate" type="button">Validate</button><button class="button" data-action="de-preview" type="button">Preview</button><button class="button" data-action="de-run" type="button">Run pipeline</button><button class="button" data-action="de-run-inspect" type="button">Inspect run</button></div></div>
+        <details class="de-advanced"><summary>Revision and recovery actions</summary><div class="toolbar"><button class="button" data-action="de-pipelines" type="button">List pipelines</button><button class="button" data-action="de-revisions" type="button">List revisions</button><button class="button" data-action="de-compare" type="button">Compare revisions</button><button class="button" data-action="de-revision" type="button">Get revision</button><button class="button" data-action="de-archive" type="button">Archive pipeline</button></div></details>
+      </form>
+      <pre id="de-pipeline-result" class="code" aria-live="polite">No pipeline operation requested.</pre>
+    </section>`;
   addSqlContractFields();
   addSqlHistoryPanel();
 }

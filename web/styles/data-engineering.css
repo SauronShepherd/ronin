@@ -1,0 +1,50 @@
+/* Data Engineering decision workbench: make query, compose and observe distinct. */
+.de-hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(15rem, .65fr); gap: 1.4rem; align-items: end; background: linear-gradient(135deg, var(--surface-raised), var(--surface-muted)); }
+.de-hero h2 { max-width: 26ch; margin: .15rem 0 .45rem; color: var(--cocoa); font-size: clamp(1.45rem, 2.7vw, 2.15rem); line-height: 1.08; letter-spacing: -.045em; }
+.de-hero p:not(.eyebrow) { max-width: 68ch; margin: 0; color: var(--muted); line-height: 1.5; }
+.de-hero-aside { display: grid; gap: .55rem; justify-items: start; }
+.de-hero-aside p { font-size: .78rem; }
+.de-mode-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+.de-mode-card { display: grid; grid-template-columns: auto 1fr; column-gap: .65rem; row-gap: .18rem; min-width: 0; padding: .95rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: linear-gradient(145deg, var(--surface-raised), var(--surface)); box-shadow: var(--shadow-soft); color: var(--ink); text-decoration: none; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+.de-mode-card:hover, .de-mode-card:focus-visible { border-color: var(--copper); box-shadow: var(--shadow); transform: translateY(-1px); }
+.de-mode-card strong, .de-mode-card span:last-child { grid-column: 2; }
+.de-mode-card strong { color: var(--cocoa); font-size: .9rem; }
+.de-mode-card span:last-child { color: var(--muted); font-size: .75rem; line-height: 1.4; }
+.de-mode-index, .de-section-index { color: var(--gold); font: 800 .7rem ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; }
+.de-mode-index { grid-row: 1 / span 2; align-self: start; padding-top: .12rem; }
+.de-workbench, .de-ops-workbench { margin: 0; }
+.de-section-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; margin-bottom: .9rem; }
+.de-section-heading h2 { margin: .15rem 0 .2rem; color: var(--cocoa); font-size: 1.2rem; letter-spacing: -.025em; }
+.de-section-heading p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.45; }
+.de-boundary { flex: none; padding: .28rem .5rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: var(--surface-muted); font-size: .68rem; }
+.de-ops-actions { align-items: center; }
+.de-action-note, .de-form-note { color: var(--muted); font-size: .76rem; }
+.de-form-note { margin: 0; line-height: 1.4; }
+.de-form-actions { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; margin-top: .2rem; }
+.de-form-actions > div { display: flex; gap: .5rem; flex-wrap: wrap; }
+.de-sql-form, .de-pipeline-form { display: grid; gap: .8rem; }
+.de-sql-form > .grid, .de-pipeline-form > .grid { margin-bottom: .1rem; }
+.de-sql-form .sql-editor, .de-pipeline-form .sql-editor { min-height: 9rem; font: .78rem/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.de-advanced { border-top: 1px solid var(--line); padding-top: .7rem; }
+.de-advanced summary { cursor: pointer; color: var(--cocoa-soft); font-size: .78rem; font-weight: 800; }
+.de-advanced[open] summary { margin-bottom: .65rem; }
+.de-advanced .toolbar { margin-bottom: 0; }
+#de-health-result, #de-sql-result, #de-pipeline-result { margin-top: .85rem; }
+#de-pipeline-workbench #de-pipeline-visual { margin-top: 1rem; background: var(--surface2); }
+#de-pipeline-workbench #de-pipeline-visual h2 { color: var(--cocoa); font-size: 1.05rem; }
+#de-pipeline-visual-result { min-height: 4rem; }
+@media (max-width: 900px) {
+  .de-hero { grid-template-columns: 1fr; gap: 1rem; }
+  .de-hero h2 { max-width: none; }
+  .de-mode-nav { grid-template-columns: 1fr; }
+  .de-mode-card { grid-template-columns: 2.1rem 1fr; }
+}
+@media (max-width: 700px) {
+  .de-section-heading { display: block; }
+  .de-boundary { display: inline-block; margin-top: .55rem; }
+  .de-form-actions { display: block; }
+  .de-form-actions > div { width: 100%; margin-top: .65rem; }
+  .de-form-actions > div .button { flex: 1 1 auto; }
+  .de-ops-actions { align-items: stretch; }
+  .de-action-note { flex-basis: 100%; }
+}
