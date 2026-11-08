@@ -72,12 +72,12 @@ export async function ingestionStudio() {
     </section>`;
 
   try {
-    document.querySelector('#ingestion-capabilities').textContent = json(
-      await get('/v1/platform/connectors'),
-    );
+    const capabilities = await get('/v1/platform/connectors');
+    const target = document.querySelector('#ingestion-capabilities');
+    if (target) target.textContent = json(capabilities);
   } catch (error) {
-    document.querySelector('#ingestion-capabilities').textContent =
-      `Capabilities unavailable: ${error.message}`;
+    const target = document.querySelector('#ingestion-capabilities');
+    if (target) target.textContent = `Capabilities unavailable: ${error.message}`;
   }
 }
 
