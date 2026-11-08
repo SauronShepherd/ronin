@@ -1,0 +1,58 @@
+/* ML Studio decision workbench: make the model lifecycle legible without hiding controls. */
+.ml-hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(15rem, .65fr); gap: 1.4rem; align-items: end; background: linear-gradient(135deg, var(--surface-raised), var(--surface-muted)); }
+.ml-hero h2 { max-width: 25ch; margin: .15rem 0 .45rem; color: var(--cocoa); font-size: clamp(1.45rem, 2.7vw, 2.15rem); line-height: 1.08; letter-spacing: -.045em; }
+.ml-hero p:not(.eyebrow) { max-width: 68ch; margin: 0; color: var(--muted); line-height: 1.5; }
+.ml-hero-aside { display: grid; gap: .55rem; justify-items: start; }
+.ml-hero-aside p { font-size: .78rem; }
+.ml-context-bar { align-items: end; }
+.ml-context-bar label { min-width: 12rem; }
+.ml-mode-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
+.ml-mode-card { display: grid; grid-template-columns: auto 1fr; column-gap: .65rem; row-gap: .18rem; min-width: 0; padding: .95rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: linear-gradient(145deg, var(--surface-raised), var(--surface)); box-shadow: var(--shadow-soft); color: var(--ink); text-decoration: none; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+.ml-mode-card:hover, .ml-mode-card:focus-visible { border-color: var(--copper); box-shadow: var(--shadow); transform: translateY(-1px); }
+.ml-mode-card strong, .ml-mode-card span:last-child { grid-column: 2; }
+.ml-mode-card strong { color: var(--cocoa); font-size: .9rem; }
+.ml-mode-card span:last-child { color: var(--muted); font-size: .75rem; line-height: 1.4; }
+.ml-mode-index, .ml-section-index { color: var(--gold); font: 800 .7rem ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; }
+.ml-mode-index { grid-row: 1 / span 2; align-self: start; padding-top: .12rem; }
+.ml-workbench { margin: 0; }
+.ml-section-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; margin-bottom: .9rem; }
+.ml-section-heading h2 { margin: .15rem 0 .2rem; color: var(--cocoa); font-size: 1.2rem; letter-spacing: -.025em; }
+.ml-section-heading p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.45; }
+.ml-boundary { flex: none; padding: .28rem .5rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: var(--surface-muted); font-size: .68rem; }
+.ml-callout { display: flex; align-items: start; gap: .7rem; margin: 0 0 .9rem; padding: .75rem .85rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-muted); }
+.ml-callout p { margin: 0; color: var(--cocoa-soft); font-size: .78rem; line-height: 1.45; }
+.ml-callout .status { flex: none; }
+.ml-lab-layout { display: grid; grid-template-columns: minmax(18rem, .75fr) minmax(0, 1.25fr); gap: .8rem; }
+.ml-form-grid { align-items: start; }
+.ml-form-panel, .ml-list-panel { min-width: 0; padding: .95rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-muted); }
+.ml-form-panel { display: grid; gap: .7rem; }
+.ml-form-panel h3, .ml-list-panel h3 { margin: 0; color: var(--cocoa); font-size: 1rem; }
+.ml-form-panel p, .ml-list-panel p { margin: 0; }
+.ml-form-panel .grid { gap: .65rem; }
+.ml-form-panel .toolbar { margin: 0; }
+.ml-card-heading, .ml-output-heading { display: flex; align-items: start; justify-content: space-between; gap: .8rem; }
+.ml-output-heading { margin: 1rem 0 .55rem; align-items: baseline; }
+.ml-output-heading p { margin: 0; font-size: .76rem; }
+.ml-output { min-height: 5rem; margin: 0; background: var(--surface-raised); }
+#ml-models, #ml-deployments { margin: 0; }
+#ml-models h2 { margin-top: 0; color: var(--cocoa); font-size: 1rem; }
+#ml-models .table-wrap, #ml-deployment-list .table-wrap { margin-top: .7rem; }
+#ml-models .empty, #ml-deployment-list .empty { margin-top: .7rem; }
+@media (max-width: 1000px) {
+  .ml-mode-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ml-lab-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .ml-hero { grid-template-columns: 1fr; gap: 1rem; }
+  .ml-hero h2 { max-width: none; }
+}
+@media (max-width: 700px) {
+  .ml-mode-nav, .ml-form-grid { grid-template-columns: 1fr; }
+  .ml-section-heading { display: block; }
+  .ml-boundary { display: inline-block; margin-top: .55rem; }
+  .ml-context-bar { display: grid; grid-template-columns: 1fr 1fr; }
+  .ml-context-bar label { grid-column: 1 / -1; min-width: 0; }
+  .ml-context-bar .button { width: 100%; }
+  .ml-card-heading { display: block; }
+  .ml-card-heading .status { display: inline-block; margin-top: .55rem; }
+}

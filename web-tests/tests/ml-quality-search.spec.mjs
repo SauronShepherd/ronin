@@ -17,6 +17,10 @@ test('ML Studio exposes quality and trial-search contracts', async ({ page }) =>
     await route.fulfill({json: {items: [], tie_breakers: [{metric: 'mean_squared_error', direction: 'minimize'}]}});
   });
   await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
+  await expect(page.locator('.ml-hero')).toContainText('Turn a governed Lab into a model you can explain and operate.');
+  await expect(page.locator('.ml-mode-nav')).toContainText('Qualify');
+  await expect(page.locator('.ml-mode-nav')).toContainText('Serve');
+  await expect(page.locator('#ml-govern')).toContainText('Review the model before promotion');
   await page.locator('#ml-quality-form button').click();
   await expect(page.locator('#ml-output')).toContainText('passed');
   await page.locator('#ml-search-form button').click();
