@@ -4,7 +4,7 @@
 
 **Last evidence review:** 8 November 2026
 
-**Candidate SHA:** runtime/test candidate `6279ef792d41a78a6e022f8193ed70bcf5ff7fc3`; VEX artifact update is pending in the documentation follow-up; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `1a9fd01ad50f39189389883e7804c6e78c9ac779`; exact-image VEX and qualification receipts are recorded in the documentation follow-up; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -22,7 +22,32 @@ explicit rather than being collapsed into that test status.
 
 ## 8 November exact-candidate refresh
 
-The current runtime/test candidate is `6279ef792d41a78a6e022f8193ed70bcf5ff7fc3`,
+The current runtime/test candidate is `1a9fd01ad50f39189389883e7804c6e78c9ac779`,
+the seventh UI pass after the backend candidate `8a855866`. ML Studio now exposes
+Lab/Qualify/Govern/Serve decision modes while retaining the existing runtime
+contracts. The exact UI lane passes Chromium `130/130`; web audit reports `65`
+files with zero failures and the measured budget is `2,069,139` asset bytes,
+`64` requests, `35` modules, `10` stylesheets and `5,111` HTML bytes. Installed
+PyRonin artifacts pass `90/90` with wheel digest
+`d30de6d1a9b3c2f4ea5f7d505eaf1e4b88c92b8284dcf988f7ea530d69dc362c` and sdist
+digest `0c1032f9d0a4bbf9530a1e3b689945e016d360bd99f5c6e3bb28e29f5dcbd50e`.
+Docker passes `27/27` plus strict v0.1 `15/15` on image
+`sha256:e28c696201dda415668524c3c3cd21b55c3c28979b4574693953bfe65453abcb`;
+Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 248
+correlated events; Docker Scout/OpenVEX is `3 raw / 0 applied` for that exact
+image. The backend Python/PostgreSQL receipt remains green on unchanged source
+code: `4562 passed, 27 skipped, 0 failed` of `4589`; coverage passes `53/53`
+and `62/62`. No release GO is claimed while any human or family gate remains
+open.
+
+The release remains **NO-GO**: the 13-family ledger is 0/13, the VEX requires
+security-reviewer acceptance, Trivy/container SBOM is unavailable, and
+maintainer/legal/product, provider, rollback, support-matrix, governance and
+manual visual decisions remain open.
+
+### Historical candidate-bound UI follow-up — runtime `6279ef7`
+
+The previous runtime/test candidate was `6279ef792d41a78a6e022f8193ed70bcf5ff7fc3`,
 the UI-only sixth pass after the backend candidate `8a855866`. The exact UI lane
 passes Chromium `130/130`; web audit reports `64` files with zero failures and
 the measured budget is `2,059,874` asset bytes, `63` requests, `35` modules,
