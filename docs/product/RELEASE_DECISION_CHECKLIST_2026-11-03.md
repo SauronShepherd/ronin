@@ -35,8 +35,9 @@ Docker passes `27/27` plus strict v0.1 `15/15` on image
 Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 244
 correlated events; Gitleaks and pip-audit are clean; SDK SBOM/provenance verify;
 and Docker Scout/OpenVEX is `3 raw / 0 applied` for that exact image. The final
-Python/PostgreSQL receipt is being reconciled after this exact run; no release
-GO is claimed while any candidate receipt or human gate remains open.
+Python/PostgreSQL receipt is green on the final documentation tree:
+`4562 passed, 27 skipped, 0 failed` of `4589`; both status-ledger contracts
+pass. No release GO is claimed while any human gate remains open.
 
 The release remains **NO-GO**: the 13-family ledger is 0/13, the VEX requires
 security-reviewer acceptance, Trivy/container SBOM is unavailable, and
@@ -178,9 +179,9 @@ The current receipt for the runtime candidate is:
   test/runtime/bootstrap are clean; SDK SBOM/provenance verify; VEX has `3`
   raw and `0` applied findings for the exact image; container SBOM remains
   open because Trivy is unavailable.
-- Python/PostgreSQL: the exact receipt is still being reconciled; until its
-  final count and status-ledger contracts are recorded, this is not a complete
-  technical GO.
+- Python/PostgreSQL: `4562 passed`, `27 skipped`, `0 failed` of `4589` in
+  `%TEMP%\\ronin-python-full-f65772a3-20261108`; both public status-ledger
+  contracts pass. The skips are explicit environment/provider/POSIX gates.
 
 This is a technical candidate receipt, not a release GO. The family ledger is
 still `0/13`, security/VEX acceptance, manual visual review, legal/NOTICE,

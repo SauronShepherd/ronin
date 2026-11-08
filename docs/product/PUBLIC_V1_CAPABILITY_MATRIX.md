@@ -11,8 +11,10 @@ artifact qualification is `90/90`, Docker is `27/27` plus strict `15/15`,
 Helm/kind passes, live is `33/33` with 244 correlated events, and VEX is
 `3 raw / 0 applied` for image
 `sha256:280a958bdfe4c795899bf9aeca391a28392101cb1ac48738878da1bb0e7a24fb`.
-The exact Python/PostgreSQL receipt is being reconciled and is not claimed as
-complete until its final status-ledger contracts pass.
+The exact Python/PostgreSQL receipt is green on the final documentation tree:
+`4562/4589` with 27 explicit skips and 0 failures; both status-ledger contracts
+pass. The runtime code and artifact identity remain bound to d8; the later
+documentation commit only records the qualification evidence.
 The ledger remains **0/13 families qualified**: mandatory family journeys,
 provider matrix, manual visual review, legal/claims decisions, Trivy, Terraform
 pin and security acceptance are still open. The UI target remains a deliberate
