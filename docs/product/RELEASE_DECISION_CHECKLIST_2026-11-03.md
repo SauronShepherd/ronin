@@ -4,7 +4,7 @@
 
 **Last evidence review:** 8 November 2026
 
-**Candidate SHA:** runtime/test candidate `7026cd7c65e6581c38a3136bae4336bcc3dd40fc`; VEX artifact update `d1488a83`; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `6012ed52deb5b5a449abc73944cd21293ac06d33`; VEX artifact update `9b1d16ef`; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -22,24 +22,27 @@ explicit rather than being collapsed into that test status.
 
 ## 8 November exact-candidate refresh
 
-The final runtime/test candidate `7026cd7c65e6581c38a3136bae4336bcc3dd40fc`
+The final runtime/test candidate `6012ed52deb5b5a449abc73944cd21293ac06d33`
 has exact local technical receipts: static Chromium `128/128`; Python/PostgreSQL
 `4562 passed, 27 skipped, 0 failed` of `4589`; Docker `27/27` with strict v0.1
 `15/15`; Helm/kind fully passed with isolated cleanup; live `33/33` over 25
-active routes with 246 correlated events; and Docker Scout/OpenVEX `3 raw / 0
+active routes with 247 correlated events; and Docker Scout/OpenVEX `3 raw / 0
 applied` against runtime image
-`sha256:e4d6a39d040e5af9e337328f8521d1e4faf71cf53bf954e79c95e26c28953f52`.
-Receipts: `%TEMP%\\ronin-python-full-7026cd7-20261108`,
-`%TEMP%\\ronin-docker-7026cd7-20261108`,
-`%TEMP%\\ronin-helm-7026cd7-20261108`,
-`%TEMP%\\ronin-live-7026cd7-20261108`, and
-`%TEMP%\\ronin-vex-7026cd7-20261108-rerun`. The Catalog live selector was
-fixed and the full live lane was repeated after that change.
+`sha256:89b122401876ff1b82f06b9e1f20dab3fa077981fb9bf51e264d3bd00d5b6be0`.
+The installed PyRonin artifact qualification passed `90/90`; wheel and sdist
+digests are recorded in the build plan. Gitleaks found no leaks in tree/history,
+pip-audit found no known vulnerabilities in test/runtime/bootstrap, and the
+SDK CycloneDX SBOM plus provenance passed generation and verification.
+Receipts: `%TEMP%\\ronin-python-full-6012ed5-20261108`,
+`%TEMP%\\ronin-docker-6012ed5-20261108`,
+`%TEMP%\\ronin-helm-6012ed5-20261108`,
+`%TEMP%\\ronin-live-6012ed5-20261108`, and
+`%TEMP%\\ronin-vex-6012ed5-20261108-rerun`.
 
-This closes local technical evidence for the candidate, but not release: the 13
-family ledger remains 0/13, the VEX exception needs security-reviewer sign-off,
-Trivy is unavailable on this host, the artifact/SBOM/provenance and rollback
-bundle is incomplete, and maintainer/legal/product, provider and manual visual
+This closes local technical evidence for the runtime candidate, but not release:
+the 13-family ledger remains 0/13, the VEX exception needs security-reviewer
+sign-off, Trivy is unavailable on this host so container SBOM inventory is not
+closed, and maintainer/legal/product, provider, rollback and manual visual
 decisions remain open. The decision is therefore still **NO-GO**.
 
 ## 4 November clean-source diagnostic refresh
@@ -105,6 +108,16 @@ Every row must identify the same candidate commit and, where relevant, the
 same image/package digests. “Implemented”, a historical pass, or a filtered
 diagnostic does not close a gate.
 
+**Current-candidate override (runtime `6012ed52`, VEX `9b1d16ef`):** the
+candidate-bound technical receipt below supersedes stale historical numbers in
+the long gate cells: installed artifact qualification is `90/90`; Docker is
+`27/27` with strict `15/15` on image
+`sha256:89b122401876ff1b82f06b9e1f20dab3fa077981fb9bf51e264d3bd00d5b6be0`;
+live is `33/33` with `247` correlated events; static Chromium is `128/128`;
+Gitleaks and pip-audit are clean; SDK SBOM/provenance verify; VEX is `3 raw / 0
+applied`; container SBOM, human VEX/security, manual visual, family/provider,
+legal, rollback and release-governance gates remain open.
+
 | Gate | Evidence required to mark PASS | Current decision state | Closure owner |
 | --- | --- | --- | --- |
 | Candidate identity | Clean worktree, exact commit SHA, branch/tag policy recorded, immutable wheel/sdist/image digests. | **OPEN** — clean exact-SHA qualification checkout exists at `7026cd7c`, with runtime image `sha256:e4d6a39d040e5af9e337328f8521d1e4faf71cf53bf954e79c95e26c28953f52`; final branch/tag policy, artifact bundle and release freeze are not approved. | Release operator |
@@ -121,28 +134,33 @@ diagnostic does not close a gate.
 | Platform and support claims | Explicit supported OS, Python, Docker/Compose and local Kubernetes matrix; every claim has matching installed/runtime evidence. | **OPEN** — matrix incomplete. | Maintainer |
 | Docs and recovery | Clean installation, configuration/secrets, upgrade, rollback, local DB+artifact restore and external object-store recovery instructions reviewed against tested behavior. | **OPEN** — dirty-tree diagnostics exist for Compose DB+local-data restore, Helm/kind install/restart and Floci/Terraform lifecycle. Repeat the relevant paths on one clean candidate; upgrade/rollback rehearsal and external object-store recovery remain. | Documentation + Operations |
 
-## Candidate-bound technical receipt — `7026cd7c`
+## Candidate-bound technical receipt — runtime `6012ed52`
 
 The stale historical wording in the gate table above is retained for audit
 history; the current candidate-bound technical result is:
 
 - Python/PostgreSQL: `4562 passed`, `27 skipped`, `0 failed` of `4589` in
-  `%TEMP%\\ronin-python-full-7026cd7-20261108`.
+  `%TEMP%\\ronin-python-full-6012ed5-20261108`.
+- Installed artifact: isolated PyRonin wheel/sdist qualification `90/90`;
+  identity manifest binds commit `6012ed52` and the exact wheel/sdist digests.
 - Docker: `27/27`, strict v0.1 `15/15`, zero skips/failures, image
-  `sha256:e4d6a39d040e5af9e337328f8521d1e4faf71cf53bf954e79c95e26c28953f52`,
-  cleanup passed; `%TEMP%\\ronin-docker-7026cd7-20261108`.
+  `sha256:89b122401876ff1b82f06b9e1f20dab3fa077981fb9bf51e264d3bd00d5b6be0`,
+  cleanup passed; `%TEMP%\\ronin-docker-6012ed5-20261108`.
 - Helm/kind: lint, Secret boundary, isolated cluster, install/readiness,
   health/API, persistence across restart and cleanup passed;
-  `%TEMP%\\ronin-helm-7026cd7-20261108`.
-- Live: `33/33` Playwright, 25 active routes, 24 API-backed, 246 correlated
+  `%TEMP%\\ronin-helm-6012ed5-20261108`.
+- Live: `33/33` Playwright, 25 active routes, 24 API-backed, 247 correlated
   events, zero server/network errors and zero unexpected authorization gaps;
-  `%TEMP%\\ronin-live-7026cd7-20261108`.
+  `%TEMP%\\ronin-live-6012ed5-20261108`.
 - Static UI: Chromium `128/128` on the final checkout; automated accessibility,
   keyboard, route traversal and responsive checks passed. Manual visual and
   accessibility sign-off is still open.
+- Security/supply-chain: Gitleaks tree/history and pip-audit test/runtime/
+  bootstrap are clean; SDK SBOM and provenance verify; container SBOM remains
+  open because Trivy is unavailable.
 - VEX: Docker Scout `3` raw findings and `0` after exact digest-bound OpenVEX;
-  `%TEMP%\\ronin-vex-7026cd7-20261108-rerun`. Security-reviewer acceptance is
-  still open.
+  `%TEMP%\\ronin-vex-6012ed5-20261108-rerun`. Security-reviewer acceptance is
+  still open; the VEX update is published in `9b1d16ef`.
 
 This is a **technical pass**, not a release GO. The family ledger remains
 `0/13`; provider credentials/matrix, legal/NOTICE/claims, manual review,

@@ -1,7 +1,7 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-08 (Europe/Madrid)
-**Fuente de código:** candidato runtime/test exacto `7026cd7c65e6581c38a3136bae4336bcc3dd40fc` (incluye el endurecimiento del selector live de Catalog); el OpenVEX del artefacto quedó actualizado y publicado en `d1488a83`. La qualification técnica final está ligada a este candidato y a sus recibos fechados; la decisión de release sigue separada de la cualificación técnica.
+**Fuente de código:** candidato runtime/test exacto `6012ed52deb5b5a449abc73944cd21293ac06d33` (incluye el endurecimiento del selector live de Catalog y la documentación de qualification); el OpenVEX final quedó actualizado y publicado en `9b1d16ef`. La qualification técnica final está ligada al runtime `6012ed52` y a sus recibos fechados; la decisión de release sigue separada de la cualificación técnica.
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
 ## 1. Qué es instrucción y qué es evidencia
@@ -56,11 +56,56 @@ La tercera pasada del 2026-11-08 convirtió Scheduler Studio en un control plane
 
 El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,034,189`, con `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML. El incremento de esta iteración Scheduler es `+4,374` bytes sobre el corte anterior; el CSS queda en 400 líneas. La regresión de Playwright, la barrida responsive y la auditoría estática cubren el cambio; el baseline no autoriza crecimiento ilimitado.
 
-### Verificación exacta del corte 2026-11-08
+### Verificación exacta del corte UI 2026-11-08
 
-Sobre `7026cd7c65e6581c38a3136bae4336bcc3dd40fc`, la suite web estática completa pasa `128/128` con Chromium; la auditoría web exacta reporta `61` archivos, `37` módulos, `180` invocaciones de ruta y cero fallos, con presupuesto `2,034,189` bytes. Las pruebas responsive de Catálogo, Semantic y Scheduler confirman igualdad entre ancho visible y scrollable en 390 px. La corrección live de Catalog selecciona el formulario de lineage de forma determinista y la jornada live completa pasa `33/33`.
+Sobre el árbol UI que desemboca en el runtime candidato `6012ed52`, la suite web estática completa pasa `128/128` con Chromium; la auditoría web exacta reporta `61` archivos, `37` módulos, `180` invocaciones de ruta y cero fallos, con presupuesto `2,034,189` bytes. Las pruebas responsive de Catálogo, Semantic y Scheduler confirman igualdad entre ancho visible y scrollable en 390 px. La corrección live de Catalog selecciona el formulario de lineage de forma determinista y la jornada live exacta del candidato pasa `33/33`.
 
-### Qualification exact-SHA final del candidato `7026cd7c`
+### Qualification exact-SHA final del candidato runtime `6012ed52`
+
+El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-6012ed5`,
+detached en `6012ed52deb5b5a449abc73944cd21293ac06d33`, queda técnicamente verde
+en las lanes locales disponibles:
+
+- Python/PostgreSQL: `4562 passed`, `27 skipped`, `0 failed` de `4589`; recibo
+  `%TEMP%\\ronin-python-full-6012ed5-20261108`.
+- Artefacto instalado: wheel `pyronin-0.0.1a0-py3-none-any.whl` y sdist
+  `pyronin-0.0.1a0.tar.gz` construidos desde el checkout limpio; instalación
+  aislada y `90 passed` de los contratos SDK. Digests: wheel
+  `8d0b7392c9ec9d2dabe827d1081b23ff00eaaf9662e2406278bffed8e04c6057`, sdist
+  `47b997a6dfc2cf58602a219e0bc47f2370e227e7a931110a8cbe3cdabb292d49`.
+- Docker: `27/27` casos reales, `0` skips/fallos; aceptación v0.1 estricta
+  `15/15`; imagen `sha256:89b122401876ff1b82f06b9e1f20dab3fa077981fb9bf51e264d3bd00d5b6be0`;
+  cleanup correcto. Recibo: `%TEMP%\\ronin-docker-6012ed5-20261108`.
+- Helm/kind: lint, frontera de Secret, cluster aislado, carga de imagen,
+  instalación, readiness, health, Studio/API, job persistente, supervivencia
+  tras restart y cleanup; recibo `%TEMP%\\ronin-helm-6012ed5-20261108`.
+- Live: `33/33` Playwright, `25` rutas activas, `24` API-backed, `247`
+  eventos/calls reales, `0` errores de servidor/red y `0` gaps inesperados de
+  autorización; `15` WARN esperados. Recibo:
+  `%TEMP%\\ronin-live-6012ed5-20261108`.
+- UI estática: Chromium `128/128`; audit web `61` archivos, `37` módulos,
+  `180` invocaciones `/v1/`, `0` fallos; presupuesto `2,034,189` bytes,
+  `60` requests, `35` módulos, `6` hojas de estilo y `4,871` bytes HTML.
+- Seguridad automatizada: Gitleaks `8.30.1` sin leaks en árbol ni historial;
+  pip-audit `2.10.1` sin vulnerabilidades conocidas en test, runtime y
+  bootstrap. El VEX de release `9b1d16ef` se verificó contra el digest exacto:
+  Docker Scout `1.27.0`, `3` findings raw y `0` tras OpenVEX. Trivy no está
+  disponible y, por ello, no se afirma inventario SBOM de contenedor.
+- Supply-chain SDK: SBOM CycloneDX y provenance generados/verificados para el
+  mismo commit y artifact identity; la evidencia de artefactos/SBOM/provenance
+  del SDK pasa. Esto no sustituye la revisión de contenedor ni aprobación
+  humana de seguridad.
+
+Esta repetición corrige la única discrepancia encontrada en el corte: el VEX
+apuntaba al digest anterior. El VEX se actualizó y publicó en `9b1d16ef`, y la
+verificación posterior quedó en `%TEMP%\\ronin-vex-6012ed5-20261108-rerun`.
+El bloque técnico local queda verde para este runtime, pero el release no:
+ledger de familias `0/13`, proveedores/credenciales, revisión humana de
+seguridad/VEX, legal/NOTICE/claims, review visual manual, Trivy/SBOM de
+contenedor, rollback, Terraform/toolchain y gobierno de CI/branches siguen
+abiertos.
+
+### Qualification exact-SHA anterior del candidato `7026cd7c`
 
 El checkout limpio del candidato `7026cd7c65e6581c38a3136bae4336bcc3dd40fc`
 queda técnicamente verde en las lanes disponibles localmente:

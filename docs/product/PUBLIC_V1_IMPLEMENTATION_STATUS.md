@@ -7,20 +7,21 @@
 
 ## Current exact-SHA qualification — 8 November 2026
 
-The current product code candidate `7026cd7c65e6581c38a3136bae4336bcc3dd40fc`
-is pushed. This UI iteration adds governed Catalog, Semantic and Scheduler
-workbenches; its exact receipt is static Chromium `128/128`, focused Scheduler
-`1/1`, web audit `61` files with zero failures, and budget `2,034,189` bytes.
-The exact candidate receipts are now repeated on this SHA: Python/PostgreSQL
-`4562 passed, 27 skipped, 0 failed` of `4589`; Docker `27/27` and strict v0.1
-`15/15`; Helm/kind install/readiness/health/API/persistence/restart/cleanup;
-live `33/33` over 25 active routes with 246 correlated events and no server or
-network errors; Docker Scout/OpenVEX `3 raw / 0 applied` for image
-`sha256:e4d6a39d040e5af9e337328f8521d1e4faf71cf53bf954e79c95e26c28953f52`; and
-static Chromium `128/128`. Receipts are indexed in the build plan and release
-checklist. Gitleaks/pip-audit, final artifact/SBOM/provenance and the human VEX
-review remain separate release gates. These local receipts do not silently
-close the release ledger or human-owned gates.
+The current runtime/test candidate `6012ed52deb5b5a449abc73944cd21293ac06d33`
+is pushed; the VEX metadata update is published in `9b1d16ef`. This UI
+iteration adds governed Catalog, Semantic and Scheduler workbenches; its exact
+receipt is static Chromium `128/128`, web audit `61` files with zero failures,
+and budget `2,034,189` bytes. The same candidate passes Python/PostgreSQL
+`4562 passed, 27 skipped, 0 failed` of `4589`; installed PyRonin artifact
+qualification `90/90`; Docker `27/27` and strict v0.1 `15/15`; Helm/kind
+install/readiness/health/API/persistence/restart/cleanup; live `33/33` over 25
+active routes with 247 correlated events and no server or network errors; and
+Docker Scout/OpenVEX `3 raw / 0 applied` for image
+`sha256:89b122401876ff1b82f06b9e1f20dab3fa077981fb9bf51e264d3bd00d5b6be0`.
+Gitleaks tree/history and pip-audit test/runtime/bootstrap are clean; SDK SBOM
+and provenance generation/verification pass. Trivy is unavailable, so the
+container SBOM gate and human VEX/security review remain open. These local
+receipts do not silently close the release ledger or human-owned gates.
 
 This does not change the release decision: Public v1 remains **0/13 (0%,
 NO-GO)**. Manual visual/product signoff, legal/NOTICE/claims, security reviewer
@@ -62,9 +63,11 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `7026cd7c65e6581c38a3136bae4336bcc3dd40fc` (2026-11-08; exact technical qualification is recorded separately and does not close the release ledger).
-The live qualification harness was rerun on the current candidate with the
-same worker image used for Docker/Helm; the prior harness remains historical.
+**Observed runtime candidate:** `6012ed52deb5b5a449abc73944cd21293ac06d33`
+(2026-11-08; exact technical qualification is recorded separately and does not
+close the release ledger). The live qualification harness was rerun on this
+candidate with the same worker image used for Docker/Helm; earlier receipts
+remain historical.
 
 **Current worktree update (2026-10-30; dirty diagnostic candidate):** P3 now includes a project-authorized local DuckDB `POST .../sql/explain` route and a SQL Studio action. The route reuses project-read authorization, validates the shared read-only SELECT contract and registered relation scope, forwards a bounded execution deadline, incrementally caps serialized plan rows, and redacts paths, URLs and inline secret assignments. Providers without the optional capability return an explicit 501. Targeted verification is recorded in `PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`; this does not qualify P3 or the release, and the historical notes below remain historical snapshots.
 
