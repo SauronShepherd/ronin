@@ -304,8 +304,19 @@ kbd { display: inline-block; min-width: 1.25rem; padding: .08rem .3rem; border: 
 .run-summary .card .button { margin-top: .65rem; }
 .run-summary .panel { margin: 0; }
 .run-summary code { overflow-wrap: anywhere; }
+.run-list-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; margin-bottom: 1rem; }
+.run-list-summary > div { display: grid; gap: .15rem; min-width: 0; padding: .85rem .9rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-raised); }
+.run-list-summary strong { color: var(--cocoa); font-size: 1.35rem; line-height: 1; }
+.run-list-summary span { color: var(--muted); font-size: .72rem; }
+.run-list-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; margin: .2rem 0 .75rem; }
+.run-list-heading h2 { margin: 0 0 .2rem; color: var(--cocoa); font-size: 1.05rem; }
+.run-list-heading p { margin: 0; font-size: .8rem; }
+.run-list-heading code { overflow-wrap: anywhere; }
+.run-list-result { min-width: 0; width: 100%; }
+.run-list-result .table-wrap { max-width: 100%; overflow-x: auto; }
 .error-copy { color: var(--red) !important; }
 .goodtxt { color: var(--green); }
+.bluetxt { color: var(--blue); }
 .warntxt { color: var(--amber); }
 @media (max-width: 700px) {
   .run-decision { display: block; }
@@ -315,4 +326,7 @@ kbd { display: inline-block; min-width: 1.25rem; padding: .08rem .3rem; border: 
   .run-timeline-heading { display: block; }
   .run-timeline-heading time { display: block; margin-top: .15rem; }
   .run-evidence-summary > div { min-width: 4.4rem; }
+  .run-list-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .run-list-heading { display: block; }
+  .run-list-heading .status { display: inline-flex; margin-top: .6rem; }
 }

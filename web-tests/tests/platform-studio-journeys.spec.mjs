@@ -189,6 +189,34 @@ test('Run detail keeps lifecycle actions and evidence review explicit', async ({
   await expect(page.getByRole('button', { name: 'Cancel run' })).toBeVisible();
 });
 
+test('Runs explorer keeps scope, health counts, and reset action explicit', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('**/v1/jobs**', async route => {
+    const url = new URL(route.request().url());
+    expect(url.searchParams.get('project')).toBe('examples/demo');
+    await route.fulfill({ json: { items: [
+      { id: 'job-running', state: 'running', project_id: 'examples/demo', created_at: '2026-11-08T09:00:00Z', updated_at: '2026-11-08T09:02:00Z' },
+      { id: 'job-success', state: 'succeeded', project_id: 'examples/demo', created_at: '2026-11-08T08:00:00Z', updated_at: '2026-11-08T08:01:00Z' },
+      { id: 'job-failed', state: 'failed', project_id: 'examples/demo', created_at: '2026-11-08T07:00:00Z', updated_at: '2026-11-08T07:03:00Z' },
+    ] } });
+  });
+
+  await page.goto('./#runs');
+  await expect(page.locator('#run-result')).toContainText('Choose a project to inspect its runs.');
+  await page.locator('#run-project').fill('examples/demo');
+  await page.getByRole('button', { name: 'Refresh runs' }).click();
+  await expect(page.getByRole('heading', { name: 'Recent runs' })).toBeVisible();
+  await expect(page.locator('.run-list-summary')).toContainText('3');
+  await expect(page.locator('.run-list-summary')).toContainText('active');
+  await expect(page.locator('.run-list-summary')).toContainText('succeeded');
+  await expect(page.locator('.run-list-summary')).toContainText('needs review');
+  await expect(page.locator('#run-result')).toContainText('examples/demo');
+  const mainWidth = await page.locator('#main').evaluate(element => ({ client: element.clientWidth, scroll: element.scrollWidth }));
+  expect(mainWidth.scroll).toBe(mainWidth.client);
+  await page.getByRole('button', { name: 'Clear' }).click();
+  await expect(page.locator('#run-result')).toContainText('Choose a project to inspect its runs.');
+});
+
 test('Ingestion Studio pages source discovery and keeps sync preview controls', async ({ page }) => {
   await page.route('**/v1/platform/connectors', async route => {
     await route.fulfill({ json: { items: [] } });
