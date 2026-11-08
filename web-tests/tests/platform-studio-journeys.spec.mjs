@@ -75,6 +75,9 @@ test('Workspace and project Studio journey covers environment, Bundle and archiv
   });
 
   await page.goto('./#workspaces');
+  await expect(page.locator('.workspace-hero')).toContainText('Make the operating boundary explicit');
+  await expect(page.locator('.workspace-mode-nav')).toContainText('Observe');
+  await expect(page.locator('.workspace-mode-nav')).toContainText('Govern');
   await page.locator('#workspace-create-id').fill('workspace-journey');
   await page.locator('#workspace-create-name').fill('Journey');
   await page.locator('#workspace-create-description').fill('P1-006');
