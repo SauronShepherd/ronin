@@ -73,7 +73,7 @@ El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-d8cb
 - Live: `33/33`, `25` rutas activas, `24` API-backed, `244` eventos correlacionados (`229` OK, `15` WARN esperados), `0` errores server/network y `0` gaps inesperados de autorización.
 - Seguridad: Gitleaks `8.30.1` sin hallazgos en árbol ni historial; pip-audit `2.10.1` sin vulnerabilidades en test/runtime/bootstrap. VEX Docker Scout `1.27.0`: `3` raw, `0` tras OpenVEX exacto; el reviewer debe aceptar formalmente las justificaciones. Trivy no está disponible y no se afirma SBOM de contenedor.
 - Supply chain SDK: SBOM CycloneDX, provenance y resumen de digests verificados; no se confunden con una revisión humana ni con inventario del contenedor.
-- Python/PostgreSQL: `4562 passed`, `27 skipped`, `0 failed` de `4589` en `%TEMP%\\ronin-python-full-f65772a3-20261108`; los dos contratos de estado público también pasan contra el mismo árbol final que conserva el runtime d8.
+- Python/PostgreSQL: `4562 passed`, `27 skipped`, `0 failed` de `4589` en `%TEMP%\\ronin-python-full-f65772a3-20261108`; los dos contratos de estado público también pasan contra el mismo árbol final que conserva el runtime d8. La cobertura por archivo pasa `53/53` en el perfil sin adaptadores PostgreSQL y `62/62` en el perfil completo; `sqlite.py` ya supera el floor general y dejó de necesitar una excepción de baseline.
 
 El candidato es técnicamente defendible en las lanes completadas, pero la decisión sigue `NO-GO`: ledger de familias `0/13`, proveedores/credenciales, revisión humana de seguridad/VEX, legal/NOTICE/claims, review visual manual, Trivy/SBOM de contenedor, rollback, Terraform/toolchain y gobierno de CI/branches siguen abiertos.
 

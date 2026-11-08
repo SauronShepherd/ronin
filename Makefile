@@ -195,7 +195,6 @@ coverage-storage-files:
 		--baseline=scheduler_leadership.py=76.28 \
 		--baseline=scheduler_schedule.py=74.00 \
 		--baseline=scheduler_timeout.py=66.70 \
-		--baseline=sqlite.py=79.72 \
 		--baseline=workspaces.py=65.10
 
 coverage-storage-files-full:
@@ -227,6 +226,5 @@ coverage-storage-files-full:
 		--baseline=scheduler_leadership.py=76.28 \
 		--baseline=scheduler_schedule.py=74.00 \
 		--baseline=scheduler_timeout.py=66.70 \
-		--baseline=sqlite.py=79.72 \
 		--baseline=workspaces.py=65.10
 	@rm -f coverage-storage.json
