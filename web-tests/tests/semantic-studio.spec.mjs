@@ -1,6 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { createHash } from 'node:crypto';
 
+test('Semantic Studio presents a responsive decision workbench', async ({ page }) => {
+  await page.goto('./#semantic');
+  await expect(page.locator('.semantic-hero')).toContainText('Make metrics explainable');
+  await expect(page.locator('.semantic-workbench')).toContainText('Turn the model into a decision');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const widths = await page.locator('#main').evaluate(node => ({ client: node.clientWidth, scroll: node.scrollWidth }));
+  expect(widths.scroll).toBe(widths.client);
+});
+
 test('Semantic Studio exports an integrity-checked archive and previews then imports only the reviewed file and scope', async ({ page }) => {
   const archive = Buffer.from('semantic-bundle-fixture');
   const digest = createHash('sha256').update(archive).digest('hex');
