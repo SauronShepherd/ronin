@@ -28,7 +28,7 @@ test('live Runs saves server settings and retains the project filter', async ({ 
   await page.locator('#api-url').fill(apiOrigin);
   await page.locator('#api-token').fill(token);
   await page.getByRole('button', { name: 'Save connection' }).click();
-  await expect(page.locator('#run-result')).toContainText('Enter a project ID to load runs');
+  await expect(page.locator('#run-result')).toContainText('Choose a project to inspect its runs');
   expect(jobResponses).toEqual([]);
   await page.locator('#run-project').fill('examples/demo');
 
