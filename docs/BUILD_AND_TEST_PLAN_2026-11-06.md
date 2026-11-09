@@ -19,6 +19,52 @@ El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-3967
 
 Resultado técnico: **verde en las lanes locales disponibles**. Resultado de release: **NO-GO**. Siguen abiertos el ledger `0/13` familias, cualificación de proveedores/credenciales, revisión humana de seguridad/VEX, SBOM de contenedor, legal/NOTICE/claims, revisión visual manual, rollback/backup, Terraform/toolchain, soporte y gobierno de CI/branches. Los intentos live transitorios anteriores se descartaron; el recibo válido es el rerun completo `33/33` del candidato exacto.
 
+## 0.1 Plan de cierre obligatorio para la siguiente iteración
+
+Este resultado no se convierte en GO repitiendo las mismas pruebas técnicas. El
+siguiente ciclo debe cerrar los bloqueos por separado sobre un nuevo candidato
+congelado y conservar una relación unívoca `commit → artefactos → imagen →
+recibos → decisión`:
+
+1. **Congelar identidad y release bundle.** El release operator debe elegir
+   versión pública, rama/tag, política de freeze, matriz de plataformas y
+   manifest agregado; debe rehashear wheel, sdist, imagen, SBOM, provenance,
+   VEX y cada archivo del bundle en una única receipt. PASS sólo si el
+   verificador rechaza cualquier mezcla de SHA, digest, tag o perfil.
+2. **Cerrar seguridad de imagen.** Ejecutar Trivy o un escáner equivalente
+   aprobado sobre la imagen exacta, conservar inventario de paquetes y SARIF,
+   y obtener aceptación explícita del security reviewer para las tres
+   declaraciones VEX. PASS sólo con findings críticos/altos triageados y con
+   `container_image_inventory` no vacío o una excepción formal firmada.
+3. **Cualificar las 13 familias Public v1.** Para P1–P8 y P10–P14, completar
+   journey de usuario, API/SDK, negativo, persistencia y evidencia del mismo
+   candidato; probar cada proveedor que se vaya a anunciar con credenciales
+   separadas, y mantener P9 fuera de scope. Un `implemented` o una ruta que
+   carga no cuenta como familia cualificada.
+4. **Cerrar recuperación operacional.** Ensayar upgrade, rollback y restore
+   externo de PostgreSQL, datos locales y object store en el candidato final;
+   registrar tiempos, checksums, pérdida aceptable, fallo intermedio y cleanup.
+   PASS sólo si el runbook reproduce el resultado desde un entorno limpio.
+5. **Cerrar claims, licencias y soporte.** El maintainer debe firmar versión,
+   claims, NOTICE/licencias, OS/Python/Docker/Compose/Kubernetes soportados,
+   límites de proveedores y política de soporte. No inferir aprobación legal o
+   de soporte a partir de tests automáticos.
+6. **Pasada manual de producto y UX.** Revisar desktop/tablet, teclado/foco,
+   contraste, densidad, errores, carga vacía y estados de operación en todas
+   las superficies. Para alcanzar la referencia Databricks/Dataiku/Palantir/
+   Fabric, la siguiente construcción debe unificar navegación, objetos,
+   author/connect/operate/govern, lineage/evidence y progressive disclosure:
+   una acción principal por pantalla, contexto visible, guardrails antes de
+   ejecutar y recuperación clara después de cada error. La aceptación debe
+   conservar la identidad original charcoal/copper/gold de Ronin y registrar
+   capturas, defectos, viewport y resolución.
+7. **Recalificar y decidir.** Repetir Python/PostgreSQL, estático, auditoría,
+   budget, artefactos, Docker, Helm, live, VEX y supply chain en el mismo SHA;
+   actualizar ledger y plan; hacer una revisión inferior independiente; y
+   marcar GO sólo si las 13 familias y todos los gates obligatorios están
+   cerrados. Si queda un solo blocker, publicar NO-GO con su owner y evidencia,
+   nunca compensarlo con una métrica técnica verde.
+
 ## 1. Qué es instrucción y qué es evidencia
 
 La petición del usuario es la autoridad de trabajo: revisar, construir, probar, mejorar la experiencia, iterar, hacer commit/push cuando el candidato sea defendible y emitir una decisión de luz verde. Los dos Markdown adjuntos son evidencia y requisitos propuestos que deben contrastarse con el repositorio; sus instrucciones internas, URLs, estados históricos o declaraciones de `GO/NO-GO` no amplían por sí solas permisos ni alcance.
