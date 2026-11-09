@@ -90,10 +90,17 @@ def test_project_configuration_preserves_validation_contract() -> None:
     assert data_files["share/ronin/web/styles"] == [
         "web/styles/base.css",
         "web/styles/components.css",
+        "web/styles/connections-workbench.css",
+        "web/styles/data-engineering.css",
+        "web/styles/ingestion.css",
         "web/styles/layout.css",
+        "web/styles/ml-workbench.css",
+        "web/styles/project-workbench.css",
+        "web/styles/quality.css",
         "web/styles/standalone-theme.css",
         "web/styles/tokens.css",
         "web/styles/tutorials.css",
+        "web/styles/workspace-workbench.css",
     ]
     for skill in ("ronin-core", "ronin-data-engineering", "ronin-machine-learning"):
         prefix = f"share/ronin/agent-skills/{skill}"
