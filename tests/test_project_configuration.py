@@ -56,6 +56,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
             "cloud-studio",
             "catalog-studio",
             "command-palette",
+                "connection-dialog",
             "connections-studio",
             "context-bar",
             "debugger-studio",
