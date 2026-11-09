@@ -11,12 +11,12 @@ function renderProjects() {
     <div><p class="eyebrow">GOVERNANCE · PROJECT CONTROL PLANE</p><h2>Build inside a governed project.</h2><p>Keep the manifest, environment binding, operation and permission evidence connected to one workspace-scoped project.</p></div>
     <div class="project-hero-aside"><span class="status blue">project → environment → operation</span><p>Ronin makes the project boundary explicit before a run, import or permission decision.</p></div>
   </section>
-  <nav class="project-mode-nav" aria-label="Project workbench modes">
+  <div class="project-mode-nav" role="group" aria-label="Project workbench modes">
     <button class="project-mode-card" type="button" data-project-scroll="project-authoring" aria-controls="project-journey-form" aria-label="Author project"><span class="project-mode-index">01</span><strong>Author</strong><span>Define or revise the project manifest.</span></button>
     <button class="project-mode-card" type="button" data-project-scroll="project-connection" aria-controls="project-environment-form" aria-label="Connect project"><span class="project-mode-index">02</span><strong>Connect</strong><span>Bind a declared environment and runtime.</span></button>
     <button class="project-mode-card" type="button" data-project-scroll="project-operation" aria-controls="project-operation-form" aria-label="Operate project"><span class="project-mode-index">03</span><strong>Operate</strong><span>Run a reviewed, idempotent pipeline operation.</span></button>
     <button class="project-mode-card" type="button" data-project-scroll="project-govern" aria-controls="project-permissions-form" aria-label="Govern project"><span class="project-mode-index">04</span><strong>Govern</strong><span>Inspect permissions and move portable evidence.</span></button>
-  </nav>
+  </div>
   <section class="panel project-workbench"><h1 id="view-title">Projects</h1>
     <p class="muted">Workspace: <code>${esc(workspaceId || 'select a workspace')}</code></p>
     <section class="project-overview" aria-labelledby="project-overview-title">

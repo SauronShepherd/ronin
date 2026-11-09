@@ -385,10 +385,9 @@ kbd { display: inline-block; min-width: 1.25rem; padding: .08rem .3rem; border: 
 .error-copy { color: var(--red) !important; }
 .goodtxt { color: var(--green); }
 .bluetxt { color: var(--blue); }
-.warntxt { color: var(--amber); }
+.warntxt { color: var(--amber); }.workspace-boundary,.connections-boundary,.connections-scope { color: var(--cocoa-soft); }
 @media (max-width: 700px) {
-  .run-decision { display: block; }
-  .run-decision-state { margin-top: .8rem; }
+  .run-decision { display: block; }.run-decision-state { margin-top: .8rem; }
   .run-section-heading { display: block; }
   .run-section-heading .button { margin-top: .65rem; }
   .run-timeline-heading { display: block; }

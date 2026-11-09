@@ -39,12 +39,12 @@ export async function ingestionStudio() {
         <p>Read-only discovery is paged. Durable execution requires governed source and destination references.</p>
       </div>
     </section>
-    <nav class="ing-mode-nav" aria-label="Ingestion workbench modes">
+    <div class="ing-mode-nav" role="group" aria-label="Ingestion workbench modes">
       <a class="ing-mode-card" href="#ingestion-discovery"><span class="ing-mode-index">01</span><strong>Discover</strong><span>Find source assets without loading an unbounded catalog.</span></a>
       <a class="ing-mode-card" href="#ingestion-preview"><span class="ing-mode-index">02</span><strong>Preview</strong><span>Inspect the plan and source response before a write.</span></a>
       <a class="ing-mode-card" href="#ingestion-sync"><span class="ing-mode-index">03</span><strong>Sync</strong><span>Submit a durable, idempotent job inside a project.</span></a>
       <a class="ing-mode-card" href="#ingestion-observe"><span class="ing-mode-index">04</span><strong>Observe</strong><span>Follow state, evidence and recorded lineage after commit.</span></a>
-    </nav>
+    </div>
     <section class="ing-workbench panel" id="ingestion-discovery" aria-labelledby="ingestion-discovery-title">
       <div class="ing-section-heading"><div><span class="ing-section-index">01 · DISCOVER</span><h2 id="ingestion-discovery-title">Start with a governed source</h2><p>Use a bounded page to establish the source boundary before defining a sync.</p></div><span class="ing-boundary">workspace · connection · cursor</span></div>
       <div class="ing-callout"><span class="status blue">Read-only</span><p>Ronin keeps only the current page and continuation cursor in this view. Stop safely if the provider is slow or the source settings change.</p></div>

@@ -127,11 +127,11 @@ function render() {
         <p>Every operation remains workspace/project scoped and produces an explicit result or an honest blocking state.</p>
       </div>
     </section>
-    <nav class="de-mode-nav" aria-label="Data Engineering workbench modes">
+    <div class="de-mode-nav" role="group" aria-label="Data Engineering workbench modes">
       <a class="de-mode-card" href="#de-sql-workbench"><span class="de-mode-index">01</span><strong>Query</strong><span>Explore a bounded result or inspect its local plan.</span></a>
       <a class="de-mode-card" href="#de-pipeline-workbench"><span class="de-mode-index">02</span><strong>Compose</strong><span>Validate, version and connect a governed pipeline.</span></a>
       <a class="de-mode-card" href="#de-ops-workbench"><span class="de-mode-index">03</span><strong>Observe</strong><span>Check runtime health before committing work.</span></a>
-    </nav>
+    </div>
     <section class="de-ops-workbench panel" id="de-ops-workbench">
       <div class="de-section-heading"><div><span class="de-section-index">03 · OBSERVE</span><h2>Know the operating boundary</h2><p>Runtime health and provider capabilities are evidence, not decoration.</p></div><span class="de-boundary">workspace · project · runtime</span></div>
       <div class="toolbar de-ops-actions"><button class="button" data-action="de-health">Health</button><button class="button" data-action="de-runtimes">Runtimes</button><span class="de-action-note">Start here when a query or pipeline is blocked.</span></div>

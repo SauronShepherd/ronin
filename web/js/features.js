@@ -60,12 +60,12 @@ async function machineLearningStudio(){
       <button class="button" data-feature="ml-models">Refresh models</button>
       <button class="button" data-feature="ml-deployments">Refresh deployments</button>
     </div>
-    <nav class="ml-mode-nav" aria-label="Machine Learning workbench modes">
+    <div class="ml-mode-nav" role="group" aria-label="Machine Learning workbench modes">
       <a class="ml-mode-card" href="#ml-discovery"><span class="ml-mode-index">01</span><strong>Lab</strong><span>Bind a dataset and define the experiment boundary.</span></a>
       <a class="ml-mode-card" href="#ml-quality"><span class="ml-mode-index">02</span><strong>Qualify</strong><span>Set quality expectations and compare candidate trials.</span></a>
       <a class="ml-mode-card" href="#ml-govern"><span class="ml-mode-index">03</span><strong>Govern</strong><span>Review model evidence before promotion or download.</span></a>
       <a class="ml-mode-card" href="#ml-serving"><span class="ml-mode-index">04</span><strong>Serve</strong><span>Pin, health-check, predict and roll back a deployment.</span></a>
-    </nav>
+    </div>
     <section class="ml-workbench panel" id="ml-discovery" aria-labelledby="ml-discovery-title">
       <div class="ml-section-heading"><div><span class="ml-section-index">01 · LAB</span><h2 id="ml-discovery-title">Define the experiment boundary</h2><p>Start from a workspace-scoped dataset and a small, reviewable Lab definition.</p></div><span class="ml-boundary">workspace · dataset · target</span></div>
       <div class="ml-callout"><span class="status blue">Bounded input</span><p>Training requests remain tied to the declared asset/version, features, target, backend and deterministic seed.</p></div>

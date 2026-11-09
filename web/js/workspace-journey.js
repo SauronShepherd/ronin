@@ -16,11 +16,11 @@ function renderWorkspaceOrientation(view) {
       <p>Ronin shows the state it can verify. Empty, unavailable and archived resources stay distinct from ready work.</p>
     </div>
   </section>
-  <nav class="workspace-mode-nav" aria-label="Workspace workbench modes">
+  <div class="workspace-mode-nav" role="group" aria-label="Workspace workbench modes">
     <button class="workspace-mode-card" type="button" data-workspace-scroll="workspace-observe" aria-controls="workspace-result"><span class="workspace-mode-index">01</span><strong>Observe</strong><span>See the workspaces available to this operator.</span></button>
     <button class="workspace-mode-card" type="button" data-workspace-scroll="workspace-create" aria-controls="workspace-create" aria-label="Register workspace"><span class="workspace-mode-index">02</span><strong>Create</strong><span>Register a workspace with an idempotent identity.</span></button>
-    <button class="workspace-mode-card" type="button" data-workspace-scroll="workspace-govern" aria-controls="project-result"><span class="workspace-mode-index">03</span><strong>Govern</strong><span>Open projects, permissions and portable Bundles.</span></button>
-  </nav>`);
+    <button class="workspace-mode-card" type="button" data-workspace-scroll="workspace-observe" aria-controls="workspace-result"><span class="workspace-mode-index">03</span><strong>Govern</strong><span>Choose a workspace before opening projects, permissions and portable Bundles.</span></button>
+  </div>`);
   const toolbar = view.querySelector(':scope > .toolbar');
   toolbar?.classList.add('workspace-context-toolbar');
   const result = view.querySelector('#workspace-result');
