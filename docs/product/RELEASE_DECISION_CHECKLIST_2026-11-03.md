@@ -33,20 +33,21 @@ invocations, `0` failures; budget `2,101,255` asset bytes, `68` requests,
 `90/90` with wheel `c07f93166edfd147f90daf5d8826a84963f38a467205acb9d035a4e452f2e34d`
 and sdist `9e26e5c6c58e04fe09fd22f82a42049a48619504d4587e4c13e9ce9836c055f3`.
 Docker is `27/27` plus strict v0.1 `15/15` on image
-`sha256:582adfd4618b2d05f8ecc5a4cd178216233d24d3057c48fa2cd5411a7a97774`;
-Helm/kind and persistence pass. The current VEX file is still bound to the
-previous image and must be refreshed before the security lane is exact; Trivy
-is unavailable. Release remains **NO-GO** at `0/13` families: provider/
+`sha256:582adfd4618b2d05f8ecc5a4cd178216233d24d3057c48fa2cd5411a7a97774c`;
+Helm/kind and persistence pass. Exact Docker Scout/OpenVEX verification is
+`3 raw / 0 applied` in `%TEMP%\\ronin-vex-13171f1-verified-2`, but the security
+reviewer has not accepted the three VEX statements; Trivy is unavailable.
+Release remains **NO-GO** at `0/13` families: provider/
 credential, security/VEX, container SBOM, supply-chain, legal/claims, visual,
 rollback, support and governance gates remain open.
 
 Receipts: `%TEMP%\\ronin-python-full-13171f1-cf543bf407044ae7ad2063d0163b8f4f`,
 `%TEMP%\\ronin-docker-13171f1-0b5027c6`, `%TEMP%\\ronin-helm-13171f1-22ba4307a0e34b07b3a974b7f141d065`,
 `%TEMP%\\ronin-artifact-identity-13171f1-c3f3bdb19079417997c878b2fb77d4ab.json`,
-`%TEMP%\\ronin-release-sbom-13171f1.json`, `%TEMP%\\ronin-release-provenance-13171f1.json`
+`%TEMP%\\ronin-vex-13171f1-verified-2`, `%TEMP%\\ronin-release-sbom-13171f1.json`, `%TEMP%\\ronin-release-provenance-13171f1.json`
 and `%TEMP%\\ronin-supply-chain-13171f1.json`. The SDK SBOM/provenance summary
-is verified for this SHA; no current VEX or container-SBOM claim is made until
-the VEX is regenerated against this image digest and Trivy/equivalent is available.
+is verified for this SHA; VEX is exact-digest verified but still requires human
+security acceptance, and no container-SBOM claim is made because Trivy/equivalent is unavailable.
 
 ## 9 November exact-candidate refresh — historical `4157181`
 
