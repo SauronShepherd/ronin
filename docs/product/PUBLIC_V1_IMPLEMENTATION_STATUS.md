@@ -7,6 +7,29 @@
 
 ## Current exact-SHA qualification — 9 November 2026
 
+The current runtime/test candidate is `74069afebcfbaefb94030e908a1974857e4d60da`.
+The Connections workbench is implemented and the runtime package contract now
+declares `connection-dialog.js` consistently in both package data and tests.
+The clean candidate is green in the available local lanes: Python/PostgreSQL
+`4562 passed, 27 skipped, 0 failed` of `4589`; Chromium `134/134`; web audit
+`69` files, `38` modules, `180` route invocations and `0` failures; budget
+`2,099,426` asset bytes, `68` requests, `36` modules, `13` stylesheets and
+`5,369` HTML bytes; installed artifacts `90/90`; Docker `27/27` and strict v0.1
+`15/15` on image
+`sha256:82a702507c6ea798f1d2c557f7a3bdca76be0035bd1f11ed90ade7ed780ce7e1`;
+Helm/kind persistence/restart pass; live `33/33` over 25 active routes with
+248 correlated events and no server/network errors; Docker Scout/OpenVEX
+`3 raw / 0 applied`. Trivy is unavailable, so no container SBOM claim is made.
+
+This is technical qualification only. Public v1 remains **0/13 (0%, NO-GO)**:
+manual visual/product signoff, legal/NOTICE/claims, security/VEX acceptance,
+provider/credential qualification, rollback/support, Terraform/toolchain and
+CI/branch governance remain open. The intended product bar remains a simpler,
+more powerful, original control plane with the operational clarity of
+Databricks, Dataiku, Palantir and Fabric.
+
+### Historical exact-SHA qualification — `4157181`
+
 The current runtime/test candidate `4157181843d47893e77d62bed62fdafeb31d6f0b`
 is pushed and adds a tenth UI pass: Projects becomes an Author/Connect/Operate/
 Govern decision workbench with an operational brief that shows source posture,
@@ -73,7 +96,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `4157181843d47893e77d62bed62fdafeb31d6f0b` (2026-11-09).
+**Observed source head:** `74069afebcfbaefb94030e908a1974857e4d60da` (2026-11-09).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

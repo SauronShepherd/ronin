@@ -4,7 +4,7 @@
 
 **Last evidence review:** 9 November 2026
 
-**Candidate SHA:** runtime/test candidate `4157181843d47893e77d62bed62fdafeb31d6f0b`; exact-image VEX and qualification receipts are recorded in the documentation follow-up; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `74069afebcfbaefb94030e908a1974857e4d60da`; exact-image VEX and qualification receipts are recorded below; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,7 +20,36 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 9 November exact-candidate refresh
+## 9 November exact-candidate refresh — current `74069af`
+
+The current clean runtime/test candidate is `74069afebcfbaefb94030e908a1974857e4d60da`.
+The Connections workbench is implemented, and the follow-up package-data and
+configuration contracts now include `connection-dialog.js`. The exact local
+qualification is green: Python/PostgreSQL `4562 passed, 27 skipped, 0 failed` of
+`4589`; Chromium `134/134`; web audit `69` files, `38` modules, `180` route
+invocations, `0` failures; budget `2,099,426` asset bytes, `68` requests,
+`36` modules, `13` stylesheets and `5,369` HTML bytes; installed artifacts
+`90/90` with wheel `a2ee5746c4c1384fa35824a2927d6ebfda9d628f486bb7087ec999441036a6d5`
+and sdist `6c0e586d338675e072e2b825fb7ee6b92c7ca2a2c88378063ed0ee729fc47adc`.
+Docker is `27/27` plus strict v0.1 `15/15` on image
+`sha256:82a702507c6ea798f1d2c557f7a3bdca76be0035bd1f11ed90ade7ed780ce7e1`;
+Helm/kind and persistence pass; live is `33/33` across 25 routes with 248
+correlated events (`233` OK, `15` expected WARN); Docker Scout/OpenVEX is
+`3 raw / 0 applied` for that exact image. Release remains **NO-GO** at `0/13`
+families: human security/VEX, Trivy/container SBOM, provider/credential,
+legal/claims, visual, rollback, support and governance gates remain open.
+
+Receipts: `%TEMP%\\ronin-python-full-74069af-20261109`,
+`%TEMP%\\ronin-docker-74069af-20261109`, `%TEMP%\\ronin-helm-74069af-20261109`,
+`%TEMP%\\ronin-live-74069af-20261109`, `%TEMP%\\ronin-vex-74069af-20261109`,
+`%TEMP%\\ronin-artifact-identity-74069af-20261109.json`,
+`%TEMP%\\ronin-release-sbom-74069af-20261109.json`,
+`%TEMP%\\ronin-release-provenance-74069af-20261109.json` and
+`%TEMP%\\ronin-supply-chain-74069af-20261109.json`. Trivy was unavailable;
+the container inventory is intentionally empty and no container SBOM claim is
+made.
+
+## 9 November exact-candidate refresh — historical `4157181`
 
 The current runtime/test candidate is `4157181843d47893e77d62bed62fdafeb31d6f0b`,
 the tenth UI pass after the backend candidate `8a855866`. Projects now exposes
