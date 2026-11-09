@@ -135,4 +135,6 @@ document.addEventListener('click', async event => {
 });
 
 window.addEventListener('hashchange', addConnectionsPanel);
+const connectionsView = document.querySelector('#view');
+if (connectionsView) new MutationObserver(addConnectionsPanel).observe(connectionsView, { childList: true });
 setTimeout(addConnectionsPanel, 0);
