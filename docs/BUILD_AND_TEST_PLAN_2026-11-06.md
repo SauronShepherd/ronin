@@ -1,21 +1,21 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-09 (Europe/Madrid)
-**Fuente de código:** candidato runtime/test exacto `74069afebcfbaefb94030e908a1974857e4d60da` (workbench de Connections, corrección de empaquetado de `connection-dialog.js` y contrato de configuración actualizado); OpenVEX exacto ligado a la imagen `sha256:82a702507c6ea798f1d2c557f7a3bdca76be0035bd1f11ed90ade7ed780ce7e1`. La qualification técnica se separa de la decisión de release: el candidato está verde en las lanes locales disponibles, pero no tiene luz verde de publicación.
+**Fuente de código:** candidato runtime/test exacto `39678f5421e67ff9819887529d4738aa59131c7e` (Connections con guardado directo, errores accionables y smoke sobre artefacto instalado; contrato de empaquetado/configuración actualizado); OpenVEX exacto ligado a la imagen `sha256:e458889ccc99d2f7685b8a9323b259c4350275a33507f6ca1a060ee5ea6fc5aa`. La qualification técnica se separa de la decisión de release: el candidato está verde en las lanes locales disponibles, pero no tiene luz verde de publicación.
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
-## 0. Cualificación exacta actual — candidato `74069af`
+## 0. Cualificación exacta actual — candidato `39678f5`
 
-El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-74069af-20261109` y el runtime/test candidato `74069afebcfbaefb94030e908a1974857e4d60da` son la única base de esta observación. Los recibos exactos son:
+El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-39678f5-20261109` y el runtime/test candidato `39678f5421e67ff9819887529d4738aa59131c7e` son la única base de esta observación. Los recibos exactos son:
 
-- Python/PostgreSQL: `4562 passed, 27 skipped, 0 failed` de `4589`; los skips son explícitos por proveedor/entorno/POSIX y no se convierten en soporte implícito. Evidencia: `%TEMP%\\ronin-python-full-74069af-20261109`.
-- UI: Chromium `134/134`; auditoría `69` archivos, `38` módulos, `180` invocaciones de ruta y `0` fallos; presupuesto `2,099,426` bytes de assets, `68` requests, `36` módulos, `13` hojas y `5,369` bytes HTML.
-- Artefactos: `90/90`; wheel `a2ee5746c4c1384fa35824a2927d6ebfda9d628f486bb7087ec999441036a6d5`, sdist `6c0e586d338675e072e2b825fb7ee6b92c7ca2a2c88378063ed0ee729fc47adc`; identidad `%TEMP%\\ronin-artifact-identity-74069af-20261109.json`.
-- Docker: `27/27`, strict v0.1 `15/15`, cleanup correcto; imagen `sha256:82a702507c6ea798f1d2c557f7a3bdca76be0035bd1f11ed90ade7ed780ce7e1`; evidencia `%TEMP%\\ronin-docker-74069af-20261109`.
-- Helm/kind: lint, Secret boundary, cluster aislado, carga de imagen, instalación, readiness, health, Studio/API, job persistente, restart/persistencia y cleanup: todo pasa; evidencia `%TEMP%\\ronin-helm-74069af-20261109`.
-- Live: `33/33`, `25` rutas activas, `24` API-backed, `248` eventos correlacionados (`233` OK, `15` WARN esperados), `0` errores server/network y `0` gaps inesperados; evidencia `%TEMP%\\ronin-live-74069af-20261109`.
-- VEX: Docker Scout `3` hallazgos brutos y `0` después del OpenVEX exacto; evidencia `%TEMP%\\ronin-vex-74069af-20261109`. Trivy no está disponible, por lo que no se afirma un SBOM de la imagen contenedora.
-- Supply chain SDK: SBOM CycloneDX `%TEMP%\\ronin-release-sbom-74069af-20261109.json`, provenance `%TEMP%\\ronin-release-provenance-74069af-20261109.json` y resumen `%TEMP%\\ronin-supply-chain-74069af-20261109.json`; `container_image_inventory` queda vacío por la ausencia de Trivy.
+- Python/PostgreSQL: `4562 passed, 27 skipped, 0 failed` de `4589`; los skips son explícitos por proveedor/entorno/POSIX y no se convierten en soporte implícito. Evidencia: `%TEMP%\\ronin-python-full-39678f5-20261109`.
+- UI: Chromium `136/136`; auditoría `69` archivos, `38` módulos, `180` invocaciones de ruta y `0` fallos; presupuesto `2,099,523` bytes de assets, `68` requests, `36` módulos, `13` hojas y `5,369` bytes HTML. La prueba de Connections cubre GET fallido, POST correcto con refresco y POST 422 visible; el smoke instalado también guarda una conexión.
+- Artefactos: `90/90`; wheel `f694f6e249484e163e5fbc746f77d3002c09c7770d20bd15ff1f1145af14ae13`, sdist `7defb5ba58f2c8795a01d7043973f20d60af6753311f9e1a8cfb77b73c528b13`; identidad `%TEMP%\\ronin-artifact-identity-39678f5-20261109.json`.
+- Docker: `27/27`, strict v0.1 `15/15`, cleanup correcto; imagen `sha256:e458889ccc99d2f7685b8a9323b259c4350275a33507f6ca1a060ee5ea6fc5aa`; evidencia `%TEMP%\\ronin-docker-39678f5-20261109`.
+- Helm/kind: lint, Secret boundary, cluster aislado, carga de imagen, instalación, readiness, health, Studio/API, job persistente, restart/persistencia y cleanup: todo pasa; evidencia `%TEMP%\\ronin-helm-39678f5-20261109`.
+- Live: `33/33`, `25` rutas activas, `24` API-backed, `246` eventos correlacionados (`231` OK, `15` WARN esperados), `0` errores server/network y `0` gaps inesperados; evidencia `%TEMP%\\ronin-live-39678f5-20261109`.
+- VEX: Docker Scout `3` hallazgos brutos y `0` después del OpenVEX exacto; evidencia `%TEMP%\\ronin-vex-39678f5-20261109`. Trivy no está disponible, por lo que no se afirma un SBOM de la imagen contenedora.
+- Supply chain SDK: SBOM CycloneDX `%TEMP%\\ronin-release-sbom-39678f5-20261109.json`, provenance `%TEMP%\\ronin-release-provenance-39678f5-20261109.json` y resumen `%TEMP%\\ronin-supply-chain-39678f5-20261109.json`; `container_image_inventory` queda vacío por la ausencia de Trivy.
 
 Resultado técnico: **verde en las lanes locales disponibles**. Resultado de release: **NO-GO**. Siguen abiertos el ledger `0/13` familias, cualificación de proveedores/credenciales, revisión humana de seguridad/VEX, SBOM de contenedor, legal/NOTICE/claims, revisión visual manual, rollback/backup, Terraform/toolchain, soporte y gobierno de CI/branches. Los intentos live transitorios anteriores se descartaron; el recibo válido es el rerun completo `33/33` del candidato exacto.
 
