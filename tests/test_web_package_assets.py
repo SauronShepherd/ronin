@@ -20,6 +20,18 @@ def test_every_runtime_studio_module_is_declared_as_package_data() -> None:
     assert runtime_modules <= declared
 
 
+def test_every_runtime_studio_stylesheet_is_declared_as_package_data() -> None:
+    root = Path(__file__).parents[1]
+    project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    declared = set(project["tool"]["setuptools"]["data-files"]["share/ronin/web/styles"])
+    runtime_stylesheets = {
+        path.relative_to(root).as_posix()
+        for path in (root / "web/styles").glob("*.css")
+        if path.name != "README.md"
+    }
+    assert runtime_stylesheets <= declared
+
+
 def test_source_studio_asset_graph_is_complete() -> None:
     root = Path(__file__).parents[1] / "web"
     assert all(path.is_file() for path in referenced_assets(root))
