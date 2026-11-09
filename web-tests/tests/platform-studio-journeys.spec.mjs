@@ -223,6 +223,28 @@ test('Runs explorer keeps scope, health counts, and reset action explicit', asyn
   await expect(page.locator('#run-result')).toContainText('Choose a project to inspect its runs.');
 });
 
+test('Runs explorer follows launch context and refreshes when the context changes', async ({ page }) => {
+  const requestedProjects = [];
+  await page.route('**/v1/jobs**', async route => {
+    const url = new URL(route.request().url());
+    const project = url.searchParams.get('project');
+    requestedProjects.push(project);
+    await route.fulfill({ json: { items: [{ id: `run-${project}`, state: 'succeeded', project_id: project, created_at: '2026-11-08T09:00:00Z', updated_at: '2026-11-08T09:01:00Z' }] } });
+  });
+
+  await page.goto('./?workspace=team-a&project=project-z#runs');
+  await expect(page.locator('#run-project')).toHaveValue('project-z');
+  await expect(page.getByRole('heading', { name: 'Recent runs' })).toBeVisible();
+  await expect(page.locator('#run-result')).toContainText('project-z');
+
+  await page.locator('.context-change').click();
+  await page.locator('#context-form [name="project"]').fill('project-next');
+  await page.locator('#context-form button[type="submit"]').click();
+  await expect(page.locator('#run-project')).toHaveValue('project-next');
+  await expect(page.locator('#run-result')).toContainText('project-next');
+  expect(requestedProjects).toEqual(['project-z', 'project-next']);
+});
+
 test('Ingestion Studio pages source discovery and keeps sync preview controls', async ({ page }) => {
   await page.route('**/v1/platform/connectors', async route => {
     await route.fulfill({ json: { items: [] } });
