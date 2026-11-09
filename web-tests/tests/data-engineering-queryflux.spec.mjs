@@ -83,6 +83,22 @@ test('Data Engineering Studio surfaces QueryFlux authorization errors', async ({
   await expect(page.locator('#de-sql-result')).toContainText('Project access denied.');
 });
 
+test('Data Engineering Studio keeps unavailable-server details out of the UI', async ({ page }) => {
+  await page.route('**/v1/data-engineering/queryflux/capabilities', async route => {
+    await route.fulfill({
+      status: 502,
+      contentType: 'text/html',
+      body: '<!doctype html><html><body>gateway unavailable</body></html>',
+    });
+  });
+
+  await page.goto('./#data');
+  await expect(page.locator('#de-queryflux-status')).toHaveText('QueryFlux: degraded');
+  await expect(page.locator('#de-queryflux-result')).toContainText('unexpected page');
+  await expect(page.locator('#de-queryflux-result')).not.toContainText('127.0.0.1');
+  await expect(page.locator('#de-queryflux-result')).not.toContainText('http://');
+});
+
 test('Data Engineering Studio keeps local SQL requests within the documented contract', async ({ page }) => {
   let postedBody;
   await page.route('**/v1/data-engineering/queryflux/capabilities', async route => {

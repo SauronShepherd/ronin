@@ -82,7 +82,7 @@ export async function request(path, options = {}) {
     const rawMessage = data?.error?.message || data?.message || data?.detail;
     const isHtml = typeof rawMessage === 'string' && /<(?:!doctype|html|body)\b/i.test(rawMessage);
     const message = isHtml
-      ? `The Ronin server is not available at ${base}. Start the server or use the address provided by your administrator.`
+      ? 'The Ronin server returned an unexpected page. Start the server or check Server connection settings.'
       : rawMessage || `Request failed (${response.status})`;
     const error = new Error(message);
     error.status = response.status;
