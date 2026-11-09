@@ -88,7 +88,7 @@ document.addEventListener('click', (event) => {
   const button = event.target.closest?.('[data-workspace-scroll]');
   if (!button) return;
   event.preventDefault();
-  document.querySelector(`[data-workspace-anchor="${button.dataset.workspaceScroll}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelector(`[data-workspace-anchor="${button.dataset.workspaceScroll}"]`)?.scrollIntoView({ behavior: 'auto', block: 'start' });
 });
 
 const observer = new MutationObserver(enhanceWorkspaces);

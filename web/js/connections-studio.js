@@ -28,7 +28,7 @@ function setMode(mode) {
     button.setAttribute('aria-pressed', String(active));
   });
   const targets = { discover: '#connection-list', configure: '#connection-editor-form', govern: '#connection-result' };
-  document.querySelector(targets[mode] || '#connection-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelector(targets[mode] || '#connection-list')?.scrollIntoView({ behavior: 'auto', block: 'start' });
 }
 
 function updateOverview(items, error = '') {

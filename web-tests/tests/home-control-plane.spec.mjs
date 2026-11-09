@@ -6,6 +6,9 @@ test.describe('home control plane', () => {
     await page.goto('./#home', { waitUntil: 'load' });
 
     await expect(page.locator('#home-overview-title')).toHaveText('One clear path from data to decision.');
+    await expect(page.locator('.home-view > .page-header')).toBeHidden();
+    await expect(page.locator('.command-open-label')).toHaveText('Search or jump');
+    await expect(page.locator('.command-open kbd')).toHaveText('⌘K');
     await expect(page.locator('.home-context-card')).toContainText('default / examples/demo');
     await expect(page.locator('.home-context-source')).toContainText('Example context');
     await expect(page.locator('.context-bar')).toContainText('Workspacedefault');

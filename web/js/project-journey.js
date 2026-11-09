@@ -176,7 +176,7 @@ document.addEventListener('click', async (event) => {
   const scroll = event.target.closest?.('[data-project-scroll]');
   if (scroll) {
     event.preventDefault();
-    document.querySelector(`[data-project-anchor="${scroll.dataset.projectScroll}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelector(`[data-project-anchor="${scroll.dataset.projectScroll}"]`)?.scrollIntoView({ behavior: 'auto', block: 'start' });
     return;
   }
   const context = event.target.closest?.('.project-context');

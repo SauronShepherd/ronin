@@ -100,6 +100,12 @@
 .topbar { min-height: 68px; padding-inline: clamp(1rem, 2.8vw, 2.4rem); }
 .breadcrumb { display: flex; align-items: center; gap: .55rem; min-width: 0; }
 .breadcrumb::before { content: ''; width: .45rem; height: .45rem; flex: none; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgb(210 154 71 / 16%); }
+.command-open { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 2.5rem; padding: .45rem .65rem; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--cocoa); background: rgb(255 250 242 / 76%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 68%); }
+.command-open:hover { border-color: var(--border-strong); background: var(--surface-raised); }
+.command-open svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+.command-open-label { color: var(--cocoa-soft); font-size: .75rem; font-weight: 800; white-space: nowrap; }
+.command-open kbd { margin-left: .12rem; }
+.home-view > .page-header { display: none; }
 .connection-form { align-items: center; padding: .28rem; border: 1px solid var(--line); border-radius: 12px; background: rgb(234 216 196 / 36%); box-shadow: inset 0 1px 0 rgb(255 250 242 / 70%); }
 .connection-form input { min-height: 2.35rem; }
 .connection-form .button { min-height: 2.35rem; }
@@ -113,6 +119,8 @@
   .breadcrumb { font-size: .9rem; }
   .page-header { align-items: flex-start; }
   .page-actions { justify-content: flex-start; }
+  .command-open { min-width: 2.5rem; padding-inline: .5rem; }
+  .command-open-label, .command-open kbd { display: none; }
 }
 
 /* Rail identity: the logo and collapse affordance belong to the navigation surface. */
