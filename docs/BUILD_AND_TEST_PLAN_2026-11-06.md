@@ -1,23 +1,22 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-09 (Europe/Madrid)
-**Fuente de código:** candidato runtime/test exacto `39678f5421e67ff9819887529d4738aa59131c7e` (Connections con guardado directo, errores accionables y smoke sobre artefacto instalado; contrato de empaquetado/configuración actualizado); OpenVEX exacto ligado a la imagen `sha256:e458889ccc99d2f7685b8a9323b259c4350275a33507f6ca1a060ee5ea6fc5aa`. La qualification técnica se separa de la decisión de release: el candidato está verde en las lanes locales disponibles, pero no tiene luz verde de publicación.
+**Fuente de código:** candidato runtime/test exacto `13171f1decace56fb08f425683d56afb978c1f07` (shell Studio más claro, workbenches guiados, packaging de estilos completo, smoke instalado estable y contratos de accesibilidad sincronizados). La qualification técnica se separa de la decisión de release: el candidato está verde en las lanes locales disponibles, pero no tiene luz verde de publicación.
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
-## 0. Cualificación exacta actual — candidato `39678f5`
+## 0. Cualificación exacta actual — candidato `13171f1d`
 
-El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-39678f5-20261109` y el runtime/test candidato `39678f5421e67ff9819887529d4738aa59131c7e` son la única base de esta observación. Los recibos exactos son:
+El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-13171f1-c598fabfb9474f40aca2b0552c5c1e6f` y el runtime/test candidato `13171f1decace56fb08f425683d56afb978c1f07` son la única base de esta observación. Los recibos exactos son:
 
-- Python/PostgreSQL: `4562 passed, 27 skipped, 0 failed` de `4589`; los skips son explícitos por proveedor/entorno/POSIX y no se convierten en soporte implícito. Evidencia: `%TEMP%\\ronin-python-full-39678f5-20261109`.
-- UI: Chromium `136/136`; auditoría `69` archivos, `38` módulos, `180` invocaciones de ruta y `0` fallos; presupuesto `2,099,523` bytes de assets, `68` requests, `36` módulos, `13` hojas y `5,369` bytes HTML. La prueba de Connections cubre GET fallido, POST correcto con refresco y POST 422 visible; el smoke instalado también guarda una conexión.
-- Artefactos: `90/90`; wheel `f694f6e249484e163e5fbc746f77d3002c09c7770d20bd15ff1f1145af14ae13`, sdist `7defb5ba58f2c8795a01d7043973f20d60af6753311f9e1a8cfb77b73c528b13`; identidad `%TEMP%\\ronin-artifact-identity-39678f5-20261109.json`.
-- Docker: `27/27`, strict v0.1 `15/15`, cleanup correcto; imagen `sha256:e458889ccc99d2f7685b8a9323b259c4350275a33507f6ca1a060ee5ea6fc5aa`; evidencia `%TEMP%\\ronin-docker-39678f5-20261109`.
-- Helm/kind: lint, Secret boundary, cluster aislado, carga de imagen, instalación, readiness, health, Studio/API, job persistente, restart/persistencia y cleanup: todo pasa; evidencia `%TEMP%\\ronin-helm-39678f5-20261109`.
-- Live: `33/33`, `25` rutas activas, `24` API-backed, `246` eventos correlacionados (`231` OK, `15` WARN esperados), `0` errores server/network y `0` gaps inesperados; evidencia `%TEMP%\\ronin-live-39678f5-20261109`.
-- VEX: Docker Scout `3` hallazgos brutos y `0` después del OpenVEX exacto; evidencia `%TEMP%\\ronin-vex-39678f5-20261109`. Trivy no está disponible, por lo que no se afirma un SBOM de la imagen contenedora.
-- Supply chain SDK: SBOM CycloneDX `%TEMP%\\ronin-release-sbom-39678f5-20261109.json`, provenance `%TEMP%\\ronin-release-provenance-39678f5-20261109.json` y resumen `%TEMP%\\ronin-supply-chain-39678f5-20261109.json`; `container_image_inventory` queda vacío por la ausencia de Trivy.
+- Python/PostgreSQL: `4563 passed, 27 skipped, 0 failed` de `4590`; los skips son explícitos por proveedor/entorno/POSIX y no se convierten en soporte implícito. Evidencia: `%TEMP%\\ronin-python-full-13171f1-cf543bf407044ae7ad2063d0163b8f4f`.
+- UI: Chromium `136/136` en la suite exacta; auditoría `69` archivos, `38` módulos, `180` invocaciones de ruta y `0` fallos; presupuesto `2,101,255` bytes de assets, `68` requests, `36` módulos, `13` hojas y `5,639` bytes HTML. El workbench de Connections cubre GET fallido, POST correcto con refresco y POST 422 visible; el smoke instalado recorre los 25 registros y guarda una conexión.
+- Artefactos: `90/90`; wheel `c07f93166edfd147f90daf5d8826a84963f38a467205acb9d035a4e452f2e34d`, sdist `9e26e5c6c58e04fe09fd22f82a42049a48619504d4587e4c13e9ce9836c055f3`; identidad `%TEMP%\\ronin-artifact-identity-13171f1-c3f3bdb19079417997c878b2fb77d4ab.json`.
+- Docker: `27/27`, strict v0.1 `15/15`, cleanup correcto; imagen `sha256:582adfd4618b2d05f8ecc5a4cd178216233d24d3057c48fa2cd5411a7a97774`; evidencia `%TEMP%\\ronin-docker-13171f1-0b5027c6`.
+- Helm/kind: lint, Secret boundary, cluster aislado, carga de imagen, instalación, readiness, health, Studio/API, job persistente, restart/persistencia y cleanup: todo pasa; evidencia `%TEMP%\\ronin-helm-13171f1-22ba4307a0e34b07b3a974b7f141d065`.
+- Seguridad/VEX: el archivo OpenVEX versionado todavía está ligado a la imagen anterior; la verificación exacta del digest `582adfd...` sigue pendiente. Trivy no está disponible, por lo que no se afirma un SBOM de la imagen contenedora ni se cierra la aceptación del security reviewer.
+- Supply chain SDK: SBOM CycloneDX, provenance y resumen exactos verificados para `13171f1d`; identidad `%TEMP%\\ronin-artifact-identity-13171f1-c3f3bdb19079417997c878b2fb77d4ab.json`, SBOM `%TEMP%\\ronin-release-sbom-13171f1.json`, provenance `%TEMP%\\ronin-release-provenance-13171f1.json` y resumen `%TEMP%\\ronin-supply-chain-13171f1.json`. `container_image_inventory` queda vacío por la ausencia de Trivy.
 
-Resultado técnico: **verde en las lanes locales disponibles**. Resultado de release: **NO-GO**. Siguen abiertos el ledger `0/13` familias, cualificación de proveedores/credenciales, revisión humana de seguridad/VEX, SBOM de contenedor, legal/NOTICE/claims, revisión visual manual, rollback/backup, Terraform/toolchain, soporte y gobierno de CI/branches. Los intentos live transitorios anteriores se descartaron; el recibo válido es el rerun completo `33/33` del candidato exacto.
+Resultado técnico: **verde en las lanes locales disponibles**. Resultado de release: **NO-GO**. Siguen abiertos el ledger `0/13` familias, cualificación de proveedores/credenciales, VEX exact-current y revisión humana de seguridad, SBOM de contenedor, legal/NOTICE/claims, revisión visual manual, rollback/backup, Terraform/toolchain, soporte y gobierno de CI/branches. No se mezclan recibos de candidatos anteriores.
 
 ## 0.1 Plan de cierre obligatorio para la siguiente iteración
 
@@ -131,11 +130,11 @@ La décima pasada del 2026-11-09 añadió al workbench de Projects un brief oper
 
 El control de presupuesto se recalibró después de medir los cambios aprobados: `asset_bytes` queda en `2,088,109`, con `67` requests, `36` módulos, `12` hojas de estilo y `5,299` bytes HTML. La regresión de Playwright, la barrida responsive, la auditoría estática y el journey de Projects cubren el cambio; el baseline no autoriza crecimiento ilimitado.
 
-### Verificación exacta del corte UI 2026-11-09
+### Verificación histórica del corte UI 2026-11-09
 
 Sobre el árbol UI del candidato `4157181`, la suite web estática completa pasa `132/132` con Chromium; la auditoría web exacta reporta `68` archivos, `38` módulos, `180` invocaciones de ruta y cero fallos, con presupuesto `2,088,109` bytes, `67` requests, `36` módulos, `12` hojas de estilo y `5,299` bytes HTML. Las pruebas responsive de Workspaces/Projects/Data Engineering/Ingestion/ML Studio y las regresiones previas confirman igualdad entre ancho visible y scrollable en 390 px. La qualification live exacta del candidato pasa `33/33`.
 
-### Qualification exact-SHA actual del candidato runtime `4157181`
+### Qualification exact-SHA histórica del candidato runtime `4157181`
 
 El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-4157181` queda ligado al runtime/test `4157181843d47893e77d62bed62fdafeb31d6f0b`; la delta desde `4a6c546` es UI/presupuesto y no contiene Python ni runtime backend.
 

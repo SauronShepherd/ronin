@@ -4,7 +4,7 @@
 
 **Last evidence review:** 9 November 2026
 
-**Candidate SHA:** runtime/test candidate `39678f5421e67ff9819887529d4738aa59131c7e`; exact-image VEX and qualification receipts are recorded below; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `13171f1decace56fb08f425683d56afb978c1f07`; exact qualification receipts are recorded below; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,39 +20,37 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 9 November exact-candidate refresh — current `39678f5`
+## 9 November exact-candidate refresh — current `13171f1d`
 
-The current clean runtime/test candidate is `39678f5421e67ff9819887529d4738aa59131c7e`.
-The Connections workbench now binds refresh/save directly after panel insertion,
-renders backend detail errors, keeps secrets out of list metadata and is covered
-by success/error/static and installed-artifact smoke paths. Exact local
-qualification is green: Python/PostgreSQL `4562 passed, 27 skipped, 0 failed` of
-`4589`; Chromium `136/136`; web audit `69` files, `38` modules, `180` route
-invocations, `0` failures; budget `2,099,523` asset bytes, `68` requests,
-`36` modules, `13` stylesheets and `5,369` HTML bytes; installed artifacts
-`90/90` with wheel `f694f6e249484e163e5fbc746f77d3002c09c7770d20bd15ff1f1145af14ae13`
-and sdist `7defb5ba58f2c8795a01d7043973f20d60af6753311f9e1a8cfb77b73c528b13`.
+The current clean runtime/test candidate is `13171f1decace56fb08f425683d56afb978c1f07`.
+The Studio shell now exposes a visible command affordance, workbenches use
+guided decision modes, all runtime styles are packaged, and installed-route
+smoke/accessibility contracts are synchronized. Exact local qualification is
+green: Python/PostgreSQL `4563 passed, 27 skipped, 0 failed` of `4590`;
+Chromium `136/136`; web audit `69` files, `38` modules, `180` route
+invocations, `0` failures; budget `2,101,255` asset bytes, `68` requests,
+`36` modules, `13` stylesheets and `5,639` HTML bytes; installed artifacts
+`90/90` with wheel `c07f93166edfd147f90daf5d8826a84963f38a467205acb9d035a4e452f2e34d`
+and sdist `9e26e5c6c58e04fe09fd22f82a42049a48619504d4587e4c13e9ce9836c055f3`.
 Docker is `27/27` plus strict v0.1 `15/15` on image
-`sha256:e458889ccc99d2f7685b8a9323b259c4350275a33507f6ca1a060ee5ea6fc5aa`;
-Helm/kind and persistence pass; live is `33/33` across 25 routes with 246
-correlated events (`231` OK, `15` expected WARN); Docker Scout/OpenVEX is
-`3 raw / 0 applied` for that exact image. Release remains **NO-GO** at `0/13`
-families: human security/VEX, Trivy/container SBOM, provider/credential,
-legal/claims, visual, rollback, support and governance gates remain open.
+`sha256:582adfd4618b2d05f8ecc5a4cd178216233d24d3057c48fa2cd5411a7a97774`;
+Helm/kind and persistence pass. The current VEX file is still bound to the
+previous image and must be refreshed before the security lane is exact; Trivy
+is unavailable. Release remains **NO-GO** at `0/13` families: provider/
+credential, security/VEX, container SBOM, supply-chain, legal/claims, visual,
+rollback, support and governance gates remain open.
 
-Receipts: `%TEMP%\\ronin-python-full-39678f5-20261109`,
-`%TEMP%\\ronin-docker-39678f5-20261109`, `%TEMP%\\ronin-helm-39678f5-20261109`,
-`%TEMP%\\ronin-live-39678f5-20261109`, `%TEMP%\\ronin-vex-39678f5-20261109`,
-`%TEMP%\\ronin-artifact-identity-39678f5-20261109.json`,
-`%TEMP%\\ronin-release-sbom-39678f5-20261109.json`,
-`%TEMP%\\ronin-release-provenance-39678f5-20261109.json` and
-`%TEMP%\\ronin-supply-chain-39678f5-20261109.json`. Trivy was unavailable;
-the container inventory is intentionally empty and no container SBOM claim is
-made.
+Receipts: `%TEMP%\\ronin-python-full-13171f1-cf543bf407044ae7ad2063d0163b8f4f`,
+`%TEMP%\\ronin-docker-13171f1-0b5027c6`, `%TEMP%\\ronin-helm-13171f1-22ba4307a0e34b07b3a974b7f141d065`,
+`%TEMP%\\ronin-artifact-identity-13171f1-c3f3bdb19079417997c878b2fb77d4ab.json`,
+`%TEMP%\\ronin-release-sbom-13171f1.json`, `%TEMP%\\ronin-release-provenance-13171f1.json`
+and `%TEMP%\\ronin-supply-chain-13171f1.json`. The SDK SBOM/provenance summary
+is verified for this SHA; no current VEX or container-SBOM claim is made until
+the VEX is regenerated against this image digest and Trivy/equivalent is available.
 
 ## 9 November exact-candidate refresh — historical `4157181`
 
-The current runtime/test candidate is `4157181843d47893e77d62bed62fdafeb31d6f0b`,
+The historical runtime/test candidate was `4157181843d47893e77d62bed62fdafeb31d6f0b`,
 the tenth UI pass after the backend candidate `8a855866`. Projects now exposes
 Author/Connect/Operate/Govern decision modes plus an operational brief with
 source posture, next gate and a secret-safe Source column, while the connection
@@ -76,7 +74,7 @@ security-reviewer acceptance, Trivy/container SBOM is unavailable, and
 maintainer/legal/product, provider, rollback, support-matrix, governance and
 manual visual decisions remain open.
 
-The exact current receipts are `%TEMP%\\ronin-helm-4157181-20261109b`,
+The exact historical receipts are `%TEMP%\\ronin-helm-4157181-20261109b`,
 `%TEMP%\\ronin-live-4157181-20261109c`, `%TEMP%\\ronin-vex-4157181-20261109b`,
 `%TEMP%\\ronin-artifact-identity-4157181-release.json`,
 `%TEMP%\\ronin-release-sbom-4157181.json`,

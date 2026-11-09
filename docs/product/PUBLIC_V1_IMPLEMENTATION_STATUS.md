@@ -7,21 +7,22 @@
 
 ## Current exact-SHA qualification — 9 November 2026
 
-The current runtime/test candidate is `39678f5421e67ff9819887529d4738aa59131c7e`.
-The Connections workbench is implemented with direct save/refresh handlers,
-secret-safe metadata and actionable backend errors; the runtime package
-contract declares `connection-dialog.js` consistently in both package data and
-tests.
+The current runtime/test candidate is `13171f1decace56fb08f425683d56afb978c1f07`.
+The Studio shell exposes a visible command affordance, workbenches are
+organized as guided decision modes, the Connections workbench keeps direct
+save/refresh handlers and actionable backend errors, and runtime styles are
+declared consistently in package data and tests.
 The clean candidate is green in the available local lanes: Python/PostgreSQL
-`4562 passed, 27 skipped, 0 failed` of `4589`; Chromium `136/136`; web audit
+`4563 passed, 27 skipped, 0 failed` of `4590`; Chromium `136/136`; web audit
 `69` files, `38` modules, `180` route invocations and `0` failures; budget
-`2,099,523` asset bytes, `68` requests, `36` modules, `13` stylesheets and
-`5,369` HTML bytes; installed artifacts `90/90`; Docker `27/27` and strict v0.1
+`2,101,255` asset bytes, `68` requests, `36` modules, `13` stylesheets and
+`5,639` HTML bytes; installed artifacts `90/90`; Docker `27/27` and strict v0.1
 `15/15` on image
-`sha256:e458889ccc99d2f7685b8a9323b259c4350275a33507f6ca1a060ee5ea6fc5aa`;
-Helm/kind persistence/restart pass; live `33/33` over 25 active routes with
-246 correlated events and no server/network errors; Docker Scout/OpenVEX
-`3 raw / 0 applied`. Trivy is unavailable, so no container SBOM claim is made.
+`sha256:582adfd4618b2d05f8ecc5a4cd178216233d24d3057c48fa2cd5411a7a97774`;
+Helm/kind persistence/restart pass; live qualification is not rerun on this
+candidate. The current VEX exact-digest check remains pending. Trivy is unavailable, so no
+container SBOM claim is made. Exact SDK SBOM/provenance evidence is recorded in
+the build plan and release checklist.
 
 This is technical qualification only. Public v1 remains **0/13 (0%, NO-GO)**:
 manual visual/product signoff, legal/NOTICE/claims, security/VEX acceptance,
@@ -32,7 +33,7 @@ Databricks, Dataiku, Palantir and Fabric.
 
 ### Historical exact-SHA qualification — `4157181`
 
-The current runtime/test candidate `4157181843d47893e77d62bed62fdafeb31d6f0b`
+The historical runtime/test candidate `4157181843d47893e77d62bed62fdafeb31d6f0b`
 is pushed and adds a tenth UI pass: Projects becomes an Author/Connect/Operate/
 Govern decision workbench with an operational brief that shows source posture,
 next gate and a secret-safe Source column, while the connection dialog gets
@@ -98,7 +99,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `39678f5421e67ff9819887529d4738aa59131c7e` (2026-11-09).
+**Observed source head:** `13171f1decace56fb08f425683d56afb978c1f07` (2026-11-09).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
