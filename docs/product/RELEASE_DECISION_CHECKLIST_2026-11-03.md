@@ -34,7 +34,9 @@ invocations, `0` failures; budget `2,101,255` asset bytes, `68` requests,
 and sdist `9e26e5c6c58e04fe09fd22f82a42049a48619504d4587e4c13e9ce9836c055f3`.
 Docker is `27/27` plus strict v0.1 `15/15` on image
 `sha256:582adfd4618b2d05f8ecc5a4cd178216233d24d3057c48fa2cd5411a7a97774c`;
-Helm/kind and persistence pass. Exact Docker Scout/OpenVEX verification is
+Helm/kind and persistence pass; live qualification is `33/33` over 25 routes,
+with 254 correlated events (`239` OK, `15` expected WARN) and no server/network
+errors. Exact Docker Scout/OpenVEX verification is
 `3 raw / 0 applied` in `%TEMP%\\ronin-vex-13171f1-verified-2`, but the security
 reviewer has not accepted the three VEX statements; Trivy is unavailable.
 Release remains **NO-GO** at `0/13` families: provider/
@@ -43,6 +45,7 @@ rollback, support and governance gates remain open.
 
 Receipts: `%TEMP%\\ronin-python-full-13171f1-cf543bf407044ae7ad2063d0163b8f4f`,
 `%TEMP%\\ronin-docker-13171f1-0b5027c6`, `%TEMP%\\ronin-helm-13171f1-22ba4307a0e34b07b3a974b7f141d065`,
+`%TEMP%\\ronin-live-13171f1-final`,
 `%TEMP%\\ronin-artifact-identity-13171f1-c3f3bdb19079417997c878b2fb77d4ab.json`,
 `%TEMP%\\ronin-vex-13171f1-verified-2`, `%TEMP%\\ronin-release-sbom-13171f1.json`, `%TEMP%\\ronin-release-provenance-13171f1.json`
 and `%TEMP%\\ronin-supply-chain-13171f1.json`. The SDK SBOM/provenance summary

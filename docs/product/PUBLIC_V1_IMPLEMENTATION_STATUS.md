@@ -19,8 +19,9 @@ The clean candidate is green in the available local lanes: Python/PostgreSQL
 `5,639` HTML bytes; installed artifacts `90/90`; Docker `27/27` and strict v0.1
 `15/15` on image
 `sha256:582adfd4618b2d05f8ecc5a4cd178216233d24d3057c48fa2cd5411a7a97774`;
-Helm/kind persistence/restart pass; live qualification is not rerun on this
-candidate. Docker Scout/OpenVEX is `3 raw / 0 applied` for the exact image, but
+Helm/kind persistence/restart pass; live qualification is `33/33` over 25
+active routes with 254 correlated events and no server/network errors. Docker
+Scout/OpenVEX is `3 raw / 0 applied` for the exact image, but
 human security acceptance remains open. Trivy is unavailable, so no container
 SBOM claim is made. Exact SDK SBOM/provenance evidence is recorded in
 the build plan and release checklist.
