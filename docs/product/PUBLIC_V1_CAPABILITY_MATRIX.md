@@ -2,26 +2,25 @@
 
 ## Current exact-SHA snapshot — 9 November 2026
 
-The current runtime/test candidate is `b86a0f6f45e5b76934583902486643cf003dbcb4`,
-which continues the Connections decision workbench while clarifying the Studio
-shell, guided workbench modes, installed route smoke and packaged stylesheet
-contracts. It also prevents unavailable-server UI from exposing internal URLs.
-Its exact receipt is static Chromium `137/137`, web audit `69` files with zero
-failures, and budget `2,101,241` asset bytes, `68` requests, `36` modules,
+The current runtime/test candidate is `4962ff0512956f0214ddc9a96def9ae2fd77ccfa`,
+which adds context-synchronized Runs: launch context seeds the project filter,
+context changes refresh the scoped query, and manual refresh remains explicit.
+Its exact UI receipt is static Chromium `138/138`, web audit `69` files with zero
+failures, and budget `2,101,245` asset bytes, `68` requests, `36` modules,
 `13` stylesheets and `5,639` HTML bytes. Installed artifact qualification is
 `90/90`, Docker is `27/27` plus strict `15/15`, Helm/kind passes on image
-`sha256:a04e91cd0b88645c32d1d095c959dc5f6ddde5b38e11076c55cb5cb367c0cd21`,
-and live qualification is `33/33` with 245 correlated events and no
-server/network errors.
-The Python/PostgreSQL receipt is `4563/4590` with 27 explicit skips and 0
-failures. Docker Scout/OpenVEX is `3 raw / 0 applied` for the exact image
-digest; Trivy `0.76.1` finds one `MEDIUM CVE-2026-4738` in each exact image
-and zero secrets, while bound CycloneDX inventories and candidate-bound
-supply-chain evidence cover both container images. Human security acceptance
-and triage of the Trivy finding remain open. Exact SDK/container
-SBOM/provenance evidence is recorded in the build plan. The candidate is bound to
-`b86a0f6f`; release status remains separate from technical qualification and is
-still **NO-GO** at `0/13` families.
+`sha256:da112fd1ba92f131668dc94f22a37829c5f2c641c29bba9901f17fc50ede83f4`,
+and live qualification is `33/33` with 246 correlated events and no
+server/network errors. The Python/PostgreSQL receipt is `4563/4590` with 27
+explicit skips and 0 failures on the unchanged parent candidate. Exact
+Docker Scout/OpenVEX, Trivy, CycloneDX SBOM/provenance and supply-chain
+receipts are not yet regenerated for the new digest; the parent receipt found
+one `MEDIUM CVE-2026-4738` in each image and zero secrets, but is not reused.
+Human security acceptance and triage remain open. The candidate is bound to
+`4962ff05`; the rebuilt Docker/Helm/live receipts are exact for this candidate,
+while security/VEX, SBOM/provenance and Floci receipts still require regeneration
+after the new image digest. Release status remains separate from technical
+qualification and is still **NO-GO** at `0/13` families.
 The ledger remains **0/13 families qualified**: mandatory family journeys,
 provider matrix, manual visual review, legal/claims decisions, security triage,
 full provider/toolchain matrix and security acceptance are still open. The UI target remains a deliberate

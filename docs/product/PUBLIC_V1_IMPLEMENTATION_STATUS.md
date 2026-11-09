@@ -7,31 +7,28 @@
 
 ## Current exact-SHA qualification — 9 November 2026
 
-The current runtime/test candidate is `b86a0f6f45e5b76934583902486643cf003dbcb4`.
-The Studio shell exposes a visible command affordance, workbenches are
+The current runtime/test candidate is `4962ff0512956f0214ddc9a96def9ae2fd77ccfa`.
+Runs now follows the global Studio context: an explicit launch project seeds the
+filter, changing context refreshes the scoped request, and manual refresh remains
+explicit. The Studio shell exposes a visible command affordance, workbenches are
 organized as guided decision modes, the Connections workbench keeps direct
 save/refresh handlers and actionable backend errors, and runtime styles are
 declared consistently in package data and tests. The unavailable-server error
 state also keeps internal server URLs out of the UI.
 The clean candidate is green in the available local lanes: Python/PostgreSQL
-`4563 passed, 27 skipped, 0 failed` of `4590`; Chromium `137/137`; web audit
-`69` files, `38` modules, `180` route invocations and `0` failures; budget
-`2,101,241` asset bytes, `68` requests, `36` modules, `13` stylesheets and
+`4563 passed, 27 skipped, 0 failed` of `4590` on the unchanged parent Python
+candidate; Chromium `138/138`; web audit `69` files, `38` modules, `180` route
+invocations and `0` failures; budget `2,101,245` asset bytes, `68` requests, `36` modules, `13` stylesheets and
 `5,639` HTML bytes; installed artifacts `90/90`; Docker `27/27` and strict v0.1
 `15/15` on image
-`sha256:a04e91cd0b88645c32d1d095c959dc5f6ddde5b38e11076c55cb5cb367c0cd21`;
-Helm/kind persistence/restart pass; candidate-bound Cloud Studio/Floci with
-Terraform `1.13.5` and AWS provider `6.65.0` also passes plan/apply/refresh/
-destroy/state-list with empty final state; live qualification is `33/33` over 25
-active routes with 245 correlated events and no server/network errors. Docker
-Scout/OpenVEX is `3 raw / 0 applied` for the exact runtime/probe images, but
-human security acceptance remains open. Trivy `0.76.1` scans the exact runtime
-and probe TARs with one `MEDIUM CVE-2026-4738` (`zlib 1.3.2-r1`) and zero
-secrets per image; bound CycloneDX inventories contain 57/56 OS packages and
-the candidate-bound supply-chain validator passes with both container images.
-The TAR scan does not apply the digest-bound OpenVEX product IDs, so the
-finding still needs explicit security triage. Exact SDK/container
-SBOM/provenance evidence is recorded in the build plan and release checklist.
+`sha256:da112fd1ba92f131668dc94f22a37829c5f2c641c29bba9901f17fc50ede83f4`;
+Helm/kind persistence/restart pass; live qualification is `33/33` over 25 active
+routes with 246 correlated events and no server/network errors. Docker
+Scout/OpenVEX, Trivy `0.76.1`, CycloneDX SBOM and provenance have not yet been
+regenerated for the new exact digest; the prior parent receipt found one
+`MEDIUM CVE-2026-4738` (`zlib 1.3.2-r1`) and zero secrets per image. Exact
+candidate security evidence therefore remains open and is not inferred from the
+parent receipt.
 The tracked license inventory is now regenerated against the current lock, but
 policy reviews remain missing/stale, so legal approval remains open.
 

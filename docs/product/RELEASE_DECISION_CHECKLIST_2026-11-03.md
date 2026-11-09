@@ -4,7 +4,7 @@
 
 **Last evidence review:** 9 November 2026
 
-**Candidate SHA:** runtime/test candidate `b86a0f6f45e5b76934583902486643cf003dbcb4`; exact qualification receipts are recorded below; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `4962ff0512956f0214ddc9a96def9ae2fd77ccfa`; exact qualification receipts are recorded below; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,33 +20,30 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 9 November exact-candidate refresh — current `b86a0f6f`
+## 9 November exact-candidate refresh — current `4962ff05`
 
-The current clean runtime/test candidate is `b86a0f6f45e5b76934583902486643cf003dbcb4`.
-The Studio shell now exposes a visible command affordance, workbenches use
+The current clean runtime/test candidate is `4962ff0512956f0214ddc9a96def9ae2fd77ccfa`.
+Runs now follows the global Studio context: launch context seeds the project
+filter and changing context refreshes the scoped query. The Studio shell now exposes a visible command affordance, workbenches use
 guided decision modes, all runtime styles are packaged, installed-route
 smoke/accessibility contracts are synchronized, and unavailable-server UI no
 longer exposes internal URLs. Exact local qualification is green: Python/
-PostgreSQL `4563 passed, 27 skipped, 0 failed` of `4590`; Chromium `137/137`;
-web audit `69` files, `38` modules, `180` route invocations, `0` failures;
-budget `2,101,241` asset bytes, `68` requests, `36` modules, `13` stylesheets
+PostgreSQL `4563 passed, 27 skipped, 0 failed` of `4590` on the unchanged parent;
+Chromium `138/138`; web audit `69` files, `38` modules, `180` route invocations,
+`0` failures; budget `2,101,245` asset bytes, `68` requests, `36` modules, `13` stylesheets
 and `5,639` HTML bytes; installed artifacts `90/90` with wheel
-`b74db56f59b40dbc95be74269c6fe7ba5494af6f0dd7a1cb8f913f9237340054` and sdist
-`2045b125e8851b75d3400da3410053b72d7e291950bc02bf30b348d638b6768d`.
+`8a962e13c6a303a84048889302f720c293a7d8a14f108bf73fef89b01754bd05` and sdist
+`832b5073fd050093f4e5ea50e11fb4d2687dcdbe80c21d4fc8b9adc91cf47caa`.
 Docker is `27/27` plus strict v0.1 `15/15` on image
-`sha256:a04e91cd0b88645c32d1d095c959dc5f6ddde5b38e11076c55cb5cb367c0cd21`;
+`sha256:da112fd1ba92f131668dc94f22a37829c5f2c641c29bba9901f17fc50ede83f4`;
 Helm/kind and persistence pass; live qualification is `33/33` over 25 routes,
-with 245 correlated events and no server/network errors. Exact Docker Scout/
-OpenVEX verification is `3 raw / 0 applied` in
-`%TEMP%\\ronin-vex-b86a0f6-20261109`; Trivy `0.76.1` scans the exact runtime and
-probe TARs with `1 MEDIUM CVE-2026-4738` and `0` secrets per image. The bound
-CycloneDX inventories contain `57`/`56` OS packages and
-`supply_chain_evidence --require-container-inventory` passes for both images.
-Trivy's TAR scan does not apply the digest-bound OpenVEX product IDs, so the
-`zlib` finding still requires explicit security triage; the security reviewer
-has not accepted the three VEX statements. The inventory is now regenerated
-against the current lock, but policy reviews remain missing/stale and are not
-being silently accepted. Release remains **NO-GO** at `0/13` families: provider/
+with 246 correlated events and no server/network errors. Docker Scout/OpenVEX
+and Trivy must be regenerated for the new exact digest before they can be
+claimed for this candidate; the parent receipt found `1 MEDIUM CVE-2026-4738`
+and `0` secrets per image, but is not reused. The security reviewer has not
+accepted the VEX statements. The inventory is regenerated against the current
+lock, but policy reviews remain missing/stale and are not being silently
+accepted. Release remains **NO-GO** at `0/13` families: provider/
 credential, security/VEX finding triage, legal/NOTICE/claims, visual,
 rollback/support, full provider/toolchain matrix, license policy and governance gates
 remain open.
@@ -56,18 +53,15 @@ digest-pinned, AWS provider `6.65.0` and official-checksummed Terraform
 `1.13.5`: plan/apply/refresh/destroy/state-list all returned zero, synthetic
 S3/SQS resources were observed after apply, and both Terraform state and
 Floci resources were empty after destroy. Receipt:
-`%TEMP%\\ronin-floci-b86a0f6-20261109-tf1135\\qualification.json`.
+`%TEMP%\\ronin-floci-b86a0f6-20261109-tf1135\\qualification.json` (parent diagnostic; not reissued for the UI-only candidate).
 
-Receipts: `%TEMP%\\ronin-python-full-b86a0f6-20261109`,
-`%TEMP%\\ronin-docker-b86a0f6-20261109`, `%TEMP%\\ronin-helm-b86a0f6-20261109`,
-`%TEMP%\\ronin-live-b86a0f6-20261109-rerun`,
-`%TEMP%\\ronin-artifact-identity-b86a0f6-20261109-trivy.json`,
-`%TEMP%\\ronin-vex-b86a0f6-20261109`, `%TEMP%\\ronin-trivy-b86a0f6-20261109`,
-`%TEMP%\\ronin-release-sbom-b86a0f6-20261109-trivy.json`,
-`%TEMP%\\ronin-release-provenance-b86a0f6-20261109-trivy.json`
-and `%TEMP%\\ronin-supply-chain-b86a0f6-20261109-trivy.json`. The SDK and
-container SBOM/provenance summary is verified for this SHA; VEX is exact-digest
-verified but the Trivy finding and human security acceptance remain open.
+Receipts: `%TEMP%\\ronin-python-full-b86a0f6-20261109` (unchanged parent),
+`%TEMP%\\ronin-docker-4962ff0-20261109b`, `%TEMP%\\ronin-helm-4962ff0-20261109b`,
+`%TEMP%\\ronin-live-4962ff0-20261109`,
+`%TEMP%\\ronin-artifact-qualification-4962ff0-20261109.json`.
+The current image digest, Docker/Helm/live and package receipts are exact for
+this SHA; Trivy, VEX, SBOM/provenance, supply-chain and Floci receipts are still
+open for this new digest and are not inherited from the parent.
 
 ## 9 November exact-candidate refresh — historical `4157181`
 
