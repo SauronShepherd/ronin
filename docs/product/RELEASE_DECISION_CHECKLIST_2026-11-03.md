@@ -38,23 +38,36 @@ Docker is `27/27` plus strict v0.1 `15/15` on image
 Helm/kind and persistence pass; live qualification is `33/33` over 25 routes,
 with 245 correlated events and no server/network errors. Exact Docker Scout/
 OpenVEX verification is `3 raw / 0 applied` in
-`%TEMP%\\ronin-vex-b86a0f6-20261109`, but the security reviewer has not accepted
-the three VEX statements; Trivy is unavailable. The license qualification also
-found a stale inventory/policy against the current lock and is not being
-silently accepted. Release remains **NO-GO** at `0/13` families: provider/
-credential, security/VEX, container SBOM, legal/NOTICE/claims, visual,
-rollback/support, Terraform/toolchain, license policy and governance gates
+`%TEMP%\\ronin-vex-b86a0f6-20261109`; Trivy `0.76.1` scans the exact runtime and
+probe TARs with `1 MEDIUM CVE-2026-4738` and `0` secrets per image. The bound
+CycloneDX inventories contain `57`/`56` OS packages and
+`supply_chain_evidence --require-container-inventory` passes for both images.
+Trivy's TAR scan does not apply the digest-bound OpenVEX product IDs, so the
+`zlib` finding still requires explicit security triage; the security reviewer
+has not accepted the three VEX statements. The inventory is now regenerated
+against the current lock, but policy reviews remain missing/stale and are not
+being silently accepted. Release remains **NO-GO** at `0/13` families: provider/
+credential, security/VEX finding triage, legal/NOTICE/claims, visual,
+rollback/support, full provider/toolchain matrix, license policy and governance gates
 remain open.
+
+The candidate-bound Cloud Studio/Floci lane also passes with Floci `2.1.0`
+digest-pinned, AWS provider `6.65.0` and official-checksummed Terraform
+`1.13.5`: plan/apply/refresh/destroy/state-list all returned zero, synthetic
+S3/SQS resources were observed after apply, and both Terraform state and
+Floci resources were empty after destroy. Receipt:
+`%TEMP%\\ronin-floci-b86a0f6-20261109-tf1135\\qualification.json`.
 
 Receipts: `%TEMP%\\ronin-python-full-b86a0f6-20261109`,
 `%TEMP%\\ronin-docker-b86a0f6-20261109`, `%TEMP%\\ronin-helm-b86a0f6-20261109`,
 `%TEMP%\\ronin-live-b86a0f6-20261109-rerun`,
-`%TEMP%\\ronin-artifact-identity-b86a0f6-20261109-full.json`,
-`%TEMP%\\ronin-vex-b86a0f6-20261109`, `%TEMP%\\ronin-release-sbom-b86a0f6-20261109.json`, `%TEMP%\\ronin-release-provenance-b86a0f6-20261109.json`
-and `%TEMP%\\ronin-supply-chain-b86a0f6-20261109.json`. The SDK SBOM/provenance
-summary is verified for this SHA; VEX is exact-digest verified but still
-requires human security acceptance, and no container-SBOM claim is made because
-Trivy/equivalent is unavailable.
+`%TEMP%\\ronin-artifact-identity-b86a0f6-20261109-trivy.json`,
+`%TEMP%\\ronin-vex-b86a0f6-20261109`, `%TEMP%\\ronin-trivy-b86a0f6-20261109`,
+`%TEMP%\\ronin-release-sbom-b86a0f6-20261109-trivy.json`,
+`%TEMP%\\ronin-release-provenance-b86a0f6-20261109-trivy.json`
+and `%TEMP%\\ronin-supply-chain-b86a0f6-20261109-trivy.json`. The SDK and
+container SBOM/provenance summary is verified for this SHA; VEX is exact-digest
+verified but the Trivy finding and human security acceptance remain open.
 
 ## 9 November exact-candidate refresh — historical `4157181`
 

@@ -15,13 +15,16 @@ and live qualification is `33/33` with 245 correlated events and no
 server/network errors.
 The Python/PostgreSQL receipt is `4563/4590` with 27 explicit skips and 0
 failures. Docker Scout/OpenVEX is `3 raw / 0 applied` for the exact image
-digest; human security acceptance and the container-SBOM claim remain open.
-Exact SDK SBOM/provenance evidence is recorded in the build plan. The candidate is bound to
+digest; Trivy `0.76.1` finds one `MEDIUM CVE-2026-4738` in each exact image
+and zero secrets, while bound CycloneDX inventories and candidate-bound
+supply-chain evidence cover both container images. Human security acceptance
+and triage of the Trivy finding remain open. Exact SDK/container
+SBOM/provenance evidence is recorded in the build plan. The candidate is bound to
 `b86a0f6f`; release status remains separate from technical qualification and is
 still **NO-GO** at `0/13` families.
 The ledger remains **0/13 families qualified**: mandatory family journeys,
-provider matrix, manual visual review, legal/claims decisions, Trivy, Terraform
-pin and security acceptance are still open. The UI target remains a deliberate
+provider matrix, manual visual review, legal/claims decisions, security triage,
+full provider/toolchain matrix and security acceptance are still open. The UI target remains a deliberate
 next phase: unify authoring, evidence, lineage, operations and progressive
 disclosure to approach the usability/depth bar of Databricks, Dataiku, Palantir
 and Fabric while keeping Ronin's charcoal/copper/gold identity.

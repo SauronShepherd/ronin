@@ -10,14 +10,15 @@ El checkout limpio `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-release-b86a
 
 - Python/PostgreSQL: `4563 passed, 27 skipped, 0 failed` de `4590`; los skips son explícitos por proveedor/entorno/POSIX y no se convierten en soporte implícito. Evidencia: `%TEMP%\\ronin-python-full-b86a0f6-20261109`.
 - UI: Chromium `137/137` en la suite estática exacta; auditoría `69` archivos, `38` módulos, `180` invocaciones de ruta y `0` fallos; presupuesto `2,101,241` bytes de assets, `68` requests, `36` módulos, `13` hojas y `5,639` bytes HTML. La regresión de QueryFlux confirma que un servidor no disponible no expone URLs internas; el smoke instalado recorre las 25 superficies y a11y/layout no reportan fallos.
-- Artefactos: `90/90`; wheel `b74db56f59b40dbc95be74269c6fe7ba5494af6f0dd7a1cb8f913f9237340054`, sdist `2045b125e8851b75d3400da3410053b72d7e291950bc02bf30b348d638b6768d`; identidad completa `%TEMP%\\ronin-artifact-identity-b86a0f6-20261109-full.json` (incluye runtime/probe TAR).
+- Artefactos: `90/90`; wheel `b74db56f59b40dbc95be74269c6fe7ba5494af6f0dd7a1cb8f913f9237340054`, sdist `2045b125e8851b75d3400da3410053b72d7e291950bc02bf30b348d638b6768d`; identidad completa `%TEMP%\\ronin-artifact-identity-b86a0f6-20261109-trivy.json` (incluye runtime/probe TAR y SBOMs Trivy raw).
 - Docker: `27/27`, strict v0.1 `15/15`, cleanup correcto; imagen `sha256:a04e91cd0b88645c32d1d095c959dc5f6ddde5b38e11076c55cb5cb367c0cd21`; evidencia `%TEMP%\\ronin-docker-b86a0f6-20261109`.
 - Helm/kind: lint, Secret boundary, cluster aislado, carga de imagen, instalación, readiness, health, Studio/API, job persistente, restart/persistencia y cleanup: todo pasa; evidencia `%TEMP%\\ronin-helm-b86a0f6-20261109`.
+- Cloud Studio/Floci: con Floci `2.1.0` digest-pinned, AWS provider `6.65.0` y Terraform `1.13.5` verificado por checksum oficial, `plan/apply/refresh/destroy/state list` pasan; se observaron bucket y queue sintéticos tras apply y cero recursos/estado después de destroy. Evidencia `%TEMP%\\ronin-floci-b86a0f6-20261109-tf1135\\qualification.json`; Compose/volumen fueron limpiados.
 - Live: `33/33`, `25` rutas activas, `24` API-backed, `245` eventos correlacionados, `0` gaps inesperados de autorización, `0` errores server/network y cleanup correcto; evidencia `%TEMP%\\ronin-live-b86a0f6-20261109-rerun`.
-- Seguridad/VEX: Docker Scout `1.27.0` verifica el OpenVEX ligado a runtime `sha256:a04e91...c0cd21` y probe `sha256:2de837...fe8adb`: `3` hallazgos brutos y `0` tras VEX. Evidencia `%TEMP%\\ronin-vex-b86a0f6-20261109`; el recibo mantiene `security_review_accepted=false`, por lo que la aceptación humana sigue abierta. Trivy no está disponible y no se afirma un SBOM de la imagen contenedora.
-- Supply chain SDK: SBOM CycloneDX, provenance y resumen exactos verificados para `b86a0f6f`; identidad `%TEMP%\\ronin-artifact-identity-b86a0f6-20261109-full.json`, SBOM `%TEMP%\\ronin-release-sbom-b86a0f6-20261109.json`, provenance `%TEMP%\\ronin-release-provenance-b86a0f6-20261109.json` y resumen `%TEMP%\\ronin-supply-chain-b86a0f6-20261109.json`. `container_image_inventory` queda vacío por la ausencia de Trivy.
+- Seguridad/VEX: Docker Scout `1.27.0` verifica el OpenVEX ligado a runtime `sha256:a04e91...c0cd21` y probe `sha256:2de837...fe8adb`: `3` hallazgos brutos y `0` tras VEX. Trivy `0.76.1` sobre los TAR exactos encuentra `1` vulnerabilidad `MEDIUM` (`CVE-2026-4738`, `zlib 1.3.2-r1`, fix upstream `1.4-r0`) por imagen y `0` secretos; la ejecución con `--vex` conserva el hallazgo porque el escaneo de TAR no enlaza automáticamente los product IDs digest-bound del OpenVEX. Evidencia `%TEMP%\\ronin-vex-b86a0f6-20261109` y `%TEMP%\\ronin-trivy-b86a0f6-20261109`; el recibo mantiene `security_review_accepted=false`, por lo que el triage técnico y la aceptación humana siguen abiertas.
+- Supply chain SDK y contenedores: SBOM CycloneDX, provenance, inventario Trivy y resumen exactos verificados para `b86a0f6f`; identidad `%TEMP%\\ronin-artifact-identity-b86a0f6-20261109-trivy.json`, SBOM de aplicación `%TEMP%\\ronin-release-sbom-b86a0f6-20261109-trivy.json`, SBOMs ligados de runtime/probe `%TEMP%\\ronin-trivy-b86a0f6-20261109\\runtime-container-bound.cdx.json` y `probe-container-bound.cdx.json`, provenance `%TEMP%\\ronin-release-provenance-b86a0f6-20261109-trivy.json` y resumen `%TEMP%\\ronin-supply-chain-b86a0f6-20261109-trivy.json`. `supply_chain_evidence --require-container-inventory` pasa con dos imágenes distintas, `57`/`56` paquetes OS y provenance SHA-256 `f8ad6464bc8f75a4e5a3c055b77a4bc088cc24cfe93ce091ddd2dc9a7dae06fc`; el claim de SBOM de contenedor ya está cerrado técnicamente, sujeto al triage y revisión de seguridad.
 
-Resultado técnico: **verde en las lanes locales disponibles**. Resultado de release: **NO-GO**. Siguen abiertos el ledger `0/13` familias, cualificación de proveedores/credenciales, aceptación humana de seguridad/VEX, SBOM de contenedor, legal/NOTICE/claims, revisión visual manual, rollback/backup, Terraform/toolchain, soporte y gobierno de CI/branches. No se mezclan recibos de candidatos anteriores.
+Resultado técnico: **verde en las lanes locales disponibles**. Resultado de release: **NO-GO**. Siguen abiertos el ledger `0/13` familias, cualificación de proveedores/credenciales, triage y aceptación humana de seguridad/VEX, legal/NOTICE/claims, revisiones de policy de licencias/NOTICE, revisión visual manual, rollback/backup, la matriz completa de toolchain/soporte, y gobierno de CI/branches. La qualification exacta de Terraform/Floci sí pasa en este candidato; no se extrapola a otros proveedores o plataformas. No se mezclan recibos de candidatos anteriores.
 
 ## 0.1 Plan de cierre obligatorio para la siguiente iteración
 
@@ -31,11 +32,13 @@ recibos → decisión`:
    manifest agregado; debe rehashear wheel, sdist, imagen, SBOM, provenance,
    VEX y cada archivo del bundle en una única receipt. PASS sólo si el
    verificador rechaza cualquier mezcla de SHA, digest, tag o perfil.
-2. **Cerrar seguridad de imagen.** Ejecutar Trivy o un escáner equivalente
-   aprobado sobre la imagen exacta, conservar inventario de paquetes y SARIF,
-   y obtener aceptación explícita del security reviewer para las tres
-   declaraciones VEX. PASS sólo con findings críticos/altos triageados y con
-   `container_image_inventory` no vacío o una excepción formal firmada.
+2. **Cerrar seguridad de imagen.** Revisar el inventario Trivy de las imágenes
+   exactas, resolver o aceptar formalmente el `CVE-2026-4738` de zlib y explicar
+   la diferencia entre el matching de VEX por digest y el escaneo de TAR; obtener
+   aceptación explícita del security reviewer para las tres declaraciones VEX.
+   PASS sólo con findings críticos/altos triageados, el hallazgo medio con una
+   decisión documentada y `container_image_inventory` no vacío o una excepción
+   formal firmada.
 3. **Cualificar las 13 familias Public v1.** Para P1–P8 y P10–P14, completar
    journey de usuario, API/SDK, negativo, persistencia y evidencia del mismo
    candidato; probar cada proveedor que se vaya a anunciar con credenciales

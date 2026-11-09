@@ -1,6 +1,6 @@
 {
   "lock_file": "requirements-dev.lock",
-  "lock_sha256": "b1bbbd33e482242638fafa124e1385f2b76eff7cbe17ee57d349f0d9b3e50c18",
+  "lock_sha256": "f1b904db278b805118f91044e667166282ac824cbb7346a32d939324655b80d0",
   "packages": [
     {
       "declared_license": "BSD-2-Clause",
@@ -143,19 +143,19 @@
         "NOTICE"
       ],
       "direct": false,
-      "evidence_sha256": "122d2e66e79a854b6dc37bd2556e28b586acfb138dcf2114babbcf5945eb5b39",
+      "evidence_sha256": "e2a61896cac489ecd960e3ae1ea6702e5fedb0767213d5402a57404ba3a7808d",
       "license_files": [
         {
-          "path": "cyclonedx/factory/__pycache__/license.cpython-312.pyc",
-          "sha256": "174e27727fcfe19e7a8db9f3666341259acd77351b6daaf8c1b15ebb2ec7973a"
+          "path": "cyclonedx/factory/__pycache__/license.cpython-313.pyc",
+          "sha256": "ed9620549728608e8d447350aeae1103feb15320c920c287c0f4e852a5379d17"
         },
         {
           "path": "cyclonedx/factory/license.py",
           "sha256": "021381eed6e355e7d325cb3e22dfd5ab1e3d244839467fada27ab3b3f6f7beb6"
         },
         {
-          "path": "cyclonedx/model/__pycache__/license.cpython-312.pyc",
-          "sha256": "ccf57c07eda3effcd038f632bfa824b49c0dbf49b0833d826ddbc4b67d75925b"
+          "path": "cyclonedx/model/__pycache__/license.cpython-313.pyc",
+          "sha256": "90b4dfbf4c594720cd92a49f34d27635fe3f15ededd5a4764a46e4fbb4da8e80"
         },
         {
           "path": "cyclonedx/model/license.py",
@@ -1066,16 +1066,16 @@
         "LICENSE"
       ],
       "direct": false,
-      "evidence_sha256": "bcc6ffcee1ae42bf56ac1bd4d6b70b9294cded2c8c7a35a913a423e380c92974",
+      "evidence_sha256": "46c6be4cd13322209ea1fcd1d303a4e7099503b844ce28707370cf8533beb737",
       "license_files": [
         {
-          "path": "pyyaml-6.0.3.dist-info/licenses/LICENSE",
+          "path": "pyyaml_ft-8.0.0.dist-info/licenses/LICENSE",
           "sha256": "8d3928f9dc4490fd635707cb88eb26bd764102a7282954307d3e5167a577e8a4"
         }
       ],
-      "package": "pyyaml",
-      "source": "https://github.com/yaml/pyyaml",
-      "version": "6.0.3"
+      "package": "pyyaml-ft",
+      "source": "https://github.com/Quansight-Labs/pyyaml-ft",
+      "version": "8.0.0"
     },
     {
       "declared_license": "Apache-2.0",
