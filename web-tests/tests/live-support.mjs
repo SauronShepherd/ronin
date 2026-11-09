@@ -124,13 +124,10 @@ export async function connectLiveStudio(page, tokenToUse = token) {
   await page.locator('#api-url').fill('');
   await page.locator('#api-token').fill(tokenToUse);
   await page.getByRole('button', { name: 'Save connection', exact: true }).click();
-  await page.locator('#toast').waitFor();
-  if (!((await page.locator('#toast').textContent()) || '').includes('Server settings saved')) {
-    throw new Error('Ronin UI did not confirm that the live server connection was saved');
-  }
-  if (await page.evaluate(() => sessionStorage.getItem('ronin.session')) !== tokenToUse) {
-    throw new Error('Ronin UI did not keep the entered live session token in this tab');
-  }
+  // The toast is intentionally transient and can disappear before a long live
+  // page settles. Assert the durable effects of the save instead.
+  await page.locator('#connection-dialog').waitFor({ state: 'hidden' });
+  await page.waitForFunction(expected => sessionStorage.getItem('ronin.session') === expected, tokenToUse);
   await page.evaluate(
     workspace => sessionStorage.setItem('ronin.workspace', workspace),
     process.env.RONIN_LIVE_WORKSPACE,
