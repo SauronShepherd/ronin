@@ -7,24 +7,27 @@
 
 ## Current exact-SHA qualification — 9 November 2026
 
-The current runtime/test candidate is `13171f1decace56fb08f425683d56afb978c1f07`.
+The current runtime/test candidate is `b86a0f6f45e5b76934583902486643cf003dbcb4`.
 The Studio shell exposes a visible command affordance, workbenches are
 organized as guided decision modes, the Connections workbench keeps direct
 save/refresh handlers and actionable backend errors, and runtime styles are
-declared consistently in package data and tests.
+declared consistently in package data and tests. The unavailable-server error
+state also keeps internal server URLs out of the UI.
 The clean candidate is green in the available local lanes: Python/PostgreSQL
-`4563 passed, 27 skipped, 0 failed` of `4590`; Chromium `136/136`; web audit
+`4563 passed, 27 skipped, 0 failed` of `4590`; Chromium `137/137`; web audit
 `69` files, `38` modules, `180` route invocations and `0` failures; budget
-`2,101,255` asset bytes, `68` requests, `36` modules, `13` stylesheets and
+`2,101,241` asset bytes, `68` requests, `36` modules, `13` stylesheets and
 `5,639` HTML bytes; installed artifacts `90/90`; Docker `27/27` and strict v0.1
 `15/15` on image
-`sha256:582adfd4618b2d05f8ecc5a4cd178216233d24d3057c48fa2cd5411a7a97774`;
+`sha256:a04e91cd0b88645c32d1d095c959dc5f6ddde5b38e11076c55cb5cb367c0cd21`;
 Helm/kind persistence/restart pass; live qualification is `33/33` over 25
-active routes with 254 correlated events and no server/network errors. Docker
-Scout/OpenVEX is `3 raw / 0 applied` for the exact image, but
+active routes with 245 correlated events and no server/network errors. Docker
+Scout/OpenVEX is `3 raw / 0 applied` for the exact runtime/probe images, but
 human security acceptance remains open. Trivy is unavailable, so no container
 SBOM claim is made. Exact SDK SBOM/provenance evidence is recorded in
-the build plan and release checklist.
+the build plan and release checklist. A license qualification run also found
+the tracked inventory/policy stale against the current lock, so legal approval
+remains open.
 
 This is technical qualification only. Public v1 remains **0/13 (0%, NO-GO)**:
 manual visual/product signoff, legal/NOTICE/claims, security/VEX acceptance,
@@ -101,7 +104,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `13171f1decace56fb08f425683d56afb978c1f07` (2026-11-09).
+**Observed source head:** `b86a0f6f45e5b76934583902486643cf003dbcb4` (2026-11-09).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
