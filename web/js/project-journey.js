@@ -19,6 +19,14 @@ function renderProjects() {
   </nav>
   <section class="panel project-workbench"><h1 id="view-title">Projects</h1>
     <p class="muted">Workspace: <code>${esc(workspaceId || 'select a workspace')}</code></p>
+    <section class="project-overview" aria-labelledby="project-overview-title">
+      <div class="project-overview-heading"><div><p class="eyebrow">OPERATING BRIEF</p><h2 id="project-overview-title">See the project boundary before you edit it.</h2><p>Ronin keeps source, runtime and operation decisions attached to the same project identity. Values stay unknown until the API confirms them.</p></div><span class="status blue">workspace-scoped</span></div>
+      <div class="project-overview-grid">
+        <div class="project-metric"><span>Visible projects</span><strong id="project-overview-count">—</strong><small id="project-overview-count-note">Loading inventory…</small></div>
+        <div class="project-metric"><span>Source posture</span><strong id="project-source-state">Unknown</strong><small id="project-source-note">Waiting for a project inventory.</small></div>
+        <div class="project-metric"><span>Next gate</span><strong id="project-next-gate">Choose a project</strong><small id="project-next-gate-note">Use context before operating on a project.</small></div>
+      </div>
+    </section>
     <form id="project-journey-form" class="stack"><label>Project manifest JSON
       <textarea id="project-manifest" class="field" rows="8" required>{}</textarea></label>
       <button class="button primary" type="submit">Create project</button>
@@ -127,10 +135,39 @@ async function loadProjects(workspaceId) {
   try {
     const data = await get(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects`);
     const items = data.items || data;
+    const rows = Array.isArray(items) ? items : [];
+    const sources = rows.filter((item) => {
+      const project = item.project || item;
+      return Array.isArray(project.repositories) && project.repositories.length > 0;
+    });
+    const count = document.querySelector('#project-overview-count');
+    const countNote = document.querySelector('#project-overview-count-note');
+    const sourceState = document.querySelector('#project-source-state');
+    const sourceNote = document.querySelector('#project-source-note');
+    const nextGate = document.querySelector('#project-next-gate');
+    const nextGateNote = document.querySelector('#project-next-gate-note');
+    if (count) count.textContent = String(rows.length);
+    if (countNote) countNote.textContent = rows.length === 1 ? 'One active project returned by the API.' : `${rows.length} active projects returned by the API.`;
+    if (sourceState) sourceState.textContent = rows.length === 0 || sources.length === 0 ? 'Unconfigured' : sources.length === rows.length ? 'Declared' : 'Mixed';
+    if (sourceNote) sourceNote.textContent = rows.length === 0 ? 'Create a project to declare its source.' : `${sources.length} of ${rows.length} project${rows.length === 1 ? '' : 's'} declare a repository.`;
+    if (nextGate) nextGate.textContent = rows.length === 0 ? 'Author' : 'Use context';
+    if (nextGateNote) nextGateNote.textContent = rows.length === 0 ? 'Start with a manifest and keep the source boundary explicit.' : 'Select a project before binding runtime or submitting a run.';
     target.innerHTML = Array.isArray(items) && items.length
-      ? `<table><caption class="sr-only">Active projects</caption><thead><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead><tbody>${items.map((item) => { const id = item.project?.id || item.id || ''; return `<tr><td>${esc(id)}</td><td>${esc(item.project?.name || item.name || '')}</td><td><button class="button project-context" data-project="${esc(id)}" type="button">Use context</button> <button class="button project-edit" data-project="${esc(id)}" type="button">Edit manifest</button> <button class="button project-bundle" data-project="${esc(id)}" type="button">Export manifest</button> <button class="button project-bundle-archive" data-project="${esc(id)}" type="button">Download Bundle</button> <button class="button project-archive" data-project="${esc(id)}" type="button">Archive</button></td></tr>`; }).join('')}</tbody></table>`
+      ? `<table><caption class="sr-only">Active projects</caption><thead><tr><th>ID</th><th>Name</th><th>Source</th><th>Actions</th></tr></thead><tbody>${items.map((item) => { const project = item.project || item; const id = project.id || item.id || ''; const repository = Array.isArray(project.repositories) ? project.repositories[0] : null; const source = repository ? `${repository.adapter_id || 'repository'} · ${repository.default_ref || 'ref unknown'}` : 'Not declared'; return `<tr><td>${esc(id)}</td><td>${esc(project.name || item.name || '')}</td><td><span class="project-source-label">${esc(source)}</span></td><td><button class="button project-context" data-project="${esc(id)}" type="button">Use context</button> <button class="button project-edit" data-project="${esc(id)}" type="button">Edit manifest</button> <button class="button project-bundle" data-project="${esc(id)}" type="button">Export manifest</button> <button class="button project-bundle-archive" data-project="${esc(id)}" type="button">Download Bundle</button> <button class="button project-archive" data-project="${esc(id)}" type="button">Archive</button></td></tr>`; }).join('')}</tbody></table>`
       : '<div class="empty">No active projects are visible.</div>';
   } catch (error) {
+    const count = document.querySelector('#project-overview-count');
+    const countNote = document.querySelector('#project-overview-count-note');
+    const sourceState = document.querySelector('#project-source-state');
+    const sourceNote = document.querySelector('#project-source-note');
+    const nextGate = document.querySelector('#project-next-gate');
+    const nextGateNote = document.querySelector('#project-next-gate-note');
+    if (count) count.textContent = '—';
+    if (countNote) countNote.textContent = 'Inventory unavailable.';
+    if (sourceState) sourceState.textContent = 'Unknown';
+    if (sourceNote) sourceNote.textContent = 'The API did not confirm source posture.';
+    if (nextGate) nextGate.textContent = 'Review error';
+    if (nextGateNote) nextGateNote.textContent = 'Resolve the inventory request before changing project state.';
     target.innerHTML = `<div class="error">${esc(error.message)}</div>`;
   }
 }

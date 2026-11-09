@@ -26,6 +26,9 @@ test('Project workbench keeps authoring modes and scope usable on a phone', asyn
   await page.goto('./#projects/workspace-a');
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.project-hero')).toBeVisible();
+  await expect(page.locator('#project-overview-title')).toContainText('project boundary');
+  await expect(page.locator('#project-overview-count')).toHaveText('1');
+  await expect(page.locator('#project-source-state')).toHaveText('Unconfigured');
   await expect(page.locator('.project-mode-card')).toHaveCount(4);
   const layout = await page.evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,
