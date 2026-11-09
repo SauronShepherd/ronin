@@ -4,7 +4,7 @@
 
 **Last evidence review:** 9 November 2026
 
-**Candidate SHA:** runtime/test candidate `4a6c546fad7e8e982f623c5cacba937e280226ec`; exact-image VEX and qualification receipts are recorded in the documentation follow-up; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `4157181843d47893e77d62bed62fdafeb31d6f0b`; exact-image VEX and qualification receipts are recorded in the documentation follow-up; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -22,19 +22,19 @@ explicit rather than being collapsed into that test status.
 
 ## 9 November exact-candidate refresh
 
-The current runtime/test candidate is `4a6c546fad7e8e982f623c5cacba937e280226ec`,
-the ninth UI pass after the backend candidate `8a855866`. Projects now exposes
-Author/Connect/Operate/Govern decision modes, and the connection dialog opens
-deterministically during fast bootstrap while retaining the existing runtime
-contracts and full project journey. The exact UI lane passes Chromium `132/132`;
-web audit reports `68` files with zero failures and the measured budget is
-`2,082,909` asset bytes, `67` requests, `36` modules, `12` stylesheets and
+The current runtime/test candidate is `4157181843d47893e77d62bed62fdafeb31d6f0b`,
+the tenth UI pass after the backend candidate `8a855866`. Projects now exposes
+Author/Connect/Operate/Govern decision modes plus an operational brief with
+source posture, next gate and a secret-safe Source column, while the connection
+dialog opens deterministically during fast bootstrap. The exact UI lane passes
+Chromium `132/132`; web audit reports `68` files with zero failures and the
+measured budget is `2,088,109` asset bytes, `67` requests, `36` modules, `12` stylesheets and
 `5,299` HTML bytes. Installed PyRonin artifacts pass `90/90` with wheel digest
-`df0e0fc55a0814f16a02143828fbb34173a94f728c0a20d6198219fe91f42c0d` and sdist
-digest `27c432e14024704b7a5427010f137cab50fba3865ea6cb1d8483dd8e648644dc`.
+`5cf92538ee70f1631bd13c5dcc79cf8a2321cbbbdf2adaea9c4c693b6df9ce8c` and sdist
+digest `6873d4d3748e7d1d9a4fbf7cf59a9bdccb0d459ae73bb396dba6c0382a110b24`.
 Docker passes `27/27` plus strict v0.1 `15/15` on image
-`sha256:6613770aff3c2c5fcd9d6a1cf96d72972927b0ec6e1c80c2ffa97005f8c14042`;
-Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 246
+`sha256:af76b755b4bf64ef17f1a670d7b35e1e099f8cd8b26b808194446fb30be6755e`;
+Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 247
 correlated events; Docker Scout/OpenVEX is `3 raw / 0 applied` for that exact
 image. The backend Python/PostgreSQL receipt remains green on unchanged source
 code: `4562 passed, 27 skipped, 0 failed` of `4589`; coverage passes `53/53`
@@ -45,6 +45,15 @@ The release remains **NO-GO**: the 13-family ledger is 0/13, the VEX requires
 security-reviewer acceptance, Trivy/container SBOM is unavailable, and
 maintainer/legal/product, provider, rollback, support-matrix, governance and
 manual visual decisions remain open.
+
+The exact current receipts are `%TEMP%\\ronin-helm-4157181-20261109b`,
+`%TEMP%\\ronin-live-4157181-20261109c`, `%TEMP%\\ronin-vex-4157181-20261109b`,
+`%TEMP%\\ronin-artifact-identity-4157181-release.json`,
+`%TEMP%\\ronin-release-sbom-4157181.json`,
+`%TEMP%\\ronin-release-provenance-4157181.json` and
+`%TEMP%\\ronin-supply-chain-4157181.json`. A first live attempt timed out while
+seeding Kafka and was discarded after successful cleanup; the fresh rerun is the
+33/33 receipt above.
 
 ### Historical candidate-bound UI follow-up — runtime `6279ef7`
 
