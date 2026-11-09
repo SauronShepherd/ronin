@@ -2,9 +2,9 @@
 
 **Decision:** NO-GO / release not qualified
 
-**Last evidence review:** 8 November 2026
+**Last evidence review:** 9 November 2026
 
-**Candidate SHA:** runtime/test candidate `5476460c9bad05da2d47415d17a6edef6dc0abb2`; exact-image VEX and qualification receipts are recorded in the documentation follow-up; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `4a6c546fad7e8e982f623c5cacba937e280226ec`; exact-image VEX and qualification receipts are recorded in the documentation follow-up; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,21 +20,21 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 8 November exact-candidate refresh
+## 9 November exact-candidate refresh
 
-The current runtime/test candidate is `5476460c9bad05da2d47415d17a6edef6dc0abb2`,
-the eighth UI pass after the backend candidate `8a855866`. Workspaces now
-exposes Observe/Create/Govern decision modes while retaining the existing
-runtime contracts and the full project journey. The exact UI lane passes
-Chromium `131/131`; web audit reports `66` files with zero failures and the
-measured budget is `2,077,634` asset bytes, `65` requests, `35` modules,
-`11` stylesheets and `5,179` HTML bytes. Installed PyRonin artifacts pass
-`90/90` with wheel digest
-`728916042f8d63607093cdebcebbb87bb016ff3272acbae0cd1a8b69164df0da` and sdist
-digest `18390b21faef297b94d6e43f89efca1de9118c93fe231f0193c114b5a3fd697e`.
+The current runtime/test candidate is `4a6c546fad7e8e982f623c5cacba937e280226ec`,
+the ninth UI pass after the backend candidate `8a855866`. Projects now exposes
+Author/Connect/Operate/Govern decision modes, and the connection dialog opens
+deterministically during fast bootstrap while retaining the existing runtime
+contracts and full project journey. The exact UI lane passes Chromium `132/132`;
+web audit reports `68` files with zero failures and the measured budget is
+`2,082,909` asset bytes, `67` requests, `36` modules, `12` stylesheets and
+`5,299` HTML bytes. Installed PyRonin artifacts pass `90/90` with wheel digest
+`df0e0fc55a0814f16a02143828fbb34173a94f728c0a20d6198219fe91f42c0d` and sdist
+digest `27c432e14024704b7a5427010f137cab50fba3865ea6cb1d8483dd8e648644dc`.
 Docker passes `27/27` plus strict v0.1 `15/15` on image
-`sha256:927edc5516d9cebfe80351d265bebfab9680a8493630decf06f139acac948d27`;
-Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 247
+`sha256:6613770aff3c2c5fcd9d6a1cf96d72972927b0ec6e1c80c2ffa97005f8c14042`;
+Helm/kind passes with cleanup; live passes `33/33` across 25 routes with 246
 correlated events; Docker Scout/OpenVEX is `3 raw / 0 applied` for that exact
 image. The backend Python/PostgreSQL receipt remains green on unchanged source
 code: `4562 passed, 27 skipped, 0 failed` of `4589`; coverage passes `53/53`
