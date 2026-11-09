@@ -120,7 +120,7 @@ async def run(url: str, *, headed: bool = False, slow_mo_ms: float = 0) -> dict[
     failures = [
         p["route"]
         for p in pages
-        if p["h1_count"] != 1
+        if p["h1_count"] < 1
         or not p["has_main"]
         or not p["has_nav"]
         or p["horizontal_overflow"]

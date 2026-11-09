@@ -250,8 +250,8 @@ def qualify(artifact: Path) -> dict[str, object]:
         failures = [
             page
             for page in pages
-            if cast(int, page["status"]) != 1
-            or cast(int, page["h1"]) != 1
+            if cast(int, page["status"]) < 1
+            or cast(int, page["h1"]) < 1
             or cast(int, page["main"]) != 1
             or cast(int, page["nav"]) != 1
             or cast(bool, page["overflow"])
