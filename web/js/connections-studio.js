@@ -67,6 +67,8 @@ function addConnectionsPanel() {
     <section class="connections-editor panel" aria-labelledby="connection-editor-title"><div class="connections-section-heading"><div><p class="eyebrow">CONFIGURE</p><h2 id="connection-editor-title">Prepare a connection definition</h2><p class="muted">Use references, not credentials. Options remain portable metadata.</p></div><span class="connections-scope">write boundary: workspace</span></div><form id="connection-editor-form" class="stack"><input type="hidden" name="editing"><label>ID<input class="field" name="id" required></label><label>Name<input class="field" name="name" required></label><label>Connector ID<input class="field" name="connector_id" required placeholder="postgres"></label><label>Options JSON<textarea class="field" name="options" rows="3">{}</textarea></label><label>Secret refs JSON<textarea class="field" name="secret_refs" rows="3">{}</textarea></label><div class="toolbar"><button class="button primary">Save connection</button><button class="button" type="button" data-action="connection-clear">Clear</button></div></form></section>
     <section class="connections-evidence panel" aria-labelledby="connection-result-title"><div class="connections-section-heading"><div><p class="eyebrow">GOVERN</p><h2 id="connection-result-title">Exact operation response</h2><p class="muted">Raw JSON is secondary evidence for the action you just took.</p></div><span class="connections-scope">review before reuse</span></div><pre id="connection-result" class="code" aria-live="polite">No connection operation executed.</pre></section>`;
   view.append(panel);
+  panel.querySelector('#connection-list-form')?.addEventListener('submit', refreshConnections);
+  panel.querySelector('#connection-editor-form')?.addEventListener('submit', saveConnection);
   loadConnections();
 }
 
@@ -90,25 +92,27 @@ async function loadConnections() {
   }
 }
 
-document.addEventListener('submit', async event => {
-  const form = event.target;
-  if (!(form instanceof HTMLFormElement)) return;
-  if (form.id === 'connection-list-form') { event.preventDefault(); await loadConnections(); return; }
-  if (form.id !== 'connection-editor-form') return;
+async function refreshConnections(event) {
   event.preventDefault();
+  await loadConnections();
+}
+
+async function saveConnection(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
   const data = new FormData(form);
   const workspace = String(document.querySelector('#connection-list-form [name="workspace"]')?.value || '').trim();
-  const id = String(data.get('id') || '').trim();
-  const payload = { id, name: String(data.get('name') || '').trim(), connector_id: String(data.get('connector_id') || '').trim(), options: JSON.parse(String(data.get('options') || '{}')), secret_refs: JSON.parse(String(data.get('secret_refs') || '{}')) };
-  const editing = String(data.get('editing') || '').trim();
   const output = document.querySelector('#connection-result');
   try {
+    const id = String(data.get('id') || '').trim();
+    const payload = { id, name: String(data.get('name') || '').trim(), connector_id: String(data.get('connector_id') || '').trim(), options: JSON.parse(String(data.get('options') || '{}')), secret_refs: JSON.parse(String(data.get('secret_refs') || '{}')) };
+    const editing = String(data.get('editing') || '').trim();
     output.textContent = json(editing ? await put(connectionPath(workspace, editing), payload) : await post(connectionPath(workspace), payload));
     form.reset();
     await loadConnections();
     setMode('discover');
   } catch (error) { output.textContent = `Connection save failed: ${error.message}`; }
-});
+}
 
 document.addEventListener('click', async event => {
   const mode = event.target.closest?.('[data-connections-mode]');

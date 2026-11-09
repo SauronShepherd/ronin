@@ -228,6 +228,20 @@ def qualify(artifact: Path) -> dict[str, object]:
                             "smoke_selector_count": selector_count,
                         }
                     )
+                page.goto(f"{base}/index.html#data", wait_until="networkidle")
+                page.locator("#connections-studio").wait_for(state="visible")
+                connection_form = page.locator("#connection-editor-form")
+                connection_form.locator('[name="id"]').fill("artifact-warehouse")
+                connection_form.locator('[name="name"]').fill("Artifact warehouse")
+                connection_form.locator('[name="connector_id"]').fill("postgres")
+                connection_form.locator('[name="secret_refs"]').fill(
+                    '{"password":"secret://artifact/password"}'
+                )
+                page.get_by_role("button", name="Save connection").click()
+                connection_result = page.locator("#connection-result")
+                connection_result.wait_for(state="visible")
+                if "items" not in connection_result.text_content():
+                    raise AssertionError("installed Connections save did not render API evidence")
                 browser.close()
         finally:
             server.shutdown()

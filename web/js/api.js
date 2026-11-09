@@ -79,7 +79,7 @@ export async function request(path, options = {}) {
     data = { message: text };
   }
   if (!response.ok) {
-    const rawMessage = data?.error?.message || data?.message;
+    const rawMessage = data?.error?.message || data?.message || data?.detail;
     const isHtml = typeof rawMessage === 'string' && /<(?:!doctype|html|body)\b/i.test(rawMessage);
     const message = isHtml
       ? `The Ronin server is not available at ${base}. Start the server or use the address provided by your administrator.`
