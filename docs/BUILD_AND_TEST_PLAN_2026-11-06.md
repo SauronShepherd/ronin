@@ -529,3 +529,13 @@ módulos y 15 hojas de estilo; `studio_web_audit`, `studio_budget --check`, Ruff
 route consistency, Studio surface, OpenAPI snapshot y capability status pasan.
 Las futuras regresiones se medirán contra este baseline candidate-bound, no se
 usará esta reconciliación para convertir skips externos en evidencia de release.
+
+## 12. Regresión de contratos web y release ledger
+
+Sobre el mismo `HEAD` `16dbe56e`, la regresión Python específica de las
+superficies web, configuración de proyectos y ledger de release pasó `27 tests`
+en `7.22s`. Incluye `test_studio_static.py`, `test_project_configuration.py`,
+el status fail-closed, el generador de status, capability status y la matriz
+Public v1. El resultado confirma que el ajuste de command palette/CSS y la
+reconciliación del presupuesto no rompieron los contratos estáticos ni la
+coherencia del expediente.
