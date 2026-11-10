@@ -4,7 +4,7 @@
 
 **Last evidence review:** 10 November 2026
 
-**Candidate SHA:** runtime/test candidate `15951c233df65c73cce09d24fb231bf0837aef24`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `0e0a9cd8f0f88f6e985ce86a1f6d848487d97772`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,7 +20,7 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 10 November exact-candidate qualification — current `15951c2`
+## 10 November exact-candidate qualification — current `0e0a9cd`
 
 The candidate adds explicit Environments and Deployments decision workbenches:
 Environments exposes Observe/Author/Govern with deterministic diff and pause/restore;
@@ -33,8 +33,9 @@ accessibility journeys pass.
 
 Candidate-bound technical receipts:
 
-- Python/PostgreSQL: `4563/4590` passed, `27` explicit environment/provider/POSIX
-  skips and `0` failures. Receipt `%TEMP%\\ronin-python-full-15951c2-20261110`.
+- Python/PostgreSQL: `4562/4590` passed, `27` explicit environment/provider/POSIX
+  skips and `1` configuration-contract failure on the previous candidate run;
+  rerun is required after the test expectation update. Receipt `%TEMP%\\ronin-python-full-ac69522-20261110`.
 - Docker: `27/27` passed, strict v0.1 `15/15`, `0` skips/failures; runtime image
   `sha256:970ea4e116ddbad8c0d69b485d0daf9bfe28762fcdfc4036a7a83abcf45861a7`.
 - Helm/kind: lint, Secret boundary, install, readiness, health, Studio/API,

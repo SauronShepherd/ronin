@@ -7,7 +7,7 @@
 
 ## Current exact-SHA qualification — 10 November 2026
 
-The current runtime/test candidate is `15951c233df65c73cce09d24fb231bf0837aef24`.
+The current runtime/test candidate is `0e0a9cd8f0f88f6e985ce86a1f6d848487d97772`.
 Environments now uses an Observe/Author/Govern workbench with deterministic diff
 preview and pause/restore actions; Deployments uses Observe/Bind/Operate with an
 explicit project/environment scope and a validated bindings-array replacement.
