@@ -3824,6 +3824,20 @@ La revisión móvil asistida queda verde para esta superficie y complementa el
 test responsive automatizado. No sustituye la aprobación visual humana
 firmada ni la revisión de todas las rutas. Public v1 permanece **NO-GO**.
 
+## 110. Suite estática Chromium completa sobre el candidato — 10/11/2026
+
+La ejecución completa del paquete `web-tests` sobre el árbol actual pasa
+**147/147** en Chromium, en 5,8 minutos y con dos workers. Incluye
+accesibilidad de las superficies, journeys funcionales, command palette y
+contexto, navegación por 25 rutas, responsive de 320 a 1440 px, workbenches de
+Workspace/Projects/Data Engineering/Connections/Environments/Deployments y
+las regresiones de streaming, semantic, ML, scheduler y synthetic.
+
+No hay skips ni fallos en esta lane estática. El resultado confirma la
+regresión frontend del candidato; no equivale a cualificación live de API,
+proveedores o persistencia, que conserva sus recibos separados y sus gates
+abiertos. Public v1 permanece **NO-GO**.
+
 ## 106. Reconciliación de ledgers al SHA actual — 10/11/2026
 
 La auditoría detectó y corrigió una divergencia documental: los ledgers
