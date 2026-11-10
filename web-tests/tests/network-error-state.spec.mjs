@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('runs surface renders a bounded backend error state', async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem('ronin.session', 'static-test-token'));
   await page.route('**/v1/jobs**', async route => {
     await route.fulfill({
       status: 503,

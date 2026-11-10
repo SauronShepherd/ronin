@@ -4,7 +4,7 @@
 
 **Last evidence review:** 10 November 2026
 
-**Candidate SHA:** runtime/test candidate `d1a0ea6dc28b7161c107081265edec01279daa56`; the current web receipt is recorded below, while packaging/runtime receipts from the prior candidate must be regenerated; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `1475246c2c7620183eca77e7c7ecb0350ca5c49d`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,23 +20,50 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 10 November UI-context iteration — current `d1a0ea6`
+## 10 November exact-candidate qualification — current `1475246`
 
-The current runtime/test candidate is `d1a0ea6dc28b7161c107081265edec01279daa56`.
-It makes the visible default context (`default / examples/demo / local`) the same
-context used by Runs, aligns direct Project deep links with their workspace, and
-preserves the `Example context` label on an unparameterized Home entry. The complete
+The candidate makes the visible default context (`default / examples/demo / local`)
+the same context used by Runs, aligns direct Project deep links with their
+workspace, preserves the `Example context` label on an unparameterized Home entry,
+and refuses unauthenticated Runs requests before they reach the API. The complete
 static Chromium suite passes `139/139`; the web audit passes with `69` files,
-`38` modules, `180` route invocations and `0` failures; the delivery budget is
-`2,101,686` asset bytes, `68` requests, `36` modules, `13` stylesheets and
-`5,639` HTML bytes. The four focused context/Home journeys also pass.
+`38` modules, `180` route invocations and `0` failures; the ratcheted delivery
+budget is `2,101,951` asset bytes, `68` requests, `36` modules, `13` stylesheets
+and `5,639` HTML bytes. The focused context/Home and error-state journeys pass.
 
-The prior candidate `4962ff05` receipts are not exact evidence for this SHA.
-Python/package, Docker/strict acceptance, Helm/kind, live, Trivy/VEX,
-SBOM/provenance, container-inventory and Floci lanes must be regenerated on
-this candidate before technical qualification can be called green. Release
-remains **NO-GO** at `0/13` families, with security, legal/NOTICE/claims,
-manual visual, rollback/support and governance approvals still open.
+Candidate-bound technical receipts:
+
+- Python/PostgreSQL: the candidate-bound full run is expected to close at
+  `4563/4590` passed, `27` explicit environment/provider/POSIX skips and `0`
+  failures once the synchronized ledger/VEX changes are committed; the first
+  pre-fix run recorded `4559` passed and four documentation-contract failures.
+  Receipt `%TEMP%\\ronin-python-full-1475246-20261110`.
+- Docker: `27/27` passed, strict v0.1 `15/15`, `0` skips/failures; runtime image
+  `sha256:3dcd85fb0da2e0e911594b38dda559931020cd77f9521274df1a69e81332f06a`.
+- Helm/kind: lint, Secret boundary, install, readiness, health, Studio/API,
+  durable job, restart persistence and cleanup passed; receipt
+  `%TEMP%\\ronin-helm-1475246-20261110`.
+- Live UI/API: `33/33` Playwright cases across 25 routes (24 API-backed), 250
+  correlated events, `0` server/network errors and `0` unexpected auth gaps;
+  receipt `%TEMP%\\ronin-live-1475246-20261110`.
+- Installed artifacts: `90/90`; wheel SHA-256
+  `ba6503f249aae9f5d1e83c4a47ceafdace377011441ff4caa5a612f7954ffd4f`, sdist
+  SHA-256 `c87113c7f182a4395bf677c3bae699eced683fbbe2ba4dcf7b4dabae4c4d2403`.
+- Supply chain: exact artifact identity, application/runtime/probe CycloneDX,
+  provenance and container inventory validate with `supply_chain_evidence.py`;
+  Trivy is pinned to `0.76.1`, with raw runtime/probe SBOMs and zero secrets.
+- VEX: Docker Scout `1.27.0` finds `3` raw findings and `0` after the exact
+  two-product OpenVEX binding for both runtime and probe; both verifiers pass.
+- Floci: endpoint HTTP 200; Terraform `1.13.5`, AWS provider `6.65.0`,
+  plan/apply/refresh/destroy/state-list all return zero and fixture resources
+  are absent after destroy; receipt `%TEMP%\\ronin-floci-1475246-evidence-20261110c`.
+
+The remaining license qualification is intentionally not presented as green:
+22 dependency review decisions are missing, one stale `pyyaml==6.0.3` policy
+entry remains, and 9 inventory/policy evidence records are mismatched. Release
+remains **NO-GO** at `0/13` families, with security/legal/NOTICE/claims, manual
+visual, rollback/support, provider/toolchain, license-policy and governance
+approvals still open.
 
 ## 9 November exact-candidate refresh — historical `4962ff05`
 

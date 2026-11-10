@@ -7,19 +7,29 @@
 
 ## Current exact-SHA qualification — 10 November 2026
 
-The current runtime/test candidate is `d1a0ea6dc28b7161c107081265edec01279daa56`.
+The current runtime/test candidate is `1475246c2c7620183eca77e7c7ecb0350ca5c49d`.
 Runs now uses the same default context shown by the shell (`default /
 examples/demo / local`), and direct Project deep links synchronize their
-workspace scope without clearing a project explicitly chosen by the operator.
+workspace scope without clearing a project explicitly chosen by the operator,
+and the Runs surface refuses unauthenticated requests before contacting the API.
 The complete static Chromium suite passes `139/139`; web audit passes
 with `69` files, `38` modules, `180` route invocations and `0` failures; budget
-is `2,101,686` asset bytes, `68` requests, `36` modules, `13` stylesheets and
+is `2,101,951` asset bytes, `68` requests, `36` modules, `13` stylesheets and
 `5,639` HTML bytes. The prior parent receipt found one
 `MEDIUM CVE-2026-4738` (`zlib 1.3.2-r1`) and zero secrets per image. Exact
-candidate security evidence therefore remains open and is not inferred from the
-parent receipt.
+candidate security evidence is now bound to the runtime/probe images: Docker
+Scout reports `3` raw and `0` after the exact two-product OpenVEX binding, while
+Trivy `0.76.1` records zero secrets and the reviewed zlib finding.
 The tracked license inventory is now regenerated against the current lock, but
-policy reviews remain missing/stale, so legal approval remains open.
+22 dependency review decisions are missing, one stale policy entry remains, and
+9 inventory/policy evidence records are mismatched; legal approval remains open.
+
+Candidate-bound qualification receipts are green for Docker (`27/27`, strict
+v0.1 `15/15`), Helm/kind, live UI/API (`33/33`, 250 correlated events), SDK
+artifacts (`90/90`), exact supply-chain evidence, and Floci with Terraform
+`1.13.5`/AWS provider `6.65.0`. The full Python/PostgreSQL run is being repeated
+after four documentation-contract failures were corrected; its pre-fix receipt
+is retained at `%TEMP%\\ronin-python-full-1475246-20261110`.
 
 This is technical qualification only. Public v1 remains **0/13 (0%, NO-GO)**:
 manual visual/product signoff, legal/NOTICE/claims, security/VEX triage and
@@ -96,7 +106,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `b86a0f6f45e5b76934583902486643cf003dbcb4` (2026-11-09).
+**Observed source head:** `1475246c2c7620183eca77e7c7ecb0350ca5c49d` (2026-11-10).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
