@@ -3931,3 +3931,16 @@ confirma que el token de qualification aparece únicamente en el Secret. Esto
 valida chart, schema, valores y boundary de secretos, pero no sustituye
 `kind`, readiness, upgrade, rollback ni persistencia real. El gate operativo
 continúa pendiente y Public v1 permanece **NO-GO**.
+
+## 115. Agregador de release exige Helm y matrix reconciliada — 10/11/2026
+
+El perfil `release_required` del agregador ahora incluye explícitamente
+`helm-qualification`; un veredicto no puede considerarse completo sin el
+rehearsal de instalación, upgrade, rollback y persistencia. La suite del
+agregador y del chart pasa **33/33**.
+
+La misma pasada detectó que `PUBLIC_V1_CAPABILITY_MATRIX.md` conservaba el
+baseline `e3181c28`; se sincronizó con el observed source del ledger actual
+(`19ae8fd2`). La prueba combinada de release, Helm, capability matrix y status
+pasa **39/39**. El nuevo gate queda correctamente pendiente de un recibo
+candidate-bound porque Docker sigue inaccesible.
