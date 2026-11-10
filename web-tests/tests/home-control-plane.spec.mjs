@@ -58,15 +58,20 @@ test.describe('home control plane', () => {
 
   test('opens and closes the command palette from the home shell', async ({ page }) => {
     await page.goto('./#home', { waitUntil: 'load' });
-    await page.keyboard.press(process.platform === 'darwin' ? 'Meta+K' : 'Control+K');
+    await page.locator('.command-open').click();
     await expect(page.locator('.command-palette')).toBeVisible();
+    await expect(page.locator('.command-palette')).toHaveAttribute('aria-label', 'Search commands…');
+    await expect(page.locator('#ronin-command-search')).toHaveAttribute('aria-controls', 'ronin-command-list');
     await page.locator('#ronin-command-search').fill('quality');
     await expect(page.locator('.command-option')).toContainText('Quality Studio');
+    await expect(page.locator('#ronin-command-list')).toHaveAttribute('aria-activedescendant', /ronin-command-/);
+    await expect(page.locator('.command-option[aria-selected="true"]')).toHaveCount(1);
     await expect(page.locator('.command-option-copy small')).toContainText('Run checks and review promotion gates.');
     await page.locator('#ronin-command-search').fill('promotion gates');
     await expect(page.locator('.command-option')).toContainText('Quality Studio');
     await page.keyboard.press('Escape');
     await expect(page.locator('.command-palette')).not.toBeVisible();
+    await expect(page.locator('.command-open')).toBeFocused();
   });
 
   test('opens a context picker and carries the selected boundary through the shell', async ({ page }) => {

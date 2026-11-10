@@ -57,8 +57,13 @@ function ensure() {
     if (event.target === dialog) dialog.close();
   });
   dialog.addEventListener('close', () => {
-    lastTrigger?.focus?.();
+    const trigger = lastTrigger;
     lastTrigger = null;
+    setTimeout(() => (trigger || document.querySelector('[data-action="open-command"]'))?.focus?.(), 0);
+  });
+  dialog.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    dialog.close();
   });
 }
 
@@ -86,7 +91,10 @@ function open(command) {
 }
 
 export function openCommandPalette() {
-  lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const active = document.activeElement;
+  lastTrigger = active instanceof HTMLElement && active !== document.body
+    ? active
+    : document.querySelector('[data-action="open-command"]');
   ensure();
   input.value = '';
   selected = 0;
