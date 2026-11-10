@@ -562,4 +562,5 @@ apertura por atajo y restitución de foco.
 
 La suite Chromium del candidato actualizado pasó `148/148` en `3.4m`; las tres
 pruebas de command palette pasan juntas y la suite completa mantiene
-accesibilidad, responsive, navegación y journeys en verde.
+accesibilidad, responsive, navegación y journeys en verde. La suite Python
+posterior al mismo fix pasó `4511 passed, 77 skipped, 0 failed` en `251.10s`.
