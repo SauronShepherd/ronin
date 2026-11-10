@@ -2,7 +2,7 @@
 
 **Decision:** NO-GO / release not qualified
 
-**Last evidence review:** 9 November 2026
+**Last evidence review:** 10 November 2026
 
 **Candidate SHA:** runtime/test candidate `4962ff0512956f0214ddc9a96def9ae2fd77ccfa`; exact qualification receipts are recorded below; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
@@ -37,31 +37,46 @@ and `5,639` HTML bytes; installed artifacts `90/90` with wheel
 Docker is `27/27` plus strict v0.1 `15/15` on image
 `sha256:da112fd1ba92f131668dc94f22a37829c5f2c641c29bba9901f17fc50ede83f4`;
 Helm/kind and persistence pass; live qualification is `33/33` over 25 routes,
-with 246 correlated events and no server/network errors. Docker Scout/OpenVEX
-and Trivy must be regenerated for the new exact digest before they can be
-claimed for this candidate; the parent receipt found `1 MEDIUM CVE-2026-4738`
-and `0` secrets per image, but is not reused. The security reviewer has not
-accepted the VEX statements. The inventory is regenerated against the current
-lock, but policy reviews remain missing/stale and are not being silently
-accepted. Release remains **NO-GO** at `0/13` families: provider/
-credential, security/VEX finding triage, legal/NOTICE/claims, visual,
-rollback/support, full provider/toolchain matrix, license policy and governance gates
-remain open.
+with 246 correlated events and no server/network errors. Docker Scout `1.27.0`
+now reports `3` raw findings and `0` after digest-bound OpenVEX. Trivy `0.76.1`
+reports `0` secrets and one `MEDIUM` `CVE-2026-4738` in each exact image
+(`zlib 1.3.2-r1`, fixed upstream at `1.4-r0`). The VEX binds runtime
+`sha256:da112fd1ba92f131668dc94f22a37829c5f2c641c29bba9901f17fc50ede83f4`
+and probe
+`sha256:84430cb0fa577d1bff12182fa725316402a4e6500c4d0d6ed070242a76980099`.
+The security reviewer has not accepted the VEX statements or zlib exception.
+The exact CycloneDX application/runtime/probe inventories, provenance and
+fail-closed supply-chain validator pass; policy reviews remain missing/stale
+and are not being silently accepted. Release remains **NO-GO** at `0/13`
+families: provider/credential, security/VEX finding triage, legal/NOTICE/claims,
+visual, rollback/support, full provider/toolchain matrix, license policy and
+governance gates remain open.
 
 The candidate-bound Cloud Studio/Floci lane also passes with Floci `2.1.0`
 digest-pinned, AWS provider `6.65.0` and official-checksummed Terraform
 `1.13.5`: plan/apply/refresh/destroy/state-list all returned zero, synthetic
 S3/SQS resources were observed after apply, and both Terraform state and
 Floci resources were empty after destroy. Receipt:
-`%TEMP%\\ronin-floci-b86a0f6-20261109-tf1135\\qualification.json` (parent diagnostic; not reissued for the UI-only candidate).
+`%TEMP%\\ronin-floci-4962ff0-20261109-c81f\\qualification.json`.
 
 Receipts: `%TEMP%\\ronin-python-full-b86a0f6-20261109` (unchanged parent),
 `%TEMP%\\ronin-docker-4962ff0-20261109b`, `%TEMP%\\ronin-helm-4962ff0-20261109b`,
 `%TEMP%\\ronin-live-4962ff0-20261109`,
 `%TEMP%\\ronin-artifact-qualification-4962ff0-20261109.json`.
-The current image digest, Docker/Helm/live and package receipts are exact for
-this SHA; Trivy, VEX, SBOM/provenance, supply-chain and Floci receipts are still
-open for this new digest and are not inherited from the parent.
+The current image digest, Docker/Helm/live, package, Trivy, VEX,
+SBOM/provenance, supply-chain and Floci receipts are exact for this application
+candidate. Technical gates are green; release approval remains blocked by the
+explicit family, human, legal, support and operational gates above.
+
+Exact supply-chain receipts: `%TEMP%\\ronin-vex-4962ff0-20261109-clean`,
+`%TEMP%\\ronin-trivy-4962ff0-20261109`,
+`%TEMP%\\ronin-supply-chain-4962ff0-20261109-f1209095dc27445e851f92a09136226d`.
+
+The previous table is retained as historical evidence for runtime `8a85586`.
+For the current candidate, the application lanes are technically qualified;
+the family ledger remains `0/13`, and human security, legal/NOTICE/claims,
+license policy, visual product, rollback, support and governance approvals
+remain open.
 
 ## 9 November exact-candidate refresh — historical `4157181`
 

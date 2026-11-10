@@ -1,6 +1,6 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
-**Corte:** 2026-11-09 (Europe/Madrid)
+**Corte:** 2026-11-10 (Europe/Madrid)
 **Fuente de código:** candidato runtime/test exacto `4962ff0512956f0214ddc9a96def9ae2fd77ccfa` (sincronización del contexto global con Runs, consulta automática del proyecto al entrar o cambiar de contexto y regresión Playwright; el presupuesto de assets no aumenta). La qualification técnica se separa de la decisión de release: las lanes web, artefacto, Docker, Helm/kind y live del candidato están verdes, pero no tiene luz verde de publicación.
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
@@ -13,11 +13,11 @@ El runtime/test candidato `4962ff0512956f0214ddc9a96def9ae2fd77ccfa` es la únic
 - Artefactos: `90/90`; wheel `8a962e13c6a303a84048889302f720c293a7d8a14f108bf73fef89b01754bd05`, sdist `832b5073fd050093f4e5ea50e11fb4d2687dcdbe80c21d4fc8b9adc91cf47caa`; evidencia `%TEMP%\\ronin-artifact-qualification-4962ff0-20261109.json`.
 - Docker: `27/27`, strict v0.1 `15/15`, cleanup correcto; imagen `sha256:da112fd1ba92f131668dc94f22a37829c5f2c641c29bba9901f17fc50ede83f4`; evidencia `%TEMP%\\ronin-docker-4962ff0-20261109b`.
 - Helm/kind: lint, Secret boundary, cluster aislado, carga de imagen, instalación, readiness, health, Studio/API, job persistente, restart/persistencia y cleanup: todo pasa sobre el mismo digest; evidencia `%TEMP%\\ronin-helm-4962ff0-20261109b`.
-- Cloud Studio/Floci: la qualification exacta `plan/apply/refresh/destroy/state list` del padre `b86a0f6f` sigue siendo diagnóstica para esta superficie; no se reutiliza como receipt del candidato `4962ff05` hasta regenerar su bundle completo.
+- Cloud Studio/Floci: la qualification exacta del candidato pasa `plan/apply/refresh/destroy/state list` con Floci `2.1.0` digest-pinned, Terraform `1.13.5` y AWS provider `6.65.0`; confirmó bucket/cola tras apply y cero recursos/estado tras destroy. Evidencia `%TEMP%\\ronin-floci-4962ff0-20261109-c81f\\qualification.json`.
 - Live: `33/33`, `25` rutas activas, `24` API-backed, `246` eventos correlacionados, `0` gaps inesperados de autorización, `0` errores server/network y cleanup correcto; evidencia `%TEMP%\\ronin-live-4962ff0-20261109`.
-- Seguridad/VEX y supply chain: el digest actual es nuevo (`da112fd1...ede83f4`), por lo que los recibos Trivy/OpenVEX/SBOM/provenance del padre `b86a0f6f` no se reutilizan. Falta regenerar el escaneo de vulnerabilidades/secretos, VEX exact-digest, inventarios CycloneDX y provenance del candidato actual; el gate queda abierto, aunque el recibo heredado mantiene como contexto `1 MEDIUM CVE-2026-4738` por imagen y `0` secretos.
+- Seguridad/VEX y supply chain: los recibos exactos ya están regenerados para runtime `sha256:da112fd1ba92f131668dc94f22a37829c5f2c641c29bba9901f17fc50ede83f4` y probe `sha256:84430cb0fa577d1bff12182fa725316402a4e6500c4d0d6ed070242a76980099`. Docker Scout `1.27.0` reporta `3` hallazgos raw y `0` tras VEX ligado a ambos digests; Trivy `0.76.1` reporta `0` secretos y un único `MEDIUM CVE-2026-4738` por imagen (`zlib 1.3.2-r1`, fix `1.4-r0`). El SBOM/provenance y `supply_chain_evidence --require-container-inventory` pasan con inventarios de runtime/probe y artefactos rehasheados; la aceptación del Security reviewer sigue abierta. Evidencia: `%TEMP%\\ronin-vex-4962ff0-20261109-clean`, `%TEMP%\\ronin-trivy-4962ff0-20261109` y `%TEMP%\\ronin-supply-chain-4962ff0-20261109-f1209095dc27445e851f92a09136226d`.
 
-Resultado técnico: **verde en las lanes ejecutadas del candidato**; seguridad/VEX, supply chain y Floci exactos quedan abiertos por no haberse regenerado tras el nuevo digest. Resultado de release: **NO-GO**. Siguen abiertos el ledger `0/13` familias, cualificación de proveedores/credenciales, triage y aceptación humana de seguridad/VEX, legal/NOTICE/claims, revisiones de policy de licencias/NOTICE, revisión visual manual, rollback/backup, la matriz completa de toolchain/soporte, y gobierno de CI/branches. No se mezclan recibos de candidatos anteriores.
+Resultado técnico: **verde en las lanes ejecutadas del candidato**, incluidos VEX técnico, inventario Trivy/SBOM/provenance y Floci exactos; permanecen abiertos los juicios humanos y de producto. Resultado de release: **NO-GO**. Siguen abiertos el ledger `0/13` familias, cualificación de proveedores/credenciales, triage y aceptación humana de seguridad/VEX, legal/NOTICE/claims, revisiones de policy de licencias/NOTICE, revisión visual manual, rollback/backup, la matriz completa de toolchain/soporte, y gobierno de CI/branches. No se mezclan recibos de candidatos anteriores.
 
 ## 0.1 Plan de cierre obligatorio para la siguiente iteración
 
@@ -29,7 +29,10 @@ recibos → decisión`:
 1. **Congelar identidad y release bundle.** El release operator debe elegir
    versión pública, rama/tag, política de freeze, matriz de plataformas y
    manifest agregado; debe rehashear wheel, sdist, imagen, SBOM, provenance,
-   VEX y cada archivo del bundle en una única receipt. PASS sólo si el
+   VEX y cada archivo del bundle en una única receipt. La identidad técnica
+   actual ya valida wheel/sdist, TAR runtime/probe, SBOM crudo, SBOM de
+   aplicación, provenance y dos inventarios CycloneDX; falta convertirla en
+   bundle de release aprobado y congelar branch/tag. PASS sólo si el
    verificador rechaza cualquier mezcla de SHA, digest, tag o perfil.
 2. **Cerrar seguridad de imagen.** Revisar el inventario Trivy de las imágenes
    exactas, resolver o aceptar formalmente el `CVE-2026-4738` de zlib y explicar
