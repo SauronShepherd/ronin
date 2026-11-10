@@ -516,3 +516,16 @@ limitaciones del host; no se convierten en evidencia de release. La decisión
 permanece `NO-GO`, porque el ledger de familias continúa en `0/13` y siguen
 abiertos los gates humanos, legales, de proveedores, supply chain, rollback,
 gobernanza y revisión visual formal descritos arriba.
+
+## 11. Reconciliación del ratchet web
+
+La pasada estática del `HEAD` `e4ce9afd` detectó que el baseline histórico de
+`docs/ui/web-budget.json` (`2,123,786` bytes) ya no representaba el árbol actual:
+varios workbenches incorporados después de aquel baseline habían aumentado el
+paquete sin actualizar su receipt. Se corrigió además el límite de longitud de
+`components.css`, que quedó en `400` líneas. El baseline se regeneró de forma
+explícita sobre el árbol candidato actual: `2,132,739` bytes, 70 requests, 36
+módulos y 15 hojas de estilo; `studio_web_audit`, `studio_budget --check`, Ruff,
+route consistency, Studio surface, OpenAPI snapshot y capability status pasan.
+Las futuras regresiones se medirán contra este baseline candidate-bound, no se
+usará esta reconciliación para convertir skips externos en evidencia de release.

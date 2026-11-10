@@ -396,8 +396,5 @@ kbd { display: inline-block; min-width: 1.25rem; padding: .08rem .3rem; border: 
   .run-section-heading .button { margin-top: .65rem; }
   .run-timeline-heading { display: block; }
   .run-timeline-heading time { display: block; margin-top: .15rem; }
-  .run-evidence-summary > div { min-width: 4.4rem; }
-  .run-list-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .run-list-heading { display: block; }
-  .run-list-heading .status { display: inline-flex; margin-top: .6rem; }
-}
+  .run-evidence-summary > div { min-width: 4.4rem; }.run-list-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .run-list-heading { display: block; }.run-list-heading .status { display: inline-flex; margin-top: .6rem; }}
