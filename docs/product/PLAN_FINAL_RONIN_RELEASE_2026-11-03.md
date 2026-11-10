@@ -3666,3 +3666,26 @@ Markdown y capability matrix con distintos SHAs observados) fue corregida y
 los tests de consistencia pasan **6/6**. La decisión global continúa **NO-GO**
 solo por los gates humanos, legales, visuales, de proveedores y de familias
 Public v1 aún no aprobados.
+
+## 96. Gate legal/licencias reproducido — 10/11/2026
+
+La ejecución de `tools/license_qualification.py` contra
+`requirements-dev.lock`, `third_party/licenses-v1.json` y
+`third_party/license-policy-v1.json` falla de forma fail-closed. La cola
+exacta es:
+
+- **22 decisiones humanas faltantes:** `boolean-py`, `cachecontrol`,
+  `certifi`, `charset-normalizer`, `cyclonedx-python-lib`, `defusedxml`,
+  `filelock`, `idna`, `license-expression`, `msgpack`, `packageurl-python`,
+  `pip-api`, `pip-audit`, `pip-requirements-parser`, `pip`, `py-serializable`,
+  `pyparsing`, `pyyaml-ft`, `requests`, `tomli-w` y `urllib3` (con sus
+  versiones exactas del lock).
+- **1 entrada stale de policy:** `pyyaml==6.0.3`.
+- **9 evidencias stale/mismatched:** `coverage`, `greenlet`, `libcst`,
+  `librt`, `mypy`, `packaging`, `playwright`, `setproctitle` y `tomli`.
+
+La corrección mecánica de inventario/evidencia puede prepararse, pero la
+decisión de licencia, NOTICE, atribución y claims no puede inferirse del
+código ni ser aprobada automáticamente. Public v1 permanece **NO-GO** hasta
+que el responsable humano revise y acepte/rechace cada entrada y actualice la
+policy de forma trazable.
