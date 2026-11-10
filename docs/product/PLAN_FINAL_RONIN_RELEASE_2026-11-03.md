@@ -3763,3 +3763,21 @@ proveedores. Para cerrar el release aún faltan pruebas de restore/rollback en
 un entorno operativo representativo, retención y restauración ante fallo, y
 la cualificación externa de SDP/proveedores cuando se disponga de sus
 instalaciones y credenciales. Public v1 permanece **NO-GO**.
+
+## 103. Regresión UI del control plane — 10/11/2026
+
+La regresión dirigida de Chromium pasa **7/7** sobre el árbol actual: barra de
+contexto, command palette, workbench de Environments, workbench de Deployments,
+responsive y accesibilidad de ambos workbenches. Se confirma que el contexto
+activo se conserva, que las decisiones Observe/Author/Govern y
+Observe/Bind/Operate siguen visibles, y que las acciones de gobierno no
+ocultan el estado real del backend.
+
+La dirección de producto UI queda explícita: RONIN debe comportarse como un
+control plane coherente —contexto persistente, objetos navegables, decisiones
+por etapas, estados loading/empty/error honestos, accesibilidad y responsive—
+con identidad propia, tomando como referencia la claridad operativa de
+Databricks, Dataiku, Palantir y Fabric. Esta regresión confirma el contrato
+automatizado, pero no sustituye una revisión visual humana firmada sobre el
+candidato final. Public v1 continúa **NO-GO** por los gates externos y
+humanos ya enumerados.
