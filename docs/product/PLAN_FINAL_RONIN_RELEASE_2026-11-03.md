@@ -4020,3 +4020,21 @@ y pasa **11/11**; la suite completa Chromium sobre el estado final pasa
 **147/147**. Esta pasada mejora densidad y claridad, pero no convierte por sí
 sola la plataforma en GO: siguen pendientes la cualificación Public v1,
 proveedores, revisión visual formal y aprobaciones de release.
+
+## 120. Re-cualificación candidate-bound tras la iteración UX — 10/11/2026
+
+La versión actual `6d3151bcd54ef3a410504d02403c39b565ef4a10`, que incluye el
+editor de celdas, la simplificación de Home, el binding histórico de contexto
+y las confirmaciones de acciones, fue reconstruida y cualificada desde un
+checkout limpio. La imagen runtime queda identificada como
+`sha256:189f54cf4781c16a7713bc3bda53278b8623eea0a37011a3165700c77ac39bbd`.
+
+La lane Docker pasa **27/27** y la aceptación estricta v0.1 **15/15**, sin
+skips, errores ni fallos. La lane Helm/kind sobre la misma imagen pasa lint,
+frontera de secretos, instalación/readiness, upgrade a revisión 2, rollback a
+revisión 1, API autorizada, persistencia del job tras reinicio y cleanup.
+
+Los recibos de infraestructura están por tanto reconciliados con el candidato
+actual. Esto no cierra los gates de producto: Public v1 sigue **NO-GO** por la
+cualificación incompleta de familias, SDP/proveedores, revisión visual formal,
+decisiones legales y aprobación de release.
