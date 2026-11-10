@@ -493,3 +493,26 @@ NO-GO en GO deben cerrarse, en este orden, los siguientes gates:
 ningún `skip` usado como soporte anunciado, `progress.complete = 13`, revisión
 humana registrada y rollback ensayado. Hasta entonces, la plataforma queda en
 `NO-GO` aunque las suites locales sean verdes.
+
+## 10. Iteración 2026-11-10 — shell de interacción y candidato actual
+
+La revisión del candidato actual añadió una mejora de producto al command
+palette del Studio (`b3829bbe`): relación accesible explícita entre búsqueda,
+lista y opción activa, cierre al pulsar fuera del diálogo y restitución del foco
+al control que abrió la paleta. Es una mejora deliberadamente pequeña pero
+representativa del objetivo UX: navegación rápida, reversible y usable por
+teclado sin añadir complejidad visual ni inventar capacidades de backend.
+
+Evidencia ejecutada sobre el `HEAD` actual:
+
+- suite Chromium estática y de journeys: `147 passed`;
+- suite Python completa: `4511 passed, 77 skipped, 0 failed`;
+- checks de status/capability: `16 passed`;
+- `python tools/generate_public_v1_status.py --check`: correcto;
+- `main` y `origin/main` sincronizados en `b3829bbe`.
+
+Los skips siguen siendo dependencias opt-in, credenciales, proveedores reales o
+limitaciones del host; no se convierten en evidencia de release. La decisión
+permanece `NO-GO`, porque el ledger de familias continúa en `0/13` y siguen
+abiertos los gates humanos, legales, de proveedores, supply chain, rollback,
+gobernanza y revisión visual formal descritos arriba.
