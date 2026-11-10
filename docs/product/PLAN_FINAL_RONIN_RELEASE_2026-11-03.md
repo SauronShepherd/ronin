@@ -3675,6 +3675,16 @@ comando/proyecto externo explícito; no se simula como provider certification.
 La decisión Public v1 sigue **NO-GO** por legal/humano, rollback y familias
 no cualificadas.
 
+## 100. Gate SDP bloqueado por instalación externa — 10/11/2026
+
+El wrapper local `sdpstudio.exe` existe, pero la ejecución del gate falla
+antes de poder consultar la versión: `ModuleNotFoundError: No module named
+'sdpstudio_cli'`. El recibo `ronin-sdp-856ff88-20261110` conserva el error y
+la limpieza. No se declara certificación SDP; hace falta instalar/configurar
+el CLI oficial y un proyecto/credencial externos. El resto de los carriles
+Trino y Spark Connect sí tiene pruebas reales verdes. Public v1 continúa
+**NO-GO**.
+
 ## 95. Repetición completa Python/PostgreSQL en candidato limpio — 10/11/2026
 
 La suite completa ejecutada en checkout limpio `d01df297426deb623aee38ddf73bb6e980b09d13`
