@@ -36,13 +36,12 @@ document.addEventListener('click', async event => {
     try {
       const workspace = String(form.elements.workspace?.value || globalThis.roninStudioContext?.workspace || sessionStorage.getItem('ronin.workspace') || 'default').trim();
       const definition = JSON.parse(String(form.elements.definition?.value || '{}'));
-      const guided = {...definition};
       for (const key of ['id', 'name', 'description']) {
         const value = form.elements[key]?.value?.trim();
-        if (value) guided[key] = value;
+        if (value) definition[key] = value;
       }
-      if (!guided.id) throw new Error('Environment definition must include id');
-      out.textContent = json(await post(`/v1/workspaces/${encodeURIComponent(workspace)}/environments/${encodeURIComponent(guided.id)}/diff`, guided));
+      if (!definition.id) throw new Error('Environment definition must include id');
+      out.textContent = json(await post(`/v1/workspaces/${encodeURIComponent(workspace)}/environments/${encodeURIComponent(definition.id)}/diff`, definition));
     } catch (error) { out.textContent = `Environment diff failed: ${error.message}`; }
     return;
   }

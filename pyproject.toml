@@ -141,6 +141,8 @@ studio_storage = ["migrations/*.sql"]
   "web/styles/components.css",
   "web/styles/connections-workbench.css",
   "web/styles/data-engineering.css",
+  "web/styles/deployment-workbench.css",
+  "web/styles/environment-workbench.css",
   "web/styles/ingestion.css",
   "web/styles/layout.css",
   "web/styles/ml-workbench.css",
