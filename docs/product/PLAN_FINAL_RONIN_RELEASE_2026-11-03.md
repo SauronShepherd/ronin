@@ -3968,3 +3968,25 @@ pero no cambia la decisión pública: siguen abiertos los 13 journeys completos,
 la revisión visual manual, SDP/proveedores, las 22 decisiones legales,
 seguridad Alpine, aggregate/freeze y aprobación de release. Public v1 sigue
 **NO-GO**; no se debe declarar GO por tener la infraestructura en verde.
+
+## 117. Iteración UX: contexto navegable y acciones destructivas gobernadas — 10/11/2026
+
+La revisión independiente de la UI identificó cuatro mejoras: confirmar
+acciones destructivas, convertir Notebook Studio en un editor de celdas,
+reducir la repetición de la portada y anunciar correctamente los errores de
+Environments. En esta pasada se implementaron las dos correcciones de menor
+riesgo y mayor impacto inmediato.
+
+El selector de contexto ahora rehidrata `workspace/project/environment/runtime`
+desde la URL en `popstate`, por lo que Atrás/Adelante no deja la interfaz y el
+contexto operativo desalineados. Connections pide confirmación explícita antes
+de borrar una definición y el flujo simple de Environments usa estados
+loading/empty/error explícitos, `role=alert` en fallos y `aria-live` durante la
+carga. La regresión estructural pasa **2/2** y la suite Playwright específica
+de Connections/Environments pasa **8/8**.
+
+Notebook Studio y la simplificación de Home quedan como la siguiente pasada de
+producto: requieren un rediseño funcional (celdas, reordenación, JSON avanzado
+y una única acción prioritaria), no un cambio cosmético. La suite completa de
+UI se debe repetir antes de cerrar esta iteración; Public v1 permanece
+**NO-GO** por los gates de alcance, certificación y aprobación ya registrados.

@@ -1,5 +1,6 @@
 import { get, post, put } from './api.js';
 import { esc, json, page } from './dom.js';
+import { confirmImpact } from './features.js';
 
 function render() {
   if (location.hash.slice(1) !== 'environments') return;
@@ -10,11 +11,17 @@ function render() {
 
 async function load(workspace) {
   const result = document.querySelector('#environment-result');
+  if (!result) return;
+  result.className = 'loading';
+  result.setAttribute('role', 'status');
+  result.setAttribute('aria-live', 'polite');
+  result.textContent = 'Loading environments…';
   try {
     const data = await get(`/v1/workspaces/${encodeURIComponent(workspace)}/environments`);
     const items = Array.isArray(data) ? data : data.items || [];
-  result.innerHTML = items.length ? `<div class="table-wrap"><table><caption class="sr-only">Environments</caption><thead><tr><th>ID</th><th>Name</th><th>Kind</th><th>State</th><th>Actions</th></tr></thead><tbody>${items.map(item => `<tr><td>${esc(item.id)}</td><td>${esc(item.name)}</td><td>${esc(item.kind)}</td><td>${esc(item.state)}</td><td><button class="button environment-edit" data-workspace="${esc(workspace)}" data-environment="${esc(item.id)}" type="button">Edit</button> <button class="button ${item.state === 'active' ? 'environment-disable' : 'environment-enable'}" data-workspace="${esc(workspace)}" data-environment="${esc(item.id)}" type="button">${item.state === 'active' ? 'Disable' : 'Enable'}</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No environments found.</div>';
-  } catch (error) { result.textContent = `Environment lookup failed: ${error.message}`; }
+    result.className = items.length ? 'environment-list' : 'empty';
+    result.innerHTML = items.length ? `<div class="table-wrap"><table><caption class="sr-only">Environments</caption><thead><tr><th>ID</th><th>Name</th><th>Kind</th><th>State</th><th>Actions</th></tr></thead><tbody>${items.map(item => `<tr><td>${esc(item.id)}</td><td>${esc(item.name)}</td><td>${esc(item.kind)}</td><td>${esc(item.state)}</td><td><button class="button environment-edit" data-workspace="${esc(workspace)}" data-environment="${esc(item.id)}" type="button">Edit</button> <button class="button ${item.state === 'active' ? 'environment-disable' : 'environment-enable'}" data-workspace="${esc(workspace)}" data-environment="${esc(item.id)}" type="button">${item.state === 'active' ? 'Disable' : 'Enable'}</button></td></tr>`).join('')}</tbody></table></div>` : '<strong>No environments found.</strong><span>Create one below to bind a project to a runtime.</span>';
+  } catch (error) { result.className = 'error'; result.setAttribute('role', 'alert'); result.textContent = `Environment lookup failed: ${error.message}`; }
 }
 
 document.addEventListener('submit', async event => {
@@ -56,6 +63,7 @@ document.addEventListener('click', async event => {
   if (!button) return;
   const out = document.querySelector('#environment-create-result');
   try {
+    if (!await confirmImpact(`Disable environment ${button.dataset.environment} in workspace ${button.dataset.workspace}? New operations will not be able to select it until it is enabled again.`)) return;
     const result = await post(`/v1/workspaces/${encodeURIComponent(button.dataset.workspace)}/environments/${encodeURIComponent(button.dataset.environment)}/disable`, {});
     out.textContent = json(result);
     await load(button.dataset.workspace);

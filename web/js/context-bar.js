@@ -146,6 +146,15 @@ export function setStudioContext(values = {}) {
   return context;
 }
 
+function syncContextFromLocation() {
+  const params = new URLSearchParams(location.search);
+  const values = Object.fromEntries(studioContextKeys().map((key) => [key, params.get(key) || undefined]));
+  const context = createStudioContext(values);
+  globalThis.roninStudioContext = context;
+  renderContextBar(context);
+  window.dispatchEvent(new CustomEvent('ronin-context-change', {detail: context}));
+}
+
 export function renderContextBar(context = globalThis.roninStudioContext || {}) {
   const topbar = document.querySelector('.topbar');
   if (!topbar) return;
@@ -169,6 +178,8 @@ document.addEventListener('click', (event) => {
   if (control.dataset.action === 'open-context') openContextPicker();
   else if (dialog?.open) dialog.close();
 });
+
+window.addEventListener('popstate', syncContextFromLocation);
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => renderContextBar(), {once: true});

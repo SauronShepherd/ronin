@@ -1,5 +1,6 @@
 import { del, get, post, put } from './api.js';
 import { esc, json } from './dom.js';
+import { confirmImpact } from './features.js';
 
 function connectionPath(workspace, id = '') {
   const suffix = id ? `/${encodeURIComponent(id)}` : '';
@@ -130,7 +131,10 @@ document.addEventListener('click', async event => {
       const form = document.querySelector('#connection-editor-form');
       form.elements.editing.value = id; form.elements.id.value = item.id; form.elements.name.value = item.name; form.elements.connector_id.value = item.connector_id; form.elements.options.value = JSON.stringify(item.options || {}, null, 2); form.elements.secret_refs.value = JSON.stringify(item.secret_refs || {}, null, 2); output.textContent = `Editing ${id}`; setMode('configure'); return;
     }
-    if (action === 'connection-delete') { output.textContent = json(await del(connectionPath(workspace, id), { body: '{}' })); await loadConnections(); setMode('govern'); }
+    if (action === 'connection-delete') {
+      if (!await confirmImpact(`Delete connection ${id} from workspace ${workspace}? This removes its definition; secret material is not recoverable from Ronin.`)) return;
+      output.textContent = json(await del(connectionPath(workspace, id), { body: '{}' })); await loadConnections(); setMode('govern');
+    }
   } catch (error) { output.textContent = `Connection operation failed: ${error.message}`; }
 });
 
