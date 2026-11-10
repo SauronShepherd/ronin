@@ -3782,6 +3782,20 @@ automatizado, pero no sustituye una revisión visual humana firmada sobre el
 candidato final. Public v1 continúa **NO-GO** por los gates externos y
 humanos ya enumerados.
 
+## 107. Reconciliación semántica del ledger — 10/11/2026
+
+La auditoría del estado detectó que el SHA del ledger ya era actual, pero sus
+campos narrativos aún describían candidatos históricos: UI 140/140, un VEX
+antiguo, policy stale y el candidato `74fb533`. Se corrigieron el resumen de
+observación, el estado del workspace y los bloqueadores para reflejar los
+recibos vigentes: UI 147/147, Scout/VEX 0/0, policy mecánicamente
+reconciliada, Trino 2/2, Spark Connect 1/1, POSIX 8/8, live 33/33 y artefactos
+90/90.
+
+El ledger sigue declarando correctamente **0/13** familias cualificadas y
+**NO-GO**. Esta corrección evita que una decisión de release se base en
+descripciones históricas aunque el SHA sea correcto.
+
 ## 106. Reconciliación de ledgers al SHA actual — 10/11/2026
 
 La auditoría detectó y corrigió una divergencia documental: los ledgers
