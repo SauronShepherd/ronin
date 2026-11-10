@@ -4097,9 +4097,10 @@ Project Studio en móvil (390×844) sobre el servidor del candidato. El Home
 presenta una jerarquía operativa clara —contexto, primer recorrido, control
 plane y siguiente acción—; Project Studio conserva el contexto workspace,
 cards de Author/Connect/Operate/Govern y la navegación inferior sin
-desbordamiento horizontal. La captura full-page del Home deja una zona vacía
-excesiva tras el contenido visible; se registra como deuda de densidad visual
-para una siguiente iteración, no como un fallo funcional.
+desbordamiento horizontal. La captura full-page aparentaba dejar una zona
+vacía tras el Home, pero la medición DOM confirma que el shell es fijo a
+900px y que `main` usa scroll interno; se trata de un artefacto de captura,
+no de una deuda CSS del producto.
 
 Esta revisión es evidencia interna reproducible, no la aprobación visual
 formal requerida por el gate de release.
