@@ -3921,3 +3921,13 @@ No se declara PASS de Docker, Helm ni upgrade/rollback para este candidato.
 El runner y sus contratos sí están implementados; queda repetir la lane en un
 host con Docker Desktop/daemon operativo, conservar la identidad exacta del
 SHA y adjuntar ambos recibos antes de cerrar `rollback-recovery-rehearsal`.
+
+## 114. Validación Helm independiente del daemon — 10/11/2026
+
+Mientras Docker Desktop permanece inaccesible, se ejecutaron las partes
+deterministas del rehearsal sobre el candidato `7c6486a4`: `helm lint` pasa sin
+fallos, `helm template` genera 4 documentos y la inspección de frontera
+confirma que el token de qualification aparece únicamente en el Secret. Esto
+valida chart, schema, valores y boundary de secretos, pero no sustituye
+`kind`, readiness, upgrade, rollback ni persistencia real. El gate operativo
+continúa pendiente y Public v1 permanece **NO-GO**.
