@@ -4,7 +4,7 @@
 
 **Last evidence review:** 10 November 2026
 
-**Candidate SHA:** runtime/test candidate `17cbcdb64d207d826e4e82afc1c26ecf548ef8a4`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `74fb53338dd62bc246c55b503b33ce2715795364`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,32 +20,34 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 10 November exact-candidate qualification — current `17cbcdb`
+## 10 November exact-candidate qualification — current `74fb5333`
 
 The candidate makes the visible default context (`default / examples/demo / local`)
 the same context used by Runs, aligns direct Project deep links with their
 workspace, preserves the `Example context` label on an unparameterized Home entry,
-and refuses unauthenticated Runs requests before they reach the API. The complete
-static Chromium suite passes `139/139`; the web audit passes with `69` files,
+refuses unauthenticated Runs requests before they reach the API, and remembers up
+to five safe recent contexts for rapid cross-workbench switching. The complete
+static Chromium suite passes `140/140`; the web audit passes with `69` files,
 `38` modules, `180` route invocations and `0` failures; the ratcheted delivery
-budget is `2,101,951` asset bytes, `68` requests, `36` modules, `13` stylesheets
-and `5,639` HTML bytes. The focused context/Home and error-state journeys pass.
+budget is `2,106,569` asset bytes, `68` requests, `36` modules, `13` stylesheets
+and `5,639` HTML bytes. The focused context/Home, recent-context and error-state
+journeys pass.
 
 Candidate-bound technical receipts:
 
 - Python/PostgreSQL: `4563/4590` passed, `27` explicit environment/provider/POSIX
-  skips and `0` failures. Receipt `%TEMP%\\ronin-python-full-17cbcdb-20261110`.
+  skips and `0` failures. Receipt `%TEMP%\\ronin-python-full-74fb533-20261110`.
 - Docker: `27/27` passed, strict v0.1 `15/15`, `0` skips/failures; runtime image
-  `sha256:6f7d2798020571039168997e523f20a83d5904055c48e202d22854e51d25ed0e`.
+  `sha256:970ea4e116ddbad8c0d69b485d0daf9bfe28762fcdfc4036a7a83abcf45861a7`.
 - Helm/kind: lint, Secret boundary, install, readiness, health, Studio/API,
   durable job, restart persistence and cleanup passed; receipt
-  `%TEMP%\\ronin-helm-17cbcdb-20261110`.
-- Live UI/API: `33/33` Playwright cases across 25 routes (24 API-backed), 249
+  `%TEMP%\\ronin-helm-74fb533-20261110`.
+- Live UI/API: `33/33` Playwright cases across 25 routes (24 API-backed), 254
   correlated events, `0` server/network errors and `0` unexpected auth gaps;
-  receipt `%TEMP%\\ronin-live-17cbcdb-20261110`.
+  receipt `%TEMP%\\ronin-live-74fb533-rerun-20261110`.
 - Installed artifacts: `90/90`; wheel SHA-256
-  `9441001a7bd49faf1926665a3e957691e21499b57ee19834914aa644d0d57149`, sdist
-  SHA-256 `12b542d6d57d1ae033b5b6c0d80f48162711e2f73ab359edfa7ade7ad32e0ce3`.
+  `c79e0422761598d86e7f8d4adfe46a542e8587c9d34ca5badd19e7b14c4e8dcc`, sdist
+  SHA-256 `766fa98205ec63f1d0e7a77297ced44f0f20b967621eec09e6a30ca4059f42a0`.
 - Supply chain: exact artifact identity, application/runtime/probe CycloneDX,
   provenance and container inventory validate with `supply_chain_evidence.py`;
   Trivy is pinned to `0.76.1`, with raw runtime/probe SBOMs and zero secrets.
@@ -53,7 +55,7 @@ Candidate-bound technical receipts:
   two-product OpenVEX binding for both runtime and probe; both verifiers pass.
 - Floci: endpoint HTTP 200; Terraform `1.13.5`, AWS provider `6.65.0`,
   plan/apply/refresh/destroy/state-list all return zero and fixture resources
-  are absent after destroy; receipt `%TEMP%\\ronin-floci-17cbcdb-evidence-20261110`.
+  are absent after destroy; receipt `%TEMP%\\ronin-floci-74fb533-evidence-20261110`.
 
 The remaining license qualification is intentionally not presented as green:
 22 dependency review decisions are missing, one stale `pyyaml==6.0.3` policy

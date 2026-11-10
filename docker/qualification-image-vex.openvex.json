@@ -2,7 +2,7 @@
   "@context": "https://openvex.dev/ns/v0.2.0",
   "@id": "https://github.com/SauronShepherd/ronin/blob/main/docker/qualification-image-vex.openvex.json",
   "author": "Ronin release qualification",
-  "timestamp": "2026-11-10T03:50:00Z",
+  "timestamp": "2026-11-10T07:42:00Z",
   "version": 17,
   "statements": [
     {
@@ -12,7 +12,7 @@
       "timestamp": "2026-11-08T15:03:00Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:6f7d2798020571039168997e523f20a83d5904055c48e202d22854e51d25ed0e",
+          "@id": "pkg:docker/ronin@sha256:970ea4e116ddbad8c0d69b485d0daf9bfe28762fcdfc4036a7a83abcf45861a7",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"
@@ -20,7 +20,7 @@
           ]
         },
         {
-          "@id": "pkg:docker/ronin-probe@sha256:aa6d30f9c4832aa23e7c30257203c3a8c13c670d8ab704641d0e3910af5cbf0b",
+          "@id": "pkg:docker/ronin-probe@sha256:a808ed5a9d9e51db78272fb80abbebd1c3937f83005db72e33ffa87bc8a34ee1",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"
@@ -39,7 +39,7 @@
       "timestamp": "2026-11-08T16:12:00Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:6f7d2798020571039168997e523f20a83d5904055c48e202d22854e51d25ed0e",
+          "@id": "pkg:docker/ronin@sha256:970ea4e116ddbad8c0d69b485d0daf9bfe28762fcdfc4036a7a83abcf45861a7",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"
@@ -47,7 +47,7 @@
           ]
         },
         {
-          "@id": "pkg:docker/ronin-probe@sha256:aa6d30f9c4832aa23e7c30257203c3a8c13c670d8ab704641d0e3910af5cbf0b",
+          "@id": "pkg:docker/ronin-probe@sha256:a808ed5a9d9e51db78272fb80abbebd1c3937f83005db72e33ffa87bc8a34ee1",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"
@@ -66,7 +66,7 @@
       "timestamp": "2026-11-08T16:12:00Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:6f7d2798020571039168997e523f20a83d5904055c48e202d22854e51d25ed0e",
+          "@id": "pkg:docker/ronin@sha256:970ea4e116ddbad8c0d69b485d0daf9bfe28762fcdfc4036a7a83abcf45861a7",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"
@@ -74,7 +74,7 @@
           ]
         },
         {
-          "@id": "pkg:docker/ronin-probe@sha256:aa6d30f9c4832aa23e7c30257203c3a8c13c670d8ab704641d0e3910af5cbf0b",
+          "@id": "pkg:docker/ronin-probe@sha256:a808ed5a9d9e51db78272fb80abbebd1c3937f83005db72e33ffa87bc8a34ee1",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"

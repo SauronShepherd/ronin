@@ -2,11 +2,12 @@
 
 ## Current exact-SHA snapshot — 10 November 2026
 
-The current runtime/test candidate is `17cbcdb64d207d826e4e82afc1c26ecf548ef8a4`,
-which makes the visible default context the same context used by Runs and keeps
-Project deep links aligned with the workspace context. Its exact web receipt is
-static Chromium `139/139`, web audit `69` files with zero failures, and budget
-`2,101,951` asset bytes, `68` requests, `36` modules, `13` stylesheets and
+The current runtime/test candidate is `74fb53338dd62bc246c55b503b33ce2715795364`,
+which makes the visible default context the same context used by Runs, keeps
+Project deep links aligned with the workspace context, and adds a safe recent-
+context switcher. Its exact web receipt is static Chromium `140/140`, web audit
+`69` files with zero failures, and budget `2,106,569` asset bytes, `68` requests,
+`36` modules, `13` stylesheets and
 `5,639` HTML bytes. Candidate-bound Docker, Helm/kind, live, artifact,
 SBOM/provenance, VEX and Floci receipts are recorded in the release checklist;
 the exact technical lanes pass, while license-policy, legal, security-human,
