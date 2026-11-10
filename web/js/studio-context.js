@@ -1,18 +1,6 @@
 const keys = Object.freeze(['workspace', 'project', 'environment', 'revision', 'runtime', 'dataset', 'run', 'compare']);
 
-// The shell presents this example boundary when a user opens the Studio without
-// a launch context. Keep the runtime context aligned with that visible default.
-export const DEFAULT_STUDIO_CONTEXT = Object.freeze({
-  workspace: 'default',
-  project: 'examples/demo',
-  runtime: 'local',
-});
-
-export function isDefaultStudioContext(context = {}) {
-  const keysInContext = Object.keys(context);
-  return keysInContext.length === Object.keys(DEFAULT_STUDIO_CONTEXT).length
-    && keysInContext.every((key) => context[key] === DEFAULT_STUDIO_CONTEXT[key]);
-}
+export const DEFAULT_STUDIO_CONTEXT = Object.freeze({workspace: 'default', project: 'examples/demo', runtime: 'local'});
 
 function clean(value) {
   if (value === undefined || value === null || value === '') return null;
