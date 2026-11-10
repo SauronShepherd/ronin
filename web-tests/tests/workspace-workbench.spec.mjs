@@ -44,6 +44,9 @@ test('Project workbench keeps authoring modes and scope usable on a phone', asyn
   expect(layout.modeOverflow).toBe(false);
   await page.getByRole('button', { name: 'Connect project' }).click();
   await expect(page.locator('#project-environment-form')).toBeInViewport();
+  await page.getByRole('button', { name: 'Use context' }).click();
+  await expect(page.locator('input[name="project_id"]')).toHaveCount(4);
+  await expect(page.locator('input[name="project_id"]').first()).toHaveValue('project-a');
   const manifest = JSON.parse(await page.locator('#project-manifest').inputValue());
   expect(manifest.schema).toBe('ronin.project/v1');
   expect(manifest.project.id).toBe('new-project');

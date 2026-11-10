@@ -4116,3 +4116,12 @@ workbench valida entrada/salida del modo edición y queda en **2/2**.
 La mejora reduce el riesgo de modificar el proyecto equivocado y acerca el
 journey a un control plane profesional; la cualificación completa P1 sigue
 pendiente.
+
+## 127. Project context handoff entre formularios — 10/11/2026
+
+La acción `Use context` del inventario de proyectos ahora propaga el
+`project_id` elegido a los cuatro formularios dependientes del Project
+Studio: importación Bundle, binding de environment, operación y permisos.
+Así se elimina la reescritura manual de identificadores y se reduce el riesgo
+de ejecutar una acción sobre un proyecto distinto al seleccionado. La
+regresión responsive valida los cuatro campos y queda en **2/2**.

@@ -2,6 +2,10 @@ import { get, post, put } from './api.js';
 import { esc, json } from './dom.js';
 import { setStudioContext } from './context-bar.js';
 
+function syncProjectForms(projectId) {
+  document.querySelectorAll('input[name="project_id"]').forEach((input) => { input.value = projectId; });
+}
+
 function renderProjects() {
   if (location.hash.slice(1).split('/')[0] !== 'projects') return;
   const view = document.querySelector('#view');
@@ -134,6 +138,7 @@ function renderProjects() {
     } catch (error) { output.textContent = `Could not inspect project permissions: ${error.message}`; }
   });
   loadProjects(workspaceId);
+  if (activeContext.project && !isExampleContext) syncProjectForms(activeContext.project);
   document.querySelector('#project-cancel-edit').addEventListener('click', () => {
     delete form.dataset.editProject;
     form.reset();
@@ -199,6 +204,7 @@ document.addEventListener('click', async (event) => {
   if (context) {
     const workspaceId = decodeURIComponent(location.hash.slice(1).split('/')[1] || '');
     setStudioContext({ workspace: workspaceId, project: context.dataset.project });
+    syncProjectForms(context.dataset.project);
     return;
   }
   const edit = event.target.closest?.('.project-edit');
