@@ -63,7 +63,9 @@ function ensure() {
   });
   dialog.addEventListener('cancel', (event) => {
     event.preventDefault();
+    const trigger = lastTrigger || document.querySelector('[data-action="open-command"]');
     dialog.close();
+    setTimeout(() => trigger?.focus?.(), 0);
   });
 }
 
@@ -92,7 +94,7 @@ function open(command) {
 
 export function openCommandPalette() {
   const active = document.activeElement;
-  lastTrigger = active instanceof HTMLElement && active !== document.body
+  lastTrigger = active instanceof HTMLElement && active.matches('[data-action="open-command"]')
     ? active
     : document.querySelector('[data-action="open-command"]');
   ensure();
@@ -111,6 +113,13 @@ document.addEventListener('click', (event) => {
 }, true);
 
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && dialog?.open) {
+    event.preventDefault();
+    const trigger = lastTrigger || document.querySelector('[data-action="open-command"]');
+    dialog.close();
+    setTimeout(() => trigger?.focus?.(), 0);
+    return;
+  }
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
     event.preventDefault();
     event.stopImmediatePropagation();

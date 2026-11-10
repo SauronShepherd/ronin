@@ -550,3 +550,16 @@ en `353.24s`. Una primera ejecución había mostrado una única interrupción
 caso pasó `11/11` veces aislado y la repetición completa posterior pasó sin
 fallos. Se conserva como señal de contención/flakiness del host Windows, no se
 cuenta como pass de una lane externa y debe vigilarse en futuras qualification.
+
+## 14. Command palette: foco al abrir con atajo
+
+La revisión de accesibilidad reprodujo un defecto real: al abrir la command
+palette con `Ctrl/⌘K`, el foco inicial de Chromium podía ser `main`, y el cierre
+intentaba restaurarlo como si fuera el disparador. El shell ahora conserva como
+disparador sólo un elemento que sea realmente `[data-action="open-command"]` y
+usa el botón visible como fallback. Se añadió una regresión específica de
+apertura por atajo y restitución de foco.
+
+La suite Chromium del candidato actualizado pasó `148/148` en `3.4m`; las tres
+pruebas de command palette pasan juntas y la suite completa mantiene
+accesibilidad, responsive, navegación y journeys en verde.

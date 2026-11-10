@@ -125,6 +125,15 @@ test.describe('home control plane', () => {
     await expect(page.locator('#quality-form')).toBeVisible();
   });
 
+  test('keyboard command palette restores focus to the shell trigger', async ({ page }) => {
+    await page.goto('./#home', { waitUntil: 'load' });
+    await page.keyboard.press(process.platform === 'darwin' ? 'Meta+K' : 'Control+K');
+    await expect(page.locator('.command-palette')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.command-palette')).not.toBeVisible();
+    await expect(page.locator('.command-open')).toBeFocused();
+  });
+
   test('shows bounded recent activity for the active project without inventing telemetry', async ({ page }) => {
     await page.addInitScript(() => sessionStorage.setItem('ronin.session', 'static-home-token'));
     await page.route('**/v1/jobs**', async route => {
