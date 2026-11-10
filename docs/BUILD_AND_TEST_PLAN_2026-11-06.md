@@ -572,3 +572,10 @@ atributos redundantes sin relajar la accesibilidad comprobada. El tamaño final
 medido del Studio es `2,132,538` bytes, por debajo del baseline candidate-bound
 de `2,132,739`; `studio_budget --check` y `studio_web_audit` pasan. La suite
 Chromium completa posterior a esta limpieza permanece en `148/148`.
+
+## 16. Command palette: saltos Home/End
+
+La paleta admite ahora `Home` y `End` para saltar al primer y último resultado,
+manteniendo actualizado `aria-activedescendant`. La regresión confirma ambos
+saltos y la suite Chromium completa posterior pasa `148/148`; el paquete queda
+en `2,132,718` bytes, dentro del ratchet vigente.

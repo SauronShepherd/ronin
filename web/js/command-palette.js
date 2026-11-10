@@ -54,6 +54,8 @@ function ensure() {
     if (!visible.length) return;
     if (event.key === 'ArrowDown') { event.preventDefault(); selected = (selected + 1) % visible.length; render(); }
     if (event.key === 'ArrowUp') { event.preventDefault(); selected = (selected - 1 + visible.length) % visible.length; render(); }
+    if (event.key === 'Home') { event.preventDefault(); selected = 0; render(); }
+    if (event.key === 'End') { event.preventDefault(); selected = visible.length - 1; render(); }
     if (event.key === 'Enter') { event.preventDefault(); open(visible[selected]); }
   });
   dialog.addEventListener('click', (event) => {

@@ -69,6 +69,11 @@ test.describe('home control plane', () => {
     await expect(page.locator('.command-option-copy small')).toContainText('Run checks and review promotion gates.');
     await page.locator('#ronin-command-search').fill('promotion gates');
     await expect(page.locator('.command-option')).toContainText('Quality Studio');
+    await page.locator('#ronin-command-search').fill('');
+    await page.locator('#ronin-command-search').press('End');
+    await expect(page.locator('#ronin-command-list')).toHaveAttribute('aria-activedescendant', 'ronin-command-settings');
+    await page.locator('#ronin-command-search').press('Home');
+    await expect(page.locator('#ronin-command-list')).toHaveAttribute('aria-activedescendant', 'ronin-command-home');
     await page.keyboard.press('Escape');
     await expect(page.locator('.command-palette')).not.toBeVisible();
     await expect(page.locator('.command-open')).toBeFocused();
