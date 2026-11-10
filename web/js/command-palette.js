@@ -32,12 +32,14 @@ let dialog;
 let input;
 let list;
 let selected = 0;
+let lastTrigger;
 
 function ensure() {
   if (dialog) return;
   dialog = document.createElement('dialog');
   dialog.className = 'dialog command-palette';
-  dialog.innerHTML = `<form method="dialog"><label class="sr-only" for="ronin-command-search">${t('command.search')}</label><input id="ronin-command-search" class="field" autocomplete="off" placeholder="${t('command.search')}"><div id="ronin-command-list" role="listbox"></div><div class="muted">${t('command.help')}</div></form>`;
+  dialog.setAttribute('aria-label', t('command.search'));
+  dialog.innerHTML = `<form method="dialog"><label class="sr-only" for="ronin-command-search">${t('command.search')}</label><input id="ronin-command-search" class="field" autocomplete="off" placeholder="${t('command.search')}" aria-controls="ronin-command-list"><div id="ronin-command-list" role="listbox" aria-label="${t('command.search')}"></div><div class="muted">${t('command.help')}</div></form>`;
   document.body.append(dialog);
   input = dialog.querySelector('input');
   list = dialog.querySelector('#ronin-command-list');
@@ -52,6 +54,11 @@ function ensure() {
   dialog.addEventListener('click', (event) => {
     const option = event.target.closest('[data-command-route]');
     if (option) open(commands.find((command) => command.route === option.dataset.commandRoute));
+    if (event.target === dialog) dialog.close();
+  });
+  dialog.addEventListener('close', () => {
+    lastTrigger?.focus?.();
+    lastTrigger = null;
   });
 }
 
@@ -63,11 +70,12 @@ function filtered() {
 function render() {
   const visible = filtered();
   selected = Math.min(selected, Math.max(visible.length - 1, 0));
+  list.setAttribute('aria-activedescendant', visible[selected] ? `ronin-command-${visible[selected].route}` : '');
   let previousGroup = '';
   list.innerHTML = visible.map((command, index) => {
     const heading = command.group !== previousGroup ? `<p class="command-group" role="presentation">${command.group}</p>` : '';
     previousGroup = command.group;
-    return `${heading}<button type="button" class="command-option" role="option" aria-selected="${index === selected}" aria-label="${command.label}: ${command.description}" data-command-route="${command.route}"><span class="command-option-copy"><strong>${command.label}</strong><small>${command.description}</small></span><kbd>${command.route}</kbd></button>`;
+    return `${heading}<button id="ronin-command-${command.route}" type="button" class="command-option" role="option" aria-selected="${index === selected}" aria-label="${command.label}: ${command.description}" data-command-route="${command.route}"><span class="command-option-copy"><strong>${command.label}</strong><small>${command.description}</small></span><kbd>${command.route}</kbd></button>`;
   }).join('') || `<p class="muted">${t('command.empty')}</p>`;
 }
 
@@ -78,6 +86,7 @@ function open(command) {
 }
 
 export function openCommandPalette() {
+  lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   ensure();
   input.value = '';
   selected = 0;
