@@ -30,10 +30,7 @@ test('live Runs saves server settings and retains the project filter', async ({ 
   await page.getByRole('button', { name: 'Save connection' }).click();
   await expect(page.locator('#run-project')).toHaveValue('examples/demo');
   await expect(page.locator('#run-result')).toContainText('examples/demo');
-  expect(jobResponses).toEqual([
-    { project: 'examples/demo', status: 401 },
-    { project: 'examples/demo', status: 200 },
-  ]);
+  expect(jobResponses).toEqual([{ project: 'examples/demo', status: 200 }]);
   await page.locator('#run-project').fill('examples/demo');
 
   const listResponse = page.waitForResponse(response => {
@@ -56,7 +53,6 @@ test('live Runs saves server settings and retains the project filter', async ({ 
   }
   expect(connectionRequests).toEqual([]);
   expect(jobResponses).toEqual([
-    { project: 'examples/demo', status: 401 },
     { project: 'examples/demo', status: 200 },
     { project: 'examples/demo', status: 200 },
   ]);

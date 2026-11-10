@@ -197,6 +197,7 @@ test('Run detail keeps lifecycle actions and evidence review explicit', async ({
 
 test('Runs explorer keeps scope, health counts, and reset action explicit', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => sessionStorage.setItem('ronin.session', 'static-test-token'));
   await page.route('**/v1/jobs**', async route => {
     const url = new URL(route.request().url());
     expect(url.searchParams.get('project')).toBe('examples/demo');
@@ -235,12 +236,13 @@ test('default shell context is the same context used by Runs', async ({ page }) 
   await expect(page.locator('.context-bar')).toContainText('default');
   await expect(page.locator('.context-bar')).toContainText('examples/demo');
   await expect(page.locator('#run-project')).toHaveValue('examples/demo');
-  await expect(page.locator('#run-result')).toContainText('No runs are visible for this credential.');
-  expect(requestedProjects).toEqual(['examples/demo']);
+  await expect(page.locator('#run-result')).toContainText('Connect a server to inspect its runs.');
+  expect(requestedProjects).toEqual([]);
 });
 
 test('Runs explorer follows launch context and refreshes when the context changes', async ({ page }) => {
   const requestedProjects = [];
+  await page.addInitScript(() => sessionStorage.setItem('ronin.session', 'static-test-token'));
   await page.route('**/v1/jobs**', async route => {
     const url = new URL(route.request().url());
     const project = url.searchParams.get('project');
