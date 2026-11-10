@@ -4125,3 +4125,8 @@ Studio: importación Bundle, binding de environment, operación y permisos.
 Así se elimina la reescritura manual de identificadores y se reduce el riesgo
 de ejecutar una acción sobre un proyecto distinto al seleccionado. La
 regresión responsive valida los cuatro campos y queda en **2/2**.
+
+La suite Chromium completa posterior al cambio pasa **147/147** en 4,2
+minutos, incluyendo accesibilidad, responsive, route traversal, Home,
+Workspace/Project y los demás Studios. No se observan regresiones fuera del
+journey focalizado.
