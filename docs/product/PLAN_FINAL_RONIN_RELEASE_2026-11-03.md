@@ -3810,6 +3810,20 @@ Esta inspección es evidencia asistida del candidato y complementa la matriz
 responsive/accesibilidad automatizada; no reemplaza la revisión visual humana
 firmada que exige el gate de release. Public v1 permanece **NO-GO**.
 
+## 109. Inspección visual móvil — 10/11/2026
+
+Se inspeccionó el shell real a **390×844 px** con Chromium: topbar con
+contexto, acceso a conexión y búsqueda; home con CTA y contexto; y rail
+inferior compacto con iconos y foco activo. El contenido mantiene márgenes,
+contraste y jerarquía legibles, y la navegación no introduce overflow
+horizontal en el viewport revisado. La captura de página completa muestra
+espacio vertical adicional por el modo `fullPage`, pero el viewport operativo
+no presenta ese defecto.
+
+La revisión móvil asistida queda verde para esta superficie y complementa el
+test responsive automatizado. No sustituye la aprobación visual humana
+firmada ni la revisión de todas las rutas. Public v1 permanece **NO-GO**.
+
 ## 106. Reconciliación de ledgers al SHA actual — 10/11/2026
 
 La auditoría detectó y corrigió una divergencia documental: los ledgers
