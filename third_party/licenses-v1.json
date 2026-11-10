@@ -143,19 +143,11 @@
         "NOTICE"
       ],
       "direct": false,
-      "evidence_sha256": "e2a61896cac489ecd960e3ae1ea6702e5fedb0767213d5402a57404ba3a7808d",
+      "evidence_sha256": "a2aee04880e167901acebf04609b9ba7336f33c1297045c1dbf20d8c6a0ac6ad",
       "license_files": [
-        {
-          "path": "cyclonedx/factory/__pycache__/license.cpython-313.pyc",
-          "sha256": "ed9620549728608e8d447350aeae1103feb15320c920c287c0f4e852a5379d17"
-        },
         {
           "path": "cyclonedx/factory/license.py",
           "sha256": "021381eed6e355e7d325cb3e22dfd5ab1e3d244839467fada27ab3b3f6f7beb6"
-        },
-        {
-          "path": "cyclonedx/model/__pycache__/license.cpython-313.pyc",
-          "sha256": "90b4dfbf4c594720cd92a49f34d27635fe3f15ededd5a4764a46e4fbb4da8e80"
         },
         {
           "path": "cyclonedx/model/license.py",

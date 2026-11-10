@@ -257,6 +257,10 @@ def _license_files(
     matched_declared: set[str] = set()
     for file in dist.files or ():
         path = str(file).replace("\\", "/")
+        if "__pycache__" in PurePosixPath(path).parts or path.casefold().endswith(".pyc"):
+            # Bytecode is an installation artifact, not legal source evidence.
+            # Including it makes evidence hashes depend on import timing.
+            continue
         name = PurePosixPath(path).name.casefold()
         declared_matches = {
             declared

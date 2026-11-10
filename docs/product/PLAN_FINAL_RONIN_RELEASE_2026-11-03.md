@@ -3781,3 +3781,19 @@ Databricks, Dataiku, Palantir y Fabric. Esta regresión confirma el contrato
 automatizado, pero no sustituye una revisión visual humana firmada sobre el
 candidato final. Public v1 continúa **NO-GO** por los gates externos y
 humanos ya enumerados.
+
+## 104. Inventario legal reproducible y estable — 10/11/2026
+
+Se corrigió el generador de evidencia legal para excluir bytecode `.pyc` y
+directorios `__pycache__`: esos archivos son artefactos de importación local,
+no textos de licencia, y hacían que el hash de una misma distribución
+dependiera del momento en que se ejecutaba el proceso. El inventario se
+regeneró desde un entorno temporal limpio instalado con
+`requirements-dev.lock` y hashes exactos.
+
+La batería contractual de licencias pasa **106/106**. El gate completo sigue
+fallando de forma intencionadamente fail-closed con los mismos blockers
+legítimos: **22 decisiones humanas faltantes**, una entrada stale de policy y
+nueve evidencias de revisión desalineadas. Esta iteración elimina un falso
+cambio de evidencia, pero no convierte ninguna aprobación legal en automática
+ni cambia Public v1 de **NO-GO**.
