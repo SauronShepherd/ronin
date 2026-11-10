@@ -579,3 +579,50 @@ La paleta admite ahora `Home` y `End` para saltar al primer y último resultado,
 manteniendo actualizado `aria-activedescendant`. La regresión confirma ambos
 saltos y la suite Chromium completa posterior pasa `148/148`; el paquete queda
 en `2,132,718` bytes, dentro del ratchet vigente.
+
+## 17. Rúbrica de producto y decisión candidate-bound
+
+La calidad técnica del shell no se interpreta como equivalencia automática con
+Databricks, Dataiku, Palantir o Fabric. Para que la comparación sea útil, cada
+familia de producto debe demostrar simultáneamente los siguientes cinco
+contratos en el mismo candidato limpio:
+
+1. **Orientación:** la persona entiende dónde está, qué contexto (`workspace`,
+   `project`, `environment`, `runtime`) está activo y cuál es el siguiente paso
+   seguro sin leer documentación externa.
+2. **Flujo completo:** puede descubrir, configurar, ejecutar, observar,
+   corregir y volver a ejecutar la capacidad; los estados `loading`, `empty`,
+   `error`, `blocked`, `running` y `success` son distinguibles y honestos.
+3. **Control y reversibilidad:** las operaciones destructivas explican su
+   alcance, requieren confirmación proporcional, producen un receipt y ofrecen
+   cancelación, rollback o una recuperación documentada cuando el dominio lo
+   permite.
+4. **Densidad sin complejidad:** búsqueda/command palette, navegación por
+   teclado, foco visible, responsive de 320–1440 px y progressive disclosure
+   permiten trabajar con potencia sin convertir la pantalla en un panel de
+   controles indistinguibles.
+5. **Evidencia:** API/OpenAPI, persistencia, autorización, auditoría, métricas y
+   documentación describen el mismo contrato que muestra la UI; ningún texto
+   de demo se usa como resultado operativo.
+
+La aceptación visual requiere además una revisión humana con capturas de cada
+journey en viewport ancho y estrecho, más una revisión de lector de pantalla y
+teclado. Los tests automatizados prueban regresión, no sustituyen esta firma.
+La hoja de decisión de Public v1 debe marcar una familia como `qualified` sólo
+cuando los cinco contratos, el journey end-to-end, el proveedor declarado, la
+licencia/NOTICE y el rollback tengan evidencia candidate-bound. Una suite verde
+con `0/13` familias no puede producir `GO`.
+
+**Observación actual:** el `HEAD` documental `8c965d08` está publicado y limpio;
+la regresión web completa es `148/148`, el subconjunto Python/ledger es `27/27`,
+la auditoría web y el presupuesto pasan, y el candidato runtime/test base
+`772e381d` conserva la suite Python `4511 passed, 77 skipped, 0 failed`.
+La rúbrica no cierra por inferencia los journeys, proveedores, licencias,
+revisión visual, supply chain, rollback ni gobierno de release: el ledger
+continúa en `0/13` y la decisión verificable continúa **NO-GO**.
+
+**Siguiente ciclo obligatorio:** seleccionar una familia con owner y proveedor,
+congelar un SHA limpio, ejecutar el journey de los cinco contratos, adjuntar
+capturas/receipts y sólo entonces cambiar su estado del ledger. Repetir hasta
+`13/13`; si una evidencia falta, conservar `NO-GO` y registrar el blocker
+concreto en lugar de rebajar el estándar.
