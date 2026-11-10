@@ -3614,3 +3614,25 @@ exactos de SBOM/provenance y repetir Helm, live y artifacts sobre este SHA.
 Las gates humanas, visuales, legales, de proveedores y las 13 familias
 Public v1 siguen pendientes. Se mantiene **NO-GO** hasta completar esas
 pruebas y aprobaciones.
+
+## 93. Recibos completos del candidato final — 10/11/2026
+
+Sobre el mismo SHA `1cf4beafd2748c4e3219a40033e34b9117975da5` y la imagen
+`sha256:ff4e7c6a4207c3505d649a25851961a689482f68bbd6db1b6b4450d2e36aaedd`:
+
+- Helm/kind pasó lint, frontera de Secret, render, carga de imagen,
+  instalación, readiness, health, Studio/API, creación de job, restart,
+  persistencia del job y cleanup.
+- Live UI/API pasó **33/33**, con 25 rutas activas, 24 API-backed, 250 eventos
+  correlacionados y cero errores de servidor/red.
+- Artefactos instalables pasaron **90/90** pruebas de contrato e instalación.
+- Se generaron y verificaron el SBOM interno, CycloneDX de release y
+  provenance local; el escaneo Scout del TAR exacto reporta **0
+  vulnerabilidades**.
+
+Esto cierra los recibos técnicos locales del candidato, pero no convierte el
+producto en GO automáticamente: siguen pendientes la revisión formal de la
+política Alpine Edge, aprobación humana/legal de licencias y claims, revisión
+visual, matriz de proveedores/OS/Python, rollback y las 13 familias de
+capacidad Public v1. La recomendación permanece **NO-GO** hasta que esos gates
+sean aceptados por sus responsables.
