@@ -2,7 +2,7 @@
 
 ## Current exact-SHA snapshot — 10 November 2026
 
-The current runtime/test candidate is `1475246c2c7620183eca77e7c7ecb0350ca5c49d`,
+The current runtime/test candidate is `17cbcdb64d207d826e4e82afc1c26ecf548ef8a4`,
 which makes the visible default context the same context used by Runs and keeps
 Project deep links aligned with the workspace context. Its exact web receipt is
 static Chromium `139/139`, web audit `69` files with zero failures, and budget

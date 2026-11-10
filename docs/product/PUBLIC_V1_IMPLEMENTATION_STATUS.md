@@ -7,7 +7,7 @@
 
 ## Current exact-SHA qualification — 10 November 2026
 
-The current runtime/test candidate is `1475246c2c7620183eca77e7c7ecb0350ca5c49d`.
+The current runtime/test candidate is `17cbcdb64d207d826e4e82afc1c26ecf548ef8a4`.
 Runs now uses the same default context shown by the shell (`default /
 examples/demo / local`), and direct Project deep links synchronize their
 workspace scope without clearing a project explicitly chosen by the operator,
@@ -25,11 +25,11 @@ The tracked license inventory is now regenerated against the current lock, but
 9 inventory/policy evidence records are mismatched; legal approval remains open.
 
 Candidate-bound qualification receipts are green for Docker (`27/27`, strict
-v0.1 `15/15`), Helm/kind, live UI/API (`33/33`, 250 correlated events), SDK
+v0.1 `15/15`), Helm/kind, live UI/API (`33/33`, 249 correlated events), SDK
 artifacts (`90/90`), exact supply-chain evidence, and Floci with Terraform
 `1.13.5`/AWS provider `6.65.0`. The full Python/PostgreSQL run is being repeated
-after four documentation-contract failures were corrected; its pre-fix receipt
-is retained at `%TEMP%\\ronin-python-full-1475246-20261110`.
+after four documentation-contract failures were corrected; it passed `4563/4590`
+with `27` explicit skips and `0` failures at `%TEMP%\\ronin-python-full-17cbcdb-20261110`.
 
 This is technical qualification only. Public v1 remains **0/13 (0%, NO-GO)**:
 manual visual/product signoff, legal/NOTICE/claims, security/VEX triage and

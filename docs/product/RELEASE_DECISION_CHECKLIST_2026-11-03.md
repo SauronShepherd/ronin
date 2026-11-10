@@ -4,7 +4,7 @@
 
 **Last evidence review:** 10 November 2026
 
-**Candidate SHA:** runtime/test candidate `1475246c2c7620183eca77e7c7ecb0350ca5c49d`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `17cbcdb64d207d826e4e82afc1c26ecf548ef8a4`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,7 +20,7 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 10 November exact-candidate qualification — current `1475246`
+## 10 November exact-candidate qualification — current `17cbcdb`
 
 The candidate makes the visible default context (`default / examples/demo / local`)
 the same context used by Runs, aligns direct Project deep links with their
@@ -33,22 +33,19 @@ and `5,639` HTML bytes. The focused context/Home and error-state journeys pass.
 
 Candidate-bound technical receipts:
 
-- Python/PostgreSQL: the candidate-bound full run is expected to close at
-  `4563/4590` passed, `27` explicit environment/provider/POSIX skips and `0`
-  failures once the synchronized ledger/VEX changes are committed; the first
-  pre-fix run recorded `4559` passed and four documentation-contract failures.
-  Receipt `%TEMP%\\ronin-python-full-1475246-20261110`.
+- Python/PostgreSQL: `4563/4590` passed, `27` explicit environment/provider/POSIX
+  skips and `0` failures. Receipt `%TEMP%\\ronin-python-full-17cbcdb-20261110`.
 - Docker: `27/27` passed, strict v0.1 `15/15`, `0` skips/failures; runtime image
-  `sha256:3dcd85fb0da2e0e911594b38dda559931020cd77f9521274df1a69e81332f06a`.
+  `sha256:6f7d2798020571039168997e523f20a83d5904055c48e202d22854e51d25ed0e`.
 - Helm/kind: lint, Secret boundary, install, readiness, health, Studio/API,
   durable job, restart persistence and cleanup passed; receipt
-  `%TEMP%\\ronin-helm-1475246-20261110`.
-- Live UI/API: `33/33` Playwright cases across 25 routes (24 API-backed), 250
+  `%TEMP%\\ronin-helm-17cbcdb-20261110`.
+- Live UI/API: `33/33` Playwright cases across 25 routes (24 API-backed), 249
   correlated events, `0` server/network errors and `0` unexpected auth gaps;
-  receipt `%TEMP%\\ronin-live-1475246-20261110`.
+  receipt `%TEMP%\\ronin-live-17cbcdb-20261110`.
 - Installed artifacts: `90/90`; wheel SHA-256
-  `ba6503f249aae9f5d1e83c4a47ceafdace377011441ff4caa5a612f7954ffd4f`, sdist
-  SHA-256 `c87113c7f182a4395bf677c3bae699eced683fbbe2ba4dcf7b4dabae4c4d2403`.
+  `9441001a7bd49faf1926665a3e957691e21499b57ee19834914aa644d0d57149`, sdist
+  SHA-256 `12b542d6d57d1ae033b5b6c0d80f48162711e2f73ab359edfa7ade7ad32e0ce3`.
 - Supply chain: exact artifact identity, application/runtime/probe CycloneDX,
   provenance and container inventory validate with `supply_chain_evidence.py`;
   Trivy is pinned to `0.76.1`, with raw runtime/probe SBOMs and zero secrets.
@@ -56,7 +53,7 @@ Candidate-bound technical receipts:
   two-product OpenVEX binding for both runtime and probe; both verifiers pass.
 - Floci: endpoint HTTP 200; Terraform `1.13.5`, AWS provider `6.65.0`,
   plan/apply/refresh/destroy/state-list all return zero and fixture resources
-  are absent after destroy; receipt `%TEMP%\\ronin-floci-1475246-evidence-20261110c`.
+  are absent after destroy; receipt `%TEMP%\\ronin-floci-17cbcdb-evidence-20261110`.
 
 The remaining license qualification is intentionally not presented as green:
 22 dependency review decisions are missing, one stale `pyyaml==6.0.3` policy
