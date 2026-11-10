@@ -4067,3 +4067,12 @@ errores de edición. La regresión Playwright responsive del workbench pasa
 Esto mejora el primer-run y la comparabilidad con los workbenches de
 Databricks/Dataiku/Fabric, pero no cualifica aún la familia P1 completa ni
 cambia el NO-GO del release.
+
+## 123. Regresión web posterior al authoring — 10/11/2026
+
+La suite Chromium completa sobre el estado posterior al cambio de proyectos
+ejecutó **147/147** casos con dos workers: accesibilidad, navegación,
+responsive, Home, contextos, workspaces/projects y journeys de todos los
+Studios. No se observaron fallos ni skips en la selección estática. Esta
+evidencia confirma la no-regresión de UI; no sustituye la revisión visual
+manual ni la cualificación Public v1 exact-head.
