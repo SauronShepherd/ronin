@@ -15,7 +15,7 @@ test.describe('home control plane', () => {
     await expect(page.locator('.context-change')).toHaveAttribute('data-action', 'open-context');
     await expect(page.locator('.home-status-card')).toHaveCount(4);
     await expect(page.locator('.home-journey-list li')).toHaveCount(3);
-    await expect(page.locator('.home-shortcut')).toHaveCount(3);
+    await expect(page.locator('.home-shortcuts')).toHaveCount(0);
     await expect(page.locator('body')).not.toContainText('undefined');
 
     for (const route of ['workspaces', 'data', 'quality', 'runs', 'migration', 'sql']) {

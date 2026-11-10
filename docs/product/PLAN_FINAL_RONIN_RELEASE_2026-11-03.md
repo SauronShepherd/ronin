@@ -4005,3 +4005,18 @@ La jornada Playwright de Notebook Studio, ampliada con edición/alta/baja de
 celdas y ejecución, pasa **1/1**. La suite completa Chromium se repetirá sobre
 este estado antes de cerrar la pasada. La simplificación de Home y los gates de
 certificación/release siguen pendientes; Public v1 permanece **NO-GO**.
+
+## 119. Home control plane: eliminación de accesos duplicados — 10/11/2026
+
+La revisión de experiencia detectó que Home ofrecía los mismos destinos en
+checkpoints, recorrido recomendado y un tercer bloque de Quick Access. Se
+eliminó únicamente ese bloque redundante: la acción prioritaria sigue siendo el
+recorrido `boundary → shape → qualify`, el historial reciente mantiene la
+señal operativa y command palette conserva el acceso directo a cualquier
+Studio.
+
+La regresión de Home se actualizó para exigir la ausencia del bloque duplicado
+y pasa **11/11**; la suite completa Chromium sobre el estado final pasa
+**147/147**. Esta pasada mejora densidad y claridad, pero no convierte por sí
+sola la plataforma en GO: siguen pendientes la cualificación Public v1,
+proveedores, revisión visual formal y aprobaciones de release.

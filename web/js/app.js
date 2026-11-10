@@ -109,14 +109,6 @@ function renderHome(){
         <a class="button primary home-attention-action" href="#runs">Open the run trail</a>
       </aside>
     </section>
-    <section class="home-shortcuts" aria-labelledby="home-shortcuts-title">
-      <div class="home-section-heading"><div><p class="eyebrow">QUICK ACCESS</p><h2 id="home-shortcuts-title">Go straight to the work</h2></div><a class="home-inline-link" href="#settings">Configure Studio <span aria-hidden="true">→</span></a></div>
-      <div class="grid three">
-        <article class="card home-shortcut"><div class="home-shortcut-icon" aria-hidden="true">◎</div><div class="stat">${routes.runs}</div><p>Inspect durable runs, events and evidence.</p><a class="button" href="#runs">Open runs</a></article>
-        <article class="card home-shortcut"><div class="home-shortcut-icon" aria-hidden="true">↯</div><div class="stat">${routes.migration}</div><p>Discover, scope and qualify source migrations.</p><a class="button" href="#migration">Open Migration Studio</a></article>
-        <article class="card home-shortcut"><div class="home-shortcut-icon" aria-hidden="true">⌘</div><div class="stat">${routes.sql}</div><p>Execute bounded read-only SQL.</p><a class="button" href="#sql">Open SQL</a></article>
-      </div>
-    </section>
     <section class="panel home-activity-panel" aria-labelledby="home-activity-title">
       <div class="home-section-heading"><div><p class="eyebrow">LIVE PROJECT SIGNAL</p><h2 id="home-activity-title">Recent activity</h2></div><a class="home-inline-link" href="#runs">View all runs <span aria-hidden="true">→</span></a></div>
       <div id="home-activity" class="home-activity loading" aria-live="polite">Loading recent activity…</div>
