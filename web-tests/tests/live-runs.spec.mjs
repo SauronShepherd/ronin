@@ -28,8 +28,9 @@ test('live Runs saves server settings and retains the project filter', async ({ 
   await page.locator('#api-url').fill(apiOrigin);
   await page.locator('#api-token').fill(token);
   await page.getByRole('button', { name: 'Save connection' }).click();
-  await expect(page.locator('#run-result')).toContainText('Choose a project to inspect its runs');
-  expect(jobResponses).toEqual([]);
+  await expect(page.locator('#run-project')).toHaveValue('examples/demo');
+  await expect(page.locator('#run-result')).toContainText('examples/demo');
+  expect(jobResponses).toEqual([{ project: 'examples/demo', status: 200 }]);
   await page.locator('#run-project').fill('examples/demo');
 
   const listResponse = page.waitForResponse(response => {
@@ -51,6 +52,9 @@ test('live Runs saves server settings and retains the project filter', async ({ 
     await expect(result).toContainText('No runs are visible for this credential.');
   }
   expect(connectionRequests).toEqual([]);
-  expect(jobResponses).toEqual([{ project: 'examples/demo', status: 200 }]);
+  expect(jobResponses).toEqual([
+    { project: 'examples/demo', status: 200 },
+    { project: 'examples/demo', status: 200 },
+  ]);
   expect(pageErrors).toEqual([]);
 });
