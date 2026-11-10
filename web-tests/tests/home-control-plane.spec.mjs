@@ -91,6 +91,26 @@ test.describe('home control plane', () => {
     await expect(page.locator('#migration-cockpit-project')).toHaveValue('project-z');
   });
 
+  test('remembers safe recent contexts for fast cross-studio switching', async ({ page }) => {
+    await page.goto('./#home', { waitUntil: 'load' });
+    await page.locator('.context-change').click();
+    await expect(page.locator('.context-recent-empty')).toHaveText(/recent working contexts/i);
+    await page.locator('#context-form [name="workspace"]').fill('team-a');
+    await page.locator('#context-form [name="project"]').fill('project-z');
+    await page.locator('#context-form [name="environment"]').fill('staging');
+    await page.locator('#context-form [name="runtime"]').fill('container');
+    await page.locator('#context-form button[type="submit"]').click();
+    await page.locator('.context-change').click();
+    await expect(page.locator('.context-recent-option')).toHaveCount(1);
+    await expect(page.locator('.context-recent-option')).toContainText('team-a / project-z');
+    await expect(page.locator('.context-recent-option')).toContainText('staging · container');
+    await page.locator('.context-recent-option').press('Enter');
+    await expect(page.locator('#context-dialog')).not.toBeVisible();
+    await expect(page).toHaveURL(/workspace=team-a.*project=project-z.*environment=staging.*runtime=container/);
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('ronin.recent-contexts')));
+    expect(saved).toEqual([{ workspace: 'team-a', project: 'project-z', environment: 'staging', runtime: 'container' }]);
+  });
+
   test('opens a surface when a command palette option is clicked', async ({ page }) => {
     await page.goto('./#home', { waitUntil: 'load' });
     await page.keyboard.press(process.platform === 'darwin' ? 'Meta+K' : 'Control+K');
