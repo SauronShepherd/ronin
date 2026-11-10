@@ -1,31 +1,17 @@
 # Ronin Public v1 capability matrix
 
-## Current exact-SHA snapshot — 9 November 2026
+## Current exact-SHA snapshot — 10 November 2026
 
-The current runtime/test candidate is `4962ff0512956f0214ddc9a96def9ae2fd77ccfa`,
-which adds context-synchronized Runs: launch context seeds the project filter,
-context changes refresh the scoped query, and manual refresh remains explicit.
-Its exact UI receipt is static Chromium `138/138`, web audit `69` files with zero
-failures, and budget `2,101,245` asset bytes, `68` requests, `36` modules,
-`13` stylesheets and `5,639` HTML bytes. Installed artifact qualification is
-`90/90`, Docker is `27/27` plus strict `15/15`, Helm/kind passes on image
-`sha256:da112fd1ba92f131668dc94f22a37829c5f2c641c29bba9901f17fc50ede83f4`,
-and live qualification is `33/33` with 246 correlated events and no
-server/network errors. The Python/PostgreSQL receipt is `4563/4590` with 27
-explicit skips and 0 failures on the unchanged parent candidate. Exact
-Docker Scout/OpenVEX, Trivy, CycloneDX SBOM/provenance, supply-chain and Floci
-receipts are now regenerated for the new digest. Docker Scout `1.27.0` is
-`3 raw / 0 applied`; Trivy `0.76.1` reports zero secrets and one `MEDIUM`
-`CVE-2026-4738` per image (`zlib 1.3.2-r1`, fixed at `1.4-r0`). The VEX binds
-runtime `sha256:da112fd1ba92f131668dc94f22a37829c5f2c641c29bba9901f17fc50ede83f4`
-and probe `sha256:84430cb0fa577d1bff12182fa725316402a4e6500c4d0d6ed070242a76980099`.
-The exact application and two container SBOM inventories, provenance and
-fail-closed validator pass. The three VEX statements remain technical
-justifications pending human review; they are not treated as approval.
-Human security acceptance and triage remain open. The candidate is bound to
-`4962ff05`; the rebuilt Docker/Helm/live receipts are exact for this candidate,
-while exact technical receipts now pass. Release status remains separate from
-technical qualification and is still **NO-GO** at `0/13` families.
+The current runtime/test candidate is `8fc3eaa70f19d0740d86a5402a7cf10db15384c0`,
+which makes the visible default context the same context used by Runs and keeps
+the example/launch distinction explicit in Home. Its exact web receipt is
+static Chromium `139/139`, web audit `69` files with zero failures, and budget
+`2,101,359` asset bytes, `68` requests, `36` modules, `13` stylesheets and
+`5,639` HTML bytes. The prior artifact, Docker, Helm/kind, live, security and
+Floci receipts belong to `4962ff05` and are not inherited by this SHA; they must
+be regenerated before this candidate can claim full technical qualification.
+Release status remains separate from the green web lane and is still **NO-GO**
+at `0/13` families.
 The ledger remains **0/13 families qualified**: mandatory family journeys,
 provider matrix, manual visual review, legal/claims decisions, security triage,
 full provider/toolchain matrix and security acceptance are still open. The UI target remains a deliberate

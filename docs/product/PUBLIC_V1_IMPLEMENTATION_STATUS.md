@@ -5,27 +5,15 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 
-## Current exact-SHA qualification — 9 November 2026
+## Current exact-SHA qualification — 10 November 2026
 
-The current runtime/test candidate is `4962ff0512956f0214ddc9a96def9ae2fd77ccfa`.
-Runs now follows the global Studio context: an explicit launch project seeds the
-filter, changing context refreshes the scoped request, and manual refresh remains
-explicit. The Studio shell exposes a visible command affordance, workbenches are
-organized as guided decision modes, the Connections workbench keeps direct
-save/refresh handlers and actionable backend errors, and runtime styles are
-declared consistently in package data and tests. The unavailable-server error
-state also keeps internal server URLs out of the UI.
-The clean candidate is green in the available local lanes: Python/PostgreSQL
-`4563 passed, 27 skipped, 0 failed` of `4590` on the unchanged parent Python
-candidate; Chromium `138/138`; web audit `69` files, `38` modules, `180` route
-invocations and `0` failures; budget `2,101,245` asset bytes, `68` requests, `36` modules, `13` stylesheets and
-`5,639` HTML bytes; installed artifacts `90/90`; Docker `27/27` and strict v0.1
-`15/15` on image
-`sha256:da112fd1ba92f131668dc94f22a37829c5f2c641c29bba9901f17fc50ede83f4`;
-Helm/kind persistence/restart pass; live qualification is `33/33` over 25 active
-routes with 246 correlated events and no server/network errors. Docker
-Scout/OpenVEX, Trivy `0.76.1`, CycloneDX SBOM and provenance have not yet been
-regenerated for the new exact digest; the prior parent receipt found one
+The current runtime/test candidate is `8fc3eaa70f19d0740d86a5402a7cf10db15384c0`.
+Runs now uses the same default context shown by the shell (`default /
+examples/demo / local`), while explicit launch context and Home copy remain
+distinct. The complete static Chromium suite passes `139/139`; web audit passes
+with `69` files, `38` modules, `180` route invocations and `0` failures; budget
+is `2,101,359` asset bytes, `68` requests, `36` modules, `13` stylesheets and
+`5,639` HTML bytes. The prior parent receipt found one
 `MEDIUM CVE-2026-4738` (`zlib 1.3.2-r1`) and zero secrets per image. Exact
 candidate security evidence therefore remains open and is not inferred from the
 parent receipt.

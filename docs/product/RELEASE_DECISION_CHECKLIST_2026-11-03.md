@@ -4,7 +4,7 @@
 
 **Last evidence review:** 10 November 2026
 
-**Candidate SHA:** runtime/test candidate `4962ff0512956f0214ddc9a96def9ae2fd77ccfa`; exact qualification receipts are recorded below; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `8fc3eaa70f19d0740d86a5402a7cf10db15384c0`; the current web receipt is recorded below, while packaging/runtime receipts from the prior candidate must be regenerated; release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,9 +20,27 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 9 November exact-candidate refresh — current `4962ff05`
+## 10 November UI-context iteration — current `8fc3eaa`
 
-The current clean runtime/test candidate is `4962ff0512956f0214ddc9a96def9ae2fd77ccfa`.
+The current runtime/test candidate is `8fc3eaa70f19d0740d86a5402a7cf10db15384c0`.
+It makes the visible default context (`default / examples/demo / local`) the same
+context used by Runs, preserves the `Example context` label on an unparameterized
+Home entry, and keeps explicit launch-context refresh behavior. The complete
+static Chromium suite passes `139/139`; the web audit passes with `69` files,
+`38` modules, `180` route invocations and `0` failures; the delivery budget is
+`2,101,359` asset bytes, `68` requests, `36` modules, `13` stylesheets and
+`5,639` HTML bytes. The four focused context/Home journeys also pass.
+
+The prior candidate `4962ff05` receipts are not exact evidence for this SHA.
+Python/package, Docker/strict acceptance, Helm/kind, live, Trivy/VEX,
+SBOM/provenance, container-inventory and Floci lanes must be regenerated on
+this candidate before technical qualification can be called green. Release
+remains **NO-GO** at `0/13` families, with security, legal/NOTICE/claims,
+manual visual, rollback/support and governance approvals still open.
+
+## 9 November exact-candidate refresh — historical `4962ff05`
+
+That historical clean runtime/test candidate was `4962ff0512956f0214ddc9a96def9ae2fd77ccfa`.
 Runs now follows the global Studio context: launch context seeds the project
 filter and changing context refreshes the scoped query. The Studio shell now exposes a visible command affordance, workbenches use
 guided decision modes, all runtime styles are packaged, installed-route
@@ -63,7 +81,7 @@ Receipts: `%TEMP%\\ronin-python-full-b86a0f6-20261109` (unchanged parent),
 `%TEMP%\\ronin-docker-4962ff0-20261109b`, `%TEMP%\\ronin-helm-4962ff0-20261109b`,
 `%TEMP%\\ronin-live-4962ff0-20261109`,
 `%TEMP%\\ronin-artifact-qualification-4962ff0-20261109.json`.
-The current image digest, Docker/Helm/live, package, Trivy, VEX,
+Its image digest, Docker/Helm/live, package, Trivy, VEX,
 SBOM/provenance, supply-chain and Floci receipts are exact for this application
 candidate. Technical gates are green; release approval remains blocked by the
 explicit family, human, legal, support and operational gates above.
@@ -73,7 +91,7 @@ Exact supply-chain receipts: `%TEMP%\\ronin-vex-4962ff0-20261109-clean`,
 `%TEMP%\\ronin-supply-chain-4962ff0-20261109-f1209095dc27445e851f92a09136226d`.
 
 The previous table is retained as historical evidence for runtime `8a85586`.
-For the current candidate, the application lanes are technically qualified;
+For that historical candidate, the application lanes were technically qualified;
 the family ledger remains `0/13`, and human security, legal/NOTICE/claims,
 license policy, visual product, rollback, support and governance approvals
 remain open.
