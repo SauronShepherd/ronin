@@ -4089,3 +4089,17 @@ seguridad estática ni de backend en la selección ejecutada.
 
 La evidencia técnica queda verde para esta pasada, pero los skips externos y
 los gates humanos/proveedor siguen impidiendo declarar GO de Public v1.
+
+## 125. Revisión visual interna del candidato — 10/11/2026
+
+Se inspeccionaron capturas reales del Home en escritorio (1440×900) y del
+Project Studio en móvil (390×844) sobre el servidor del candidato. El Home
+presenta una jerarquía operativa clara —contexto, primer recorrido, control
+plane y siguiente acción—; Project Studio conserva el contexto workspace,
+cards de Author/Connect/Operate/Govern y la navegación inferior sin
+desbordamiento horizontal. La captura full-page del Home deja una zona vacía
+excesiva tras el contenido visible; se registra como deuda de densidad visual
+para una siguiente iteración, no como un fallo funcional.
+
+Esta revisión es evidencia interna reproducible, no la aprobación visual
+formal requerida por el gate de release.
