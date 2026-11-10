@@ -3990,3 +3990,18 @@ producto: requieren un rediseño funcional (celdas, reordenación, JSON avanzado
 y una única acción prioritaria), no un cambio cosmético. La suite completa de
 UI se debe repetir antes de cerrar esta iteración; Public v1 permanece
 **NO-GO** por los gates de alcance, certificación y aprobación ya registrados.
+
+## 118. Notebook Studio: editor de celdas sobre el documento canónico — 10/11/2026
+
+Se implementó la primera mejora funcional solicitada por la revisión de UX.
+Notebook Studio ahora presenta un workbench de celdas antes del JSON avanzado:
+cada celda muestra su fuente editable, puede añadirse, eliminarse o moverse y
+la vista mantiene sincronización bidireccional con el documento
+`ronin.notebook/v1`. Guardar y ejecutar sincronizan las fuentes de las celdas
+antes de enviar el contrato duradero; el JSON sigue disponible para casos
+avanzados y no se inventan campos de ejecución.
+
+La jornada Playwright de Notebook Studio, ampliada con edición/alta/baja de
+celdas y ejecución, pasa **1/1**. La suite completa Chromium se repetirá sobre
+este estado antes de cerrar la pasada. La simplificación de Home y los gates de
+certificación/release siguen pendientes; Public v1 permanece **NO-GO**.

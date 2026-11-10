@@ -146,6 +146,12 @@ test('Notebook Studio edits, creates and executes a bounded notebook', async ({ 
 
   await page.goto('./#notebooks');
   await page.getByRole('button', { name: 'etl (r1)' }).click();
+  await expect(page.locator('.notebook-cell')).toHaveCount(1);
+  await page.locator('.notebook-cell-source').fill('SELECT 3');
+  await page.getByRole('button', { name: 'Add cell' }).click();
+  await expect(page.locator('.notebook-cell')).toHaveCount(2);
+  await page.locator('.notebook-cell').nth(1).getByRole('button', { name: 'Remove' }).click();
+  await expect(page.locator('.notebook-cell')).toHaveCount(1);
   const documentField = page.locator('#notebook-editor textarea[name="document"]');
   await documentField.fill('{"schema":"ronin.notebook/v1","cells":[{"id":"cell-1","source":"SELECT 2"}]}');
   await page.locator('#notebook-editor [data-notebook-action="save"]').click();
