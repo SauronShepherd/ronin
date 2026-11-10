@@ -4158,3 +4158,23 @@ del cluster aislado.
 La lane es `DIRTY-WORKTREE DIAGNOSTIC` por los artefactos no trackeados del
 workspace; confirma el comportamiento técnico del despliegue actual, pero no
 es una aprobación de candidato limpio ni cierra los gates de release.
+
+## 130. Docker + Helm sobre clon limpio del candidato — 10/11/2026
+
+Para separar los artefactos no trackeados del workspace principal, se creó el
+clon limpio temporal `a310ffd1aac136ed200b4c57a7517e6fa883c984`, con remoto
+GitHub compatible con la fuente declarada del proyecto. Sin
+`AllowDirtyWorktree`, la imagen quedó identificada como
+`sha256:75b430987dc461f84eb8e4e84889053f37887f23192f661d0ea3fa253fb6b5e7`.
+
+Docker pasó **27/27** y strict v0.1 **15/15**, sin skips ni fallos. Helm v4.3.1
+en kind pasó lint, secret boundary, instalación/readiness, upgrade a revisión
+2, rollback a revisión 1, salud, Studio/API autorizados, persistencia del job
+tras restart y cleanup. Recibos:
+
+- `%TEMP%\\ronin-docker-clean-a310ffd-20261110-r2`
+- `%TEMP%\\ronin-helm-clean-a310ffd-20261110-r1`
+
+Esta es evidencia de `CLEAN-CANDIDATE QUALIFICATION` para los gates Docker y
+Helm del commit `a310ffd1`; no cierra la cualificación de las familias Public
+v1 ni los gates humanos, legales, de proveedor y gobernanza.
