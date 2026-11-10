@@ -19,14 +19,14 @@
     "coverage==7.16.0": {
       "attribution_required": false,
       "decision": "allow",
-      "evidence_sha256": "1cfaab4800f79a6c1b2b39fd2060d7a4eb64cf8072e37380666541fa8d121205",
+      "evidence_sha256": "277051905e939128f0266ce33155e1f408bd58a6343798a8b948159a3093a259",
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
     },
     "greenlet==3.5.6": {
       "attribution_required": false,
       "decision": "allow",
-      "evidence_sha256": "ba9be0b7b34fa775748c9066756b071cbc9e695fb456092c9d5aff2d2392b2dc",
+      "evidence_sha256": "031d1eaef720c218bf6b06659b1b5f364fa6bbcccf314a56127f6d9e76e34235",
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution license evidence: upstream declares MIT AND PSF-2.0 and includes both license texts; used as a development/browser-test dependency."
     },
@@ -47,14 +47,14 @@
     "libcst==1.9.0": {
       "attribution_required": false,
       "decision": "allow",
-      "evidence_sha256": "647d26696c05e33e586bd0a21bd0adc92c90684d4f62c265c17a130818ca1315",
+      "evidence_sha256": "ca8768e1f008ebcdae6f21b1b883964fb1853c2543860155793ae3147d79d9ba",
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
     },
     "librt==0.15.0": {
       "attribution_required": false,
       "decision": "allow",
-      "evidence_sha256": "071ad9003d276bea9503ab72002003da426a1e2090ead6d74402133b3083cbe1",
+      "evidence_sha256": "ffb61af9c6e584cbe077e55460c571072e707fb9d5cf27fcb7c489c7c798f081",
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
     },
@@ -103,14 +103,14 @@
     "mypy==1.20.2": {
       "attribution_required": false,
       "decision": "allow",
-      "evidence_sha256": "1c161c360dc5fbedc8ae43fc648fa937096e4464d4d552dd3741f5dc53769340",
+      "evidence_sha256": "d07b140d9f067b734edcfd133b97c568937059a775c96b5d15e8174e65441462",
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
     },
     "packaging==26.3": {
       "attribution_required": false,
       "decision": "allow",
-      "evidence_sha256": "d3a6046c4f3196a97a5751e931cadbeebf280fb0dec4f9df8365b83359d4a2c6",
+      "evidence_sha256": "7ca3030ec77850d9e284299dbe38c75c3e58ba007732cfb1938001949590bf05",
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
     },
@@ -131,7 +131,7 @@
     "playwright==1.64.0": {
       "attribution_required": false,
       "decision": "allow",
-      "evidence_sha256": "781d41a0259f3a2bf1e5502434e5d4fd931cac2ad0b0093067b4118a02c6ec86",
+      "evidence_sha256": "37d9552afae73ef096fbd3f7f51989fde51622706442dfd002cf798ac8a80038",
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution license evidence: upstream declares Apache-2.0 and bundles its required NOTICE and third-party license notices; used for browser qualification."
     },
@@ -184,13 +184,6 @@
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
     },
-    "pyyaml==6.0.3": {
-      "attribution_required": false,
-      "decision": "allow",
-      "evidence_sha256": "bcc6ffcee1ae42bf56ac1bd4d6b70b9294cded2c8c7a35a913a423e380c92974",
-      "notice_required": false,
-      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
-    },
     "rich==15.0.0": {
       "attribution_required": false,
       "decision": "allow",
@@ -208,7 +201,7 @@
     "setproctitle==1.3.7": {
       "attribution_required": false,
       "decision": "allow",
-      "evidence_sha256": "17350f5dd8c40a09391347d59817e3cbdc4e9b598ea537c8bfa4dbb17f5d42f7",
+      "evidence_sha256": "e421d530810466d70a63c8bf2ca59fd40c44c75df769c6a137f84f1b40d04a63",
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
     },
@@ -236,7 +229,7 @@
     "tomli==2.5.0": {
       "attribution_required": false,
       "decision": "allow",
-      "evidence_sha256": "17d307d9c490fe3096a6a74e922f9b776d8667277d4e14d613a8f24493c28908",
+      "evidence_sha256": "d872f957326f5d765e150c149f7fa2a18731118eb5abd58096564a5dd8593bda",
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution license evidence: upstream includes the MIT license text; used as a development dependency."
     },

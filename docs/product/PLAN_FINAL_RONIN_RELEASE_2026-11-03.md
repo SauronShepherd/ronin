@@ -3797,3 +3797,16 @@ legítimos: **22 decisiones humanas faltantes**, una entrada stale de policy y
 nueve evidencias de revisión desalineadas. Esta iteración elimina un falso
 cambio de evidencia, pero no convierte ninguna aprobación legal en automática
 ni cambia Public v1 de **NO-GO**.
+
+## 105. Reconciliación mecánica de la policy legal — 10/11/2026
+
+Se actualizaron las nueve referencias de evidencia stale al hash estable del
+inventario reproducible y se retiró la revisión obsoleta de `pyyaml==6.0.3`,
+que ya no pertenece al grafo activo. La suite de contrato de licencias vuelve
+a pasar **106/106**.
+
+El gate completo ahora falla únicamente por las **22 decisiones humanas
+faltantes**; no quedan entradas stale de policy ni evidencias desalineadas.
+Esto cierra el trabajo mecánico del gate, pero no permite asignar decisiones
+legales, NOTICE, atribución o claims automáticamente. Public v1 permanece
+**NO-GO** hasta la revisión y aceptación formal del responsable.
