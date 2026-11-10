@@ -3745,3 +3745,21 @@ Gitleaks `v8.0.0` escaneó el árbol actual y sus **2049 commits**, unos
 Este gate de secretos queda verde; no sustituye la revisión humana de
 licencias/NOTICE, claims, proveedores ni familias Public v1. La decisión
 global permanece **NO-GO**.
+
+## 102. Continuidad, migraciones y rollback local — 10/11/2026
+
+La batería dirigida de continuidad pasa **33/33**: backup PostgreSQL y
+appliance, SQLite, manifiestos, registro de migraciones, cualificación de
+migraciones, certificación de fixtures y rollback del ciclo de plugins. No se
+detectan regresiones en el contrato de migraciones forward-only ni en la
+integridad de los manifiestos.
+
+La certificación ejecutable de fixtures genera recibos válidos para los cuatro
+perfiles declarados —Fabric, Databricks, Foundry y Dataiku—, incluyendo
+descubrimiento, traducción, importación, exportación y round-trip del bundle.
+Estos recibos certifican únicamente el conjunto golden local y no implican
+compatibilidad autenticada con tenants, APIs o proyectos reales de esos
+proveedores. Para cerrar el release aún faltan pruebas de restore/rollback en
+un entorno operativo representativo, retención y restauración ante fallo, y
+la cualificación externa de SDP/proveedores cuando se disponga de sus
+instalaciones y credenciales. Public v1 permanece **NO-GO**.
