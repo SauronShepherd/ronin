@@ -95,42 +95,7 @@ def test_docker_vex_scan_is_digest_bound_and_uses_an_explicit_author() -> None:
     statements = {item["vulnerability"]["name"]: item for item in vex["statements"]}
 
     assert vex["author"] == "Ronin release qualification"
-    assert set(statements) == {"CVE-2026-107891", "CVE-2026-119586", "CVE-2026-4738"}
-    for statement in statements.values():
-        assert statement["status"] == "not_affected"
-        assert statement["justification"] == "vulnerable_code_not_present"
-        assert len(statement["products"]) == 2
-        assert {product["@id"].split("@", maxsplit=1)[0] for product in statement["products"]} == {
-            "pkg:docker/ronin",
-            "pkg:docker/ronin-probe",
-        }
-        assert all(
-            re.fullmatch(r"pkg:docker/[^@]+@sha256:[0-9a-f]{64}", product["@id"])
-            for product in statement["products"]
-        )
-    musl = statements["CVE-2026-107891"]
-    assert "security.alpinelinux.org/vuln/CVE-2026-107891" in musl["impact_statement"]
-    assert all(
-        product["subcomponents"]
-        == [{"@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"}]
-        for product in musl["products"]
-    )
-    sqlite = statements["CVE-2026-119586"]
-    assert "sqlite3 executable" in sqlite["impact_statement"]
-    assert "command-line shell" in sqlite["impact_statement"]
-    assert all(
-        product["subcomponents"]
-        == [{"@id": "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"}]
-        for product in sqlite["products"]
-    )
-    zlib = statements["CVE-2026-4738"]
-    assert "GDAL" in zlib["impact_statement"]
-    assert "libgdal" in zlib["impact_statement"]
-    assert all(
-        product["subcomponents"]
-        == [{"@id": "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"}]
-        for product in zlib["products"]
-    )
+    assert statements == {}
     assert "--vex-author $author" in script
     assert "[IO.Path]::IsPathRooted($VexPath)" in script
     assert '"-VexPath must name an existing VEX file."' in script
@@ -141,11 +106,8 @@ def test_docker_vex_scan_is_digest_bound_and_uses_an_explicit_author() -> None:
     assert "Copy-Item -LiteralPath $vexFullPath -Destination $vexEvidence" in script
     assert "vex_sha256 = $vexSha256" in script
     assert "local-image-config-digest" in script
-    assert '"CVE-2026-107891", "CVE-2026-119586", "CVE-2026-4738"' in script
-    assert "if ($productMatches.Count -ne 1)" in script
-    assert "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24" in script
-    assert "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24" in script
-    assert "if ($rawFindings.Count -ne $expectedFindings.Count)" in script
+    assert "$expectedVulnerabilities = @()" in script
+    assert "if ($rawFindings.Count -ne 0)" in script
     assert "if ($vexFindings.Count -ne 0)" in script
     assert "security_review_required = $true" in script
     assert "release_security_gate_closed = $false" in script
@@ -540,7 +502,7 @@ def test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies() ->
 
     python_image = (
         "python:3.11-alpine3.24@sha256:"
-        "09d17d5e4c16d0a7a1eea690bcb7c6ab8616b211f8421e429e97c1bef5bd0ed2"
+        "bb1d70c1df30d8ee1e05214dbe82d6cdfd29833c1f47ce917f20991aca93acaa"
     )
     docker_cli = (
         "docker:29.9.2-cli-alpine3.24@sha256:"
@@ -548,6 +510,9 @@ def test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies() ->
     )
 
     assert f"ARG PYTHON_IMAGE={python_image}" in dockerfile
+    assert "https://dl-cdn.alpinelinux.org/alpine/edge/main" in dockerfile
+    assert "musl=1.2.6-r6" in apk_runtime_lock
+    assert "sqlite-libs=3.54.1-r0" in apk_runtime_lock
     assert f"FROM {docker_cli} AS docker-cli" in dockerfile
     assert "apk upgrade" not in dockerfile + probe
     assert "COPY docker/apk-runtime.lock /tmp/apk-runtime.lock" in dockerfile
@@ -575,13 +540,13 @@ def test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies() ->
     assert "psycopg-binary==3.3.6" in runtime_lock
     assert "tzdata==2026.4" in runtime_lock
     assert "--hash=sha256:" in runtime_lock
-    for lock, expected_count in ((apk_runtime_lock, 19), (apk_probe_lock, 18)):
+    for lock, expected_count in ((apk_runtime_lock, 25), (apk_probe_lock, 21)):
         packages = [line for line in lock.splitlines() if line]
         assert len(packages) == expected_count
         assert len(packages) == len(set(packages))
         assert all("=" in package for package in packages)
         assert all(
-            package.rsplit("=", maxsplit=1)[1].endswith(("-r0", "-r1", "-r2", "-r3"))
+                package.rsplit("=", maxsplit=1)[1].endswith(("-r0", "-r1", "-r2", "-r3", "-r6"))
             for package in packages
         )
 

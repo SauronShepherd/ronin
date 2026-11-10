@@ -1,4 +1,4 @@
-ARG PYTHON_IMAGE=python:3.11-alpine3.24@sha256:09d17d5e4c16d0a7a1eea690bcb7c6ab8616b211f8421e429e97c1bef5bd0ed2
+ARG PYTHON_IMAGE=python:3.11-alpine3.24@sha256:bb1d70c1df30d8ee1e05214dbe82d6cdfd29833c1f47ce917f20991aca93acaa
 
 FROM docker:29.9.2-cli-alpine3.24@sha256:5e6baf67325a79f64ed3bed6863954d5e05d0f3d4e57cbdb14809346814bbfdb AS docker-cli
 
@@ -6,6 +6,7 @@ FROM ${PYTHON_IMAGE}
 COPY docker/apk-probe.lock /tmp/apk-probe.lock
 RUN set -eux; \
     sed -i 's/\r$//' /tmp/apk-probe.lock; \
+    printf '%s\n' 'https://dl-cdn.alpinelinux.org/alpine/edge/main' >> /etc/apk/repositories; \
     apk add --no-cache $(cat /tmp/apk-probe.lock); \
     rm /tmp/apk-probe.lock
 COPY docker/pip-bootstrap.lock /tmp/pip-bootstrap.lock

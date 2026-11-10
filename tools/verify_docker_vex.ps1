@@ -56,7 +56,7 @@ $imagePurl = "pkg:docker/$imageName@$imageDigest"
 $vex = Get-Content -Raw -LiteralPath $vexFullPath | ConvertFrom-Json
 $author = [string]$vex.author
 if (-not $author) { throw "OpenVEX document must name its author." }
-$expectedVulnerabilities = @("CVE-2026-107891", "CVE-2026-119586", "CVE-2026-4738")
+$expectedVulnerabilities = @()
 $vexStatements = @($vex.statements)
 $statementVulnerabilities = @($vexStatements | ForEach-Object { [string]$_.vulnerability.name })
 if (
@@ -121,18 +121,8 @@ $expectedFindings = @(
         package = "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"
     }
 )
-if ($rawFindings.Count -ne $expectedFindings.Count) {
-    throw "Raw scan finding count differs from the reviewed set; review $rawReport before accepting this image."
-}
-foreach ($expectedFinding in $expectedFindings) {
-    $matchingFindings = @(
-        $rawFindings | Where-Object {
-            $_.id -eq $expectedFinding.id -and $_.package -eq $expectedFinding.package
-        }
-    )
-    if ($matchingFindings.Count -ne 1) {
-        throw "Raw scan does not match the reviewed finding $($expectedFinding.id); review $rawReport."
-    }
+if ($rawFindings.Count -ne 0) {
+    throw "Raw scan found vulnerabilities but the VEX contains no reviewed findings; review $rawReport before accepting this image."
 }
 if ($vexFindings.Count -ne 0) {
     throw "Docker Scout still reports vulnerabilities after applying the digest-bound VEX; review $vexReport."
@@ -161,7 +151,7 @@ $summary = [ordered]@{
     vex_evidence_file = $vexEvidence
     raw_findings = $rawFindings
     vex_findings = $vexFindings
-    vex_suppressed_reviewed_findings = $rawFindings.Count
+    vex_suppressed_reviewed_findings = 0
     security_review_required = $true
     security_review_accepted = $false
     release_security_gate_closed = $false
