@@ -133,6 +133,8 @@ $studioStatus = $null
 $jobsStatus = $null
 $restartJobId = $null
 $restartPersistence = $false
+$upgradeRevision = $null
+$rollbackStatus = $null
 $renderedResourceCount = 0
 $tokenConfinedToSecret = $false
 $token = [guid]::NewGuid().ToString("N")
@@ -215,6 +217,25 @@ server:
     if ($LASTEXITCODE -ne 0) { throw "Could not capture Kubernetes resource inventory." }
     $resourceInventory | Set-Content -LiteralPath (Join-Path $evidenceRoot "kubernetes-resources.txt") -Encoding utf8
     Add-Phase "deployment_readiness" "passed"
+
+    & $helm upgrade ronin (Join-Path $repoRoot "deploy\helm\ronin") `
+        --kube-context $kubeContext --namespace $namespace --reuse-values `
+        --description "Ronin qualification upgrade rehearsal"
+    if ($LASTEXITCODE -ne 0) { throw "Helm upgrade rehearsal failed." }
+    $history = @(& $helm history ronin --kube-context $kubeContext --namespace $namespace -o json | ConvertFrom-Json)
+    if ($LASTEXITCODE -ne 0 -or $history.Count -lt 2) {
+        throw "Helm upgrade rehearsal did not create a second release revision."
+    }
+    $upgradeRevision = [int]$history[-1].revision
+    Add-Phase "helm_upgrade" "passed (revision $upgradeRevision)"
+
+    & $helm rollback ronin 1 --kube-context $kubeContext --namespace $namespace --wait --timeout 180s
+    if ($LASTEXITCODE -ne 0) { throw "Helm rollback to revision 1 failed." }
+    & $kubectl --context $kubeContext rollout status "deployment/$deployment" `
+        -n $namespace --timeout=180s
+    if ($LASTEXITCODE -ne 0) { throw "Deployment did not become ready after Helm rollback." }
+    $rollbackStatus = "passed"
+    Add-Phase "helm_rollback" "passed (restored revision 1)"
 
     $service = (& $kubectl --context $kubeContext get services -n $namespace `
         -o jsonpath="{.items[0].metadata.name}").Trim()
@@ -336,6 +357,8 @@ server:
         authorized_jobs_status = $jobsStatus
         restart_job_id = $restartJobId
         restart_persistence = $restartPersistence
+        upgrade_revision = $upgradeRevision
+        rollback_status = $rollbackStatus
         phases = $phases
         cleanup = $cleanupStatus
         result = if ($failure) { "failed" } else { "passed" }

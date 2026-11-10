@@ -3892,3 +3892,18 @@ El trabajo no elimina la revisión humana de la política Alpine Edge ni la
 aceptación final de seguridad. Sí garantiza que el NO-GO no se apoye en
 hallazgos técnicos ya resueltos. Las condiciones de familias, proveedores,
 legal, rollback y gobierno permanecen abiertas.
+
+## 112. Runner Helm: rehearsal de upgrade y rollback — 10/11/2026
+
+Se amplió `tools/run_helm_qualification.ps1` para ejecutar una actualización
+Helm controlada, exigir una segunda revisión en `helm history`, hacer rollback
+explícito a la revisión 1, esperar de nuevo el readiness del Deployment y
+registrar `upgrade_revision`/`rollback_status` en el recibo. La regresión de
+estructura y el parseo PowerShell pasan **2/2**.
+
+La ejecución candidate-bound queda deliberadamente pendiente: el runner exige
+que el recibo Docker y la imagen inmutable correspondan al mismo SHA fuente, y
+la última imagen disponible fue construida antes de este cambio de runner. No
+se declara un PASS por inferencia. El gate de rollback operativo permanece
+**qualification_pending** hasta repetir Docker + Helm sobre el mismo
+candidato. Public v1 continúa **NO-GO**.
