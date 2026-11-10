@@ -2,11 +2,11 @@
 
 ## Current exact-SHA snapshot — 10 November 2026
 
-The current runtime/test candidate is `8fc3eaa70f19d0740d86a5402a7cf10db15384c0`,
+The current runtime/test candidate is `d1a0ea6dc28b7161c107081265edec01279daa56`,
 which makes the visible default context the same context used by Runs and keeps
-the example/launch distinction explicit in Home. Its exact web receipt is
+Project deep links aligned with the workspace context. Its exact web receipt is
 static Chromium `139/139`, web audit `69` files with zero failures, and budget
-`2,101,359` asset bytes, `68` requests, `36` modules, `13` stylesheets and
+`2,101,686` asset bytes, `68` requests, `36` modules, `13` stylesheets and
 `5,639` HTML bytes. The prior artifact, Docker, Helm/kind, live, security and
 Floci receipts belong to `4962ff05` and are not inherited by this SHA; they must
 be regenerated before this candidate can claim full technical qualification.

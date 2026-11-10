@@ -7,12 +7,13 @@
 
 ## Current exact-SHA qualification — 10 November 2026
 
-The current runtime/test candidate is `8fc3eaa70f19d0740d86a5402a7cf10db15384c0`.
+The current runtime/test candidate is `d1a0ea6dc28b7161c107081265edec01279daa56`.
 Runs now uses the same default context shown by the shell (`default /
-examples/demo / local`), while explicit launch context and Home copy remain
-distinct. The complete static Chromium suite passes `139/139`; web audit passes
+examples/demo / local`), and direct Project deep links synchronize their
+workspace scope without clearing a project explicitly chosen by the operator.
+The complete static Chromium suite passes `139/139`; web audit passes
 with `69` files, `38` modules, `180` route invocations and `0` failures; budget
-is `2,101,359` asset bytes, `68` requests, `36` modules, `13` stylesheets and
+is `2,101,686` asset bytes, `68` requests, `36` modules, `13` stylesheets and
 `5,639` HTML bytes. The prior parent receipt found one
 `MEDIUM CVE-2026-4738` (`zlib 1.3.2-r1`) and zero secrets per image. Exact
 candidate security evidence therefore remains open and is not inferred from the
