@@ -3735,3 +3735,13 @@ decisión de licencia, NOTICE, atribución y claims no puede inferirse del
 código ni ser aprobada automáticamente. Public v1 permanece **NO-GO** hasta
 que el responsable humano revise y acepte/rechace cada entrada y actualice la
 policy de forma trazable.
+
+## 101. Secret scanning del árbol actual — 10/11/2026
+
+Gitleaks `v8.0.0` escaneó el árbol actual y sus **2049 commits**, unos
+**17,14 MB**, y encontró **0 leaks**. Recibo SARIF:
+`ronin-gitleaks-8d1fdb-20261110/worktree.sarif`.
+
+Este gate de secretos queda verde; no sustituye la revisión humana de
+licencias/NOTICE, claims, proveedores ni familias Public v1. La decisión
+global permanece **NO-GO**.
