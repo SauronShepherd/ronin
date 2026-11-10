@@ -4144,3 +4144,17 @@ backup/restore de appliance. El recibo es un diagnóstico
 `DIRTY-WORKTREE` porque permanecen artefactos no trackeados propiedad del
 workspace; no se presenta como evidencia de candidato limpio ni cierra los
 gates humanos/proveedor.
+
+## 129. Helm/kind exact-head tras la reconciliación Docker — 10/11/2026
+
+Helm v4.3.1/kind se ejecutó con el `HEAD` `971b6a8`, la imagen
+`sha256:50fab6ec9ab542fdce1cf5199541e13d49126cbce1757633332705943d6bb1f1`
+y el recibo Docker compatible (`27/27`, strict `15/15`). Pasaron lint,
+frontera de secretos, instalación/readiness, upgrade a revisión 2, rollback a
+revisión 1, salud, Studio/API autorizados, creación de job persistente,
+reinicio del deployment, supervivencia del mismo job tras restart y cleanup
+del cluster aislado.
+
+La lane es `DIRTY-WORKTREE DIAGNOSTIC` por los artefactos no trackeados del
+workspace; confirma el comportamiento técnico del despliegue actual, pero no
+es una aprobación de candidato limpio ni cierra los gates de release.
