@@ -38,16 +38,16 @@ Candidate-bound technical receipts:
   `%TEMP%\\ronin-python-full-817ae3c-rerun-20261110`; an earlier infrastructure
   abort with exit `-1` produced no JUnit and is not counted as a test result.
 - Docker: `27/27` passed, strict v0.1 `15/15`, `0` skips/failures; runtime image
-  `sha256:970ea4e116ddbad8c0d69b485d0daf9bfe28762fcdfc4036a7a83abcf45861a7`.
+  `sha256:05bdec5e2d217f1208dd755332408da54795920feb66862a687fe76b4dbf9505`.
 - Helm/kind: lint, Secret boundary, install, readiness, health, Studio/API,
   durable job, restart persistence and cleanup passed; receipt
-  `%TEMP%\\ronin-helm-74fb533-20261110`.
-- Live UI/API: `33/33` Playwright cases across 25 routes (24 API-backed), 254
+  `%TEMP%\\ronin-helm-a4d982b-20261110`.
+- Live UI/API: `33/33` Playwright cases across 25 routes (24 API-backed), 250
   correlated events, `0` server/network errors and `0` unexpected auth gaps;
-  receipt `%TEMP%\\ronin-live-74fb533-rerun-20261110`.
+  receipt `%TEMP%\\ronin-live-a4d982b-20261110`.
 - Installed artifacts: `90/90`; wheel SHA-256
-  `c79e0422761598d86e7f8d4adfe46a542e8587c9d34ca5badd19e7b14c4e8dcc`, sdist
-  SHA-256 `766fa98205ec63f1d0e7a77297ced44f0f20b967621eec09e6a30ca4059f42a0`.
+  `30e2c40517e8ef0bd3c17abd074ff2b0fdedff62a2c804d87dc325d967af3bcf`, sdist
+  SHA-256 `51152a21b86235c173d2a3a738faf15b3e7fe7c84d31de93e87227fa399763b2`.
 - Supply chain: exact artifact identity, application/runtime/probe CycloneDX,
   provenance and container inventory validate with `supply_chain_evidence.py`;
   Trivy is pinned to `0.76.1`, with raw runtime/probe SBOMs and zero secrets.
