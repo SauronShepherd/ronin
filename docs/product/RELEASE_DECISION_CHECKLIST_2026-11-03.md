@@ -4,7 +4,7 @@
 
 **Last evidence review:** 10 November 2026
 
-**Candidate SHA:** runtime/test candidate `74fb53338dd62bc246c55b503b33ce2715795364`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** runtime/test candidate `15951c233df65c73cce09d24fb231bf0837aef24`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,23 +20,21 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 10 November exact-candidate qualification — current `74fb5333`
+## 10 November exact-candidate qualification — current `15951c2`
 
-The candidate makes the visible default context (`default / examples/demo / local`)
-the same context used by Runs, aligns direct Project deep links with their
-workspace, preserves the `Example context` label on an unparameterized Home entry,
-refuses unauthenticated Runs requests before they reach the API, and remembers up
-to five safe recent contexts for rapid cross-workbench switching. The complete
-static Chromium suite passes `140/140`; the web audit passes with `69` files,
-`38` modules, `180` route invocations and `0` failures; the ratcheted delivery
-budget is `2,106,569` asset bytes, `68` requests, `36` modules, `13` stylesheets
-and `5,639` HTML bytes. The focused context/Home, recent-context and error-state
-journeys pass.
+The candidate adds explicit Environments and Deployments decision workbenches:
+Environments exposes Observe/Author/Govern with deterministic diff and pause/restore;
+Deployments exposes Observe/Bind/Operate with the validated bindings-array contract.
+The complete static Chromium suite passes `147/147`; the web audit passes with
+`71` files, `38` modules, `180` route invocations and `0` failures; the ratcheted
+delivery budget is `2,123,808` asset bytes, `70` requests, `36` modules,
+`15` stylesheets and `5,778` HTML bytes. The focused workbench, responsive and
+accessibility journeys pass.
 
 Candidate-bound technical receipts:
 
 - Python/PostgreSQL: `4563/4590` passed, `27` explicit environment/provider/POSIX
-  skips and `0` failures. Receipt `%TEMP%\\ronin-python-full-74fb533-20261110`.
+  skips and `0` failures. Receipt `%TEMP%\\ronin-python-full-15951c2-20261110`.
 - Docker: `27/27` passed, strict v0.1 `15/15`, `0` skips/failures; runtime image
   `sha256:970ea4e116ddbad8c0d69b485d0daf9bfe28762fcdfc4036a7a83abcf45861a7`.
 - Helm/kind: lint, Secret boundary, install, readiness, health, Studio/API,
