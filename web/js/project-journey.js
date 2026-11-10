@@ -7,6 +7,11 @@ function renderProjects() {
   const view = document.querySelector('#view');
   if (!view || document.querySelector('#project-journey-form')) return;
   const workspaceId = decodeURIComponent(location.hash.slice(1).split('/')[1] || '');
+  const activeContext = globalThis.roninStudioContext || {};
+  const isExampleContext = activeContext.workspace === 'default' && activeContext.project === 'examples/demo';
+  if (workspaceId && (activeContext.workspace !== workspaceId || isExampleContext)) {
+    setStudioContext({ workspace: workspaceId, project: null });
+  }
   view.innerHTML = `<section class="project-hero panel">
     <div><p class="eyebrow">GOVERNANCE · PROJECT CONTROL PLANE</p><h2>Build inside a governed project.</h2><p>Keep the manifest, environment binding, operation and permission evidence connected to one workspace-scoped project.</p></div>
     <div class="project-hero-aside"><span class="status blue">project → environment → operation</span><p>Ronin makes the project boundary explicit before a run, import or permission decision.</p></div>
