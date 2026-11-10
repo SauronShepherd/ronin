@@ -23,6 +23,9 @@ test('Project workbench keeps authoring modes and scope usable on a phone', asyn
   await page.route('**/v1/workspaces/workspace-a/projects', async route => {
     await route.fulfill({ json: { items: [{ id: 'project-a', name: 'Analytics' }] } });
   });
+  await page.route('**/v1/workspaces/workspace-a/projects/project-a', async route => {
+    await route.fulfill({ json: { schema: 'ronin.project/v1', project: { id: 'project-a', name: 'Analytics', repositories: [{ adapter_id: 'git', alias: 'source', default_ref: 'main', role: 'primary', sync_policy: 'manual', uri: 'https://git.example.com/analytics.git', subdirectory: null }] } } });
+  });
   await page.goto('./#projects/workspace-a');
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.project-hero')).toBeVisible();
@@ -46,4 +49,10 @@ test('Project workbench keeps authoring modes and scope usable on a phone', asyn
   expect(manifest.project.id).toBe('new-project');
   expect(manifest.project.repositories[0].adapter_id).toBe('git');
   await expect(page.locator('#project-manifest')).toHaveAttribute('rows', '14');
+  await page.getByRole('button', { name: 'Edit manifest' }).click();
+  await expect(page.locator('#project-authoring-mode')).toHaveText('Edit project-a');
+  await expect(page.locator('#project-cancel-edit')).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel edit' }).click();
+  await expect(page.locator('#project-authoring-mode')).toHaveText('Create project');
+  await expect(page.locator('#project-cancel-edit')).toBeHidden();
 });

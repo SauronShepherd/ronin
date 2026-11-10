@@ -34,7 +34,7 @@ function renderProjects() {
     </section>
     <form id="project-journey-form" class="stack"><label>Project manifest JSON
       <textarea id="project-manifest" class="field" rows="14" required>{&quot;schema&quot;:&quot;ronin.project/v1&quot;,&quot;project&quot;:{&quot;id&quot;:&quot;new-project&quot;,&quot;name&quot;:&quot;New project&quot;,&quot;repositories&quot;:[{&quot;adapter_id&quot;:&quot;git&quot;,&quot;alias&quot;:&quot;source&quot;,&quot;default_ref&quot;:&quot;main&quot;,&quot;role&quot;:&quot;primary&quot;,&quot;sync_policy&quot;:&quot;manual&quot;,&quot;uri&quot;:&quot;https://git.example.com/org/project.git&quot;,&quot;subdirectory&quot;:null}],&quot;execution&quot;:{&quot;requirements&quot;:[{&quot;name&quot;:&quot;python&quot;,&quot;constraint&quot;:&quot;&gt;=3.11&quot;,&quot;level&quot;:&quot;required&quot;}],&quot;resolution&quot;:&quot;compatible&quot;,&quot;runtime&quot;:{&quot;adapter_id&quot;:&quot;local&quot;,&quot;profile_id&quot;:&quot;python-3.11&quot;}}}}</textarea></label>
-      <button class="button primary" type="submit">Create project</button>
+      <div class="toolbar project-authoring-actions"><span id="project-authoring-mode" class="status blue">Create project</span><button class="button primary" type="submit">Create project</button><button class="button" id="project-cancel-edit" type="button" hidden>Cancel edit</button></div>
       <pre id="project-journey-result" class="code" aria-live="polite">No project created.</pre></form>
     <form id="project-bundle-import-form" class="stack"><h2>Import project Bundle</h2>
       <label>Project ID<input class="field" name="project_id" required></label>
@@ -78,9 +78,11 @@ function renderProjects() {
       output.textContent = json(data);
       delete form.dataset.editProject;
       form.querySelector('button[type="submit"]').textContent = 'Create project';
+      document.querySelector('#project-authoring-mode').textContent = 'Create project';
+      document.querySelector('#project-cancel-edit').hidden = true;
       await loadProjects(workspaceId);
     } catch (error) {
-      output.textContent = `Could not create project: ${error.message}`;
+      output.textContent = `${editing ? 'Could not update project' : 'Could not create project'}: ${error.message}`;
     }
   });
   document.querySelector('#project-bundle-import-form').addEventListener('submit', async (event) => {
@@ -132,6 +134,15 @@ function renderProjects() {
     } catch (error) { output.textContent = `Could not inspect project permissions: ${error.message}`; }
   });
   loadProjects(workspaceId);
+  document.querySelector('#project-cancel-edit').addEventListener('click', () => {
+    delete form.dataset.editProject;
+    form.reset();
+    document.querySelector('#project-manifest').value = '{"schema":"ronin.project/v1","project":{"id":"new-project","name":"New project","repositories":[{"adapter_id":"git","alias":"source","default_ref":"main","role":"primary","sync_policy":"manual","uri":"https://git.example.com/org/project.git","subdirectory":null}],"execution":{"requirements":[{"name":"python","constraint":">=3.11","level":"required"}],"resolution":"compatible","runtime":{"adapter_id":"local","profile_id":"python-3.11"}}}}';
+    form.querySelector('button[type="submit"]').textContent = 'Create project';
+    document.querySelector('#project-authoring-mode').textContent = 'Create project';
+    document.querySelector('#project-cancel-edit').hidden = true;
+    document.querySelector('#project-journey-result').textContent = 'No project created.';
+  });
 }
 
 async function loadProjects(workspaceId) {
@@ -193,7 +204,7 @@ document.addEventListener('click', async (event) => {
   const edit = event.target.closest?.('.project-edit');
   if (edit) {
     const workspaceId = decodeURIComponent(location.hash.slice(1).split('/')[1] || '');
-    try { const manifest = await get(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(edit.dataset.project)}`); document.querySelector('#project-manifest').value = JSON.stringify(manifest, null, 2); document.querySelector('#project-journey-form').dataset.editProject = edit.dataset.project; document.querySelector('#project-journey-form button[type="submit"]').textContent = 'Update project'; } catch (error) { document.querySelector('#project-journey-result').textContent = `Could not load project: ${error.message}`; }
+    try { const manifest = await get(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(edit.dataset.project)}`); document.querySelector('#project-manifest').value = JSON.stringify(manifest, null, 2); document.querySelector('#project-journey-form').dataset.editProject = edit.dataset.project; document.querySelector('#project-journey-form button[type="submit"]').textContent = 'Update project'; document.querySelector('#project-authoring-mode').textContent = `Edit ${edit.dataset.project}`; document.querySelector('#project-cancel-edit').hidden = false; } catch (error) { document.querySelector('#project-journey-result').textContent = `Could not load project: ${error.message}`; }
     return;
   }
   const archiveButton = event.target.closest?.('.project-bundle-archive');

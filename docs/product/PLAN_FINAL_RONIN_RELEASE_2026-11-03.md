@@ -4104,3 +4104,15 @@ no de una deuda CSS del producto.
 
 Esta revisión es evidencia interna reproducible, no la aprobación visual
 formal requerida por el gate de release.
+
+## 126. Edición de proyectos reversible — 10/11/2026
+
+El Project Studio ahora distingue explícitamente `Create project` de
+`Edit <project-id>`, ofrece `Cancel edit` y restaura la plantilla válida de
+authoring sin conservar accidentalmente el manifiesto editado. Los mensajes
+de error diferencian creación y actualización. La regresión Playwright del
+workbench valida entrada/salida del modo edición y queda en **2/2**.
+
+La mejora reduce el riesgo de modificar el proyecto equivocado y acerca el
+journey a un control plane profesional; la cualificación completa P1 sigue
+pendiente.
