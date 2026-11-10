@@ -3663,6 +3663,18 @@ Spark Connect y SDP siguen requiriendo endpoints/comandos externos explícitos.
 La decisión Public v1 continúa **NO-GO** por los gates humanos, legales,
 rollback, proveedores pendientes y familias no cualificadas.
 
+## 99. Cualificación Spark Connect real — 10/11/2026
+
+Spark Connect 4.2.0 se levantó en servicio aislado de loopback y el cliente
+real pasó **1/1** prueba, sin skips ni fallos. Recibo:
+`ronin-spark-bc0fc45-20261110`.
+
+Con Trino **2/2** y Spark Connect **1/1**, los carriles de proveedores locales
+reproducibles quedan verdes. SDP continúa pendiente porque requiere un
+comando/proyecto externo explícito; no se simula como provider certification.
+La decisión Public v1 sigue **NO-GO** por legal/humano, rollback y familias
+no cualificadas.
+
 ## 95. Repetición completa Python/PostgreSQL en candidato limpio — 10/11/2026
 
 La suite completa ejecutada en checkout limpio `d01df297426deb623aee38ddf73bb6e980b09d13`
