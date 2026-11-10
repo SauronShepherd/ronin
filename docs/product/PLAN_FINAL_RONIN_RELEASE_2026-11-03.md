@@ -3582,3 +3582,18 @@ publicada. No se amplía el VEX ni se presenta este resultado como un cierre
 de seguridad; siguen abiertas la remediación/aceptación formal, el SBOM de
 contenedor, la procedencia, las revisiones humanas y las familias Public v1.
 La decisión sigue **NO-GO, 0/13**.
+
+## 91. Iteración de seguridad de dependencias transitivas — 10/11/2026
+
+La revisión del escaneo mostró que `krb5=1.22.3-r0` no actualizaba su
+biblioteca transitiva. El commit `69609ff` añade también
+`krb5-libs=1.22.3-r0`. La imagen reconstruida
+`sha256:828140139c707dc4b8dd1403aac6d68689098da9cd9c5b6a32c622b6011da36f`
+contiene Kerberos 1.22.3-r0 y zlib 1.4-r0; Scout baja a **2 HIGH**.
+
+Persisten solamente `musl 1.2.6-r3` (`CVE-2026-107891`, fix publicado
+1.2.6-r6 aún no disponible en el repositorio Alpine configurado) y
+`sqlite 3.53.4-r0` (`CVE-2026-119586`, sin fix publicado). No se amplía el
+VEX para ocultar hallazgos. Falta repetir la cualificación Docker completa
+para este último cambio, generar SBOM/provenance exactos y cerrar la
+aceptación de seguridad; la decisión continúa **NO-GO, 0/13**.
