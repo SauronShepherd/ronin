@@ -3650,3 +3650,19 @@ La regresión contractual Docker pasa **24/24**. Esto fortalece el cierre de
 la cadena técnica, pero no cambia el estado de release: siguen pendientes
 las gates humanas, legales, visuales, proveedor/OS/Python y las 13 familias
 Public v1.
+
+## 95. Repetición completa Python/PostgreSQL en candidato limpio — 10/11/2026
+
+La suite completa ejecutada en checkout limpio `d01df297426deb623aee38ddf73bb6e980b09d13`
+recoge **4588 casos**, con **4563 passed, 27 skipped y 0 failed** en
+883,41 segundos. PostgreSQL 16.4 se levantó en un servicio aislado y la
+limpieza terminó correctamente. Los skips están explicitados por Docker
+opt-in, proveedores externos no configurados, symlinks no disponibles en
+Windows y capacidades POSIX; los journeys Docker, Helm y live tienen recibos
+separados y verdes.
+
+La divergencia documental encontrada durante esta corrida (JSON, ledger
+Markdown y capability matrix con distintos SHAs observados) fue corregida y
+los tests de consistencia pasan **6/6**. La decisión global continúa **NO-GO**
+solo por los gates humanos, legales, visuales, de proveedores y de familias
+Public v1 aún no aprobados.
