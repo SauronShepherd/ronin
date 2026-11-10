@@ -1,20 +1,20 @@
 # RONIN — plan de construcción, pruebas y decisión de release
 
 **Corte:** 2026-11-10 (Europe/Madrid)
-**Fuente de código:** candidato runtime/test exacto `817ae3c93d61cd22a44f28f2c37090ba22573108` (workbenches de Environments y Deployments con contexto explícito, author/bind/operate/govern, diff determinista y estilos declarados en el paquete; el ratchet de entrega queda actualizado a `2,123,786` bytes). La qualification técnica se separa de la decisión de release: las lanes técnicas del candidato están verdes, pero licencia, revisión humana, familias, claims, soporte, rollback y gobierno siguen abiertos.
+**Fuente autoritativa actual:** candidato runtime/test exacto `16dbe56ee773f9aee698de63cb193ce8d3695109`; `main` actual `3bb4a09e` es un descendiente documental sin cambios de runtime. Las evidencias de esta ficha se refieren al candidato `16dbe56e`, salvo cuando se indique expresamente una ejecución anterior o un snapshot limpio distinto. La qualification técnica se separa de la decisión de release: las lanes técnicas del candidato están verdes, pero licencia, revisión humana, familias, claims, soporte, rollback y gobierno siguen abiertos.
 **Documentos revisados:** `C:\Users\angel.alvarez\Downloads\RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` y `C:\Users\angel.alvarez\Downloads\RONIN_RELEASE_2026-11-03_TEST_MASTER.md`
 
-## 0. Cualificación exacta actual — candidato `817ae3c`
+## 0. Cualificación exacta actual — candidato `16dbe56e`
 
-El runtime/test candidato `0e0a9cd8f0f88f6e985ce86a1f6d848487d97772` es la única base de esta observación. La iteración añade dos workbenches orientados a decisión: Environments separa Observe/Author/Govern, muestra inventario honesto y habilita diff, creación y pause/restore; Deployments separa Observe/Bind/Operate, conserva el contrato de bindings como array y enlaza explícitamente Projects y Runs. El contexto de workspace queda visible y se hereda de la sesión global; los estilos nuevos se declaran también en el paquete instalable.
-
--- UI: Chromium `147/147` en la suite estática completa; auditoría `71` archivos, `38` módulos, `180` invocaciones de ruta y `0` fallos; presupuesto ratcheteado `2,123,786` bytes de assets, `70` requests, `36` módulos, `15` hojas y `5,778` bytes HTML. Las regresiones verifican contexto, responsive y accesibilidad de Environments y Deployments, además de los workbenches anteriores.
-- Python/PostgreSQL: `4563/4590` pasados, `27` skips explícitos, `0` fallos, cobertura habilitada; receipt `%TEMP%\\ronin-python-full-817ae3c-rerun-20261110`. La corrida anterior abortó con código `-1` sin JUnit y se conserva como incidente de infraestructura.
-- Docker/Helm/live: Docker `27/27`, strict v0.1 `15/15`, imagen `sha256:05bdec5e2d217f1208dd755332408da54795920feb66862a687fe76b4dbf9505`; Helm/kind, persistencia tras restart y cleanup pasan en `%TEMP%\\ronin-helm-a4d982b-20261110`; live `33/33`, `25` rutas, `24` API-backed, `250` eventos correlacionados y cleanup correcto en `%TEMP%\\ronin-live-a4d982b-20261110`.
-- Artefactos y supply chain: qualification instalada `90/90`; wheel `30e2c40517e8ef0bd3c17abd074ff2b0fdedff62a2c804d87dc325d967af3bcf`, sdist `51152a21b86235c173d2a3a738faf15b3e7fe7c84d31de93e87227fa399763b2`; release SBOM e identidad generados para el candidato. Docker Scout exacto reporta `24` vulnerabilidades crudas y `21` restantes tras aplicar las `3` declaraciones VEX revisadas; el triage/aceptación de seguridad y provenance/container SBOM siguen abiertos.
-- Floci: HTTP 200, Terraform `1.13.5`, AWS provider `6.65.0`, plan/apply/refresh/destroy/state-list correctos y cero recursos residuales. VEX Docker Scout `1.27.0`: `3 raw → 0 applied` para runtime y probe, con dos productos exactos por declaración.
-
-Resultado técnico: **verde en las lanes exactas ejecutadas** (Python/PostgreSQL, Chromium, auditoría, budget y contratos de packaging); Docker/Helm/live/artefactos/supply-chain todavía requieren receipt del mismo candidato. Resultado de release: **NO-GO**. Siguen abiertos el ledger `0/13` familias, cualificación de proveedores/credenciales, triage y aceptación humana de seguridad/VEX, legal/NOTICE/claims, 22 decisiones de licencia, una policy obsoleta, 9 evidencias desalineadas, revisión visual manual, rollback/backup, la matriz completa de toolchain/soporte, y gobierno de CI/branches.
+El candidato runtime/test exacto está verde en las lanes locales ejecutadas:
+Chromium `147/147`, regresión Python web/release `27 passed`, auditoría web sin
+fallos, budget `2,132,739` bytes, route consistency `196 operations`, capability
+status y OpenAPI snapshot válidos. Docker/Helm y el snapshot limpio de
+infraestructura están documentados por separado y permanecen ligados a sus
+SHA/digests propios; no se mezclan con esta ficha. Resultado de release:
+**NO-GO**. El ledger permanece en `0/13` familias y siguen abiertos los gates de
+proveedores/credenciales, seguridad/VEX, legal/NOTICE/claims, licencias,
+revisión visual manual, rollback/backup, soporte y gobierno de CI/branches.
 
 ## 0.1 Plan de cierre obligatorio para la siguiente iteración
 
