@@ -3879,3 +3879,16 @@ faltantes**; no quedan entradas stale de policy ni evidencias desalineadas.
 Esto cierra el trabajo mecánico del gate, pero no permite asignar decisiones
 legales, NOTICE, atribución o claims automáticamente. Public v1 permanece
 **NO-GO** hasta la revisión y aceptación formal del responsable.
+
+## 111. Limpieza de bloqueadores históricos del ledger — 10/11/2026
+
+Se actualizaron dos condiciones machine-readable que todavía arrastraban
+diagnósticos antiguos: `latest-implementation-edits` ahora refleja Chromium
+147/147 y los carriles POSIX, Trino y Spark actuales; `security-vex-human-
+acceptance` ya no reclama CVEs ni excepciones VEX activas y registra el
+resultado vigente **0 raw / 0 post-VEX** y Gitleaks **0**.
+
+El trabajo no elimina la revisión humana de la política Alpine Edge ni la
+aceptación final de seguridad. Sí garantiza que el NO-GO no se apoye en
+hallazgos técnicos ya resueltos. Las condiciones de familias, proveedores,
+legal, rollback y gobierno permanecen abiertas.

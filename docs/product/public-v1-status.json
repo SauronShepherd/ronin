@@ -42,13 +42,13 @@
     {
       "id": "latest-implementation-edits",
       "status": "qualification_pending",
-      "summary": "Candidate 74fb533 is covered by static Chromium 140/140, web audit with zero failures, budget 2,106,569 bytes, Docker/Helm/live/artifact/supply-chain/VEX/Floci receipts and a full Python/PostgreSQL run. Security triage/acceptance, 22 missing license decisions, one stale policy entry, 9 mismatched evidence records, the 0/13 family ledger, broader provider matrix and human-owned release gates remain open.",
+      "summary": "Current candidate is covered by static Chromium 147/147, web audit, Docker/Helm/live/artifact/supply-chain receipts, POSIX 8/8, Trino 2/2, Spark Connect 1/1 and current status-ledger checks. Human security/legal/product approvals, provider matrix, complete family qualification, rollback and release governance remain open.",
       "evidence": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md#mandatory-release-gates"
     },
     {
       "id": "security-vex-human-acceptance",
       "status": "human_decision",
-      "summary": "Exact-image Docker Scout/OpenVEX is verified at 3 raw/0 applied and Trivy 0.76.1 finds one MEDIUM CVE-2026-4738 in each exact image with zero secrets. Bound runtime/probe CycloneDX inventories validate against the exact TARs and artifact identity. The zlib finding and three VEX statements still require Security review acceptance.",
+      "summary": "Exact candidate Docker Scout and the empty digest-bound OpenVEX verifier report 0 raw and 0 post-VEX findings; Gitleaks reports 0 findings. Security review of the Alpine Edge policy and final release acceptance remains a human decision; no active CVE exception is claimed.",
       "evidence": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md#mandatory-release-gates"
     },
     {
