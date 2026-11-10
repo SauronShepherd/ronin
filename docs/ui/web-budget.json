@@ -1,7 +1,7 @@
 {
-  "asset_bytes": 2106569,
-  "asset_requests": 68,
+  "asset_bytes": 2123808,
+  "asset_requests": 70,
   "module_requests": 36,
-  "stylesheet_requests": 13,
-  "html_bytes": 5639
+  "stylesheet_requests": 15,
+  "html_bytes": 5778
 }
