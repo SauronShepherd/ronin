@@ -656,3 +656,17 @@ es evidencia suficiente para este shell porque `main` mantiene scroll interno.
 El próximo ciclo debe capturar el viewport visible y recorrer el scroll en cada
 breakpoint, y debe resolver la compresión del contexto móvil antes de pedir la
 firma humana. El estado de release no cambia: `0/13`, **NO-GO**.
+
+## 20. Contexto móvil y navegación fija
+
+Se implementó el primer fix del hallazgo visual: bajo `700px` el shell muestra
+un resumen único y truncable de `workspace / project` en lugar de tres chips
+comprimidos, y `main` reserva espacio inferior adicional para la barra de
+navegación fija. El diálogo conserva los cinco campos completos para editar el
+contexto sin perder información.
+
+La matriz responsive y de contexto pasa `16/16`; la auditoría web queda en 71
+archivos y 0 fallos. El tamaño candidate-bound sube a `2,133,306` bytes por la
+metadata visual y la reserva de scroll; el baseline se actualiza de forma
+explícita y cualquier incremento posterior seguirá fallando cerrado. La suite
+Chromium completa sigue siendo obligatoria antes de aceptar este cambio.

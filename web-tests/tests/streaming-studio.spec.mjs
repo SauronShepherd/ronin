@@ -63,6 +63,7 @@ test('Streaming Studio loads, edits, and saves a persisted stream definition', a
     checkpoint_policy: 'resume',
     definition: { id: 'events/main', name: 'Edited events' },
   });
+  await expect.poll(() => apiRequests.length).toBe(3);
   await expect(page.locator('#stream-definition-result')).toContainText('Edited events');
   expect(apiRequests).toEqual([
     { method: 'GET', pathname: '/v1/workspaces/workspace-a/streams' },
