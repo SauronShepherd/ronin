@@ -3944,3 +3944,27 @@ baseline `e3181c28`; se sincronizó con el observed source del ledger actual
 (`19ae8fd2`). La prueba combinada de release, Helm, capability matrix y status
 pasa **39/39**. El nuevo gate queda correctamente pendiente de un recibo
 candidate-bound porque Docker sigue inaccesible.
+
+## 116. Docker + Helm candidate-bound repetidos en entorno operativo — 10/11/2026
+
+Se corrigió el falso bloqueo del primer intento de Docker: el clon efímero de
+cualificación tenía un `origin` local, incompatible con la verificación del
+binding Git declarado por `examples/demo`. Sin cambiar el repositorio ni el
+producto, el remoto del clon temporal se alineó con
+`https://github.com/SauronShepherd/ronin.git` y se repitió la lane sobre
+`7b4648645d5fef278e10d1613ea113ca21115655`.
+
+El resultado candidate-bound queda en verde: imagen
+`sha256:0e898d5f7ffd3bbd7543951630e8cd4d2748ce51358168590fe82d33cf92253a`,
+Docker **27/27**, aceptación estricta v0.1 **15/15**, sin skips ni fallos;
+incluye worker Docker real, PostgreSQL, crash/reclaim, cancelación,
+backup/restore, Floci/S3 y Azurite/Azure. La lane Helm/kind sobre la misma
+imagen pasa lint, render de frontera de secretos, instalación/readiness,
+upgrade a revisión 2, rollback a revisión 1, API autorizada, persistencia de
+job tras reinicio y cleanup.
+
+Esto cierra la evidencia técnica de Docker/Helm/rollback para el candidato,
+pero no cambia la decisión pública: siguen abiertos los 13 journeys completos,
+la revisión visual manual, SDP/proveedores, las 22 decisiones legales,
+seguridad Alpine, aggregate/freeze y aprobación de release. Public v1 sigue
+**NO-GO**; no se debe declarar GO por tener la infraestructura en verde.
