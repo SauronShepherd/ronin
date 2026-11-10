@@ -3782,6 +3782,19 @@ automatizado, pero no sustituye una revisión visual humana firmada sobre el
 candidato final. Public v1 continúa **NO-GO** por los gates externos y
 humanos ya enumerados.
 
+## 106. Reconciliación de ledgers al SHA actual — 10/11/2026
+
+La auditoría detectó y corrigió una divergencia documental: los ledgers
+`PUBLIC_V1_IMPLEMENTATION_STATUS.md` y `public-v1-status.json` registraban
+`e3181c28`, mientras el candidato publicado ya estaba en `dd5575e1`, con 13
+commits de distancia. Se sincronizaron ambos al SHA actual y el chequeo
+fail-closed de estado, junto con la batería legal, pasa **109/109**.
+
+La sincronización sólo corrige la identidad de la evidencia; no cambia las
+capacidades cualificadas ni la decisión de release. SDP continúa bloqueado por
+la ausencia del módulo `sdpstudio_cli` en el wrapper local. Public v1 sigue
+**NO-GO**.
+
 ## 104. Inventario legal reproducible y estable — 10/11/2026
 
 Se corrigió el generador de evidencia legal para excluir bytecode `.pyc` y
