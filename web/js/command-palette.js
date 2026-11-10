@@ -27,16 +27,15 @@ const descriptions = Object.freeze({
 });
 
 const commands = routesManifest.map(({id}) => ({id, route: id, label: t(`nav.${id}`), description: descriptions[id] || 'Open this Ronin Studio surface.', group: groupByRoute[id] || 'More'}));
+const triggerSelector = '[data-action="open-command"]';
 
 let dialog;
 let input;
 let list;
 let selected = 0;
-let lastTrigger;
 
 function restoreFocus() {
-  const trigger = lastTrigger || document.querySelector('[data-action="open-command"]');
-  lastTrigger = null;
+  const trigger = document.querySelector(triggerSelector);
   setTimeout(() => trigger?.focus?.(), 0);
 }
 
@@ -44,8 +43,8 @@ function ensure() {
   if (dialog) return;
   dialog = document.createElement('dialog');
   dialog.className = 'dialog command-palette';
-  dialog.setAttribute('aria-label', t('command.search'));
-  dialog.innerHTML = `<form method="dialog"><label class="sr-only" for="ronin-command-search">${t('command.search')}</label><input id="ronin-command-search" class="field" autocomplete="off" placeholder="${t('command.search')}" aria-controls="ronin-command-list"><div id="ronin-command-list" role="listbox" aria-label="${t('command.search')}"></div><div class="muted">${t('command.help')}</div></form>`;
+  dialog.ariaLabel = t('command.search');
+  dialog.innerHTML = `<form><label class="sr-only" for="ronin-command-search">${t('command.search')}</label><input id="ronin-command-search" class="field" placeholder="${t('command.search')}" aria-controls="ronin-command-list"><div id="ronin-command-list" role="listbox" aria-labelledby="ronin-command-search"></div><div class="muted">${t('command.help')}</div></form>`;
   document.body.append(dialog);
   input = dialog.querySelector('input');
   list = dialog.querySelector('#ronin-command-list');
@@ -64,10 +63,6 @@ function ensure() {
   });
   dialog.addEventListener('close', () => {
     restoreFocus();
-  });
-  dialog.addEventListener('cancel', (event) => {
-    event.preventDefault();
-    dialog.close();
   });
 }
 
@@ -95,10 +90,6 @@ function open(command) {
 }
 
 export function openCommandPalette() {
-  const active = document.activeElement;
-  lastTrigger = active instanceof HTMLElement && active.matches('[data-action="open-command"]')
-    ? active
-    : document.querySelector('[data-action="open-command"]');
   ensure();
   input.value = '';
   selected = 0;
