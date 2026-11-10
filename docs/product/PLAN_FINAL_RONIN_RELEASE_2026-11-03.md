@@ -4038,3 +4038,18 @@ Los recibos de infraestructura están por tanto reconciliados con el candidato
 actual. Esto no cierra los gates de producto: Public v1 sigue **NO-GO** por la
 cualificación incompleta de familias, SDP/proveedores, revisión visual formal,
 decisiones legales y aprobación de release.
+
+## 121. Suite Python completa y reconciliación del ledger — 10/11/2026
+
+La suite Python completa se ejecutó sobre un checkout limpio del candidato
+runtime (`6d3151bc`): 4.582 tests recolectados, con 6 skips ya previstos por
+entorno. El único fallo fue contractual/documental: la matriz de capacidades
+conservaba el SHA histórico `19ae8fd2`, mientras el ledger declaraba
+`21ecf6cc` para ese checkout. No hubo fallo de runtime ni de integración en
+esa pasada. La matriz canónica se sincronizó con el `observed_main_sha` actual
+del ledger (`30351aa5`); la regresión focalizada de matriz, estado y ledger
+queda en **12/12**.
+
+Este arreglo no cambia el veredicto de producto: la cualificación de las 13
+familias sigue en 0/13 y permanecen abiertos los gates humanos, legales,
+proveedores/SDP, SBOM/Trivy, revisión visual y aprobación final.
