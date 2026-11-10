@@ -3636,3 +3636,17 @@ política Alpine Edge, aprobación humana/legal de licencias y claims, revisión
 visual, matriz de proveedores/OS/Python, rollback y las 13 familias de
 capacidad Public v1. La recomendación permanece **NO-GO** hasta que esos gates
 sean aceptados por sus responsables.
+
+## 94. Reconciliación VEX y probe — 10/11/2026
+
+La imagen probe también queda alineada con la base Python fijada y los
+paquetes Alpine Edge parcheados (`musl`, `musl-utils` y `sqlite-libs`). El
+VEX histórico de tres excepciones se reemplazó por un documento vacío para
+no conservar afirmaciones de vulnerabilidad ya inexistentes. El verificador
+ahora exige cero hallazgos crudos cuando el VEX no tiene statements y se
+ejecutó contra la imagen exacta: **0 raw / 0 post-VEX**, PASS.
+
+La regresión contractual Docker pasa **24/24**. Esto fortalece el cierre de
+la cadena técnica, pero no cambia el estado de release: siguen pendientes
+las gates humanas, legales, visuales, proveedor/OS/Python y las 13 familias
+Public v1.
