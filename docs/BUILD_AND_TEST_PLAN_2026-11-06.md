@@ -626,3 +626,16 @@ congelar un SHA limpio, ejecutar el journey de los cinco contratos, adjuntar
 capturas/receipts y sólo entonces cambiar su estado del ledger. Repetir hasta
 `13/13`; si una evidencia falta, conservar `NO-GO` y registrar el blocker
 concreto en lugar de rebajar el estándar.
+
+## 18. Metadata explícita del command palette
+
+El disparador visible de la command palette declara ahora `aria-haspopup="dialog"`
+ y `aria-keyshortcuts="Control+K Meta+K"`. Esto hace que el modo de apertura y
+ sus atajos sean descubribles para tecnología asistiva, manteniendo el mismo
+ comportamiento visual y de teclado. El contrato Playwright focalizado pasa
+ `3/3` y el contrato estático pasa `10/10`.
+
+El incremento medido es deliberado y pequeño: `asset_bytes=2,132,778` y
+`html_bytes=5,838`. Se actualiza el baseline candidate-bound para que el ratchet
+ siga detectando cualquier incremento posterior; no se usa como evidencia de
+ release ni cambia el ledger `0/13` o la decisión **NO-GO**.
