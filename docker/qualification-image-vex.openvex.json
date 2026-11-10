@@ -12,7 +12,7 @@
       "timestamp": "2026-11-08T15:03:00Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:970ea4e116ddbad8c0d69b485d0daf9bfe28762fcdfc4036a7a83abcf45861a7",
+          "@id": "pkg:docker/ronin@sha256:05bdec5e2d217f1208dd755332408da54795920feb66862a687fe76b4dbf9505",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/musl@1.2.6-r3?os_name=alpine&os_version=3.24"
@@ -39,7 +39,7 @@
       "timestamp": "2026-11-08T16:12:00Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:970ea4e116ddbad8c0d69b485d0daf9bfe28762fcdfc4036a7a83abcf45861a7",
+          "@id": "pkg:docker/ronin@sha256:05bdec5e2d217f1208dd755332408da54795920feb66862a687fe76b4dbf9505",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/sqlite@3.53.4-r0?os_name=alpine&os_version=3.24"
@@ -66,7 +66,7 @@
       "timestamp": "2026-11-08T16:12:00Z",
       "products": [
         {
-          "@id": "pkg:docker/ronin@sha256:970ea4e116ddbad8c0d69b485d0daf9bfe28762fcdfc4036a7a83abcf45861a7",
+          "@id": "pkg:docker/ronin@sha256:05bdec5e2d217f1208dd755332408da54795920feb66862a687fe76b4dbf9505",
           "subcomponents": [
             {
               "@id": "pkg:apk/alpine/zlib@1.3.2-r1?os_name=alpine&os_version=3.24"
