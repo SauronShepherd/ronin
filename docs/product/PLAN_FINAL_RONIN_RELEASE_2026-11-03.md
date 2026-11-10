@@ -4076,3 +4076,16 @@ responsive, Home, contextos, workspaces/projects y journeys de todos los
 Studios. No se observaron fallos ni skips en la selección estática. Esta
 evidencia confirma la no-regresión de UI; no sustituye la revisión visual
 manual ni la cualificación Public v1 exact-head.
+
+## 124. Suite Python completa sobre el candidato actual — 10/11/2026
+
+La batería `python -m pytest --ignore=tests/perf -q` se ejecutó sobre el
+estado actual posterior al authoring: **4.511 passed, 77 skipped, 0 failed**
+en 506,78 segundos. Los skips son explícitos y reproducibles: integraciones
+reales opt-in de PostgreSQL/Docker/S3/Azure/Trino/OTLP, SDP externo, pruebas
+POSIX o symlink no disponibles en este host Windows y otras lanes de proveedor
+que requieren servicios externos. No hubo fallo Python, de contrato, de
+seguridad estática ni de backend en la selección ejecutada.
+
+La evidencia técnica queda verde para esta pasada, pero los skips externos y
+los gates humanos/proveedor siguen impidiendo declarar GO de Public v1.
