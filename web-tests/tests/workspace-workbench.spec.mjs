@@ -41,4 +41,9 @@ test('Project workbench keeps authoring modes and scope usable on a phone', asyn
   expect(layout.modeOverflow).toBe(false);
   await page.getByRole('button', { name: 'Connect project' }).click();
   await expect(page.locator('#project-environment-form')).toBeInViewport();
+  const manifest = JSON.parse(await page.locator('#project-manifest').inputValue());
+  expect(manifest.schema).toBe('ronin.project/v1');
+  expect(manifest.project.id).toBe('new-project');
+  expect(manifest.project.repositories[0].adapter_id).toBe('git');
+  await expect(page.locator('#project-manifest')).toHaveAttribute('rows', '14');
 });

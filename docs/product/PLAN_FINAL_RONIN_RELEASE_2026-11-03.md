@@ -4053,3 +4053,17 @@ queda en **12/12**.
 Este arreglo no cambia el veredicto de producto: la cualificación de las 13
 familias sigue en 0/13 y permanecen abiertos los gates humanos, legales,
 proveedores/SDP, SBOM/Trivy, revisión visual y aprobación final.
+
+## 122. Authoring inicial de proyectos — 10/11/2026
+
+La revisión del journey P1 workspace → project detectó que el formulario de
+authoring de proyectos comenzaba con `{}`, aunque el contrato exige un
+documento `ronin.project/v1` con identidad, repositorio y runtime. El editor
+ahora ofrece una plantilla editable y válida como punto de partida, conserva
+la posibilidad de revisar el JSON canónico y amplía el área para reducir
+errores de edición. La regresión Playwright responsive del workbench pasa
+**2/2**, incluyendo la validación del schema, identidad y repositorio inicial.
+
+Esto mejora el primer-run y la comparabilidad con los workbenches de
+Databricks/Dataiku/Fabric, pero no cualifica aún la familia P1 completa ni
+cambia el NO-GO del release.

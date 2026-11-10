@@ -33,7 +33,7 @@ function renderProjects() {
       </div>
     </section>
     <form id="project-journey-form" class="stack"><label>Project manifest JSON
-      <textarea id="project-manifest" class="field" rows="8" required>{}</textarea></label>
+      <textarea id="project-manifest" class="field" rows="14" required>{&quot;schema&quot;:&quot;ronin.project/v1&quot;,&quot;project&quot;:{&quot;id&quot;:&quot;new-project&quot;,&quot;name&quot;:&quot;New project&quot;,&quot;repositories&quot;:[{&quot;adapter_id&quot;:&quot;git&quot;,&quot;alias&quot;:&quot;source&quot;,&quot;default_ref&quot;:&quot;main&quot;,&quot;role&quot;:&quot;primary&quot;,&quot;sync_policy&quot;:&quot;manual&quot;,&quot;uri&quot;:&quot;https://git.example.com/org/project.git&quot;,&quot;subdirectory&quot;:null}],&quot;execution&quot;:{&quot;requirements&quot;:[{&quot;name&quot;:&quot;python&quot;,&quot;constraint&quot;:&quot;&gt;=3.11&quot;,&quot;level&quot;:&quot;required&quot;}],&quot;resolution&quot;:&quot;compatible&quot;,&quot;runtime&quot;:{&quot;adapter_id&quot;:&quot;local&quot;,&quot;profile_id&quot;:&quot;python-3.11&quot;}}}}</textarea></label>
       <button class="button primary" type="submit">Create project</button>
       <pre id="project-journey-result" class="code" aria-live="polite">No project created.</pre></form>
     <form id="project-bundle-import-form" class="stack"><h2>Import project Bundle</h2>
