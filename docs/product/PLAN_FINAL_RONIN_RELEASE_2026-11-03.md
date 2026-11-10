@@ -3565,3 +3565,20 @@ del fix, y las regresiones futuras siguen rechazándose. La repetición completa
 siguientes recibos de candidato; no se debe usar el resultado de `849529e5` para
 aprobarlos. El gate release sigue **NO-GO** por Docker/PostgreSQL, policy de
 licencias y decisiones de versión/claims.
+
+## 90. Iteración de seguridad de imagen — 10/11/2026
+
+El candidato `f52af3104d1d3f77db84a59414ebdee3c413f557` actualiza el lock de
+runtime para solicitar `krb5=1.22.3-r0` y `zlib=1.4-r0`, y vuelve a ejecutar la
+cualificación en checkout limpio. Docker pasa **27/27** integraciones y la
+aceptación estricta v0.1 pasa **15/15**, con imagen
+`sha256:a1386eaf2fb1ca97c1c0901023f7e207dec4325b113c0878fb02b0111e1540c0`.
+
+El escaneo exacto de Docker Scout sobre esa imagen baja de 24 a **23
+vulnerabilidades**, elimina la crítica de zlib, pero conserva **9 HIGH, 8
+MEDIUM y 6 UNSPECIFIED**: `krb5 1.22.2-r1`, `musl 1.2.6-r3` y `sqlite
+3.53.4-r0`. SQLite mantiene `CVE-2026-119586` sin versión corregida
+publicada. No se amplía el VEX ni se presenta este resultado como un cierre
+de seguridad; siguen abiertas la remediación/aceptación formal, el SBOM de
+contenedor, la procedencia, las revisiones humanas y las familias Public v1.
+La decisión sigue **NO-GO, 0/13**.
