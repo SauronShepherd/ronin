@@ -7,7 +7,7 @@
 
 ## Current exact-SHA qualification — 10 November 2026
 
-The current runtime/test candidate is `0e0a9cd8f0f88f6e985ce86a1f6d848487d97772`.
+The current runtime/test candidate is `817ae3c93d61cd22a44f28f2c37090ba22573108`.
 Environments now uses an Observe/Author/Govern workbench with deterministic diff
 preview and pause/restore actions; Deployments uses Observe/Bind/Operate with an
 explicit project/environment scope and a validated bindings-array replacement.
@@ -20,7 +20,7 @@ and the Runs surface refuses unauthenticated requests before contacting the API.
 The context selector also remembers up to five safe recent contexts without
 persisting credentials. The complete static Chromium suite passes `140/140`;
 web audit passes with `69` files, `38` modules, `180` route invocations and
-`0` failures; budget is `2,123,808` asset bytes, `70` requests, `36` modules,
+`0` failures; budget is `2,123,786` asset bytes, `70` requests, `36` modules,
 `15` stylesheets and
 `5,778` HTML bytes. The prior parent receipt found one
 `MEDIUM CVE-2026-4738` (`zlib 1.3.2-r1`) and zero secrets per image. Exact
@@ -34,9 +34,9 @@ The tracked license inventory is now regenerated against the current lock, but
 Candidate-bound qualification receipts are green for Docker (`27/27`, strict
 v0.1 `15/15`), Helm/kind, live UI/API (`33/33`, 254 correlated events), SDK
 artifacts (`90/90`), exact supply-chain evidence, and Floci with Terraform
-`1.13.5`/AWS provider `6.65.0`. The full Python/PostgreSQL run passed after four
-documentation-contract failures were corrected: `4563/4590`
-with `27` explicit skips and `0` failures at `%TEMP%\\ronin-python-full-74fb533-20261110`.
+`1.13.5`/AWS provider `6.65.0`. The full Python/PostgreSQL run passed after the
+package/configuration contract was synchronized: `4563/4590` with `27` explicit
+skips and `0` failures at `%TEMP%\\ronin-python-full-817ae3c-rerun-20261110`.
 
 This is technical qualification only. Public v1 remains **0/13 (0%, NO-GO)**:
 manual visual/product signoff, legal/NOTICE/claims, security/VEX triage and
