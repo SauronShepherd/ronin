@@ -3651,6 +3651,18 @@ la cadena técnica, pero no cambia el estado de release: siguen pendientes
 las gates humanas, legales, visuales, proveedor/OS/Python y las 13 familias
 Public v1.
 
+## 98. Cualificación Trino real — 10/11/2026
+
+El proveedor Trino 484, fijado por digest
+`sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f`,
+se levantó en servicio aislado y la prueba real pasa **2/2**, sin skips ni
+fallos. Recibo: `ronin-trino-bc0fc45-20261110`.
+
+Esto cierra el carril Trino local; no certifica otros proveedores externos.
+Spark Connect y SDP siguen requiriendo endpoints/comandos externos explícitos.
+La decisión Public v1 continúa **NO-GO** por los gates humanos, legales,
+rollback, proveedores pendientes y familias no cualificadas.
+
 ## 95. Repetición completa Python/PostgreSQL en candidato limpio — 10/11/2026
 
 La suite completa ejecutada en checkout limpio `d01df297426deb623aee38ddf73bb6e980b09d13`
