@@ -639,3 +639,20 @@ El incremento medido es deliberado y pequeño: `asset_bytes=2,132,778` y
 `html_bytes=5,838`. Se actualiza el baseline candidate-bound para que el ratchet
  siga detectando cualquier incremento posterior; no se usa como evidencia de
  release ni cambia el ledger `0/13` o la decisión **NO-GO**.
+
+## 19. Revisión visual manual del shell
+
+Se inspeccionó el `HEAD` en Chromium con capturas de `1440×900` y `390×844`,
+servidor estático local y navegación real. La jerarquía del rail, la entrada
+action-first y el contraste de las superficies son consistentes; no apareció
+un desbordamiento horizontal ni una interacción inaccesible en esta pasada.
+
+Quedan dos hallazgos de producto que impiden firmar la revisión visual como
+completa: en móvil los chips de `workspace/project/runtime` se comprimen hasta
+truncarse y pierden parte de su legibilidad; además, el control plane queda
+parcialmente próximo a la barra de navegación fija y necesita una comprobación
+de espacio inferior al recorrer contenido largo. La captura `fullPage` tampoco
+es evidencia suficiente para este shell porque `main` mantiene scroll interno.
+El próximo ciclo debe capturar el viewport visible y recorrer el scroll en cada
+breakpoint, y debe resolver la compresión del contexto móvil antes de pedir la
+firma humana. El estado de release no cambia: `0/13`, **NO-GO**.
