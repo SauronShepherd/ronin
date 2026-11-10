@@ -14,7 +14,7 @@ El runtime/test candidato `0e0a9cd8f0f88f6e985ce86a1f6d848487d97772` es la únic
 - Artefactos y supply chain: `90/90`; wheel `c79e0422761598d86e7f8d4adfe46a542e8587c9d34ca5badd19e7b14c4e8dcc`, sdist `766fa98205ec63f1d0e7a77297ced44f0f20b967621eec09e6a30ca4059f42a0`; imágenes runtime/probe, SBOM crudos y CycloneDX ligados por artifact identity, provenance y `Trivy 0.76.1`.
 - Floci: HTTP 200, Terraform `1.13.5`, AWS provider `6.65.0`, plan/apply/refresh/destroy/state-list correctos y cero recursos residuales. VEX Docker Scout `1.27.0`: `3 raw → 0 applied` para runtime y probe, con dos productos exactos por declaración.
 
-Resultado técnico: **verde en las lanes candidate-bound ejecutadas**, sin mezclar receipts anteriores. Resultado de release: **NO-GO**. Siguen abiertos el ledger `0/13` familias, cualificación de proveedores/credenciales, triage y aceptación humana de seguridad/VEX, legal/NOTICE/claims, 22 decisiones de licencia, una policy obsoleta, 9 evidencias desalineadas, revisión visual manual, rollback/backup, la matriz completa de toolchain/soporte, y gobierno de CI/branches.
+Resultado técnico: **verde en las lanes exactas ejecutadas** (Python/PostgreSQL, Chromium, auditoría, budget y contratos de packaging); Docker/Helm/live/artefactos/supply-chain todavía requieren receipt del mismo candidato. Resultado de release: **NO-GO**. Siguen abiertos el ledger `0/13` familias, cualificación de proveedores/credenciales, triage y aceptación humana de seguridad/VEX, legal/NOTICE/claims, 22 decisiones de licencia, una policy obsoleta, 9 evidencias desalineadas, revisión visual manual, rollback/backup, la matriz completa de toolchain/soporte, y gobierno de CI/branches.
 
 ## 0.1 Plan de cierre obligatorio para la siguiente iteración
 
