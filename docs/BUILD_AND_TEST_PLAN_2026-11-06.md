@@ -539,3 +539,14 @@ el status fail-closed, el generador de status, capability status y la matriz
 Public v1. El resultado confirma que el ajuste de command palette/CSS y la
 reconciliación del presupuesto no rompieron los contratos estáticos ni la
 coherencia del expediente.
+
+## 13. Suite Python completa del candidato actual
+
+La ejecución completa sobre el `HEAD` documental `d977edcd` (sin cambios de
+runtime respecto de `16dbe56e`) terminó en `4511 passed, 77 skipped, 0 failed`
+en `353.24s`. Una primera ejecución había mostrado una única interrupción
+`WinError 10053` durante la segunda petición del caso
+`test_queryflux_execution_is_bound_to_an_existing_project_in_workspace`; el
+caso pasó `11/11` veces aislado y la repetición completa posterior pasó sin
+fallos. Se conserva como señal de contención/flakiness del host Windows, no se
+cuenta como pass de una lane externa y debe vigilarse en futuras qualification.
