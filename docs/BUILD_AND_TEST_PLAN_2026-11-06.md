@@ -613,8 +613,8 @@ cuando los cinco contratos, el journey end-to-end, el proveedor declarado, la
 licencia/NOTICE y el rollback tengan evidencia candidate-bound. Una suite verde
 con `0/13` familias no puede producir `GO`.
 
-**Observación actual:** el `HEAD` documental `8c965d08` está publicado y limpio;
-la regresión web completa es `148/148`, el subconjunto Python/ledger es `27/27`,
+**Observación actual:** el `HEAD` documental/runtime `1b124cb0` está publicado y limpio;
+la regresión web completa es `148/148`, el subconjunto Python/ledger candidate-bound es `17/17`,
 la auditoría web y el presupuesto pasan, y el candidato runtime/test base
 `772e381d` conserva la suite Python `4511 passed, 77 skipped, 0 failed`.
 La rúbrica no cierra por inferencia los journeys, proveedores, licencias,
