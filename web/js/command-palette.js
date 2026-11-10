@@ -34,6 +34,12 @@ let list;
 let selected = 0;
 let lastTrigger;
 
+function restoreFocus() {
+  const trigger = lastTrigger || document.querySelector('[data-action="open-command"]');
+  lastTrigger = null;
+  setTimeout(() => trigger?.focus?.(), 0);
+}
+
 function ensure() {
   if (dialog) return;
   dialog = document.createElement('dialog');
@@ -57,15 +63,11 @@ function ensure() {
     if (event.target === dialog) dialog.close();
   });
   dialog.addEventListener('close', () => {
-    const trigger = lastTrigger;
-    lastTrigger = null;
-    setTimeout(() => (trigger || document.querySelector('[data-action="open-command"]'))?.focus?.(), 0);
+    restoreFocus();
   });
   dialog.addEventListener('cancel', (event) => {
     event.preventDefault();
-    const trigger = lastTrigger || document.querySelector('[data-action="open-command"]');
     dialog.close();
-    setTimeout(() => trigger?.focus?.(), 0);
   });
 }
 
@@ -115,9 +117,7 @@ document.addEventListener('click', (event) => {
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && dialog?.open) {
     event.preventDefault();
-    const trigger = lastTrigger || document.querySelector('[data-action="open-command"]');
     dialog.close();
-    setTimeout(() => trigger?.focus?.(), 0);
     return;
   }
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
