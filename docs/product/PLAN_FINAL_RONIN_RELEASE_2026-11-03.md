@@ -3597,3 +3597,20 @@ Persisten solamente `musl 1.2.6-r3` (`CVE-2026-107891`, fix publicado
 VEX para ocultar hallazgos. Falta repetir la cualificación Docker completa
 para este último cambio, generar SBOM/provenance exactos y cerrar la
 aceptación de seguridad; la decisión continúa **NO-GO, 0/13**.
+
+## 92. Cierre técnico del escaneo de imagen — 10/11/2026
+
+El commit `1cf4beafd2748c4e3219a40033e34b9117975da5` añade el repositorio
+Alpine Edge de forma explícita y fija `musl=1.2.6-r6`, `musl-utils=1.2.6-r6`
+y `sqlite-libs=3.54.1-r0`, además de los locks parcheados previos. El
+candidato exacto producido por la cualificación,
+`sha256:ff4e7c6a4207c3505d649a25851961a689482f68bbd6db1b6b4450d2e36aaedd`,
+queda en **0 vulnerabilidades Scout**, **27/27** integraciones Docker y
+**15/15** aceptación estricta v0.1.
+
+Este resultado cierra el hallazgo técnico del escáner, pero no equivale aún a
+GO: hay que revisar formalmente el uso de Alpine Edge, generar los recibos
+exactos de SBOM/provenance y repetir Helm, live y artifacts sobre este SHA.
+Las gates humanas, visuales, legales, de proveedores y las 13 familias
+Public v1 siguen pendientes. Se mantiene **NO-GO** hasta completar esas
+pruebas y aprobaciones.
