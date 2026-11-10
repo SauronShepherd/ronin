@@ -4130,3 +4130,17 @@ La suite Chromium completa posterior al cambio pasa **147/147** en 4,2
 minutos, incluyendo accesibilidad, responsive, route traversal, Home,
 Workspace/Project y los demás Studios. No se observan regresiones fuera del
 journey focalizado.
+
+## 128. Docker exact-head tras la iteración de UI — 10/11/2026
+
+Se reconstruyó y ejecutó la cualificación Docker sobre `8da2500c`, que ya
+incluye el handoff de contexto del Project Studio. La imagen quedó identificada
+como `sha256:b6f8c1af853c63c5d2b54513bc5959f429a2ee9f0630ee9bc160de521d2a186e`.
+
+La aceptación de integración pasó **27/27**, sin skips, fallos ni errores; la
+aceptación estricta v0.1 pasó **15/15**. Se cubrieron worker/runtime Docker,
+PostgreSQL, leases y crash/reclaim, cancelación, Floci/S3, Azurite/Azure y
+backup/restore de appliance. El recibo es un diagnóstico
+`DIRTY-WORKTREE` porque permanecen artefactos no trackeados propiedad del
+workspace; no se presenta como evidencia de candidato limpio ni cierra los
+gates humanos/proveedor.
