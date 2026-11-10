@@ -474,3 +474,23 @@ not qualify every family or artifact on one common candidate. The ledger remains
 0/13; human license/NOTICE and version/claims decisions remain open, as do the
 candidate-bound manual visual review and several family journeys. These
 diagnostic passes cannot overturn those blockers.
+
+## Current candidate reconciliation — 2026-11-10
+
+The prior table entries above preserve historical decision traceability. The
+current clean runtime candidate is `6d3151bcd54ef3a410504d02403c39b565ef4a10`
+with image digest
+`sha256:189f54cf4781c16a7713bc3bda53278b8623eea0a37011a3165700c77ac39bbd`.
+Candidate-bound Docker qualification passes **27/27** with zero skips or
+failures and strict v0.1 acceptance passes **15/15**. Candidate-bound Helm/kind
+passes chart lint, secret boundary, install/readiness, upgrade revision 2,
+rollback to revision 1, authorized Studio/API, queued-job persistence after
+restart and isolated cleanup. The receipts are recorded in the release plan
+§120 and under `%TEMP%\ronin-docker-6d3151bc-20261110` and
+`%TEMP%\ronin-helm-6d3151bc-20261110`.
+
+These receipts close the technical Docker/Helm/rollback rehearsal for this
+candidate only. They do not close the separate human decisions, the 0/13
+capability-family release ledger, manual visual sign-off, SBOM/Trivy review,
+support matrix, artifact aggregate or release freeze. The decision remains
+**NO-GO**.
