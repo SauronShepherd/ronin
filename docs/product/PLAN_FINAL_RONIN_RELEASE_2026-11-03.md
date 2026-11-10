@@ -3667,6 +3667,18 @@ los tests de consistencia pasan **6/6**. La decisión global continúa **NO-GO**
 solo por los gates humanos, legales, visuales, de proveedores y de familias
 Public v1 aún no aprobados.
 
+## 97. Matriz POSIX/Linux cerrada — 10/11/2026
+
+El runner POSIX fallaba inicialmente en Windows porque el script inline se
+codificaba con CRLF y BusyBox `sh` interpretaba `set -eu` con un retorno de
+carro. Se normalizó a LF y se añadió una regresión contractual. La nueva
+ejecución limpia sobre la imagen final pasa **8/8** casos POSIX/Linux, con
+**0 skips y 0 fallos**, y cleanup correcto. El recibo está en
+`ronin-posix-bc0fc45-20261110`.
+
+La matriz de plataforma mejora, pero no cambia el NO-GO: permanecen los gates
+humanos/legal, proveedores externos, rollback y cualificación de familias.
+
 ## 96. Gate legal/licencias reproducido — 10/11/2026
 
 La ejecución de `tools/license_qualification.py` contra
