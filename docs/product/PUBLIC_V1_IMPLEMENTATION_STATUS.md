@@ -7,7 +7,12 @@
 
 ## Current exact-SHA qualification — 10 November 2026
 
-The current runtime/test candidate is `74fb53338dd62bc246c55b503b33ce2715795364`.
+The current runtime/test candidate is `15951c233df65c73cce09d24fb231bf0837aef24`.
+Environments now uses an Observe/Author/Govern workbench with deterministic diff
+preview and pause/restore actions; Deployments uses Observe/Bind/Operate with an
+explicit project/environment scope and a validated bindings-array replacement.
+Both surfaces inherit the visible workspace context and retain their existing API
+contracts.
 Runs now uses the same default context shown by the shell (`default /
 examples/demo / local`), and direct Project deep links synchronize their
 workspace scope without clearing a project explicitly chosen by the operator,
@@ -15,9 +20,9 @@ and the Runs surface refuses unauthenticated requests before contacting the API.
 The context selector also remembers up to five safe recent contexts without
 persisting credentials. The complete static Chromium suite passes `140/140`;
 web audit passes with `69` files, `38` modules, `180` route invocations and
-`0` failures; budget is `2,106,569` asset bytes, `68` requests, `36` modules,
-`13` stylesheets and
-`5,639` HTML bytes. The prior parent receipt found one
+`0` failures; budget is `2,123,808` asset bytes, `70` requests, `36` modules,
+`15` stylesheets and
+`5,778` HTML bytes. The prior parent receipt found one
 `MEDIUM CVE-2026-4738` (`zlib 1.3.2-r1`) and zero secrets per image. Exact
 candidate security evidence is now bound to the runtime/probe images: Docker
 Scout reports `3` raw and `0` after the exact two-product OpenVEX binding, while
@@ -108,7 +113,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `799941c75f9b147228b7a52ebc28ffcb7ad8dde6` (2026-11-10).
+**Observed source head:** `952ddfc4ae9475dd452fbb4f7556036c6b7e2809` (2026-11-10).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
