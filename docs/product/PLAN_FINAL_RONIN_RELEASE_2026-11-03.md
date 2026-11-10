@@ -3907,3 +3907,17 @@ la última imagen disponible fue construida antes de este cambio de runner. No
 se declara un PASS por inferencia. El gate de rollback operativo permanece
 **qualification_pending** hasta repetir Docker + Helm sobre el mismo
 candidato. Public v1 continúa **NO-GO**.
+
+## 113. Bloqueo de infraestructura para el rehearsal candidate-bound — 10/11/2026
+
+El checkout limpio del candidato `7c6486a4` se creó correctamente en un
+directorio temporal sin los artefactos no rastreados del usuario. La ejecución
+de `docker build --pull=false -t ronin:qualification-7c6486a4 .` no llegó a
+compilar: Docker devolvió `failed to connect to the docker API` porque
+`com.docker.service` está detenido. El intento de iniciar el servicio falla
+por permisos de Windows.
+
+No se declara PASS de Docker, Helm ni upgrade/rollback para este candidato.
+El runner y sus contratos sí están implementados; queda repetir la lane en un
+host con Docker Desktop/daemon operativo, conservar la identidad exacta del
+SHA y adjuntar ambos recibos antes de cerrar `rollback-recovery-rehearsal`.
