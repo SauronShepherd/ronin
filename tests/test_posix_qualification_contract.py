@@ -17,6 +17,7 @@ def test_posix_runner_is_digest_pinned_and_mounts_checkout_read_only() -> None:
     assert '$mountRepo = "type=bind,source=$repoRoot,target=/workspace,readonly"' in script
     assert '"--network", "bridge", "--user", "0:0"' in script
     assert '$dockerArgs += @("--env", $name)' in script
+    assert '$runtimeScript = $runtimeScript -replace "`r`n", "`n"' in script
 
 
 def test_posix_runner_selects_the_complete_previously_skipped_platform_set() -> None:

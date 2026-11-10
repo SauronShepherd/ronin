@@ -103,6 +103,7 @@ python -m pytest -p no:cacheprovider -p tools.pytest_timing_report -q \
   tests/test_mounted_file_secrets.py::test_mounted_file_secret_rejects_broad_permissions \
   tests/test_local_file_ingestion.py::test_connector_rejects_symlink
 '@
+$runtimeScript = $runtimeScript -replace "`r`n", "`n"
 $encodedScript = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($runtimeScript))
 $mountRepo = "type=bind,source=$repoRoot,target=/workspace,readonly"
 $mountEvidence = "type=bind,source=$evidenceRoot,target=/evidence"
