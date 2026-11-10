@@ -1,4 +1,4 @@
-import routesManifest from '../routes.json' with {type: 'json'};import {config,get,post,put,setConfig} from './api.js';import {duration,esc,fmt,json,page,status} from './dom.js';import {machineLearningStudio} from './features.js';import {alertsStudio} from './alerts-studio.js';import {decodeStudioContext} from './studio-context.js';import './command-palette.js';import {renderContextBar} from './context-bar.js';import {loadHomeActivity} from './home-activity.js';import './debugger-studio.js';import './cloud-studio.js';import {renderPerformance} from './performance-studio.js';
+import routesManifest from '../routes.json' with {type: 'json'};import {config,get,post,put,setConfig} from './api.js';import {duration,esc,fmt,json,page,status} from './dom.js';import {machineLearningStudio} from './features.js';import {alertsStudio} from './alerts-studio.js';import {decodeStudioContext,isDefaultStudioContext} from './studio-context.js';import './command-palette.js';import {renderContextBar} from './context-bar.js';import {loadHomeActivity} from './home-activity.js';import './debugger-studio.js';import './cloud-studio.js';import {renderPerformance} from './performance-studio.js';
 let studioContext=decodeStudioContext(location.search);window.roninStudioContext=studioContext;renderContextBar(studioContext);
 addEventListener('ronin-context-change',e=>{studioContext=e.detail;state.runProject=e.detail.project??'';render()});
 import {t} from './i18n.js';
@@ -50,7 +50,7 @@ function renderHome(){
   const hasContext=Object.keys(studioContext).length>0;
   const workspace=studioContext.workspace||(hasContext?'Choose workspace':'default');
   const project=studioContext.project||(hasContext?'Choose project':'examples/demo');
-  const contextSource=hasContext?'Launch context':'Example context';
+  const contextSource=isDefaultStudioContext(studioContext)?'Example context':'Launch context';
   view.innerHTML=`${page('Overview','CONTROL PLANE')}
     <section class="home-overview" aria-labelledby="home-overview-title">
       <div class="home-overview-head">

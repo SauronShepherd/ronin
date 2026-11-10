@@ -208,8 +208,8 @@ test('Runs explorer keeps scope, health counts, and reset action explicit', asyn
   });
 
   await page.goto('./#runs');
-  await expect(page.locator('#run-result')).toContainText('Choose a project to inspect its runs.');
-  await page.locator('#run-project').fill('examples/demo');
+  await expect(page.locator('#run-project')).toHaveValue('examples/demo');
+  await expect(page.getByRole('heading', { name: 'Recent runs' })).toBeVisible();
   await page.getByRole('button', { name: 'Refresh runs' }).click();
   await expect(page.getByRole('heading', { name: 'Recent runs' })).toBeVisible();
   await expect(page.locator('.run-list-summary')).toContainText('3');
@@ -221,6 +221,22 @@ test('Runs explorer keeps scope, health counts, and reset action explicit', asyn
   expect(mainWidth.scroll).toBe(mainWidth.client);
   await page.getByRole('button', { name: 'Clear' }).click();
   await expect(page.locator('#run-result')).toContainText('Choose a project to inspect its runs.');
+});
+
+test('default shell context is the same context used by Runs', async ({ page }) => {
+  const requestedProjects = [];
+  await page.route('**/v1/jobs**', async route => {
+    const project = new URL(route.request().url()).searchParams.get('project');
+    requestedProjects.push(project);
+    await route.fulfill({ json: { items: [] } });
+  });
+
+  await page.goto('./#runs');
+  await expect(page.locator('.context-bar')).toContainText('default');
+  await expect(page.locator('.context-bar')).toContainText('examples/demo');
+  await expect(page.locator('#run-project')).toHaveValue('examples/demo');
+  await expect(page.locator('#run-result')).toContainText('No runs are visible for this credential.');
+  expect(requestedProjects).toEqual(['examples/demo']);
 });
 
 test('Runs explorer follows launch context and refreshes when the context changes', async ({ page }) => {

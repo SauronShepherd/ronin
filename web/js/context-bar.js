@@ -1,11 +1,10 @@
-import {createStudioContext,studioContextKeys} from './studio-context.js';
+import {createStudioContext,DEFAULT_STUDIO_CONTEXT,studioContextKeys} from './studio-context.js';
 
 const labels = Object.freeze({
   workspace: 'Workspace', project: 'Project', environment: 'Environment', revision: 'Revision', runtime: 'Runtime',
   dataset: 'Dataset', run: 'Run', compare: 'Compare',
 });
 
-const defaultContext = Object.freeze({workspace: 'default', project: 'examples/demo', runtime: 'local'});
 const editableFields = Object.freeze([
   ['workspace', 'Workspace', 'default'],
   ['project', 'Project', 'examples/demo'],
@@ -54,7 +53,7 @@ function ensureDialog() {
 function openContextPicker() {
   const picker = ensureDialog();
   const active = globalThis.roninStudioContext || {};
-  const resolved = Object.keys(active).length ? active : defaultContext;
+  const resolved = Object.keys(active).length ? active : DEFAULT_STUDIO_CONTEXT;
   for (const [key] of editableFields) {
     const input = picker.querySelector(`[name="${key}"]`);
     if (input) input.value = resolved[key] || '';
@@ -86,7 +85,7 @@ export function renderContextBar(context = globalThis.roninStudioContext || {}) 
     bar.setAttribute('aria-label', 'Studio context');
     topbar.insertBefore(bar, topbar.querySelector('.connection-open'));
   }
-  const resolved = Object.keys(context).length ? context : defaultContext;
+  const resolved = Object.keys(context).length ? context : DEFAULT_STUDIO_CONTEXT;
   const items = studioContextKeys().filter((key) => resolved[key]);
   bar.innerHTML = `${items.map((key) => `<span class="context-chip"><b>${labels[key]}</b><span title="${escape(resolved[key])}">${escape(resolved[key])}</span></span>`).join('')}<button class="context-change" type="button" data-action="open-context" aria-haspopup="dialog" aria-controls="context-dialog">Change context</button>`;
   bar.hidden = false;
