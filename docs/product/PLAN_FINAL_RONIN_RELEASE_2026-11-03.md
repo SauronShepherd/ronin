@@ -3796,6 +3796,20 @@ El ledger sigue declarando correctamente **0/13** familias cualificadas y
 **NO-GO**. Esta corrección evita que una decisión de release se base en
 descripciones históricas aunque el SHA sea correcto.
 
+## 108. Inspección visual asistida del workbench — 10/11/2026
+
+Se inspeccionó el render Chromium real del recorrido de Ingestion Studio en
+desktop, incluyendo rail persistente, topbar, contexto workspace/proyecto/
+runtime, agrupación de acciones, paneles de decisión y estado de operación.
+La composición conserva jerarquía clara, contraste consistente, foco visible y
+un lenguaje visual coherente con el control plane; no se observó overflow ni
+un control ambiguo en la captura revisada. El recorrido funcional asociado
+pasó **1/1**.
+
+Esta inspección es evidencia asistida del candidato y complementa la matriz
+responsive/accesibilidad automatizada; no reemplaza la revisión visual humana
+firmada que exige el gate de release. Public v1 permanece **NO-GO**.
+
 ## 106. Reconciliación de ledgers al SHA actual — 10/11/2026
 
 La auditoría detectó y corrigió una divergencia documental: los ledgers
