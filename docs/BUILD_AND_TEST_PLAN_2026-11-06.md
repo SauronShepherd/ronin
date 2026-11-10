@@ -564,3 +564,11 @@ La suite Chromium del candidato actualizado pasó `148/148` en `3.4m`; las tres
 pruebas de command palette pasan juntas y la suite completa mantiene
 accesibilidad, responsive, navegación y journeys en verde. La suite Python
 posterior al mismo fix pasó `4511 passed, 77 skipped, 0 failed` en `251.10s`.
+
+## 15. Ratchet final tras la limpieza de command palette
+
+La limpieza posterior centralizó la restauración de foco y retiró estado y
+atributos redundantes sin relajar la accesibilidad comprobada. El tamaño final
+medido del Studio es `2,132,538` bytes, por debajo del baseline candidate-bound
+de `2,132,739`; `studio_budget --check` y `studio_web_audit` pasan. La suite
+Chromium completa posterior a esta limpieza permanece en `148/148`.
