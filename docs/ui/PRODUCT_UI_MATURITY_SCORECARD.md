@@ -28,7 +28,7 @@ The scorecard is deliberately stricter than a passing browser suite: automated t
 
 ## Current iteration baseline
 
-The 2026-11-11 candidate has automated evidence for the shell, context propagation into Data Engineering, Semantic Studio, SQL Studio and Migration Studio, command palette with local recent-Studio prioritization, mobile navigation clearance, long-identifier discoverability, SQL progressive disclosure, local SQL and QueryFlux tabular result previews, Catalog context inheritance, QueryFlux capability disclosure, Connections operation disclosure, Alerts decision and state-table disclosure, Semantic metric/join table disclosure, Quality response disclosure, Project Studio revision history/comparison, exact-head Chromium assembled from three bounded receipts (`59 + 69 + 47 = 175 passed`, `33 explicit skips`, `0 failed`) plus the focused command-palette/home regression (`4 passed` total), updated QueryFlux/context receipt (`8 passed`), Connections receipt (`5 passed`), Alerts receipt (`3 passed`), Semantic receipt (`6 passed`), Migration context receipt (`1 passed`) and the latest Python suite (`4516 passed, 77 skipped, 0 failed`). It does **not** yet have a green score for every Public v1 Studio, nor the human/product, provider, legal, security, rollback and governance approvals. Those remain explicit release blockers in `docs/product/public-v1-status.json` and `docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md`.
+The 2026-11-11 candidate has automated evidence for the shell, context propagation into Data Engineering, Semantic Studio, SQL Studio and Migration Studio, command palette with local recent-Studio prioritization, mobile navigation clearance, long-identifier discoverability, SQL progressive disclosure, local SQL and QueryFlux tabular result previews, Catalog context inheritance, QueryFlux capability disclosure, Connections operation disclosure, Alerts decision and state-table disclosure, Semantic metric/join table disclosure, Quality response disclosure, Project Studio revision history/comparison, and the current exact-head Chromium workflow (`180/180 passed`, `0 failed`) together with green Python 3.11/3.12 canonical gates. It does **not** yet have a green score for every Public v1 Studio, nor the human/product, provider, legal, security, rollback and governance approvals. Those remain explicit release blockers in `docs/product/public-v1-status.json` and `docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md`.
 
 ## Next review order
 
@@ -42,7 +42,7 @@ The 2026-11-11 candidate has automated evidence for the shell, context propagati
 
 | Surface | Automated evidence | Current product score |
 | --- | --- | --- |
-| Shell, navigation and responsive layout | Chromium global `164 passed / 33 explicit skips / 0 failed`; route traversal, keyboard, Axe and viewport matrix green; web audit `0` failures | Yellow — human visual sign-off still open |
+| Shell, navigation and responsive layout | Exact-head Chromium global `180 passed / 0 failed`; route traversal, keyboard, Axe and viewport matrix green; web audit `0` failures | Yellow — human visual sign-off still open |
 | Workspace / Project | Workspace retry `3/3`; context, revision history and comparison journeys green | Yellow — provider/source-control qualification absent |
 | Environment | `5/5`, including 503 → retry, authoring, reversible governance and serious/critical Axe clean | Yellow — runtime/provider qualification absent |
 | Scheduler | `3/3`, including durable operations, backfill and delivery retry | Yellow — live worker/HA qualification absent |
@@ -54,12 +54,11 @@ surface is promoted to green until the applicable human visual review and
 provider/security/rollback gates are accepted; the release ledger therefore
 remains `NO-GO / 0 of 13`.
 
-## CI correction receipt — 2026-11-11
+## CI correction receipt — historical context
 
 The responsive topbar defect found in the Linux Chromium run was corrected at
-`23ddf749ea198bf028bb32e20585a5b788aacf35`: the compact control layout now
-starts at the same 900px boundary as the single-column shell. The candidate's
-GitHub Actions run `43057053167` is green across Chromium non-live (`180/180`)
-and Python 3.11/3.12. This closes the automated regression for that change;
-it does not alter the release decision or replace the required human,
-provider, legal, security, rollback and governance gates.
+`23ddf749ea198bf028bb32e20585a5b788aacf35`. Subsequent exact-head CI on the
+current candidate is green across Chromium non-live (`180/180`) and Python
+3.11/3.12. This closes the automated regression; it does not alter the release
+decision or replace the required human, provider, legal, security, rollback and
+governance gates.
