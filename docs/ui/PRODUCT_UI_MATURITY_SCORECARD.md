@@ -1,0 +1,39 @@
+# Ronin UI maturity scorecard
+
+This scorecard turns the Public v1 UI ambition into reviewable acceptance criteria. It is a product-quality gate, not a claim that the current release is ready. A Studio may be called **mature** only when every applicable criterion has candidate-bound evidence.
+
+## Product bar
+
+Ronin should feel like one operating surface for governed data work: a user can understand the active boundary, choose a safe next action, inspect evidence, and recover from an error without learning the API. The visual language may remain original, but the interaction bar should be comparable to Databricks, Dataiku, Palantir and Fabric in clarity, density, keyboard support and operational honesty.
+
+## Per-Studio acceptance criteria
+
+| Area | Acceptance criterion | Evidence required |
+| --- | --- | --- |
+| Orientation | The page states what the Studio is for, its active workspace/project context and the next safe action above the fold. | Candidate screenshot at 1440x900 and 390x844; no invented live telemetry. |
+| Progressive disclosure | The primary path is visible first; advanced parameters, destructive actions and raw JSON are behind an explicit secondary surface. | DOM review plus focused journey test. |
+| Context safety | Workspace, project, environment, revision and runtime remain visible or recoverable while navigating within the Studio. | Context propagation test and mobile review. |
+| Evidence | Every result exposes state, scope, identity and a useful empty/error state; successful output can be traced to its request or revision. | API/UI journey with mocked and negative responses. |
+| Recovery | A failed request explains what happened, preserves entered intent where safe and gives a bounded retry or correction path. | Forced 4xx/5xx browser journey. |
+| Density | Tables, forms and code output remain readable without horizontal overflow; long identifiers truncate with an accessible full value. | 320, 390, 768 and 1440 viewport matrix. |
+| Accessibility | Keyboard navigation, focus restoration, labels, dialog semantics and status announcements work without a pointer. | Axe scan plus keyboard journey. |
+| Performance | Initial shell and Studio assets stay inside the tracked request/byte budget; no route emits unexpected resource failures. | `studio_web_audit`, budget check and route traversal. |
+| Destructive boundaries | Mutations are explicit, authenticated and confirmation-gated when irreversible; read-only previews never imply execution. | API contract tests and UI action review. |
+
+## Release scoring
+
+Score each applicable row as `green`, `yellow` or `red` for the exact candidate SHA. A Studio is `green` only with no red rows and no more than one yellow row, and only after human visual review. The Public v1 release remains `NO-GO` while any mandatory Studio is below green or while provider, legal, security, rollback or governance gates remain open.
+
+The scorecard is deliberately stricter than a passing browser suite: automated tests prove behavior, while the visual and product rows require a candidate-bound human decision.
+
+## Current iteration baseline
+
+The 2026-11-11 candidate has automated evidence for the shell, context propagation, command palette, mobile navigation clearance, Project Studio revision history/comparison, exact-head Chromium and the Python suite. It does **not** yet have a green score for every Public v1 Studio, nor the human/product, provider, legal, security, rollback and governance approvals. Those remain explicit release blockers in `docs/product/public-v1-status.json` and `docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md`.
+
+## Next review order
+
+1. Project and Data Engineering: bind revision, compare, run and evidence flows to one visible context.
+2. QueryFlux, Catalog and Quality: make governed search, explainability, quality state and promotion decisions legible without raw API knowledge.
+3. Scheduler, Streaming and Migration: make recovery, lag, replay and promotion boundaries visible before an operator acts.
+4. ML, Semantic, Graph and Cloud: preserve provenance and safe-preview semantics across the richer authoring surfaces.
+5. Repeat the full viewport, accessibility, negative-path and human visual pass on every mandatory Studio before any release decision changes.

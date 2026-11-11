@@ -717,3 +717,21 @@ archivo; la auditoría registra 182 invocaciones y 0 fallos. El baseline
 candidate-bound queda en `asset_bytes=2,136,819`, actualizado explícitamente
 por este incremento funcional. P1 continúa parcial y el release permanece
 `0/13`, **NO-GO**.
+
+## 23. Regresión Python completa del candidato P1
+
+La regresión completa del candidato exact-head quedó registrada con `4511
+passed, 77 skipped, 0 failed` en 502.30s. Los skips son dependencias de
+entorno, plataforma o proveedor y no se cuentan como qualification.
+
+## 24. Scorecard de madurez de UI
+
+La aspiración de una UI comparable a Databricks, Dataiku, Palantir y Fabric
+queda convertida en criterios verificables en
+`docs/ui/PRODUCT_UI_MATURITY_SCORECARD.md`. El scorecard separa evidencia
+automatizada de decisión visual humana y exige revisar orientación,
+divulgación progresiva, contexto, evidencia, recuperación, densidad responsive,
+accesibilidad, presupuesto, límites destructivos y estado honesto por Studio.
+No cambia el NO-GO actual: el candidato todavía no tiene todos los Studios en
+verde ni las aprobaciones humanas, de proveedores, seguridad, rollback y
+gobernanza requeridas.
