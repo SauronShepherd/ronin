@@ -1424,3 +1424,19 @@ queda en `0` fallos y el budget se ratchea explícitamente a
 `asset_bytes=2,147,110`, un aumento medido de 397 bytes. El release permanece
 **NO-GO / 0 de 13**.
 
+## 72. Regresión Python exacta posterior a la reconciliación del ledger
+
+Sobre `c9048479198caaf604dc90e0bde9892f46945f0`, la suite completa local
+
+```text
+python -m pytest --ignore=tests/perf -q
+```
+
+terminó con `4511 passed, 77 skipped, 0 failed` en `10:06`. El fallo anterior
+de la misma suite era exclusivamente la discrepancia entre la matriz de
+capacidad y `public-v1-status.json`; la reconciliación quedó cubierta por
+`tests/test_public_capability_matrix.py` (`3 passed`). Los 77 skips siguen
+identificados como Docker/PostgreSQL/proveedores externos opt-in o limitaciones
+del host y no se convierten en pases implícitos. El release permanece
+**NO-GO / 0 de 13** hasta cerrar las cualificaciones externas y humanas.
+
