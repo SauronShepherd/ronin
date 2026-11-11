@@ -1320,6 +1320,19 @@ scopes `{}` ni una política de bind no reconocida. `kubectl` no está instalado
 por lo que no se declara una qualification real de cluster/kind. El release
 permanece **NO-GO / 0 de 13**.
 
+## 80. Reconciliación exact-SHA y Gitleaks
+
+Los commits documentales posteriores habían dejado `public-v1-status.json`
+apuntando a un SHA anterior. Se regeneró el ledger para
+`58eadc10083f810cc6f8cb1fba276c76a9ca41a0` y se actualizó la matriz al mismo
+baseline; `tests/test_public_capability_matrix.py` pasa **3/3**, el generator
+check pasa y `capability_status` valida el JSON.
+
+Gitleaks `8.30.1` ejecutó `gitleaks detect --source . --redact` sobre 2.203
+commits y aproximadamente 17,38 MB: **no leaks found**. El expediente queda
+consistente con el HEAD publicado; el release permanece **NO-GO / 0 de 13** por
+las revisiones y aprobaciones externas aún abiertas.
+
 ## 79. Qualification Helm/kind con smoke autenticado
 
 Se creó el cluster efímero `kind-ronin-qualification` con kind `0.33.0` y
