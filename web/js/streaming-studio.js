@@ -91,7 +91,9 @@ function renderStreamHealth(output, payload) {
   const tone = state === 'healthy' ? 'green' : ['lagging', 'degraded'].includes(state) ? 'amber' : 'blue';
   const totalLag = Number.isFinite(payload?.total_lag) ? payload.total_lag : Number.isFinite(payload?.lag) ? payload.lag : null;
   const partitions = Number.isFinite(payload?.partitions) ? payload.partitions : (payload?.lag && typeof payload.lag === 'object' ? Object.keys(payload.lag).length : null);
-  output.innerHTML = `<div class="stream-health-summary"><div><span class="status ${tone}" data-state="${esc(state)}" aria-label="Stream health: ${esc(state)}">${esc(state)}</span><strong>${esc(payload?.stream_id || 'Selected stream')}</strong></div><dl><div><dt>Total lag</dt><dd>${totalLag == null ? '—' : esc(totalLag)}</dd></div><div><dt>Partitions</dt><dd>${partitions == null ? '—' : esc(partitions)}</dd></div></dl></div><details class="stream-health-raw"><summary>Advanced: raw health evidence</summary><pre class="code">${esc(json(payload))}</pre></details>`;
+  const emptyPartitions = Array.isArray(payload?.empty_partitions) ? payload.empty_partitions : [];
+  const emptyCopy = emptyPartitions.length ? `No records available yet on partition${emptyPartitions.length === 1 ? '' : 's'} ${emptyPartitions.join(', ')}.` : 'All observed partitions have data or a committed checkpoint.';
+  output.innerHTML = `<div class="stream-health-summary"><div><span class="status ${tone}" data-state="${esc(state)}" aria-label="Stream health: ${esc(state)}">${esc(state)}</span><strong>${esc(payload?.stream_id || 'Selected stream')}</strong></div><dl><div><dt>Total lag</dt><dd>${totalLag == null ? '—' : esc(totalLag)}</dd></div><div><dt>Partitions</dt><dd>${partitions == null ? '—' : esc(partitions)}</dd></div></dl><p class="muted" data-empty-partitions>${esc(emptyCopy)}</p></div><details class="stream-health-raw"><summary>Advanced: raw health evidence</summary><pre class="code">${esc(json(payload))}</pre></details>`;
 }
 
 function render() {
