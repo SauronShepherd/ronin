@@ -4,6 +4,17 @@ import { esc, json, page } from './dom.js';
 const activeWorkspace = () => globalThis.roninStudioContext?.workspace || sessionStorage.getItem('ronin.workspace') || 'default';
 let lastAlertAction = 'list';
 
+function renderAlertDecision(result, action, payload) {
+  const state = payload?.state || {};
+  const status = state.status || payload?.status || 'unknown';
+  const metric = payload?.metric;
+  const value = metric?.value === undefined ? 'no metric value' : `metric ${metric.value}`;
+  const title = action === 'evaluate' ? `Rule ${payload?.rule_id || 'unknown'} evaluated` : `Alert ${payload?.rule_id || 'unknown'} acknowledged`;
+  const copy = action === 'evaluate' ? `${status} · ${value} · ${payload?.changed ? 'state changed' : 'no state change'}` : `${status} · operator acknowledgement recorded`;
+  result.innerHTML = `<div class="alert-decision-summary"><strong>${esc(title)}</strong><span>${esc(copy)}</span><p>Review the rule and fingerprint before using this signal downstream.</p></div><details class="alerts-raw"><summary>Advanced: raw alert response</summary><pre class="code"></pre></details>`;
+  result.querySelector('pre').textContent = json(payload);
+}
+
 export function alertsStudio() {
   if (location.hash.slice(1) !== 'alerts') return;
   const view = document.querySelector('#view');
@@ -39,7 +50,8 @@ document.addEventListener('submit', async event => {
         : instances
           ? await get(`/v1/workspaces/${workspace}/alerts/instances`)
         : await get(`/v1/workspaces/${workspace}/alerts/rules`);
-    if (evaluating || !Array.isArray(payload.items)) { result.textContent = json(payload); return; }
+    if (evaluating || acknowledging) { renderAlertDecision(result, action, payload); return; }
+    if (!Array.isArray(payload.items)) { result.textContent = json(payload); return; }
     result.innerHTML = payload.items.length
       ? `<div class="table-wrap"><table><caption class="sr-only">Alert rules</caption><thead><tr><th>Rule</th><th>State</th><th>Severity</th><th>Metric</th></tr></thead><tbody>${payload.items.map((rule) => `<tr><td>${esc(rule.id || '')}</td><td>${esc(rule.state || rule.status || '')}</td><td>${esc(rule.severity || '')}</td><td>${esc(rule.metric || rule.name || '')}</td></tr>`).join('')}</tbody></table></div>`
       : '<div class="empty">No alert rules found.</div>';

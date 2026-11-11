@@ -1686,6 +1686,17 @@ La regresión focalizada de Connections terminó en **5 passed, 0 failed**.
 `studio_web_audit` mantiene 0 fallos y el budget ratificado es
 `asset_bytes=2,153,028`. El release permanece **NO-GO / 0 de 13**.
 
+## 91. Alerts hace legibles evaluación y acknowledgement
+
+Las respuestas de evaluar y reconocer una alerta ahora muestran primero regla,
+estado, valor de métrica y si hubo transición. El payload completo queda bajo
+`Advanced: raw alert response`, mientras las listas de reglas/instancias
+conservan su tabla y el retry mantiene el último ámbito.
+
+La regresión focalizada de Alerts terminó en **3 passed, 0 failed**.
+`studio_web_audit` mantiene 0 fallos y el budget ratificado es
+`asset_bytes=2,154,083`. El release permanece **NO-GO / 0 de 13**.
+
 ## 88. SQL local muestra resultados tabulares antes de la evidencia cruda
 
 El resultado de SQL local sigue el mismo contrato de lectura que QueryFlux:

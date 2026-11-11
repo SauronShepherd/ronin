@@ -28,3 +28,20 @@ test('Alerts workbench retries the last operation without losing scope', async (
   await expect(page.locator('#alerts-result')).toContainText('orders-late');
   expect(attempts).toBe(2);
 });
+
+test('Alerts workbench explains evaluation and acknowledgement before raw evidence', async ({ page }) => {
+  await page.route('**/v1/workspaces/default/alerts/evaluate', async route => {
+    await route.fulfill({ json: { rule_id: 'orders-late', changed: true, metric: { value: 12 }, state: { status: 'firing' } } });
+  });
+  await page.route('**/v1/workspaces/default/alerts/acknowledge', async route => {
+    await route.fulfill({ json: { rule_id: 'orders-late', state: { status: 'firing', acknowledged_at: '2026-11-11T10:00:00Z' } } });
+  });
+  await page.goto('./#alerts');
+  await page.locator('#alerts-form [name="rule_id"]').fill('orders-late');
+  await page.getByRole('button', { name: 'Evaluate rule' }).click();
+  await expect(page.locator('.alert-decision-summary')).toContainText('firing');
+  await expect(page.locator('.alerts-raw')).not.toHaveAttribute('open', '');
+  await page.locator('#alerts-form [name="fingerprint"]').fill('fingerprint-1');
+  await page.getByRole('button', { name: 'Acknowledge alert' }).click();
+  await expect(page.locator('.alert-decision-summary')).toContainText('acknowledged');
+});
