@@ -47,9 +47,13 @@ test('Quality Studio presents an evidence-first decision workbench', async ({ pa
 
   await page.getByRole('button', { name: 'Load contract', exact: true }).click();
   await expect(page.locator('#quality-contract')).toHaveValue(/asset-a/);
+  await expect(page.locator('.quality-operation-summary')).toContainText('Contract loaded');
+  await expect(page.locator('.quality-raw')).not.toHaveAttribute('open', '');
+  await page.locator('.quality-raw summary').click();
+  await expect(page.locator('.quality-raw pre')).toContainText('asset-a');
   await page.locator('#quality-contract').fill(JSON.stringify({ asset: { asset_id: 'asset-a', version: 'v1' }, rules: [{ id: 'row-count' }] }));
   await page.getByRole('button', { name: 'Save contract', exact: true }).click();
-  await expect(page.locator('#quality-result')).toContainText('row-count');
+  await expect(page.locator('#quality-result')).toContainText('Contract saved');
 
   await page.setViewportSize({ width: 390, height: 844 });
   const widths = await page.locator('#main').evaluate(node => ({ client: node.clientWidth, scroll: node.scrollWidth }));

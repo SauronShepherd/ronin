@@ -49,11 +49,13 @@ document.addEventListener('click', async event => {
       const data = await get(`/v1/workspaces/${values.workspace}/quality/contracts/${values.asset}/${values.version}`);
       const editor = document.querySelector('#quality-contract');
       if (editor) editor.value = JSON.stringify(data, null, 2);
-      result.textContent = JSON.stringify(data, null, 2);
+      const rules = Array.isArray(data.rules) ? data.rules.length : 0;
+      result.innerHTML = `<div class="quality-operation-summary"><strong>Contract loaded for ${esc(decodeURIComponent(values.asset))}@${esc(decodeURIComponent(values.version))}.</strong><span>${rules} rule${rules === 1 ? '' : 's'} ready for review.</span></div><details class="quality-raw"><summary>Advanced: contract response</summary><pre class="code">${esc(JSON.stringify(data, null, 2))}</pre></details>`;
     } else if (action === 'save-contract') {
       const contract = JSON.parse(document.querySelector('#quality-contract').value || '{}');
       const data = await put(`/v1/workspaces/${values.workspace}/quality/contracts/${values.asset}/${values.version}`, contract);
-      result.textContent = JSON.stringify(data, null, 2);
+      const rules = Array.isArray(contract.rules) ? contract.rules.length : 0;
+      result.innerHTML = `<div class="quality-operation-summary"><strong>Contract saved for ${esc(decodeURIComponent(values.asset))}@${esc(decodeURIComponent(values.version))}.</strong><span>${rules} rule${rules === 1 ? '' : 's'} is now available for dry-run.</span></div><details class="quality-raw"><summary>Advanced: publication response</summary><pre class="code">${esc(JSON.stringify(data, null, 2))}</pre></details>`;
     } else {
       const rows = JSON.parse(document.querySelector('#quality-rows').value || '[]');
       const data = await post(`/v1/workspaces/${values.workspace}/quality/runs`, {

@@ -1644,3 +1644,20 @@ El budget queda ratificado en `asset_bytes=2,148,533` (+478 bytes medidos) y el
 audit web mantiene 181 invocaciones y 0 fallos. El release permanece
 **NO-GO / 0 de 13** por los gates externos y aprobaciones aún abiertos.
 
+## 86. Quality Studio separa decisión y respuesta cruda
+
+Quality Studio mantiene visibles los editores de contrato y dry-run como
+acciones primarias, pero las operaciones de cargar y guardar contrato ahora
+presentan una confirmación legible con asset, versión y número de reglas. El
+payload completo queda bajo `Advanced: contract response` o
+`Advanced: publication response`, evitando que la revisión principal sea un
+bloque JSON.
+
+La regresión focalizada terminó en **2 passed**. Los checks estáticos y de
+presupuesto pasan con `asset_bytes=2,149,401`; `studio_web_audit` conserva 181
+invocaciones y 0 fallos. La última suite Chromium global completa autoritativa
+anterior al cambio terminó en **175 passed, 33 skipped, 0 failed**; la
+repetición posterior no produjo receipt válido por terminación del static
+server durante navegación y queda explícitamente excluida como evidencia.
+El release permanece **NO-GO / 0 de 13**.
+
