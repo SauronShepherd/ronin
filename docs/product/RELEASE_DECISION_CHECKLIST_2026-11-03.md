@@ -630,3 +630,16 @@ SPDX and CycloneDX container SBOMs. These receipts extend the technical
 security evidence at the same external evidence directory, but do not replace
 the required Trivy/VEX and human security review; the release remains
 **NO-GO**.
+
+## Python artifact qualification receipt — 2026-11-11
+
+The clean checkout `ef85e6f47564a1beee7f793c33825a01a2180492` produced and
+installed the immutable `pyronin` wheel and sdist in an isolated environment.
+The artifact contract suite passed **90/90** and import origin was verified as
+`isolated-site-packages`. The wheel SHA-256 is
+`9da05d57191b01d88acc596bd5a13d71b534c1d99aea1b3954d9fd23d1192682`; the
+sdist SHA-256 is
+`30f57447795b9abf97c820f74721a0d10f1c0562d237ddf41e354e7db813712d`.
+The machine-readable receipt is preserved at
+`C:\Users\angel.alvarez\Downloads\ronin-artifact-evidence-ef85e6f\artifact-qualification.json`.
+This closes the Python artifact stage only; release blockers remain open.
