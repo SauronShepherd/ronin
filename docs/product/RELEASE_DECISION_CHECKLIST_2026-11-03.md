@@ -622,3 +622,11 @@ vulnerabilities**. Raw receipts are preserved outside the repository at
 `C:\Users\angel.alvarez\Downloads\ronin-security-ef85e6f`.
 Trivy is unavailable on this host, so container SBOM/image review and human
 VEX acceptance remain open; this stage does not change the overall **NO-GO**.
+
+Docker Scout `1.28.0` was subsequently available for the exact qualified image
+`sha256:ef9fc66f59a083851595db5dea4a6d3f7fc2e1e3eb56de717c53d3e797bfefbd`.
+It indexed 93 packages, reported **no vulnerable package**, and generated both
+SPDX and CycloneDX container SBOMs. These receipts extend the technical
+security evidence at the same external evidence directory, but do not replace
+the required Trivy/VEX and human security review; the release remains
+**NO-GO**.
