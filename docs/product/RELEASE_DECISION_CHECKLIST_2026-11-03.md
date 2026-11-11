@@ -566,8 +566,13 @@ The evidence is preserved outside the repository at
 `C:\Users\angel.alvarez\Downloads\ronin-clean-docker-evidence-3cf5aa7`.
 
 The license qualification still fails closed because 21 locked distributions
-have no policy review decision. An attempt to generate the inventory in a
-fresh `uv` environment also stopped on an exact-lock mismatch (`click`
-expected `8.5.0`, installed `8.5.1`); this is an environment reproducibility
-defect, not a reason to relax the lock or infer legal approval. Legal/NOTICE
-review therefore remains open and the release decision is still **NO-GO**.
+have no policy review decision. The reproducible inventory procedure is to
+sync the environment from `requirements-dev.lock` with `uv pip sync`, repair
+the Windows `tzdata` installation explicitly to the locked `2026.4` build,
+and invoke `.venv\\Scripts\\python.exe tools/license_qualification.py` directly;
+`uv run` must not be used for this receipt because the unconstrained project
+metadata can re-upgrade packages. That procedure generated a 56-package
+inventory with lock SHA
+`f1b904db278b805118f91044e667166282ac824cbb7346a32d939324655b80d0`.
+Legal/NOTICE review therefore remains open and the release decision is still
+**NO-GO**.
