@@ -67,4 +67,4 @@ jobs:
 
       - name: Run non-live browser suite
         working-directory: web-tests
-        run: npm test -- --workers=2
+        run: npm test -- --workers=1
