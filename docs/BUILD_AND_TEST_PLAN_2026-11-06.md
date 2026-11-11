@@ -1458,3 +1458,18 @@ ausencias de review en PASS. El siguiente owner action es completar las
 decisiones en la política de licencias y repetir el verificador; el release
 permanece **NO-GO / 0 de 13**.
 
+## 74. Docker qualification: separar diagnóstico de candidato limpio
+
+La ejecución con `-AllowDirtyWorktree` sobre `33034984` pasó **27/27** pruebas
+reales (worker Docker, PostgreSQL, backup/restore, Floci/S3 y Azurite), pero se
+clasifica sólo como diagnóstico porque el checkout contenía artefactos no
+rastreados del usuario.
+
+La repetición desde un checkout limpio produjo `18 passed, 4 failed, 5 errors`
+en Windows, todos concentrados en preparación/ejecución del worker (`worker.preparation.error`), mientras las pruebas de aislamiento, S3, Azure y backup
+pasaron. La repetición bajo una ruta compartida con Docker reprodujo el mismo
+patrón. El candidato incorpora ahora logging seguro del motivo controlado de
+preparación (`2e199285`) para que el siguiente run no pierda la causa raíz.
+Hasta obtener una ejecución limpia `27/27`, esta puerta permanece abierta y el
+release sigue **NO-GO / 0 de 13**.
+
