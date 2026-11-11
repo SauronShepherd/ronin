@@ -78,10 +78,10 @@ function renderProjects() {
   const form = document.querySelector('#project-journey-form');
   form.onsubmit = async (event) => {
     event.preventDefault();
+    const editing = form.dataset.editProject;
     try {
       const manifest = JSON.parse(document.querySelector('#project-manifest').value);
       const projectId = manifest?.project?.id || 'unknown';
-      const editing = form.dataset.editProject;
       const data = editing
         ? await put(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(editing)}`, manifest)
         : await post(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects`, manifest, { headers: { 'Idempotency-Key': `studio-project-${workspaceId}-${projectId}` } });
