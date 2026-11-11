@@ -38,6 +38,24 @@ test.describe('home control plane', () => {
     );
   });
 
+  test('keeps long context identifiers discoverable when the shell truncates them', async ({ page }) => {
+    const workspace = 'workspace-with-a-deliberately-long-governed-name';
+    const project = 'project-with-a-deliberately-long-production-name';
+    await page.goto(`./?workspace=${workspace}&project=${project}#home`, { waitUntil: 'load' });
+
+    const chips = page.locator('.context-chip');
+    await expect(chips.filter({ hasText: 'Workspace' })).toHaveAttribute(
+      'aria-label',
+      `Workspace: ${workspace}`,
+    );
+    await expect(chips.filter({ hasText: 'Project' })).toHaveAttribute(
+      'aria-label',
+      `Project: ${project}`,
+    );
+    await expect(chips.filter({ hasText: 'Workspace' }).locator('span')).toHaveAttribute('title', workspace);
+    await expect(chips.filter({ hasText: 'Project' }).locator('span')).toHaveAttribute('title', project);
+  });
+
   for (const viewport of [
     { name: 'phone', width: 320, height: 720 },
     { name: 'tablet', width: 768, height: 1024 },

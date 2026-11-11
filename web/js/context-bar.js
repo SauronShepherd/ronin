@@ -169,7 +169,7 @@ export function renderContextBar(context = globalThis.roninStudioContext || {}) 
   const resolved = Object.keys(context).length ? context : DEFAULT_STUDIO_CONTEXT;
   const items = studioContextKeys().filter((key) => resolved[key]);
   const mobileSummary = `${resolved.workspace || '—'} / ${resolved.project || '—'}`;
-  bar.innerHTML = `<span class="context-mobile-summary" title="${escape(mobileSummary)}">${escape(mobileSummary)}</span>${items.map((key) => `<span class="context-chip"><b>${labels[key]}</b><span title="${escape(resolved[key])}">${escape(resolved[key])}</span></span>`).join('')}<button class="context-change" type="button" data-action="open-context" aria-haspopup="dialog" aria-controls="context-dialog">Change context</button>`;
+  bar.innerHTML = `<span class="context-mobile-summary" title="${escape(mobileSummary)}" aria-label="Active workspace and project: ${escape(mobileSummary)}">${escape(mobileSummary)}</span>${items.map((key) => `<span class="context-chip" aria-label="${labels[key]}: ${escape(resolved[key])}"><b aria-hidden="true">${labels[key]}</b><span title="${escape(resolved[key])}" aria-label="${escape(resolved[key])}">${escape(resolved[key])}</span></span>`).join('')}<button class="context-change" type="button" data-action="open-context" aria-haspopup="dialog" aria-controls="context-dialog">Change context</button>`;
   bar.hidden = false;
 }
 

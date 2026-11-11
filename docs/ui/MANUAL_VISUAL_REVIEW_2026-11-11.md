@@ -1,7 +1,7 @@
 # Ronin Studio — manual visual review
 
 Date: 2026-11-11  
-Candidate: runtime/test `37525ee638e905b6b251667519a7b564e568b41a`  
+Candidate: runtime/test `2406cd42`  
 Reviewer mode: local Chromium, static server, no backend claims
 
 ## Scope and method
@@ -27,7 +27,7 @@ Passes for this review slice:
   content, and additional bottom padding lets the control plane scroll clear of
   the bar;
 - accessibility metadata and keyboard paths are covered by the candidate's
-  automated Chromium suite (`148/148`).
+  automated Chromium suite (`172 passed / 33 explicit skips / 0 failed`).
 
 ## Open findings
 
@@ -37,7 +37,9 @@ still require a formal product/design sign-off:
 1. Inspect the complete control plane while scrolling at 320, 390 and 520 px;
    verify that no last card or action is visually obscured by the fixed bar.
 2. Review truncation of long workspace/project identifiers with realistic
-   names, including an explicit tooltip or an equivalent accessible name.
+   names. The candidate now provides both a native tooltip and an accessible
+   full-value name; visual confirmation at 320px and 390px remains a human
+   sign-off item.
 3. Repeat the visual pass on every active Public v1 family journey and record
    screenshots against the same frozen release SHA.
 
