@@ -1,5 +1,8 @@
 import pytest
-from studio_data_engineering.queryflux_lifecycle import QueryFluxExecution
+from studio_data_engineering.queryflux_lifecycle import (
+    QueryFluxExecution,
+    SqliteQueryFluxExecutionStore,
+)
 
 
 def _execution() -> QueryFluxExecution:
@@ -36,3 +39,20 @@ def test_queryflux_failed_state_requires_failure_code() -> None:
 def test_queryflux_rejects_illegal_transition() -> None:
     with pytest.raises(ValueError, match="invalid QueryFlux transition"):
         _execution().transition("succeeded")
+
+
+def test_sqlite_queryflux_store_is_idempotent_and_persists_cancel(tmp_path) -> None:
+    store = SqliteQueryFluxExecutionStore(tmp_path / "ronin.db")
+    created = store.create(_execution())
+    assert store.create(_execution()) == created
+    cancelling = store.request_cancel(created)
+    assert cancelling.state == "cancelling"
+    assert cancelling.cancel_requested is True
+    assert store.get("workspace-a", "project-a", "run-a", "attempt-a") == cancelling
+    assert store.request_cancel(cancelling) == cancelling
+
+
+def test_sqlite_queryflux_store_rejects_transition_for_missing_execution(tmp_path) -> None:
+    store = SqliteQueryFluxExecutionStore(tmp_path / "ronin.db")
+    with pytest.raises(KeyError, match="does not exist"):
+        store.request_cancel(_execution())

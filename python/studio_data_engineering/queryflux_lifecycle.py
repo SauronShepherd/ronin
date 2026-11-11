@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import sqlite3
 from dataclasses import dataclass, replace
+from pathlib import Path
 from typing import Literal
+
+from studio_storage.sqlite import open_database
 
 QueryFluxState = Literal["queued", "running", "cancelling", "succeeded", "failed", "cancelled"]
 QueryFluxTerminalState = Literal["succeeded", "failed", "cancelled"]
@@ -62,4 +66,132 @@ class QueryFluxExecution:
         return self.state in {"succeeded", "failed", "cancelled"}
 
 
-__all__ = ("QueryFluxExecution", "QueryFluxState", "QueryFluxTerminalState")
+class SqliteQueryFluxExecutionStore:
+    """SQLite persistence for the QueryFlux lifecycle boundary."""
+
+    def __init__(self, path: Path) -> None:
+        self._path = path
+        connection = open_database(path)
+        try:
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS de_queryflux_executions ("
+                "workspace_id TEXT NOT NULL, project_id TEXT NOT NULL,"
+                "run_id TEXT NOT NULL, attempt_id TEXT NOT NULL, state TEXT NOT NULL,"
+                "cancel_requested INTEGER NOT NULL DEFAULT 0, failure_code TEXT NULL,"
+                "created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                "updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                "PRIMARY KEY(workspace_id,project_id,run_id,attempt_id))"
+            )
+        finally:
+            connection.close()
+
+    def _connect(self) -> sqlite3.Connection:
+        return open_database(self._path)
+
+    @staticmethod
+    def _identity(execution: QueryFluxExecution) -> tuple[str, str, str, str]:
+        values = (
+            execution.workspace_id,
+            execution.project_id,
+            execution.run_id,
+            execution.attempt_id,
+        )
+        if any(not value or value != value.strip() for value in values):
+            raise ValueError("QueryFlux execution identity must be non-empty and trimmed")
+        return values
+
+    def create(self, execution: QueryFluxExecution) -> QueryFluxExecution:
+        identity = self._identity(execution)
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute(
+                "INSERT OR IGNORE INTO de_queryflux_executions "
+                "(workspace_id,project_id,run_id,attempt_id,state,cancel_requested,failure_code) "
+                "VALUES (?,?,?,?,?,?,?)",
+                (
+                    *identity,
+                    execution.state,
+                    int(execution.cancel_requested),
+                    execution.failure_code,
+                ),
+            )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+        stored = self.get(*identity)
+        if stored is None:
+            raise RuntimeError("QueryFlux execution was not persisted")
+        return stored
+
+    def get(
+        self, workspace_id: str, project_id: str, run_id: str, attempt_id: str
+    ) -> QueryFluxExecution | None:
+        values = (workspace_id, project_id, run_id, attempt_id)
+        if any(not value or value != value.strip() for value in values):
+            raise ValueError("QueryFlux execution identity must be non-empty and trimmed")
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT workspace_id,project_id,run_id,attempt_id,state,"
+                "cancel_requested,failure_code FROM de_queryflux_executions "
+                "WHERE workspace_id=? AND project_id=? AND run_id=? AND attempt_id=?",
+                values,
+            ).fetchone()
+        finally:
+            connection.close()
+        if row is None:
+            return None
+        return QueryFluxExecution(
+            row["workspace_id"],
+            row["project_id"],
+            row["run_id"],
+            row["attempt_id"],
+            row["state"],
+            bool(row["cancel_requested"]),
+            row["failure_code"],
+        )
+
+    def transition(self, execution: QueryFluxExecution) -> QueryFluxExecution:
+        identity = self._identity(execution)
+        current = self.get(*identity)
+        if current is None:
+            raise KeyError("QueryFlux execution does not exist")
+        next_execution = current.transition(execution.state, failure_code=execution.failure_code)
+        if execution.cancel_requested and not next_execution.cancel_requested:
+            next_execution = replace(next_execution, cancel_requested=True)
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute(
+                "UPDATE de_queryflux_executions SET state=?,cancel_requested=?,failure_code=?,"
+                "updated_at=CURRENT_TIMESTAMP WHERE workspace_id=? AND project_id=? "
+                "AND run_id=? AND attempt_id=?",
+                (
+                    next_execution.state,
+                    int(next_execution.cancel_requested),
+                    next_execution.failure_code,
+                    *identity,
+                ),
+            )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+        return self.get(*identity)  # type: ignore[return-value]
+
+    def request_cancel(self, execution: QueryFluxExecution) -> QueryFluxExecution:
+        return self.transition(execution.request_cancel())
+
+
+__all__ = (
+    "QueryFluxExecution",
+    "QueryFluxState",
+    "QueryFluxTerminalState",
+    "SqliteQueryFluxExecutionStore",
+)
