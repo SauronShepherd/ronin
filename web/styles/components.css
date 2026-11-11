@@ -149,7 +149,7 @@ tr:hover td, .data-table tr:hover td { background: rgb(234 216 196 / 40%); }
 .empty, .error, .loading { min-height: 8rem; display: grid; place-items: center; align-content: center; gap: .3rem; }
 .empty h2, .error h2, .loading h2 { margin: 0; color: var(--cocoa); }
 .empty p, .error p, .loading p { margin: 0; }
-.status { letter-spacing: .02em; box-shadow: inset 0 1px 0 rgb(255 250 242 / 70%); }.de-result-summary .de-queryflux-lifecycle { margin-left: auto; white-space: nowrap; }
+.status { letter-spacing: .02em; box-shadow: inset 0 1px 0 rgb(255 250 242 / 70%); }.de-result-summary .de-queryflux-lifecycle { margin-left: auto; white-space: nowrap; }.stream-health-summary { display: grid; gap: .85rem; }.stream-health-summary > div { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; }.stream-health-summary strong { color: var(--cocoa); }.stream-health-summary dl { display: flex; gap: 1.2rem; margin: 0; }.stream-health-summary dt { color: var(--muted); font-size: .75rem; }.stream-health-summary dd { margin: .15rem 0 0; font-weight: 800; }
 .status::before { content: ''; width: .38rem; height: .38rem; border-radius: 50%; background: currentColor; opacity: .75; }
 .code { max-height: 28rem; }
 .card .button, .panel .button { margin-top: .2rem; }

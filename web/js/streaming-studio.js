@@ -86,6 +86,14 @@ function formWorkspace() {
   return String(new FormData(form).get('workspace') || '').trim();
 }
 
+function renderStreamHealth(output, payload) {
+  const state = payload?.status || (payload?.healthy === true ? 'healthy' : payload?.healthy === false ? 'lagging' : 'unknown');
+  const tone = state === 'healthy' ? 'green' : ['lagging', 'degraded'].includes(state) ? 'amber' : 'blue';
+  const totalLag = Number.isFinite(payload?.total_lag) ? payload.total_lag : Number.isFinite(payload?.lag) ? payload.lag : null;
+  const partitions = Number.isFinite(payload?.partitions) ? payload.partitions : (payload?.lag && typeof payload.lag === 'object' ? Object.keys(payload.lag).length : null);
+  output.innerHTML = `<div class="stream-health-summary"><div><span class="status ${tone}" data-state="${esc(state)}" aria-label="Stream health: ${esc(state)}">${esc(state)}</span><strong>${esc(payload?.stream_id || 'Selected stream')}</strong></div><dl><div><dt>Total lag</dt><dd>${totalLag == null ? '—' : esc(totalLag)}</dd></div><div><dt>Partitions</dt><dd>${partitions == null ? '—' : esc(partitions)}</dd></div></dl></div><details class="stream-health-raw"><summary>Advanced: raw health evidence</summary><pre class="code">${esc(json(payload))}</pre></details>`;
+}
+
 function render() {
   if (location.hash.slice(1) !== 'streaming') return;
   const view = document.querySelector('#view');
@@ -360,9 +368,11 @@ document.addEventListener('submit', async event => {
   const output = document.querySelector('#stream-health-result');
   const base = `/v1/workspaces/${encodeURIComponent(String(data.get('workspace')))}/streams/${encodeURIComponent(String(data.get('stream')))}`;
   try {
-    output.textContent = json(action === 'run'
+    const result = action === 'run'
       ? await post(`${base}/run`, { limit: Number(data.get('limit')) })
-      : await get(`${base}/health`));
+      : await get(`${base}/health`);
+    if (action === 'health') renderStreamHealth(output, result);
+    else output.textContent = json(result);
   } catch (error) { output.innerHTML = action === 'health' ? `<div class="error"><strong>Streaming health failed.</strong><p>${esc(error.message)}</p><button class="button" type="button" data-stream-retry>Retry health check</button></div>` : `Streaming batch failed: ${error.message}`; }
 });
 

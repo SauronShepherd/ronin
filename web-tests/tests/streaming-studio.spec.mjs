@@ -88,7 +88,8 @@ test('Streaming Studio retries a failed health check without losing stream scope
   await page.getByRole('button', { name: 'Check health' }).click();
   await expect(page.locator('#stream-health-result')).toContainText('Stream health is warming up.');
   await page.getByRole('button', { name: 'Retry health check', exact: true }).click();
-  await expect(page.locator('#stream-health-result')).toContainText('healthy');
+  await expect(page.locator('#stream-health-result .stream-health-summary [data-state="healthy"]')).toHaveAttribute('aria-label', 'Stream health: healthy');
+  await expect(page.locator('#stream-health-result')).toContainText('Total lag');
   await expect(page.locator('#stream-health-form [name="stream"]')).toHaveValue('events/main');
   expect(attempts).toBe(2);
 });
