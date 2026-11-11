@@ -567,6 +567,18 @@ test('Migration Studio inventories the selected workspace and project', async ({
   expect(requested).toContain('/v1/workspaces/team-a/projects/project-z/migration/sessions');
 });
 
+test('Migration Studio follows the active shell context in its control forms', async ({ page }) => {
+  await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/migration/sessions', route => route.fulfill({ json: { items: [] } }));
+  await page.goto('./#migration');
+  await expect(page.locator('#migration-cockpit-workspace')).toBeVisible();
+  await page.evaluate(() => {
+    globalThis.roninStudioContext = { workspace: 'workspace-shell', project: 'project-shell' };
+    window.dispatchEvent(new CustomEvent('ronin-context-change', { detail: globalThis.roninStudioContext }));
+  });
+  await expect(page.locator('#migration-cockpit-workspace')).toHaveValue('workspace-shell');
+  await expect(page.locator('#migration-cockpit-project')).toHaveValue('project-shell');
+});
+
 test('SQL Studio sends one workspace-scoped request per submit', async ({ page }) => {
   let queryCount = 0;
   await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/sql/query', async route => {

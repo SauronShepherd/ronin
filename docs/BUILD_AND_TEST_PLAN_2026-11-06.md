@@ -1740,6 +1740,18 @@ La jornada focalizada de Platform Studio terminó en **26 passed, 0 failed**.
 `studio_web_audit` mantiene 0 fallos y el budget ratificado es
 `asset_bytes=2,156,169`. El release permanece **NO-GO / 0 de 13**.
 
+## 96. Migration Studio hereda el contexto del shell
+
+Los controles de creación y cockpit de Migration Studio sincronizan workspace y
+proyecto con el contexto activo, incluyendo los cambios de contexto posteriores
+a la carga. La ruta de sesiones sigue usando los valores visibles del formulario
+y no altera la frontera de discovery ni de importación.
+
+La regresión focalizada de contexto terminó en **1 passed, 0 failed** y la
+jornada Platform completa en **27 passed, 0 failed**. `studio_web_audit`
+mantiene 0 fallos y el budget ratificado es `asset_bytes=2,156,711`. El release
+permanece **NO-GO / 0 de 13**.
+
 ## 88. SQL local muestra resultados tabulares antes de la evidencia cruda
 
 El resultado de SQL local sigue el mismo contrato de lectura que QueryFlux:
