@@ -753,3 +753,12 @@ el mismo contenido terminó **4511 passed, 77 skipped, 0 failed** en 705.38s.
 El resultado verde confirma también que la inconsistencia era documental y no
 una regresión funcional.
 
+## 27. Regresión Chromium posterior al arreglo de Synthetic Studio
+
+La ejecución global sobre `96b4b2ab` encontró inicialmente dos fallos de
+superficie; uno era una flake de navegación y el otro reveló una regresión
+real: `synthetic-journey.js` no estaba importado por el shell, por lo que los
+controles de validación y generación asíncrona no aparecían. El módulo se
+conectó en `app.js`; los tres journeys Synthetic pasaron y la repetición
+completa terminó **154 passed, 0 failed** en 8m18s.
+
