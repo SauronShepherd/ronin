@@ -1616,3 +1616,17 @@ suite Chromium completa sobre el candidato terminó en **173 passed, 33 skipped,
 invocaciones y 0 fallos. Las cualificaciones externas y las aprobaciones
 humanas siguen pendientes; el release permanece **NO-GO / 0 de 13**.
 
+## 84. Catalog conserva la frontera activa del shell
+
+Catalog ya no repone silenciosamente `default`: al abrirse, toma el workspace
+del contexto global y lo aplica a búsqueda de assets y publicación de glossary.
+Además, escucha cambios de contexto mientras la ruta sigue abierta y reconstruye
+los formularios, de modo que lineage y glossary no puedan continuar apuntando a
+la frontera anterior.
+
+La regresión focalizada terminó en **7 passed**. La suite Chromium exacta del
+candidato terminó en **174 passed, 33 skipped, 0 failed**; el audit web mantiene
+181 invocaciones y 0 fallos. El budget se ratifica en
+`asset_bytes=2,148,055` (+215 bytes medidos). El release permanece
+**NO-GO / 0 de 13** por los gates externos y aprobaciones todavía abiertos.
+

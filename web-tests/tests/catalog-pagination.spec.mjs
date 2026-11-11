@@ -45,6 +45,17 @@ test('catalog search follows the server cursor to the next bounded page', async 
   expect(requests[2].searchParams.get('cursor')).toBeNull();
 });
 
+test('catalog inherits the active shell workspace across discovery and glossary', async ({ page }) => {
+  await page.goto('./?workspace=team-a&project=project-z#catalog', { waitUntil: 'load' });
+  await expect(page.locator('#catalog-search-form [name="workspace"]')).toHaveValue('team-a');
+  await expect(page.locator('#glossary-form [name="workspace"]')).toHaveValue('team-a');
+  await page.locator('.context-change').click();
+  await page.locator('#context-form [name="workspace"]').fill('team-b');
+  await page.locator('#context-form button[type="submit"]').click();
+  await expect(page.locator('#catalog-search-form [name="workspace"]')).toHaveValue('team-b');
+  await expect(page.locator('#glossary-form [name="workspace"]')).toHaveValue('team-b');
+});
+
 test('catalog search keeps the workspace and query recoverable after a lookup error', async ({ page }) => {
   let attempts = 0;
   await page.route('**/v1/workspaces/ws-a/catalog/assets**', async route => {
