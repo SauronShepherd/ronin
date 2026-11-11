@@ -671,3 +671,6 @@ El tamaño candidate-bound sube a `2,133,306` bytes por la
 metadata visual y la reserva de scroll; el baseline se actualiza de forma
 explícita y cualquier incremento posterior seguirá fallando cerrado. La suite
 Chromium completa sigue siendo obligatoria antes de aceptar este cambio.
+El expediente reproducible de esta revisión queda en
+`docs/ui/MANUAL_VISUAL_REVIEW_2026-11-11.md`; sus hallazgos abiertos mantienen
+la firma visual humana en `qualification_pending`.
