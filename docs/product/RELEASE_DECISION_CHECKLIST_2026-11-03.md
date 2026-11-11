@@ -643,3 +643,16 @@ sdist SHA-256 is
 The machine-readable receipt is preserved at
 `C:\Users\angel.alvarez\Downloads\ronin-artifact-evidence-ef85e6f\artifact-qualification.json`.
 This closes the Python artifact stage only; release blockers remain open.
+
+## Clean Helm/kind qualification receipt — 2026-11-11
+
+The exact clean candidate `ef85e6f47564a1beee7f793c33825a01a2180492` passed
+Helm lint and secret-boundary rendering, isolated kind install/readiness,
+upgrade to revision 2, rollback to revision 1, health/API/Studio authorization,
+durable queued-job creation, pod restart and queued-job persistence after the
+restart. The matching image digest was
+`sha256:ef9fc66f59a083851595db5dea4a6d3f7fc2e1e3eb56de717c53d3e797bfefbd`;
+the isolated kind cluster was removed successfully. Evidence is preserved at
+`C:\Users\angel.alvarez\Downloads\ronin-helm-evidence-ef85e6f`.
+This closes the Helm operational rehearsal for that candidate, not the broader
+Public v1 family or human release gates; the decision remains **NO-GO**.
