@@ -48,6 +48,15 @@ test.describe('home control plane', () => {
       await page.goto('./#home', { waitUntil: 'load' });
       await expect(page.locator('.home-overview')).toBeVisible();
       await expect(page.locator('.home-workbench')).toBeVisible();
+      if (viewport.name === 'phone') {
+        await expect(page.locator('.context-mobile-summary')).toBeVisible();
+        await expect(page.locator('.context-mobile-summary')).toContainText('default / examples/demo');
+        await expect(page.locator('.context-chip')).toHaveCount(3);
+        await expect(page.locator('.context-chip').first()).toBeHidden();
+      } else if (viewport.name === 'desktop') {
+        await expect(page.locator('.context-mobile-summary')).toBeHidden();
+        await expect(page.locator('.context-chip')).toHaveCount(3);
+      }
       const layout = await page.evaluate(() => ({
         documentWidth: document.documentElement.scrollWidth,
         viewportWidth: window.innerWidth,
