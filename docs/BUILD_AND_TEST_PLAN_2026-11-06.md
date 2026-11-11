@@ -1697,6 +1697,17 @@ La regresión focalizada de Alerts terminó en **3 passed, 0 failed**.
 `studio_web_audit` mantiene 0 fallos y el budget ratificado es
 `asset_bytes=2,154,083`. El release permanece **NO-GO / 0 de 13**.
 
+## 92. Alerts distingue reglas de estados de alerta
+
+La acción `List states` ya no reutiliza columnas de reglas. Presenta regla,
+estado, valor observado, fingerprint y acknowledgement; la acción `List rules`
+mantiene sus columnas de severidad y métrica. Se conservan fallbacks para
+respuestas antiguas que usen `id`/`state`.
+
+La regresión focalizada de Alerts terminó en **3 passed, 0 failed**.
+`studio_web_audit` mantiene 0 fallos y el budget ratificado es
+`asset_bytes=2,154,557`. El release permanece **NO-GO / 0 de 13**.
+
 ## 88. SQL local muestra resultados tabulares antes de la evidencia cruda
 
 El resultado de SQL local sigue el mismo contrato de lectura que QueryFlux:

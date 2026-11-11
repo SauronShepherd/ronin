@@ -14,6 +14,14 @@ function renderAlertDecision(result, action, payload) {
   result.innerHTML = `<div class="alert-decision-summary"><strong>${esc(title)}</strong><span>${esc(copy)}</span><p>Review the rule and fingerprint before using this signal downstream.</p></div><details class="alerts-raw"><summary>Advanced: raw alert response</summary><pre class="code"></pre></details>`;
   result.querySelector('pre').textContent = json(payload);
 }
+function renderAlertItems(result, items, instances) {
+  if (!items.length) { result.innerHTML = '<div class="empty">No alert states found.</div>'; return; }
+  const columns = instances
+    ? [['rule_id', 'Rule'], ['status', 'State'], ['value', 'Value'], ['fingerprint', 'Fingerprint'], ['acknowledged_at', 'Acknowledged']]
+    : [['id', 'Rule'], ['state', 'State'], ['severity', 'Severity'], ['metric', 'Metric']];
+  const cell = (item, key) => (item[key] ?? (key === 'rule_id' ? item.id : key === 'status' ? item.state : key === 'metric' ? item.name : '')) || '—';
+  result.innerHTML = `<div class="table-wrap"><table><caption class="sr-only">${instances ? 'Alert instances' : 'Alert rules'}</caption><thead><tr>${columns.map(([, label]) => `<th>${label}</th>`).join('')}</tr></thead><tbody>${items.map(item => `<tr>${columns.map(([key]) => `<td>${esc(cell(item, key))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
 
 export function alertsStudio() {
   if (location.hash.slice(1) !== 'alerts') return;
@@ -52,9 +60,7 @@ document.addEventListener('submit', async event => {
         : await get(`/v1/workspaces/${workspace}/alerts/rules`);
     if (evaluating || acknowledging) { renderAlertDecision(result, action, payload); return; }
     if (!Array.isArray(payload.items)) { result.textContent = json(payload); return; }
-    result.innerHTML = payload.items.length
-      ? `<div class="table-wrap"><table><caption class="sr-only">Alert rules</caption><thead><tr><th>Rule</th><th>State</th><th>Severity</th><th>Metric</th></tr></thead><tbody>${payload.items.map((rule) => `<tr><td>${esc(rule.id || '')}</td><td>${esc(rule.state || rule.status || '')}</td><td>${esc(rule.severity || '')}</td><td>${esc(rule.metric || rule.name || '')}</td></tr>`).join('')}</tbody></table></div>`
-      : '<div class="empty">No alert rules found.</div>';
+    renderAlertItems(result, payload.items, instances);
   } catch (error) {
     result.innerHTML = `<div class="error"><strong>Alert operation failed.</strong><p>${esc(error.message)}</p><button class="button" type="button" data-alert-retry>Retry this operation</button></div>`;
   }

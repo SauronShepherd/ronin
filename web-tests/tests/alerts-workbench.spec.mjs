@@ -26,6 +26,8 @@ test('Alerts workbench retries the last operation without losing scope', async (
   await expect(page.locator('#alerts-result')).toContainText('Alert operation failed');
   await page.getByRole('button', { name: 'Retry this operation' }).click();
   await expect(page.locator('#alerts-result')).toContainText('orders-late');
+  await expect(page.locator('#alerts-result table')).toContainText('State');
+  await expect(page.locator('#alerts-result table')).toContainText('firing');
   expect(attempts).toBe(2);
 });
 
