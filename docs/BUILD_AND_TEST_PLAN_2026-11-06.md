@@ -1219,3 +1219,29 @@ La evidencia más reciente y válida queda ligada al candidato publicado
 budget `2,140,976` bytes y checks de ledger/capability válidos. El índice no
 promueve ninguna familia Public v1 ni modifica el **NO-GO / 0 de 13**.
 
+## 60. Cierre estático de superficie, rutas y contrato
+
+Como pasada independiente de Playwright se ejecutaron, sobre el mismo
+worktree y sin incluir artefactos no rastreados, las tres comprobaciones
+canónicas:
+
+```text
+python -m tools.studio_surface
+Studio surface check passed: 128/238 published operations matched
+
+python -m tools.route_consistency
+route consistency check passed for 196 operations
+
+python -m tools.openapi_snapshot
+65bacd817f37cbd2775c67d87d02c028e71d1e8a33f9a0c865dede9ab0c96105
+```
+
+Las comprobaciones no encontraron rutas declaradas con una implementación
+incoherente ni cambios no reproducibles en OpenAPI. El primer contador es una
+correlación de operaciones publicadas con la superficie del Studio, no una
+afirmación de que las 238 operaciones tengan un workbench completo; las
+familias no cubiertas siguen sujetas a su journey y evidencia de cualificación.
+Esta pasada refuerza la integridad del shell web, pero no cierra proveedores,
+seguridad/supply chain, legal, rollback, aceptación humana ni las 13 familias:
+el release permanece **NO-GO / 0 de 13**.
+
