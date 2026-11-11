@@ -1303,3 +1303,18 @@ externos; no se convierten en PASS implícito. Esta evidencia fortalece la
 calidad exact-SHA de la UI, pero no cierra las certificaciones externas ni las
 13 familias Public v1: el release permanece **NO-GO / 0 de 13**.
 
+## 64. Alerts como workbench de observabilidad
+
+Monitoring & Alerts dejó de ser un formulario aislado y ahora presenta un
+workbench coherente con el resto del Studio: contexto de workspace visible,
+acciones de observar/evaluar/acknowledge agrupadas, nota operativa y panel de
+resultado. El workspace inicial se hereda del contexto global y los fallos
+ofrecen retry de la última acción sin perder regla ni fingerprint.
+
+Se añadieron dos regresiones: herencia de `team-a/project-z` y recuperación de
+una consulta de estados que devuelve 503. Ambas pasan, la cobertura combinada
+de accesibilidad y traversal pasa `52/52`, y la cualificación Chromium exacta
+del cambio termina **167 passed, 33 skipped, 0 failed** en `7.1m`. Los skips
+siguen siendo dependencias externas explícitas; no elevan el estado de release.
+El resultado permanece **NO-GO / 0 de 13**.
+
