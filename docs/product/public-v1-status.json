@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-11-11T16:45:00+01:00",
-  "observed_main_sha": "c0bdd4a3ced8db80e82c5835921200662dd93a5a",
+  "observed_at": "2026-11-11T16:40:00+01:00",
+  "observed_main_sha": "b349f2ebaf03eec90d5765b21107a6af734d3596",
   "latest_automated_evidence": "HEAD c0bdd4a3: Python 4516 passed/77 skipped/0 failed; status/matrix consistency 6 passed; web audit 0 failures over 71 files and 181 route invocations; UI budget 2,156,896 asset bytes; status and capability checks passed. Focused Chromium receipts for the changed Studio surfaces are green. Public v1 remains conservatively unqualified.",
   "current_observation": "2026-11-11 current exact tracked candidate is c0bdd4a3: complete Python 4516 passed/77 skipped/0 failed, web audit and UI budget checks green, and focused changed-surface browser regressions green. The candidate includes single-authority Catalog and Workspaces workbenches with delegated routing, plus recoverable Environment, Scheduler, Alerts, FinOps, Performance, Cloud, Debugger, Ingestion and Migration flows. External provider qualification, human visual/product review, legal/license/NOTICE decisions, security/supply-chain acceptance, rollback/restore, release governance and complete Public v1 family qualification remain open. Release remains NO-GO at 0/13 families.",
   "observed_workspace_state": "Current observation 2026-11-11: main is clean in tracked files at c0bdd4a3; user-owned untracked artifacts remain outside the tracked candidate. Automated evidence is exact-SHA-scoped and separate infrastructure receipts are not merged into one qualification claim. Remaining blockers are external provider matrix, human visual/product review, legal/license/NOTICE decisions, security/supply-chain acceptance, operational restore/rollback, governance and complete Public v1 family qualification.",
