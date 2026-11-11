@@ -79,7 +79,7 @@ function showPipelineRunEvidence(out, runId, data) {
   });
   out.append(heading, evidence, details);
 }
-function showQueryEvidence(out, data) { const evidence = data?.query_evidence; if (!evidence || typeof evidence !== 'object') { renderLocalSqlResult(out, data); return; } out.textContent = ''; renderLocalSqlResult(out, data, evidence); }
+function showQueryEvidence(out, data) { const evidence = data?.query_evidence; if (!evidence || typeof evidence !== 'object') { renderLocalSqlResult(out, data); return; } const routing_trace = evidence.routing_trace || {}; const provider_version = evidence.provider_version || null; out.textContent = ''; renderLocalSqlResult(out, { ...data, query_evidence: { ...evidence, routing_trace, provider_version } }, evidence); }
 function renderLocalSqlResult(out, data, evidence = data?.query_evidence) {
   const columns = (data?.columns || []).map(column => typeof column === 'string' ? column : column?.name).filter(Boolean); const rows = Array.isArray(data?.rows) ? data.rows : [];
   const heading = document.createElement('div'); heading.className = 'de-result-summary'; heading.textContent = `${rows.length} row${rows.length === 1 ? '' : 's'} loaded · ${data?.row_count ?? rows.length} total · ${evidence?.selected_engine || 'Local SQL'} · ${data?.status || 'succeeded'}`;

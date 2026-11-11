@@ -1663,6 +1663,23 @@ ciclo de vida del proceso quedan excluidos; los tres receipts por archivo son
 la evidencia autoritativa.
 El release permanece **NO-GO / 0 de 13**.
 
+## 97. Reconciliación del candidato exacto y suite Python completa
+
+La ejecución completa del worktree canónico detectó y corrigió dos deudas
+reales: el ledger `public-v1-status` estaba stale frente a `79510ae`, y la
+superficie de Data Engineering había dejado implícita la evidencia estática de
+`routing_trace`/`provider_version`. La matriz de capacidades también se
+reconcilió al mismo SHA, sin promover estados de producto.
+
+La primera suite completa terminó en `4514 passed, 77 skipped, 2 failed`; tras
+las correcciones, la segunda terminó en `4515 passed, 77 skipped, 1 failed`
+únicamente por la referencia stale de la matriz. La prueba de consistencia
+posterior terminó en **7 passed**, `generate_public_v1_status --check` pasó,
+`studio_web_audit` mantiene 0 fallos y el budget ratificado es
+`asset_bytes=2,156,896`. El release permanece **NO-GO / 0 de 13** hasta
+repetir la suite completa sobre el commit que contiene esta reconciliación y
+resolver los gates externos.
+
 ## 89. Data Engineering sigue el contexto global del shell
 
 Los formularios de SQL y pipeline inicializan workspace y proyecto desde el
