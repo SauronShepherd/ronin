@@ -1322,3 +1322,18 @@ baseline `asset_bytes=2,144,740` (`70` assets, `36` módulos, `15` hojas de
 estilo); el incremento es el coste medido del workbench y queda registrado,
 no oculto. El resultado permanece **NO-GO / 0 de 13**.
 
+## 65. FinOps como cockpit de uso y coste
+
+FinOps Studio ahora presenta un cockpit de control con workspace heredado del
+shell, selección explícita de medida y ventana temporal, nota operativa y
+resultado de evidencia. Usage y costs siguen exigiendo ambos extremos del
+periodo; budgets conserva su contrato sin periodo. Los errores muestran retry
+de la última consulta y escapan el mensaje antes de insertarlo en la UI.
+
+Se añadieron dos regresiones: contexto `team-a/project-z` y retry de budgets
+tras un 503. La combinación de accesibilidad y FinOps pasa `27/27`, la
+auditoría web queda en `0` fallos y el budget se ratchea explícitamente a
+`asset_bytes=2,146,713` (`70` assets, `36` módulos, `15` hojas de estilo).
+Este incremento es coste medido de la nueva superficie, no una relajación
+silenciosa. El release permanece **NO-GO / 0 de 13**.
+
