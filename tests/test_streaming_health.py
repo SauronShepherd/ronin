@@ -110,6 +110,8 @@ def test_kafka_health_reader_uses_persisted_definition_and_live_watermarks(
     assert result["status"] == "lagging"
     assert result["lag"] == {"0": 1, "1": 0}
     assert result["empty_partitions"] == ["1"]
+    assert result["observed_at"].endswith("Z")
+    assert "T" in result["observed_at"]
     assert "secret-value" not in str(result)
     assert topic_partitions == [("events", 0), ("events", 1)]
     assert consumer is not None

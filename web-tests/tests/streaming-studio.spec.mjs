@@ -80,7 +80,7 @@ test('Streaming Studio retries a failed health check without losing stream scope
       await route.fulfill({ status: 503, json: { error: { code: 'stream_unavailable', message: 'Stream health is warming up.' } } });
       return;
     }
-    await route.fulfill({ json: { stream_id: 'events/main', status: 'healthy', lag: { 0: 0 }, total_lag: 0, partitions: 1, empty_partitions: ['0'] } });
+    await route.fulfill({ json: { stream_id: 'events/main', status: 'healthy', lag: { 0: 0 }, total_lag: 0, partitions: 1, empty_partitions: ['0'], observed_at: '2026-11-11T18:00:00Z' } });
   });
   await page.goto('./#streaming');
   await page.locator('#stream-health-form [name="workspace"]').fill('ws-a');
@@ -91,6 +91,7 @@ test('Streaming Studio retries a failed health check without losing stream scope
   await expect(page.locator('#stream-health-result .stream-health-summary [data-state="healthy"]')).toHaveAttribute('aria-label', 'Stream health: healthy');
   await expect(page.locator('#stream-health-result')).toContainText('Total lag');
   await expect(page.locator('[data-empty-partitions]')).toContainText('No records available yet on partition 0.');
+  await expect(page.locator('[data-observed-at]')).toContainText('2026-11-11T18:00:00Z');
   await expect(page.locator('#stream-health-form [name="stream"]')).toHaveValue('events/main');
   expect(attempts).toBe(2);
 });

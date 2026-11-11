@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from contextlib import suppress
+from datetime import UTC, datetime
 from typing import Any
 
 from .checkpoint import SqliteStreamCheckpointStore
@@ -126,6 +127,7 @@ class KafkaStreamingHealthReader:
             projection = stream_health(stream_id, checkpoint, latest_offsets=high_watermarks)
             projection.update(
                 {
+                    "observed_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                     "source_status": "available",
                     "status": "healthy" if projection["healthy"] else "lagging",
                     "empty_partitions": sorted(
