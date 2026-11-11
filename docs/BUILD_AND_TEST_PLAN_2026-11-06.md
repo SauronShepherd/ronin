@@ -1320,6 +1320,24 @@ scopes `{}` ni una política de bind no reconocida. `kubectl` no está instalado
 por lo que no se declara una qualification real de cluster/kind. El release
 permanece **NO-GO / 0 de 13**.
 
+## 79. Qualification Helm/kind con smoke autenticado
+
+Se creó el cluster efímero `kind-ronin-qualification` con kind `0.33.0` y
+node `kindest/node:v1.37.0`; `kubectl` `v1.37.2` se descargó fuera del repo.
+La imagen cualificada se cargó en el nodo y Helm instaló el chart con token,
+bind policy y un `GrantSet` JSON versionado válido, conforme al README del
+chart. La primera tentativa con `read:jobs,write:jobs` produjo correctamente
+un CrashLoop por configuración inválida; no se acepta una lista ad-hoc como
+scope.
+
+La configuración corregida terminó con Helm `STATUS: deployed`, rollout
+`deployment/ronin` **1/1**, pod `Running`, PVC `ronin-data` **Bound**, smoke
+`GET /healthz` **200** (`{"status":"ready"}`) y smoke autenticado
+`GET /v1/jobs?project=examples/demo` **200** (`items=[]`). La qualification
+local de cluster queda verde; el cluster es efímero y no constituye aprobación
+de operación distribuida o multiusuario. El release global permanece
+**NO-GO / 0 de 13**.
+
 ## 62. Scheduler hereda el contexto activo del shell
 
 La ruta canónica `scheduler-studio.js` inicializaba el campo Workspace con el
