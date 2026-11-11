@@ -874,3 +874,17 @@ candidate-bound. El incremento queda registrado deliberadamente y cualquier
 crecimiento posterior volverá a fallar cerrado. El journey Workbench pasa
 `2/2` en Chromium con un worker; esto no cambia la cualificación de release.
 
+## 35. Consolidación pendiente del doble render de Workspace
+
+La ruta activa también conserva un loader histórico en `features.js`, mientras
+el Workbench moderno se mejora desde `workspace-journey.js`. Ambos pueden
+observar la misma navegación y solicitar `/v1/workspaces`; por ello una fixture
+que falle sólo la primera petición no demuestra de forma fiable el estado que
+ve el operador. La implementación añade el retry a la ruta activa y mantiene
+la prueba existente del Workbench (`2/2`), pero el caso 503 → retry se mantiene
+pendiente hasta consolidar ambos loaders en una única autoridad de renderizado.
+
+La auditoría estática sigue en `0` fallos; el presupuesto candidate-bound se
+actualiza a `2,139,950` bytes. Esta deuda de consolidación es de producto y no
+se interpreta como pass de recuperación ni como cierre de P1.
+
