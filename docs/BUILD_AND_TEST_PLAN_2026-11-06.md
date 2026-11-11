@@ -1177,3 +1177,16 @@ budget medido baja a `asset_bytes=2,141,897`. Esto mejora coherencia y carga
 percibida de la UI sin cambiar contratos API. No cualifica P6 ni cambia el
 **NO-GO / 0 de 13**.
 
+## 57. Regresión Chromium global posterior a Workspaces
+
+La consolidación del renderer de Workspaces se verificó con la suite Chromium
+completa del candidato `bf2e19ca`: `164 passed, 33 skipped, 0 failed` en
+`7.2m`, con un worker. La evidencia incluye Axe, navegación, live routes,
+responsive, traversal, Projects, Workspaces y todas las superficies del
+catálogo web. `studio_web_audit` permanece en `0` fallos y el budget en
+`asset_bytes=2,140,913`.
+
+El cambio queda validado globalmente; el release continúa **NO-GO / 0 de 13**
+por las cualificaciones externas y aprobaciones humanas que no pueden
+inferirse de esta suite.
+
