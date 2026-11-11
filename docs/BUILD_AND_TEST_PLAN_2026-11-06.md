@@ -1134,7 +1134,7 @@ archivos de tests que no estaban formateados y se tipó el registro de páginas
 de `tools/browser_audit.py` con un `TypedDict`, eliminando el error de mypy sin
 cambiar su comportamiento. Los tests afectados terminan `27 passed`.
 
-Esta evidencia mejora la reproducibilidad del candidato `76966e8b`; no cierra
+Esta evidencia mejora la reproducibilidad del candidato `5753e901`; no cierra
 las aprobaciones humanas, proveedores externos, supply chain, rollback ni la
 cualificación de familias, por lo que el release sigue **NO-GO / 0 de 13**.
 
