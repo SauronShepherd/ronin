@@ -160,7 +160,12 @@ document.addEventListener('submit', async event => {
   output.className = 'catalog-result loading';
   output.textContent = 'Loading glossary…';
   try { output.className = 'catalog-result'; output.innerHTML = glossaryView(await get(`/v1/workspaces/${workspace}/glossary/terms${suffix}`)); }
-  catch (error) { output.className = 'catalog-result'; output.innerHTML = `<div class="error"><strong>Glossary lookup failed.</strong><span>${esc(error.message)}</span></div>`; }
+  catch (error) { output.className = 'catalog-result'; output.innerHTML = `<div class="error"><strong>Glossary lookup failed.</strong><span>${esc(error.message)}</span><button class="button" type="button" data-action="glossary-retry">Retry glossary search</button></div>`; }
+});
+
+document.addEventListener('click', async event => {
+  if (!event.target.closest('[data-action="glossary-retry"]')) return;
+  document.querySelector('#glossary-search-form')?.requestSubmit();
 });
 
 document.addEventListener('submit', async event => {

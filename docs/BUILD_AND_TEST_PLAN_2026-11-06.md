@@ -779,3 +779,11 @@ ausencia de overflow en móvil (`5/5` casos del archivo). El coste medido sube
 explícitamente de `2,139,033` a `2,139,167` bytes; el budget check y la
 auditoría web pasan.
 
+## 30. Recuperación del glosario en Catalog
+
+La búsqueda del glosario ofrece ahora `Retry glossary search` tras un fallo,
+conservando workspace y consulta. El journey de Catalog alcanza `6/6` casos,
+incluye el error `503` y la recuperación, y mantiene el layout responsive. El
+budget candidate-bound se actualiza explícitamente de `2,139,167` a
+`2,139,459` bytes; auditoría y budget check pasan.
+

@@ -144,3 +144,25 @@ test('catalog keeps long asset identities discoverable without widening the tabl
   const widths = await page.locator('#main').evaluate(node => ({ client: node.clientWidth, scroll: node.scrollWidth }));
   expect(widths.scroll).toBe(widths.client);
 });
+
+test('catalog glossary search preserves workspace and query after an error', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/workspaces/ws-a/glossary/terms**', async route => {
+    attempts += 1;
+    if (attempts === 1) {
+      await route.fulfill({ status: 503, json: { error: { code: 'glossary_unavailable', message: 'Glossary is warming up.' } } });
+      return;
+    }
+    await route.fulfill({ json: { items: [{ id: 'customer', version: '1', name: 'Customer', definition: 'A governed buyer identity.', owner: 'data-team', references: [] }] } });
+  });
+  await page.goto('./#catalog');
+  await page.locator('#glossary-form [name="workspace"]').fill('ws-a');
+  await page.locator('#glossary-search-form [name="query"]').fill('customer');
+  await page.getByRole('button', { name: 'Load terms' }).click();
+  await expect(page.locator('#glossary-result')).toContainText('Glossary is warming up.');
+  await page.getByRole('button', { name: 'Retry glossary search', exact: true }).click();
+  await expect(page.locator('.glossary-table')).toContainText('Customer');
+  await expect(page.locator('#glossary-form [name="workspace"]')).toHaveValue('ws-a');
+  await expect(page.locator('#glossary-search-form [name="query"]')).toHaveValue('customer');
+  expect(attempts).toBe(2);
+});
