@@ -1630,3 +1630,17 @@ candidato terminó en **174 passed, 33 skipped, 0 failed**; el audit web mantien
 `asset_bytes=2,148,055` (+215 bytes medidos). El release permanece
 **NO-GO / 0 de 13** por los gates externos y aprobaciones todavía abiertos.
 
+## 85. QueryFlux presenta decisión antes que metadata cruda
+
+El panel de capacidades de QueryFlux ahora muestra primero si el proveedor está
+listo para ejecución acotada, cuántas capacidades están disponibles y si falta
+un engine autorizado. La respuesta completa queda bajo “Advanced: capability
+response”; los engines, policies y payload de ejecución no cambian.
+
+La regresión focalizada terminó en **7 passed**, incluyendo el estado de error
+de proveedor no disponible, autorización y paginación estable. La suite
+Chromium completa del candidato terminó en **175 passed, 33 skipped, 0 failed**.
+El budget queda ratificado en `asset_bytes=2,148,533` (+478 bytes medidos) y el
+audit web mantiene 181 invocaciones y 0 fallos. El release permanece
+**NO-GO / 0 de 13** por los gates externos y aprobaciones aún abiertos.
+

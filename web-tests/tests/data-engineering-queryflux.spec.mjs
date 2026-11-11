@@ -66,6 +66,25 @@ test('Data Engineering Studio executes QueryFlux and reads stable result pages',
   expect(resultPageRequests).toBe(1);
 });
 
+test('Data Engineering Studio keeps QueryFlux capabilities human-readable before showing raw metadata', async ({ page }) => {
+  await page.route('**/v1/data-engineering/queryflux/capabilities', async route => {
+    await route.fulfill({
+      json: {
+        status: 'ready',
+        provider: 'queryflux',
+        allowed_engines: ['duckdb'],
+        translation_policies: ['native_only'],
+        capabilities: { stable_result_paging: true },
+      },
+    });
+  });
+  await page.goto('./#data');
+  await expect(page.locator('.queryflux-capability-summary')).toContainText('ready for bounded execution');
+  await expect(page.locator('.queryflux-raw')).not.toHaveAttribute('open', '');
+  await page.locator('.queryflux-raw summary').click();
+  await expect(page.locator('.queryflux-raw pre')).toContainText('stable_result_paging');
+});
+
 test('Data Engineering Studio surfaces QueryFlux authorization errors', async ({ page }) => {
   await page.route('**/v1/data-engineering/queryflux/capabilities', async route => {
     await route.fulfill({ json: { status: 'ready', allowed_engines: ['duckdb'], translation_policies: ['native_only'] } });
