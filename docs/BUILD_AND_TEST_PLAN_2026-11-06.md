@@ -1316,5 +1316,9 @@ una consulta de estados que devuelve 503. Ambas pasan, la cobertura combinada
 de accesibilidad y traversal pasa `52/52`, y la cualificación Chromium exacta
 del cambio termina **167 passed, 33 skipped, 0 failed** en `7.1m`. Los skips
 siguen siendo dependencias externas explícitas; no elevan el estado de release.
-El resultado permanece **NO-GO / 0 de 13**.
+La auditoría estática quedó corregida a `0` fallos tras compactar el CSS dentro
+del límite de 400 líneas. El budget se ratchetó de forma explícita al nuevo
+baseline `asset_bytes=2,144,740` (`70` assets, `36` módulos, `15` hojas de
+estilo); el incremento es el coste medido del workbench y queda registrado,
+no oculto. El resultado permanece **NO-GO / 0 de 13**.
 

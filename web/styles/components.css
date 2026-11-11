@@ -319,8 +319,7 @@ kbd { display: inline-block; min-width: 1.25rem; padding: .08rem .3rem; border: 
 .home-activity-empty strong { color: var(--cocoa); }
 .home-activity-empty p { margin: 0; color: var(--muted); font-size: .82rem; }
 .home-activity-empty a { color: var(--copper); font-size: .8rem; font-weight: 800; text-decoration: none; }
-.home-activity-empty a:hover { color: var(--cocoa); text-decoration: underline; }
-.home-activity-error { border-left: 3px solid var(--amber); padding-left: .8rem; }
+.home-activity-empty a:hover { color: var(--cocoa); text-decoration: underline; }.home-activity-error { border-left: 3px solid var(--amber); padding-left: .8rem; }
 .home-shortcuts .grid { gap: .9rem; }
 .home-shortcut { position: relative; display: grid; gap: .45rem; min-height: 12rem; margin: 0; overflow: hidden; background: linear-gradient(180deg, var(--surface-raised), var(--surface)); }
 .home-shortcut::before { content: ''; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, var(--copper), var(--gold), transparent); }
@@ -398,5 +397,4 @@ kbd { display: inline-block; min-width: 1.25rem; padding: .08rem .3rem; border: 
   .run-timeline-heading { display: block; }
   .run-timeline-heading time { display: block; margin-top: .15rem; }
   .run-evidence-summary > div { min-width: 4.4rem; }.run-list-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .run-list-heading { display: block; }.run-list-heading .status { display: inline-flex; margin-top: .6rem; }}
-@media(max-width:850px){.alerts-hero,.alerts-workbench{grid-template-columns:1fr}.alerts-section-heading{display:block}.alerts-section-index{display:inline-block;margin-top:.6rem}.alerts-hero-signals{align-items:start}}
+  .run-list-heading { display: block; }.run-list-heading .status { display: inline-flex; margin-top: .6rem; }}@media(max-width:850px){.alerts-hero,.alerts-workbench{grid-template-columns:1fr}.alerts-section-heading{display:block}.alerts-section-index{display:inline-block;margin-top:.6rem}.alerts-hero-signals{align-items:start}}
