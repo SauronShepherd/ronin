@@ -522,13 +522,22 @@ test('Migration Studio creates one session per submit', async ({ page }) => {
 });
 
 test('Migration Studio keeps an unqualified review state visually gated', async ({ page }) => {
+  let inventoryAttempts = 0;
   await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/migration/sessions', async route => {
+    inventoryAttempts += 1;
+    if (inventoryAttempts === 1) {
+      await route.fulfill({ status: 503, json: { detail: 'migration inventory temporarily unavailable' } });
+      return;
+    }
     await route.fulfill({ json: { items: [] } });
   });
   await page.goto('./#migration');
+  await expect(page.getByRole('button', { name: 'Retry session inventory' })).toBeVisible();
+  await page.getByRole('button', { name: 'Retry session inventory' }).click();
   const qualification = page.locator('.migration-kpi').nth(4).locator('.goodtxt');
   await expect(qualification).toHaveText('REVIEW');
   await expect(qualification).toHaveCSS('color', 'rgb(149, 96, 31)');
+  expect(inventoryAttempts).toBe(2);
 });
 
 test('SQL Studio sends one workspace-scoped request per submit', async ({ page }) => {

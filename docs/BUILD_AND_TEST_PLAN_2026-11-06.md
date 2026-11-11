@@ -1060,3 +1060,20 @@ queda en `0` fallos. El budget se recalibra explícitamente a
 de retry. Esto refuerza la recuperación operativa de P2/P3, pero no cualifica
 ninguna familia Public v1 ni cambia el estado **NO-GO / 0 de 13**.
 
+## 49. Recuperación del inventario de Migration Studio
+
+La ruta activa de Migration Studio (`renderMigrationCockpit()` y
+`loadMigrationCockpit()`) ahora expone `Retry session inventory` cuando la
+lectura de sesiones falla. El retry repite únicamente el `GET` read-only y no
+recrea sesiones ni repite discovery, generación, validación o promoción.
+También se conserva la indicación visual de que la cualificación sigue en
+`REVIEW` hasta que exista evidencia runtime.
+
+La prueba focalizada de Migration termina `2/2`, incluyendo 503 → retry del
+inventario y la comprobación de que la UI permanece visualmente no cualificada.
+`studio_web_audit` queda en `0` fallos. El budget se recalibra explícitamente a
+`asset_bytes=2,142,258` (`70` assets, `36` módulos, `15` hojas de estilo,
+`5,838` bytes HTML), un incremento de `340` bytes. Esto cierra una deuda de
+recuperabilidad de la ruta activa, pero no cualifica P14 ni cambia el estado
+**NO-GO / 0 de 13**.
+
