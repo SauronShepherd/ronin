@@ -1663,6 +1663,19 @@ ciclo de vida del proceso quedan excluidos; los tres receipts por archivo son
 la evidencia autoritativa.
 El release permanece **NO-GO / 0 de 13**.
 
+## 88. SQL local muestra resultados tabulares antes de la evidencia cruda
+
+El resultado de SQL local sigue el mismo contrato de lectura que QueryFlux:
+presenta primero filas, columnas, volumen, engine y estado; el payload completo
+queda bajo `Advanced: raw result and query evidence`. Export CSV conserva el
+estado durable y el contrato de límites permanece intacto.
+
+La regresión combinada de Data Engineering y Platform Studio terminó en
+**32 passed, 0 failed**. El audit web vuelve a 0 fallos; el budget ratificado
+es `asset_bytes=2,151,393`. El receipt Chromium global anterior sigue siendo
+`175 passed, 33 skipped, 0 failed`, complementado por esta cualificación
+focalizada. El release permanece **NO-GO / 0 de 13**.
+
 ## 87. QueryFlux muestra resultados tabulares antes del JSON
 
 La respuesta de QueryFlux ahora presenta una tabla de resultados con columnas,

@@ -177,6 +177,10 @@ test('Data Engineering Studio keeps local SQL requests within the documented con
     timeout_ms: 5000,
     max_result_bytes: 1048576,
   });
+  await expect(page.locator('#de-sql-result .de-result-summary')).toContainText('1 row loaded');
+  await expect(page.locator('#de-sql-result table')).toContainText('7');
+  await expect(page.locator('#de-sql-result .de-sql-raw')).not.toHaveAttribute('open', '');
+  await expect(page.locator('#de-sql-result')).toContainText('"row_count": 1');
   await page.getByRole('button', { name: 'Export CSV' }).click();
   await expect(page.locator('#de-sql-result')).toHaveText(/id\s+7/);
 });

@@ -79,18 +79,18 @@ function showPipelineRunEvidence(out, runId, data) {
   });
   out.append(heading, evidence, details);
 }
-function showQueryEvidence(out, data) {
-  const evidence = data?.query_evidence;
-  if (!evidence || typeof evidence !== 'object') { out.textContent = json(data); return; }
-  out.textContent = '';
-  const heading = document.createElement('strong');
-  heading.textContent = `Query target: ${evidence.selected_engine || 'unknown engine'} · ${evidence.provider_id || 'unknown provider'}`;
-  const details = document.createElement('p');
-  details.textContent = `Provider version: ${evidence.provider_version || 'unknown'} · Translation: ${evidence.translation_policy || 'unknown'}`;
-  const trace = document.createElement('pre');
-  trace.className = 'code';
-  trace.textContent = json({ routing_trace: evidence.routing_trace || {} });
-  out.append(heading, details, trace);
+function showQueryEvidence(out, data) { const evidence = data?.query_evidence; if (!evidence || typeof evidence !== 'object') { renderLocalSqlResult(out, data); return; } out.textContent = ''; renderLocalSqlResult(out, data, evidence); }
+function renderLocalSqlResult(out, data, evidence = data?.query_evidence) {
+  const columns = (data?.columns || []).map(column => typeof column === 'string' ? column : column?.name).filter(Boolean); const rows = Array.isArray(data?.rows) ? data.rows : [];
+  const heading = document.createElement('div'); heading.className = 'de-result-summary'; heading.textContent = `${rows.length} row${rows.length === 1 ? '' : 's'} loaded · ${data?.row_count ?? rows.length} total · ${evidence?.selected_engine || 'Local SQL'} · ${data?.status || 'succeeded'}`;
+  out.append(heading);
+  if (columns.length) {
+    const wrap = document.createElement('div'); wrap.className = 'table-wrap'; const table = document.createElement('table');
+    const cell = (value) => esc(value === null || value === undefined ? '' : typeof value === 'object' ? JSON.stringify(value) : value);
+    table.innerHTML = `<thead><tr>${columns.map(column => `<th scope="col">${esc(column)}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${columns.map((_, index) => `<td>${cell(row?.[index])}</td>`).join('')}</tr>`).join('')}</tbody>`;
+    wrap.append(table); out.append(wrap); }
+  const raw = document.createElement('details'); raw.className = 'de-sql-raw'; raw.innerHTML = `<summary>Advanced: raw result and query evidence</summary><pre class="code"></pre>`;
+  raw.querySelector('pre').textContent = json(data); out.append(raw);
 }
 function csvField(value) {
   const text = value === null || value === undefined ? '' : typeof value === 'object' ? JSON.stringify(value) : String(value);
