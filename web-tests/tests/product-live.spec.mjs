@@ -1063,8 +1063,8 @@ test('live Projects create, export, and reimport a secret-safe Bundle through th
   await page.getByRole('button', { name: 'Create project', exact: true }).click();
   let result = await response;
   expect(result.status(), await result.text()).toBe(400);
+  await expect(page.locator('#project-journey-result')).toContainText('Could not create project');
   const visibleWarning = await page.locator('#project-journey-result').innerText();
-  expect(visibleWarning).toContain('Could not create project');
   expect(visibleWarning).not.toContain(unsafeSentinel);
   expect(calls.some(call => call.path === projectsPath && call.status === 400 && call.outcome === 'WARN')).toBe(true);
 
