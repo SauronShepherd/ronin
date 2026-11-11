@@ -55,6 +55,25 @@ test('Cloud Studio validates a target and generates a reviewable plan', async ({
   await expect(page.locator('#cloud-result')).toContainText('resources');
 });
 
+test('Cloud Studio retries target validation without losing the target JSON', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/cloud-studio/validate', async route => {
+    attempts += 1;
+    expect(route.request().postDataJSON()).toEqual({ provider: 'local', resources: [] });
+    if (attempts === 1) {
+      await route.fulfill({ status: 503, json: { error: { code: 'cloud_unavailable', message: 'Cloud validator is warming up.' } } });
+      return;
+    }
+    await route.fulfill({ json: { status: 'ok', resources: [] } });
+  });
+  await page.goto('./#cloud');
+  await page.getByRole('button', { name: 'Validate target', exact: true }).click();
+  await expect(page.locator('#cloud-result')).toContainText('Cloud validator is warming up.');
+  await page.getByRole('button', { name: 'Retry validation', exact: true }).click();
+  await expect(page.locator('#cloud-result')).toContainText('"status": "ok"');
+  expect(attempts).toBe(2);
+});
+
 test('Workspace and project Studio journey covers environment, Bundle and archive actions', async ({ page }) => {
   let archived = false;
   await page.route('**/v1/workspaces', async route => {

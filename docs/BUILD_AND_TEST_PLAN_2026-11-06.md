@@ -983,6 +983,18 @@ La evidencia confirma que la sincronización del ledger y los cambios de UI no
 rompen el runtime Python del candidato. Junto con Chromium `158/158`, mejora
 la confianza de regresión, pero no cambia `0/13` ni la decisión **NO-GO**.
 
+## 44. Recuperación de Cloud Studio
+
+Cloud Studio conserva el target JSON y ofrece `Retry validation` después de
+un error del validador. El retry repite únicamente la validación del target;
+no aplica infraestructura ni convierte el plan en una operación ejecutada.
+La prueba focalizada pasa `2/2`, incluyendo 503 → retry y el journey de plan
+reviewable.
+
+La auditoría web permanece en `0` fallos y el budget candidate-bound queda en
+`2,141,117` bytes. Esto mejora la recuperación de una superficie de
+deployment planning, pero no cualifica P14 ni cambia `0/13`.
+
 ## 43. Recuperación de Performance Studio
 
 Performance Studio conserva ahora el run JSON y el baseline introducidos
