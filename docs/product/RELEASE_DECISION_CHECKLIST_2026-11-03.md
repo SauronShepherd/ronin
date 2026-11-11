@@ -20,6 +20,10 @@ and 279 real API events, all correlated with structured HTTP logs, with zero
 server/network errors and zero unexpected authorization gaps. Evidence:
 `C:\Users\angel.alvarez\Downloads\ronin-live-full-rerun-34f7f71`.
 
+The exact candidate's static Chromium suite also passed **180/180** cases in
+8.3 minutes with one worker, including accessibility, keyboard navigation,
+responsive viewports, route traversal and the Studio workbench journeys.
+
 This is a technical live pass only. It does not close the Public v1 family
 ledger, security reviewer acceptance, legal/NOTICE decisions, manual visual
 review, rollback/recovery rehearsal, provider matrix or release governance.
