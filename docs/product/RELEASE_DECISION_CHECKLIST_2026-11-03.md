@@ -576,3 +576,16 @@ inventory with lock SHA
 `f1b904db278b805118f91044e667166282ac824cbb7346a32d939324655b80d0`.
 Legal/NOTICE review therefore remains open and the release decision is still
 **NO-GO**.
+
+## Post-merge UI and static gates — 2026-11-11
+
+The shared semantic-token contract introduced by `4ec15011` and the reconciled
+Public v1 ledger in `f5c8acb` were followed by a full non-live Chromium run:
+**180/180 passed** in approximately 4.7 minutes, including accessibility,
+responsive, route traversal and Studio journeys. The subsequent static checks
+passed for 197 route operations, 71 audited web files/182 route invocations,
+the capability ledger and the OpenAPI snapshot. The UI budget is green at
+2,162,764 asset bytes, 70 asset requests, 36 JS modules and 15 stylesheets;
+the 576-byte ratchet is intentional and documented in commit `2066d825`.
+These are technical receipts only; they do not close the human visual review
+or any release blocker, so the decision remains **NO-GO**.
