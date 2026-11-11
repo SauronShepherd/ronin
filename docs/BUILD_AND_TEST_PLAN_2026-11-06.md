@@ -1491,3 +1491,14 @@ Esto cierra la evidencia local de `pip-audit` para runtime y test, pero no
 sustituye el SBOM/Trivy de la imagen, el triage VEX ni la revisión humana de
 supply-chain. El release permanece **NO-GO / 0 de 13**.
 
+## 76. Docker Scout y VEX exactos del candidato
+
+Sobre la imagen local cualificada `ronin:qualification` con config digest
+`sha256:c615c59dc84a01229c1fc18429417e2c5900f08a10c4be8aa2b6eaae8f548cc5`,
+Docker Scout `1.28.0` indexó 93 paquetes y no detectó vulnerabilidades críticas
+ni altas. El runner `tools/verify_docker_vex.ps1` pasó con `0` findings raw y
+`0` findings tras aplicar el OpenVEX exacto (`docker/qualification-image-vex.openvex.json`).
+La evidencia queda en `%TEMP%\\ronin-vex-54e5566`. El reviewer de seguridad aún
+debe aceptar formalmente el VEX y Trivy sigue sin estar instalado; por tanto el
+release global permanece **NO-GO / 0 de 13**.
+
