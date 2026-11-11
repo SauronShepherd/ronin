@@ -48,6 +48,7 @@ for (const viewport of [
         appColumns: getComputedStyle(document.querySelector('#app')).gridTemplateColumns,
         navHasInternalOverflow: nav.scrollWidth > nav.clientWidth,
         mainHasInternalScroll: main.scrollHeight > main.clientHeight,
+        mainPaddingBottom: parseFloat(getComputedStyle(main).paddingBottom),
       };
     });
 
@@ -62,6 +63,7 @@ for (const viewport of [
       expect(layout.railBottom).toBeCloseTo(viewport.height, 0);
       expect(layout.navHasInternalOverflow).toBe(true);
       expect(layout.mainBottom).toBeLessThanOrEqual(layout.railTop + 1);
+      if (viewport.width <= 700) expect(layout.mainPaddingBottom).toBeGreaterThanOrEqual(66);
       expect(layout.appColumns.split(' ').length).toBe(1);
     } else {
       expect(layout.railPosition).toBe('relative');

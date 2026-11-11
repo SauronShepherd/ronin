@@ -41,6 +41,11 @@ still require a formal product/design sign-off:
 3. Repeat the visual pass on every active Public v1 family journey and record
    screenshots against the same frozen release SHA.
 
+The responsive matrix now also asserts that mobile `main` padding is at least
+the fixed navigation height (`66px`), so the last visible content can scroll
+above the navigation bar. This is a layout invariant, not a substitute for the
+human inspection of long content.
+
 Release consequence: these open findings keep the manual-visual-review gate
 `qualification_pending`; they do not change the automated result, but they also
 do not permit a GO decision. Public v1 remains `0/13` and **NO-GO**.
