@@ -1337,3 +1337,18 @@ auditoría web queda en `0` fallos y el budget se ratchea explícitamente a
 Este incremento es coste medido de la nueva superficie, no una relajación
 silenciosa. El release permanece **NO-GO / 0 de 13**.
 
+## 66. Cualificación Chromium exacta posterior a FinOps
+
+El commit `c41bf838` se ejecutó con la configuración canónica de `web-tests`:
+
+```text
+npm exec -- playwright test --project=chromium --workers=1
+```
+
+Resultado: **169 passed, 33 skipped, 0 failed** en `8.9m`. Las dos pruebas de
+FinOps pasan dentro de la suite completa, junto con accesibilidad, live routes,
+responsive, traversal, Scheduler, Semantic, Streaming, Synthetic, Workspaces y
+Projects. Esta evidencia valida el workbench de costes sobre el SHA publicado;
+los 33 skips siguen siendo dependencias externas explícitas y no cualifican
+familias por sí solos. El release permanece **NO-GO / 0 de 13**.
+
