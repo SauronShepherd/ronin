@@ -20,6 +20,24 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
+## 11 November clean-candidate Docker qualification — `3cf5aa7`
+
+The exact candidate `3cf5aa75a468c3e86cf8aceec079a031fde31f0b` was checked out
+into an isolated clean worktree and qualified with `tools/run_docker_qualification.ps1`.
+The run passed **27/27 tests, 0 skipped, 0 failed**, including real Docker
+worker isolation and resource limits, PostgreSQL-backed journeys, process
+reclaim, appliance backup/restore, S3/Floci, Azure/Azurite and the strict v0.1
+acceptance **15/15**. The runtime image digest was
+`sha256:3216bd2e46965cc9b01b5839fdf15019de34c9a568fcdd6c0b8d4db16f47996b`.
+Receipts are stored outside the checkout at
+`C:\Users\angel.alvarez\Downloads\ronin-clean-docker-evidence-3cf5aa7`.
+
+This closes the Docker-backed technical gate for this candidate only. It does
+not change the release decision: Public v1 remains **NO-GO / 0 of 13** until
+the remaining provider, security/supply-chain, legal/claims, human visual,
+rollback/support, governance and complete family-qualification gates are
+closed on the same candidate.
+
 ## 11 November exact-candidate revalidation — current `c0bdd4a3`
 
 The reconciled tracked candidate is technically green in the locally executable
