@@ -864,3 +864,13 @@ doble fase de renderizado del shell; no se cuenta como pass hasta que esa
 fixture pueda demostrar 503 → retry → inventario sobre el mismo candidato.
 Este cambio mejora la UX, pero no cualifica P1 ni altera `0/13`.
 
+## 34. Ratchet del presupuesto tras el retry de Workspace
+
+La auditoría estática del shell sigue en `71` archivos, `38` módulos, `182`
+invocaciones de ruta y `0` fallos. El mensaje y control de recuperación de
+Workspace incrementan el asset budget de `2,139,459` a `2,139,801` bytes;
+`python -m tools.studio_budget --check` pasa después de actualizar el baseline
+candidate-bound. El incremento queda registrado deliberadamente y cualquier
+crecimiento posterior volverá a fallar cerrado. El journey Workbench pasa
+`2/2` en Chromium con un worker; esto no cambia la cualificación de release.
+
