@@ -1245,3 +1245,25 @@ Esta pasada refuerza la integridad del shell web, pero no cierra proveedores,
 seguridad/supply chain, legal, rollback, aceptación humana ni las 13 familias:
 el release permanece **NO-GO / 0 de 13**.
 
+## 61. Cualificación Chromium exacta del commit publicado
+
+Desde `web-tests`, que contiene la configuración canónica de Playwright, se
+ejecutó:
+
+```text
+npm exec -- playwright test --project=chromium --workers=1
+```
+
+Resultado del commit publicado `ae42c724`: **164 passed, 33 skipped, 0
+failed** en `11.4m`. La suite cubre accesibilidad, command palette, deep-links,
+contexto workspace/project, Catalog, Data Engineering, ML, Migration,
+responsive de 320px a 1440px, route traversal, scheduler, semantic, streaming,
+synthetic, Workspaces y Projects. Los 33 skips corresponden a lanes
+explícitamente condicionadas por proveedores o servicios externos y no se
+interpretan como PASS de esas capacidades.
+
+Esta evidencia confirma que el shell y las journeys web disponibles están
+estables en el SHA publicado. No sustituye la cualificación exact-SHA de las
+familias Public v1, las certificaciones externas ni la aceptación humana; el
+release permanece **NO-GO / 0 de 13**.
+
