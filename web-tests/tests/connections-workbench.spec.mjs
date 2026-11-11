@@ -74,6 +74,8 @@ test('Connections workbench saves a secret-safe definition and refreshes its inv
   const save = page.getByRole('button', { name: 'Save connection' });
   await save.click();
   await expect(page.locator('#connection-result')).toContainText('warehouse');
+  await expect(page.locator('#connection-result .connection-operation-summary')).toContainText('Saved connection');
+  await expect(page.locator('#connection-result .connections-raw')).not.toHaveAttribute('open', '');
   await expect(page.locator('#connection-list')).toContainText('Warehouse');
   await expect(page.locator('#connection-list')).not.toContainText('secret://');
   expect(saved).toBe(true);

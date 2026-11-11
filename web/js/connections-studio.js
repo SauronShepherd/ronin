@@ -55,6 +55,14 @@ function updateOverview(items, error = '') {
 function renderConnectionRows(items, workspace) {
   return items.length ? `<div class="table-wrap"><table><caption class="sr-only">Connections</caption><thead><tr><th>ID</th><th>Name</th><th>Connector</th><th>Secret posture</th><th>State</th><th>Actions</th></tr></thead><tbody>${items.map(item => `<tr><td><strong>${esc(item.id)}</strong></td><td>${esc(item.name)}</td><td><code>${esc(item.connector_id)}</code></td><td><span class="connections-secret-posture">${esc(secretPosture(item))}</span></td><td>${esc(connectionState(item))}</td><td><button class="button" type="button" data-action="connection-edit" data-workspace="${esc(workspace)}" data-id="${esc(item.id)}">Edit</button><button class="button danger" type="button" data-action="connection-delete" data-workspace="${esc(workspace)}" data-id="${esc(item.id)}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><h3>No connections configured</h3><p>Start with a connector and a secret reference. Ronin will keep credential material opaque.</p><button class="button primary" type="button" data-connections-mode="configure">Configure a connection</button></div>';
 }
+function renderConnectionOperation(output, action, data) {
+  const item = data?.connection || data?.item || data;
+  const id = item?.id || data?.id || 'connection';
+  const name = item?.name || data?.name || id;
+  const connector = item?.connector_id || data?.connector_id || 'connector';
+  output.innerHTML = `<div class="connection-operation-summary"><strong>${esc(action)}: ${esc(name)}</strong><span>${esc(id)} · ${esc(connector)} · workspace-scoped</span><p>Secret material remains opaque; review the inventory before using this connection.</p></div><details class="connections-raw"><summary>Advanced: raw operation response</summary><pre class="code"></pre></details>`;
+  output.querySelector('pre').textContent = json(data);
+}
 
 function addConnectionsPanel() {
   if (location.hash.slice(1) !== 'data') return;
@@ -110,7 +118,7 @@ async function saveConnection(event) {
     const id = String(data.get('id') || '').trim();
     const payload = { id, name: String(data.get('name') || '').trim(), connector_id: String(data.get('connector_id') || '').trim(), options: JSON.parse(String(data.get('options') || '{}')), secret_refs: JSON.parse(String(data.get('secret_refs') || '{}')) };
     const editing = String(data.get('editing') || '').trim();
-    output.textContent = json(editing ? await put(connectionPath(workspace, editing), payload) : await post(connectionPath(workspace), payload));
+    renderConnectionOperation(output, editing ? 'Updated connection' : 'Saved connection', editing ? await put(connectionPath(workspace, editing), payload) : await post(connectionPath(workspace), payload));
     form.reset();
     await loadConnections();
     setMode('discover');
@@ -136,7 +144,7 @@ document.addEventListener('click', async event => {
     }
     if (action === 'connection-delete') {
       if (!await confirmImpact(`Delete connection ${id} from workspace ${workspace}? This removes its definition; secret material is not recoverable from Ronin.`)) return;
-      output.textContent = json(await del(connectionPath(workspace, id), { body: '{}' })); await loadConnections(); setMode('govern');
+      renderConnectionOperation(output, 'Deleted connection', await del(connectionPath(workspace, id), { body: '{}' })); await loadConnections(); setMode('govern');
     }
   } catch (error) { output.textContent = `Connection operation failed: ${error.message}`; }
 });

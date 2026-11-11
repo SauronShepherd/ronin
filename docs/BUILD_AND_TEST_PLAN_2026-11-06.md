@@ -1674,6 +1674,18 @@ La regresión focalizada terminó en **8 passed, 0 failed**. `studio_web_audit`
 mantiene 0 fallos y el budget ratificado es `asset_bytes=2,152,201`. El release
 permanece **NO-GO / 0 de 13** por los gates externos y de aprobación pendientes.
 
+## 90. Connections separa decisión operativa y evidencia cruda
+
+Las acciones de guardar, actualizar y eliminar una conexión ahora muestran
+primero una confirmación legible con nombre, identificador, connector y ámbito
+workspace-scoped. El JSON completo queda bajo `Advanced: raw operation response`;
+las referencias de secreto no se exponen en la vista principal ni en el
+inventario.
+
+La regresión focalizada de Connections terminó en **5 passed, 0 failed**.
+`studio_web_audit` mantiene 0 fallos y el budget ratificado es
+`asset_bytes=2,153,028`. El release permanece **NO-GO / 0 de 13**.
+
 ## 88. SQL local muestra resultados tabulares antes de la evidencia cruda
 
 El resultado de SQL local sigue el mismo contrato de lectura que QueryFlux:
