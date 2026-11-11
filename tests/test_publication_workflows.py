@@ -24,7 +24,10 @@ def test_duplicate_reservation_workflow_is_removed() -> None:
 
 def test_validation_workflows_are_removed_from_the_repository() -> None:
     workflows = ROOT / ".github" / "workflows"
-    assert [path.name for path in workflows.glob("*.yml")] == ["publish-dockerhub.yml"]
+    assert {path.name for path in workflows.glob("*.yml")} == {
+        "publish-dockerhub.yml",
+        "quality.yml",
+    }
     for name in (
         "ci.yml",
         "docker-qualification.yml",
