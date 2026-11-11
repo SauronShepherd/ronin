@@ -762,3 +762,11 @@ controles de validación y generación asíncrona no aparecían. El módulo se
 conectó en `app.js`; los tres journeys Synthetic pasaron y la repetición
 completa terminó **154 passed, 0 failed** en 8m18s.
 
+## 28. Recalibración del presupuesto tras conectar Synthetic Journey
+
+La importación del módulo que faltaba añade `2,214` bytes al shell. El
+presupuesto candidate-bound se actualiza de `2,136,819` a `2,139,033` bytes,
+manteniendo requests, módulos, hojas de estilo y HTML sin cambios. La
+recalibración es explícita y `python -m tools.studio_budget --check` vuelve a
+pasar; no se permite crecimiento implícito.
+
