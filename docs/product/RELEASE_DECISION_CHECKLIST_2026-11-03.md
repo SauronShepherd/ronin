@@ -612,3 +612,13 @@ Evidence is preserved outside the repository at
 This closes the clean Docker acceptance stage for that exact candidate; legal,
 provider, family, visual, security and governance gates remain open, so the
 release decision stays **NO-GO**.
+
+## Security qualification receipt — 2026-11-11
+
+On the same clean checkout `ef85e6f47564a1beee7f793c33825a01a2180492`,
+Gitleaks `8.30.1` scanned 2,284 commits and the current tree with **zero
+leaks**. `pip-audit` against `requirements-test.lock` reported **no known
+vulnerabilities**. Raw receipts are preserved outside the repository at
+`C:\Users\angel.alvarez\Downloads\ronin-security-ef85e6f`.
+Trivy is unavailable on this host, so container SBOM/image review and human
+VEX acceptance remain open; this stage does not change the overall **NO-GO**.
