@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-11-11T16:45:00+01:00",
-  "observed_main_sha": "350a53952e293d009d382e69b3279fcd7fd8d849",
+  "observed_at": "2026-11-11T17:40:00+01:00",
+  "observed_main_sha": "9c6efbc5fac65f939b3bab8f3dcf23d55e581cc9",
   "latest_automated_evidence": "HEAD b349f2eb: Python 4519 passed/68 skipped/0 failed in the canonical CI gate; Chromium non-live 180 passed/0 failed; web audit 0 failures over 71 files and 181 route invocations; UI budget 2,158,413 asset bytes; status and capability checks passed on the prior reconciled head. Public v1 remains conservatively unqualified.",
   "current_observation": "2026-11-11 current exact tracked candidate is 6c0d88aa: the responsive topbar correction is covered by Chromium CI 180/180 on its parent candidate, Python canonical quality is 4519 passed/68 skipped/0 failed before ledger reconciliation, web audit and UI budget checks are green, and the ledgers are reconciled to the observed head. External provider qualification, human visual/product review, legal/license/NOTICE decisions, security/supply-chain acceptance, rollback/restore, release governance and complete Public v1 family qualification remain open. Release remains NO-GO at 0/13 families.",
   "observed_workspace_state": "Current observation 2026-11-11: main is clean in tracked files at 6c0d88aa; user-owned untracked artifacts remain outside the tracked candidate. Automated evidence is exact-SHA-scoped and separate infrastructure receipts are not merged into one qualification claim. Remaining blockers are external provider matrix, human visual/product review, legal/license/NOTICE decisions, security/supply-chain acceptance, operational restore/rollback, governance and complete Public v1 family qualification.",
