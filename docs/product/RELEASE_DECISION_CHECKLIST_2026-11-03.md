@@ -4,7 +4,7 @@
 
 **Last evidence review:** 11 November 2026
 
-**Candidate SHA:** exact current tracked candidate `30b0eca0c41d60fb1d76270ed4b1b7e6920bb4ac`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** exact current tracked candidate `ba1b8b37a5bba4f39e44b348ba67974a81299f2e`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
