@@ -1083,14 +1083,15 @@ El Debugger Studio hereda ahora el workspace activo del shell antes de caer al
 estado persistido y mantiene la continuidad contextual durante la navegación.
 La regresión correspondiente pasa dentro de la suite de journeys.
 
-La ejecución canónica completa sobre `83c079e3` produjo `170 passed, 33
-skipped, 1 failed`; el único fallo fue el caso de finalización del tutorial
-guiado. El mismo caso pasó después en una ejecución aislada y en una
-repetición `--repeat-each=3`, con `3 passed, 0 failed`. Se clasifica por tanto
-como flakiness transitoria de test, no como regresión funcional confirmada, y
-queda pendiente estabilizar el test antes de declarar una suite completamente
-verde. El release sigue **NO-GO / 0 de 13**: las puertas externas, seguridad,
-operación y aprobación humana continúan sin cualificar.
+La primera ejecución canónica completa sobre `83c079e3` produjo `170 passed,
+33 skipped, 1 failed`; el único fallo fue el caso de finalización del tutorial
+guiado. El mismo caso pasó después en una ejecución aislada, en una repetición
+`--repeat-each=3` y en una repetición `--repeat-each=10`. La segunda ejecución
+canónica completa terminó con `171 passed, 33 skipped, 0 failed` en `13.5m`,
+incluido el tutorial. La evidencia actual deja la suite Chromium completamente
+verde; los 33 skips siguen siendo lanes externas explícitas. El release queda
+pendiente únicamente de las puertas externas, seguridad, operación y aprobación
+humana, por lo que mantiene **NO-GO / 0 de 13**.
 
 ## 70. Debugger hereda el contexto activo
 
