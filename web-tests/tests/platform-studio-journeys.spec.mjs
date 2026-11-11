@@ -44,6 +44,26 @@ test('Debugger Studio creates a session and sets a breakpoint', async ({ page })
   await expect(page.locator('#debugger-result')).toContainText('"status": "ok"');
 });
 
+test('Debugger Studio retries session creation without losing the selected session', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/data-engineering/debugger/sessions**', async route => {
+    attempts += 1;
+    expect(route.request().postDataJSON().session_id).toBe('retry-debug');
+    if (attempts === 1) {
+      await route.fulfill({ status: 503, json: { error: { code: 'debugger_unavailable', message: 'Debugger service is warming up.' } } });
+      return;
+    }
+    await route.fulfill({ json: { status: 'ok', session_id: 'retry-debug' } });
+  });
+  await page.goto('./#debugger');
+  await page.locator('#debugger-session').fill('retry-debug');
+  await page.getByRole('button', { name: 'Create session', exact: true }).click();
+  await expect(page.locator('#debugger-result')).toContainText('Debugger service is warming up.');
+  await page.getByRole('button', { name: 'Retry session creation', exact: true }).click();
+  await expect(page.locator('#debugger-result')).toContainText('retry-debug');
+  expect(attempts).toBe(2);
+});
+
 test('Cloud Studio validates a target and generates a reviewable plan', async ({ page }) => {
   await page.route('**/v1/cloud-studio/**', async route => {
     await route.fulfill({ json: { status: 'ok', resources: [] } });

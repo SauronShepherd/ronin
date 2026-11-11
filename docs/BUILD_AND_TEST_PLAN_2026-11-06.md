@@ -995,6 +995,18 @@ La auditoría web permanece en `0` fallos y el budget candidate-bound queda en
 `2,141,117` bytes. Esto mejora la recuperación de una superficie de
 deployment planning, pero no cualifica P14 ni cambia `0/13`.
 
+## 46. Recuperación de Debugger Studio
+
+Debugger Studio conserva la sesión y las celdas introducidas cuando falla la
+creación de una sesión, mostrando `Retry session creation`. El retry repite
+únicamente el `POST` de creación; no reenvía breakpoints ni ejecución de
+celdas. La prueba focalizada pasa `2/2`, incluyendo 503 → retry y el flujo de
+breakpoint.
+
+La auditoría web sigue en `0` fallos y el budget candidate-bound queda en
+`2,141,636` bytes. Esto mejora la recuperación de una superficie de debugging
+interactivo, pero no cualifica P4 ni cambia `0/13`.
+
 ## 45. Regresión Chromium global posterior a Performance y Cloud
 
 La suite no-live completa del candidato actual terminó **`160 passed, 0
