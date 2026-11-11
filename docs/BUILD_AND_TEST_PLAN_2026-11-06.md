@@ -1303,6 +1303,23 @@ externos; no se convierten en PASS implícito. Esta evidencia fortalece la
 calidad exact-SHA de la UI, pero no cierra las certificaciones externas ni las
 13 familias Public v1: el release permanece **NO-GO / 0 de 13**.
 
+## 67. Reconciliación del baseline de la matriz de capacidades
+
+La regresión Python completa detectó un único fallo documental en
+`tests/test_public_capability_matrix.py`: la matriz tenía como `Observed source
+baseline` `160327…`, mientras `docs/product/public-v1-status.json` declaraba
+`49816…`. No era un fallo de runtime ni una cualificación de producto, pero sí
+invalidaba la lane completa. Se añadió el baseline ledger-aligned `49816…` a
+la cabecera de la matriz y se conservaron los recibos históricos como
+históricos, sin promover el estado de release.
+
+Después de la corrección: el test aislado pasa `1/1`, la familia de matriz pasa
+`3/3`, `generate_public_v1_status --check` pasa y `capability_status` es válido.
+La corrida completa que motivó el hallazgo fue `4510 passed, 77 skipped, 1
+failed`; el fallo quedó aislado y corregido, por lo que la evidencia funcional
+vigente se reconcilia con `4511 passed, 77 skipped, 0 failed`. El veredicto
+continúa **NO-GO / 0 de 13**.
+
 ## 64. Alerts como workbench de observabilidad
 
 Monitoring & Alerts dejó de ser un formulario aislado y ahora presenta un
