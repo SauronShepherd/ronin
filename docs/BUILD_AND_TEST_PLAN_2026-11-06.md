@@ -1203,3 +1203,19 @@ La regresión combinada pasa `36/36`; la suite Chromium global posterior pasa
 fallos y el budget medido es `asset_bytes=2,140,976`. El release sigue
 **NO-GO / 0 de 13** por las puertas externas y humanas.
 
+## 59. Índice canónico de evidencia reciente
+
+Las secciones recientes se añadieron durante iteraciones independientes y su
+orden físico no debe interpretarse como orden de dependencia. Para revisar el
+expediente actual, usar esta secuencia: (1) sección 50, contexto de Migration;
+(2) sección 51, primera regresión global con timeout; (3) sección 52, corrida
+global verde; (4) sección 53, calidad estática; (5) sección 54, autoridad única
+de Catalog; (6) sección 55, regresión global de Catalog; (7) sección 56,
+autoridad única de Workspaces; (8) sección 57, regresión global de Workspaces;
+(9) sección 58, router delegado sin flicker.
+
+La evidencia más reciente y válida queda ligada al candidato publicado
+`766618ff`: Chromium `164 passed, 33 skipped, 0 failed`, web audit sin fallos,
+budget `2,140,976` bytes y checks de ledger/capability válidos. El índice no
+promueve ninguna familia Public v1 ni modifica el **NO-GO / 0 de 13**.
+
