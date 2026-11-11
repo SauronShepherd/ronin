@@ -970,3 +970,16 @@ requiere 503 → retry, ausencia de sesiones, selección y responsive en el
 cockpit activo sobre un candidato exacto. No se implementa mediante un
 listener paralelo mientras existan los dos loaders.
 
+## 42. Regresión Python completa del candidato reconciliado
+
+La ejecución `python -m pytest --ignore=tests/perf -q` sobre el candidato
+reconciliado terminó **`4511 passed, 77 skipped, 0 failed` en 5m54s**. Los
+skips están enumerados por pytest y corresponden a cualificaciones opt-in de
+Docker/worker/Compose, PostgreSQL, S3/Azure, OTLP, Trino/SDP/Spark, symlinks,
+credenciales y proveedores externos. No se convierten en passes ni cierran
+los gates live, de portabilidad, seguridad o despliegue.
+
+La evidencia confirma que la sincronización del ledger y los cambios de UI no
+rompen el runtime Python del candidato. Junto con Chromium `158/158`, mejora
+la confianza de regresión, pero no cambia `0/13` ni la decisión **NO-GO**.
+
