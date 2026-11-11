@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from studio_storage.postgres_core import _psycopg
 from studio_storage.sqlite import open_database
@@ -200,7 +200,7 @@ class PostgresQueryFluxExecutionStore:
         self._application_name = application_name
         self.migrate()
 
-    def _connect(self):
+    def _connect(self) -> Any:
         psycopg, _dict_row = _psycopg()
         return psycopg.connect(self._dsn, autocommit=False, application_name=self._application_name)
 
