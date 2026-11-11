@@ -513,3 +513,14 @@ candidate only. They do not close the separate human decisions, the 0/13
 capability-family release ledger, manual visual sign-off, SBOM/Trivy review,
 support matrix, artifact aggregate or release freeze. The decision remains
 **NO-GO**.
+
+## Latest automated correction receipt — 2026-11-11
+
+A CI-only responsive defect was fixed in commit
+`23ddf749ea198bf028bb32e20585a5b788aacf35`: the topbar now enters compact
+controls at the 900px shell breakpoint, preventing tablet overflow under
+Chromium Linux font metrics. GitHub Actions run `43057053167` is green for
+Chromium non-live (`180/180`) and Python 3.11/3.12. This is a technical gate
+improvement, not a release promotion: the 0/13 family ledger and the human,
+provider, legal, security, rollback, artifact and governance gates remain
+open, so the decision stays **NO-GO**.

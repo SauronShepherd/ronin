@@ -53,3 +53,13 @@ The snapshot is a candidate-bound product review, not a release score. No
 surface is promoted to green until the applicable human visual review and
 provider/security/rollback gates are accepted; the release ledger therefore
 remains `NO-GO / 0 of 13`.
+
+## CI correction receipt — 2026-11-11
+
+The responsive topbar defect found in the Linux Chromium run was corrected at
+`23ddf749ea198bf028bb32e20585a5b788aacf35`: the compact control layout now
+starts at the same 900px boundary as the single-column shell. The candidate's
+GitHub Actions run `43057053167` is green across Chromium non-live (`180/180`)
+and Python 3.11/3.12. This closes the automated regression for that change;
+it does not alter the release decision or replace the required human,
+provider, legal, security, rollback and governance gates.
