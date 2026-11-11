@@ -718,11 +718,15 @@ candidate-bound queda en `asset_bytes=2,136,819`, actualizado explícitamente
 por este incremento funcional. P1 continúa parcial y el release permanece
 `0/13`, **NO-GO**.
 
-## 23. Regresión Python completa del candidato P1
+## 25. Regresión Chromium completa del HEAD actual
 
-La regresión completa del candidato exact-head quedó registrada con `4511
-passed, 77 skipped, 0 failed` en 502.30s. Los skips son dependencias de
-entorno, plataforma o proveedor y no se cuentan como qualification.
+La suite Chromium no-live se ejecutó en un solo worker sobre el HEAD actual
+`9ae80e80dac0a55700e7835e80a4b9c5e9ff6cf0` y terminó con **152 passed, 0
+failed** en 10m36s. Incluye accesibilidad por Studio, navegación por teclado,
+matriz responsive, traversal de rutas, journeys de Catalog/Lineage,
+Data Engineering/QueryFlux, Quality y Workspace/Project. Esta evidencia
+automatizada mejora la confianza del candidato, pero no sustituye la revisión
+visual humana ni cualifica por sí sola las familias Public v1.
 
 ## 24. Scorecard de madurez de UI
 
@@ -735,3 +739,4 @@ accesibilidad, presupuesto, límites destructivos y estado honesto por Studio.
 No cambia el NO-GO actual: el candidato todavía no tiene todos los Studios en
 verde ni las aprobaciones humanas, de proveedores, seguridad, rollback y
 gobernanza requeridas.
+
