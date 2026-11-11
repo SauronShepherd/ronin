@@ -80,11 +80,15 @@ async function loadWorkspaceJourney() {
     result.innerHTML = rows.length ? `<div class="workspace-section-heading workspace-result-heading"><div><span class="workspace-section-index">01 · OBSERVE</span><h2 id="workspace-observe-title">Choose the boundary you can operate</h2><p>Open projects only after the workspace is visible and active.</p></div><span class="workspace-boundary">workspace inventory</span></div><div class="table-wrap"><table><caption class="sr-only">Available workspaces</caption><thead><tr><th>Name</th><th>ID</th><th>Status</th><th>Context</th></tr></thead><tbody>${rows.map((workspace) => `<tr><td><strong>${esc(workspace.name || workspace.id)}</strong></td><td><code>${esc(workspace.id)}</code></td><td>${status(workspace.state || workspace.status || 'active')}</td><td><a class="button" href="#projects/${encodeURIComponent(workspace.id)}" data-workspace-context="${esc(workspace.id)}">Open projects</a></td></tr>`).join('')}</tbody></table></div>` : '<div class="workspace-section-heading workspace-result-heading"><div><span class="workspace-section-index">01 · OBSERVE</span><h2 id="workspace-observe-title">No workspace is ready yet</h2><p>Create one below, then return here to establish its project context.</p></div></div><div class="empty"><strong>No workspaces are visible.</strong><span>The API returned an empty inventory.</span></div>';
   } catch (error) {
     result.className = 'workspace-result';
-    result.innerHTML = `<div class="workspace-section-heading workspace-result-heading"><div><span class="workspace-section-index">01 · OBSERVE</span><h2 id="workspace-observe-title">Workspace inventory unavailable</h2><p>Resolve the connection or authorization issue before creating or operating resources.</p></div></div><div class="error"><strong>Request failed</strong><span>${esc(error.message)}</span></div>`;
+    result.innerHTML = `<div class="workspace-section-heading workspace-result-heading"><div><span class="workspace-section-index">01 · OBSERVE</span><h2 id="workspace-observe-title">Workspace inventory unavailable</h2><p>Resolve the connection or authorization issue before creating or operating resources.</p></div></div><div class="error"><strong>Request failed</strong><span>${esc(error.message)}</span><button class="button" type="button" data-workspace-retry>Retry workspace inventory</button></div>`;
   }
 }
 
 document.addEventListener('click', (event) => {
+  if (event.target.closest?.('[data-workspace-retry]')) {
+    loadWorkspaceJourney();
+    return;
+  }
   const button = event.target.closest?.('[data-workspace-scroll]');
   if (!button) return;
   event.preventDefault();

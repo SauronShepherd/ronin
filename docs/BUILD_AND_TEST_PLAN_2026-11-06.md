@@ -849,3 +849,18 @@ obligatorios, revisión visual humana, decisiones de alcance B si se pretende
 Consecuencia: esta reconciliación no cierra ningún RPV1 ni VER, no modifica el
 ledger oficial y conserva la decisión **NO-GO / 0 de 13 familias cualificadas**.
 
+## 33. Recuperación del inventario en Workspace Studio
+
+Workspace Studio incorpora ahora `Retry workspace inventory` tanto en el
+renderizado principal como en la mejora del Workbench. El retry sólo repite la
+lectura `GET /v1/workspaces`: no reenvía formularios ni crea recursos, y deja
+la frontera workspace/project intacta. Esto cubre el requisito de recuperación
+del scorecard para un fallo transitorio del control plane.
+
+La regresión existente del Workbench continúa verde (`2/2`): contexto,
+orientación, responsive móvil y flujo de creación siguen funcionando. La
+prueba de fallo transitorio queda pendiente de una fixture estable para la
+doble fase de renderizado del shell; no se cuenta como pass hasta que esa
+fixture pueda demostrar 503 → retry → inventario sobre el mismo candidato.
+Este cambio mejora la UX, pero no cualifica P1 ni altera `0/13`.
+
