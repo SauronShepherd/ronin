@@ -2,6 +2,7 @@ import {post} from './api.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const view = () => document.querySelector('#view');
+let lastPerformancePayload = null;
 
 // Performance is part of routes.json and is rendered by the primary rail.
 // This module only owns the Performance Studio view.
@@ -35,15 +36,23 @@ document.addEventListener('submit', async event => {
     const payload = {run: JSON.parse(document.querySelector('#performance-run').value)};
     const baseline = document.querySelector('#performance-baseline').value.trim();
     if (baseline) payload.baseline = JSON.parse(baseline);
+    lastPerformancePayload = payload;
     result.innerHTML = '<p class="muted">Analyzing…</p>';
     error.textContent = '';
     error.hidden = true;
     result.innerHTML = renderReport(await post('/api/v1/performance/analyze', payload));
   } catch (exception) {
-    error.textContent = `Analysis failed: ${exception.message}`;
+    error.innerHTML = `Analysis failed: ${esc(exception.message)} <button class="button" type="button" data-performance-retry>Retry analysis</button>`;
     error.hidden = false;
     result.innerHTML = '';
   }
+});
+
+document.addEventListener('click', event => {
+  if (!event.target.closest('[data-performance-retry]') || !lastPerformancePayload) return;
+  const form = document.querySelector('#performance-form');
+  if (!form) return;
+  form.requestSubmit();
 });
 
 new MutationObserver(() => {

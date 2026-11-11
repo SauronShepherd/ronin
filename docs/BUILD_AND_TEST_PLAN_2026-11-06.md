@@ -983,3 +983,15 @@ La evidencia confirma que la sincronización del ledger y los cambios de UI no
 rompen el runtime Python del candidato. Junto con Chromium `158/158`, mejora
 la confianza de regresión, pero no cambia `0/13` ni la decisión **NO-GO**.
 
+## 43. Recuperación de Performance Studio
+
+Performance Studio conserva ahora el run JSON y el baseline introducidos
+cuando el análisis falla, mostrando `Retry analysis` sólo después de un error
+del `POST /api/v1/performance/analyze`. El retry reenvía la misma intención
+visible y no crea ni modifica una operación durable.
+
+La prueba focalizada pasa `2/2`, incluyendo 503 → retry y resultado válido. La
+auditoría web sigue en `0` fallos y el budget candidate-bound queda en
+`2,140,702` bytes. Esto mejora la recuperación de una superficie de
+inteligencia operativa, pero no cualifica P12 ni cambia `0/13`.
+

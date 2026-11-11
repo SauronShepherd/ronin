@@ -12,6 +12,26 @@ test('Performance Studio submits a normalized run and renders the report', async
   await expect(page.locator('#performance-result')).toContainText('0.91');
 });
 
+test('Performance Studio retries a failed analysis without losing the run JSON', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/api/v1/performance/analyze', async route => {
+    attempts += 1;
+    expect(route.request().postDataJSON().run.run_id).toBe('retry-run');
+    if (attempts === 1) {
+      await route.fulfill({ status: 503, json: { error: { code: 'performance_unavailable', message: 'Performance service is warming up.' } } });
+      return;
+    }
+    await route.fulfill({ json: { score: 0.77, series: { stages: [] }, issues: [] } });
+  });
+  await page.goto('./#performance');
+  await page.locator('#performance-run').fill('{"run_id":"retry-run","stages":[]}');
+  await page.getByRole('button', { name: 'Analyze performance' }).click();
+  await expect(page.locator('#performance-error')).toContainText('Performance service is warming up.');
+  await page.getByRole('button', { name: 'Retry analysis', exact: true }).click();
+  await expect(page.locator('#performance-result')).toContainText('0.77');
+  expect(attempts).toBe(2);
+});
+
 test('Debugger Studio creates a session and sets a breakpoint', async ({ page }) => {
   await page.route('**/v1/data-engineering/debugger/**', async route => {
     await route.fulfill({ json: { status: 'ok', session_id: 'studio-debug' } });
