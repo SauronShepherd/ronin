@@ -589,3 +589,13 @@ the capability ledger and the OpenAPI snapshot. The UI budget is green at
 the 576-byte ratchet is intentional and documented in commit `2066d825`.
 These are technical receipts only; they do not close the human visual review
 or any release blocker, so the decision remains **NO-GO**.
+
+## Final Python regression receipt — 2026-11-11
+
+The complete local Python suite on the final pre-receipt candidate completed
+with exit code 0: **4527 passed, 77 skipped, 0 failed** in 307.71 seconds.
+The captured receipt is preserved outside the repository at
+`C:\Users\angel.alvarez\Downloads\ronin-python-final-bfce7d43-rerun.txt`.
+Skips are environment/provider-gated cases explicitly listed by pytest; they
+are not counted as release qualification. This closes the local Python
+regression stage only and does not change the overall **NO-GO** decision.
