@@ -8,3 +8,5 @@ def test_project_authoring_form_uses_a_stable_submit_binding_and_error_copy() ->
     assert "Could not create project" in source
     assert "Could not update project" in source
     assert "${error.message}" in source
+    assert source.index("await loadProjects(workspaceId);") < source.index("document.querySelector('#project-journey-result').textContent = json(data);")
+    assert "const output = document.querySelector('#project-journey-result');" in source

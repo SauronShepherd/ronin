@@ -78,7 +78,6 @@ function renderProjects() {
   const form = document.querySelector('#project-journey-form');
   form.onsubmit = async (event) => {
     event.preventDefault();
-    const output = document.querySelector('#project-journey-result');
     try {
       const manifest = JSON.parse(document.querySelector('#project-manifest').value);
       const projectId = manifest?.project?.id || 'unknown';
@@ -86,14 +85,15 @@ function renderProjects() {
       const data = editing
         ? await put(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(editing)}`, manifest)
         : await post(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects`, manifest, { headers: { 'Idempotency-Key': `studio-project-${workspaceId}-${projectId}` } });
-      output.textContent = json(data);
       delete form.dataset.editProject;
       form.querySelector('button[type="submit"]').textContent = 'Create project';
       document.querySelector('#project-authoring-mode').textContent = 'Create project';
       document.querySelector('#project-cancel-edit').hidden = true;
       await loadProjects(workspaceId);
+      document.querySelector('#project-journey-result').textContent = json(data);
     } catch (error) {
-      output.textContent = `${editing ? 'Could not update project' : 'Could not create project'}: ${error.message}`;
+      const output = document.querySelector('#project-journey-result');
+      if (output) output.textContent = `${editing ? 'Could not update project' : 'Could not create project'}: ${error.message}`;
     }
   };
   document.querySelector('#project-bundle-import-form').addEventListener('submit', async (event) => {
