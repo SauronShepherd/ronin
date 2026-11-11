@@ -995,6 +995,18 @@ La auditoría web permanece en `0` fallos y el budget candidate-bound queda en
 `2,141,117` bytes. Esto mejora la recuperación de una superficie de
 deployment planning, pero no cualifica P14 ni cambia `0/13`.
 
+## 45. Regresión Chromium global posterior a Performance y Cloud
+
+La suite no-live completa del candidato actual terminó **`160 passed, 0
+failed` en 5,9 minutos**, con un worker. La ampliación respecto a `158/158`
+incluye los journeys de retry de Performance Studio y Cloud Studio, además de
+accesibilidad, responsive, traversal y todas las superficies existentes.
+
+La evidencia es una regresión web exact-candidate, no una aprobación de
+release: proveedores live, seguridad, supply chain, Bundle/restore,
+Helm/Compose, revisión visual humana, legal, rollback y gobernanza siguen
+abiertos. El ledger permanece **NO-GO / 0 de 13**.
+
 ## 43. Recuperación de Performance Studio
 
 Performance Studio conserva ahora el run JSON y el baseline introducidos
