@@ -1077,6 +1077,21 @@ inventario y la comprobación de que la UI permanece visualmente no cualificada.
 recuperabilidad de la ruta activa, pero no cualifica P14 ni cambia el estado
 **NO-GO / 0 de 13**.
 
+## 69. Cualificación Chromium exacta posterior a Connections
+
+El commit `664f1248` se ejecutó con la configuración canónica de `web-tests`:
+
+```text
+npm exec -- playwright test --project=chromium --workers=1
+```
+
+Resultado: **170 passed, 33 skipped, 0 failed** en `9.5m`. Las cinco pruebas
+de Connections pasan dentro de la suite completa, junto con accesibilidad,
+live routes, responsive, traversal, Scheduler, Semantic, Streaming, Synthetic,
+Workspaces y Projects. Los 33 skips siguen siendo lanes externas explícitas y
+no elevan ninguna familia a cualificada. El release permanece
+**NO-GO / 0 de 13**.
+
 ## 56. Workspaces con una única autoridad de renderizado
 
 La misma auditoría que detectó el renderer duplicado de Catalog encontró una
