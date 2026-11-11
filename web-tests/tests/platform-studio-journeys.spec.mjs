@@ -585,6 +585,16 @@ test('SQL Studio sends one workspace-scoped request per submit', async ({ page }
   expect(queryCount).toBe(1);
 });
 
+test('SQL Studio initializes from the active shell context', async ({ page }) => {
+  await page.goto('./#sql');
+  await page.evaluate(() => {
+    globalThis.roninStudioContext = { workspace: 'workspace-shell', project: 'project-shell' };
+    window.dispatchEvent(new CustomEvent('ronin-context-change', { detail: globalThis.roninStudioContext }));
+  });
+  await expect(page.locator('#sql-workspace')).toHaveValue('workspace-shell');
+  await expect(page.locator('#sql-project')).toHaveValue('project-shell');
+});
+
 test('SQL Studio keeps execution limits behind progressive disclosure', async ({ page }) => {
   await page.goto('./#sql');
   const advanced = page.locator('.sql-advanced');

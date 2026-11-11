@@ -1730,6 +1730,16 @@ La regresión focalizada de Semantic Studio terminó en **6 passed, 0 failed**.
 `studio_web_audit` mantiene 0 fallos y el budget ratificado es
 `asset_bytes=2,156,053`. El release permanece **NO-GO / 0 de 13**.
 
+## 95. SQL Studio hereda el contexto del shell
+
+La entrada SQL genérica del shell ya inicializa workspace y proyecto desde el
+contexto activo, evitando que el acceso directo a `#sql` pierda el ámbito que
+el operador acaba de seleccionar. La ejecución y sus límites no cambian.
+
+La jornada focalizada de Platform Studio terminó en **26 passed, 0 failed**.
+`studio_web_audit` mantiene 0 fallos y el budget ratificado es
+`asset_bytes=2,156,169`. El release permanece **NO-GO / 0 de 13**.
+
 ## 88. SQL local muestra resultados tabulares antes de la evidencia cruda
 
 El resultado de SQL local sigue el mismo contrato de lectura que QueryFlux:
