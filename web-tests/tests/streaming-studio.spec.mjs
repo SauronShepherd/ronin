@@ -72,6 +72,27 @@ test('Streaming Studio loads, edits, and saves a persisted stream definition', a
   ]);
 });
 
+test('Streaming Studio retries a failed health check without losing stream scope', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/workspaces/ws-a/streams/**/health', async route => {
+    attempts += 1;
+    if (attempts === 1) {
+      await route.fulfill({ status: 503, json: { error: { code: 'stream_unavailable', message: 'Stream health is warming up.' } } });
+      return;
+    }
+    await route.fulfill({ json: { stream_id: 'events/main', status: 'healthy', lag: 0 } });
+  });
+  await page.goto('./#streaming');
+  await page.locator('#stream-health-form [name="workspace"]').fill('ws-a');
+  await page.locator('#stream-health-form [name="stream"]').fill('events/main');
+  await page.getByRole('button', { name: 'Check health' }).click();
+  await expect(page.locator('#stream-health-result')).toContainText('Stream health is warming up.');
+  await page.getByRole('button', { name: 'Retry health check', exact: true }).click();
+  await expect(page.locator('#stream-health-result')).toContainText('healthy');
+  await expect(page.locator('#stream-health-form [name="stream"]')).toHaveValue('events/main');
+  expect(attempts).toBe(2);
+});
+
 test('Streaming Studio verifies, reviews, imports, and exports a portable Bundle', async ({ page }) => {
   const archive = Buffer.from('ronin-stream-bundle-fixture');
   const digest = createHash('sha256').update(archive).digest('hex');

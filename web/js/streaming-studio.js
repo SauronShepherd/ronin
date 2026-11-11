@@ -1,5 +1,5 @@
 import { get, put, post } from './api.js';
-import { json, page } from './dom.js';
+import { esc, json, page } from './dom.js';
 
 let reviewedBundle = null;
 
@@ -197,6 +197,10 @@ document.addEventListener('submit', async event => {
 });
 
 document.addEventListener('click', async event => {
+  if (event.target.closest('[data-stream-retry]')) {
+    document.querySelector('#stream-health-form')?.requestSubmit();
+    return;
+  }
   if (event.target instanceof HTMLButtonElement && event.target.id === 'stream-bundle-export') {
     const workspace = String(new FormData(document.querySelector('#stream-definition-form')).get('workspace'));
     const output = document.querySelector('#stream-bundle-result');
@@ -359,9 +363,7 @@ document.addEventListener('submit', async event => {
     output.textContent = json(action === 'run'
       ? await post(`${base}/run`, { limit: Number(data.get('limit')) })
       : await get(`${base}/health`));
-  } catch (error) {
-    output.textContent = `Streaming ${action === 'run' ? 'batch' : 'health'} failed: ${error.message}`;
-  }
+  } catch (error) { output.innerHTML = action === 'health' ? `<div class="error"><strong>Streaming health failed.</strong><p>${esc(error.message)}</p><button class="button" type="button" data-stream-retry>Retry health check</button></div>` : `Streaming batch failed: ${error.message}`; }
 });
 
 setTimeout(() => {
