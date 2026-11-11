@@ -1369,3 +1369,17 @@ Projects. Esta evidencia valida el workbench de costes sobre el SHA publicado;
 los 33 skips siguen siendo dependencias externas explícitas y no cualifican
 familias por sí solos. El release permanece **NO-GO / 0 de 13**.
 
+## 68. Connections hereda contexto y recupera inventario
+
+Connections Workbench ahora inicia el campo Workspace desde el contexto global
+del shell y convierte un fallo de inventario en una acción explícita de retry.
+Esto evita presentar conexiones de `default` cuando el operador está dentro de
+otro workspace y mantiene el estado verificable durante la recuperación.
+
+La regresión añadida usa `team-a/project-z`, fuerza dos fallos de inicialización
+del workbench y comprueba que el tercer request sólo llega después de pulsar
+`Retry inventory`; la suite Connections queda en **5 passed**. La auditoría web
+queda en `0` fallos y el budget se ratchea explícitamente a
+`asset_bytes=2,147,110`, un aumento medido de 397 bytes. El release permanece
+**NO-GO / 0 de 13**.
+

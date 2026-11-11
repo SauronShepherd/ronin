@@ -35,6 +35,24 @@ test('Connections workbench keeps unknown API failures visible', async ({ page }
   await expect(page.locator('#connection-list')).toContainText('Connection lookup failed');
 });
 
+test('Connections workbench inherits the active workspace and retries inventory', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/workspaces/team-a/connections', async route => {
+    attempts += 1;
+    if (attempts <= 2) {
+      await route.fulfill({ status: 503, json: { detail: 'connection index is warming up' } });
+      return;
+    }
+    await route.fulfill({ json: { items: [{ id: 'warehouse', name: 'Warehouse', connector_id: 'postgres' }] } });
+  });
+  await page.goto('./?workspace=team-a&project=project-z#data');
+  await expect(page.locator('#connection-list-form [name="workspace"]')).toHaveValue('team-a');
+  await expect(page.locator('#connection-list')).toContainText('Connection lookup failed');
+  await page.getByRole('button', { name: 'Retry inventory' }).click();
+  await expect(page.locator('#connection-list')).toContainText('Warehouse');
+  expect(attempts).toBe(3);
+});
+
 test('Connections workbench saves a secret-safe definition and refreshes its inventory', async ({ page }) => {
   let saved = false;
   await page.route('**/v1/workspaces/default/connections', async route => {
