@@ -238,6 +238,14 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
     execution = executions.get("workspace-1", "project-1", "run-1", "attempt-1")
     assert execution is not None
     assert execution.state == "succeeded"
+    status = plugin.queryflux_execution_status(
+        workspace_id="workspace-1",
+        project_id="project-1",
+        run_id="run-1",
+        attempt_id="attempt-1",
+    )
+    assert status["state"] == "succeeded"
+    assert status["cancel_requested"] is False
 
 
 def test_pipeline_compiler_reports_validity_and_runtime() -> None:
