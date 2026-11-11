@@ -5,9 +5,9 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 
-## Current exact-SHA qualification — 10 November 2026
+## Current exact-SHA qualification — 11 November 2026
 
-The current runtime/test candidate is `dd5575e16ecd419808e85cdfed8f050274e1ed44`.
+The current runtime/test candidate is `76966e8b` (`Chromium 164 passed, 33 explicit skips, 0 failed; Python 4511 passed, 77 skipped, 0 failed`).
 Environments now uses an Observe/Author/Govern workbench with deterministic diff
 preview and pause/restore actions; Deployments uses Observe/Bind/Operate with an
 explicit project/environment scope and a validated bindings-array replacement.
