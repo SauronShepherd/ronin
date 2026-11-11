@@ -92,6 +92,7 @@ def test_queryflux_capabilities_are_safe_and_fail_closed() -> None:
     assert capabilities["status"] == "not_configured"
     assert capabilities["provider"] == "queryflux"
     assert capabilities["capabilities"]["routing_trace"] is True
+    assert capabilities["capabilities"]["cancellation"] is False
     assert "endpoint" not in capabilities
     assert capabilities["translation_policies"] == ["native_only", "best_effort"]
 
@@ -142,6 +143,7 @@ def test_configured_queryflux_capabilities_are_handshake_bound(tmp_path) -> None
     assert capabilities["allowed_engines"] == ["duckdb"]
     assert capabilities["translation_policies"] == ["native_only", "best_effort"]
     assert capabilities["capabilities"]["strict_translation"] is False
+    assert capabilities["capabilities"]["cancellation"] is True
 
 
 def test_unhealthy_queryflux_handshake_is_reported_as_degraded(tmp_path) -> None:

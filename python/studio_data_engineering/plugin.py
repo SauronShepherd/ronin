@@ -404,7 +404,7 @@ class DataEnginerringStudioPlugin:
                 "capabilities": {
                     "routing_trace": True,
                     "bounded_preview": True,
-                    "cancellation": True,
+                    "cancellation": False,
                     "stable_result_paging": True,
                 },
                 "translation_policies": ["native_only", "best_effort"],
@@ -425,7 +425,11 @@ class DataEnginerringStudioPlugin:
                 if "queryflux" in self._queryflux_runtime.profiles()
                 else ()
             ),
-            "capabilities": {**dict(capability_values), "stable_result_paging": True},
+            "capabilities": {
+                **dict(capability_values),
+                "cancellation": capability_values.get("cancel") is True,
+                "stable_result_paging": True,
+            },
             "translation_policies": translation_policies,
         }
 
