@@ -939,3 +939,17 @@ solicitudes redundantes durante la navegación inicial, pero ya no invalida la
 evidencia del comportamiento de recuperación del operador. No se cierra P1 ni
 se modifica el estado de release `0/13`.
 
+## 40. Regresión Chromium global con resultado terminal fiable
+
+Tras cerrar un servidor estático residual que ocupaba el puerto `8099`, la
+suite completa no-live se ejecutó con un proceso persistente sobre el candidato
+actual: **`158 passed, 0 failed` en 6,3 minutos**, con un worker. El resultado
+incluye accesibilidad de rutas, responsive, traversal, Catalog, QueryFlux,
+Environment, Scheduler, Synthetic, Workspace/Project, Streaming, Semantic,
+ML y journeys de plataforma.
+
+Este resultado sí es evidencia exact-candidate de regresión web, pero no es
+una cualificación de release: no sustituye proveedores live, seguridad,
+supply-chain, Bundle/restore, Helm/Compose, revisión visual humana, legal,
+rollback ni gobernanza de CI. El estado permanece **NO-GO / 0 de 13**.
+
