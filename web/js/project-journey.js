@@ -76,7 +76,7 @@ function renderProjects() {
   };
   Object.entries(projectAnchors).forEach(([id, anchor]) => document.getElementById(id)?.setAttribute('data-project-anchor', anchor));
   const form = document.querySelector('#project-journey-form');
-  form.addEventListener('submit', async (event) => {
+  form.onsubmit = async (event) => {
     event.preventDefault();
     const output = document.querySelector('#project-journey-result');
     try {
@@ -95,7 +95,7 @@ function renderProjects() {
     } catch (error) {
       output.textContent = `${editing ? 'Could not update project' : 'Could not create project'}: ${error.message}`;
     }
-  });
+  };
   document.querySelector('#project-bundle-import-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
