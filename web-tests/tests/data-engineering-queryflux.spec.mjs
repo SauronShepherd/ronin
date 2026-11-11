@@ -48,6 +48,11 @@ test('Data Engineering Studio executes QueryFlux and reads stable result pages',
       json: { columns: ['id'], rows: [[2]], row_count: 2, next_cursor: null },
     });
   });
+  await page.route('**/v1/workspaces/workspace-a/projects/project-1/data-engineering/queryflux/executions/*/*', async route => {
+    await route.fulfill({
+      json: { state: 'succeeded', cancel_requested: false },
+    });
+  });
 
   await page.goto('./#data');
   await page.locator('#de-sql-form [name="workspace"]').fill('workspace-a');
@@ -71,6 +76,7 @@ test('Data Engineering Studio executes QueryFlux and reads stable result pages',
   expect(postedBody.attempt_id).toMatch(/^[0-9a-f-]{36}$/i);
   await expect(page.getByRole('button', { name: /Load next results page/ })).toBeVisible();
   await expect(page.locator('#de-sql-result .de-result-summary')).toContainText('1 of 2 rows loaded');
+  await expect(page.locator('#de-sql-result .de-result-summary')).toContainText('lifecycle: succeeded');
   await expect(page.locator('#de-sql-result table')).toContainText('1');
   await expect(page.locator('#de-sql-result .de-sql-raw')).not.toHaveAttribute('open', '');
   await page.getByRole('button', { name: /Load next results page/ }).click();

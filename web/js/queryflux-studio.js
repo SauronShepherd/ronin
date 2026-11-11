@@ -3,6 +3,7 @@ import { esc, json } from './dom.js';
 
 let capabilities = null;
 let resultState = null;
+let lifecycleState = null;
 
 export function getQueryFluxResultState() {
   return resultState;
@@ -63,7 +64,8 @@ function renderQueryFluxResult() {
   const columns = resultState.columns.map((column, index) => typeof column === 'string' ? column : column?.name || column?.id || `column_${index + 1}`);
   const rows = resultState.rows.map(row => Array.isArray(row) ? row : columns.map(column => row?.[column]));
   out.className = 'de-sql-result';
-  out.innerHTML = `<div class="de-result-summary"><strong>${resultState.rows.length} of ${resultState.rowCount} rows loaded</strong><span>${esc(resultState.selectedEngine || 'QueryFlux')} · ${esc(resultState.status || 'unknown')}</span></div><div class="table-wrap"><table><caption class="sr-only">QueryFlux result preview</caption><thead><tr>${columns.map(column => `<th>${esc(column)}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(value => `<td>${esc(value == null ? '—' : typeof value === 'object' ? json(value) : value)}</td>`).join('')}</tr>`).join('') : '<tr><td colspan="99">No rows returned.</td></tr>'}</tbody></table></div><details class="de-sql-raw"><summary>Advanced: raw result and evidence</summary><pre class="code">${esc(json(payload))}</pre></details>`;
+  const lifecycle = lifecycleState?.state ? ` · lifecycle: ${lifecycleState.state}` : '';
+  out.innerHTML = `<div class="de-result-summary"><strong>${resultState.rows.length} of ${resultState.rowCount} rows loaded</strong><span>${esc(resultState.selectedEngine || 'QueryFlux')} · ${esc(resultState.status || 'unknown')}${esc(lifecycle)}</span></div><div class="table-wrap"><table><caption class="sr-only">QueryFlux result preview</caption><thead><tr>${columns.map(column => `<th>${esc(column)}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(value => `<td>${esc(value == null ? '—' : typeof value === 'object' ? json(value) : value)}</td>`).join('')}</tr>`).join('') : '<tr><td colspan="99">No rows returned.</td></tr>'}</tbody></table></div><details class="de-sql-raw"><summary>Advanced: raw result and evidence</summary><pre class="code">${esc(json(payload))}</pre></details>`;
   if (next) {
     next.hidden = !resultState.nextCursor;
     next.disabled = false;
@@ -104,6 +106,19 @@ function queryFluxIdentifier() {
 
 function queryFluxResultsEndpoint(workspace, project, runId, attemptId) {
   return `/v1/workspaces/${encodeURIComponent(workspace)}/projects/${encodeURIComponent(project)}/data-engineering/queryflux/executions/${encodeURIComponent(runId)}/${encodeURIComponent(attemptId)}/results`;
+}
+
+function queryFluxLifecycleEndpoint(workspace, project, runId, attemptId) {
+  return `/v1/workspaces/${encodeURIComponent(workspace)}/projects/${encodeURIComponent(project)}/data-engineering/queryflux/executions/${encodeURIComponent(runId)}/${encodeURIComponent(attemptId)}`;
+}
+
+async function loadQueryFluxLifecycle(workspace, project, runId, attemptId) {
+  try {
+    lifecycleState = await get(queryFluxLifecycleEndpoint(workspace, project, runId, attemptId));
+  } catch {
+    lifecycleState = null;
+  }
+  renderQueryFluxResult();
 }
 
 export async function executeQueryFlux(data, out) {
@@ -150,6 +165,7 @@ export async function executeQueryFlux(data, out) {
     if (next) next.hidden = true;
   }
   out.dataset.runId = runId;
+  await loadQueryFluxLifecycle(workspace, project, runId, attemptId);
   return getLoadedQueryFluxResult();
 }
 
