@@ -37,4 +37,17 @@
   --shadow-strong: 0 22px 48px rgb(73 43 24 / 18%);
   --ring: 0 0 0 3px rgb(180 84 47 / 20%);
   --radius-lg: 18px;
+
+  /* Normative semantic aliases from BRAND_V1. Components should consume
+     these names when introducing new UI so every studio shares one contract. */
+  --ronin-color-primary: var(--copper);
+  --ronin-color-primary-hover: var(--cocoa-soft);
+  --ronin-color-primary-active: var(--cocoa);
+  --ronin-color-accent: var(--gold);
+  --ronin-color-surface: var(--surface);
+  --ronin-color-surface-raised: var(--surface-raised);
+  --ronin-color-text: var(--ink);
+  --ronin-color-text-muted: var(--muted);
+  --ronin-color-border: var(--border);
+  --ronin-color-focus: var(--focus);
 }

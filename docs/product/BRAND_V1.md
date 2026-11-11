@@ -145,4 +145,6 @@ Frontends SHOULD consume semantic tokens rather than raw hex values:
 --ronin-color-focus
 ```
 
-The web implementation may map these onto CSS variables, a design-token JSON file or another generated theme format, but `BRAND_V1.md` remains the visual contract until a machine-readable token file is added.
+The web implementation maps these onto the machine-readable CSS token contract in
+`web/styles/tokens.css`; the `--ronin-color-*` aliases are the preferred names
+for new components. `BRAND_V1.md` remains the normative visual contract.
