@@ -150,6 +150,13 @@ class DataEnginerringStudioPlugin:
         )
         context.contributions.add_route(
             "GET",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}",
+            context.plugin_id,
+            self.queryflux_execution_status,
+            permission="data-engineering:read",
+        )
+        context.contributions.add_route(
+            "GET",
             "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/results",
             context.plugin_id,
             self.queryflux_results,
@@ -571,6 +578,37 @@ class DataEnginerringStudioPlugin:
                 "digest": result.evidence_artifact.digest,
                 "storage_ref": result.evidence_artifact.storage_ref,
             },
+        }
+
+    def queryflux_execution_status(
+        self,
+        *,
+        workspace_id: str,
+        project_id: str,
+        run_id: str,
+        attempt_id: str,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        """Read safe lifecycle metadata for one scoped QueryFlux attempt."""
+
+        self._assert_ready()
+        store = self._queryflux_execution_store
+        if store is None:
+            return _plugin_error(
+                "query_execution_status_not_configured",
+                "durable QueryFlux execution status is not configured",
+            )
+        execution = store.get(workspace_id, project_id, run_id, attempt_id)
+        if execution is None:
+            return _plugin_error("query_execution_not_found", "QueryFlux execution was not found")
+        return {
+            "workspace_id": execution.workspace_id,
+            "project_id": execution.project_id,
+            "run_id": execution.run_id,
+            "attempt_id": execution.attempt_id,
+            "state": execution.state,
+            "cancel_requested": execution.cancel_requested,
+            "failure_code": execution.failure_code,
         }
 
     def queryflux_results(

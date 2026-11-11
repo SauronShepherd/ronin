@@ -63,6 +63,25 @@
         }
       }
     },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}": {
+      "get": {
+        "operationId": "getQueryFluxExecution",
+        "description": "Read safe lifecycle metadata for one workspace- and project-scoped QueryFlux execution. This route reports durable state only; it does not imply remote cancellation.",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "run_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "attempt_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}}
+        ],
+        "responses": {
+          "200": {"description": "QueryFlux execution lifecycle", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QueryFluxExecution"}}}},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
+          "404": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
     "/v1/platform/plugins": {
       "get": {
         "operationId": "listPlugins",
@@ -1527,6 +1546,19 @@
           "row_count": {"type": "integer", "minimum": 0},
           "next_cursor": {"type": ["string", "null"], "maxLength": 256},
           "evidence": {"type": "object", "additionalProperties": false, "required": ["role", "digest", "storage_ref"], "properties": {"role": {"type": "string"}, "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "storage_ref": {"type": "string"}}}
+        }
+      },
+      "QueryFluxExecution": {
+        "type": "object", "additionalProperties": false,
+        "required": ["workspace_id", "project_id", "run_id", "attempt_id", "state", "cancel_requested", "failure_code"],
+        "properties": {
+          "workspace_id": {"type": "string", "minLength": 1, "maxLength": 512},
+          "project_id": {"type": "string", "minLength": 1, "maxLength": 512},
+          "run_id": {"type": "string", "minLength": 1, "maxLength": 512},
+          "attempt_id": {"type": "string", "minLength": 1, "maxLength": 512},
+          "state": {"type": "string", "enum": ["queued", "running", "cancelling", "succeeded", "failed", "cancelled"]},
+          "cancel_requested": {"type": "boolean"},
+          "failure_code": {"type": ["string", "null"], "maxLength": 512}
         }
       },
       "QueryFluxResultPage": {
