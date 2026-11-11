@@ -2,6 +2,25 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test.describe('environment workbench', () => {
+  test('recovers the workspace-scoped inventory after a refresh error', async ({ page }) => {
+    let failNext = false;
+    await page.route('**/v1/workspaces/default/environments', async route => {
+      if (failNext) {
+        failNext = false;
+        await route.fulfill({ status: 503, json: { error: { code: 'service_unavailable', message: 'Environment index is warming up.' } } });
+        return;
+      }
+      await route.fulfill({ json: { items: [{ id: 'local', name: 'Local', description: 'Developer runtime', state: 'active' }] } });
+    });
+    await page.goto('./#environments', { waitUntil: 'load' });
+    await expect(page.locator('#environment-result')).toContainText('Local');
+    failNext = true;
+    await page.getByRole('button', { name: 'Refresh environments', exact: true }).click();
+    await expect(page.locator('#environment-result')).toContainText('Environment index is warming up.');
+    await page.getByRole('button', { name: 'Retry environment inventory', exact: true }).click();
+    await expect(page.locator('#environment-result')).toContainText('Local');
+  });
+
   test('keeps observe, author and govern decisions visible in the active context', async ({ page }) => {
     await page.route('**/v1/workspaces/team-a/environments', async route => {
       await route.fulfill({ json: { items: [

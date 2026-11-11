@@ -888,6 +888,19 @@ La auditoría estática sigue en `0` fallos; el presupuesto candidate-bound se
 actualiza a `2,139,950` bytes. Esta deuda de consolidación es de producto y no
 se interpreta como pass de recuperación ni como cierre de P1.
 
+## 37. Recuperación de Environment Studio
+
+Environment Studio incorpora `Retry environment inventory` para errores de la
+lectura workspace-scoped. La acción conserva el workspace activo y sólo repite
+`GET /v1/workspaces/{workspace}/environments`; no reenvía creación, pausa ni
+restauración. La suite del Studio pasa `5/5`, incluyendo el caso reproducible
+503 → retry, autoría, gobernanza reversible y accesibilidad seria/critical en
+cero.
+
+La auditoría web continúa en `0` fallos y el presupuesto candidate-bound queda
+en `2,140,105` bytes. Esto mejora la recuperación y la claridad operativa del
+control plane, pero no cualifica P1 ni modifica el estado `0/13`.
+
 ## 36. Evidencia reproducible del retry Workspace
 
 La fixture estable se obtuvo separando la carga inicial del refresh: el
