@@ -83,6 +83,33 @@ test('Data Engineering Studio surfaces QueryFlux authorization errors', async ({
   await expect(page.locator('#de-sql-result')).toContainText('Project access denied.');
 });
 
+test('Data Engineering Studio retries a failed bounded QueryFlux query without losing scope', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/data-engineering/queryflux/capabilities', async route => {
+    await route.fulfill({ json: { status: 'ready', allowed_engines: ['duckdb'], translation_policies: ['native_only'] } });
+  });
+  await page.route('**/v1/workspaces/workspace-a/projects/project-1/data-engineering/queryflux/execute', async route => {
+    attempts += 1;
+    if (attempts === 1) {
+      await route.fulfill({ status: 503, json: { error: { code: 'provider_unavailable', message: 'QueryFlux is warming up.' } } });
+      return;
+    }
+    await route.fulfill({ json: { columns: [{ name: 'id', type: 'INTEGER' }], rows: [[9]], row_count: 1, next_cursor: null } });
+  });
+  await page.goto('./#data');
+  await page.locator('#de-sql-form [name="workspace"]').fill('workspace-a');
+  await page.locator('#de-sql-form [name="project"]').fill('project-1');
+  await page.locator('#de-sql-form [name="profile"]').selectOption('queryflux');
+  await page.locator('#de-sql-form [name="sql"]').fill('SELECT 9');
+  await page.getByRole('button', { name: 'Execute bounded query' }).click();
+  await expect(page.locator('#de-sql-result')).toContainText('QueryFlux is warming up.');
+  await page.getByRole('button', { name: 'Retry this query', exact: true }).click();
+  await expect(page.locator('#de-sql-result')).toContainText('"row_count": 1');
+  await expect(page.locator('#de-sql-form [name="workspace"]')).toHaveValue('workspace-a');
+  await expect(page.locator('#de-sql-form [name="project"]')).toHaveValue('project-1');
+  expect(attempts).toBe(2);
+});
+
 test('Data Engineering Studio keeps unavailable-server details out of the UI', async ({ page }) => {
   await page.route('**/v1/data-engineering/queryflux/capabilities', async route => {
     await route.fulfill({

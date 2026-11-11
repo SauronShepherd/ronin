@@ -1,5 +1,5 @@
 import { get, post, put } from './api.js';
-import { json, page } from './dom.js';
+import { esc, json, page } from './dom.js';
 import {
   clearQueryFluxResultState,
   executeQueryFlux,
@@ -308,6 +308,10 @@ document.addEventListener('click', async event => {
   }
   const out = document.querySelector(action === 'de-health' || action === 'de-runtimes' ? '#de-health-result' : action.startsWith('de-sql-') ? '#de-sql-result' : '#de-pipeline-result');
   try {
+    if (action === 'de-sql-retry') {
+      document.querySelector('[data-action="de-sql-execute"]')?.click();
+      return;
+    }
     if (action === 'de-sql-save') { const name = document.querySelector('#de-sql-save-name').value.trim(); const form = document.querySelector('#de-sql-form'); const sql = form.querySelector('[name="sql"]').value; const profile = form.querySelector('[name="profile"]').value; const dialect = form.querySelector('[name="dialect"]')?.value || ''; const translation_policy = form.querySelector('[name="translation_policy"]')?.value || 'native_only'; if (!name || !sql.trim()) throw new Error('Query name and SQL are required'); savedSql = [{ name, sql, profile, dialect, translation_policy }, ...savedSql.filter(entry => entry.name !== name)].slice(0, 20); localStorage.setItem(SQL_SAVED_KEY, JSON.stringify(savedSql)); renderSavedSql(); document.querySelector('#de-sql-result').textContent = `Saved query: ${name}`; return; }
     if (action === 'de-queryflux-capabilities') {
       await loadQueryFluxCapabilities();
@@ -373,7 +377,7 @@ document.addEventListener('click', async event => {
     else if (action === 'de-archive') { const data = new FormData(document.querySelector('#de-pipeline-form')); if (!confirm(`Archive pipeline ${data.get('pipeline_id')}?`)) return; out.textContent = json(await post(`/v1/workspaces/${encodeURIComponent(data.get('workspace'))}/projects/${encodeURIComponent(data.get('project'))}/pipelines/${encodeURIComponent(data.get('pipeline_id'))}/archive`, {})); }
     else if (action === 'de-pipelines' || action === 'de-revisions' || action === 'de-revision' || action === 'de-compare') { const data = new FormData(document.querySelector('#de-pipeline-form')); const projectBase = `/v1/workspaces/${encodeURIComponent(data.get('workspace'))}/projects/${encodeURIComponent(data.get('project'))}/pipelines`; const base = `${projectBase}/${encodeURIComponent(data.get('pipeline_id'))}/revisions`; const revision = String(data.get('revision') || ''); const compareRevision = String(data.get('compare_revision') || ''); if ((action === 'de-revision' && !revision) || (action === 'de-compare' && (!revision || !compareRevision))) throw new Error('Enter both revision numbers'); const compareUrl = `${base}/compare?left_revision=${encodeURIComponent(revision)}&right_revision=${encodeURIComponent(compareRevision)}`; out.textContent = json(await get(action === 'de-pipelines' ? projectBase : action === 'de-revision' ? `${base}/${encodeURIComponent(revision)}` : action === 'de-compare' ? compareUrl : base)); }
     else { const body = JSON.parse(new FormData(document.querySelector('#de-pipeline-form')).get('pipeline')); const result = await post(`/v1/data-engineering/pipelines/${action === 'de-validate' ? 'validate' : 'preview'}`, body); if (action === 'de-validate' && result.ir_digest) document.querySelector('[name="ir_digest"]').value = result.ir_digest; out.textContent = json(result); }
-  } catch (error) { out.textContent = `Data Engineering operation failed: ${error.message}`; }
+  } catch (error) { if (action === 'de-sql-execute') out.innerHTML = `<div class="error"><strong>Data Engineering operation failed.</strong><p>${esc(error.message)}</p><button class="button" type="button" data-action="de-sql-retry">Retry this query</button></div>`; else out.textContent = `Data Engineering operation failed: ${error.message}`; }
 });
 setTimeout(() => { window.addEventListener('hashchange', render); if (location.hash.slice(1) === 'data') { render(); addPipelineEditor(); } }, 0);
 
