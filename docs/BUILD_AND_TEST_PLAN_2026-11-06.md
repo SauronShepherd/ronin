@@ -1138,3 +1138,17 @@ Esta evidencia mejora la reproducibilidad del candidato `5753e901`; no cierra
 las aprobaciones humanas, proveedores externos, supply chain, rollback ni la
 cualificación de familias, por lo que el release sigue **NO-GO / 0 de 13**.
 
+## 54. Catalog con una única autoridad de renderizado
+
+La auditoría de arquitectura web encontró dos renderizadores para Catalog:
+`app.js` pintaba una búsqueda básica y `catalog-studio.js` la reemplazaba con
+un `setTimeout`, dejando una carrera potencial en deep-links y navegación. Se
+eliminó el renderer muerto de `app.js`; `catalog-studio.js` es ahora la única
+autoridad del workbench completo de búsqueda, lineage y glossary.
+
+La regresión específica de Catalog pasa `6/6`; route traversal, responsive y
+deep-link pasan `27/27`; `studio_web_audit` permanece en `0` fallos y el
+budget medido baja a `asset_bytes=2,141,897`. Esto mejora coherencia y carga
+percibida de la UI sin cambiar contratos API. No cualifica P6 ni cambia el
+**NO-GO / 0 de 13**.
+
