@@ -787,3 +787,32 @@ incluye el error `503` y la recuperación, y mantiene el layout responsive. El
 budget candidate-bound se actualiza explícitamente de `2,139,167` a
 `2,139,459` bytes; auditoría y budget check pasan.
 
+## 31. P3 — plan de construcción para cancelación QueryFlux
+
+La cancelación de QueryFlux no se puede resolver con `AbortController` en la
+UI: eso sólo corta la espera HTTP y no garantiza que el proveedor detenga la
+consulta. El diseño obligatorio queda fijado así:
+
+1. Separar `submit` de `poll` y devolver una identidad durable
+   `workspace/project/run_id/attempt_id`, junto con un handle de proveedor
+   protegido y no expuesto al cliente.
+2. Persistir el estado de ejecución (`queued`, `running`, `cancel_requested`,
+   `cancelled`, `succeeded`, `failed`) y el digest de la consulta; las
+   transiciones serán idempotentes y project-scoped.
+3. Exponer `POST .../queryflux/executions/{run_id}/{attempt_id}/cancel` con
+   `data-engineering:execute`, autorización de workspace/proyecto, auditoría y
+   respuesta que distinga solicitud aceptada de cancelación confirmada.
+4. Reconciliar la cancelación con el transport `cancel(handle)`, liberar el
+   handle sólo después del estado terminal y persistir evidencia de estado sin
+   inventar un resultado de datos.
+5. Añadir al Studio un botón `Cancel query` sólo mientras exista una ejecución
+   cancelable, estados honestos y recuperación de errores; no mostrarlo para
+   proveedores sin la capability `cancel`.
+6. Cubrir OpenAPI, permisos cross-workspace, idempotencia, carrera
+   cancel/complete, timeout, provider unavailable, reinicio y journey
+   Chromium/API real. La familia P3 no contará como cualificada hasta que ese
+   journey pase sobre un candidato limpio.
+
+Este plan mantiene el release **NO-GO** y evita una falsa sensación de
+cancelación mientras el backend siga siendo una llamada síncrona.
+
