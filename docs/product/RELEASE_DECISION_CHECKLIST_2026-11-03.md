@@ -4,7 +4,7 @@
 
 **Last evidence review:** 11 November 2026
 
-**Candidate SHA:** exact current tracked candidate `34f7f71431f2d75dd7e8d95dcb393c046db6fab1`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** exact current tracked candidate `30b0eca0c41d60fb1d76270ed4b1b7e6920bb4ac`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -28,6 +28,21 @@ This is a technical live pass only. It does not close the Public v1 family
 ledger, security reviewer acceptance, legal/NOTICE decisions, manual visual
 review, rollback/recovery rehearsal, provider matrix or release governance.
 The release therefore remains **NO-GO / 0 of 13**.
+
+## 11 November current candidate security hardening — `30b0eca0`
+
+The runtime and probe Alpine locks now pin Git and `git-init-template` to
+`2.56.1-r0`, and the probe explicitly upgrades `krb5-libs` to `1.22.3-r0`.
+The exact candidate's clean Docker qualification passed **27/27** tests with
+zero skips/failures and strict v0.1 acceptance **15/15**; the built runtime
+image digest was `sha256:fef07a41ec8a4138a9a31312b24147a81a089613df9335d4d93936ac5ee139a1`.
+Receipt: `C:\Users\angel.alvarez\Downloads\ronin-docker-30b0eca-diagnostic`.
+
+Trivy `0.76.1` scans of rebuilt runtime and probe images report zero
+HIGH/CRITICAL vulnerabilities and zero secrets; the fail-closed exit code is
+`0` for both. This improves the technical security gate but does not close
+the separate license policy or human security acceptance gates. The license
+qualification still fails closed on 21 missing package review decisions.
 
 This checklist is the short decision sheet for
 [`PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`](PLAN_FINAL_RONIN_RELEASE_2026-11-03.md).
