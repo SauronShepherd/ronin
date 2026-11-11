@@ -5,9 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Literal
 
-QueryFluxState = Literal[
-    "queued", "running", "cancelling", "succeeded", "failed", "cancelled"
-]
+QueryFluxState = Literal["queued", "running", "cancelling", "succeeded", "failed", "cancelled"]
 QueryFluxTerminalState = Literal["succeeded", "failed", "cancelled"]
 
 _TRANSITIONS: dict[QueryFluxState, frozenset[QueryFluxState]] = {
