@@ -38,6 +38,19 @@ the remaining provider, security/supply-chain, legal/claims, human visual,
 rollback/support, governance and complete family-qualification gates are
 closed on the same candidate.
 
+## 11 November clean-candidate license gate — still open
+
+The read-only legal qualification was run against the same clean candidate with
+`python tools/license_qualification.py --inventory third_party/licenses-v1.json --policy third_party/license-policy-v1.json`.
+It failed closed because the policy lacks review decisions for 21 locked
+distributions: `boolean-py`, `cachecontrol`, `certifi`, `charset-normalizer`,
+`cyclonedx-python-lib`, `defusedxml`, `filelock`, `idna`, `license-expression`,
+`msgpack`, `packageurl-python`, `pip-api`, `pip-audit`,
+`pip-requirements-parser`, `pip`, `py-serializable`, `pyparsing`, `pyyaml-ft`,
+`requests`, `tomli-w` and `urllib3` (with their exact locked versions recorded
+by the command). No license approval was inferred or added. This remains a
+human legal/NOTICE gate and independently keeps the release at **NO-GO**.
+
 ## 11 November exact-candidate revalidation — current `c0bdd4a3`
 
 The reconciled tracked candidate is technically green in the locally executable
