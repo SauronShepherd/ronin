@@ -1283,3 +1283,23 @@ comprueba el valor visible y observa que `List schedules` llama únicamente a
 El cambio mejora aislamiento y continuidad de contexto, pero no altera el
 alcance de Public v1 ni el veredicto **NO-GO / 0 de 13**.
 
+## 63. Regresión Chromium completa posterior al contexto de Scheduler
+
+El cambio de `scheduler-studio.js` se cualificó sobre el SHA exacto
+`36fa86f1` con:
+
+```text
+npm exec -- playwright test --project=chromium --workers=1
+```
+
+Resultado: **165 passed, 33 skipped, 0 failed** en `12.1m`. El incremento de
+una prueba respecto al corte anterior corresponde a la regresión que verifica
+que `?workspace=team-a&project=project-z#workflows` conserva `team-a` y no
+consulta accidentalmente `default`. El shell, las journeys, accesibilidad,
+responsive y traversal completo siguen verdes.
+
+Los skips continúan siendo lanes condicionadas por servicios/proveedores
+externos; no se convierten en PASS implícito. Esta evidencia fortalece la
+calidad exact-SHA de la UI, pero no cierra las certificaciones externas ni las
+13 familias Public v1: el release permanece **NO-GO / 0 de 13**.
+
