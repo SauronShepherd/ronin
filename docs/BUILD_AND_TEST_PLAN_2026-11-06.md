@@ -1440,3 +1440,21 @@ identificados como Docker/PostgreSQL/proveedores externos opt-in o limitaciones
 del host y no se convierten en pases implícitos. El release permanece
 **NO-GO / 0 de 13** hasta cerrar las cualificaciones externas y humanas.
 
+## 73. Auditoría de licencias: gate reproducible, revisión pendiente
+
+La ejecución local de la cualificación de licencias sobre el grafo bloqueado
+
+```text
+python -m tools.license_qualification --root . --lock requirements-dev.lock --extra dev
+```
+
+falla cerradamente porque faltan decisiones de revisión para 20 paquetes del
+grafo actual (`boolean-py`, `cachecontrol`, `certifi`, `charset-normalizer`,
+`cyclonedx-python-lib`, `defusedxml`, `filelock`, `idna`,
+`license-expression`, `msgpack`, `packageurl-python`, `pip-api`, `pip-audit`,
+`pip-requirements-parser`, `pip`, `py-serializable`, `pyparsing`, `pyyaml-ft`,
+`requests` y `urllib3`, entre otros). No se infieren licencias ni se convierten
+ausencias de review en PASS. El siguiente owner action es completar las
+decisiones en la política de licencias y repetir el verificador; el release
+permanece **NO-GO / 0 de 13**.
+
