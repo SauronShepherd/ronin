@@ -62,6 +62,7 @@ function renderProjects() {
       <label>Pipeline ID<input class="field" name="revision_pipeline" value="main" required></label>
       <button class="button" type="submit">Inspect revision history</button>
       <div id="project-revisions-result" class="project-revisions-result" aria-live="polite">No revision history loaded.</div></form>
+    <form id="project-revisions-compare-form" class="grid three"><label>Compare project<input class="field" name="compare_project" required></label><label>Left revision<input class="field" name="left_revision" type="number" min="1" required></label><label>Right revision<input class="field" name="right_revision" type="number" min="1" required></label><label>Pipeline ID<input class="field" name="compare_pipeline" value="main" required></label><button class="button" type="submit">Compare revisions</button><div id="project-revisions-compare-result" class="code" aria-live="polite">No revision comparison requested.</div></form>
     <form id="project-permissions-form" class="stack"><h2>Inspect project permissions</h2>
       <label>Project ID<input class="field" name="project_id" required></label>
       <button class="button" type="submit">Inspect permissions</button>
@@ -148,6 +149,19 @@ function renderProjects() {
         ? `<table><caption class="sr-only">Pipeline revision history</caption><thead><tr><th>Revision</th><th>Source digest</th><th>Revision key</th></tr></thead><tbody>${items.map((item) => `<tr><td><strong>${esc(item.revision)}</strong></td><td><code>${esc(item.source_digest || '—')}</code></td><td><code>${esc(item.revision_key || `${pipelineId}/${item.revision}`)}</code></td></tr>`).join('')}</tbody></table>`
         : '<div class="empty">No immutable revisions are visible for this pipeline.</div>';
     } catch (error) { output.innerHTML = `<div class="error">Could not load revision history: ${esc(error.message)}</div>`; }
+  });
+  document.querySelector('#project-revisions-compare-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const output = document.querySelector('#project-revisions-compare-result');
+    const projectId = String(data.get('compare_project') || '').trim();
+    const pipelineId = String(data.get('compare_pipeline') || '').trim();
+    const left = String(data.get('left_revision') || '').trim();
+    const right = String(data.get('right_revision') || '').trim();
+    try {
+      const query = new URLSearchParams({ left_revision: left, right_revision: right });
+      output.textContent = json(await get(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(projectId)}/pipelines/${encodeURIComponent(pipelineId)}/revisions/compare?${query}`));
+    } catch (error) { output.textContent = `Could not compare revisions: ${error.message}`; }
   });
   document.querySelector('#project-permissions-form').addEventListener('submit', async (event) => {
     event.preventDefault();

@@ -691,3 +691,18 @@ invocaciones sin fallos. El coste medido es `asset_bytes=2,135,236`, nuevo
 baseline candidate-bound explícito. Esto fortalece P1 y la ergonomía de
 source-control/evidence, pero no convierte la familia en `qualified`: faltan
 journeys completos, provider/source-control real y gates humanos.
+
+## 22. P1 — comparación explícita de revisiones
+
+La superficie de evidencia de Project Studio añade ahora comparación de dos
+revisiones mediante el endpoint existente
+`GET .../revisions/compare?left_revision=&right_revision=`. El resultado se
+renderiza como evidencia secundaria de sólo lectura; la UI conserva el scope
+de workspace/proyecto/pipeline y muestra los cambios recibidos sin aplicar
+ninguna mutación.
+
+El journey de workspace verifica historial y comparación con `2/2` casos del
+archivo; la auditoría registra 182 invocaciones y 0 fallos. El baseline
+candidate-bound queda en `asset_bytes=2,136,819`, actualizado explícitamente
+por este incremento funcional. P1 continúa parcial y el release permanece
+`0/13`, **NO-GO**.

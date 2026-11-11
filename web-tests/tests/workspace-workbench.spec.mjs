@@ -29,6 +29,9 @@ test('Project workbench keeps authoring modes and scope usable on a phone', asyn
   await page.route('**/v1/workspaces/workspace-a/projects/project-a/pipelines/main/revisions', async route => {
     await route.fulfill({ json: { items: [{ revision: 2, source_digest: 'sha256:revision-two', revision_key: 'main/2' }] } });
   });
+  await page.route('**/v1/workspaces/workspace-a/projects/project-a/pipelines/main/revisions/compare?left_revision=1&right_revision=2', async route => {
+    await route.fulfill({ json: { left_revision: 1, right_revision: 2, changes: [{ path: 'pipeline.yaml', kind: 'changed' }] } });
+  });
   await page.goto('./#projects/workspace-a');
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.project-hero')).toBeVisible();
@@ -65,4 +68,9 @@ test('Project workbench keeps authoring modes and scope usable on a phone', asyn
   await page.locator('#project-revisions-form button[type="submit"]').click();
   await expect(page.locator('#project-revisions-result')).toContainText('sha256:revision-two');
   await expect(page.locator('#project-revisions-result')).toContainText('main/2');
+  await page.locator('#project-revisions-compare-form [name="compare_project"]').fill('project-a');
+  await page.locator('#project-revisions-compare-form [name="left_revision"]').fill('1');
+  await page.locator('#project-revisions-compare-form [name="right_revision"]').fill('2');
+  await page.locator('#project-revisions-compare-form button[type="submit"]').click();
+  await expect(page.locator('#project-revisions-compare-result')).toContainText('pipeline.yaml');
 });
