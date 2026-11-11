@@ -1663,6 +1663,17 @@ ciclo de vida del proceso quedan excluidos; los tres receipts por archivo son
 la evidencia autoritativa.
 El release permanece **NO-GO / 0 de 13**.
 
+## 89. Data Engineering sigue el contexto global del shell
+
+Los formularios de SQL y pipeline inicializan workspace y proyecto desde el
+contexto activo del shell y se vuelven a sincronizar cuando ese contexto
+cambia. Así se evita que una consulta o ejecución durable quede accidentalmente
+en `default/examples/demo` mientras el operador está trabajando en otro ámbito.
+
+La regresión focalizada terminó en **8 passed, 0 failed**. `studio_web_audit`
+mantiene 0 fallos y el budget ratificado es `asset_bytes=2,152,201`. El release
+permanece **NO-GO / 0 de 13** por los gates externos y de aprobación pendientes.
+
 ## 88. SQL local muestra resultados tabulares antes de la evidencia cruda
 
 El resultado de SQL local sigue el mismo contrato de lectura que QueryFlux:

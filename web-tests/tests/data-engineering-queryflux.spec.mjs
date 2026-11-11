@@ -1,5 +1,18 @@
 import { test, expect } from '@playwright/test';
 
+test('Data Engineering Studio follows the active shell context across query and pipeline forms', async ({ page }) => {
+  await page.goto('./#data');
+  await expect(page.locator('#de-sql-form')).toBeVisible();
+  await page.evaluate(() => {
+    globalThis.roninStudioContext = { workspace: 'workspace-shell', project: 'project-shell' };
+    window.dispatchEvent(new CustomEvent('ronin-context-change', { detail: globalThis.roninStudioContext }));
+  });
+  await expect(page.locator('#de-sql-form [name="workspace"]')).toHaveValue('workspace-shell');
+  await expect(page.locator('#de-sql-form [name="project"]')).toHaveValue('project-shell');
+  await expect(page.locator('#de-pipeline-form [name="workspace"]')).toHaveValue('workspace-shell');
+  await expect(page.locator('#de-pipeline-form [name="project"]')).toHaveValue('project-shell');
+});
+
 test('Data Engineering Studio executes QueryFlux and reads stable result pages', async ({ page }) => {
   let postedBody;
   let resultPageRequests = 0;
