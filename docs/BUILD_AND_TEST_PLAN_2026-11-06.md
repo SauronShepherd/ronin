@@ -1077,6 +1077,21 @@ inventario y la comprobación de que la UI permanece visualmente no cualificada.
 recuperabilidad de la ruta activa, pero no cualifica P14 ni cambia el estado
 **NO-GO / 0 de 13**.
 
+## 71. Debugger y cualificación exacta del candidato actual
+
+El Debugger Studio hereda ahora el workspace activo del shell antes de caer al
+estado persistido y mantiene la continuidad contextual durante la navegación.
+La regresión correspondiente pasa dentro de la suite de journeys.
+
+La ejecución canónica completa sobre `83c079e3` produjo `170 passed, 33
+skipped, 1 failed`; el único fallo fue el caso de finalización del tutorial
+guiado. El mismo caso pasó después en una ejecución aislada y en una
+repetición `--repeat-each=3`, con `3 passed, 0 failed`. Se clasifica por tanto
+como flakiness transitoria de test, no como regresión funcional confirmada, y
+queda pendiente estabilizar el test antes de declarar una suite completamente
+verde. El release sigue **NO-GO / 0 de 13**: las puertas externas, seguridad,
+operación y aprobación humana continúan sin cualificar.
+
 ## 70. Debugger hereda el contexto activo
 
 Debugger Studio ahora resuelve `workspace_id` desde el contexto global del
