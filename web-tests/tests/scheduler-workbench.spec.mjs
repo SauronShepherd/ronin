@@ -82,3 +82,16 @@ test('Scheduler Studio retries event delivery observation after a transient erro
   await expect(page.locator('#scheduler-result')).toContainText('delivery-1');
   expect(attempts).toBe(2);
 });
+
+test('Scheduler Studio inherits the active shell workspace', async ({ page }) => {
+  const requests = [];
+  await page.route('**/v1/workspaces/team-a/schedules', async route => {
+    requests.push(route.request().url());
+    await route.fulfill({ json: { items: [] } });
+  });
+  await page.goto('./?workspace=team-a&project=project-z#workflows');
+  await expect(page.locator('#scheduler-form [name="workspace"]')).toHaveValue('team-a');
+  await page.getByRole('button', { name: 'List schedules' }).click();
+  await expect(page.locator('#scheduler-result')).toContainText('items');
+  expect(requests).toHaveLength(1);
+});

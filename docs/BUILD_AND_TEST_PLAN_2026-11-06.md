@@ -1267,3 +1267,19 @@ estables en el SHA publicado. No sustituye la cualificación exact-SHA de las
 familias Public v1, las certificaciones externas ni la aceptación humana; el
 release permanece **NO-GO / 0 de 13**.
 
+## 62. Scheduler hereda el contexto activo del shell
+
+La ruta canónica `scheduler-studio.js` inicializaba el campo Workspace con el
+valor fijo `default`, aunque el shell ya tuviera un contexto de workspace
+seleccionado. El workbench ahora toma primero `roninStudioContext.workspace`,
+después el workspace recordado en sesión y sólo finalmente `default`. Así, las
+acciones de observación, ejecución y recuperación parten del mismo ámbito que
+el resto de la UI.
+
+La regresión añadida verifica `?workspace=team-a&project=project-z#workflows`,
+comprueba el valor visible y observa que `List schedules` llama únicamente a
+`/v1/workspaces/team-a/schedules`. La suite Scheduler queda en **4 passed**;
+`studio_web_audit` sigue sin fallos y el budget pasa con `asset_bytes=2,141,251`.
+El cambio mejora aislamiento y continuidad de contexto, pero no altera el
+alcance de Public v1 ni el veredicto **NO-GO / 0 de 13**.
+
