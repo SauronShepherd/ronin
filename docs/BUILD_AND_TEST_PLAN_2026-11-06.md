@@ -888,6 +888,18 @@ La auditoría estática sigue en `0` fallos; el presupuesto candidate-bound se
 actualiza a `2,139,950` bytes. Esta deuda de consolidación es de producto y no
 se interpreta como pass de recuperación ni como cierre de P1.
 
+## 38. Hallazgo de routing para Scheduler/Workflows
+
+La auditoría de recuperación de Workflows mostró que `#workflows` no usa el
+loader histórico de `features.js` como superficie principal: el DOM y los
+journeys activos pertenecen al Scheduler Studio moderno. Se retiró el cambio
+experimental del loader histórico y no se contabilizó su prueba fallida.
+
+La suite Scheduler vigente queda verde (`2/2`), incluyendo operaciones
+durables, backfill y retry de observación. El siguiente trabajo de recuperación
+de inventario debe implementarse en `scheduler-studio.js`, con el contrato y
+selectores de esa superficie, no duplicando lógica en `features.js`.
+
 ## 37. Recuperación de Environment Studio
 
 Environment Studio incorpora `Retry environment inventory` para errores de la
