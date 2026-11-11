@@ -740,3 +740,16 @@ No cambia el NO-GO actual: el candidato todavía no tiene todos los Studios en
 verde ni las aprobaciones humanas, de proveedores, seguridad, rollback y
 gobernanza requeridas.
 
+## 26. Regresión Python exact-head y reconciliación del ledger
+
+La regresión `python -m pytest --ignore=tests/perf -q` se ejecutó sobre el
+HEAD de implementación antes de esta reconciliación. Detectó un único fallo
+de consistencia documental: `PUBLIC_V1_CAPABILITY_MATRIX.md` conservaba el
+SHA anterior aunque el ledger ya había avanzado. El fallo no era funcional;
+la referencia se corrigió y la selección de validadores del ledger pasó
+`16/16`. La primera ejecución quedó registrada como `4510 passed, 77
+skipped, 1 failed`; tras corregir la referencia, la repetición completa sobre
+el mismo contenido terminó **4511 passed, 77 skipped, 0 failed** en 705.38s.
+El resultado verde confirma también que la inconsistencia era documental y no
+una regresión funcional.
+
