@@ -123,6 +123,21 @@
   .command-open-label, .command-open kbd { display: none; }
 }
 
+/* The shell becomes single-column at 900px, so the topbar must enter its
+   compact control layout at the same boundary. Keeping the wide labels and
+   context rail until 700px can make the flex row wider than the viewport in
+   Chromium's Linux font metrics. */
+@media (max-width: 900px) {
+  .topbar { min-width: 0; padding-inline: .85rem; }
+  .breadcrumb { flex: 1 1 auto; min-width: 0; }
+  .context-bar { flex: 0 1 12rem; max-width: 12rem; }
+  .connection-open span,
+  .command-open-label,
+  .command-open kbd { display: none; }
+  .connection-open,
+  .command-open { flex: 0 0 auto; min-width: 2.5rem; padding-inline: .5rem; }
+}
+
 /* Rail identity: the logo and collapse affordance belong to the navigation surface. */
 .rail { padding: 1rem .68rem; }
 .rail-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: .4rem; margin: .12rem .08rem 1rem; }
