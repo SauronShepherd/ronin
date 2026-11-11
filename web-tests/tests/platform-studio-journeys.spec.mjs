@@ -333,10 +333,16 @@ test('Ingestion Studio pages source discovery and keeps sync preview controls', 
     await route.fulfill({ json: { items: [] } });
   });
   const discoveryRequests = [];
+  let discoveryAttempts = 0;
   await page.route('**/v1/platform/connectors/discover**', async route => {
     expect(new URL(route.request().url()).searchParams.get('workspace_id')).toBe('default');
     const body = route.request().postDataJSON();
     discoveryRequests.push(body);
+    discoveryAttempts += 1;
+    if (discoveryAttempts === 1) {
+      await route.fulfill({ status: 503, json: { detail: 'provider temporarily unavailable' } });
+      return;
+    }
     if (!body.cursor) {
       await route.fulfill({ json: {
         schema: 'ronin.connector-discovery/v1',
@@ -376,12 +382,15 @@ test('Ingestion Studio pages source discovery and keeps sync preview controls', 
   await expect(page.locator('#ingestion-observe')).toContainText('Keep evidence with the outcome');
   await page.locator('[name="connection_ref"]').fill('conn-1');
   await page.getByRole('button', { name: 'Discover assets' }).click();
+  await expect(page.locator('#ingestion-discovery-status')).toContainText('Discovery failed');
+  await page.getByRole('button', { name: 'Retry discovery page' }).click();
   await expect(page.locator('#ingestion-discovery-status')).toContainText('Page 1 loaded');
   await expect(page.locator('#ingestion-discovery-result')).toContainText('public.orders');
   await page.getByRole('button', { name: 'Load next page' }).click();
   await expect(page.locator('#ingestion-discovery-status')).toContainText('discovery complete');
   await expect(page.locator('#ingestion-discovery-result')).toContainText('public.users');
   expect(discoveryRequests).toEqual([
+    { connector_id: 'postgres', connection_ref: 'conn-1', page_size: 100 },
     { connector_id: 'postgres', connection_ref: 'conn-1', page_size: 100 },
     { connector_id: 'postgres', connection_ref: 'conn-1', page_size: 100, cursor: 'opaque-page-two' },
   ]);

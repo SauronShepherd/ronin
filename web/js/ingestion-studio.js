@@ -6,6 +6,7 @@ let discoveryRequestId = 0;
 let discoveryCursor = null;
 let discoveryPageNumber = 0;
 let discoverySourceKey = '';
+let discoveryRetryPending = false;
 let activeSyncTimer = null;
 let activeSyncScope = null;
 
@@ -24,6 +25,7 @@ export async function ingestionStudio() {
   discoveryCursor = null;
   discoveryPageNumber = 0;
   discoverySourceKey = '';
+  discoveryRetryPending = false;
 
   const view = document.querySelector('#view');
   const workspaceId = globalThis.roninStudioContext?.workspace || sessionStorage.getItem('ronin.workspace') || 'default';
@@ -127,6 +129,7 @@ function updateDiscoveryControls({loading, hasMore}) {
   const cancel = document.querySelector('#ingestion-discover-cancel');
   if (!start || !next || !cancel) return;
   start.disabled = loading;
+  start.textContent = discoveryRetryPending ? 'Retry discovery page' : 'Discover assets';
   next.disabled = loading || !hasMore;
   cancel.disabled = !loading;
 }
@@ -154,6 +157,7 @@ async function loadDiscoveryPage({restart}) {
     discoveryCursor = null;
     discoveryPageNumber = 0;
     discoverySourceKey = sourceKey;
+    discoveryRetryPending = false;
     result.textContent = 'Waiting for the first page…';
   }
 
@@ -191,6 +195,7 @@ async function loadDiscoveryPage({restart}) {
     discoveryCursor = data.has_more ? data.next_cursor : null;
     result.textContent = json(data);
     status.textContent = `Page ${pageNumber} loaded · ${data.count} assets on this page · ${data.has_more ? 'more pages available' : 'discovery complete'}.`;
+    discoveryRetryPending = false;
     updateDiscoveryControls({loading: false, hasMore: data.has_more});
   } catch (error) {
     if (requestId !== discoveryRequestId) return;
@@ -198,6 +203,7 @@ async function loadDiscoveryPage({restart}) {
       status.textContent = 'Stopped this request. No page was loaded; a read-only provider request already accepted by the server may finish.';
     } else {
       status.textContent = `Discovery failed: ${error.message}`;
+      discoveryRetryPending = true;
     }
     updateDiscoveryControls({loading: false, hasMore: discoveryCursor !== null});
   } finally {
@@ -208,7 +214,7 @@ async function loadDiscoveryPage({restart}) {
 document.addEventListener('submit', async event => {
   if (event.target.id === 'ingestion-discover-form') {
     event.preventDefault();
-    await loadDiscoveryPage({restart: true});
+    await loadDiscoveryPage({restart: !discoveryRetryPending});
     return;
   }
   if (event.target.id !== 'ingestion-preview-form') return;

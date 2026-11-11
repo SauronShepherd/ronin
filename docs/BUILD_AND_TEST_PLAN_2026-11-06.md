@@ -1043,3 +1043,20 @@ auditoría web sigue en `0` fallos y el budget candidate-bound queda en
 `2,140,702` bytes. Esto mejora la recuperación de una superficie de
 inteligencia operativa, pero no cualifica P12 ni cambia `0/13`.
 
+## 48. Recuperación de discovery paginado en Ingestion Studio
+
+Ingestion Studio ahora conserva la intención y el cursor de la página fallida
+cuando la lectura read-only de discovery responde con error. La acción cambia
+a `Retry discovery page` y repite únicamente esa lectura; si el fallo ocurre
+en una página posterior, el cursor ya aceptado se conserva. Las operaciones
+durables de preview, plan, checkpoint y sync no se reintentan automáticamente.
+
+La prueba focalizada de Ingestion termina `5 passed, 3 skipped` (los skips son
+los journeys live opt-in), incluyendo 503 → retry → página 1 → página 2,
+cancelación, validación de página malformada y sync gobernado. `studio_web_audit`
+queda en `0` fallos. El budget se recalibra explícitamente a
+`asset_bytes=2,141,918` (`70` assets, `36` módulos, `15` hojas de estilo,
+`5,838` bytes HTML), un incremento de `282` bytes para la etiqueta y estado
+de retry. Esto refuerza la recuperación operativa de P2/P3, pero no cualifica
+ninguna familia Public v1 ni cambia el estado **NO-GO / 0 de 13**.
+
