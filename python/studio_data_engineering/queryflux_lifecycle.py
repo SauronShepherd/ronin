@@ -7,6 +7,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
 
+from studio_storage.postgres_core import _psycopg
 from studio_storage.sqlite import open_database
 
 QueryFluxState = Literal["queued", "running", "cancelling", "succeeded", "failed", "cancelled"]
@@ -189,9 +190,132 @@ class SqliteQueryFluxExecutionStore:
         return self.transition(execution.request_cancel())
 
 
+class PostgresQueryFluxExecutionStore:
+    """PostgreSQL persistence for the QueryFlux lifecycle boundary."""
+
+    def __init__(self, dsn: str, *, application_name: str = "ronin-queryflux-lifecycle") -> None:
+        if not dsn or dsn != dsn.strip():
+            raise ValueError("PostgreSQL DSN must be non-empty and trimmed")
+        self._dsn = dsn
+        self._application_name = application_name
+        self.migrate()
+
+    def _connect(self):
+        psycopg, _dict_row = _psycopg()
+        return psycopg.connect(self._dsn, autocommit=False, application_name=self._application_name)
+
+    def migrate(self) -> None:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "CREATE TABLE IF NOT EXISTS ronin_de_queryflux_executions ("
+                    "workspace_id TEXT NOT NULL, project_id TEXT NOT NULL,"
+                    "run_id TEXT NOT NULL, attempt_id TEXT NOT NULL, state TEXT NOT NULL,"
+                    "cancel_requested BOOLEAN NOT NULL DEFAULT FALSE, failure_code TEXT NULL,"
+                    "created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                    "updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+                    "PRIMARY KEY(workspace_id,project_id,run_id,attempt_id))"
+                )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    @staticmethod
+    def _identity(execution: QueryFluxExecution) -> tuple[str, str, str, str]:
+        return SqliteQueryFluxExecutionStore._identity(execution)
+
+    def create(self, execution: QueryFluxExecution) -> QueryFluxExecution:
+        identity = self._identity(execution)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO ronin_de_queryflux_executions "
+                    "(workspace_id,project_id,run_id,attempt_id,state,cancel_requested,"
+                    "failure_code) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+                    (
+                        *identity,
+                        execution.state,
+                        execution.cancel_requested,
+                        execution.failure_code,
+                    ),
+                )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+        stored = self.get(*identity)
+        if stored is None:
+            raise RuntimeError("QueryFlux execution was not persisted")
+        return stored
+
+    def get(
+        self, workspace_id: str, project_id: str, run_id: str, attempt_id: str
+    ) -> QueryFluxExecution | None:
+        identity = (workspace_id, project_id, run_id, attempt_id)
+        if any(not value or value != value.strip() for value in identity):
+            raise ValueError("QueryFlux execution identity must be non-empty and trimmed")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT workspace_id,project_id,run_id,attempt_id,state,"
+                    "cancel_requested,failure_code FROM ronin_de_queryflux_executions "
+                    "WHERE workspace_id=%s AND project_id=%s AND run_id=%s AND attempt_id=%s",
+                    identity,
+                )
+                row = cursor.fetchone()
+        finally:
+            connection.close()
+        if row is None:
+            return None
+        return QueryFluxExecution(*row)
+
+    def transition(self, execution: QueryFluxExecution) -> QueryFluxExecution:
+        identity = self._identity(execution)
+        current = self.get(*identity)
+        if current is None:
+            raise KeyError("QueryFlux execution does not exist")
+        next_execution = current.transition(execution.state, failure_code=execution.failure_code)
+        if execution.cancel_requested and not next_execution.cancel_requested:
+            next_execution = replace(next_execution, cancel_requested=True)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE ronin_de_queryflux_executions SET state=%s,cancel_requested=%s,"
+                    "failure_code=%s,updated_at=CURRENT_TIMESTAMP WHERE workspace_id=%s "
+                    "AND project_id=%s AND run_id=%s AND attempt_id=%s",
+                    (
+                        next_execution.state,
+                        next_execution.cancel_requested,
+                        next_execution.failure_code,
+                        *identity,
+                    ),
+                )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+        return self.get(*identity)  # type: ignore[return-value]
+
+    def request_cancel(self, execution: QueryFluxExecution) -> QueryFluxExecution:
+        return self.transition(execution.request_cancel())
+
+
 __all__ = (
     "QueryFluxExecution",
     "QueryFluxState",
     "QueryFluxTerminalState",
     "SqliteQueryFluxExecutionStore",
+    "PostgresQueryFluxExecutionStore",
 )

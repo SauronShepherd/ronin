@@ -37,6 +37,7 @@ from .query_execution import (
     execute_query,
 )
 from .queryflux_lifecycle import (
+    PostgresQueryFluxExecutionStore,
     QueryFluxExecution,
     QueryFluxState,
     QueryFluxTerminalState,
@@ -98,6 +99,7 @@ __all__ = (
     "QueryFluxState",
     "QueryFluxTerminalState",
     "SqliteQueryFluxExecutionStore",
+    "PostgresQueryFluxExecutionStore",
     "PostgresQueryEvidenceReferenceStore",
     "SqliteQueryEvidenceReferenceStore",
     "PipelineExecutionError",
