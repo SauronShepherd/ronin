@@ -1558,3 +1558,29 @@ y no cambian runtime ni la imagen. El gate automatizado de Trivy queda verde,
 pero el reviewer aún debe aceptar el expediente de seguridad; el release
 permanece **NO-GO / 0 de 13**.
 
+## 81. Helm rechaza scopes inválidos antes del despliegue
+
+La cualificación `kind` demostró que una cadena como
+`read:jobs,write:jobs` podía superar el lint del chart y provocar un
+`CrashLoopBackOff` al iniciar el servidor. El schema de Helm ahora exige el
+prefijo estructural de un `GrantSet` válido (`version: 1` y `grants`) antes de
+renderizar o instalar el chart. Se añadió una regresión estructural y se
+verificaron ambos caminos:
+
+```text
+python -m pytest -q tests/test_helm_chart_structure.py
+2 passed
+
+helm lint deploy/helm/ronin -f <valid-GrantSet-values.yaml>
+1 chart(s) linted, 0 chart(s) failed
+
+helm lint deploy/helm/ronin -f <invalid-comma-scopes-values.yaml>
+1 chart(s) linted, 1 chart(s) failed
+```
+
+La mejora evita que una configuración inválida llegue al runtime, pero no
+eleva por sí sola el release global: siguen pendientes las revisiones de
+licencias, aceptación formal de seguridad/VEX, proveedores, rollback/support,
+gobernanza CI y las aprobaciones Product/Security/QA/Release. El release
+permanece **NO-GO / 0 de 13**.
+

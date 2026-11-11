@@ -36,7 +36,12 @@
       "properties": {
         "replicas": {"type": "integer", "minimum": 1, "maximum": 1},
         "token": {"type": "string", "minLength": 1},
-        "tokenScopes": {"type": "string", "minLength": 3, "not": {"const": "{}"}},
+        "tokenScopes": {
+          "type": "string",
+          "minLength": 3,
+          "not": {"const": "{}"},
+          "pattern": "^\\s*\\{\\s*\\\"version\\\"\\s*:\\s*1\\s*,\\s*\\\"grants\\\"\\s*:"
+        },
         "bindPolicy": {"type": "string", "enum": ["insecure-plaintext-network"]}
       }
     }

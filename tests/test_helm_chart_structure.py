@@ -22,6 +22,10 @@ def test_reference_helm_chart_has_safe_single_replica_baseline() -> None:
     schema = json.loads((root / "values.schema.json").read_text(encoding="utf-8"))
     assert schema["properties"]["server"]["properties"]["token"]["minLength"] == 1
     assert schema["properties"]["server"]["properties"]["tokenScopes"]["not"] == {"const": "{}"}
+    token_scopes_schema = schema["properties"]["server"]["properties"]["tokenScopes"]
+    assert "version" in token_scopes_schema["pattern"]
+    assert "grants" in token_scopes_schema["pattern"]
+    assert "read:jobs,write:jobs" not in token_scopes_schema["pattern"]
     assert schema["properties"]["server"]["properties"]["bindPolicy"]["enum"] == [
         "insecure-plaintext-network"
     ]
