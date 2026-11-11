@@ -888,3 +888,17 @@ La auditoría estática sigue en `0` fallos; el presupuesto candidate-bound se
 actualiza a `2,139,950` bytes. Esta deuda de consolidación es de producto y no
 se interpreta como pass de recuperación ni como cierre de P1.
 
+## 36. Evidencia reproducible del retry Workspace
+
+La fixture estable se obtuvo separando la carga inicial del refresh: el
+inventario se carga correctamente, el siguiente `Refresh workspaces` se fuerza
+a responder `503 service_unavailable`, y la acción `Retry workspace inventory`
+debe recuperar el mismo inventario. El archivo
+`workspace-workbench.spec.mjs` pasa ahora `3/3` con un worker, incluyendo el
+caso 503 → retry y los journeys responsive de Workspace y Project.
+
+La consolidación de los dos loaders sigue siendo una deuda técnica para evitar
+solicitudes redundantes durante la navegación inicial, pero ya no invalida la
+evidencia del comportamiento de recuperación del operador. No se cierra P1 ni
+se modifica el estado de release `0/13`.
+

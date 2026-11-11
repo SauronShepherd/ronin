@@ -1,5 +1,27 @@
 import { test, expect } from '@playwright/test';
 
+test('Workspace inventory recovers through retry after a refresh error', async ({ page }) => {
+  let attempts = 0;
+  let failNext = false;
+  await page.route('**/v1/workspaces', async route => {
+    attempts += 1;
+    if (failNext) {
+      failNext = false;
+      await route.fulfill({ status: 503, json: { error: { code: 'service_unavailable', message: 'Workspace index is warming up.' } } });
+      return;
+    }
+    await route.fulfill({ json: { items: [{ id: 'workspace-a', name: 'Analytics', status: 'active' }] } });
+  });
+  await page.goto('./#workspaces');
+  await expect(page.getByText('Analytics')).toBeVisible();
+  failNext = true;
+  await page.getByRole('button', { name: 'Refresh workspaces' }).click();
+  await expect(page.getByText('Workspace index is warming up.')).toBeVisible();
+  await page.getByRole('button', { name: 'Retry workspace inventory' }).click();
+  await expect(page.getByText('Analytics')).toBeVisible();
+  expect(attempts).toBeGreaterThanOrEqual(3);
+});
+
 test('Workspace workbench keeps context, modes and create flow usable on a phone', async ({ page }) => {
   await page.route('**/v1/workspaces', async route => {
     await route.fulfill({ json: { items: [{ id: 'workspace-a', name: 'Analytics', status: 'active' }] } });
