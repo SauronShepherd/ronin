@@ -1093,6 +1093,21 @@ POSIX no disponibles en Windows. El budget y `studio_web_audit` permanecen
 verdes. El gate web global sigue abierto hasta obtener una corrida completa
 sin timeout y el ledger conserva **NO-GO / 0 de 13**.
 
+## 52. Chromium global verde y ledger sincronizado
+
+Una segunda ejecución limpia del candidato terminó `164 passed, 33 skipped,
+0 failed` en `8.9m`, con un worker. La prueba de tutorial que había expirado
+durante la corrida anterior pasó dentro de esta ejecución completa. Junto con
+la regresión Python `4511 passed, 77 skipped, 0 failed`, `studio_web_audit`
+sin fallos y el budget validado, esto deja verdes las lanes automatizadas
+disponibles en este entorno.
+
+El ledger humano y el JSON de Public v1 se sincronizaron al SHA exacto
+`c7a2acd3507be31d59b41573a8eb2ee7482bce66`; `generate_public_v1_status
+--check` y `capability_status` pasan. Esta evidencia cierra la inestabilidad
+automatizada observada, pero el release continúa **NO-GO / 0 de 13** por las
+puertas humanas, externas y de cualificación de familias aún abiertas.
+
 ## 50. Contexto de proyecto en Migration Studio
 
 La revisión de la ruta activa encontró que el cockpit aceptaba workspace y
