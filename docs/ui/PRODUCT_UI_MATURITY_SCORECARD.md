@@ -37,3 +37,19 @@ The 2026-11-11 candidate has automated evidence for the shell, context propagati
 3. Scheduler, Streaming and Migration: make recovery, lag, replay and promotion boundaries visible before an operator acts.
 4. ML, Semantic, Graph and Cloud: preserve provenance and safe-preview semantics across the richer authoring surfaces.
 5. Repeat the full viewport, accessibility, negative-path and human visual pass on every mandatory Studio before any release decision changes.
+
+## Candidate evidence snapshot — 2026-11-11
+
+| Surface | Automated evidence | Current product score |
+| --- | --- | --- |
+| Shell, navigation and responsive layout | Chromium global `158/158`; route traversal, keyboard, Axe and viewport matrix green; web audit `0` failures | Yellow — human visual sign-off still open |
+| Workspace / Project | Workspace retry `3/3`; context, revision history and comparison journeys green | Yellow — provider/source-control qualification absent |
+| Environment | `5/5`, including 503 → retry, authoring, reversible governance and serious/critical Axe clean | Yellow — runtime/provider qualification absent |
+| Scheduler | `3/3`, including durable operations, backfill and delivery retry | Yellow — live worker/HA qualification absent |
+| Catalog / Quality / QueryFlux / Synthetic | Focused journeys green; global Chromium green | Yellow — end-to-end family qualification and real provider evidence absent |
+| Migration / ML / Semantic / Graph / Cloud / Streaming | Route and focused tests green where available | Yellow/red — external runtime, portability, security and human review gates remain |
+
+The snapshot is a candidate-bound product review, not a release score. No
+surface is promoted to green until the applicable human visual review and
+provider/security/rollback gates are accepted; the release ledger therefore
+remains `NO-GO / 0 of 13`.
