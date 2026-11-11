@@ -386,6 +386,7 @@ def test_preparation_failure_is_logged_and_does_not_escape_worker(tmp_path: Path
         assert outcome.execution.state.value == "failed"
         assert outcome.execution.failure_code == "worker.preparation.error"
         assert "marking attempt failed and continuing" in caplog.text
+        assert "reason=cannot read notebook target" in caplog.text
 
         persisted = SqliteJobStore(config.database_path, migration_now=START)
         job = persisted.get_job(JobId("job-runtime"))

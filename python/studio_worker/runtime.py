@@ -348,11 +348,12 @@ class LocalWorkerRuntime:
         if isinstance(error, WorkerPreparationError):
             _LOGGER.warning(
                 "job preparation failed; marking attempt failed and continuing "
-                "(job_id=%s, run_id=%s, attempt_id=%s, failure_code=%s)",
+                "(job_id=%s, run_id=%s, attempt_id=%s, failure_code=%s, reason=%s)",
                 claim.job.id,
                 claim.run.id,
                 claim.attempt_id,
                 failure_code,
+                str(error),
             )
         else:
             _LOGGER.exception(
