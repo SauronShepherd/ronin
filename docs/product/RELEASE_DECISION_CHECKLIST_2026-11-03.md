@@ -4,10 +4,26 @@
 
 **Last evidence review:** 11 November 2026
 
-**Candidate SHA:** exact current tracked candidate `c0bdd4a3ced8db80e82c5835921200662dd93a5a`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** exact current tracked candidate `34f7f71431f2d75dd7e8d95dcb393c046db6fab1`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
+
+## 11 November current candidate live revalidation — `34f7f714`
+
+The current tracked candidate fixes Project authoring error feedback and is
+clean in tracked files. Focused live qualification passed Projects `1/1`
+with 12 correlated API events and Ingestion `1/1` with 13 correlated API
+events; both runs reported zero server/network errors. The complete live
+qualification rerun then passed **33/33 Playwright cases**, covering 25 routes
+and 279 real API events, all correlated with structured HTTP logs, with zero
+server/network errors and zero unexpected authorization gaps. Evidence:
+`C:\Users\angel.alvarez\Downloads\ronin-live-full-rerun-34f7f71`.
+
+This is a technical live pass only. It does not close the Public v1 family
+ledger, security reviewer acceptance, legal/NOTICE decisions, manual visual
+review, rollback/recovery rehearsal, provider matrix or release governance.
+The release therefore remains **NO-GO / 0 of 13**.
 
 This checklist is the short decision sheet for
 [`PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`](PLAN_FINAL_RONIN_RELEASE_2026-11-03.md).
