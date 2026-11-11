@@ -953,3 +953,20 @@ una cualificación de release: no sustituye proveedores live, seguridad,
 supply-chain, Bundle/restore, Helm/Compose, revisión visual humana, legal,
 rollback ni gobernanza de CI. El estado permanece **NO-GO / 0 de 13**.
 
+## 41. Siguiente incremento: recuperación de Migration Studio
+
+La revisión de Migration Studio identifica una deuda de recuperación en la
+lectura de sesiones: el cockpit activo usa `loadMigrationCockpit()` dentro del
+shell de `app.js`, mientras la vista histórica usa `loadMigrationSessions()`.
+Ambas deben converger antes de añadir un retry, para que `Refresh` y
+`Retry session inventory` apunten al mismo endpoint y no creen dos estados de
+selección.
+
+El incremento queda definido como lectura segura únicamente: `GET
+/v1/workspaces/{workspace}/projects/{project}/migration/sessions`, conservar
+workspace, project y session seleccionada, mostrar error tipado y retry tras
+4xx/5xx, y no repetir create, discover, scope, blueprint ni promote. El cierre
+requiere 503 → retry, ausencia de sesiones, selección y responsive en el
+cockpit activo sobre un candidato exacto. No se implementa mediante un
+listener paralelo mientras existan los dos loaders.
+
