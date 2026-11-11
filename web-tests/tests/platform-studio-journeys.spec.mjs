@@ -64,6 +64,19 @@ test('Debugger Studio retries session creation without losing the selected sessi
   expect(attempts).toBe(2);
 });
 
+test('Debugger Studio inherits the active shell workspace', async ({ page }) => {
+  let requested = '';
+  await page.route('**/v1/data-engineering/debugger/sessions**', async route => {
+    requested = route.request().url();
+    await route.fulfill({ json: { status: 'ok', session_id: 'team-debug' } });
+  });
+  await page.goto('./?workspace=team-a&project=project-z#debugger');
+  await page.locator('#debugger-session').fill('team-debug');
+  await page.getByRole('button', { name: 'Create session', exact: true }).click();
+  await expect(page.locator('#debugger-result')).toContainText('team-debug');
+  expect(new URL(requested).searchParams.get('workspace_id')).toBe('team-a');
+});
+
 test('Cloud Studio validates a target and generates a reviewable plan', async ({ page }) => {
   await page.route('**/v1/cloud-studio/**', async route => {
     await route.fulfill({ json: { status: 'ok', resources: [] } });

@@ -3,7 +3,7 @@ import { post } from './api.js';
 let lastDebuggerAction = null;
 
 function workspaceQuery() {
-  const workspace = sessionStorage.getItem('ronin.workspace') || 'default';
+  const workspace = globalThis.roninStudioContext?.workspace || sessionStorage.getItem('ronin.workspace') || 'default';
   return `?workspace_id=${encodeURIComponent(workspace)}`;
 }
 

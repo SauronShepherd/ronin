@@ -1077,6 +1077,16 @@ inventario y la comprobación de que la UI permanece visualmente no cualificada.
 recuperabilidad de la ruta activa, pero no cualifica P14 ni cambia el estado
 **NO-GO / 0 de 13**.
 
+## 70. Debugger hereda el contexto activo
+
+Debugger Studio ahora resuelve `workspace_id` desde el contexto global del
+shell antes de consultar el workspace recordado en sesión. La regresión
+`?workspace=team-a&project=project-z#debugger` verifica que la creación de una
+sesión envía `workspace_id=team-a`; las pruebas Debugger pasan `3/3`.
+Auditoría web y `git diff --check` están verdes; el budget se ratchea a
+`asset_bytes=2,147,154`, un incremento medido de 44 bytes. El release sigue
+**NO-GO / 0 de 13**.
+
 ## 69. Cualificación Chromium exacta posterior a Connections
 
 El commit `664f1248` se ejecutó con la configuración canónica de `web-tests`:
