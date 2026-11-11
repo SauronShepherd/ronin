@@ -45,6 +45,28 @@ test('catalog search follows the server cursor to the next bounded page', async 
   expect(requests[2].searchParams.get('cursor')).toBeNull();
 });
 
+test('catalog search keeps the workspace and query recoverable after a lookup error', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/workspaces/ws-a/catalog/assets**', async route => {
+    attempts += 1;
+    if (attempts === 1) {
+      await route.fulfill({ status: 503, json: { error: { code: 'service_unavailable', message: 'Catalog is warming up.' } } });
+      return;
+    }
+    await route.fulfill({ json: { items: [{ id: 'asset-recovered', name: 'Recovered asset', kind: 'table', tags: [], classifications: [] }], next_cursor: null } });
+  });
+  await page.goto('./#catalog', { waitUntil: 'load' });
+  await page.locator('#catalog-search-form [name="workspace"]').fill('ws-a');
+  await page.locator('#catalog-search-form [name="query"]').fill('orders');
+  await page.getByRole('button', { name: 'Search catalog' }).click();
+  await expect(page.locator('#catalog-result')).toContainText('Catalog is warming up.');
+  await page.getByRole('button', { name: 'Retry this search', exact: true }).click();
+  await expect(page.locator('#catalog-result')).toContainText('Recovered asset');
+  await expect(page.locator('#catalog-search-form [name="workspace"]')).toHaveValue('ws-a');
+  await expect(page.locator('#catalog-search-form [name="query"]')).toHaveValue('orders');
+  expect(attempts).toBe(2);
+});
+
 test('catalog workbench turns governed assets into lineage and glossary review', async ({ page }) => {
   await page.route('**/v1/workspaces/ws-a/catalog/assets**', route => route.fulfill({ json: {
     items: [{ id: 'curated-orders', name: 'Curated orders', kind: 'table', tags: ['gold'], classifications: ['internal'] }],

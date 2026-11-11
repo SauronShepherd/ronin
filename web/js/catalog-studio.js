@@ -80,7 +80,7 @@ async function showCatalogPage(form, cursor = null) {
     return true;
   } catch (error) {
     result.className = 'catalog-result';
-    result.innerHTML = `<div class="error"><strong>Catalog lookup failed.</strong><span>${esc(error.message)}</span></div>`;
+    result.innerHTML = `<div class="error"><strong>Catalog lookup failed.</strong><span>${esc(error.message)}</span><button class="button" type="button" data-action="catalog-retry">Retry this search</button></div>`;
     return false;
   }
 }
@@ -95,6 +95,12 @@ document.addEventListener('submit', async event => {
 });
 
 document.addEventListener('click', async event => {
+  const retry = event.target.closest('[data-action="catalog-retry"]');
+  if (retry) {
+    const form = document.querySelector('#catalog-search-form');
+    if (form) await showCatalogPage(form);
+    return;
+  }
   const assetButton = event.target.closest('[data-action="catalog-select-asset"]');
   if (assetButton) {
     const assetId = assetButton.dataset.assetId || '';
