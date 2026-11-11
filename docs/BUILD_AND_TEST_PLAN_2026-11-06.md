@@ -1007,6 +1007,18 @@ La auditoría web sigue en `0` fallos y el budget candidate-bound queda en
 `2,141,636` bytes. Esto mejora la recuperación de una superficie de debugging
 interactivo, pero no cualifica P4 ni cambia `0/13`.
 
+## 47. Regresión Chromium global posterior a Debugger
+
+La suite no-live completa del candidato actual terminó **`161 passed, 0
+failed` en 8,1 minutos**, con un worker. Incluye el retry de creación de
+sesión de Debugger, los retries de Performance y Cloud, accesibilidad,
+responsive, traversal y el conjunto completo de journeys web.
+
+Esta evidencia confirma regresión web exact-candidate, pero no cualifica
+release. Proveedores live, seguridad, supply chain, Bundle/restore,
+Helm/Compose, revisión visual humana, legal, rollback y CI governance siguen
+abiertos; el ledger permanece **NO-GO / 0 de 13**.
+
 ## 45. Regresión Chromium global posterior a Performance y Cloud
 
 La suite no-live completa del candidato actual terminó **`160 passed, 0
