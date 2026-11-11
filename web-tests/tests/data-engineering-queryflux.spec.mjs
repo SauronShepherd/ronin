@@ -57,6 +57,9 @@ test('Data Engineering Studio executes QueryFlux and reads stable result pages',
   expect(postedBody.run_id).toMatch(/^[0-9a-f-]{36}$/i);
   expect(postedBody.attempt_id).toMatch(/^[0-9a-f-]{36}$/i);
   await expect(page.getByRole('button', { name: /Load next results page/ })).toBeVisible();
+  await expect(page.locator('#de-sql-result .de-result-summary')).toContainText('1 of 2 rows loaded');
+  await expect(page.locator('#de-sql-result table')).toContainText('1');
+  await expect(page.locator('#de-sql-result .de-sql-raw')).not.toHaveAttribute('open', '');
   await page.getByRole('button', { name: /Load next results page/ }).click();
   await expect(page.locator('#de-sql-result')).toContainText('"rows"');
   await expect(page.locator('#de-sql-result')).toContainText('"row_count": 2');

@@ -1,5 +1,5 @@
 import { get, post } from './api.js';
-import { json } from './dom.js';
+import { esc, json } from './dom.js';
 
 let capabilities = null;
 let resultState = null;
@@ -49,7 +49,7 @@ function renderQueryFluxResult() {
   const out = document.querySelector('#de-sql-result');
   const next = document.querySelector('#de-queryflux-next-page');
   if (!out || !resultState) return;
-  out.textContent = json({
+  const payload = {
     status: resultState.status,
     selected_engine: resultState.selectedEngine,
     rows_loaded: resultState.rows.length,
@@ -59,7 +59,11 @@ function renderQueryFluxResult() {
     evidence: resultState.evidence,
     run_id: resultState.runId,
     attempt_id: resultState.attemptId,
-  });
+  };
+  const columns = resultState.columns.map((column, index) => typeof column === 'string' ? column : column?.name || column?.id || `column_${index + 1}`);
+  const rows = resultState.rows.map(row => Array.isArray(row) ? row : columns.map(column => row?.[column]));
+  out.className = 'de-sql-result';
+  out.innerHTML = `<div class="de-result-summary"><strong>${resultState.rows.length} of ${resultState.rowCount} rows loaded</strong><span>${esc(resultState.selectedEngine || 'QueryFlux')} · ${esc(resultState.status || 'unknown')}</span></div><div class="table-wrap"><table><caption class="sr-only">QueryFlux result preview</caption><thead><tr>${columns.map(column => `<th>${esc(column)}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(value => `<td>${esc(value == null ? '—' : typeof value === 'object' ? json(value) : value)}</td>`).join('')}</tr>`).join('') : '<tr><td colspan="99">No rows returned.</td></tr>'}</tbody></table></div><details class="de-sql-raw"><summary>Advanced: raw result and evidence</summary><pre class="code">${esc(json(payload))}</pre></details>`;
   if (next) {
     next.hidden = !resultState.nextCursor;
     next.disabled = false;

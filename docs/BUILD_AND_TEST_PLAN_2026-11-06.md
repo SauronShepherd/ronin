@@ -1663,3 +1663,16 @@ ciclo de vida del proceso quedan excluidos; los tres receipts por archivo son
 la evidencia autoritativa.
 El release permanece **NO-GO / 0 de 13**.
 
+## 87. QueryFlux muestra resultados tabulares antes del JSON
+
+La respuesta de QueryFlux ahora presenta una tabla de resultados con columnas,
+filas cargadas, total, engine y estado. La evidencia, IDs de run/attempt y el
+payload completo permanecen disponibles bajo `Advanced: raw result and
+evidence`; la paginación y Export CSV siguen usando el mismo estado durable.
+
+La regresión focalizada post-cambio terminó en **7 passed** y verifica el
+resumen, la tabla y el disclosure cerrado. El budget se ratifica en
+`asset_bytes=2,150,506` (+1,105 bytes medidos); `studio_web_audit` mantiene 181
+invocaciones y 0 fallos. El receipt Chromium global de referencia sigue siendo
+`175 passed, 33 skipped, 0 failed`, complementado por este receipt focalizado.
+El release permanece **NO-GO / 0 de 13**.
