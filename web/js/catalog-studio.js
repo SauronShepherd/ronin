@@ -139,7 +139,13 @@ document.addEventListener('submit', async event => {
   output.className = 'catalog-lineage-result loading';
   output.textContent = 'Loading lineage…';
   try { output.className = 'catalog-lineage-result'; output.innerHTML = lineageView(await get(`/v1/workspaces/${workspace}/catalog/lineage/${asset}/${version}?direction=${direction}&limit=100`)); }
-  catch (error) { output.className = 'catalog-lineage-result'; output.innerHTML = `<div class="error"><strong>Lineage lookup failed.</strong><span>${esc(error.message)}</span></div>`; }
+  catch (error) { output.className = 'catalog-lineage-result'; output.innerHTML = `<div class="error"><strong>Lineage lookup failed.</strong><span>${esc(error.message)}</span><button class="button" type="button" data-action="catalog-lineage-retry">Retry lineage</button></div>`; }
+});
+
+document.addEventListener('click', async event => {
+  if (!event.target.closest('[data-action="catalog-lineage-retry"]')) return;
+  const form = document.querySelector('#catalog-lineage-form');
+  if (form) form.requestSubmit();
 });
 
 document.addEventListener('submit', async event => {

@@ -104,3 +104,27 @@ test('catalog workbench turns governed assets into lineage and glossary review',
   const widths = await page.locator('#main').evaluate(node => ({ client: node.clientWidth, scroll: node.scrollWidth }));
   expect(widths.scroll).toBe(widths.client);
 });
+
+test('catalog lineage keeps the selected asset revision recoverable after an error', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/workspaces/ws-a/catalog/lineage/curated-orders/1**', async route => {
+    attempts += 1;
+    if (attempts === 1) {
+      await route.fulfill({ status: 502, json: { error: { code: 'lineage_unavailable', message: 'Lineage index is warming up.' } } });
+      return;
+    }
+    await route.fulfill({ json: { items: [{ source: { asset_id: 'raw-orders', version: 'v2' }, target: { asset_id: 'curated-orders', version: '1' }, operation: 'write', mode: 'observed' }] } });
+  });
+  await page.goto('./#catalog');
+  await page.locator('#catalog-search-form [name="workspace"]').fill('ws-a');
+  await page.locator('#catalog-lineage-form [name="asset_id"]').fill('curated-orders');
+  await page.locator('#catalog-lineage-form [name="version"]').fill('1');
+  await page.locator('#catalog-lineage-form [name="direction"]').selectOption('upstream');
+  await page.getByRole('button', { name: 'Inspect lineage' }).click();
+  await expect(page.locator('#catalog-lineage-result')).toContainText('Lineage index is warming up.');
+  await page.getByRole('button', { name: 'Retry lineage', exact: true }).click();
+  await expect(page.locator('.catalog-lineage-map')).toContainText('raw-orders');
+  await expect(page.locator('#catalog-lineage-form [name="asset_id"]')).toHaveValue('curated-orders');
+  await expect(page.locator('#catalog-lineage-form [name="version"]')).toHaveValue('1');
+  expect(attempts).toBe(2);
+});
