@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 test('server connection dialog stays usable across viewport sizes and preserves its configured address', async ({ page }) => {
   await page.goto('./#home');
   const open = page.getByRole('button', { name: 'Server connection' });
+  await page.evaluate(() => document.fonts.ready);
   for (const width of [320, 390, 520, 768, 900, 1024, 1440]) {
     await page.setViewportSize({ width, height: 844 });
     await expect(open).toBeVisible();
