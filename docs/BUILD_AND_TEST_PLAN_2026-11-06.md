@@ -1077,6 +1077,18 @@ inventario y la comprobación de que la UI permanece visualmente no cualificada.
 recuperabilidad de la ruta activa, pero no cualifica P14 ni cambia el estado
 **NO-GO / 0 de 13**.
 
+## 56. Workspaces con una única autoridad de renderizado
+
+La misma auditoría que detectó el renderer duplicado de Catalog encontró una
+vista básica de Workspaces en `app.js` que competía con el workbench completo
+de `features.js`. Se eliminó la autoridad básica y la ruta queda servida por
+el workbench que contiene contexto, inventario, proyectos, creación y retry.
+
+La regresión combinada de Workspaces/Projects y traversal pasa `30/30`; la
+auditoría web queda en `0` fallos y el budget medido baja a
+`asset_bytes=2,140,913`, con `181` invocaciones de ruta. No se cambian APIs ni
+se cualifica P1; el release conserva **NO-GO / 0 de 13**.
+
 ## 55. Regresión global posterior a Catalog
 
 La consolidación del renderer de Catalog se verificó con la suite Chromium
