@@ -8,7 +8,22 @@ import json
 import os
 from importlib import import_module
 from pathlib import Path
-from typing import cast
+from typing import NotRequired, TypedDict, cast
+
+
+class AuditPage(TypedDict):
+    route: str
+    status: int
+    h1_count: int
+    has_main: bool
+    has_nav: bool
+    smoke_selector: str
+    has_smoke_selector: bool
+    horizontal_overflow: bool
+    has_ml_controls: NotRequired[bool]
+    has_ml_score: NotRequired[bool]
+    has_migration_controls: NotRequired[bool]
+    has_migration_artifact_form: NotRequired[bool]
 
 
 def load_routes(path: Path = Path("web/routes.json")) -> tuple[str, ...]:
@@ -34,7 +49,7 @@ async def run(url: str, *, headed: bool = False, slow_mo_ms: float = 0) -> dict[
     async_playwright = import_module("playwright.async_api").async_playwright
 
     console_errors: list[str] = []
-    pages: list[dict[str, object]] = []
+    pages: list[AuditPage] = []
     studio_routes = load_routes()
     route_specs = await asyncio.to_thread(_load_route_specs)
     async with async_playwright() as playwright:

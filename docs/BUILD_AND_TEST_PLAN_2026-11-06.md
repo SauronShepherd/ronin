@@ -1123,3 +1123,18 @@ web permanece en `0` fallos y el budget queda en `asset_bytes=2,142,571`.
 Este arreglo corrige una inconsistencia de contexto, pero no cualifica P14 ni
 modifica el **NO-GO / 0 de 13**.
 
+## 53. Calidad estática canónica del candidato
+
+La comprobación amplia inicial se descartó porque recorría artefactos no
+rastreados preservados en el workspace. Repetida sobre los `CODE_PATHS` del
+Makefile (`python tests tools packages/pyronin/src docker`), la quality lane
+queda limpia: `ruff format --check` informa `912 files already formatted`,
+`ruff check` pasa y mypy pasa sobre `442` archivos fuente. Se corrigieron tres
+archivos de tests que no estaban formateados y se tipó el registro de páginas
+de `tools/browser_audit.py` con un `TypedDict`, eliminando el error de mypy sin
+cambiar su comportamiento. Los tests afectados terminan `27 passed`.
+
+Esta evidencia mejora la reproducibilidad del candidato `76966e8b`; no cierra
+las aprobaciones humanas, proveedores externos, supply chain, rollback ni la
+cualificación de familias, por lo que el release sigue **NO-GO / 0 de 13**.
+

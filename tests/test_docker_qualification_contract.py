@@ -546,7 +546,7 @@ def test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies() ->
         assert len(packages) == len(set(packages))
         assert all("=" in package for package in packages)
         assert all(
-                package.rsplit("=", maxsplit=1)[1].endswith(("-r0", "-r1", "-r2", "-r3", "-r6"))
+            package.rsplit("=", maxsplit=1)[1].endswith(("-r0", "-r1", "-r2", "-r3", "-r6"))
             for package in packages
         )
 
