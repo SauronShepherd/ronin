@@ -68,6 +68,7 @@ document.addEventListener('click', async event => {
     const result = await get(`/v1/workspaces/${encodeURIComponent(values.workspace)}/event-deliveries?limit=100`);
     if (output) output.textContent = json(result);
   } catch (error) {
-    if (output) output.textContent = `Scheduler operation failed: ${error.message}`;
+    if (output) output.innerHTML = `<div class="error"><strong>Scheduler operation failed.</strong><p>${esc(error.message)}</p><button class="button" type="button" data-scheduler-retry>Retry this observation</button></div>`;
+    lastRetryableSchedulerAction = 'deliveries';
   }
 });

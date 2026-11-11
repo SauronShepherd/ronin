@@ -64,3 +64,21 @@ test('Scheduler Studio retries a failed observation without losing its scope', a
   await expect(page.locator('#scheduler-form [name="schedule_id"]')).toHaveValue('daily');
   expect(attempts).toBe(2);
 });
+
+test('Scheduler Studio retries event delivery observation after a transient error', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/workspaces/default/event-deliveries?limit=100', async route => {
+    attempts += 1;
+    if (attempts === 1) {
+      await route.fulfill({ status: 503, json: { error: { code: 'delivery_unavailable', message: 'Delivery index is warming up.' } } });
+      return;
+    }
+    await route.fulfill({ json: { items: [{ id: 'delivery-1', state: 'delivered' }] } });
+  });
+  await page.goto('./#workflows');
+  await page.getByRole('button', { name: 'Inspect event deliveries' }).click();
+  await expect(page.locator('#scheduler-result')).toContainText('Delivery index is warming up.');
+  await page.getByRole('button', { name: 'Retry this observation', exact: true }).click();
+  await expect(page.locator('#scheduler-result')).toContainText('delivery-1');
+  expect(attempts).toBe(2);
+});

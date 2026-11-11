@@ -900,6 +900,18 @@ durables, backfill y retry de observación. El siguiente trabajo de recuperació
 de inventario debe implementarse en `scheduler-studio.js`, con el contrato y
 selectores de esa superficie, no duplicando lógica en `features.js`.
 
+## 39. Recuperación de entregas en Scheduler Studio
+
+La observación `Inspect event deliveries` ahora comparte el contrato de
+recuperación de las demás lecturas del Scheduler: ante un fallo conserva el
+workspace y muestra `Retry this observation`; el retry vuelve a ejecutar sólo
+el `GET` de entregas y no modifica estados durables.
+
+La suite Scheduler pasa `3/3`, incluyendo la regresión existente y el caso
+503 → retry de entregas. La auditoría web mantiene `0` fallos y el budget
+candidate-bound queda en `2,140,294` bytes. Esto fortalece la observabilidad
+operativa, pero no cualifica P5 ni cambia `0/13`.
+
 ## 37. Recuperación de Environment Studio
 
 Environment Studio incorpora `Retry environment inventory` para errores de la
