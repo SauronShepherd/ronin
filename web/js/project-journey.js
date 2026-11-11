@@ -56,6 +56,12 @@ function renderProjects() {
       <label>Operation JSON<textarea class="field" name="operation" rows="6" required>{"revision_key":"main/working","ir_digest":"","runtime":"local-preview","parameters":{"pipeline":{"config":{"name":"main"},"nodes":[],"edges":[]}}}</textarea></label>
       <button class="button primary" type="submit">Run governed pipeline</button>
       <pre id="project-operation-result" class="code" aria-live="polite">No governed operation submitted.</pre></form>
+    <form id="project-revisions-form" class="stack"><h2>Revision evidence</h2>
+      <p class="muted">Inspect immutable pipeline revisions before choosing the revision key for an operation.</p>
+      <label>Project ID<input class="field" name="revision_project" required></label>
+      <label>Pipeline ID<input class="field" name="revision_pipeline" value="main" required></label>
+      <button class="button" type="submit">Inspect revision history</button>
+      <div id="project-revisions-result" class="project-revisions-result" aria-live="polite">No revision history loaded.</div></form>
     <form id="project-permissions-form" class="stack"><h2>Inspect project permissions</h2>
       <label>Project ID<input class="field" name="project_id" required></label>
       <button class="button" type="submit">Inspect permissions</button>
@@ -128,6 +134,20 @@ function renderProjects() {
       const result = await post(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(projectId)}/pipelines/${encodeURIComponent(pipelineId)}/runs`, payload, { headers: { 'Idempotency-Key': `studio-pipeline-run-${workspaceId}-${projectId}-${pipelineId}-${payload.revision_key}` } });
       output.textContent = json(result);
     } catch (error) { output.textContent = `Could not run governed operation: ${error.message}`; }
+  });
+  document.querySelector('#project-revisions-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const output = document.querySelector('#project-revisions-result');
+    const projectId = String(data.get('revision_project') || '').trim();
+    const pipelineId = String(data.get('revision_pipeline') || '').trim();
+    try {
+      const result = await get(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(projectId)}/pipelines/${encodeURIComponent(pipelineId)}/revisions`);
+      const items = Array.isArray(result.items) ? result.items : [];
+      output.innerHTML = items.length
+        ? `<table><caption class="sr-only">Pipeline revision history</caption><thead><tr><th>Revision</th><th>Source digest</th><th>Revision key</th></tr></thead><tbody>${items.map((item) => `<tr><td><strong>${esc(item.revision)}</strong></td><td><code>${esc(item.source_digest || '—')}</code></td><td><code>${esc(item.revision_key || `${pipelineId}/${item.revision}`)}</code></td></tr>`).join('')}</tbody></table>`
+        : '<div class="empty">No immutable revisions are visible for this pipeline.</div>';
+    } catch (error) { output.innerHTML = `<div class="error">Could not load revision history: ${esc(error.message)}</div>`; }
   });
   document.querySelector('#project-permissions-form').addEventListener('submit', async (event) => {
     event.preventDefault();

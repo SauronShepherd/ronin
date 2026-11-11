@@ -26,6 +26,9 @@ test('Project workbench keeps authoring modes and scope usable on a phone', asyn
   await page.route('**/v1/workspaces/workspace-a/projects/project-a', async route => {
     await route.fulfill({ json: { schema: 'ronin.project/v1', project: { id: 'project-a', name: 'Analytics', repositories: [{ adapter_id: 'git', alias: 'source', default_ref: 'main', role: 'primary', sync_policy: 'manual', uri: 'https://git.example.com/analytics.git', subdirectory: null }] } } });
   });
+  await page.route('**/v1/workspaces/workspace-a/projects/project-a/pipelines/main/revisions', async route => {
+    await route.fulfill({ json: { items: [{ revision: 2, source_digest: 'sha256:revision-two', revision_key: 'main/2' }] } });
+  });
   await page.goto('./#projects/workspace-a');
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.project-hero')).toBeVisible();
@@ -58,4 +61,8 @@ test('Project workbench keeps authoring modes and scope usable on a phone', asyn
   await page.getByRole('button', { name: 'Cancel edit' }).click();
   await expect(page.locator('#project-authoring-mode')).toHaveText('Create project');
   await expect(page.locator('#project-cancel-edit')).toBeHidden();
+  await page.locator('#project-revisions-form [name="revision_project"]').fill('project-a');
+  await page.locator('#project-revisions-form button[type="submit"]').click();
+  await expect(page.locator('#project-revisions-result')).toContainText('sha256:revision-two');
+  await expect(page.locator('#project-revisions-result')).toContainText('main/2');
 });

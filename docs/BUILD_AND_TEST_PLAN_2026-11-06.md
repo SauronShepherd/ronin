@@ -674,3 +674,20 @@ Chromium completa sigue siendo obligatoria antes de aceptar este cambio.
 El expediente reproducible de esta revisión queda en
 `docs/ui/MANUAL_VISUAL_REVIEW_2026-11-11.md`; sus hallazgos abiertos mantienen
 la firma visual humana en `qualification_pending`.
+
+## 21. P1 — evidencia de revisiones en Project Studio
+
+Project Studio ahora ofrece una superficie de sólo lectura para consultar las
+revisiones inmutables de un pipeline antes de seleccionar `revision_key` para
+una operación. La UI mantiene explícitos `workspace`, `project` y `pipeline`,
+renderiza digest y clave de revisión, y muestra un estado vacío o un error
+scoped sin inventar revisiones. Reutiliza el endpoint existente
+`GET /v1/workspaces/{workspace}/projects/{project}/pipelines/{pipeline}/revisions`;
+no introduce un backend paralelo ni mutación implícita.
+
+El journey `workspace-workbench.spec.mjs` verifica la lectura de una revisión
+con digest y clave (`2/2` casos del archivo), y la auditoría web queda en 181
+invocaciones sin fallos. El coste medido es `asset_bytes=2,135,236`, nuevo
+baseline candidate-bound explícito. Esto fortalece P1 y la ergonomía de
+source-control/evidence, pero no convierte la familia en `qualified`: faltan
+journeys completos, provider/source-control real y gates humanos.
