@@ -133,6 +133,10 @@ The Data Engineering Studio QueryFlux profile uses this project-scoped execution
 route, obtains engine choices from `GET /v1/data-engineering/queryflux/capabilities`,
 and loads later pages from the evidence route. Its CSV export operates on loaded
 query rows and refuses to imply completeness while a next page is still available.
+The capability response is fail-closed: `capabilities.cancellation` is `true`
+only when the negotiated provider handshake advertises `cancel`; an unconfigured
+or non-cancellable provider is exposed as unavailable rather than as a promise
+that the UI can stop remote work.
 The local SQL route accepts only its documented SQL fields; QueryFlux profile and
 translation options are not silently ignored by that route.
 
