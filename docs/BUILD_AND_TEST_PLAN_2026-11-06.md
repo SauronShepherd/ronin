@@ -1308,6 +1308,18 @@ estables en el SHA publicado. No sustituye la cualificación exact-SHA de las
 familias Public v1, las certificaciones externas ni la aceptación humana; el
 release permanece **NO-GO / 0 de 13**.
 
+## 78. Terraform y Helm: validación local de despliegue
+
+Terraform `1.16.2` inicializó el módulo Cloud Studio con backend deshabilitado
+y `terraform validate` terminó con `Success! The configuration is valid.`
+Helm `4.3.1` pasó el lint del chart con los overrides de seguridad obligatorios
+(`server.token`, `server.tokenScopes` y `server.bindPolicy`), y
+`tests/test_helm_chart_structure.py` pasó **2/2**. El lint sin overrides falla
+intencionadamente cerrado porque los valores por defecto no permiten token vacío,
+scopes `{}` ni una política de bind no reconocida. `kubectl` no está instalado,
+por lo que no se declara una qualification real de cluster/kind. El release
+permanece **NO-GO / 0 de 13**.
+
 ## 62. Scheduler hereda el contexto activo del shell
 
 La ruta canónica `scheduler-studio.js` inicializaba el campo Workspace con el
