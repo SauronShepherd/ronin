@@ -96,6 +96,7 @@ test('Data Engineering Studio keeps QueryFlux capabilities human-readable before
   });
   await page.goto('./#data');
   await expect(page.locator('.queryflux-capability-summary')).toContainText('ready for bounded execution');
+  await expect(page.locator('.queryflux-capability-boundary')).toContainText('cancellation is unavailable');
   await expect(page.locator('.queryflux-raw')).not.toHaveAttribute('open', '');
   await page.locator('.queryflux-raw summary').click();
   await expect(page.locator('.queryflux-raw pre')).toContainText('stable_result_paging');

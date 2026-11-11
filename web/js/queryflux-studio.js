@@ -173,7 +173,11 @@ export async function loadQueryFluxCapabilities() {
       capabilities: enabled,
       translation_policies: payload.translation_policies || ['native_only', 'best_effort'],
     };
-    result.innerHTML = `<div class="queryflux-capability-summary"><strong>${state === 'ready' ? 'QueryFlux is ready for bounded execution.' : 'QueryFlux needs review before execution.'}</strong><span>${enabled.length ? `${enabled.length} capability${enabled.length === 1 ? '' : 'ies'} available` : 'No authorized execution engine is available'}</span></div><details class="queryflux-raw"><summary>Advanced: capability response</summary><pre class="code">${json(summary)}</pre></details>`;
+    const cancellation = payload.capabilities?.cancellation === true;
+    const cancellationCopy = cancellation
+      ? 'Provider cancellation is available for active work.'
+      : 'Provider cancellation is unavailable; execution stays bounded and cannot be stopped remotely.';
+    result.innerHTML = `<div class="queryflux-capability-summary"><strong>${state === 'ready' ? 'QueryFlux is ready for bounded execution.' : 'QueryFlux needs review before execution.'}</strong><span>${enabled.length ? `${enabled.length} capability${enabled.length === 1 ? '' : 'ies'} available` : 'No authorized execution engine is available'}</span><span class="queryflux-capability-boundary">${esc(cancellationCopy)}</span></div><details class="queryflux-raw"><summary>Advanced: capability response</summary><pre class="code">${json(summary)}</pre></details>`;
   } catch (error) {
     capabilities = null;
     updateQueryProfileControls();
