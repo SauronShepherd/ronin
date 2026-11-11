@@ -28,7 +28,8 @@ function assetTable(items) {
   return `<div class="table-wrap catalog-table-wrap"><table class="catalog-table"><caption class="sr-only">Governed catalog assets</caption><thead><tr><th>Asset</th><th>Kind</th><th>Tags</th><th>Classification</th><th>Action</th></tr></thead><tbody>${items.map(item => {
     const id = catalogAssetId(item);
     const name = item.name || id || 'Unnamed asset';
-    return `<tr><td><button class="catalog-asset-link" type="button" data-action="catalog-select-asset" data-asset-id="${esc(id)}"><strong>${esc(name)}</strong></button><span class="catalog-subline">${esc(id || 'Identity not published')}</span></td><td><span class="catalog-kind">${esc(item.kind || 'asset')}</span></td><td>${pills(item.tags)}</td><td>${pills(item.classifications)}</td><td><button class="button" type="button" data-action="catalog-select-asset" data-asset-id="${esc(id)}">Inspect lineage</button></td></tr>`;
+    const identity = id || 'Identity not published';
+    return `<tr><td><button class="catalog-asset-link" type="button" title="${esc(identity)}" aria-label="Inspect ${esc(name)} (${esc(identity)})" data-action="catalog-select-asset" data-asset-id="${esc(id)}"><strong>${esc(name)}</strong></button><span class="catalog-subline" title="${esc(identity)}">${esc(identity)}</span></td><td><span class="catalog-kind">${esc(item.kind || 'asset')}</span></td><td>${pills(item.tags)}</td><td>${pills(item.classifications)}</td><td><button class="button" type="button" data-action="catalog-select-asset" data-asset-id="${esc(id)}">Inspect lineage</button></td></tr>`;
   }).join('')}</tbody></table></div>`;
 }
 

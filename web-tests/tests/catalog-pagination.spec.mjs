@@ -128,3 +128,19 @@ test('catalog lineage keeps the selected asset revision recoverable after an err
   await expect(page.locator('#catalog-lineage-form [name="version"]')).toHaveValue('1');
   expect(attempts).toBe(2);
 });
+
+test('catalog keeps long asset identities discoverable without widening the table', async ({ page }) => {
+  const assetId = 'warehouse.customer_orders.curated.production.v2026_11_11';
+  await page.route('**/v1/workspaces/ws-a/catalog/assets**', route => route.fulfill({ json: {
+    items: [{ id: assetId, name: 'Customer orders', kind: 'table', tags: [], classifications: [] }],
+    next_cursor: null,
+  } }));
+  await page.goto('./#catalog');
+  await page.locator('#catalog-search-form [name="workspace"]').fill('ws-a');
+  await page.getByRole('button', { name: 'Search catalog' }).click();
+  const identity = page.locator('.catalog-subline').first();
+  await expect(identity).toHaveAttribute('title', assetId);
+  await expect(page.locator('.catalog-asset-link').first()).toHaveAttribute('aria-label', `Inspect Customer orders (${assetId})`);
+  const widths = await page.locator('#main').evaluate(node => ({ client: node.clientWidth, scroll: node.scrollWidth }));
+  expect(widths.scroll).toBe(widths.client);
+});

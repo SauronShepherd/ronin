@@ -770,3 +770,12 @@ manteniendo requests, módulos, hojas de estilo y HTML sin cambios. La
 recalibración es explícita y `python -m tools.studio_budget --check` vuelve a
 pasar; no se permite crecimiento implícito.
 
+## 29. Identidad larga y accesible en Catalog
+
+Las filas de Catalog conservan ahora el identificador completo mediante
+`title` y `aria-label`, mientras la presentación puede truncarse dentro de la
+tabla responsive. El journey de Catalog verifica un identificador largo y
+ausencia de overflow en móvil (`5/5` casos del archivo). El coste medido sube
+explícitamente de `2,139,033` a `2,139,167` bytes; el budget check y la
+auditoría web pasan.
+
