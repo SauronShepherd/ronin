@@ -1,7 +1,9 @@
 import { get, post, put, request } from './api.js';
-import { json, page } from './dom.js';
+import { esc, json, page } from './dom.js';
 
 const field = (label, name, value) => `<label>${label}<input class="field" name="${name}" value="${value}" required></label>`;
+const retryableSchedulerActions = new Set(['list', 'inspect-schedule', 'next-runs', 'history', 'inspect-run', 'events', 'deliveries', 'inspect-backfill']);
+let lastRetryableSchedulerAction = null;
 
 export function schedulerStudio() {
   const view = document.querySelector('#view');
@@ -19,6 +21,10 @@ async function payloadDigest(payload) {
 }
 
 document.addEventListener('click', async event => {
+  if (event.target.closest('[data-scheduler-retry]')) {
+    document.querySelector(`[data-scheduler-action="${lastRetryableSchedulerAction || ''}"]`)?.click();
+    return;
+  }
   const action = event.target.closest('[data-scheduler-action]')?.dataset.schedulerAction;
   if (!action || location.hash.slice(1) !== 'workflows') return;
   const values = Object.fromEntries(new FormData(document.querySelector('#scheduler-form')));
@@ -44,7 +50,8 @@ document.addEventListener('click', async event => {
     else if (action === 'cancel') result = await post(`/v1/workspaces/${workspace}/backfills/${encodeURIComponent(values.backfill_id)}/cancel`, {});
     else return;
     output.textContent = json(result);
-  } catch (error) { output.textContent = `Scheduler operation failed: ${error.message}`; }
+  } catch (error) { output.innerHTML = retryableSchedulerActions.has(action) ? `<div class="error"><strong>Scheduler operation failed.</strong><p>${esc(error.message)}</p><button class="button" type="button" data-scheduler-retry>Retry this observation</button></div>` : `Scheduler operation failed: ${error.message}`; }
+  if (retryableSchedulerActions.has(action)) lastRetryableSchedulerAction = action;
 });
 
 window.addEventListener('hashchange', () => { if (location.hash.slice(1) === 'workflows') schedulerStudio(); });

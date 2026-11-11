@@ -43,3 +43,24 @@ test('Scheduler Studio groups durable operations and keeps their scope visible',
   const widths = await page.locator('#main').evaluate(node => ({ client: node.clientWidth, scroll: node.scrollWidth }));
   expect(widths.scroll).toBe(widths.client);
 });
+
+test('Scheduler Studio retries a failed observation without losing its scope', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/workspaces/default/schedules', async route => {
+    attempts += 1;
+    if (attempts === 1) {
+      await route.fulfill({ status: 503, json: { error: { code: 'scheduler_unavailable', message: 'Scheduler is warming up.' } } });
+      return;
+    }
+    await route.fulfill({ json: { items: [{ id: 'daily', workflow_id: 'main' }] } });
+  });
+  await page.goto('./#workflows');
+  await page.locator('#scheduler-form [name="workspace"]').fill('default');
+  await page.locator('#scheduler-form [name="schedule_id"]').fill('daily');
+  await page.getByRole('button', { name: 'List schedules' }).click();
+  await expect(page.locator('#scheduler-result')).toContainText('Scheduler is warming up.');
+  await page.getByRole('button', { name: 'Retry this observation', exact: true }).click();
+  await expect(page.locator('#scheduler-result')).toContainText('daily');
+  await expect(page.locator('#scheduler-form [name="schedule_id"]')).toHaveValue('daily');
+  expect(attempts).toBe(2);
+});
