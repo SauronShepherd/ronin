@@ -23,6 +23,7 @@ from .execution import plan_pipeline_execution
 from .ide import IdeCell
 from .previews import preview_pipeline
 from .query_execution import QueryTransport, execute_query
+from .queryflux_lifecycle import QueryFluxExecution
 from .result_paging import page_query_result
 from .revisions import RevisionApplication, RevisionArtifactStore, RevisionRecordStore
 from .runtimes import QueryEngineRuntimeProvider
@@ -89,6 +90,7 @@ class DataEnginerringStudioPlugin:
         self._queryflux_transport: QueryTransport | None = None
         self._queryflux_evidence_store: Any | None = None
         self._queryflux_evidence_reference_store: Any | None = None
+        self._queryflux_execution_store: Any | None = None
         self._artifact_reference_barrier: Any | None = None
 
     def register(self, context: PluginContext) -> None:
@@ -112,6 +114,7 @@ class DataEnginerringStudioPlugin:
         self._queryflux_evidence_reference_store = context.services.get(
             "queryflux_evidence_reference_store"
         )
+        self._queryflux_execution_store = context.services.get("queryflux_execution_store")
         self._artifact_reference_barrier = context.services.get("artifact_reference_barrier")
         if artifact_store is not None:
             self._revisions = RevisionApplication(
@@ -516,19 +519,45 @@ class DataEnginerringStudioPlugin:
             tuple(parameters),
             max_result_bytes=body.get("max_result_bytes", DEFAULT_MAX_RESULT_BYTES),
         )
-        result = execute_query(
-            self._queryflux_runtime,
-            self._queryflux_transport,
-            cast(Any, self._queryflux_evidence_store),
-            request,
-            engine=cast(str, body["engine"]),
-            project_id=project_id,
-            run_id=cast(str, body["run_id"]),
-            attempt_id=cast(str, body["attempt_id"]),
-            evidence_reference_store=cast(Any, self._queryflux_evidence_reference_store),
-            artifact_reference_barrier=cast(Any, self._artifact_reference_barrier),
-            page_size=page_size,
+        lifecycle = QueryFluxExecution(
+            workspace_id, project_id, cast(str, body["run_id"]), cast(str, body["attempt_id"])
         )
+        lifecycle_store = self._queryflux_execution_store
+        if lifecycle_store is not None:
+            lifecycle = lifecycle_store.create(lifecycle)
+            lifecycle = lifecycle_store.transition(lifecycle.transition("running"))
+        try:
+            result = execute_query(
+                self._queryflux_runtime,
+                self._queryflux_transport,
+                cast(Any, self._queryflux_evidence_store),
+                request,
+                engine=cast(str, body["engine"]),
+                project_id=project_id,
+                run_id=cast(str, body["run_id"]),
+                attempt_id=cast(str, body["attempt_id"]),
+                evidence_reference_store=cast(Any, self._queryflux_evidence_reference_store),
+                artifact_reference_barrier=cast(Any, self._artifact_reference_barrier),
+                page_size=page_size,
+            )
+        except Exception as error:
+            if lifecycle_store is not None:
+                lifecycle_store.transition(
+                    lifecycle.transition("failed", failure_code=type(error).__name__)
+                )
+            raise
+        if lifecycle_store is not None:
+            terminal_state = cast(Any, result.status.state)
+            if terminal_state == "succeeded":
+                lifecycle_store.transition(lifecycle.transition("succeeded"))
+            elif terminal_state == "cancelled":
+                lifecycle_store.transition(lifecycle.transition("cancelled"))
+            else:
+                lifecycle_store.transition(
+                    lifecycle.transition(
+                        "failed", failure_code=result.status.message or "query_failed"
+                    )
+                )
         return {
             "status": result.status.state,
             "message": result.status.message,

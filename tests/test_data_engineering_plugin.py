@@ -6,6 +6,7 @@ from studio_data_engineering import (
     QueryEngineRuntimeProvider,
     SqliteCompilationStore,
     SqliteQueryEvidenceReferenceStore,
+    SqliteQueryFluxExecutionStore,
     compile_pipeline,
     preview_pipeline,
 )
@@ -197,6 +198,7 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
     )
     store = LocalArtifactStore(tmp_path / "artifacts")
     references = SqliteQueryEvidenceReferenceStore(tmp_path / "ronin.db")
+    executions = SqliteQueryFluxExecutionStore(tmp_path / "ronin.db")
     transport = _QueryFluxTransport()
     plugin.register(
         PluginContext(
@@ -207,6 +209,7 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
                 "queryflux_runtime_provider": provider,
                 "queryflux_transport": transport,
                 "queryflux_evidence_reference_store": references,
+                "queryflux_execution_store": executions,
             },
         )
     )
@@ -232,6 +235,9 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
     records = references.list_evidence_references()
     assert len(records) == 1
     assert records[0]["storage_ref"] == result["evidence"]["storage_ref"]
+    execution = executions.get("workspace-1", "project-1", "run-1", "attempt-1")
+    assert execution is not None
+    assert execution.state == "succeeded"
 
 
 def test_pipeline_compiler_reports_validity_and_runtime() -> None:
