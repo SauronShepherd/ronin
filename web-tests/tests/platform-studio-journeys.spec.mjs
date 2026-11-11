@@ -585,6 +585,18 @@ test('SQL Studio sends one workspace-scoped request per submit', async ({ page }
   expect(queryCount).toBe(1);
 });
 
+test('SQL Studio keeps execution limits behind progressive disclosure', async ({ page }) => {
+  await page.goto('./#sql');
+  const advanced = page.locator('.sql-advanced');
+  await expect(advanced).toBeVisible();
+  await expect(advanced).not.toHaveAttribute('open', '');
+  await expect(page.locator('#sql-max-rows')).toBeHidden();
+  await advanced.locator('summary').click();
+  await expect(advanced).toHaveAttribute('open', '');
+  await expect(page.locator('#sql-max-rows')).toBeVisible();
+  await expect(page.locator('#sql-timeout-ms')).toHaveValue('5000');
+});
+
 test('Data Engineering Studio executes a bounded read-only SQL query', async ({ page }) => {
   await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/sql/query', async route => {
     const body = route.request().postDataJSON();

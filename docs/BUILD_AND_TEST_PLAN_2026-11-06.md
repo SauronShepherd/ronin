@@ -1600,3 +1600,19 @@ visual a 320/390px y los gates de proveedor, legal, seguridad, rollback,
 gobernanza y aprobación humana siguen abiertos; el release permanece
 **NO-GO / 0 de 13**.
 
+## 83. SQL Studio aplica progressive disclosure a los límites técnicos
+
+SQL Studio ahora prioriza la pregunta, el contexto y el editor de consulta. Los
+tres límites de ejecución siguen teniendo los mismos valores, validaciones y
+payload (`max_rows`, `timeout_ms`, `max_result_bytes`), pero se muestran bajo
+un `<details>` explícito de “Advanced execution limits”. Esto reduce carga
+cognitiva sin ocultar la capacidad avanzada ni cambiar el contrato.
+
+La regresión focalizada terminó en **25 passed**, incluida la comprobación de
+que los controles están cerrados inicialmente y aparecen al expandirlos. La
+suite Chromium completa sobre el candidato terminó en **173 passed, 33 skipped,
+0 failed**. El presupuesto se ratificó con el coste medido de
+`asset_bytes=2,147,840` (+507 bytes); la auditoría web conserva 181
+invocaciones y 0 fallos. Las cualificaciones externas y las aprobaciones
+humanas siguen pendientes; el release permanece **NO-GO / 0 de 13**.
+
