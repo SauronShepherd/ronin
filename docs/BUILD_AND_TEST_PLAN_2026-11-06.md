@@ -1077,3 +1077,18 @@ inventario y la comprobación de que la UI permanece visualmente no cualificada.
 recuperabilidad de la ruta activa, pero no cualifica P14 ni cambia el estado
 **NO-GO / 0 de 13**.
 
+## 50. Contexto de proyecto en Migration Studio
+
+La revisión de la ruta activa encontró que el cockpit aceptaba workspace y
+proyecto en sus controles, pero el inventario de sesiones seguía consultando
+siempre `default/examples/demo`. `loadMigrationCockpit()` ahora construye el
+endpoint con los valores visibles y mantiene el fallback sólo cuando aún no
+existen los controles. Esto alinea la UI con el aislamiento por proyecto que
+declara la API y evita presentar sesiones de otro contexto.
+
+La regresión focalizada de Migration queda en `3/3`, incluyendo 503 → retry,
+estado visual `REVIEW` y cambio explícito a `team-a/project-z`. La auditoría
+web permanece en `0` fallos y el budget queda en `asset_bytes=2,142,571`.
+Este arreglo corrige una inconsistencia de contexto, pero no cualifica P14 ni
+modifica el **NO-GO / 0 de 13**.
+

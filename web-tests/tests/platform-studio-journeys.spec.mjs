@@ -540,6 +540,20 @@ test('Migration Studio keeps an unqualified review state visually gated', async 
   expect(inventoryAttempts).toBe(2);
 });
 
+test('Migration Studio inventories the selected workspace and project', async ({ page }) => {
+  const requested = [];
+  await page.route('**/v1/workspaces/*/projects/*/migration/sessions', async route => {
+    requested.push(new URL(route.request().url()).pathname);
+    await route.fulfill({ json: { items: [] } });
+  });
+  await page.goto('./#migration');
+  await page.locator('#migration-cockpit-workspace').fill('team-a');
+  await page.locator('#migration-cockpit-project').fill('project-z');
+  await page.getByRole('button', { name: 'Refresh' }).click();
+  await expect(page.locator('#migration-cockpit-sessions')).toContainText('No sessions yet');
+  expect(requested).toContain('/v1/workspaces/team-a/projects/project-z/migration/sessions');
+});
+
 test('SQL Studio sends one workspace-scoped request per submit', async ({ page }) => {
   let queryCount = 0;
   await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/sql/query', async route => {
