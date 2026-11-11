@@ -540,7 +540,7 @@ def test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies() ->
     assert "psycopg-binary==3.3.6" in runtime_lock
     assert "tzdata==2026.4" in runtime_lock
     assert "--hash=sha256:" in runtime_lock
-    for lock, expected_count in ((apk_runtime_lock, 25), (apk_probe_lock, 21)):
+    for lock, expected_count in ((apk_runtime_lock, 25), (apk_probe_lock, 22)):
         packages = [line for line in lock.splitlines() if line]
         assert len(packages) == expected_count
         assert len(packages) == len(set(packages))
