@@ -1475,3 +1475,19 @@ La aceptación estricta v0.1 terminó con **15/15**, sin skips ni errores. Esta
 puerta Docker queda técnicamente verde; el release global sigue **NO-GO / 0 de
 13** por licencias, seguridad, proveedores y aprobaciones humanas pendientes.
 
+## 75. Pip-audit de locks de runtime y test
+
+La revisión automatizada de dependencias pasó sobre ambos locks:
+
+```text
+python -m pip_audit -r docker/requirements-runtime.lock --progress-spinner off
+No known vulnerabilities found
+
+python -m pip_audit -r requirements-test.lock --progress-spinner off
+No known vulnerabilities found
+```
+
+Esto cierra la evidencia local de `pip-audit` para runtime y test, pero no
+sustituye el SBOM/Trivy de la imagen, el triage VEX ni la revisión humana de
+supply-chain. El release permanece **NO-GO / 0 de 13**.
+
