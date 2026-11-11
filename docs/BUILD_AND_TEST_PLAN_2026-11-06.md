@@ -1502,3 +1502,16 @@ La evidencia queda en `%TEMP%\\ronin-vex-54e5566`. El reviewer de seguridad aún
 debe aceptar formalmente el VEX y Trivy sigue sin estar instalado; por tanto el
 release global permanece **NO-GO / 0 de 13**.
 
+## 77. Trivy 0.76.1 sobre la imagen cualificada
+
+Trivy `0.76.1`, ejecutado dentro de Docker con los scanners `vuln,secret` y
+severidades `HIGH,CRITICAL`, escaneó la imagen `ronin:qualification` ligada al
+config digest `sha256:c615c59dc84a01229c1fc18429417e2c5900f08a10c4be8aa2b6eaae8f548cc5`.
+El inventario cubrió Alpine 3.24.4, paquetes Python y el binario Docker CLI:
+resultado **0 vulnerabilidades y 0 secretos**. El JSON reproducible queda en
+`%TEMP%\\ronin-trivy-54e5566-out\\trivy.json`. La imagen fue construida desde
+`8ea064b5`; los commits posteriores del candidato sólo actualizan documentación
+y no cambian runtime ni la imagen. El gate automatizado de Trivy queda verde,
+pero el reviewer aún debe aceptar el expediente de seguridad; el release
+permanece **NO-GO / 0 de 13**.
+
