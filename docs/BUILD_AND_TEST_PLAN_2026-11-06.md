@@ -1077,6 +1077,22 @@ inventario y la comprobación de que la UI permanece visualmente no cualificada.
 recuperabilidad de la ruta activa, pero no cualifica P14 ni cambia el estado
 **NO-GO / 0 de 13**.
 
+## 51. Regresión exacta posterior al contexto de Migration
+
+La regresión Chromium global del candidato `2e2b3940` ejecutó `197` casos con
+un worker y terminó `163 passed, 33 skipped, 1 failed` en `22m06s`. El único
+fallo fue `guided-tutorial.spec.mjs:32`, timeout de `60s` durante el setup de
+`page`, sin aserción funcional fallida. La misma prueba aislada se reprodujo
+inmediatamente con `1/1 passed` en `8.8s`, por lo que queda clasificada como
+inestabilidad/contención del runner global, no como evidencia de release verde.
+
+La regresión Python exacta del mismo candidato terminó `4511 passed, 77
+skipped, 0 failed` en `530.87s`. Los skips corresponden a opt-ins explícitos
+de Docker, PostgreSQL, proveedores externos, SDP/Spark, OTLP y capacidades
+POSIX no disponibles en Windows. El budget y `studio_web_audit` permanecen
+verdes. El gate web global sigue abierto hasta obtener una corrida completa
+sin timeout y el ledger conserva **NO-GO / 0 de 13**.
+
 ## 50. Contexto de proyecto en Migration Studio
 
 La revisión de la ruta activa encontró que el cockpit aceptaba workspace y
