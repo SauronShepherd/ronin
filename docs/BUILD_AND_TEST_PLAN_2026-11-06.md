@@ -1077,6 +1077,19 @@ inventario y la comprobación de que la UI permanece visualmente no cualificada.
 recuperabilidad de la ruta activa, pero no cualifica P14 ni cambia el estado
 **NO-GO / 0 de 13**.
 
+## 55. Regresión global posterior a Catalog
+
+La consolidación del renderer de Catalog se verificó con la suite Chromium
+completa del candidato `b85eda8e`: `164 passed, 33 skipped, 0 failed` en
+`10.7m`, con un worker. La auditoría web queda en `0` fallos y el budget se
+mantiene validado en `asset_bytes=2,141,897`. La evidencia cubre accesibilidad,
+live routes, responsive, route traversal, Catalog y los journeys de todas las
+superficies incluidas en la suite.
+
+Esto confirma que la eliminación de la doble autoridad no regresiona el shell
+ni los contratos de UI, pero no convierte la cualificación automatizada en GO:
+el ledger sigue **NO-GO / 0 de 13** hasta cerrar las puertas externas y humanas.
+
 ## 51. Regresión exacta posterior al contexto de Migration
 
 La regresión Chromium global del candidato `2e2b3940` ejecutó `197` casos con
