@@ -9,7 +9,11 @@ test('server connection dialog stays usable across viewport sizes and preserves 
     await expect(open).toBeVisible();
     const bounds = await open.boundingBox();
     expect(bounds).not.toBeNull();
-    expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
+    const right = bounds.x + bounds.width;
+    const topbar = await page.locator('.topbar').evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }));
+    console.log(`connection-layout viewport=${width} x=${bounds.x} width=${bounds.width} right=${right} topbar=${JSON.stringify(topbar)}`);
+    expect(right, `connection button exceeds viewport ${width}: right=${right}`).toBeLessThanOrEqual(width);
+    expect(topbar.scrollWidth, `topbar overflows viewport ${width}`).toBeLessThanOrEqual(topbar.clientWidth);
   }
   await open.click();
   const dialog = page.locator('#connection-dialog');
