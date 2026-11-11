@@ -1190,3 +1190,16 @@ El cambio queda validado globalmente; el release continúa **NO-GO / 0 de 13**
 por las cualificaciones externas y aprobaciones humanas que no pueden
 inferirse de esta suite.
 
+## 58. Router delegado sin flicker para Catalog y Workspaces
+
+Tras retirar los renderers duplicados, el router principal podía caer
+brevemente en la vista genérica `empty` mientras los módulos especialistas
+inicializaban sus workbenches. La ruta ahora marca Catalog y Workspaces como
+delegadas y no pinta esa vista intermedia; `catalog-studio.js` y `features.js`
+conservan la autoridad de renderizado.
+
+La regresión combinada pasa `36/36`; la suite Chromium global posterior pasa
+`164 passed, 33 skipped, 0 failed` en `9.9m`. `studio_web_audit` queda en `0`
+fallos y el budget medido es `asset_bytes=2,140,976`. El release sigue
+**NO-GO / 0 de 13** por las puertas externas y humanas.
+
