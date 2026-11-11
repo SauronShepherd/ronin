@@ -55,3 +55,26 @@ test('Quality Studio presents an evidence-first decision workbench', async ({ pa
   const widths = await page.locator('#main').evaluate(node => ({ client: node.clientWidth, scroll: node.scrollWidth }));
   expect(widths.scroll).toBe(widths.client);
 });
+
+test('Quality Studio keeps the selected scope recoverable after a state error', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/workspaces/ws-a/quality/state/asset-a/v1', async route => {
+    attempts += 1;
+    if (attempts === 1) {
+      await route.fulfill({ status: 403, json: { error: { code: 'permission_denied', message: 'Review access is required.' } } });
+      return;
+    }
+    await route.fulfill({ json: { latest_status: 'passed', latest_run_id: 'quality-run-recovered', run_count: 1, latest_run: { status: 'passed', results: [] }, history: [] } });
+  });
+  await page.goto('./#quality', { waitUntil: 'domcontentloaded' });
+  await page.locator('#quality-workspace').fill('ws-a');
+  await page.locator('#quality-asset').fill('asset-a');
+  await page.locator('#quality-version').fill('v1');
+  await page.getByRole('button', { name: 'Load state', exact: true }).click();
+  await expect(page.locator('#quality-result')).toContainText('Review access is required.');
+  await page.getByRole('button', { name: 'Retry this revision', exact: true }).click();
+  await expect(page.locator('#quality-result')).toContainText('quality-run-recovered');
+  await expect(page.locator('#quality-workspace')).toHaveValue('ws-a');
+  await expect(page.locator('#quality-asset')).toHaveValue('asset-a');
+  expect(attempts).toBe(2);
+});

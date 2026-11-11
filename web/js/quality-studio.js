@@ -24,7 +24,7 @@ export async function loadQualityState() {
     result.className = 'quality-result';
     result.innerHTML = `<div class="quality-result-heading"><div><p class="eyebrow">LATEST DECISION</p><h3>${esc(data.latest_run_id || 'No runs recorded')}</h3><p class="muted">${esc(latest.execution_ref || 'No execution reference recorded.')}</p></div>${status(latestStatus)}</div><div class="grid three"><div class="card"><h3>Gate state</h3>${status(latestStatus)}<p class="muted">latest durable result</p></div><div class="card"><h3>Run history</h3><strong>${data.run_count ?? 0}</strong><p class="muted">recorded executions</p></div><div class="card"><h3>Rule evidence</h3><strong>${ruleResults.length}</strong><p class="muted">latest rule results</p></div></div><section class="quality-evidence-section"><div class="quality-subheading"><div><h3>Latest rule evidence</h3><p class="muted">Review each rule before changing the promotion decision.</p></div><span class="quality-boundary">${esc(latestStatus)}</span></div><div class="table-wrap"><table><caption class="sr-only">Latest quality rule evidence</caption><thead><tr><th>Rule</th><th>Status</th><th>Message</th></tr></thead><tbody>${ruleResults.map(rule => `<tr><td><strong>${esc(rule.rule_id)}</strong></td><td>${status(rule.status)}</td><td>${esc(rule.message || '—')}</td></tr>`).join('') || '<tr><td colspan="3">No latest rule results.</td></tr>'}</tbody></table></div></section><section class="quality-evidence-section"><div class="quality-subheading"><div><h3>Immutable run history</h3><p class="muted">The trail stays attached to this asset revision.</p></div></div><div class="table-wrap"><table><caption class="sr-only">Quality run history</caption><thead><tr><th>Run</th><th>Asset</th><th>Status</th></tr></thead><tbody>${(data.history || []).map(run => `<tr><td><strong>${esc(run.run_id)}</strong></td><td>${esc(run.asset?.asset_id || '—')}@${esc(run.asset?.version || '—')}</td><td>${status(run.status)}</td></tr>`).join('') || '<tr><td colspan="3">No quality runs.</td></tr>'}</tbody></table></div></section>`;
   } catch (error) {
-    result.innerHTML = `<div class="error"><strong>Could not load quality state.</strong><p>${esc(error.message)}</p></div>`;
+    result.innerHTML = `<div class="error"><strong>Could not load quality state.</strong><p>${esc(error.message)}</p><button class="button" type="button" data-quality-action="retry-state">Retry this revision</button></div>`;
   }
 }
 
@@ -43,7 +43,9 @@ document.addEventListener('click', async event => {
   const values = qualityValues();
   result.textContent = 'Loading…';
   try {
-    if (action === 'contract') {
+    if (action === 'retry-state') {
+      await loadQualityState();
+    } else if (action === 'contract') {
       const data = await get(`/v1/workspaces/${values.workspace}/quality/contracts/${values.asset}/${values.version}`);
       const editor = document.querySelector('#quality-contract');
       if (editor) editor.value = JSON.stringify(data, null, 2);
