@@ -36,6 +36,7 @@ from .query_execution import (
     QueryTransport,
     execute_query,
 )
+from .queryflux_lifecycle import QueryFluxExecution, QueryFluxState, QueryFluxTerminalState
 from .revisions import PipelineRevisionRecord, RevisionApplication, RevisionConflict
 from .runtimes import (
     QueryEngineRuntimeProvider,
@@ -88,6 +89,9 @@ __all__ = (
     "QueryEvidenceReferenceStore",
     "QueryTransport",
     "execute_query",
+    "QueryFluxExecution",
+    "QueryFluxState",
+    "QueryFluxTerminalState",
     "PostgresQueryEvidenceReferenceStore",
     "SqliteQueryEvidenceReferenceStore",
     "PipelineExecutionError",
