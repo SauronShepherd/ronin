@@ -555,3 +555,19 @@ Chromium non-live (`180/180`) and Python 3.11/3.12. This is a technical gate
 improvement, not a release promotion: the 0/13 family ledger and the human,
 provider, legal, security, rollback, artifact and governance gates remain
 open, so the decision stays **NO-GO**.
+
+## Latest candidate and legal evidence — 2026-11-11
+
+The clean candidate `3cf5aa75a468c3e86cf8aceec079a031fde31f0b` completed the
+Docker qualification with **27/27** journeys, zero skips and zero failures;
+strict v0.1 acceptance completed **15/15**. The runtime image digest was
+`sha256:3216bd2e46965cc9b01b5839fdf15019de34c9a568fcdd6c0b8d4db16f47996b`.
+The evidence is preserved outside the repository at
+`C:\Users\angel.alvarez\Downloads\ronin-clean-docker-evidence-3cf5aa7`.
+
+The license qualification still fails closed because 21 locked distributions
+have no policy review decision. An attempt to generate the inventory in a
+fresh `uv` environment also stopped on an exact-lock mismatch (`click`
+expected `8.5.0`, installed `8.5.1`); this is an environment reproducibility
+defect, not a reason to relax the lock or infer legal approval. Legal/NOTICE
+review therefore remains open and the release decision is still **NO-GO**.
