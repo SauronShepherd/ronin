@@ -28,6 +28,7 @@ const descriptions = Object.freeze({
 
 const commands = routesManifest.map(({id}) => ({id, route: id, label: t(`nav.${id}`), description: descriptions[id] || 'Open this Ronin Studio surface.', group: groupByRoute[id] || 'More'}));
 const triggerSelector = '[data-action="open-command"]';
+const RECENT_COMMANDS_KEY = 'ronin.recent-commands';
 
 let dialog;
 let input;
@@ -68,9 +69,16 @@ function ensure() {
   });
 }
 
+function readRecentRoutes() { try { const saved = JSON.parse(localStorage.getItem(RECENT_COMMANDS_KEY) || '[]'); return Array.isArray(saved) ? saved.filter((route, index) => commands.some((command) => command.route === route) && saved.indexOf(route) === index).slice(0, 5) : []; } catch { return []; } }
+
+function rememberRoute(route) { try { localStorage.setItem(RECENT_COMMANDS_KEY, JSON.stringify([route, ...readRecentRoutes().filter((value) => value !== route)].slice(0, 5))); } catch { /* local-only enhancement must never block navigation */ } }
+
 function filtered() {
   const query = (input?.value || '').toLowerCase().trim();
-  return commands.filter((command) => [command.label, command.route, command.description, command.group].some((value) => value.toLowerCase().includes(query)));
+  const matches = commands.filter((command) => [command.label, command.route, command.description, command.group].some((value) => value.toLowerCase().includes(query)));
+  if (query) return matches;
+  const recent = readRecentRoutes();
+  return [...recent.map((route) => matches.find((command) => command.route === route)).filter(Boolean), ...matches.filter((command) => !recent.includes(command.route))];
 }
 
 function render() {
@@ -87,6 +95,7 @@ function render() {
 
 function open(command) {
   if (!command) return;
+  rememberRoute(command.route);
   dialog.close();
   window.location.hash = command.route;
 }
