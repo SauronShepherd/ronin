@@ -675,6 +675,17 @@ El expediente reproducible de esta revisión queda en
 `docs/ui/MANUAL_VISUAL_REVIEW_2026-11-11.md`; sus hallazgos abiertos mantienen
 la firma visual humana en `qualification_pending`.
 
+## 23. Regresión Python completa del candidato P1
+
+La suite `python -m pytest --ignore=tests/perf -q` sobre el mismo código de
+runtime del candidato `8d5f8c0f` terminó `4511 passed, 77 skipped, 0 failed`
+en `502.30s`. Los skips corresponden a Docker/worker, PostgreSQL, S3/Azure,
+OTLP, Trino/SDP/Spark, symlinks y otros proveedores o límites del host; quedan
+enumerados por pytest y no se convierten en passes ni en qualification externa.
+El resultado confirma que la UI de revisión/comparación no rompe los contratos
+Python del candidato. No altera el ledger `0/13` ni cierra los gates de
+proveedores, legal, visual, supply chain, rollback o gobierno.
+
 ## 21. P1 — evidencia de revisiones en Project Studio
 
 Project Studio ahora ofrece una superficie de sólo lectura para consultar las
