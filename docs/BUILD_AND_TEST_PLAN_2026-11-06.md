@@ -665,8 +665,9 @@ comprimidos, y `main` reserva espacio inferior adicional para la barra de
 navegación fija. El diálogo conserva los cinco campos completos para editar el
 contexto sin perder información.
 
-La matriz responsive y de contexto pasa `16/16`; la auditoría web queda en 71
-archivos y 0 fallos. El tamaño candidate-bound sube a `2,133,306` bytes por la
+La matriz responsive y de contexto pasa `16/16`; la suite Chromium candidate-bound
+pasa `148/148` con un worker; la auditoría web queda en 71 archivos y 0 fallos.
+El tamaño candidate-bound sube a `2,133,306` bytes por la
 metadata visual y la reserva de scroll; el baseline se actualiza de forma
 explícita y cualquier incremento posterior seguirá fallando cerrado. La suite
 Chromium completa sigue siendo obligatoria antes de aceptar este cambio.
