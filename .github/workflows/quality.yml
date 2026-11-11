@@ -63,7 +63,7 @@ jobs:
 
       - name: Install Chromium
         working-directory: web-tests
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Run non-live browser suite
         working-directory: web-tests
