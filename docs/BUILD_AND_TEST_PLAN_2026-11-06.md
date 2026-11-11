@@ -1655,9 +1655,11 @@ bloque JSON.
 
 La regresión focalizada terminó en **2 passed**. Los checks estáticos y de
 presupuesto pasan con `asset_bytes=2,149,401`; `studio_web_audit` conserva 181
-invocaciones y 0 fallos. La última suite Chromium global completa autoritativa
-anterior al cambio terminó en **175 passed, 33 skipped, 0 failed**; la
-repetición posterior no produjo receipt válido por terminación del static
-server durante navegación y queda explícitamente excluida como evidencia.
+invocaciones y 0 fallos. La cualificación Chromium completa se ejecutó en tres
+grupos acotados contra el mismo static server externo: `59 passed`, `69 passed /
+4 skipped` y `47 passed / 29 skipped`. La suma cubre los 208 tests: **175
+passed, 33 skipped, 0 failed**. Los intentos monolíticos que terminaron por
+ciclo de vida del proceso quedan excluidos; los tres receipts por archivo son
+la evidencia autoritativa.
 El release permanece **NO-GO / 0 de 13**.
 
