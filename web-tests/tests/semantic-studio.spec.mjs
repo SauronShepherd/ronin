@@ -21,6 +21,17 @@ test('Semantic Studio presents metric and join rows before raw evidence', async 
   await expect(page.locator('#semantic-join-result table')).toContainText('Ada');
 });
 
+test('Semantic Studio follows the active shell workspace and project', async ({ page }) => {
+  await page.goto('./#semantic');
+  await page.evaluate(() => {
+    globalThis.roninStudioContext = { workspace: 'workspace-shell', project: 'project-shell' };
+    window.dispatchEvent(new CustomEvent('ronin-context-change', { detail: globalThis.roninStudioContext }));
+  });
+  await expect(page.locator('#semantic-query-form [name="workspace"]')).toHaveValue('workspace-shell');
+  await expect(page.locator('#semantic-query-form [name="project"]')).toHaveValue('project-shell');
+  await expect(page.locator('#semantic-bundle-import-form [name="project"]')).toHaveValue('project-shell');
+});
+
 test('Semantic Studio exports an integrity-checked archive and previews then imports only the reviewed file and scope', async ({ page }) => {
   const archive = Buffer.from('semantic-bundle-fixture');
   const digest = createHash('sha256').update(archive).digest('hex');

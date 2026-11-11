@@ -17,6 +17,8 @@ function render() {
   if (location.hash.slice(1) !== 'semantic') return;
   const view = document.querySelector('#view');
   if (!view) return;
+  const workspace = esc(globalThis.roninStudioContext?.workspace || 'default');
+  const project = esc(globalThis.roninStudioContext?.project || 'examples/demo');
   view.innerHTML = `${page('Semantic Studio', 'METRICS · DASHBOARDS')}
     <section class="panel semantic-hero">
       <div><p class="eyebrow">DECISION LAYER</p><h2>Make metrics explainable before they become dashboards.</h2><p>Keep model meaning, dashboard intent and portable evidence in one workspace-scoped review loop.</p></div>
@@ -25,8 +27,8 @@ function render() {
     <section class="panel semantic-context-panel">
       <div class="semantic-section-heading"><div><p class="eyebrow">MODEL REGISTRY</p><h2>Start from governed meaning.</h2><p class="muted">Load the models that define the measures your team can trust.</p></div><span class="semantic-section-index">01</span></div>
       <form id="semantic-model-form" class="toolbar semantic-scope-form">
-        <label>Workspace<input class="field" name="workspace" value="default" required></label>
-        <label>Project<input class="field" name="project" value="examples/demo" required></label>
+        <label>Workspace<input class="field" name="workspace" value="${workspace}" required></label>
+        <label>Project<input class="field" name="project" value="${project}" required></label>
         <button class="button primary" type="submit">List models</button>
       </form>
       <div id="semantic-model-result" class="code semantic-result" aria-live="polite">No models loaded.</div>
@@ -35,7 +37,7 @@ function render() {
       <section class="panel semantic-dashboard-panel">
         <div class="semantic-section-heading"><div><p class="eyebrow">DASHBOARD WORKBENCH</p><h2>Turn the model into a decision.</h2><p class="muted">Save a definition, execute it against the current scope or inspect what already exists.</p></div><span class="semantic-section-index">02</span></div>
         <form id="semantic-dashboard-form" class="stack semantic-dashboard-form">
-          <div class="grid three"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Project<input class="field" name="project" value="examples/demo" required></label><label>Dashboard ID<input class="field" name="dashboard" value="sales_dashboard" required></label></div>
+          <div class="grid three"><label>Workspace<input class="field" name="workspace" value="${workspace}" required></label><label>Project<input class="field" name="project" value="${project}" required></label><label>Dashboard ID<input class="field" name="dashboard" value="sales_dashboard" required></label></div>
           <label>Definition<textarea class="field" name="definition" rows="7">{"id":"sales_dashboard","name":"Sales","tiles":[{"id":"orders","title":"Orders","chart":"number","query":{"model_id":"sales","measures":["orders"],"dimensions":[],"filters":[],"limit":100}}]}</textarea></label>
           <div class="toolbar semantic-actions"><button class="button" type="submit" name="action" value="list">List dashboards</button><button class="button primary" type="submit" name="action" value="execute">Execute dashboard</button><button class="button" type="submit" name="action" value="save">Save dashboard</button></div>
         </form>
@@ -45,10 +47,10 @@ function render() {
     </section>
     <section class="panel semantic-portability-panel">
       <div class="semantic-section-heading"><div><p class="eyebrow">PORTABILITY</p><h2>Move a reviewed semantic surface safely.</h2><p class="muted">Digest, size and target project are verified before import.</p></div><span class="semantic-section-index">03</span></div>
-      <div class="semantic-portability-grid"><div><form id="semantic-bundle-export-form" class="stack"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Project<input class="field" name="project" value="examples/demo" required></label><button class="button" id="semantic-bundle-export" type="button">Download semantic Bundle</button></form></div><div><form id="semantic-bundle-import-form" class="stack"><div class="grid two"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Target project<input class="field" name="project" value="examples/demo" required></label></div><label>Bundle file<input class="field" name="bundle" type="file" accept=".roninbundle,.zip,application/zip" required></label><div class="toolbar semantic-actions"><button class="button" type="button" id="semantic-bundle-preview">Verify and preview</button><button class="button primary" type="button" id="semantic-bundle-import" disabled>Import reviewed Bundle</button></div></form></div></div>
+      <div class="semantic-portability-grid"><div><form id="semantic-bundle-export-form" class="stack"><label>Workspace<input class="field" name="workspace" value="${workspace}" required></label><label>Project<input class="field" name="project" value="${project}" required></label><button class="button" id="semantic-bundle-export" type="button">Download semantic Bundle</button></form></div><div><form id="semantic-bundle-import-form" class="stack"><div class="grid two"><label>Workspace<input class="field" name="workspace" value="${workspace}" required></label><label>Target project<input class="field" name="project" value="${project}" required></label></div><label>Bundle file<input class="field" name="bundle" type="file" accept=".roninbundle,.zip,application/zip" required></label><div class="toolbar semantic-actions"><button class="button" type="button" id="semantic-bundle-preview">Verify and preview</button><button class="button primary" type="button" id="semantic-bundle-import" disabled>Import reviewed Bundle</button></div></form></div></div>
       <div id="semantic-bundle-result" class="code semantic-result" aria-live="polite">Choose a Bundle to review before importing.</div>
     </section>
-    <section class="semantic-lab-grid"><section class="panel"><div class="semantic-section-heading"><div><p class="eyebrow">QUERY LAB</p><h2>Ask one bounded question.</h2></div><span class="semantic-section-index">04</span></div><form id="semantic-query-form" class="stack"><div class="grid two"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Project<input class="field" name="project" value="examples/demo" required></label></div><label>Metric query JSON<textarea class="field sql-editor" name="query" rows="5">{"model_id":"sales","measures":["revenue"],"dimensions":[],"filters":[],"limit":100}</textarea><button class="button primary" type="submit">Run metric query</button></form><div id="semantic-query-result" class="code semantic-result" aria-live="polite">No query executed.</div></section><section class="panel"><div class="semantic-section-heading"><div><p class="eyebrow">COMPOSITION</p><h2>Join with intent.</h2></div><span class="semantic-section-index">05</span></div><form id="semantic-join-form" class="stack"><div class="grid two"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Project<input class="field" name="project" value="examples/demo" required></label></div><label>Join JSON<textarea class="field sql-editor" name="join" rows="5">{"base_model_id":"sales","steps":[],"limit":100}</textarea><button class="button" type="submit">Run join</button></form><div id="semantic-join-result" class="code semantic-result" aria-live="polite">No join executed.</div></section></section>`;
+    <section class="semantic-lab-grid"><section class="panel"><div class="semantic-section-heading"><div><p class="eyebrow">QUERY LAB</p><h2>Ask one bounded question.</h2></div><span class="semantic-section-index">04</span></div><form id="semantic-query-form" class="stack"><div class="grid two"><label>Workspace<input class="field" name="workspace" value="${workspace}" required></label><label>Project<input class="field" name="project" value="${project}" required></label></div><label>Metric query JSON<textarea class="field sql-editor" name="query" rows="5">{"model_id":"sales","measures":["revenue"],"dimensions":[],"filters":[],"limit":100}</textarea><button class="button primary" type="submit">Run metric query</button></form><div id="semantic-query-result" class="code semantic-result" aria-live="polite">No query executed.</div></section><section class="panel"><div class="semantic-section-heading"><div><p class="eyebrow">COMPOSITION</p><h2>Join with intent.</h2></div><span class="semantic-section-index">05</span></div><form id="semantic-join-form" class="stack"><div class="grid two"><label>Workspace<input class="field" name="workspace" value="${workspace}" required></label><label>Project<input class="field" name="project" value="${project}" required></label></div><label>Join JSON<textarea class="field sql-editor" name="join" rows="5">{"base_model_id":"sales","steps":[],"limit":100}</textarea><button class="button" type="submit">Run join</button></form><div id="semantic-join-result" class="code semantic-result" aria-live="polite">No join executed.</div></section></section>`;
   reviewedBundle = null;
 }
 
@@ -219,5 +221,6 @@ document.addEventListener('click', async event => {
 
 setTimeout(() => {
   window.addEventListener('hashchange', render);
+  window.addEventListener('ronin-context-change', () => { if (location.hash.slice(1) === 'semantic') window.setTimeout(render, 0); });
   if (location.hash.slice(1) === 'semantic') render();
 }, 0);

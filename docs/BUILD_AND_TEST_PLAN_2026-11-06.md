@@ -1719,6 +1719,17 @@ La regresión focalizada de Semantic Studio terminó en **5 passed, 0 failed**.
 `studio_web_audit` mantiene 0 fallos y el budget ratificado es
 `asset_bytes=2,155,744`. El release permanece **NO-GO / 0 de 13**.
 
+## 94. Semantic Studio sigue el contexto global
+
+Los formularios de modelos, dashboards, bundles, metric query y join inicializan
+workspace/proyecto desde el shell y se reconstruyen de forma segura cuando el
+contexto cambia, evitando operaciones semánticas contra `default/examples/demo`
+por accidente.
+
+La regresión focalizada de Semantic Studio terminó en **6 passed, 0 failed**.
+`studio_web_audit` mantiene 0 fallos y el budget ratificado es
+`asset_bytes=2,156,053`. El release permanece **NO-GO / 0 de 13**.
+
 ## 88. SQL local muestra resultados tabulares antes de la evidencia cruda
 
 El resultado de SQL local sigue el mismo contrato de lectura que QueryFlux:
