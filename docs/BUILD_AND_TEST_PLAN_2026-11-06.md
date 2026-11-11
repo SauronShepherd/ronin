@@ -1708,6 +1708,17 @@ La regresión focalizada de Alerts terminó en **3 passed, 0 failed**.
 `studio_web_audit` mantiene 0 fallos y el budget ratificado es
 `asset_bytes=2,154,557`. El release permanece **NO-GO / 0 de 13**.
 
+## 93. Semantic Studio muestra filas de métricas antes del JSON
+
+Las operaciones de metric query y join ahora muestran filas y columnas cuando
+el contrato devuelve resultados tabulares, además de filas cargadas y total.
+La respuesta completa queda bajo `Advanced: raw query response`; los flujos de
+modelos, dashboards y bundles permanecen sin cambios.
+
+La regresión focalizada de Semantic Studio terminó en **5 passed, 0 failed**.
+`studio_web_audit` mantiene 0 fallos y el budget ratificado es
+`asset_bytes=2,155,744`. El release permanece **NO-GO / 0 de 13**.
+
 ## 88. SQL local muestra resultados tabulares antes de la evidencia cruda
 
 El resultado de SQL local sigue el mismo contrato de lectura que QueryFlux:

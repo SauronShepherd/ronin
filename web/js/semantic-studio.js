@@ -1,8 +1,17 @@
 import { get, post, put } from './api.js';
-import { json, page } from './dom.js';
+import { esc, json, page } from './dom.js';
 
 const MAX_BUNDLE_BYTES = 700 * 1024;
 let reviewedBundle = null;
+
+function renderSemanticQuery(output, payload, label) {
+  const columns = (payload?.columns || []).map(column => typeof column === 'string' ? column : column?.name).filter(Boolean);
+  const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+  if (!columns.length) { output.textContent = json(payload); return; }
+  const cell = value => esc(value === null || value === undefined ? '' : typeof value === 'object' ? JSON.stringify(value) : value);
+  output.innerHTML = `<div class="semantic-result-summary"><strong>${rows.length} row${rows.length === 1 ? '' : 's'} loaded</strong><span>${esc(label)} · ${payload.row_count ?? rows.length} total</span></div><div class="table-wrap"><table><caption class="sr-only">${esc(label)} result</caption><thead><tr>${columns.map(column => `<th>${esc(column)}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${columns.map((_, index) => `<td>${cell(row?.[index])}</td>`).join('')}</tr>`).join('')}</tbody></table></div><details class="semantic-raw"><summary>Advanced: raw query response</summary><pre class="code"></pre></details>`;
+  output.querySelector('pre').textContent = json(payload);
+}
 
 function render() {
   if (location.hash.slice(1) !== 'semantic') return;
@@ -105,10 +114,10 @@ document.addEventListener('submit', async event => {
       document.querySelector('#semantic-dashboard-result').textContent = json(result);
     } else if (form.id === 'semantic-query-form') {
       event.preventDefault();
-      document.querySelector('#semantic-query-result').textContent = json(await post(`${path}query`, JSON.parse(String(data.get('query')))));
+      renderSemanticQuery(document.querySelector('#semantic-query-result'), await post(`${path}query`, JSON.parse(String(data.get('query')))), 'Metric query');
     } else if (form.id === 'semantic-join-form') {
       event.preventDefault();
-      document.querySelector('#semantic-join-result').textContent = json(await post(`${path}join`, JSON.parse(String(data.get('join')))));
+      renderSemanticQuery(document.querySelector('#semantic-join-result'), await post(`${path}join`, JSON.parse(String(data.get('join')))), 'Semantic join');
     }
   } catch (error) {
     const target = form.id === 'semantic-model-form' ? '#semantic-model-result'

@@ -10,6 +10,17 @@ test('Semantic Studio presents a responsive decision workbench', async ({ page }
   expect(widths.scroll).toBe(widths.client);
 });
 
+test('Semantic Studio presents metric and join rows before raw evidence', async ({ page }) => {
+  await page.route('**/semantic/query', route => route.fulfill({ json: { columns: ['metric', 'value'], rows: [['revenue', 42]], row_count: 1 } }));
+  await page.route('**/semantic/join', route => route.fulfill({ json: { columns: ['customer', 'revenue'], rows: [['Ada', 42]], row_count: 1 } }));
+  await page.goto('./#semantic');
+  await page.getByRole('button', { name: 'Run metric query' }).click();
+  await expect(page.locator('#semantic-query-result table')).toContainText('42');
+  await expect(page.locator('#semantic-query-result .semantic-raw')).not.toHaveAttribute('open', '');
+  await page.getByRole('button', { name: 'Run join' }).click();
+  await expect(page.locator('#semantic-join-result table')).toContainText('Ada');
+});
+
 test('Semantic Studio exports an integrity-checked archive and previews then imports only the reviewed file and scope', async ({ page }) => {
   const archive = Buffer.from('semantic-bundle-fixture');
   const digest = createHash('sha256').update(archive).digest('hex');
