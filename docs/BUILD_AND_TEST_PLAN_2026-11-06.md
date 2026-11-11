@@ -1678,8 +1678,8 @@ ejecución final sobre el árbol actual terminó en **`4516 passed, 77 skipped,
 0 failed`**. La suite de consistencia de status/matriz quedó en `6 passed`,
 `generate_public_v1_status --check`, `studio_web_audit` y `studio_budget
 --check` pasan, y `git diff --check` no encuentra errores.
-únicamente por la referencia stale de la matriz. La prueba de consistencia
-posterior terminó en **7 passed**, `generate_public_v1_status --check` pasó,
+La primera ejecución falló únicamente por la referencia stale de la matriz; la
+prueba de consistencia posterior terminó en **6 passed**, `generate_public_v1_status --check` pasó,
 `studio_web_audit` mantiene 0 fallos y el budget ratificado es
 `asset_bytes=2,156,896`. El release permanece **NO-GO / 0 de 13** hasta
 repetir la suite completa sobre el commit que contiene esta reconciliación y

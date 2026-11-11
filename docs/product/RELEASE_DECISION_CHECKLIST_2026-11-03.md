@@ -4,7 +4,7 @@
 
 **Last evidence review:** 11 November 2026
 
-**Candidate SHA:** exact current tracked candidate `4fe98da8ccaaee034ffdac11b2d4946965d87440`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
+**Candidate SHA:** exact current tracked candidate `4bfa5e15f27f05219d202303cc8759a72371ee2f`; the current candidate-bound technical receipts are recorded below. Release paperwork is not yet approved and the canonical worktree retains unrelated user-owned artifacts.
 
 **Qualification progress:** 0/13 Public v1 capability families
 **Launch guidance:** delay the public release until all mandatory rows below are closed on one clean candidate.
@@ -20,7 +20,7 @@ status, explanation and evidence reference. A mere pending test is represented
 as `qualification_pending`; independent human and candidate blockers remain
 explicit rather than being collapsed into that test status.
 
-## 11 November exact-candidate revalidation — current `4fe98da`
+## 11 November exact-candidate revalidation — current `4bfa5e15`
 
 The reconciled tracked candidate is technically green in the locally executable
 lanes: the complete Python suite finished with **`4516 passed, 77 skipped,
