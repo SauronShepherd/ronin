@@ -28,7 +28,7 @@ The scorecard is deliberately stricter than a passing browser suite: automated t
 
 ## Current iteration baseline
 
-The 2026-11-11 candidate has automated evidence for the shell, context propagation, command palette, mobile navigation clearance, Project Studio revision history/comparison, exact-head Chromium and the Python suite. It does **not** yet have a green score for every Public v1 Studio, nor the human/product, provider, legal, security, rollback and governance approvals. Those remain explicit release blockers in `docs/product/public-v1-status.json` and `docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md`.
+The 2026-11-11 candidate has automated evidence for the shell, context propagation, command palette, mobile navigation clearance, Project Studio revision history/comparison, exact-head Chromium (`164 passed, 33 explicit skips, 0 failed`) and the Python suite (`4511 passed, 77 skipped, 0 failed`). It does **not** yet have a green score for every Public v1 Studio, nor the human/product, provider, legal, security, rollback and governance approvals. Those remain explicit release blockers in `docs/product/public-v1-status.json` and `docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md`.
 
 ## Next review order
 
@@ -42,7 +42,7 @@ The 2026-11-11 candidate has automated evidence for the shell, context propagati
 
 | Surface | Automated evidence | Current product score |
 | --- | --- | --- |
-| Shell, navigation and responsive layout | Chromium global `158/158`; route traversal, keyboard, Axe and viewport matrix green; web audit `0` failures | Yellow — human visual sign-off still open |
+| Shell, navigation and responsive layout | Chromium global `164 passed / 33 explicit skips / 0 failed`; route traversal, keyboard, Axe and viewport matrix green; web audit `0` failures | Yellow — human visual sign-off still open |
 | Workspace / Project | Workspace retry `3/3`; context, revision history and comparison journeys green | Yellow — provider/source-control qualification absent |
 | Environment | `5/5`, including 503 → retry, authoring, reversible governance and serious/critical Axe clean | Yellow — runtime/provider qualification absent |
 | Scheduler | `3/3`, including durable operations, backfill and delivery retry | Yellow — live worker/HA qualification absent |
