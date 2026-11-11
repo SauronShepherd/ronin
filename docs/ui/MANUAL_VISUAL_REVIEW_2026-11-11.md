@@ -1,7 +1,7 @@
 # Ronin Studio — manual visual review
 
 Date: 2026-11-11  
-Candidate: runtime/test `2406cd42`  
+Candidate: runtime/test `dfe60dc1`
 Reviewer mode: local Chromium, static server, no backend claims
 
 ## Scope and method

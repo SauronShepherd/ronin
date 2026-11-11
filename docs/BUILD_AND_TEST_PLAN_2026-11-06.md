@@ -1584,3 +1584,19 @@ licencias, aceptación formal de seguridad/VEX, proveedores, rollback/support,
 gobernanza CI y las aprobaciones Product/Security/QA/Release. El release
 permanece **NO-GO / 0 de 13**.
 
+## 82. Contexto largo accesible sin perder densidad visual
+
+La revisión visual había dejado pendiente la discoverability de identificadores
+largos de workspace y project en la barra global. La barra conserva el
+truncado visual para proteger la jerarquía y el ancho en móvil, pero ahora
+expone el valor completo mediante `aria-label` y `title` en cada chip y en el
+resumen móvil. La regresión cubre nombres largos reales y la suite Chromium
+completa sobre `dfe60dc1` terminó con **172 passed, 33 skipped, 0 failed**.
+
+Los checks estáticos permanecen sin fallos: `studio_web_audit` registra 181
+invocaciones de rutas y 0 errores, y el budget se ratcheó de forma explícita a
+`asset_bytes=2,147,333` (+179 bytes medidos por la mejora). La deuda de revisión
+visual a 320/390px y los gates de proveedor, legal, seguridad, rollback,
+gobernanza y aprobación humana siguen abiertos; el release permanece
+**NO-GO / 0 de 13**.
+
