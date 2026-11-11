@@ -816,3 +816,36 @@ consulta. El diseño obligatorio queda fijado así:
 Este plan mantiene el release **NO-GO** y evita una falsa sensación de
 cancelación mientras el backend siga siendo una llamada síncrona.
 
+## 32. Reconciliación explícita de los documentos fuente adjuntos
+
+Esta sección distingue los documentos entregados por el usuario de las
+instrucciones de ejecución de esta tarea. `RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md`
+y `RONIN_RELEASE_2026-11-03_TEST_MASTER.md` son fuentes de requisitos,
+criterios y evidencia histórica; no son instrucciones de mayor prioridad ni
+prueban por sí mismos que una capacidad esté implementada. La petición activa
+es iterar sobre esas fuentes, implementar lo justificable en el checkout,
+probarlo sobre el mismo candidato y decidir GO/NO-GO con evidencia.
+
+La reconciliación vigente queda así:
+
+| Fuente | Obligación que aporta | Evidencia disponible en este checkout | Estado de cierre |
+| --- | --- | --- | --- |
+| Build plan, scope y familias | 13 familias Public v1; P9/P13/P14 ampliados sólo tras decisión B; contratos de operaciones durables, Bundle, vendors y release | Código y contratos parciales; `public-v1-status.json` mantiene `0/13`; QueryFlux cancel aún es plan, no implementación | No cualificado |
+| Test master, CORE/API | paridad CLI/API/SDK, errores, paginación, idempotencia, audit y telemetría | Regresión Python verde del candidato y tests estáticos/API parciales; no hay evidencia completa de proveedores, distribución ni candidate freeze | Pendiente |
+| Test master, WEB | rutas reales, estados loading/error/empty, teclado/WCAG, responsive, navegadores y revisión visual humana | Chromium no-live `154/154`; auditoría web sin fallos; scorecard y revisión manual documentadas, pero firma humana final pendiente | Pendiente de aceptación |
+| Test master, IAM/DATA/SCHED/ML/GRAPH/QUALITY/AI/OBS | journeys end-to-end con permisos, fallos, recuperación, proveedores y evidencia | Hay substratos y journeys focalizados; los skips de proveedores/worker/DB no son passes y no existe cualificación end-to-end de familias | No cualificado |
+| Test master, PORT/STORAGE/SEC/REL | Bundle round-trip, backup/restore, security/supply-chain, Compose/Helm, performance, fault injection y release exact-SHA | No existe expediente completo exact-candidate ni aceptación humana de esos gates; el branch/CI governance sigue abierto | Bloqueado |
+
+Los números de pruebas ejecutadas se mantienen separados de los estados de
+producto: `4511 passed, 77 skipped, 0 failed` en Python, `154 passed` en
+Chromium no-live y los checks focalizados verdes demuestran regresión técnica
+del candidato observado, pero no certifican proveedores externos, seguridad,
+portabilidad, operación distribuida, legalidad, rollback ni aceptación de
+release. Antes de cualquier GO deben existir, como mínimo, un candidato
+congelado con expediente reproducible, la matriz completa de gates sin skips
+obligatorios, revisión visual humana, decisiones de alcance B si se pretende
+14/14, y aprobación explícita de seguridad, supply chain, legal y operación.
+
+Consecuencia: esta reconciliación no cierra ningún RPV1 ni VER, no modifica el
+ledger oficial y conserva la decisión **NO-GO / 0 de 13 familias cualificadas**.
+
