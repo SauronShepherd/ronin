@@ -599,3 +599,16 @@ The captured receipt is preserved outside the repository at
 Skips are environment/provider-gated cases explicitly listed by pytest; they
 are not counted as release qualification. This closes the local Python
 regression stage only and does not change the overall **NO-GO** decision.
+
+## Clean Docker qualification receipt — 2026-11-11
+
+The exact clean checkout `ef85e6f47564a1beee7f793c33825a01a2180492` completed
+the Docker qualification with **27/27 passed**, zero skipped and zero failed.
+Strict v0.1 acceptance completed **15/15** with zero skips, xfails, failures,
+errors or missing journeys. The runtime image digest was
+`sha256:ef9fc66f59a083851595db5dea4a6d3f7fc2e1e3eb56de717c53d3e797bfefbd`.
+Evidence is preserved outside the repository at
+`C:\Users\angel.alvarez\Downloads\ronin-docker-evidence-ef85e6f`.
+This closes the clean Docker acceptance stage for that exact candidate; legal,
+provider, family, visual, security and governance gates remain open, so the
+release decision stays **NO-GO**.
