@@ -53,8 +53,8 @@ def test_helm_qualification_runner_isolated_and_checks_restart_persistence() -> 
     assert "helm rollback ronin 1" in script
     assert "helm_upgrade" in script
     assert "helm_rollback" in script
-    assert "historyPayload.history" in script
-    assert "Helm 4 wraps JSON history" in script
+    assert "Get-HelmRevisionRecords" in script
+    assert "-UseBasicParsing" in script
     assert "rollback_status = $rollbackStatus" in script
     assert "Isolated kind cluster remains after cleanup" in script
     assert "[string]$DockerEvidenceDirectory" in script

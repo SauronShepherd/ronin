@@ -52,6 +52,22 @@ function Add-Phase([string]$Name, [string]$Status) {
     Write-Output ("{0}: {1}" -f $Name, $Status)
 }
 
+function Get-HelmRevisionRecords($Value) {
+    if ($null -eq $Value) { return }
+    if ($Value -is [System.Collections.IEnumerable] -and $Value -isnot [string]) {
+        foreach ($item in $Value) { Get-HelmRevisionRecords $item }
+        return
+    }
+    $revisionProperty = $Value.PSObject.Properties["revision"]
+    if ($null -ne $revisionProperty) {
+        $Value
+        return
+    }
+    foreach ($property in $Value.PSObject.Properties) {
+        Get-HelmRevisionRecords $property.Value
+    }
+}
+
 $helm = Resolve-Executable $HelmPath
 $kind = Resolve-Executable $KindPath
 $kubectl = Resolve-Executable $KubectlPath
@@ -225,15 +241,12 @@ server:
     $historyPayload = (& $helm history ronin --kube-context $kubeContext --namespace $namespace -o json | ConvertFrom-Json)
     # Helm 4 wraps JSON history in a `history` property; Helm 3 emitted the
     # revisions directly. Normalize both forms before enforcing the upgrade gate.
-    $history = if ($null -ne $historyPayload.history) {
-        @($historyPayload.history)
-    } else {
-        @($historyPayload)
-    }
+    $history = @(Get-HelmRevisionRecords $historyPayload)
     if ($LASTEXITCODE -ne 0 -or $history.Count -lt 2) {
         throw "Helm upgrade rehearsal did not create a second release revision."
     }
-    $upgradeRevision = [int]$history[-1].revision
+    $upgradeRevision = [int](($history | Sort-Object { [int]$_.revision } | Select-Object -Last 1).revision)
+    if ($upgradeRevision -lt 2) { throw "Helm history did not expose a valid upgrade revision." }
     Add-Phase "helm_upgrade" "passed (revision $upgradeRevision)"
 
     & $helm rollback ronin 1 --kube-context $kubeContext --namespace $namespace --wait --timeout 180s
@@ -257,7 +270,7 @@ server:
     do {
         if ($forward.HasExited) { throw "kubectl port-forward exited with code $($forward.ExitCode)." }
         try {
-            $health = Invoke-WebRequest "http://127.0.0.1:$port/healthz" -TimeoutSec 2
+            $health = Invoke-WebRequest "http://127.0.0.1:$port/healthz" -UseBasicParsing -TimeoutSec 2
             if ($health.StatusCode -eq 200) { $healthStatus = $health.StatusCode }
         } catch {
             Start-Sleep -Seconds 1
@@ -266,7 +279,7 @@ server:
     if ($null -eq $healthStatus) { throw "Ronin /healthz did not return HTTP 200." }
     Add-Phase "health_endpoint" "passed (HTTP $healthStatus)"
 
-    $studio = Invoke-WebRequest "http://127.0.0.1:$port/studio/" -TimeoutSec 10
+    $studio = Invoke-WebRequest "http://127.0.0.1:$port/studio/" -UseBasicParsing -TimeoutSec 10
     $studioStatus = $studio.StatusCode
     if ($studioStatus -ne 200) { throw "Studio did not return HTTP 200." }
     $jobs = Invoke-RestMethod "http://127.0.0.1:$port/v1/jobs?project=examples%2Fdemo&limit=10" `
@@ -275,7 +288,7 @@ server:
     Add-Phase "studio_and_authorized_api" "passed (Studio HTTP $studioStatus; jobs API HTTP $jobsStatus)"
 
     $submitBody = '{"project":"examples/demo","target":"notebooks/etl","parameters":{"limit":7}}'
-    $submittedResponse = Invoke-WebRequest "http://127.0.0.1:$port/v1/jobs" -Method Post `
+    $submittedResponse = Invoke-WebRequest "http://127.0.0.1:$port/v1/jobs" -UseBasicParsing -Method Post `
         -Headers @{ Authorization = "Bearer $token"; "Idempotency-Key" = "helm-$runId" } `
         -ContentType "application/json" -Body $submitBody -TimeoutSec 10
     if ($submittedResponse.StatusCode -ne 201) { throw "Job submit did not return HTTP 201." }
@@ -324,16 +337,16 @@ server:
 } finally {
     if ($forward -and -not $forward.HasExited) { Stop-Process -Id $forward.Id -Force }
     try {
-        $remainingClusters = @(& $kind get clusters 2>$null)
-        if ($LASTEXITCODE -ne 0 -and $remainingClusters.Count -gt 0) { throw "Could not inspect kind clusters during cleanup." }
+        try { $remainingClusters = @(& $kind get clusters 2>&1) } catch { $remainingClusters = @("No kind clusters found.") }
+        if ($LASTEXITCODE -ne 0 -and -not (($remainingClusters -join " ") -match "No kind clusters found")) { throw "Could not inspect kind clusters during cleanup." }
         if ($remainingClusters -contains $clusterName) {
             & $kubectl --context $kubeContext delete namespace $namespace `
                 --ignore-not-found=true --wait=true 2>$null | Out-Null
             & $kind delete cluster --name $clusterName
             if ($LASTEXITCODE -ne 0) { throw "Could not delete isolated kind cluster '$clusterName'." }
         }
-        $remainingClusters = @(& $kind get clusters 2>$null)
-        if (($LASTEXITCODE -ne 0 -and $remainingClusters.Count -gt 0) -or $remainingClusters -contains $clusterName) {
+        try { $remainingClusters = @(& $kind get clusters 2>&1) } catch { $remainingClusters = @("No kind clusters found.") }
+        if ((($LASTEXITCODE -ne 0 -and -not (($remainingClusters -join " ") -match "No kind clusters found")) -or $remainingClusters -contains $clusterName)) {
             throw "Isolated kind cluster remains after cleanup."
         }
         $cleanupStatus = "passed"
