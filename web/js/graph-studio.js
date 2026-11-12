@@ -1,5 +1,6 @@
 import { get, post } from './api.js';
 import { json, page } from './dom.js';
+import { confirmImpact } from './features.js';
 
 function render() {
   if (location.hash.slice(1) !== 'graphs') return;
@@ -59,7 +60,7 @@ document.addEventListener('submit', async event => {
     } catch (error) { result.textContent = `Neighbor lookup failed: ${error.message}`; }
   } else if (form.id === 'graph-action-form') {
     event.preventDefault();
-    if (!window.confirm('Execute this authorized graph action?')) return;
+    if (!await confirmImpact('Execute this authorized graph action? The server will apply the declared side effect and preserve its evidence.')) return;
     const queryForm = document.querySelector('#graph-query-form');
     const queryData = new FormData(queryForm);
     const data = new FormData(form);
