@@ -84,6 +84,7 @@ foreach ($name in $environmentNames) {
 
 Import-Module (Join-Path $PSScriptRoot "qualification_python.psm1") -Force
 $python = Get-RoninTestPythonEnvironment -CheckoutRoot $repoRoot
+Add-Type -AssemblyName System.Net.Http
 Start-Transcript -LiteralPath $transcriptPath -Force | Out-Null
 try {
     Write-Output "Source HEAD: $candidateSha"

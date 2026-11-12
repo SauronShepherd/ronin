@@ -16,6 +16,7 @@ def test_trino_runner_uses_a_pinned_image_and_loopback_only() -> None:
     assert "^trinodb/trino@sha256:[0-9a-f]{64}$" in script
     assert '--publish "127.0.0.1:${port}:8080"' in script
     assert '$serverInfo.nodeVersion.version -eq "484"' in script
+    assert "Add-Type -AssemblyName System.Net.Http" in script
 
 
 def test_trino_runner_requires_exact_live_test_manifest_and_no_skips() -> None:
