@@ -117,6 +117,7 @@ class LocalWorkerRuntimeConfig:
     ml_rows: object | None = None
     semantic_refresh_runner: object | None = None
     pipeline_runner: object | None = None
+    queryflux_runner: object | None = None
     excluded_targets: tuple[str, ...] = ("ml-studio.execute",)
 
     def __post_init__(self) -> None:
@@ -518,6 +519,7 @@ class LocalWorkerRuntime:
                             ml_rows=self.config.ml_rows,
                             semantic_refresh_runner=self.config.semantic_refresh_runner,
                             pipeline_runner=self.config.pipeline_runner,
+                            queryflux_runner=self.config.queryflux_runner,
                         ),
                     )
                 except SchedulerWorkloadCancelled:

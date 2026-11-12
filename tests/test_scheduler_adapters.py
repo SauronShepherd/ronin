@@ -72,6 +72,45 @@ def test_scheduler_dispatch_routes_sql_without_notebook_fallback() -> None:
     assert result.evidence_payload()["rows"] == [[1]]
 
 
+def test_scheduler_dispatch_routes_queryflux_to_injected_runner() -> None:
+    seen = {}
+
+    def runner(payload, *, cancellation_requested, run_id):
+        seen.update(payload)
+        assert cancellation_requested is None
+        assert run_id == "run-1"
+        return {"state": "succeeded", "row_count": 1}
+
+    result = execute_scheduler_job(
+        _job(
+            "data-engineering.queryflux-execution.v1",
+            {
+                "workspace_id": "workspace-1",
+                "project_id": "project-1",
+                "run_id": "run-1",
+                "attempt_id": "attempt-1",
+                "sql": "SELECT 1",
+                "engine": "trino",
+            },
+        ),
+        queryflux_runner=runner,
+        run_id="run-1",
+    )
+    assert result.family == "queryflux"
+    assert result.queryflux == {"state": "succeeded", "row_count": 1}
+    assert seen["attempt_id"] == "attempt-1"
+
+
+def test_scheduler_dispatch_rejects_queryflux_without_runner() -> None:
+    with pytest.raises(UnsupportedSchedulerWorkload, match="QueryFlux runner"):
+        execute_scheduler_job(
+            _job(
+                "data-engineering.queryflux-execution.v1",
+                {"workspace_id": "workspace-1", "project_id": "project-1"},
+            )
+        )
+
+
 def test_scheduler_dispatch_rejects_unqualified_family() -> None:
     with pytest.raises(UnsupportedSchedulerWorkload, match="ml.run requires"):
         execute_scheduler_job(_job("ml.run"))

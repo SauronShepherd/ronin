@@ -37,6 +37,7 @@ class SchedulerWorkloadResult:
     ml: dict[str, object] | None = None
     semantic: dict[str, object] | None = None
     pipeline: dict[str, object] | None = None
+    queryflux: dict[str, object] | None = None
 
     def evidence_payload(self) -> dict[str, Any]:
         """Return the portable, deterministic payload stored as scheduler evidence."""
@@ -70,6 +71,8 @@ class SchedulerWorkloadResult:
             return {"family": self.family, "semantic": self.semantic, "version": 1}
         if self.family == "pipeline" and self.pipeline is not None:
             return {"family": self.family, "pipeline": self.pipeline, "version": 1}
+        if self.family == "queryflux" and self.queryflux is not None:
+            return {"family": self.family, "queryflux": self.queryflux, "version": 1}
         raise UnsupportedSchedulerWorkload("scheduler result has no portable evidence payload")
 
 
@@ -98,10 +101,34 @@ def execute_scheduler_job(
     ml_rows: Any | None = None,
     semantic_refresh_runner: Any | None = None,
     pipeline_runner: Any | None = None,
+    queryflux_runner: Callable[..., dict[str, object]] | None = None,
     max_rows: int = 10_000,
     timeout_seconds: int | None = None,
 ) -> SchedulerWorkloadResult:
     """Dispatch a scheduler Job without falling back to notebook semantics."""
+
+    if job.target == "data-engineering.queryflux-execution.v1":
+        if queryflux_runner is None:
+            raise UnsupportedSchedulerWorkload(
+                "data-engineering.queryflux-execution.v1 requires an injected QueryFlux runner"
+            )
+        try:
+            payload = json.loads(job.parameters_json)
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise UnsupportedSchedulerWorkload("QueryFlux parameters are invalid") from exc
+        if not isinstance(payload, dict) or any(
+            not isinstance(payload.get(key), str) or not str(payload[key]).strip()
+            for key in ("workspace_id", "project_id", "run_id", "attempt_id", "sql", "engine")
+        ):
+            raise UnsupportedSchedulerWorkload("QueryFlux parameters are invalid")
+        result = queryflux_runner(
+            payload,
+            cancellation_requested=cancellation_requested,
+            run_id=run_id,
+        )
+        if not isinstance(result, dict):
+            raise UnsupportedSchedulerWorkload("QueryFlux runner returned an invalid result")
+        return SchedulerWorkloadResult(family="queryflux", queryflux=result)
 
     if job.target == "sql.query":
         if sql_engine is None:
