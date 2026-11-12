@@ -424,6 +424,7 @@ class LocalWorkerRuntime:
             "ml.run",
             "semantic.refresh",
             "data-engineering.pipeline-run.v1",
+            "data-engineering.queryflux-execution.v1",
         }:
             if claim.job.target == "sql.query" and self.config.scheduler_sql_engine is None:
                 raise UnsupportedSchedulerWorkload(
@@ -471,6 +472,13 @@ class LocalWorkerRuntime:
             ):
                 raise UnsupportedSchedulerWorkload(
                     "data-engineering.pipeline-run.v1 scheduler execution requires pipeline_runner"
+                )
+            if (
+                claim.job.target == "data-engineering.queryflux-execution.v1"
+                and self.config.queryflux_runner is None
+            ):
+                raise UnsupportedSchedulerWorkload(
+                    "data-engineering.queryflux-execution.v1 requires queryflux_runner"
                 )
             cancellation_watch: asyncio.Task[None] | None = None
             try:

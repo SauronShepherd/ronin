@@ -459,6 +459,84 @@ def test_restart_reclaims_same_run_and_reuses_persisted_cells(tmp_path: Path) ->
     asyncio.run(scenario())
 
 
+def test_restart_reclaims_queryflux_job_and_executes_once(tmp_path: Path) -> None:
+    class QueryFluxRunner:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def __call__(self, payload, *, cancellation_requested, run_id):
+            self.calls += 1
+            assert payload["workspace_id"] == "workspace-1"
+            assert cancellation_requested is None
+            assert run_id == "run-queryflux"
+            return {"state": "succeeded", "row_count": 1, "evidence": {"digest": "d" * 64}}
+
+    async def scenario() -> None:
+        config = _config(tmp_path)
+        store = SqliteJobStore(config.database_path, migration_now=START)
+        payload = json.dumps(
+            {
+                "workspace_id": "workspace-1",
+                "project_id": "project-1",
+                "run_id": "run-queryflux",
+                "attempt_id": "attempt-1",
+                "sql": "SELECT 1",
+                "engine": "trino",
+            },
+            separators=(",", ":"),
+        )
+        store.create_job(
+            Job(
+                id=JobId("job-queryflux"),
+                project_id="project-1",
+                idempotency_key="queryflux-restart-key",
+                request_digest="b" * 64,
+                state=JobState.QUEUED,
+                created_at=START,
+                updated_at=START,
+                target="data-engineering.queryflux-execution.v1",
+                parameters_json=payload,
+            ),
+            Run(
+                id=RunId("run-queryflux"),
+                job_id=JobId("job-queryflux"),
+                ordinal=1,
+                state=RunState.PENDING,
+                not_before=START,
+                created_at=START,
+                updated_at=START,
+            ),
+        )
+        stale = store.claim_next_run(
+            owner="crashed-queryflux-worker",
+            lease_token=LeaseToken("crashed-queryflux-lease"),
+            attempt_id=AttemptId("attempt-crashed"),
+            lease_seconds=30,
+            now=START,
+        )
+        assert stale is not None
+        runner = QueryFluxRunner()
+        replacement_config = replace(config, queryflux_runner=runner)
+        async with LocalWorkerRuntime(
+            replacement_config,
+            migration_now=AFTER_EXPIRY,
+            engine_path="docker",
+            now=_Clock(AFTER_EXPIRY),
+        ) as runtime:
+            outcome = await runtime.run_once(
+                attempt_id=AttemptId("attempt-replacement"),
+                lease_token=LeaseToken("replacement-queryflux-lease"),
+            )
+        assert outcome.reclaimed_run_ids == (RunId("run-queryflux"),)
+        assert outcome.execution is not None
+        assert outcome.execution.state.value == "succeeded"
+        assert runner.calls == 1
+        final_job = store.get_job(JobId("job-queryflux"))
+        assert final_job is not None and final_job.state is JobState.SUCCEEDED
+
+    asyncio.run(scenario())
+
+
 def test_run_forever_idle_shutdown_interrupts_poll_wait(tmp_path: Path) -> None:
     async def scenario() -> None:
         config = _config(tmp_path, poll_seconds=30.0)
