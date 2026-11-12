@@ -261,6 +261,7 @@ def test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate(tmp_pa
             "RONIN_IMAGE": "sha256:" + "1" * 64,
             "RONIN_QUERYFLUX_URL": _TRINO_URL if _TRINO_URL.endswith("/") else _TRINO_URL + "/",
             "RONIN_WORKER_LEASE_SECONDS": "2",
+            "RONIN_WORKER_HEARTBEAT_INTERVAL_SECONDS": "0.5",
             "RONIN_WORKER_EXCLUDED_TARGETS": "",
         }
     )

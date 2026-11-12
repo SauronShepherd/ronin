@@ -898,6 +898,16 @@ def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
         raise CliError("RONIN_WORKER_LEASE_SECONDS must be an integer") from exc
     if lease_seconds < 2:
         raise CliError("RONIN_WORKER_LEASE_SECONDS must be at least 2")
+    try:
+        heartbeat_interval = float(
+            os.environ.get("RONIN_WORKER_HEARTBEAT_INTERVAL_SECONDS", "10")
+        )
+    except ValueError as exc:
+        raise CliError("RONIN_WORKER_HEARTBEAT_INTERVAL_SECONDS must be numeric") from exc
+    if not 0 < heartbeat_interval < lease_seconds:
+        raise CliError(
+            "RONIN_WORKER_HEARTBEAT_INTERVAL_SECONDS must be positive and shorter than the lease"
+        )
     return LocalWorkerRuntimeConfig(
         paths=WorkerPaths(workspace, database.parent),
         owner=_env("RONIN_WORKER_OWNER", f"worker-{os.getpid()}"),
@@ -908,6 +918,7 @@ def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
         excluded_targets=excluded_targets,
         queryflux_runner=queryflux_runner,
         lease_seconds=lease_seconds,
+        heartbeat_interval_seconds=heartbeat_interval,
     )
 
 
