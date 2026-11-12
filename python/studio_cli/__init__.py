@@ -12,6 +12,7 @@ import shutil
 import sqlite3
 import sys
 import time
+import urllib.request
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -20,6 +21,21 @@ from typing import Literal, cast
 from studio_core import GrantSet, ProjectManifest
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import DurableExecutionService
+from studio_data_engineering import (
+    PostgresQueryEvidenceReferenceStore,
+    PostgresQueryFluxExecutionStore,
+    QueryEngineRuntimeProvider,
+    QueryFluxWorkerRunner,
+    SqliteQueryEvidenceReferenceStore,
+    SqliteQueryFluxExecutionStore,
+)
+from studio_query_engine import (
+    DiscoveredEngine,
+    EngineCapabilities,
+    EngineHandshake,
+    QueryExecutionPolicy,
+    QueryFluxTrinoTransport,
+)
 from studio_migration import (
     IICS_ADAPTER_VERSION,
     BenchmarkResult,
@@ -56,6 +72,7 @@ from studio_orchestrator import Instant, JobStore
 from studio_server import RoninHTTPServer
 from studio_sql import DuckDbDependencyError, DuckDbSqlEngine
 from studio_storage import PostgresJobReadPort, PostgresMetadataStore, SqliteJobStore
+from studio_storage import LocalArtifactStore
 from studio_storage.migration_registry import MigrationStatusError, migration_status
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
@@ -874,6 +891,7 @@ def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
         )
         if target.strip()
     )
+    queryflux_runner = _queryflux_runner_from_environment(database, postgres_dsn)
     return LocalWorkerRuntimeConfig(
         paths=WorkerPaths(workspace, database.parent),
         owner=_env("RONIN_WORKER_OWNER", f"worker-{os.getpid()}"),
@@ -882,7 +900,63 @@ def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
         postgres_dsn=postgres_dsn,
         connector_workspace_id=os.environ.get("RONIN_WORKSPACE_ID"),
         excluded_targets=excluded_targets,
+        queryflux_runner=queryflux_runner,
     )
+
+
+class _LoopbackQueryFluxHttpClient:
+    """Small JSON client restricted to the explicitly configured provider URL."""
+
+    def request(self, method: str, url: str, *, body: str | None = None):
+        request = urllib.request.Request(
+            url,
+            data=body.encode("utf-8") if body is not None else None,
+            method=method,
+            headers={
+                "Content-Type": "text/plain",
+                "X-Trino-User": "ronin-worker",
+            },
+        )
+        with urllib.request.urlopen(request, timeout=15) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        if not isinstance(payload, dict):
+            raise RuntimeError("QueryFlux provider response must be a JSON object")
+        return payload
+
+
+def _queryflux_runner_from_environment(database: Path, postgres_dsn: str | None):
+    base_url = os.environ.get("RONIN_QUERYFLUX_URL")
+    if not base_url:
+        return None
+    if not base_url.endswith("/") or not base_url.startswith(("http://", "https://")):
+        raise CliError("RONIN_QUERYFLUX_URL must be an HTTP(S) URL ending with '/'")
+    provider_version = os.environ.get("RONIN_QUERYFLUX_PROVIDER_VERSION", "configured")
+    provider = QueryEngineRuntimeProvider(
+        DiscoveredEngine(
+            EngineHandshake(
+                "queryflux",
+                provider_version,
+                EngineCapabilities((("cancel", True), ("parameter_binding", True))),
+                True,
+            ),
+            ("trino",),
+            "ready",
+        ),
+        QueryExecutionPolicy((("queryflux", ("trino",)),), required_capability="cancel"),
+    )
+    transport = QueryFluxTrinoTransport(_LoopbackQueryFluxHttpClient(), base_url=base_url)
+    artifacts = LocalArtifactStore(database.parent / "artifacts")
+    references = (
+        PostgresQueryEvidenceReferenceStore(postgres_dsn)
+        if postgres_dsn is not None
+        else SqliteQueryEvidenceReferenceStore(database)
+    )
+    executions = (
+        PostgresQueryFluxExecutionStore(postgres_dsn)
+        if postgres_dsn is not None
+        else SqliteQueryFluxExecutionStore(database)
+    )
+    return QueryFluxWorkerRunner(provider, transport, artifacts, references, executions)
 
 
 def _migration_iics_discover(namespace: argparse.Namespace) -> int:

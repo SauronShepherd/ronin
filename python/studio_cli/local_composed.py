@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import os
+import asyncio
 import secrets
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -28,10 +29,12 @@ from studio_core import (
     WorkspaceId,
 )
 from studio_data_engineering import (
+    PostgresQueryFluxExecutionStore,
     PostgresQueryEvidenceReferenceStore,
     PostgresRevisionStore,
     RevisionApplication,
     SqliteQueryEvidenceReferenceStore,
+    SqliteQueryFluxExecutionStore,
     SqliteRevisionStore,
 )
 from studio_execution import (
@@ -300,6 +303,17 @@ def build_local_composed_from_env() -> LocalServerComposition:
         else SqliteJobStore(database, migration_now=now)
     )
     job_service = DurableExecutionService(job_store)
+
+    def submit_queryflux_job(job: object, run: object) -> object:
+        """Persist a QueryFlux job through the same durable service as other jobs."""
+
+        return asyncio.run(job_service.submit(cast(Any, job), cast(Any, run)))
+
+    queryflux_execution_store = (
+        PostgresQueryFluxExecutionStore(postgres_dsn)
+        if postgres_dsn is not None
+        else SqliteQueryFluxExecutionStore(database)
+    )
     try:
         job_grants = GrantSet.from_json(_env("RONIN_TOKEN_SCOPES"))
     except ValueError as exc:
@@ -576,6 +590,8 @@ def build_local_composed_from_env() -> LocalServerComposition:
                 if postgres_dsn is not None
                 else SqliteQueryEvidenceReferenceStore(database)
             ),
+            "queryflux_execution_store": queryflux_execution_store,
+            "queryflux_job_submitter": submit_queryflux_job,
             "govern_studio_db_path": str(database.parent / "synthetic-data.sqlite3"),
             "catalog_store": catalog_store,
         },
