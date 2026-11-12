@@ -37,6 +37,8 @@ def test_otlp_runner_retains_timing_and_cleanup_evidence() -> None:
     assert '"collector-container.log"' in script
     assert "docker rm --force --volumes $containerName" in script
     assert '$cleanupStatus = "failed"' in script
+    assert "function Save-ContainerLogs" in script
+    assert "Save-ContainerLogs -Name $containerName -Path $containerLogPath" in script
     assert "service_startup = $startupSeconds" in script
     assert "pytest = $pytestSeconds" in script
     assert "cleanup = $cleanupSeconds" in script

@@ -59,6 +59,21 @@ function Test-LoopbackPort([int]$TargetPort) {
     }
 }
 
+function Save-ContainerLogs {
+    param(
+        [Parameter(Mandatory = $true)] [string]$Name,
+        [Parameter(Mandatory = $true)] [string]$Path
+    )
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        # Collector images may emit benign startup diagnostics on stderr.
+        $ErrorActionPreference = "Continue"
+        docker logs $Name 2>&1 | Set-Content -LiteralPath $Path -Encoding utf8
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+}
+
 $port = Get-FreeLoopbackPort
 $runId = [guid]::NewGuid().ToString("N").Substring(0, 10)
 $containerName = "ronin-otlp-qualification-$runId".ToLowerInvariant()
@@ -140,7 +155,7 @@ try {
     $startupClock.Stop()
     $startupSeconds = [Math]::Round($startupClock.Elapsed.TotalSeconds, 3)
     if (-not $ready) {
-        docker logs $containerName 2>&1 | Set-Content -LiteralPath $containerLogPath -Encoding utf8
+        Save-ContainerLogs -Name $containerName -Path $containerLogPath
         throw "Pinned OpenTelemetry Collector did not listen on OTLP/HTTP within two minutes."
     }
     Write-Output "OpenTelemetry Collector ready on loopback port $port"
@@ -203,7 +218,7 @@ try {
 } finally {
     $cleanupClock = [Diagnostics.Stopwatch]::StartNew()
     if ($serviceStarted) {
-        docker logs $containerName 2>&1 | Set-Content -LiteralPath $containerLogPath -Encoding utf8
+        Save-ContainerLogs -Name $containerName -Path $containerLogPath
         docker rm --force --volumes $containerName | Out-Null
         if ($LASTEXITCODE -ne 0) {
             $cleanupStatus = "failed"
