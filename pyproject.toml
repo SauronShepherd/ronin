@@ -103,6 +103,7 @@ studio_storage = ["migrations/*.sql"]
   "web/js/alerts-studio.js",
   "web/js/api.js",
   "web/js/app.js",
+  "web/js/backfill-accessibility.js",
   "web/js/catalog-studio.js",
   "web/js/cloud-studio.js",
   "web/js/command-palette.js",
