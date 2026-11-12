@@ -98,6 +98,7 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_data_engineering",
             "studio_connectors",
             "studio_streaming",
+            "studio_query_engine",
         }
     ),
 }
