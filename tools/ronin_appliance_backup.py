@@ -202,6 +202,17 @@ def _replace_data_volume(
         _compose_prefix(compose_file) + ["cp", str(data) + "/.", f"server:{stage_path}"],
         env=env,
     )
+
+
+def _copy_data_volume_to_host(
+    compose_file: Path, env: dict[str, str], destination: Path
+) -> None:
+    destination.mkdir(parents=True, exist_ok=False)
+    _run(
+        _compose_prefix(compose_file)
+        + ["cp", f"server:{_VOLUME_ROOT}/.", str(destination)],
+        env=env,
+    )
     script = (
         "import os,pathlib,shutil;"
         f"root=pathlib.Path({_VOLUME_ROOT!r});stage=root/{stage_name!r};"
@@ -243,14 +254,23 @@ def restore_appliance(compose_file: Path, bundle: Path, *, force: bool) -> None:
     writers = _running_writer_services(compose_file, env, services)
     restore_id = uuid.uuid4().hex[:12]
     restored = False
+    snapshot = Path(tempfile.mkdtemp(prefix=f".ronin-restore-{restore_id}-")) / "data"
     try:
         _quiesce(compose_file, env, writers)
+        _copy_data_volume_to_host(compose_file, env, snapshot)
         _replace_data_volume(compose_file, env, data, restore_id=restore_id)
-        restore_postgres(compose_file, database, force=True)
+        try:
+            restore_postgres(compose_file, database, force=True)
+        except Exception:
+            # Keep writers stopped and restore the pre-operation data generation so
+            # a failed database restore cannot leave DB and local artifacts split.
+            _replace_data_volume(compose_file, env, snapshot, restore_id=f"{restore_id}-rollback")
+            raise
         restored = True
     finally:
         if restored:
             _resume(compose_file, env, writers)
+        shutil.rmtree(snapshot.parent, ignore_errors=True)
 
 
 def main() -> int:

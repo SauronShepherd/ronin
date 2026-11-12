@@ -125,6 +125,11 @@ def test_failed_appliance_restore_keeps_writers_stopped(
     monkeypatch.setattr(appliance_backup, "_quiesce", lambda *_args: events.append("stop"))
     monkeypatch.setattr(
         appliance_backup,
+        "_copy_data_volume_to_host",
+        lambda *_args: events.append("snapshot-volume"),
+    )
+    monkeypatch.setattr(
+        appliance_backup,
         "_replace_data_volume",
         lambda *_args, **_kwargs: events.append("replace-volume"),
     )
@@ -139,4 +144,10 @@ def test_failed_appliance_restore_keeps_writers_stopped(
     with pytest.raises(RuntimeError, match="restore failed"):
         appliance_backup.restore_appliance(compose_file, bundle, force=True)
 
-    assert events == ["stop", "replace-volume", "restore-database"]
+    assert events == [
+        "stop",
+        "snapshot-volume",
+        "replace-volume",
+        "restore-database",
+        "replace-volume",
+    ]
