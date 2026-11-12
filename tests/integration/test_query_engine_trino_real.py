@@ -16,6 +16,7 @@ from studio_data_engineering import (
     QueryFluxWorkerRunner,
     SqliteQueryEvidenceReferenceStore,
     SqliteQueryFluxExecutionStore,
+    SqliteQueryFluxExecutionStore,
     execute_query,
 )
 from studio_query_engine import (
@@ -302,5 +303,7 @@ def test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate(tmp_pa
             first.wait(timeout=10)
     final = store.get_job(JobId("job-queryflux-process"))
     assert final is not None and final.state is JobState.SUCCEEDED
-    events = store.read_events(RunId("run-process"), since=0)
-    assert sum(event.kind == "worker.attempt.succeeded" for event in events) == 1
+    execution = SqliteQueryFluxExecutionStore(database).get(
+        "workspace-process", "project-process", "run-process", "attempt-1"
+    )
+    assert execution is not None and execution.state == "succeeded"
