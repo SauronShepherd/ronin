@@ -5,7 +5,14 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
+from typing import Any, Callable
 from studio_orchestrator import Instant, Job, JobId, JobState, Run, RunId, RunState
+from studio_query_engine import QueryRequest
+
+from .evidence import EvidenceStore
+from .query_execution import QueryEvidenceReferenceStore, execute_query
+from .queryflux_lifecycle import QueryFluxExecution, QueryFluxState
+from .runtimes import QueryEngineRuntimeProvider
 
 
 @dataclass(frozen=True, slots=True)
@@ -18,6 +25,110 @@ class QueryFluxExecutionPlan:
     attempt_id: str
     job: Job
     run: Run
+
+
+class QueryFluxWorkerRunner:
+    """Execute one persisted QueryFlux payload with durable lifecycle updates."""
+
+    def __init__(
+        self,
+        provider: QueryEngineRuntimeProvider,
+        transport: Any,
+        evidence_store: EvidenceStore,
+        evidence_reference_store: QueryEvidenceReferenceStore,
+        execution_store: Any,
+        *,
+        artifact_reference_barrier: Any | None = None,
+    ) -> None:
+        self.provider = provider
+        self.transport = transport
+        self.evidence_store = evidence_store
+        self.evidence_reference_store = evidence_reference_store
+        self.execution_store = execution_store
+        self.artifact_reference_barrier = artifact_reference_barrier
+
+    def __call__(
+        self,
+        payload: dict[str, object],
+        *,
+        cancellation_requested: Callable[[], bool] | None = None,
+        run_id: str | None = None,
+    ) -> dict[str, object]:
+        del run_id
+        workspace_id = str(payload["workspace_id"])
+        project_id = str(payload["project_id"])
+        logical_run_id = str(payload["run_id"])
+        attempt_id = str(payload["attempt_id"])
+        execution = self.execution_store.create(
+            QueryFluxExecution(workspace_id, project_id, logical_run_id, attempt_id)
+        )
+        if execution.state == "queued":
+            execution = self.execution_store.transition(execution.transition("running"))
+
+        def cancelled() -> bool:
+            current = self.execution_store.get(
+                workspace_id, project_id, logical_run_id, attempt_id
+            )
+            return bool(cancellation_requested and cancellation_requested()) or bool(
+                current and current.cancel_requested
+            )
+
+        request = QueryRequest(
+            str(payload["sql"]),
+            "queryflux",
+            str(payload.get("translation_policy", "native_only")),
+            int(payload.get("max_rows", 1_000)),
+            tuple(payload.get("parameters", [])),
+            max_result_bytes=int(payload.get("max_result_bytes", 64 * 1024 * 1024)),
+        )
+        try:
+            result = execute_query(
+                self.provider,
+                self.transport,
+                self.evidence_store,
+                request,
+                engine=str(payload["engine"]),
+                project_id=project_id,
+                run_id=logical_run_id,
+                attempt_id=attempt_id,
+                evidence_reference_store=self.evidence_reference_store,
+                artifact_reference_barrier=self.artifact_reference_barrier,
+                page_size=int(payload.get("page_size", 1_000)),
+                cancellation_requested=cancelled,
+            )
+        except Exception as error:
+            current = self.execution_store.get(
+                workspace_id, project_id, logical_run_id, attempt_id
+            ) or execution
+            if not current.terminal:
+                self.execution_store.transition(
+                    current.transition("failed", failure_code=type(error).__name__)
+                )
+            raise
+        current = self.execution_store.get(
+            workspace_id, project_id, logical_run_id, attempt_id
+        ) or execution
+        target: QueryFluxState = (
+            "succeeded" if result.status.state == "succeeded" else
+            "cancelled" if result.status.state == "cancelled" else "failed"
+        )
+        if not current.terminal:
+            self.execution_store.transition(
+                current.transition(
+                    target,
+                    failure_code=None if target != "failed" else (result.status.message or "query_failed"),
+                )
+            )
+        return {
+            "state": result.status.state,
+            "row_count": result.row_count,
+            "next_cursor": result.next_cursor,
+            "selected_engine": result.selected_engine,
+            "evidence": {
+                "digest": result.evidence_artifact.digest,
+                "storage_ref": result.evidence_artifact.storage_ref,
+            },
+        }
 
 
 def plan_queryflux_execution(
@@ -84,4 +195,4 @@ def plan_queryflux_execution(
     return QueryFluxExecutionPlan(workspace_id, project_id, run_id, attempt_id, job, run)
 
 
-__all__ = ("QueryFluxExecutionPlan", "plan_queryflux_execution")
+__all__ = ("QueryFluxExecutionPlan", "QueryFluxWorkerRunner", "plan_queryflux_execution")

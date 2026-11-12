@@ -8,7 +8,9 @@ from pathlib import Path
 import pytest
 from studio_data_engineering import (
     QueryEngineRuntimeProvider,
+    QueryFluxWorkerRunner,
     SqliteQueryEvidenceReferenceStore,
+    SqliteQueryFluxExecutionStore,
     execute_query,
 )
 from studio_data_engineering.result_paging import page_query_result
@@ -26,12 +28,13 @@ from studio_storage import LocalArtifactStore
 
 
 class _Transport:
-    def __init__(self, states: list[QueryStatus]) -> None:
+    def __init__(self, states: list[QueryStatus], provider_id: str = "provider") -> None:
         self.states = states
         self.cancelled = False
+        self.provider_id = provider_id
 
     def submit(self, _request: QueryRequest) -> tuple[QueryHandle, str]:
-        return QueryHandle("ronin-q-1", "provider", "provider-q-1"), "next-1"
+        return QueryHandle("ronin-q-1", self.provider_id, "provider-q-1"), "next-1"
 
     def poll(
         self, _handle: QueryHandle, _next_uri: str
@@ -114,6 +117,22 @@ def _provider() -> QueryEngineRuntimeProvider:
             "ready",
         ),
         QueryExecutionPolicy((("local", ("duckdb",)),), required_capability="cancel"),
+    )
+
+
+def _queryflux_provider() -> QueryEngineRuntimeProvider:
+    return QueryEngineRuntimeProvider(
+        DiscoveredEngine(
+            EngineHandshake(
+                "queryflux",
+                "1",
+                EngineCapabilities((("cancel", True), ("parameter_binding", True))),
+                True,
+            ),
+            ("duckdb",),
+            "ready",
+        ),
+        QueryExecutionPolicy((("queryflux", ("duckdb",)),), required_capability="cancel"),
     )
 
 
@@ -303,7 +322,7 @@ def test_execute_query_accepts_result_at_exact_serialized_byte_budget(tmp_path: 
     store = LocalArtifactStore(tmp_path / "artifacts")
     result = execute_query(
         _provider(),
-        _Transport([QueryStatus("succeeded")]),
+            _Transport([QueryStatus("succeeded")]),
         store,
         QueryRequest("SELECT 1", "local", max_result_bytes=len(serialized_result)),
         engine="duckdb",
@@ -388,3 +407,35 @@ def test_execute_query_holds_writer_lease_through_durable_reference_commit(
 
     assert events == ["lock", "artifact", "reference", "unlock"]
     assert references.list_evidence_references()[0]["digest"] == result.evidence_artifact.digest
+
+
+def test_queryflux_worker_runner_persists_terminal_state_and_evidence(tmp_path: Path) -> None:
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    references = SqliteQueryEvidenceReferenceStore(tmp_path / "ronin.db")
+    executions = SqliteQueryFluxExecutionStore(tmp_path / "ronin.db")
+    runner = QueryFluxWorkerRunner(
+        _queryflux_provider(),
+        _Transport([QueryStatus("succeeded")], provider_id="queryflux"),
+        artifacts,
+        references,
+        executions,
+    )
+    result = runner(
+        {
+            "workspace_id": "workspace-1",
+            "project_id": "project-1",
+            "run_id": "run-1",
+            "attempt_id": "attempt-1",
+            "sql": "SELECT 1",
+            "engine": "duckdb",
+            "translation_policy": "native_only",
+            "max_rows": 100,
+            "page_size": 50,
+            "max_result_bytes": 4096,
+            "parameters": [],
+        }
+    )
+    assert result["state"] == "succeeded"
+    execution = executions.get("workspace-1", "project-1", "run-1", "attempt-1")
+    assert execution is not None and execution.state == "succeeded"
+    assert references.list_evidence_references()[0]["digest"] == result["evidence"]["digest"]

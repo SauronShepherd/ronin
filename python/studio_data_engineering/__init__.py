@@ -43,7 +43,7 @@ from .queryflux_lifecycle import (
     QueryFluxTerminalState,
     SqliteQueryFluxExecutionStore,
 )
-from .queryflux_execution import QueryFluxExecutionPlan, plan_queryflux_execution
+from .queryflux_execution import QueryFluxExecutionPlan, QueryFluxWorkerRunner, plan_queryflux_execution
 from .revisions import PipelineRevisionRecord, RevisionApplication, RevisionConflict
 from .runtimes import (
     QueryEngineRuntimeProvider,
@@ -98,6 +98,7 @@ __all__ = (
     "execute_query",
     "QueryFluxExecution",
     "QueryFluxExecutionPlan",
+    "QueryFluxWorkerRunner",
     "plan_queryflux_execution",
     "QueryFluxState",
     "QueryFluxTerminalState",

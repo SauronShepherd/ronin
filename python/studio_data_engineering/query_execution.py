@@ -79,6 +79,7 @@ def execute_query(
     page_size: int = 1_000,
     max_polls: int = 100,
     clock: Callable[[], float] = time.monotonic,
+    cancellation_requested: Callable[[], bool] | None = None,
 ) -> QueryExecutionResult:
     """Run one bounded query lifecycle and persist its final evidence."""
 
@@ -105,6 +106,14 @@ def execute_query(
     encoded_rows_bytes = 0
     limit_failure: str | None = None
     for _ in range(max_polls):
+        if cancellation_requested is not None and cancellation_requested():
+            cancellation = transport.cancel(handle)
+            status = QueryStatus(
+                "cancelled" if cancellation.cancelled else "failed",
+                "query cancellation requested",
+                provider_query_id=handle.provider_query_id,
+            )
+            break
         status, page, following_uri = transport.poll(handle, next_uri)
         if page is not None:
             if columns is None:
