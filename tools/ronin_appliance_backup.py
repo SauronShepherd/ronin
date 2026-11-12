@@ -242,6 +242,17 @@ def _copy_data_volume_to_host(
     )
 
 
+def _copy_data_volume_to_host(
+    compose_file: Path, env: dict[str, str], destination: Path
+) -> None:
+    destination.mkdir(parents=True, exist_ok=False)
+    _run(
+        _compose_prefix(compose_file)
+        + ["cp", f"server:{_VOLUME_ROOT}/.", str(destination)],
+        env=env,
+    )
+
+
 def restore_appliance(compose_file: Path, bundle: Path, *, force: bool) -> None:
     if not force:
         raise ValueError("appliance restore is destructive; pass --force explicitly")
