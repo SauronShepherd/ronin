@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 import pytest
 from studio_data_engineering.queryflux_lifecycle import (
     QueryFluxExecution,
@@ -56,3 +58,37 @@ def test_sqlite_queryflux_store_rejects_transition_for_missing_execution(tmp_pat
     store = SqliteQueryFluxExecutionStore(tmp_path / "ronin.db")
     with pytest.raises(KeyError, match="does not exist"):
         store.request_cancel(_execution())
+
+
+def test_sqlite_queryflux_store_serializes_cancel_and_terminal_transition(tmp_path) -> None:
+    path = tmp_path / "ronin.db"
+    seed = SqliteQueryFluxExecutionStore(path)
+    seed.create(_execution().transition("running"))
+
+    def finish() -> QueryFluxExecution | None:
+        try:
+            return SqliteQueryFluxExecutionStore(path).transition(
+                _execution().transition("running").transition("succeeded")
+            )
+        except ValueError as error:
+            assert "cannot succeed" in str(error)
+            return None
+
+    def cancel() -> QueryFluxExecution:
+        return SqliteQueryFluxExecutionStore(path).request_cancel(
+            _execution().transition("running")
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = [future.result() for future in (pool.submit(finish), pool.submit(cancel))]
+
+    final = SqliteQueryFluxExecutionStore(path).get(
+        "workspace-a", "project-a", "run-a", "attempt-a"
+    )
+    assert final is not None
+    assert final.state in {"succeeded", "cancelling"}
+    assert not (final.state == "succeeded" and final.cancel_requested)
+    assert all(
+        outcome is None or outcome.state in {"succeeded", "cancelling", "cancelled"}
+        for outcome in outcomes
+    )

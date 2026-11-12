@@ -158,15 +158,34 @@ class SqliteQueryFluxExecutionStore:
 
     def transition(self, execution: QueryFluxExecution) -> QueryFluxExecution:
         identity = self._identity(execution)
-        current = self.get(*identity)
-        if current is None:
-            raise KeyError("QueryFlux execution does not exist")
-        next_execution = current.transition(execution.state, failure_code=execution.failure_code)
-        if execution.cancel_requested and not next_execution.cancel_requested:
-            next_execution = replace(next_execution, cancel_requested=True)
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT workspace_id,project_id,run_id,attempt_id,state,"
+                "cancel_requested,failure_code FROM de_queryflux_executions "
+                "WHERE workspace_id=? AND project_id=? AND run_id=? AND attempt_id=?",
+                identity,
+            ).fetchone()
+            if row is None:
+                raise KeyError("QueryFlux execution does not exist")
+            current = QueryFluxExecution(
+                row["workspace_id"],
+                row["project_id"],
+                row["run_id"],
+                row["attempt_id"],
+                row["state"],
+                bool(row["cancel_requested"]),
+                row["failure_code"],
+            )
+            if execution.cancel_requested and current.terminal:
+                connection.commit()
+                return current
+            next_execution = current.transition(
+                execution.state, failure_code=execution.failure_code
+            )
+            if execution.cancel_requested and not next_execution.cancel_requested:
+                next_execution = replace(next_execution, cancel_requested=True)
             connection.execute(
                 "UPDATE de_queryflux_executions SET state=?,cancel_requested=?,failure_code=?,"
                 "updated_at=CURRENT_TIMESTAMP WHERE workspace_id=? AND project_id=? "
@@ -280,15 +299,28 @@ class PostgresQueryFluxExecutionStore:
 
     def transition(self, execution: QueryFluxExecution) -> QueryFluxExecution:
         identity = self._identity(execution)
-        current = self.get(*identity)
-        if current is None:
-            raise KeyError("QueryFlux execution does not exist")
-        next_execution = current.transition(execution.state, failure_code=execution.failure_code)
-        if execution.cancel_requested and not next_execution.cancel_requested:
-            next_execution = replace(next_execution, cancel_requested=True)
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT workspace_id,project_id,run_id,attempt_id,state,"
+                    "cancel_requested,failure_code FROM ronin_de_queryflux_executions "
+                    "WHERE workspace_id=%s AND project_id=%s AND run_id=%s "
+                    "AND attempt_id=%s FOR UPDATE",
+                    identity,
+                )
+                row = cursor.fetchone()
+                if row is None:
+                    raise KeyError("QueryFlux execution does not exist")
+                current = QueryFluxExecution(*row)
+                if execution.cancel_requested and current.terminal:
+                    connection.commit()
+                    return current
+                next_execution = current.transition(
+                    execution.state, failure_code=execution.failure_code
+                )
+                if execution.cancel_requested and not next_execution.cancel_requested:
+                    next_execution = replace(next_execution, cancel_requested=True)
                 cursor.execute(
                     "UPDATE ronin_de_queryflux_executions SET state=%s,cancel_requested=%s,"
                     "failure_code=%s,updated_at=CURRENT_TIMESTAMP WHERE workspace_id=%s "
