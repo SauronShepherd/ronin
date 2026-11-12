@@ -7,6 +7,7 @@ def test_operational_studio_actions_use_product_dialogs() -> None:
     graph = (ROOT / "web/js/graph-studio.js").read_text(encoding="utf-8")
     notebook = (ROOT / "web/js/notebook-studio.js").read_text(encoding="utf-8")
     features = (ROOT / "web/js/features.js").read_text(encoding="utf-8")
+    standalone = (ROOT / "web/studio.js").read_text(encoding="utf-8")
 
     assert "window.confirm" not in graph
     assert "confirmImpact('Execute this authorized graph action?" in graph
@@ -14,3 +15,6 @@ def test_operational_studio_actions_use_product_dialogs() -> None:
     assert "confirmImpact('Discard unsaved notebook changes?" in notebook
     assert "window.prompt" not in features
     assert 'data-feature-form="ml-deployment-input"' in features
+    assert "window.confirm" not in standalone
+    assert "dialog.showModal()" in standalone
+    assert 'setAttribute("aria-labelledby", "impact-dialog-title")' in standalone

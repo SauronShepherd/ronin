@@ -11,6 +11,9 @@ body { margin:0; background:var(--ink); color:var(--text); font:14px system-ui,s
 .detail-grid { display:grid; gap:14px; grid-template-columns:repeat(3,1fr); } pre { color:var(--muted); max-height:420px; overflow:auto; white-space:pre-wrap; }
 .run-filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; } .run-filters input, .run-filters select { background:#120f0d; color:var(--text); } .run-filters select { border:1px solid var(--line); border-radius:6px; padding:9px 11px; }
 .sql-form { display:grid; gap:12px; max-width:900px; } .sql-form input, .sql-form textarea { background:#120f0d; color:var(--text); font:14px ui-monospace,monospace; padding:10px; width:100%; } .sql-result { background:var(--panel); border:1px solid var(--line); border-radius:8px; margin-top:16px; padding:18px; }
+.impact-dialog { background:var(--panel); border:1px solid var(--line); border-radius:10px; color:var(--text); max-width:34rem; padding:1.25rem; }
+.impact-dialog::backdrop { background:rgb(45 33 27 / 48%); }
+.impact-dialog .actions { justify-content:flex-end; margin-top:1rem; }
 @media (max-width:800px) { .layout { grid-template-columns:1fr; } .sidebar { border-bottom:1px solid var(--line); border-right:0; } .detail-grid { grid-template-columns:1fr; } .connection-form input { width:130px; } }
 
 /* Legacy studio surface aligned with the public dojo palette. */
