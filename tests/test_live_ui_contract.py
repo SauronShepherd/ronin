@@ -1,6 +1,8 @@
 from pathlib import Path
 
 
-def test_connection_submit_waits_for_active_route_render() -> None:
+def test_connection_submit_persists_session_atomically_with_config() -> None:
     app = Path("web/js/app.js").read_text(encoding="utf-8")
-    assert "config.token=token;sessionStorage.setItem('ronin.session',token)" in app
+    assert "const nextToken=clearToken?'':enteredToken||config.token" in app
+    assert "setConfig(document.querySelector('#api-url').value.trim(),nextToken)" in app
+    assert "if(nextToken)sessionStorage.setItem('ronin.session',nextToken);else sessionStorage.removeItem('ronin.session')" in app
