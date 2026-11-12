@@ -40,6 +40,26 @@
         }
       }
     },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/cancel": {
+      "post": {
+        "operationId": "cancelQueryFluxExecution",
+        "description": "Request cancellation of a non-terminal QueryFlux execution. The operation is fail-closed until a durable worker coordinator can confirm provider cancellation; terminal executions are returned idempotently.",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "run_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "attempt_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}}
+        ],
+        "responses": {
+          "200": {"description": "Current or cancellation-requested lifecycle", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QueryFluxExecution"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
+          "404": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
     "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/results": {
       "get": {
         "operationId": "getQueryFluxResultPage",

@@ -123,6 +123,10 @@ SUPPORTED_ROUTES = (
                 "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}",
             ),
             (
+                "POST",
+                "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/cancel",
+            ),
+            (
                 "GET",
                 "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/results",
             ),

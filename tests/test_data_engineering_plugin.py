@@ -7,6 +7,7 @@ from studio_data_engineering import (
     SqliteCompilationStore,
     SqliteQueryEvidenceReferenceStore,
     SqliteQueryFluxExecutionStore,
+    QueryFluxExecution,
     compile_pipeline,
     preview_pipeline,
 )
@@ -61,7 +62,7 @@ def test_data_enginerring_studio_manifest_and_contributions(tmp_path) -> None:
 
     assert plugin.manifest.name == "Data Enginerring Studio"
     assert "data-engineering.ir.v1" in registry.capabilities
-    assert len(registry.routes) == 15
+    assert len(registry.routes) == 16
     assert registry.job_registry.items[0].job_type == "data-engineering.pipeline-run.v1"
     assert registry.ui_registry.items[0].manifest["navigation"][0]["label"] == (
         "Data Enginerring Studio"
@@ -246,6 +247,33 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
     )
     assert status["state"] == "succeeded"
     assert status["cancel_requested"] is False
+
+
+def test_queryflux_cancel_fails_closed_without_durable_worker_coordinator(tmp_path) -> None:
+    plugin = DataEnginerringStudioPlugin()
+    registry = ContributionRegistry()
+    for capability in plugin.manifest.capabilities:
+        registry.add_capability(capability, plugin.manifest.id)
+    for permission in plugin.manifest.permissions:
+        registry.add_permission(permission, plugin.manifest.id)
+    executions = SqliteQueryFluxExecutionStore(tmp_path / "ronin.db")
+    executions.create(QueryFluxExecution("workspace-1", "project-1", "run-1", "attempt-1"))
+    plugin.register(
+        PluginContext(
+            plugin.manifest.id,
+            registry,
+            {"queryflux_execution_store": executions},
+        )
+    )
+    plugin.startup()
+    response = plugin.queryflux_execution_cancel(
+        workspace_id="workspace-1",
+        project_id="project-1",
+        run_id="run-1",
+        attempt_id="attempt-1",
+    )
+    assert response["error"]["code"] == "query_execution_cancel_unavailable"
+    assert executions.get("workspace-1", "project-1", "run-1", "attempt-1").state == "queued"
 
 
 def test_pipeline_compiler_reports_validity_and_runtime() -> None:

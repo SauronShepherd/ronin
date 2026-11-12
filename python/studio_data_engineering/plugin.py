@@ -91,6 +91,7 @@ class DataEnginerringStudioPlugin:
         self._queryflux_evidence_store: Any | None = None
         self._queryflux_evidence_reference_store: Any | None = None
         self._queryflux_execution_store: Any | None = None
+        self._queryflux_execution_canceller: Any | None = None
         self._artifact_reference_barrier: Any | None = None
 
     def register(self, context: PluginContext) -> None:
@@ -115,6 +116,9 @@ class DataEnginerringStudioPlugin:
             "queryflux_evidence_reference_store"
         )
         self._queryflux_execution_store = context.services.get("queryflux_execution_store")
+        self._queryflux_execution_canceller = context.services.get(
+            "queryflux_execution_canceller"
+        )
         self._artifact_reference_barrier = context.services.get("artifact_reference_barrier")
         if artifact_store is not None:
             self._revisions = RevisionApplication(
@@ -154,6 +158,13 @@ class DataEnginerringStudioPlugin:
             context.plugin_id,
             self.queryflux_execution_status,
             permission="data-engineering:read",
+        )
+        context.contributions.add_route(
+            "POST",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/cancel",
+            context.plugin_id,
+            self.queryflux_execution_cancel,
+            permission="data-engineering:execute",
         )
         context.contributions.add_route(
             "GET",
@@ -609,6 +620,61 @@ class DataEnginerringStudioPlugin:
             "state": execution.state,
             "cancel_requested": execution.cancel_requested,
             "failure_code": execution.failure_code,
+        }
+
+    def queryflux_execution_cancel(
+        self,
+        *,
+        workspace_id: str,
+        project_id: str,
+        run_id: str,
+        attempt_id: str,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        """Request cancellation only when a durable worker coordinator is present.
+
+        The lifecycle store alone records intent; it cannot safely claim that a
+        provider query was cancelled.  Fail closed until the worker coordinator
+        can delegate and confirm ``transport.cancel(handle)``.
+        """
+
+        self._assert_ready()
+        store = self._queryflux_execution_store
+        if store is None:
+            return _plugin_error(
+                "query_execution_cancel_not_configured",
+                "durable QueryFlux execution cancellation is not configured",
+            )
+        execution = store.get(workspace_id, project_id, run_id, attempt_id)
+        if execution is None:
+            return _plugin_error("queryflux_execution_not_found", "QueryFlux execution was not found")
+        if execution.terminal:
+            return {
+                "workspace_id": execution.workspace_id,
+                "project_id": execution.project_id,
+                "run_id": execution.run_id,
+                "attempt_id": execution.attempt_id,
+                "state": execution.state,
+                "cancel_requested": execution.cancel_requested,
+                "failure_code": execution.failure_code,
+            }
+        coordinator = self._queryflux_execution_canceller
+        if not callable(coordinator):
+            return _plugin_error(
+                "query_execution_cancel_unavailable",
+                "QueryFlux cancellation requires a durable worker coordinator",
+            )
+        cancelled = coordinator(execution)
+        if not isinstance(cancelled, QueryFluxExecution):
+            raise TypeError("queryflux_execution_canceller must return QueryFluxExecution")
+        return {
+            "workspace_id": cancelled.workspace_id,
+            "project_id": cancelled.project_id,
+            "run_id": cancelled.run_id,
+            "attempt_id": cancelled.attempt_id,
+            "state": cancelled.state,
+            "cancel_requested": cancelled.cancel_requested,
+            "failure_code": cancelled.failure_code,
         }
 
     def queryflux_results(
