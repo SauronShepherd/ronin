@@ -41,6 +41,8 @@ def test_trino_runner_retains_evidence_and_checks_cleanup() -> None:
     assert '"trino-container.log"' in script
     assert "docker rm --force --volumes $containerName" in script
     assert '$cleanupStatus = "failed"' in script
+    assert "function Save-ContainerLogs" in script
+    assert "Save-ContainerLogs -Name $containerName -Path $containerLogPath" in script
     assert "qualification_mode = $qualificationMode" in script
     assert "service_startup = $serviceStartupSeconds" in script
     assert "pytest = $pytestSeconds" in script

@@ -47,6 +47,22 @@ function Get-FreeLoopbackPort {
     }
 }
 
+function Save-ContainerLogs {
+    param(
+        [Parameter(Mandatory = $true)] [string]$Name,
+        [Parameter(Mandatory = $true)] [string]$Path
+    )
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        # Trino emits JVM warnings on stderr even when the service is healthy.
+        # Capture both streams without turning those warnings into a runner error.
+        $ErrorActionPreference = "Continue"
+        docker logs $Name 2>&1 | Set-Content -LiteralPath $Path -Encoding utf8
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+}
+
 $port = Get-FreeLoopbackPort
 $runId = [guid]::NewGuid().ToString("N").Substring(0, 10)
 $containerName = "ronin-trino-qualification-$runId".ToLowerInvariant()
@@ -125,7 +141,7 @@ try {
     $httpClient.Dispose()
     $httpClient = $null
     if ($null -eq $serverInfo) {
-        docker logs $containerName 2>&1 | Set-Content -LiteralPath $containerLogPath -Encoding utf8
+        Save-ContainerLogs -Name $containerName -Path $containerLogPath
         throw "Pinned Trino did not become ACTIVE at version 484 within four minutes."
     }
     Write-Output "Trino ready: version $($serverInfo.nodeVersion.version), state $($serverInfo.state)"
@@ -192,7 +208,7 @@ try {
         $httpClient = $null
     }
     if ($serviceStarted) {
-        docker logs $containerName 2>&1 | Set-Content -LiteralPath $containerLogPath -Encoding utf8
+        Save-ContainerLogs -Name $containerName -Path $containerLogPath
         docker rm --force --volumes $containerName | Out-Null
         if ($LASTEXITCODE -ne 0) {
             $cleanupStatus = "failed"
