@@ -260,6 +260,9 @@ for (const route of routes) {
         item.request().method() === 'POST' && new URL(item.url()).pathname === promotionPath,
       );
       await page.getByRole('button', {name: 'Promote', exact: true}).click();
+      const promotionForm = page.locator('[data-feature-form="ml-deployment-input"]');
+      await promotionForm.locator('[name="reason"]').fill('live qualification promotion');
+      await promotionForm.getByRole('button', {name: 'Promote model version', exact: true}).click();
       const blockedPromotion = await response;
       expect(blockedPromotion.status(), await blockedPromotion.text()).toBe(409);
       await expect(page.locator('#ml-output')).toContainText('no passed evaluation');
@@ -299,6 +302,9 @@ for (const route of routes) {
         item.request().method() === 'POST' && new URL(item.url()).pathname === promotionPath,
       );
       await page.getByRole('button', {name: 'Promote', exact: true}).click();
+      const approvedPromotionForm = page.locator('[data-feature-form="ml-deployment-input"]');
+      await approvedPromotionForm.locator('[name="reason"]').fill('live qualification promotion after review');
+      await approvedPromotionForm.getByRole('button', {name: 'Promote model version', exact: true}).click();
       const promoted = await response;
       expect(promoted.status(), await promoted.text()).toBe(200);
       expect((await promoted.json()).stage).toBe('champion');
@@ -325,12 +331,14 @@ for (const route of routes) {
       expect(deploymentHealth.status(), await deploymentHealth.text()).toBe(200);
       await expect(page.locator('#ml-output')).toContainText(deploymentId);
 
-      await page.evaluate(() => { window.prompt = () => JSON.stringify([{x: 1}, {x: 2}]); });
       response = page.waitForResponse(item =>
         item.request().method() === 'POST' &&
         new URL(item.url()).pathname === `/v1/ml-studio/deployments/${deploymentId}/predict`,
       );
       await page.locator(`[data-feature="ml-deployment-predict"][data-deployment="${deploymentId}"]`).click();
+      const predictionForm = page.locator('[data-feature-form="ml-deployment-input"]');
+      await predictionForm.locator('[name="rows"]').fill(JSON.stringify([{x: 1}, {x: 2}]));
+      await predictionForm.getByRole('button', {name: 'Run deployment prediction', exact: true}).click();
       const predictions = await response;
       expect(predictions.status(), await predictions.text()).toBe(200);
       expect((await predictions.json()).predictions).toHaveLength(2);
