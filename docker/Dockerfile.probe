@@ -1,6 +1,6 @@
 ARG PYTHON_IMAGE=python:3.11-alpine3.24@sha256:bb1d70c1df30d8ee1e05214dbe82d6cdfd29833c1f47ce917f20991aca93acaa
 
-FROM docker:29.9.2-cli-alpine3.24@sha256:5e6baf67325a79f64ed3bed6863954d5e05d0f3d4e57cbdb14809346814bbfdb AS docker-cli
+FROM docker:29.10.0-rc.1-cli-alpine3.24@sha256:8d076a8d79ac8e6f5ee4134a3327c46e48ef6db5130c1106aafd53ef05d5846d AS docker-cli
 
 FROM ${PYTHON_IMAGE}
 COPY docker/apk-probe.lock /tmp/apk-probe.lock

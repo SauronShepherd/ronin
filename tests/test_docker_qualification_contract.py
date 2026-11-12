@@ -505,8 +505,8 @@ def test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies() ->
         "bb1d70c1df30d8ee1e05214dbe82d6cdfd29833c1f47ce917f20991aca93acaa"
     )
     docker_cli = (
-        "docker:29.9.2-cli-alpine3.24@sha256:"
-        "5e6baf67325a79f64ed3bed6863954d5e05d0f3d4e57cbdb14809346814bbfdb"
+        "docker:29.10.0-rc.1-cli-alpine3.24@sha256:"
+        "8d076a8d79ac8e6f5ee4134a3327c46e48ef6db5130c1106aafd53ef05d5846d"
     )
 
     assert f"ARG PYTHON_IMAGE={python_image}" in dockerfile
@@ -540,7 +540,7 @@ def test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies() ->
     assert "psycopg-binary==3.3.6" in runtime_lock
     assert "tzdata==2026.4" in runtime_lock
     assert "--hash=sha256:" in runtime_lock
-    for lock, expected_count in ((apk_runtime_lock, 25), (apk_probe_lock, 22)):
+    for lock, expected_count in ((apk_runtime_lock, 27), (apk_probe_lock, 22)):
         packages = [line for line in lock.splitlines() if line]
         assert len(packages) == expected_count
         assert len(packages) == len(set(packages))
