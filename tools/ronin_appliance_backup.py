@@ -202,17 +202,6 @@ def _replace_data_volume(
         _compose_prefix(compose_file) + ["cp", str(data) + "/.", f"server:{stage_path}"],
         env=env,
     )
-
-
-def _copy_data_volume_to_host(
-    compose_file: Path, env: dict[str, str], destination: Path
-) -> None:
-    destination.mkdir(parents=True, exist_ok=False)
-    _run(
-        _compose_prefix(compose_file)
-        + ["cp", f"server:{_VOLUME_ROOT}/.", str(destination)],
-        env=env,
-    )
     script = (
         "import os,pathlib,shutil;"
         f"root=pathlib.Path({_VOLUME_ROOT!r});stage=root/{stage_name!r};"
