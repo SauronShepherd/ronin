@@ -24,6 +24,7 @@ from .ide import IdeCell
 from .previews import preview_pipeline
 from .query_execution import QueryTransport, execute_query
 from .queryflux_lifecycle import QueryFluxExecution
+from .queryflux_execution import plan_queryflux_execution
 from .result_paging import page_query_result
 from .revisions import RevisionApplication, RevisionArtifactStore, RevisionRecordStore
 from .runtimes import QueryEngineRuntimeProvider
@@ -92,6 +93,7 @@ class DataEnginerringStudioPlugin:
         self._queryflux_evidence_reference_store: Any | None = None
         self._queryflux_execution_store: Any | None = None
         self._queryflux_execution_canceller: Any | None = None
+        self._queryflux_job_submitter: Any | None = None
         self._artifact_reference_barrier: Any | None = None
 
     def register(self, context: PluginContext) -> None:
@@ -119,6 +121,7 @@ class DataEnginerringStudioPlugin:
         self._queryflux_execution_canceller = context.services.get(
             "queryflux_execution_canceller"
         )
+        self._queryflux_job_submitter = context.services.get("queryflux_job_submitter")
         self._artifact_reference_barrier = context.services.get("artifact_reference_barrier")
         if artifact_store is not None:
             self._revisions = RevisionApplication(
@@ -131,6 +134,13 @@ class DataEnginerringStudioPlugin:
         compilation_store = context.services.get("compilation_store")
         if isinstance(compilation_store, SqliteCompilationStore):
             self._compilations = compilation_store
+        context.contributions.add_route(
+            "POST",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions",
+            context.plugin_id,
+            self.queryflux_execution_create,
+            permission="data-engineering:execute",
+        )
         context.contributions.add_route(
             "GET",
             "/v1/data-engineering/health",
@@ -620,6 +630,66 @@ class DataEnginerringStudioPlugin:
             "state": execution.state,
             "cancel_requested": execution.cancel_requested,
             "failure_code": execution.failure_code,
+        }
+
+    def queryflux_execution_create(
+        self,
+        *,
+        workspace_id: str,
+        project_id: str,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        """Create one durable QueryFlux execution before worker dispatch."""
+
+        self._assert_ready()
+        store = self._queryflux_execution_store
+        submitter = self._queryflux_job_submitter
+        if store is None or not callable(submitter):
+            return _plugin_error(
+                "query_execution_not_configured",
+                "durable QueryFlux creation and dispatch are not configured",
+            )
+        if not isinstance(body, dict):
+            raise ValueError("queryflux execution body must be an object")
+        required = ("sql", "engine", "run_id", "attempt_id")
+        if any(
+            not isinstance(body.get(key), str) or not body[key].strip()
+            for key in required
+        ):
+            raise ValueError("sql, engine, run_id and attempt_id are required strings")
+        parameters = body.get("parameters", [])
+        if not isinstance(parameters, list):
+            raise ValueError("parameters must be an array")
+        plan = plan_queryflux_execution(
+            workspace_id=workspace_id,
+            project_id=project_id,
+            run_id=cast(str, body["run_id"]),
+            attempt_id=cast(str, body["attempt_id"]),
+            sql=cast(str, body["sql"]),
+            engine=cast(str, body["engine"]),
+            translation_policy=str(body.get("translation_policy", "native_only")),
+            max_rows=int(body.get("max_rows", 1_000)),
+            page_size=int(body.get("page_size", 1_000)),
+            max_result_bytes=int(body.get("max_result_bytes", DEFAULT_MAX_RESULT_BYTES)),
+            parameters=parameters,
+            now="2026-11-12T00:00:00.000000Z",
+        )
+        existing = store.get(workspace_id, project_id, plan.run_id, plan.attempt_id)
+        if existing is None:
+            existing = store.create(
+                QueryFluxExecution(workspace_id, project_id, plan.run_id, plan.attempt_id)
+            )
+            submitter(plan.job, plan.run)
+        return {
+            "id": f"{plan.run_id}/{plan.attempt_id}",
+            "workspace_id": workspace_id,
+            "project_id": project_id,
+            "run_id": plan.run_id,
+            "attempt_id": plan.attempt_id,
+            "state": existing.state,
+            "provider": "queryflux",
+            "selected_engine": cast(str, body["engine"]),
         }
 
     def queryflux_execution_cancel(

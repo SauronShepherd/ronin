@@ -40,6 +40,24 @@
         }
       }
     },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions": {
+      "post": {
+        "operationId": "createQueryFluxExecution",
+        "description": "Create one idempotent, durable QueryFlux execution before worker dispatch. The composed host must provide durable job storage and a qualified worker submitter.",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
+          {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 512}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QueryFluxExecuteRequest"}}}},
+        "responses": {
+          "200": {"description": "Queued or existing durable execution", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QueryFluxExecution"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
     "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/executions/{run_id}/{attempt_id}/cancel": {
       "post": {
         "operationId": "cancelQueryFluxExecution",

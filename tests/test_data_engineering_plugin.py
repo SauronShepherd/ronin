@@ -62,7 +62,7 @@ def test_data_enginerring_studio_manifest_and_contributions(tmp_path) -> None:
 
     assert plugin.manifest.name == "Data Enginerring Studio"
     assert "data-engineering.ir.v1" in registry.capabilities
-    assert len(registry.routes) == 16
+    assert len(registry.routes) == 17
     assert registry.job_registry.items[0].job_type == "data-engineering.pipeline-run.v1"
     assert registry.ui_registry.items[0].manifest["navigation"][0]["label"] == (
         "Data Enginerring Studio"
@@ -274,6 +274,43 @@ def test_queryflux_cancel_fails_closed_without_durable_worker_coordinator(tmp_pa
     )
     assert response["error"]["code"] == "query_execution_cancel_unavailable"
     assert executions.get("workspace-1", "project-1", "run-1", "attempt-1").state == "queued"
+
+
+def test_queryflux_create_persists_before_idempotent_worker_dispatch(tmp_path) -> None:
+    plugin = DataEnginerringStudioPlugin()
+    registry = ContributionRegistry()
+    for capability in plugin.manifest.capabilities:
+        registry.add_capability(capability, plugin.manifest.id)
+    for permission in plugin.manifest.permissions:
+        registry.add_permission(permission, plugin.manifest.id)
+    executions = SqliteQueryFluxExecutionStore(tmp_path / "ronin.db")
+    submitted = []
+    plugin.register(
+        PluginContext(
+            plugin.manifest.id,
+            registry,
+            {
+                "queryflux_execution_store": executions,
+                "queryflux_job_submitter": lambda job, run: submitted.append((job, run)),
+            },
+        )
+    )
+    plugin.startup()
+    body = {
+        "sql": "SELECT 1",
+        "engine": "trino",
+        "run_id": "run-1",
+        "attempt_id": "attempt-1",
+    }
+    first = plugin.queryflux_execution_create(
+        workspace_id="workspace-1", project_id="project-1", body=body
+    )
+    second = plugin.queryflux_execution_create(
+        workspace_id="workspace-1", project_id="project-1", body=body
+    )
+    assert first["state"] == second["state"] == "queued"
+    assert len(submitted) == 1
+    assert submitted[0][0].target == "data-engineering.queryflux-execution.v1"
 
 
 def test_pipeline_compiler_reports_validity_and_runtime() -> None:
