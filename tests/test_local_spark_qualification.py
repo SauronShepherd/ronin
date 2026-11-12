@@ -28,3 +28,15 @@ def test_run_bounded_rejects_non_object_worker_output(monkeypatch) -> None:
         "provider": "pyspark-local",
         "error": "ValueError",
     }
+
+
+def test_run_bounded_extracts_json_after_spark_diagnostics(monkeypatch) -> None:
+    class Completed:
+        returncode = 0
+        stdout = 'WARN Spark startup\\n{"status":"passed","provider":"pyspark-local"}\\n'
+
+    monkeypatch.setattr(qualification.subprocess, "run", lambda *_args, **_kwargs: Completed())
+    assert qualification.run_bounded(3) == {
+        "status": "passed",
+        "provider": "pyspark-local",
+    }

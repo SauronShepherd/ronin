@@ -79,7 +79,21 @@ def run_bounded(timeout_seconds: float) -> dict[str, Any]:
                 "provider": "pyspark-local",
                 "returncode": completed.returncode,
             }
-        result = json.loads(completed.stdout)
+        # The Spark JVM may write startup warnings and progress bars to stdout
+        # even when the worker returns a valid JSON payload. Parse the final
+        # JSON object without treating those diagnostics as a failed job.
+        decoder = json.JSONDecoder()
+        result = None
+        for offset in reversed([index for index, value in enumerate(completed.stdout) if value == "{"]):
+            try:
+                candidate, _ = decoder.raw_decode(completed.stdout[offset:])
+            except json.JSONDecodeError:
+                continue
+            if isinstance(candidate, dict):
+                result = candidate
+                break
+        if result is None:
+            result = json.loads(completed.stdout)
         if not isinstance(result, dict):
             raise ValueError("qualification output must be an object")
         return result
