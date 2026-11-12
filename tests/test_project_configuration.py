@@ -53,6 +53,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
             "a11y",
             "app",
             "alerts-studio",
+            "backfill-accessibility",
             "cloud-studio",
             "catalog-studio",
             "command-palette",
