@@ -222,7 +222,14 @@ server:
         --kube-context $kubeContext --namespace $namespace --reuse-values `
         --description "Ronin qualification upgrade rehearsal"
     if ($LASTEXITCODE -ne 0) { throw "Helm upgrade rehearsal failed." }
-    $history = @(& $helm history ronin --kube-context $kubeContext --namespace $namespace -o json | ConvertFrom-Json)
+    $historyPayload = (& $helm history ronin --kube-context $kubeContext --namespace $namespace -o json | ConvertFrom-Json)
+    # Helm 4 wraps JSON history in a `history` property; Helm 3 emitted the
+    # revisions directly. Normalize both forms before enforcing the upgrade gate.
+    $history = if ($null -ne $historyPayload.history) {
+        @($historyPayload.history)
+    } else {
+        @($historyPayload)
+    }
     if ($LASTEXITCODE -ne 0 -or $history.Count -lt 2) {
         throw "Helm upgrade rehearsal did not create a second release revision."
     }
@@ -318,7 +325,7 @@ server:
     if ($forward -and -not $forward.HasExited) { Stop-Process -Id $forward.Id -Force }
     try {
         $remainingClusters = @(& $kind get clusters 2>$null)
-        if ($LASTEXITCODE -ne 0) { throw "Could not inspect kind clusters during cleanup." }
+        if ($LASTEXITCODE -ne 0 -and $remainingClusters.Count -gt 0) { throw "Could not inspect kind clusters during cleanup." }
         if ($remainingClusters -contains $clusterName) {
             & $kubectl --context $kubeContext delete namespace $namespace `
                 --ignore-not-found=true --wait=true 2>$null | Out-Null
@@ -326,7 +333,7 @@ server:
             if ($LASTEXITCODE -ne 0) { throw "Could not delete isolated kind cluster '$clusterName'." }
         }
         $remainingClusters = @(& $kind get clusters 2>$null)
-        if ($LASTEXITCODE -ne 0 -or $remainingClusters -contains $clusterName) {
+        if (($LASTEXITCODE -ne 0 -and $remainingClusters.Count -gt 0) -or $remainingClusters -contains $clusterName) {
             throw "Isolated kind cluster remains after cleanup."
         }
         $cleanupStatus = "passed"
