@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import sys
+import time
 from collections.abc import Mapping
 from http.client import HTTPConnection
 from pathlib import Path
@@ -24,7 +27,8 @@ from studio_query_engine import (
     QueryFluxTrinoTransport,
     TrinoHttpTransport,
 )
-from studio_storage import LocalArtifactStore
+from studio_orchestrator import Instant, Job, JobId, JobState, Run, RunId, RunState
+from studio_storage import LocalArtifactStore, SqliteJobStore
 
 _TRINO_URL = os.environ.get("RONIN_TRINO_TEST_URL")
 pytestmark = pytest.mark.skipif(
@@ -203,3 +207,99 @@ def test_queryflux_worker_runner_real_trino_persists_terminal_evidence(tmp_path:
     execution = executions.get("workspace-real", "project-real", "run-real-worker", "attempt-1")
     assert execution is not None and execution.state == "succeeded"
     assert references.list_evidence_references()[0]["digest"] == result["evidence"]["digest"]
+
+
+def test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate(tmp_path: Path) -> None:
+    assert _TRINO_URL is not None
+    fixed = Instant("2026-11-12T00:00:00.000000Z")
+    database = tmp_path / "ronin.sqlite3"
+    store = SqliteJobStore(database, migration_now=fixed)
+    payload = json.dumps(
+        {
+            "workspace_id": "workspace-process",
+            "project_id": "project-process",
+            "run_id": "run-process",
+            "attempt_id": "attempt-1",
+            "sql": "SELECT CAST(? AS VARCHAR)",
+            "engine": "trino",
+            "translation_policy": "native_only",
+            "max_rows": 10,
+            "page_size": 10,
+            "max_result_bytes": 4096,
+            "parameters": ["process-recovery"],
+        },
+        separators=(",", ":"),
+    )
+    store.create_job(
+        Job(
+            id=JobId("job-queryflux-process"),
+            project_id="project-process",
+            idempotency_key="queryflux-process-recovery",
+            request_digest="c" * 64,
+            state=JobState.QUEUED,
+            created_at=fixed,
+            updated_at=fixed,
+            target="data-engineering.queryflux-execution.v1",
+            parameters_json=payload,
+        ),
+        Run(
+            id=RunId("run-process"),
+            job_id=JobId("job-queryflux-process"),
+            ordinal=1,
+            state=RunState.PENDING,
+            not_before=fixed,
+            created_at=fixed,
+            updated_at=fixed,
+        ),
+    )
+    env = os.environ.copy()
+    env.update(
+        {
+            "RONIN_DB": str(database),
+            "RONIN_WORKSPACE": str(tmp_path),
+            "RONIN_STORAGE_BACKEND": "sqlite",
+            "RONIN_IMAGE": "sha256:" + "1" * 64,
+            "RONIN_QUERYFLUX_URL": _TRINO_URL if _TRINO_URL.endswith("/") else _TRINO_URL + "/",
+            "RONIN_WORKER_LEASE_SECONDS": "2",
+            "RONIN_WORKER_EXCLUDED_TARGETS": "",
+        }
+    )
+    command = [sys.executable, "-m", "studio_cli.entrypoint", "worker"]
+    first = subprocess.Popen(command, cwd=str(Path.cwd()), env=env)
+    try:
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            current = store.get_job(JobId("job-queryflux-process"))
+            if current is not None and current.state is JobState.RUNNING:
+                break
+            if first.poll() is not None:
+                raise AssertionError(f"worker exited before claim: {first.returncode}")
+            time.sleep(0.1)
+        else:
+            raise AssertionError("worker did not claim QueryFlux job")
+        first.kill()
+        first.wait(timeout=10)
+        time.sleep(2.5)
+        second = subprocess.Popen(command, cwd=str(Path.cwd()), env=env)
+        try:
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline:
+                current = store.get_job(JobId("job-queryflux-process"))
+                if current is not None and current.state is JobState.SUCCEEDED:
+                    break
+                if second.poll() is not None:
+                    raise AssertionError(f"replacement worker exited: {second.returncode}")
+                time.sleep(0.2)
+            else:
+                raise AssertionError("replacement worker did not complete QueryFlux job")
+        finally:
+            second.terminate()
+            second.wait(timeout=10)
+    finally:
+        if first.poll() is None:
+            first.kill()
+            first.wait(timeout=10)
+    final = store.get_job(JobId("job-queryflux-process"))
+    assert final is not None and final.state is JobState.SUCCEEDED
+    events = store.read_events(RunId("run-process"), since=0)
+    assert sum(event.kind == "worker.attempt.succeeded" for event in events) == 1

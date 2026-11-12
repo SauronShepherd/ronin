@@ -892,6 +892,12 @@ def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
         if target.strip()
     )
     queryflux_runner = _queryflux_runner_from_environment(database, postgres_dsn)
+    try:
+        lease_seconds = int(os.environ.get("RONIN_WORKER_LEASE_SECONDS", "30"))
+    except ValueError as exc:
+        raise CliError("RONIN_WORKER_LEASE_SECONDS must be an integer") from exc
+    if lease_seconds < 2:
+        raise CliError("RONIN_WORKER_LEASE_SECONDS must be at least 2")
     return LocalWorkerRuntimeConfig(
         paths=WorkerPaths(workspace, database.parent),
         owner=_env("RONIN_WORKER_OWNER", f"worker-{os.getpid()}"),
@@ -901,6 +907,7 @@ def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
         connector_workspace_id=os.environ.get("RONIN_WORKSPACE_ID"),
         excluded_targets=excluded_targets,
         queryflux_runner=queryflux_runner,
+        lease_seconds=lease_seconds,
     )
 
 

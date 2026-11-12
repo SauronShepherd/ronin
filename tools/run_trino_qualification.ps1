@@ -74,7 +74,8 @@ $summaryPath = Join-Path $evidenceRoot "qualification.json"
 $expectedTests = @(
     "test_trino_real_prepared_scalar_bindings",
     "test_trino_real_result_byte_budget_accepts_exact_limit_and_rejects_one_byte_less",
-    "test_queryflux_worker_runner_real_trino_persists_terminal_evidence"
+    "test_queryflux_worker_runner_real_trino_persists_terminal_evidence",
+    "test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate"
 )
 $startedAt = [DateTimeOffset]::UtcNow
 $clock = [Diagnostics.Stopwatch]::StartNew()
