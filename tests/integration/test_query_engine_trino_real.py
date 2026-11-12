@@ -8,13 +8,20 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import pytest
-from studio_data_engineering import QueryEngineRuntimeProvider, execute_query
+from studio_data_engineering import (
+    QueryEngineRuntimeProvider,
+    QueryFluxWorkerRunner,
+    SqliteQueryEvidenceReferenceStore,
+    SqliteQueryFluxExecutionStore,
+    execute_query,
+)
 from studio_query_engine import (
     DiscoveredEngine,
     EngineCapabilities,
     EngineHandshake,
     QueryExecutionPolicy,
     QueryRequest,
+    QueryFluxTrinoTransport,
     TrinoHttpTransport,
 )
 from studio_storage import LocalArtifactStore
@@ -145,3 +152,54 @@ def test_trino_real_result_byte_budget_accepts_exact_limit_and_rejects_one_byte_
     assert rejected.status.state == "failed"
     assert rejected.status.message == "query result exceeds the configured byte limit"
     assert rejected.page is None
+
+
+def test_queryflux_worker_runner_real_trino_persists_terminal_evidence(tmp_path: Path) -> None:
+    assert _TRINO_URL is not None
+    base_url = _TRINO_URL if _TRINO_URL.endswith("/") else f"{_TRINO_URL}/"
+    transport = QueryFluxTrinoTransport(_LocalTrinoHttpClient(), base_url=base_url)
+    provider = QueryEngineRuntimeProvider(
+        DiscoveredEngine(
+            EngineHandshake(
+                "queryflux",
+                "484",
+                EngineCapabilities((
+                    ("cancel", True),
+                    ("parameter_binding", True),
+                )),
+                True,
+            ),
+            ("trino",),
+            "ready",
+        ),
+        QueryExecutionPolicy((("queryflux", ("trino",)),), required_capability="cancel"),
+    )
+    references = SqliteQueryEvidenceReferenceStore(tmp_path / "ronin.db")
+    executions = SqliteQueryFluxExecutionStore(tmp_path / "ronin.db")
+    runner = QueryFluxWorkerRunner(
+        provider,
+        transport,
+        LocalArtifactStore(tmp_path / "artifacts"),
+        references,
+        executions,
+    )
+    result = runner(
+        {
+            "workspace_id": "workspace-real",
+            "project_id": "project-real",
+            "run_id": "run-real-worker",
+            "attempt_id": "attempt-1",
+            "sql": "SELECT CAST(? AS VARCHAR), CAST(? AS BIGINT)",
+            "engine": "trino",
+            "translation_policy": "native_only",
+            "max_rows": 100,
+            "page_size": 50,
+            "max_result_bytes": 4096,
+            "parameters": ["worker", 7],
+        }
+    )
+    assert result["state"] == "succeeded"
+    assert result["row_count"] == 1
+    execution = executions.get("workspace-real", "project-real", "run-real-worker", "attempt-1")
+    assert execution is not None and execution.state == "succeeded"
+    assert references.list_evidence_references()[0]["digest"] == result["evidence"]["digest"]
