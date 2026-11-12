@@ -23,8 +23,9 @@ test('ML Studio exposes model card and promotion actions', async ({ page }) => {
   await expect(page.locator('#ml-models')).toContainText('model-a');
   await page.locator('[data-feature="ml-card"]').click();
   await expect(page.locator('#ml-output')).toContainText('run-1');
-  await page.evaluate(() => { window.prompt = () => 'validated in Studio'; });
   await page.locator('[data-feature="ml-promote"]').click();
+  await page.locator('[data-feature-form="ml-deployment-input"] [name="reason"]').fill('validated in Studio');
+  await page.locator('[data-feature-form="ml-deployment-input"] button[type="submit"]').click();
   await expect.poll(() => promoted).toBe(true);
 });
 
@@ -100,8 +101,9 @@ test('ML Studio registers a successful durable run as a candidate model', async 
   await expect.poll(() => registered).toBe(true);
   await expect(page.locator('#ml-register-execution')).toContainText('Registered candidate churn@run-ui');
   await expect(page.locator('#ml-models')).toContainText('churn');
-  await page.evaluate(() => { window.prompt = () => 'validated run'; });
   await page.locator('#ml-register-execution [data-feature="ml-promote"]').click();
+  await page.locator('[data-feature-form="ml-deployment-input"] [name="reason"]').fill('validated run');
+  await page.locator('[data-feature-form="ml-deployment-input"] button[type="submit"]').click();
   await expect.poll(() => promoted).toBe(true);
   await expect(page.locator('#ml-models')).toContainText('champion');
 });
