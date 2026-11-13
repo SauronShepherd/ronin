@@ -60,6 +60,14 @@ def test_floci_qualification_never_passes_without_terraform() -> None:
     assert backend.calls == ["health"]
 
 
+def test_qualification_creates_new_workspace(tmp_path: Path) -> None:
+    workspace = tmp_path / "nested" / "cloud"
+    result = qualify("http://127.0.0.1:4566", str(workspace), backend=FakeBackend())
+
+    assert result["status"] == "blocked"
+    assert workspace.is_dir()
+
+
 def test_qualification_can_select_backend_and_command_timeout() -> None:
     backend = TimeoutBackend()
     result = qualify(

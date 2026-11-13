@@ -136,6 +136,7 @@ def qualify(
     backend_kind: str = "floci",
     command_timeout_seconds: float = 120.0,
 ) -> dict[str, Any]:
+    Path(workspace).mkdir(parents=True, exist_ok=True)
     selected = backend or create_backend(backend_kind, endpoint, workspace_dir=workspace)
     if hasattr(selected, "command_timeout_seconds"):
         selected.command_timeout_seconds = command_timeout_seconds
