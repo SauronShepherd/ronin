@@ -234,7 +234,7 @@ class SqliteWorkspaceStore:
             cursor = connection.execute(
                 "UPDATE workspace_projects SET manifest_json=?,updated_at=?, "
                 "row_version=row_version+1 "
-                "WHERE workspace_id=? AND project_id=?",
+                "WHERE workspace_id=? AND project_id=? AND archived_at IS NULL",
                 (manifest.to_json(), now, str(workspace_id), str(project_id)),
             )
             if cursor.rowcount != 1:
@@ -288,7 +288,8 @@ class SqliteWorkspaceStore:
         connection = self._connect()
         try:
             cursor = connection.execute(
-                "DELETE FROM workspace_projects WHERE workspace_id=? AND project_id=?",
+                "DELETE FROM workspace_projects "
+                "WHERE workspace_id=? AND project_id=? AND archived_at IS NULL",
                 (str(workspace_id), str(project_id)),
             )
             return cursor.rowcount == 1

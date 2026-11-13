@@ -29,6 +29,7 @@ class _Store:
     def __init__(self) -> None:
         self.workspaces: dict[WorkspaceId, Workspace] = {}
         self.projects: dict[tuple[WorkspaceId, ProjectId], ProjectManifest] = {}
+        self.archived_projects: set[tuple[WorkspaceId, ProjectId]] = set()
         self.calls: dict[str, int] = {}
 
     def _called(self, name: str) -> None:
@@ -55,12 +56,20 @@ class _Store:
     def register_project(self, workspace_id, manifest, *, now):
         del now
         self._called("register_project")
+        key = (workspace_id, manifest.project.id)
+        if key in self.archived_projects:
+            existing = self.projects[key]
+            if existing != manifest:
+                raise RuntimeError("project registration already exists with different intent")
+            return existing
         self.projects[(workspace_id, manifest.project.id)] = manifest
         return manifest
 
     def replace_project(self, workspace_id, manifest, *, now):
         del now
         self._called("replace_project")
+        if (workspace_id, manifest.project.id) in self.archived_projects:
+            raise KeyError(f"{workspace_id}/{manifest.project.id}")
         self.projects[(workspace_id, manifest.project.id)] = manifest
         return manifest
 
@@ -76,8 +85,19 @@ class _Store:
             if found_workspace == workspace_id
         )
 
+    def archive_project(self, workspace_id, project_id, *, now):
+        del now
+        self._called("archive_project")
+        key = (workspace_id, project_id)
+        if key not in self.projects or key in self.archived_projects:
+            return False
+        self.archived_projects.add(key)
+        return True
+
     def unregister_project(self, workspace_id, project_id):
         self._called("unregister_project")
+        if (workspace_id, project_id) in self.archived_projects:
+            return False
         return self.projects.pop((workspace_id, project_id), None) is not None
 
 
@@ -223,3 +243,23 @@ def test_project_missing_replace_and_unregister_use_stable_not_found() -> None:
         projects.unregister(_WS, _PROJECT)
     assert store.calls.get("replace_project", 0) == 0
     assert store.calls.get("unregister_project", 0) == 0
+
+
+def test_archived_project_is_not_reactivated_by_register_or_mutated_by_delete() -> None:
+    store = _Store()
+    WorkspaceService(store).create(Workspace(_WS, "Workspace"), now=_NOW)
+    projects = ProjectService(store)
+    manifest = _manifest()
+    projects.register(_WS, manifest, now=_NOW)
+    assert projects.archive(_WS, _PROJECT, now=_NOW)
+
+    # The service keeps archived records readable, but no operation may turn
+    # an archived registration back into an active mutable record implicitly.
+    assert projects.register(_WS, manifest, now=_NOW) == manifest
+    with pytest.raises(WorkspaceServiceConflict, match="different intent"):
+        projects.register(_WS, _manifest("Replacement"), now=_NOW)
+    with pytest.raises(WorkspaceServiceNotFound, match="project not found"):
+        projects.replace(_WS, _manifest("Changed"), now=_NOW)
+    with pytest.raises(WorkspaceServiceNotFound, match="project not found"):
+        projects.unregister(_WS, _PROJECT)
+    assert projects.get(_WS, _PROJECT) == manifest

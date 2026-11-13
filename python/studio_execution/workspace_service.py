@@ -125,7 +125,12 @@ class ProjectService:
             raise WorkspaceServiceNotFound(f"project not found: {workspace_id}/{project_id}")
         if existing == manifest:
             return existing
-        return self._store.replace_project(workspace_id, manifest, now=now)
+        try:
+            return self._store.replace_project(workspace_id, manifest, now=now)
+        except KeyError as exc:
+            raise WorkspaceServiceNotFound(
+                f"project not found: {workspace_id}/{project_id}"
+            ) from exc
 
     def archive(
         self, workspace_id: WorkspaceId, project_id: ProjectId, *, now: Instant | str

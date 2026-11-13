@@ -539,7 +539,7 @@ class PostgresMetadataStore:
                 cursor.execute(
                     "UPDATE ronin_projects SET manifest_json=%s,updated_at=%s, "
                     "row_version=row_version+1 "
-                    "WHERE workspace_id=%s AND project_id=%s",
+                    "WHERE workspace_id=%s AND project_id=%s AND archived_at IS NULL",
                     (manifest.to_json(), str(current), str(workspace_id), str(manifest.project.id)),
                 )
                 if cursor.rowcount != 1:
@@ -611,7 +611,8 @@ class PostgresMetadataStore:
             with connection.cursor() as cursor:
                 self._require_active_workspace(cursor, workspace_id)
                 cursor.execute(
-                    "DELETE FROM ronin_projects WHERE workspace_id=%s AND project_id=%s",
+                    "DELETE FROM ronin_projects "
+                    "WHERE workspace_id=%s AND project_id=%s AND archived_at IS NULL",
                     (str(workspace_id), str(project_id)),
                 )
                 deleted = bool(cursor.rowcount == 1)
