@@ -102,7 +102,6 @@ from .openlineage_transport import (
     OPENLINEAGE_API_VERSION,
     OpenLineageDedupStore,
     OpenLineageSink,
-    SqliteOpenLineageDedupStore,
     OpenLineageTransport,
     OpenLineageTransportError,
     PublishReceipt,

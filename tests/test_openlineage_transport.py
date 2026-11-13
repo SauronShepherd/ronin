@@ -3,11 +3,11 @@ from urllib.request import Request
 import pytest
 from studio_core import (
     MAX_OPENLINEAGE_EVENT_BYTES,
-    SqliteOpenLineageDedupStore,
     OpenLineageTransport,
     OpenLineageTransportError,
     validate_openlineage_event,
 )
+from studio_storage.openlineage import SqliteOpenLineageDedupStore
 from studio_core.openlineage import (
     OPENLINEAGE_COLUMN_LINEAGE_SCHEMA,
     OPENLINEAGE_LINEAGE_FACET_SCHEMA,
