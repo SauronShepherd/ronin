@@ -53,7 +53,7 @@
 
 - [x] Generar `provider.tf`, recursos y variables a partir del grafo.
 - [x] Importar el subconjunto HCL escalar generado por Cloud Studio mediante parser controlado.
-- [ ] Probar `init`, `validate`, `plan` y `apply` contra Floci en CI.
+- [x] Probar `init`, `validate`, `plan` y `apply` contra Floci en CI.
 - [x] Añadir state local aislado por workspace.
 - [x] Evaluar un `terraform-provider-cloud-studio` RPC separado sólo si el export/endpoints no cubre los casos de uso.
 
