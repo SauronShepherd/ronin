@@ -6,10 +6,10 @@ import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from studio_orchestrator import Instant, Job, JobId, JobState, Run, RunId, RunState
-from studio_query_engine import QueryRequest
+from studio_query_engine import QueryRequest, TranslationPolicy
 
 from .evidence import EvidenceStore
 from .query_execution import QueryEvidenceReferenceStore, execute_query
@@ -73,13 +73,19 @@ class QueryFluxWorkerRunner:
                 current and current.cancel_requested
             )
 
+        translation_policy = cast(
+            TranslationPolicy, str(payload.get("translation_policy", "native_only"))
+        )
+        parameters = tuple(cast(list[object], payload.get("parameters", [])))
         request = QueryRequest(
             str(payload["sql"]),
             "queryflux",
-            str(payload.get("translation_policy", "native_only")),
-            int(payload.get("max_rows", 1_000)),
-            tuple(payload.get("parameters", [])),
-            max_result_bytes=int(payload.get("max_result_bytes", 64 * 1024 * 1024)),
+            translation_policy,
+            int(cast(str | int, payload.get("max_rows", 1_000))),
+            parameters,
+            max_result_bytes=int(
+                cast(str | int, payload.get("max_result_bytes", 64 * 1024 * 1024))
+            ),
         )
         try:
             result = execute_query(
@@ -93,7 +99,7 @@ class QueryFluxWorkerRunner:
                 attempt_id=attempt_id,
                 evidence_reference_store=self.evidence_reference_store,
                 artifact_reference_barrier=self.artifact_reference_barrier,
-                page_size=int(payload.get("page_size", 1_000)),
+                page_size=int(cast(str | int, payload.get("page_size", 1_000))),
                 cancellation_requested=cancelled,
             )
         except Exception as error:

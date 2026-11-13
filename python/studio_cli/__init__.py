@@ -927,7 +927,7 @@ def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
 class _LoopbackQueryFluxHttpClient:
     """Small JSON client restricted to the explicitly configured provider URL."""
 
-    def request(self, method: str, url: str, *, body: str | None = None):
+    def request(self, method: str, url: str, *, body: str | None = None) -> dict[str, object]:
         request = urllib.request.Request(  # noqa: S310
             url,
             data=body.encode("utf-8") if body is not None else None,
@@ -944,7 +944,9 @@ class _LoopbackQueryFluxHttpClient:
         return payload
 
 
-def _queryflux_runner_from_environment(database: Path, postgres_dsn: str | None):
+def _queryflux_runner_from_environment(
+    database: Path, postgres_dsn: str | None
+) -> Callable[..., dict[str, object]] | None:
     base_url = os.environ.get("RONIN_QUERYFLUX_URL")
     if not base_url:
         return None

@@ -14,6 +14,7 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from pathlib import Path
 from time import monotonic
+from typing import cast
 
 from studio_core import RuntimeCapability, RuntimeCatalog, RuntimeProfile
 from studio_core.canonical_json import decode as decode_canonical_json
@@ -527,7 +528,10 @@ class LocalWorkerRuntime:
                             ml_rows=self.config.ml_rows,
                             semantic_refresh_runner=self.config.semantic_refresh_runner,
                             pipeline_runner=self.config.pipeline_runner,
-                            queryflux_runner=self.config.queryflux_runner,
+                            queryflux_runner=cast(
+                                Callable[..., dict[str, object]] | None,
+                                self.config.queryflux_runner,
+                            ),
                         ),
                     )
                 except SchedulerWorkloadCancelled:
