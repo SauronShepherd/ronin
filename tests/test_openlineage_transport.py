@@ -3,6 +3,7 @@ from urllib.request import Request
 import pytest
 from studio_core import (
     MAX_OPENLINEAGE_EVENT_BYTES,
+    SqliteOpenLineageDedupStore,
     OpenLineageTransport,
     OpenLineageTransportError,
     validate_openlineage_event,
@@ -514,3 +515,43 @@ def test_openlineage_invalid_shape_messages_are_exact(
     with pytest.raises(ValueError, match=".") as error:
         validate_openlineage_event(event)
     assert str(error.value) == message
+
+
+def test_openlineage_sqlite_dedup_survives_transport_restart(tmp_path) -> None:
+    path = tmp_path / "openlineage-dedup.sqlite3"
+    first_sink = Sink()
+    first = OpenLineageTransport(
+        first_sink,
+        dedup_store=SqliteOpenLineageDedupStore(path),
+    )
+    receipt = first.publish(EVENT)
+    assert receipt.deduplicated is False
+    assert len(first_sink.events) == 1
+
+    second_sink = Sink()
+    second = OpenLineageTransport(
+        second_sink,
+        dedup_store=SqliteOpenLineageDedupStore(path),
+    )
+    replay = second.publish(EVENT)
+    assert replay.event_digest == receipt.event_digest
+    assert replay.deduplicated is True
+    assert replay.attempts == 0
+    assert second_sink.events == []
+
+
+def test_openlineage_sqlite_dedup_marks_only_after_success(tmp_path) -> None:
+    path = tmp_path / "openlineage-dedup.sqlite3"
+    failing_sink = Sink(failures=1)
+    transport = OpenLineageTransport(
+        failing_sink,
+        max_attempts=1,
+        dedup_store=SqliteOpenLineageDedupStore(path),
+    )
+    with pytest.raises(OpenLineageTransportError):
+        transport.publish(EVENT)
+    retry = OpenLineageTransport(
+        Sink(),
+        dedup_store=SqliteOpenLineageDedupStore(path),
+    ).publish(EVENT)
+    assert retry.deduplicated is False

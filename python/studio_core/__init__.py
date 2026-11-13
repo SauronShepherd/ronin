@@ -100,7 +100,9 @@ from .openlineage import lineage_event_payload
 from .openlineage_transport import (
     MAX_OPENLINEAGE_EVENT_BYTES,
     OPENLINEAGE_API_VERSION,
+    OpenLineageDedupStore,
     OpenLineageSink,
+    SqliteOpenLineageDedupStore,
     OpenLineageTransport,
     OpenLineageTransportError,
     PublishReceipt,
@@ -245,6 +247,8 @@ __all__ = (
     "GlossaryTerm",
     "GlossaryTermId",
     "OpenLineageSink",
+    "OpenLineageDedupStore",
+    "SqliteOpenLineageDedupStore",
     "MAX_OPENLINEAGE_EVENT_BYTES",
     "OPENLINEAGE_API_VERSION",
     "OpenLineageTransport",

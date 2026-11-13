@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+import sqlite3
 from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol
 from urllib.parse import urlsplit
 
@@ -160,6 +162,60 @@ class OpenLineageSink(Protocol):
     def publish(self, event: Mapping[str, JsonValue]) -> None: ...
 
 
+class OpenLineageDedupStore(Protocol):
+    """Durable digest store used only after a provider accepts an event."""
+
+    def contains(self, event_digest: str) -> bool: ...
+
+    def mark_published(self, event_digest: str) -> None: ...
+
+
+class SqliteOpenLineageDedupStore:
+    """Bounded, restart-safe publication digest store."""
+
+    def __init__(self, path: str | Path, *, max_entries: int = 4096) -> None:
+        if (
+            not isinstance(max_entries, int)
+            or isinstance(max_entries, bool)
+            or not 1 <= max_entries <= 100_000
+        ):
+            raise ValueError("max_entries must be between 1 and 100000")
+        self._path = str(path)
+        self._max_entries = max_entries
+        with self._connect() as connection:
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS ronin_openlineage_published ("
+                "event_digest TEXT PRIMARY KEY, published_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"
+            )
+
+    def _connect(self) -> sqlite3.Connection:
+        connection = sqlite3.connect(self._path)
+        connection.execute("PRAGMA busy_timeout=5000")
+        return connection
+
+    def contains(self, event_digest: str) -> bool:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT 1 FROM ronin_openlineage_published WHERE event_digest=?",
+                (event_digest,),
+            ).fetchone()
+        return row is not None
+
+    def mark_published(self, event_digest: str) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                "INSERT OR IGNORE INTO ronin_openlineage_published(event_digest) VALUES (?)",
+                (event_digest,),
+            )
+            connection.execute(
+                "DELETE FROM ronin_openlineage_published WHERE event_digest IN ("
+                "SELECT event_digest FROM ronin_openlineage_published "
+                "ORDER BY published_at,event_digest "
+                "LIMIT MAX(0,(SELECT COUNT(*) FROM ronin_openlineage_published)-?))",
+                (self._max_entries,),
+            )
+
+
 @dataclass(frozen=True, slots=True)
 class PublishReceipt:
     event_digest: str
@@ -240,6 +296,7 @@ class OpenLineageTransport:
         *,
         max_attempts: int = 3,
         max_deduplication_entries: int = 4096,
+        dedup_store: OpenLineageDedupStore | None = None,
     ) -> None:
         if (
             not isinstance(max_attempts, int)
@@ -257,6 +314,7 @@ class OpenLineageTransport:
         self._sink = sink
         self._max_attempts = max_attempts
         self._max_deduplication_entries = max_deduplication_entries
+        self._dedup_store = dedup_store
         self._published: OrderedDict[str, None] = OrderedDict()
 
     @staticmethod
@@ -269,6 +327,8 @@ class OpenLineageTransport:
         if digest in self._published:
             self._published.move_to_end(digest)
             return PublishReceipt(digest, 0, True)
+        if self._dedup_store is not None and self._dedup_store.contains(digest):
+            return PublishReceipt(digest, 0, True)
         last_error: Exception | None = None
         for attempt in range(1, self._max_attempts + 1):
             try:
@@ -277,6 +337,8 @@ class OpenLineageTransport:
                 last_error = exc
                 continue
             self._published[digest] = None
+            if self._dedup_store is not None:
+                self._dedup_store.mark_published(digest)
             self._published.move_to_end(digest)
             while len(self._published) > self._max_deduplication_entries:
                 self._published.popitem(last=False)
@@ -291,6 +353,8 @@ __all__ = [
     "MAX_OPENLINEAGE_EVENT_BYTES",
     "SUPPORTED_OPENLINEAGE_SCHEMA_VERSIONS",
     "OpenLineageSink",
+    "OpenLineageDedupStore",
+    "SqliteOpenLineageDedupStore",
     "OpenLineageTransport",
     "OpenLineageTransportError",
     "PublishReceipt",
