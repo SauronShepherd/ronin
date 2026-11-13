@@ -13,6 +13,14 @@ S3, Lambda, SQS, and DynamoDB resource types.
 The UI should use the catalog endpoint to render a palette and serialize canvas nodes/edges
 to the topology endpoint. React Flow is a suitable optional frontend implementation.
 
+**AWS Emulator reference decision (2026-11-13):** the official AWS
+Emulator is the second *reference*, not yet an implemented Ronin backend.
+Floci stays the existing external qualification backend (Docker/S3/Terraform),
+in-memory stays the default and LocalStack remains optional. Promotion of
+AWS Emulator ahead of Floci is blocked pending 100% of mandatory Floci-passing
+scenarios, zero required skips, no regressions and proven fallback. See
+[CLOUD_STUDIO_AWS_EMULATOR_ADOPTION.md](CLOUD_STUDIO_AWS_EMULATOR_ADOPTION.md).
+
 ## Running an external backend
 
 Start `examples/cloud-studio/compose.floci.yaml` and set
