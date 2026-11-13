@@ -5,9 +5,10 @@ from typing import Any
 
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
-from .backends import create_backend, terraform_provider_config
+from .backends import EmulatorBackend, InMemoryBackend, create_backend, terraform_provider_config
 from .engine import (
     CATALOG,
+    CloudEmulator,
     CloudResource,
     CloudTopology,
     SnapshotStore,
@@ -54,6 +55,7 @@ class CloudStudioPlugin:
             terraform_root or os.getenv("RONIN_CLOUD_STUDIO_TERRAFORM_ROOT") or None,
             os.getenv("RONIN_CLOUD_STUDIO_IAC", iac_executable),
         )
+        self._workspace_backends: dict[str, EmulatorBackend] = {"default": self.backend}
         configured_snapshot_root = os.getenv("RONIN_CLOUD_STUDIO_SNAPSHOTS")
         snapshot_root: str = (
             snapshot_dir
@@ -227,6 +229,13 @@ class CloudStudioPlugin:
             raise ValueError("cloud request body must be a JSON object")
         return value
 
+    def _backend_for_workspace(self, workspace: str) -> EmulatorBackend:
+        if not isinstance(self.backend, InMemoryBackend):
+            return self.backend
+        if workspace not in self._workspace_backends:
+            self._workspace_backends[workspace] = InMemoryBackend(CloudEmulator())
+        return self._workspace_backends[workspace]
+
     def validate(
         self,
         payload: dict[str, Any] | None = None,
@@ -246,7 +255,8 @@ class CloudStudioPlugin:
         **_kwargs: Any,
     ) -> dict[str, Any]:
         payload = self._request_payload(payload, body)
-        return self.backend.apply(self._topology(payload))
+        workspace = str(payload.get("workspace", "default"))
+        return self._backend_for_workspace(workspace).apply(self._topology(payload))
 
     def plan(
         self,
@@ -256,13 +266,16 @@ class CloudStudioPlugin:
         **_kwargs: Any,
     ) -> dict[str, Any]:
         payload = self._request_payload(payload, body)
-        return self.backend.plan(self._topology(payload))
+        workspace = str(payload.get("workspace", "default"))
+        return self._backend_for_workspace(workspace).plan(self._topology(payload))
 
-    def refresh(self, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
-        return self.backend.refresh()
+    def refresh(self, *_args: Any, **kwargs: Any) -> dict[str, Any]:
+        workspace = str(kwargs.get("workspace", "default"))
+        return self._backend_for_workspace(workspace).refresh()
 
-    def destroy(self, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
-        return self.backend.destroy()
+    def destroy(self, *_args: Any, **kwargs: Any) -> dict[str, Any]:
+        workspace = str(kwargs.get("workspace", "default"))
+        return self._backend_for_workspace(workspace).destroy()
 
     def terraform(
         self,

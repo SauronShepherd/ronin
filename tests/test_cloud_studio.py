@@ -244,6 +244,19 @@ def test_plugin_snapshot_route_validates_and_normalizes_topology(tmp_path) -> No
         )
 
 
+def test_plugin_isolates_in_memory_state_by_workspace() -> None:
+    plugin = CloudStudioPlugin()
+    payload = {
+        "resources": [{"id": "bucket", "type": "aws.s3.bucket", "name": "assets"}],
+    }
+    assert plugin.apply({**payload, "workspace": "alpha"})["resources"]
+    assert plugin.refresh(workspace="beta")["resources"] == []
+    assert plugin.refresh(workspace="alpha")["resources"]
+    plugin.destroy(workspace="alpha")
+    assert plugin.refresh(workspace="alpha")["resources"] == []
+    assert plugin.refresh(workspace="beta")["resources"] == []
+
+
 def test_snapshot_store_round_trips_workspace(tmp_path) -> None:
     store = SnapshotStore(tmp_path)
     snapshot = {"resources": [{"id": "bucket"}], "edges": []}
