@@ -14,6 +14,7 @@ Status: PASS for the static method/path gate; clean-wheel and dynamic-plugin qua
 - `python -m tools.route_consistency`: **199 operations consistent**.
 - Ruff on changed files: **clean**.
 - `tests/test_plugin_clean_room.py::test_first_party_plugins_discover_from_clean_main_wheel`: **passed** against a freshly built `ronin_studio-0.0.0-py3-none-any.whl`, installed into an isolated target outside the checkout; all 7 first-party entry-point manifests were discovered with `-S` and `PYTHONNOUSERSITE=1`.
+- Parameter matcher hardening: malformed brace segments are rejected as unpublished; focused surface/route suite now reports **5 passed**, and the surface ratchet remains **128/241**.
 
 ## Boundary
 

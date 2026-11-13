@@ -25,3 +25,10 @@ def test_surface_gate_rejects_wrong_method_for_an_existing_path() -> None:
     assert unpublished_operations(published, invoked) == (
         "POST /v1/workspaces/workspace-a/projects/project-1",
     )
+
+
+def test_surface_gate_does_not_treat_malformed_braces_as_parameters() -> None:
+    published = {"GET /v1/workspaces/{workspace_id}/projects/{project_id}"}
+    invoked = {"GET /v1/workspaces/workspace-a/projects/{project_id"}
+
+    assert unpublished_operations(published, invoked) == tuple(invoked)

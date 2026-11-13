@@ -73,10 +73,25 @@ def declared_map() -> str:
 
 
 def _operation_paths_match(left_operation: str, right_operation: str) -> bool:
+    def is_parameter(segment: str) -> bool:
+        return bool(re.fullmatch(r"\{[A-Za-z_][A-Za-z0-9_]*\}", segment))
+
     left = left_operation.split(" ", 1)[1].strip("/").split("/")
     right = right_operation.split(" ", 1)[1].strip("/").split("/")
+
+    def segments_match(left_segment: str, right_segment: str) -> bool:
+        if ("{" in left_segment or "}" in left_segment) and not is_parameter(left_segment):
+            return False
+        if ("{" in right_segment or "}" in right_segment) and not is_parameter(right_segment):
+            return False
+        return (
+            left_segment == right_segment
+            or is_parameter(left_segment)
+            or is_parameter(right_segment)
+        )
+
     return len(left) == len(right) and all(
-        a == b or a.startswith("{") or b.startswith("{") for a, b in zip(left, right, strict=True)
+        segments_match(a, b) for a, b in zip(left, right, strict=True)
     )
 
 
