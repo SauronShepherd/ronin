@@ -9,10 +9,17 @@ from studio_core import (
     AssetRevision,
     AssetVersion,
     CatalogAsset,
+    ExecutionProfile,
     LineageEdge,
+    Project,
+    ProjectId,
+    ProjectManifest,
+    RepositoryBinding,
+    RuntimeProfileRef,
     Workspace,
     WorkspaceId,
 )
+from studio_execution import ProjectService, WorkspaceService, WorkspaceServiceNotFound
 from studio_storage import (
     ArtifactStore,
     CatalogStore,
@@ -35,6 +42,52 @@ def test_local_artifact_store_satisfies_artifact_port(tmp_path: Path) -> None:
 def test_sqlite_workspace_store_satisfies_workspace_port(tmp_path: Path) -> None:
     store = SqliteWorkspaceStore(tmp_path / "ronin.db", migration_now=NOW)
     assert isinstance(store, WorkspaceStore)
+
+
+def test_sqlite_project_lifecycle_survives_new_store_instance_after_restart(
+    tmp_path: Path,
+) -> None:
+    database = tmp_path / "restart.sqlite3"
+    workspace_id = WorkspaceId("restart-workspace")
+    project_id = ProjectId("restart-project")
+    manifest = ProjectManifest.from_project(
+        Project(
+            project_id,
+            "Restart project",
+            (RepositoryBinding("code", "https://git.example.test/restart.git", role="primary"),),
+            ExecutionProfile(runtime=RuntimeProfileRef("python", "3.11")),
+        )
+    )
+
+    first_store = SqliteWorkspaceStore(database, migration_now=NOW)
+    WorkspaceService(first_store).create(Workspace(workspace_id, "Restart"), now=NOW)
+    first_projects = ProjectService(first_store)
+    first_projects.register(workspace_id, manifest, now=NOW)
+
+    # A new service/store pair models a cold process restart against the same
+    # durable database, without carrying an in-memory project cache forward.
+    restarted_store = SqliteWorkspaceStore(database, migration_now=NOW)
+    restarted_projects = ProjectService(restarted_store)
+    assert restarted_projects.get(workspace_id, project_id) == manifest
+    assert restarted_projects.list(workspace_id) == (manifest,)
+
+    restarted_projects.archive(workspace_id, project_id, now=NOW)
+    after_archive_restart = ProjectService(SqliteWorkspaceStore(database, migration_now=NOW))
+    assert after_archive_restart.get(workspace_id, project_id) == manifest
+    assert after_archive_restart.list(workspace_id) == ()
+    with pytest.raises(WorkspaceServiceNotFound, match="project not found"):
+        after_archive_restart.replace(
+            workspace_id,
+            ProjectManifest.from_project(
+                Project(
+                    project_id,
+                    "No resurrection",
+                    manifest.project.repositories,
+                    manifest.project.execution,
+                )
+            ),
+            now=NOW,
+        )
 
 
 def test_sqlite_connection_store_satisfies_connection_port(tmp_path: Path) -> None:
