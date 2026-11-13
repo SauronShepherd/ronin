@@ -130,7 +130,7 @@ def test_http_backend_exposes_rfc9457_problem(monkeypatch: pytest.MonkeyPatch) -
 
 def test_terraform_provider_config_is_endpoint_based_and_secret_free() -> None:
     config = terraform_provider_config(create_backend("floci"))
-    assert 'dynamodb = "http://127.0.0.1:4566"' in config
+    assert "dynamodb = var.endpoint" in config
     assert "AWS_ACCESS_KEY_ID" not in config
 
 
@@ -141,10 +141,12 @@ def test_terraform_backend_writes_exact_pinned_tool_versions(tmp_path) -> None:
 
     config = (tmp_path / "main.tf").read_text(encoding="utf-8")
     provider = (tmp_path / "provider.tf").read_text(encoding="utf-8")
+    variables = (tmp_path / "variables.tf").read_text(encoding="utf-8")
     resources = (tmp_path / "resources.tf").read_text(encoding="utf-8")
     assert 'required_version = "= 1.13.5"' in config
     assert 'version = "= 6.65.0"' in config
-    assert 's3 = "http://127.0.0.1:4566"' in provider
+    assert "s3 = var.endpoint" in provider
+    assert 'variable "endpoint"' in variables
     assert 'resource "aws_s3_bucket"' in resources
 
 

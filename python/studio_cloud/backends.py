@@ -29,6 +29,8 @@ class EmulatorBackend(Protocol):
 
     def plan(self, topology: CloudTopology) -> dict[str, object]: ...
 
+    def validate(self) -> dict[str, object]: ...
+
     def refresh(self) -> dict[str, object]: ...
 
     def destroy(self) -> dict[str, object]: ...
@@ -50,6 +52,9 @@ class InMemoryBackend:
 
     def plan(self, topology: CloudTopology) -> dict[str, object]:
         return self.emulator.plan(topology)
+
+    def validate(self) -> dict[str, object]:
+        return {"returncode": 0, "stdout": "in-memory topology valid", "stderr": ""}
 
     def refresh(self) -> dict[str, object]:
         return self.emulator.refresh()
@@ -140,6 +145,9 @@ class HttpEmulatorBackend:
         return self._request(
             "POST", "plan", {"resources": resources, "edges": list(topology.edges)}
         )
+
+    def validate(self) -> dict[str, object]:
+        return {"status": "valid", "backend": self.name}
 
     def refresh(self) -> dict[str, object]:
         return self._request("GET", "refresh")
@@ -232,6 +240,11 @@ class TerraformEmulatorBackend(HttpEmulatorBackend):
             encoding="utf-8",
         )
         (root / "provider.tf").write_text(terraform_provider_config(self), encoding="utf-8")
+        (root / "variables.tf").write_text(
+            'variable "region" {\n  type = string\n  default = "us-east-1"\n}\n\n'
+            'variable "endpoint" {\n  type = string\n  default = "http://127.0.0.1:4566"\n}\n',
+            encoding="utf-8",
+        )
         (root / "resources.tf").write_text(export_terraform(topology), encoding="utf-8")
 
     def _ensure_initialized(self) -> None:
@@ -243,6 +256,10 @@ class TerraformEmulatorBackend(HttpEmulatorBackend):
         self._write_config(topology)
         self._ensure_initialized()
         return self._run("plan", "-input=false", "-no-color")
+
+    def validate(self) -> dict[str, object]:
+        self._ensure_initialized()
+        return self._run("validate", "-no-color")
 
     def apply(self, topology: CloudTopology) -> dict[str, object]:
         self._write_config(topology)
@@ -268,10 +285,10 @@ def terraform_provider_config(
     """Render endpoint overrides compatible with the AWS Terraform provider."""
     if backend.endpoint is None:
         return 'provider "aws" { region = "us-east-1" }\n'
-    endpoints = "\n".join(f'    {service} = "{backend.endpoint}"' for service in services)
+    endpoints = "\n".join(f"    {service} = var.endpoint" for service in services)
     return (
         'provider "aws" {\n'
-        '  region                      = "us-east-1"\n'
+        '  region                      = var.region\n'
         '  access_key                  = "cloud-studio"\n'
         '  secret_key                  = "cloud-studio"\n'
         "  skip_credentials_validation = true\n"
