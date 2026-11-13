@@ -1,11 +1,18 @@
 """Ronin plugin boundary for Cloud Studio."""
 
 import os
+from pathlib import Path
 from typing import Any
 
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
-from .backends import EmulatorBackend, InMemoryBackend, create_backend, terraform_provider_config
+from .backends import (
+    EmulatorBackend,
+    InMemoryBackend,
+    TerraformEmulatorBackend,
+    create_backend,
+    terraform_provider_config,
+)
 from .engine import (
     CATALOG,
     CloudEmulator,
@@ -231,7 +238,21 @@ class CloudStudioPlugin:
 
     def _backend_for_workspace(self, workspace: str) -> EmulatorBackend:
         if not isinstance(self.backend, InMemoryBackend):
-            return self.backend
+            if not isinstance(self.backend, TerraformEmulatorBackend) or workspace == "default":
+                return self.backend
+            workspace_key = self.snapshots._path(workspace).stem
+            workspace_root = Path(self.backend.workspace_dir) / workspace_key
+            workspace_root.mkdir(parents=True, exist_ok=True)
+            return TerraformEmulatorBackend(
+                name=self.backend.name,
+                endpoint=self.backend.endpoint,
+                license_required=self.backend.license_required,
+                timeout_seconds=self.backend.timeout_seconds,
+                workspace_dir=str(workspace_root),
+                terraform_executable=self.backend.terraform_executable,
+                command_timeout_seconds=self.backend.command_timeout_seconds,
+                plugin_cache_dir=self.backend.plugin_cache_dir,
+            )
         if workspace not in self._workspace_backends:
             self._workspace_backends[workspace] = InMemoryBackend(CloudEmulator())
         return self._workspace_backends[workspace]

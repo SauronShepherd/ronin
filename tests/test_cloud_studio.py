@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from studio_cloud import (
     CloudEmulator,
@@ -255,6 +257,26 @@ def test_plugin_isolates_in_memory_state_by_workspace() -> None:
     plugin.destroy(workspace="alpha")
     assert plugin.refresh(workspace="alpha")["resources"] == []
     assert plugin.refresh(workspace="beta")["resources"] == []
+
+
+def test_plugin_derives_isolated_terraform_workspace_directories(tmp_path) -> None:
+    plugin = CloudStudioPlugin(
+        backend_kind="floci",
+        endpoint="http://127.0.0.1:4566",
+        snapshot_dir=str(tmp_path / "snapshots"),
+        terraform_root=str(tmp_path / "terraform"),
+    )
+    alpha = plugin._backend_for_workspace("alpha")
+    beta = plugin._backend_for_workspace("beta")
+    assert isinstance(alpha, TerraformEmulatorBackend)
+    assert isinstance(beta, TerraformEmulatorBackend)
+    assert alpha.workspace_dir != beta.workspace_dir
+    assert alpha.workspace_dir.endswith("alpha")
+    assert beta.workspace_dir.endswith("beta")
+    assert Path(alpha.workspace_dir).is_dir()
+    assert Path(beta.workspace_dir).is_dir()
+    with pytest.raises(ValueError, match="unsafe"):
+        plugin._backend_for_workspace("../escape")
 
 
 def test_snapshot_store_round_trips_workspace(tmp_path) -> None:
