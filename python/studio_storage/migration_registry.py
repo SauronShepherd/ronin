@@ -50,7 +50,7 @@ _SCHEMA_TABLES = {
     "ml": "ml_schema_migrations",
 }
 _SUPPORTED_VERSIONS = {
-    "workspaces": 2,
+    "workspaces": 3,
     "environments": 1,
     "connections": 1,
     "catalog": 4,
