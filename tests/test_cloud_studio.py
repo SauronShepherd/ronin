@@ -88,8 +88,12 @@ def test_terraform_backend_writes_exact_pinned_tool_versions(tmp_path) -> None:
     backend._write_config(topology())
 
     config = (tmp_path / "main.tf").read_text(encoding="utf-8")
+    provider = (tmp_path / "provider.tf").read_text(encoding="utf-8")
+    resources = (tmp_path / "resources.tf").read_text(encoding="utf-8")
     assert 'required_version = "= 1.13.5"' in config
     assert 'version = "= 6.65.0"' in config
+    assert 's3 = "http://127.0.0.1:4566"' in provider
+    assert 'resource "aws_s3_bucket"' in resources
 
 
 def test_factory_reads_backend_from_environment(monkeypatch) -> None:

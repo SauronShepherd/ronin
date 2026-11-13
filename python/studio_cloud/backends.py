@@ -170,9 +170,11 @@ class TerraformEmulatorBackend(HttpEmulatorBackend):
             '      version = "= 6.65.0"\n'
             "    }\n"
             "  }\n"
-            "}\n\n" + terraform_provider_config(self) + "\n" + export_terraform(topology),
+            "}\n",
             encoding="utf-8",
         )
+        (root / "provider.tf").write_text(terraform_provider_config(self), encoding="utf-8")
+        (root / "resources.tf").write_text(export_terraform(topology), encoding="utf-8")
 
     def _ensure_initialized(self) -> None:
         if not self.initialized:
