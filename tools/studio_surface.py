@@ -72,23 +72,35 @@ def declared_map() -> str:
     return MAP.read_text(encoding="utf-8")
 
 
+def _operation_paths_match(left_operation: str, right_operation: str) -> bool:
+    left = left_operation.split(" ", 1)[1].strip("/").split("/")
+    right = right_operation.split(" ", 1)[1].strip("/").split("/")
+    return len(left) == len(right) and all(
+        a == b or a.startswith("{") or b.startswith("{")
+        for a, b in zip(left, right, strict=True)
+    )
+
+
+def unpublished_operations(published: set[str], invoked: set[str]) -> tuple[str, ...]:
+    """Return invoked method/path pairs absent from the published contract."""
+
+    return tuple(
+        sorted(
+            operation
+            for operation in invoked
+            if not any(
+                operation.split(" ", 1)[0] == published_operation.split(" ", 1)[0]
+                and _operation_paths_match(operation, published_operation)
+                for published_operation in published
+            )
+        )
+    )
+
+
 def check() -> None:
     operations = published_operations() | plugin_operations()
     invoked = ui_operations()
-    route_paths = {route.split(" ", 1)[1] for route in operations}
-
-    def matches(path: str, route: str) -> bool:
-        left, right = path.strip("/").split("/"), route.strip("/").split("/")
-        return len(left) == len(right) and all(
-            a == b or a.startswith("{") or b.startswith("{")
-            for a, b in zip(left, right, strict=True)
-        )
-
-    unknown = sorted(
-        path
-        for path in invoked
-        if not any(matches(path.split(" ", 1)[1], route) for route in route_paths)
-    )
+    unknown = unpublished_operations(operations, invoked)
     if not MAP.exists():
         raise SystemExit(f"missing Studio surface declaration: {MAP}")
     if unknown:
@@ -105,7 +117,7 @@ def check() -> None:
         for operation in invoked
         if any(
             operation.split(" ", 1)[0] == published.split(" ", 1)[0]
-            and matches(operation.split(" ", 1)[1], published.split(" ", 1)[1])
+            and _operation_paths_match(operation, published)
             for published in operations
         )
     }
