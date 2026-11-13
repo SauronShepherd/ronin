@@ -136,7 +136,41 @@ class CloudEmulator:
         resources = snapshot.get("resources", [])
         if not isinstance(resources, list):
             raise ValueError("snapshot.resources must be a list")
-        self._state = {str(item["id"]): dict(item) for item in resources}
+        restored: list[CloudResource] = []
+        for item in resources:
+            if not isinstance(item, dict):
+                raise ValueError("snapshot resources must be objects")
+            required = {"id", "type", "name"}
+            if not required.issubset(item):
+                raise ValueError("snapshot resource is missing id, type, or name")
+            properties = item.get("properties")
+            if properties is None:
+                properties = {
+                    key: value for key, value in item.items() if key not in {"id", "type", "name"}
+                }
+            if not isinstance(properties, dict):
+                raise ValueError("snapshot resource properties must be an object")
+            restored.append(
+                CloudResource(
+                    id=str(item["id"]),
+                    type=str(item["type"]),
+                    name=str(item["name"]),
+                    properties=dict(properties),
+                )
+            )
+        topology = CloudTopology(tuple(restored))
+        errors = topology.validate()
+        if errors:
+            raise ValueError("invalid snapshot: " + "; ".join(errors))
+        self._state = {
+            resource.id: {
+                "id": resource.id,
+                "type": resource.type,
+                "name": resource.name,
+                **resource.properties,
+            }
+            for resource in restored
+        }
         return self.snapshot()
 
 

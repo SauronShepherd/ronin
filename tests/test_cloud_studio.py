@@ -164,6 +164,26 @@ def test_snapshot_can_be_imported() -> None:
     assert restored == snapshot
 
 
+def test_snapshot_import_revalidates_resource_contract() -> None:
+    emulator = CloudEmulator()
+    with pytest.raises(ValueError, match="invalid snapshot"):
+        emulator.import_snapshot(
+            {
+                "resources": [
+                    {
+                        "id": "bucket",
+                        "type": "aws.s3.bucket",
+                        "name": "bucket",
+                        "properties": {"tags": {"secret": "nested"}},
+                    }
+                ]
+            }
+        )
+
+    with pytest.raises(ValueError, match="missing id"):
+        emulator.import_snapshot({"resources": [{"type": "aws.s3.bucket"}]})
+
+
 def test_snapshot_store_round_trips_workspace(tmp_path) -> None:
     store = SnapshotStore(tmp_path)
     snapshot = {"resources": [{"id": "bucket"}], "edges": []}
