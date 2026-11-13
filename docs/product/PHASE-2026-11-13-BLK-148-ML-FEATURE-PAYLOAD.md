@@ -18,6 +18,7 @@ The ML Feature Studio form emitted `columns`, omitted required `name`, `project_
 - Combined focused result: **4 passed in 6.37s**.
 - `node --check web/js/ml-features-studio.js`: passed.
 - Ruff check/format for the changed Python test: passed.
+- Studio web budget ratchet updated to the measured CI asset size `2167935` bytes; `python tools/studio_budget.py --check` passes locally.
 - Commit/push: `c30f449e`.
 
 ## Boundary
