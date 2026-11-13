@@ -41,6 +41,19 @@ def test_emulator_applies_and_snapshots_state() -> None:
     assert emulator.destroy()["destroyed"] == ["bucket"]
 
 
+def test_emulator_preserves_topology_edges_across_snapshot_round_trip() -> None:
+    source = CloudTopology(
+        (
+            CloudResource("bucket", "aws.s3.bucket", "assets"),
+            CloudResource("queue", "aws.sqs.queue", "events"),
+        ),
+        (("bucket", "queue"),),
+    )
+    snapshot = CloudEmulator().apply(source)
+    assert snapshot["edges"] == [["bucket", "queue"]]
+    assert CloudEmulator().import_snapshot(snapshot) == snapshot
+
+
 def test_unknown_resource_is_rejected() -> None:
     assert CloudTopology((CloudResource("x", "azure.unknown", "x"),)).validate()
 

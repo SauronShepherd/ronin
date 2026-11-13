@@ -113,6 +113,7 @@ class CloudEmulator:
 
     def __init__(self) -> None:
         self._state: dict[str, dict[str, Any]] = {}
+        self._edges: tuple[tuple[str, str], ...] = ()
 
     def apply(self, topology: CloudTopology) -> dict[str, Any]:
         errors = topology.validate()
@@ -122,10 +123,14 @@ class CloudEmulator:
             r.id: {"id": r.id, "type": r.type, "name": r.name, **r.properties}
             for r in topology.resources
         }
+        self._edges = topology.edges
         return self.snapshot()
 
     def snapshot(self) -> dict[str, Any]:
-        return {"resources": [dict(value) for value in self._state.values()]}
+        return {
+            "resources": [dict(value) for value in self._state.values()],
+            "edges": [list(edge) for edge in self._edges],
+        }
 
     def plan(self, topology: CloudTopology) -> dict[str, Any]:
         errors = topology.validate()
@@ -147,12 +152,21 @@ class CloudEmulator:
     def destroy(self) -> dict[str, Any]:
         removed = sorted(self._state)
         self._state.clear()
+        self._edges = ()
         return {"destroyed": removed, **self.snapshot()}
 
     def import_snapshot(self, snapshot: dict[str, Any]) -> dict[str, Any]:
         resources = snapshot.get("resources", [])
         if not isinstance(resources, list):
             raise ValueError("snapshot.resources must be a list")
+        edges = snapshot.get("edges", [])
+        if not isinstance(edges, list) or any(
+            not isinstance(edge, list)
+            or len(edge) != 2
+            or not all(isinstance(value, str) for value in edge)
+            for edge in edges
+        ):
+            raise ValueError("snapshot.edges must be a list of string pairs")
         restored: list[CloudResource] = []
         for item in resources:
             if not isinstance(item, dict):
@@ -175,7 +189,7 @@ class CloudEmulator:
                     properties=dict(properties),
                 )
             )
-        topology = CloudTopology(tuple(restored))
+        topology = CloudTopology(tuple(restored), tuple((edge[0], edge[1]) for edge in edges))
         errors = topology.validate()
         if errors:
             raise ValueError("invalid snapshot: " + "; ".join(errors))
@@ -188,6 +202,7 @@ class CloudEmulator:
             }
             for resource in restored
         }
+        self._edges = topology.edges
         return self.snapshot()
 
 
