@@ -49,6 +49,10 @@ CATALOG: dict[str, dict[str, Any]] = {
     },
 }
 
+MAX_TOPOLOGY_RESOURCES = 256
+MAX_RESOURCE_PROPERTIES = 64
+MAX_IDENTIFIER_LENGTH = 128
+
 
 @dataclass(frozen=True, slots=True)
 class CloudResource:
@@ -65,6 +69,8 @@ class CloudTopology:
 
     def validate(self) -> list[str]:
         errors: list[str] = []
+        if len(self.resources) > MAX_TOPOLOGY_RESOURCES:
+            errors.append(f"topology exceeds resource limit ({MAX_TOPOLOGY_RESOURCES})")
         ids = {item.id for item in self.resources}
         if len(ids) != len(self.resources):
             errors.append("resource ids must be unique")
@@ -73,6 +79,17 @@ class CloudTopology:
                 errors.append(f"unsupported resource type: {resource.type}")
             if not resource.id or not resource.name:
                 errors.append("resource id and name are required")
+            if (
+                len(resource.id) > MAX_IDENTIFIER_LENGTH
+                or len(resource.name) > MAX_IDENTIFIER_LENGTH
+            ):
+                errors.append(
+                    f"resource identifiers exceed {MAX_IDENTIFIER_LENGTH} characters: {resource.id}"
+                )
+            if len(resource.properties) > MAX_RESOURCE_PROPERTIES:
+                errors.append(
+                    f"resource properties exceed limit ({MAX_RESOURCE_PROPERTIES}): {resource.id}"
+                )
             if any(
                 not isinstance(value, (str, bool, int, float))
                 for value in resource.properties.values()

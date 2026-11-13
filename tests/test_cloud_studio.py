@@ -184,6 +184,27 @@ def test_snapshot_import_revalidates_resource_contract() -> None:
         emulator.import_snapshot({"resources": [{"type": "aws.s3.bucket"}]})
 
 
+def test_topology_rejects_unbounded_resource_shapes() -> None:
+    too_many = CloudTopology(
+        tuple(
+            CloudResource("bucket-" + str(index), "aws.s3.bucket", "bucket") for index in range(257)
+        )
+    )
+    assert any("resource limit" in error for error in too_many.validate())
+
+    too_many_properties = CloudTopology(
+        (
+            CloudResource(
+                "bucket",
+                "aws.s3.bucket",
+                "bucket",
+                {f"property_{index}": "value" for index in range(65)},
+            ),
+        )
+    )
+    assert any("properties exceed limit" in error for error in too_many_properties.validate())
+
+
 def test_snapshot_store_round_trips_workspace(tmp_path) -> None:
     store = SnapshotStore(tmp_path)
     snapshot = {"resources": [{"id": "bucket"}], "edges": []}
