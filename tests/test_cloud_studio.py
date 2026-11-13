@@ -98,9 +98,9 @@ def test_http_backend_posts_real_json_contract(monkeypatch: pytest.MonkeyPatch) 
         return Response()
 
     monkeypatch.setattr(cloud_backends, "urlopen", fake_urlopen)
-    result = HttpEmulatorBackend(
-        "remote", "http://backend:4566", timeout_seconds=7
-    ).apply(topology())
+    result = HttpEmulatorBackend("remote", "http://backend:4566", timeout_seconds=7).apply(
+        topology()
+    )
     request, timeout = captured[0]
     assert result == {"status": "accepted"}
     assert request.full_url == "http://backend:4566/v1/cloud-studio/apply"

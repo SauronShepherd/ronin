@@ -101,11 +101,9 @@ jobs:
         run: docker compose -f examples/cloud-studio/compose.floci.yaml -p ronin-cloud-studio-ci up -d floci
 
       - name: Run real Cloud Studio Terraform qualification
-        env:
-          TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/terraform-plugin-cache
         run: |
           rm -rf .tmp/cloud-studio-ci
-          mkdir -p .tmp/cloud-studio-ci "$TF_PLUGIN_CACHE_DIR"
+          mkdir -p .tmp/cloud-studio-ci
           python tools/cloud_studio_floci_qualification.py \
             --backend floci \
             --terraform \

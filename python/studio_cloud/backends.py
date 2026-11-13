@@ -292,7 +292,7 @@ def terraform_provider_config(
     endpoints = "\n".join(f"    {service} = var.endpoint" for service in services)
     return (
         'provider "aws" {\n'
-        '  region                      = var.region\n'
+        "  region                      = var.region\n"
         '  access_key                  = "cloud-studio"\n'
         '  secret_key                  = "cloud-studio"\n'
         "  skip_credentials_validation = true\n"

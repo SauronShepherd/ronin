@@ -127,9 +127,7 @@ class Node:
     origin: Origin = DEFAULT_ORIGIN
     ownership: Ownership = "GRAPH"
     label: str | None = field(default=None, compare=False, hash=False)
-    _param_index: dict[str, FrozenValue] = field(
-        init=False, repr=False, compare=False, hash=False
-    )
+    _param_index: dict[str, FrozenValue] = field(init=False, repr=False, compare=False, hash=False)
 
     def __post_init__(self) -> None:
         if not self.instance_key:
