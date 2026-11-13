@@ -76,8 +76,7 @@ def _operation_paths_match(left_operation: str, right_operation: str) -> bool:
     left = left_operation.split(" ", 1)[1].strip("/").split("/")
     right = right_operation.split(" ", 1)[1].strip("/").split("/")
     return len(left) == len(right) and all(
-        a == b or a.startswith("{") or b.startswith("{")
-        for a, b in zip(left, right, strict=True)
+        a == b or a.startswith("{") or b.startswith("{") for a, b in zip(left, right, strict=True)
     )
 
 
