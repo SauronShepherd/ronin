@@ -112,7 +112,10 @@ def run_bounded(timeout_seconds: float) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--timeout-seconds", type=float, default=30.0)
+    # Keep the local provider bound aligned with the published qualification
+    # plan.  Spark JVM startup on supported Windows hosts can exceed 30 s while
+    # remaining bounded and deterministic.
+    parser.add_argument("--timeout-seconds", type=float, default=45.0)
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
     result = qualify() if args.worker else run_bounded(args.timeout_seconds)
