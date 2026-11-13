@@ -171,6 +171,32 @@ def test_data_engineering_routes_execute_through_real_control_plane() -> None:
         host.stop()
 
 
+def test_data_engineering_get_without_workspace_scope_fails_closed() -> None:
+    plugin = DataEnginerringStudioPlugin()
+    workspaces_plugin = WorkspacesPlugin()
+    manager = PluginManager()
+    plan = manager.compose(
+        (
+            PluginRecord(workspaces_plugin.manifest, workspaces_plugin, "test"),
+            PluginRecord(plugin.manifest, plugin, "test"),
+        )
+    )
+    host = PluginHost(manager, plan)
+    host.start()
+    try:
+        with _server(
+            _Store(),
+            _Authorizer(),
+            plugin_host=host,
+            plugin_routes_enabled=True,
+        ) as address:
+            status, payload = _request(address, "GET", "/v1/data-engineering/health")
+        assert status == 403
+        assert payload["error"]["code"] == "plugin_workspace_scope_required"
+    finally:
+        host.stop()
+
+
 def test_queryflux_execution_is_bound_to_an_existing_project_in_workspace(tmp_path) -> None:
     plugin = DataEnginerringStudioPlugin()
     workspaces_plugin = WorkspacesPlugin()

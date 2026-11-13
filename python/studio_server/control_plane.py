@@ -1725,6 +1725,16 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             workspace_value = parse_qs(query).get("workspace_id", [None])[0]
                         if workspace_value is None and permission.startswith("cloud-studio:"):
                             workspace_value = str(self._server().default_workspace_id or "") or None
+                        if workspace_value is None and (
+                            permission.startswith("data-engineering:")
+                            or permission.startswith("ml-studio:")
+                        ):
+                            self._error(
+                                HTTPStatus.FORBIDDEN,
+                                "plugin_workspace_scope_required",
+                                "plugin routes require an explicit workspace scope",
+                            )
+                            return
                         if workspace_value is not None:
                             workspace_id = WorkspaceId(workspace_value)
                             mapped_permission = {
