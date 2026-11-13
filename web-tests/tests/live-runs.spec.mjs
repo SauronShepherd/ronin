@@ -24,6 +24,7 @@ test('live Runs saves server settings and retains the project filter', async ({ 
   page.on('pageerror', error => pageErrors.push(error.message));
 
   await page.goto(new URL('/studio/#runs', apiOrigin).toString(), { waitUntil: 'domcontentloaded' });
+  await page.locator('#rail .nav-item').first().waitFor({ state: 'visible' });
   await page.getByRole('button', { name: 'Server connection' }).click();
   await page.locator('#api-url').fill(apiOrigin);
   await page.locator('#api-token').fill(token);

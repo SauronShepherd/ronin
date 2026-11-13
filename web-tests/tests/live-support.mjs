@@ -120,6 +120,7 @@ export function installLiveApiProxy(page, expectedToken = token) {
 
 export async function connectLiveStudio(page, tokenToUse = token) {
   await page.goto('./#home');
+  await page.locator('#rail .nav-item').first().waitFor({ state: 'visible' });
   await page.getByRole('button', { name: 'Server connection' }).click();
   await page.locator('#api-url').fill('');
   await page.locator('#api-token').fill(tokenToUse);
