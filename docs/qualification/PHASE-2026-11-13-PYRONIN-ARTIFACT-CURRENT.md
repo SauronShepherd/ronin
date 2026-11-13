@@ -1,25 +1,12 @@
-# PyRonin wheel/sdist artifact qualification — current candidate
+# Qualification receipt — PyRonin SDK artifact
 
-**Date:** 2026-11-13  
-**Candidate SHA:** `f8e0260a1e3d42fe34e56e96a7c362eb08aa8b5e`
-
-## Gate
-
-The artifact runner used a detached clean worktree, built wheel and sdist,
-installed the wheel into isolated site-packages outside the checkout and ran
-the package contract suite.
-
-Result: **90 passed, 0 failed, 0 skipped** in 11.99 seconds.
-
-- Package: `pyronin`
-- Version: `0.0.1a0`
-- Wheel SHA-256: `898715702113483af2ba1ca66470e9a3a792969a7bded84a7ea5c78689dbcd86`
-- sdist SHA-256: `1284b732d17ca51d892e5257682eed218c6e23a87f16b221d2d741718f9c87bf`
-- Import origin: isolated site-packages
-- Qualification JSON: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-artifact-qualification-current-20261113054800.json`
-
-## Boundary
-
-This closes the SDK artifact-installation lane. Application SBOM/provenance,
-license/legal approval, complete Public v1 families and release aggregation
-remain separate gates. Public v1 remains **0/13 (0%) — NO-GO**.
+- Date: 2026-11-13
+- Candidate source: current `main` at execution time.
+- Build mode: detached isolated worktree; wheel/sdist built and installed outside the checkout.
+- Package: `pyronin==0.0.1a0`.
+- Result: **90 passed, 0 failed, 0 skipped** in 5.20 seconds.
+- Wheel SHA-256: `3575a91f21cb704d2301ceb3c1602519bcaf42fefd845121d388ba409c2e47d5`.
+- Sdist SHA-256: `b5a1eafa0b1640e6b88d3bfec9f2bc6d8d05081a3fbfe6047f8899a34fc02d5b`.
+- Wheel RECORD SHA-256: `f3492f0e84596ee776bd02a362e17d288d7e955a5f14ab1892e423143d5630e9`.
+- Evidence JSON: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-artifact-current-20261113103009.json`.
+- Boundary: this closes the SDK artifact-installation lane only; SBOM/provenance, license/legal approval, complete families and release aggregation remain separate.
