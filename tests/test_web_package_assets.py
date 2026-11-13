@@ -81,8 +81,17 @@ def test_catalog_studio_exposes_glossary_publication() -> None:
 def test_ml_studio_exposes_feature_definition_lifecycle() -> None:
     root = Path(__file__).parents[1]
     source = (root / "web/js/ml-features-studio.js").read_text(encoding="utf-8")
-    for marker in ("ml-feature-form", "/v1/ml-studio/features", "ronin.ml-feature/v1", "columns"):
+    for marker in (
+        "ml-feature-form",
+        "/v1/ml-studio/features",
+        "ronin.ml-feature/v1",
+        "project_id",
+        "features: [{ column:",
+        "transform",
+        "Number(data.get('version'))",
+    ):
         assert marker in source, f"ML feature lifecycle missing: {marker}"
+    assert "columns: [" not in source
 
 
 def test_public_studio_does_not_publish_model_invocation_or_genai_surfaces() -> None:
