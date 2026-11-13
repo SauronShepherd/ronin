@@ -258,6 +258,16 @@ def test_snapshot_store_round_trips_workspace(tmp_path) -> None:
         raise AssertionError("unsafe workspace must be rejected")
 
 
+def test_snapshot_store_replaces_only_after_writing_complete_json(tmp_path) -> None:
+    store = SnapshotStore(tmp_path)
+    expected = {"resources": [{"id": "bucket"}], "edges": []}
+    assert store.save("durable", expected) == expected
+    assert (tmp_path / "durable.json").read_text(encoding="utf-8") == (
+        '{"edges": [], "resources": [{"id": "bucket"}]}'
+    )
+    assert not (tmp_path / "durable.tmp").exists()
+
+
 def test_external_health_reports_unreachable_without_raising() -> None:
     result = create_backend("floci", "http://127.0.0.1:1").health()
     assert result["available"] is False

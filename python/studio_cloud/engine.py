@@ -8,6 +8,7 @@ stable topology contract.
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -298,6 +299,11 @@ class SnapshotStore:
         target = self._path(workspace)
         temporary = target.with_suffix(".tmp")
         temporary.write_text(json.dumps(snapshot, sort_keys=True), encoding="utf-8")
+        descriptor = os.open(temporary, os.O_RDWR)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
         temporary.replace(target)
         return snapshot
 
