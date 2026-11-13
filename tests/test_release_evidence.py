@@ -425,6 +425,70 @@ def test_aggregate_release_evidence_cli_writes_exact_candidate_verdict(
     assert '"status": "passed"' in capsys.readouterr().out
 
 
+def test_release_required_six_bundle_fixture_rejects_duplicate_artifact_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Model the six producer bundles and keep duplicate gate IDs fail-closed."""
+
+    gates = sorted(RELEASE_REQUIRED_GATES)
+    partitions = [gates[index::6] for index in range(6)]
+    bundles: list[Path] = []
+    for index, partition in enumerate(partitions):
+        path = tmp_path / f"producer-{index}.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "schema": SCHEMA,
+                    "commit": "abc123",
+                    "qualification_profile": "release_required",
+                    "records": [record(gate) for gate in partition],
+                }
+            ),
+            encoding="utf-8",
+        )
+        bundles.append(path)
+
+    merged = tmp_path / "six-bundles.json"
+    verdict = tmp_path / "six-verdict.json"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "aggregate-release-evidence",
+            *(str(path) for path in bundles),
+            "--output",
+            str(merged),
+            "--verdict-output",
+            str(verdict),
+            "--expected-commit",
+            "abc123",
+        ],
+    )
+    assert aggregate_release_evidence_main() == 0
+    assert json.loads(verdict.read_text(encoding="utf-8"))["status"] == "passed"
+    capsys.readouterr()
+
+    duplicate_path = tmp_path / "producer-duplicate.json"
+    duplicate_path.write_text(bundles[0].read_text(encoding="utf-8"), encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "aggregate-release-evidence",
+            *(str(path) for path in bundles),
+            str(duplicate_path),
+            "--output",
+            str(tmp_path / "duplicate-merged.json"),
+            "--verdict-output",
+            str(tmp_path / "duplicate-verdict.json"),
+            "--expected-commit",
+            "abc123",
+        ],
+    )
+    assert aggregate_release_evidence_main() == 2
+    assert "duplicate gate_id across bundles" in capsys.readouterr().out
+
+
 def test_aggregate_release_evidence_cli_rejects_diagnostic_gate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
