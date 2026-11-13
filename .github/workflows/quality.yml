@@ -72,6 +72,8 @@ jobs:
   cloud-studio-terraform:
     name: Cloud Studio Terraform / Floci
     runs-on: ubuntu-latest
+    env:
+      TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/terraform-plugin-cache
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -102,6 +104,8 @@ jobs:
 
       - name: Run real Cloud Studio Terraform qualification
         run: |
+          rm -rf .tmp/cloud-studio-ci
+          mkdir -p .tmp/cloud-studio-ci "$TF_PLUGIN_CACHE_DIR"
           python tools/cloud_studio_floci_qualification.py \
             --backend floci \
             --terraform \
