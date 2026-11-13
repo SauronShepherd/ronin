@@ -7,6 +7,7 @@ from dataclasses import replace
 from studio_core import ProjectId, ProjectManifest, Workspace, WorkspaceId
 from studio_orchestrator import Instant
 from studio_storage.ports import WorkspaceStore
+from studio_storage.workspaces import WorkspaceConflict
 
 
 class WorkspaceServiceError(RuntimeError):
@@ -133,14 +134,26 @@ class ProjectService:
             ) from exc
 
     def archive(
-        self, workspace_id: WorkspaceId, project_id: ProjectId, *, now: Instant | str
+        self,
+        workspace_id: WorkspaceId,
+        project_id: ProjectId,
+        *,
+        now: Instant | str,
+        idempotency_key: str | None = None,
     ) -> bool:
         self._workspace(workspace_id, mutable=True)
         if self._store.get_project(workspace_id, project_id) is None:
             raise WorkspaceServiceNotFound(f"project not found: {workspace_id}/{project_id}")
         # The storage predicate makes an already archived project a safe
         # no-op, including retries after a process restart.
-        return self._store.archive_project(workspace_id, project_id, now=now)
+        try:
+            if idempotency_key is None:
+                return self._store.archive_project(workspace_id, project_id, now=now)
+            return self._store.archive_project(
+                workspace_id, project_id, now=now, idempotency_key=idempotency_key
+            )
+        except (ValueError, WorkspaceConflict) as exc:
+            raise WorkspaceServiceConflict(str(exc)) from exc
 
     def unregister(self, workspace_id: WorkspaceId, project_id: ProjectId) -> None:
         self._workspace(workspace_id, mutable=True)

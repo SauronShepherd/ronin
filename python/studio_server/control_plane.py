@@ -3301,7 +3301,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     return
                 archived = self._server().project_service.archive(
-                    workspace_id, project_ref, now=_now()
+                    workspace_id,
+                    project_ref,
+                    now=_now(),
+                    idempotency_key=self.headers["Idempotency-Key"].strip(),
                 )
                 self._write_json(
                     HTTPStatus.OK,

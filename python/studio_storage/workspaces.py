@@ -10,8 +10,12 @@ from studio_orchestrator import Instant
 
 from .sqlite import execute_migration_script, open_database
 
-_WORKSPACE_SCHEMA_VERSION = 2
-_WORKSPACE_MIGRATIONS = {1: "workspace_001.sql", 2: "workspace_002_project_archive.sql"}
+_WORKSPACE_SCHEMA_VERSION = 3
+_WORKSPACE_MIGRATIONS = {
+    1: "workspace_001.sql",
+    2: "workspace_002_project_archive.sql",
+    3: "workspace_003_project_archive_idempotency.sql",
+}
 
 
 class WorkspaceConflict(RuntimeError):
@@ -270,17 +274,48 @@ class SqliteWorkspaceStore:
             connection.close()
 
     def archive_project(
-        self, workspace_id: WorkspaceId, project_id: ProjectId, *, now: Instant | str
+        self,
+        workspace_id: WorkspaceId,
+        project_id: ProjectId,
+        *,
+        now: Instant | str,
+        idempotency_key: str | None = None,
     ) -> bool:
         connection = self._connect()
         try:
+            connection.execute("BEGIN IMMEDIATE")
+            if idempotency_key is not None:
+                if not idempotency_key.strip():
+                    raise ValueError("idempotency_key is required")
+                receipt = connection.execute(
+                    "SELECT project_id FROM project_archive_idempotency "
+                    "WHERE workspace_id=? AND idempotency_key=?",
+                    (str(workspace_id), idempotency_key),
+                ).fetchone()
+                if receipt is not None:
+                    if receipt["project_id"] != str(project_id):
+                        raise WorkspaceConflict("idempotency key belongs to another project")
+                    connection.execute("COMMIT")
+                    return False
+            current = str(Instant(now))
             cursor = connection.execute(
                 "UPDATE workspace_projects SET archived_at=?,updated_at=?,"
                 "row_version=row_version+1 "
                 "WHERE workspace_id=? AND project_id=? AND archived_at IS NULL",
-                (str(Instant(now)), str(Instant(now)), str(workspace_id), str(project_id)),
+                (current, current, str(workspace_id), str(project_id)),
             )
+            if idempotency_key is not None:
+                connection.execute(
+                    "INSERT INTO project_archive_idempotency "
+                    "(workspace_id,idempotency_key,project_id,created_at) VALUES (?,?,?,?)",
+                    (str(workspace_id), idempotency_key, str(project_id), current),
+                )
+            connection.execute("COMMIT")
             return cursor.rowcount == 1
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
         finally:
             connection.close()
 

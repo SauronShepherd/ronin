@@ -7,6 +7,7 @@ import http.client
 import json
 import logging
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
 from threading import Thread
@@ -2903,6 +2904,7 @@ def test_project_archive_requires_key_and_replays_after_service_restart(tmp_path
     store = SqliteWorkspaceStore(db, migration_now=now)
     store.create_workspace(Workspace(_WS_A, "A"), now=now)
     store.register_project(_WS_A, _manifest(), now=now)
+    store.register_project(_WS_A, _manifest("Second", ProjectId("project-2")), now=now)
     authorizer = _Authorizer()
 
     with _server(store, authorizer) as address:
@@ -2923,6 +2925,15 @@ def test_project_archive_requires_key_and_replays_after_service_restart(tmp_path
         assert status == 200
         assert first["idempotent_replay"] is False
 
+        status, conflict = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/projects/project-2/archive",
+            headers={"Idempotency-Key": "archive-project-1"},
+        )
+        assert status == 409
+        assert conflict["error"]["code"] == "conflict"
+
     restarted = SqliteWorkspaceStore(db, migration_now=now)
     with _server(restarted, authorizer) as address:
         status, replay = _request(
@@ -2934,6 +2945,27 @@ def test_project_archive_requires_key_and_replays_after_service_restart(tmp_path
         assert status == 200
         assert replay["archived"] is True
         assert replay["idempotent_replay"] is True
+
+
+def test_project_archive_same_key_is_serialized_by_sqlite(tmp_path) -> None:
+    db = tmp_path / "projects.sqlite3"
+    now = "2026-11-13T00:00:00.000000Z"
+    seed = SqliteWorkspaceStore(db, migration_now=now)
+    seed.create_workspace(Workspace(_WS_A, "A"), now=now)
+    seed.register_project(_WS_A, _manifest(), now=now)
+
+    def archive_once() -> bool:
+        store = SqliteWorkspaceStore(db, migration_now=now)
+        return store.archive_project(
+            _WS_A,
+            _PROJECT,
+            now=now,
+            idempotency_key="archive-concurrent-1",
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = tuple(executor.map(lambda _: archive_once(), range(2)))
+    assert sorted(results) == [False, True]
 
 
 def test_govern_studio_routes_execute_through_real_http_server() -> None:

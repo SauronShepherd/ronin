@@ -115,6 +115,15 @@ CREATE TABLE IF NOT EXISTS ronin_projects (
     row_version BIGINT NOT NULL DEFAULT 1,
     PRIMARY KEY(workspace_id, project_id)
 );
+CREATE TABLE IF NOT EXISTS ronin_project_archive_idempotency (
+    workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
+    idempotency_key TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY(workspace_id, idempotency_key),
+    FOREIGN KEY(workspace_id, project_id)
+        REFERENCES ronin_projects(workspace_id, project_id) ON DELETE CASCADE
+);
 CREATE TABLE IF NOT EXISTS ronin_environments (
     workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
     environment_id TEXT NOT NULL,
@@ -584,19 +593,45 @@ class PostgresMetadataStore:
             connection.close()
 
     def archive_project(
-        self, workspace_id: WorkspaceId, project_id: ProjectId, *, now: Instant | str
+        self,
+        workspace_id: WorkspaceId,
+        project_id: ProjectId,
+        *,
+        now: Instant | str,
+        idempotency_key: str | None = None,
     ) -> bool:
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
                 self._require_active_workspace(cursor, workspace_id)
+                if idempotency_key is not None:
+                    if not idempotency_key.strip():
+                        raise ValueError("idempotency_key is required")
+                    cursor.execute(
+                        "SELECT project_id FROM ronin_project_archive_idempotency "
+                        "WHERE workspace_id=%s AND idempotency_key=%s FOR UPDATE",
+                        (str(workspace_id), idempotency_key),
+                    )
+                    receipt = cursor.fetchone()
+                    if receipt is not None:
+                        if receipt["project_id"] != str(project_id):
+                            raise ValueError("idempotency key belongs to another project")
+                        connection.commit()
+                        return False
+                current = str(Instant(now))
                 cursor.execute(
                     "UPDATE ronin_projects SET archived_at=%s,updated_at=%s,"
                     "row_version=row_version+1 "
                     "WHERE workspace_id=%s AND project_id=%s AND archived_at IS NULL",
-                    (str(Instant(now)), str(Instant(now)), str(workspace_id), str(project_id)),
+                    (current, current, str(workspace_id), str(project_id)),
                 )
                 archived = bool(cursor.rowcount == 1)
+                if idempotency_key is not None:
+                    cursor.execute(
+                        "INSERT INTO ronin_project_archive_idempotency "
+                        "(workspace_id,idempotency_key,project_id,created_at) VALUES (%s,%s,%s,%s)",
+                        (str(workspace_id), idempotency_key, str(project_id), current),
+                    )
             connection.commit()
             return archived
         except Exception:
