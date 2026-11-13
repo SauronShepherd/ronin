@@ -249,7 +249,7 @@ class TerraformEmulatorBackend(HttpEmulatorBackend):
 
     def _ensure_initialized(self) -> None:
         if not self.initialized:
-            self._run("init", "-backend=false", "-input=false")
+            self._run("init", "-upgrade", "-backend=false", "-input=false")
             self.initialized = True
 
     def plan(self, topology: CloudTopology) -> dict[str, object]:
