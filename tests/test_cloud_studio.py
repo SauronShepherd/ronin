@@ -218,6 +218,32 @@ def test_topology_rejects_unbounded_resource_shapes() -> None:
     assert any("properties exceed limit" in error for error in too_many_properties.validate())
 
 
+def test_plugin_snapshot_route_validates_and_normalizes_topology(tmp_path) -> None:
+    plugin = CloudStudioPlugin(snapshot_dir=str(tmp_path))
+    result = plugin.save_snapshot(
+        {
+            "workspace": "demo",
+            "resources": [
+                {
+                    "id": "bucket",
+                    "type": "aws.s3.bucket",
+                    "name": "assets",
+                    "properties": {"force_destroy": True},
+                }
+            ],
+            "edges": [],
+        }
+    )
+    assert result["snapshot"]["resources"][0]["properties"] == {"force_destroy": True}
+    with pytest.raises(ValueError, match="invalid snapshot"):
+        plugin.save_snapshot(
+            {
+                "workspace": "demo",
+                "resources": [{"id": "bad", "type": "unknown", "name": "bad"}],
+            }
+        )
+
+
 def test_snapshot_store_round_trips_workspace(tmp_path) -> None:
     store = SnapshotStore(tmp_path)
     snapshot = {"resources": [{"id": "bucket"}], "edges": []}

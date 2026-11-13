@@ -308,7 +308,22 @@ class CloudStudioPlugin:
     ) -> dict[str, Any]:
         payload = self._request_payload(payload, body)
         workspace = str(payload.get("workspace", "default"))
-        snapshot = {"resources": payload.get("resources", []), "edges": payload.get("edges", [])}
+        topology = self._topology(payload)
+        errors = topology.validate()
+        if errors:
+            raise ValueError("invalid snapshot: " + "; ".join(errors))
+        snapshot = {
+            "resources": [
+                {
+                    "id": item.id,
+                    "type": item.type,
+                    "name": item.name,
+                    "properties": dict(item.properties),
+                }
+                for item in topology.resources
+            ],
+            "edges": [list(edge) for edge in topology.edges],
+        }
         return {"workspace": workspace, "snapshot": self.snapshots.save(workspace, snapshot)}
 
     def load_snapshot(
