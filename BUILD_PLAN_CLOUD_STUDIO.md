@@ -70,7 +70,7 @@
 - [x] Browser end-to-end headless sobre la superficie visual standalone.
 - [x] Import/export JSON de topologías.
 - [x] Layout automático y vistas por proveedor/servicio (catálogo/backend metadata).
-- [ ] Tests de accesibilidad y rendimiento.
+- [x] Tests de accesibilidad y rendimiento.
 
 ### Fase 5 — Calidad y distribución
 

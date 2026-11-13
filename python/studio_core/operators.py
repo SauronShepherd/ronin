@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from bisect import bisect_left, bisect_right
-from dataclasses import dataclass
+from bisect import bisect_right
+from dataclasses import dataclass, field
 from typing import Literal, TypeAlias
 
 from .canonical_json import encode as encode_canonical_json
@@ -154,6 +154,9 @@ class OperatorCatalog:
     """Canonical, version-aware operator contract collection."""
 
     operators: tuple[OperatorContract, ...] = ()
+    _index: dict[tuple[str, int], OperatorContract] = field(
+        init=False, repr=False, compare=False, hash=False
+    )
 
     def __post_init__(self) -> None:
         canonical = tuple(
@@ -163,17 +166,14 @@ class OperatorCatalog:
         if len(refs) != len(set(refs)):
             raise ValueError("operator references must be unique within a catalog")
         object.__setattr__(self, "operators", canonical)
+        object.__setattr__(
+            self,
+            "_index",
+            {(operator.ref.name, operator.ref.version): operator for operator in canonical},
+        )
 
     def get(self, ref: OperatorRef) -> OperatorContract | None:
-        key = (ref.name, ref.version)
-        index = bisect_left(
-            self.operators,
-            key,
-            key=lambda item: (item.ref.name, item.ref.version),
-        )
-        if index < len(self.operators) and self.operators[index].ref == ref:
-            return self.operators[index]
-        return None
+        return self._index.get((ref.name, ref.version))
 
     def latest(self, name: str) -> OperatorContract | None:
         index = bisect_right(self.operators, name, key=lambda item: item.ref.name) - 1

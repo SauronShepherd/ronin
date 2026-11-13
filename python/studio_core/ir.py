@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import heapq
 import math
-from bisect import bisect_left
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Literal, TypeAlias, cast
@@ -128,6 +127,9 @@ class Node:
     origin: Origin = DEFAULT_ORIGIN
     ownership: Ownership = "GRAPH"
     label: str | None = field(default=None, compare=False, hash=False)
+    _param_index: dict[str, FrozenValue] = field(
+        init=False, repr=False, compare=False, hash=False
+    )
 
     def __post_init__(self) -> None:
         if not self.instance_key:
@@ -141,6 +143,7 @@ class Node:
         object.__setattr__(self, "params", canonical_params)
         object.__setattr__(self, "inputs", canonical_inputs)
         object.__setattr__(self, "outputs", canonical_outputs)
+        object.__setattr__(self, "_param_index", dict(canonical_params))
         expected = NodeId.derive(
             _node_semantic_payload(
                 self.operator,
@@ -211,10 +214,7 @@ class Node:
         )
 
     def param(self, name: str) -> FrozenValue | None:
-        index = bisect_left(self.params, name, key=lambda item: item[0])
-        if index < len(self.params) and self.params[index][0] == name:
-            return self.params[index][1]
-        return None
+        return self._param_index.get(name)
 
 
 @dataclass(frozen=True, order=True, slots=True)
