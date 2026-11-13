@@ -51,7 +51,7 @@
 
 ### Fase 3 — Terraform/OpenTofu
 
-- [ ] Generar `provider.tf`, recursos y variables a partir del grafo.
+- [x] Generar `provider.tf`, recursos y variables a partir del grafo.
 - [x] Importar el subconjunto HCL escalar generado por Cloud Studio mediante parser controlado.
 - [ ] Probar `init`, `validate`, `plan` y `apply` contra Floci en CI.
 - [x] Añadir state local aislado por workspace.
