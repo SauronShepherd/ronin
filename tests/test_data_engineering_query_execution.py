@@ -322,7 +322,7 @@ def test_execute_query_accepts_result_at_exact_serialized_byte_budget(tmp_path: 
     store = LocalArtifactStore(tmp_path / "artifacts")
     result = execute_query(
         _provider(),
-            _Transport([QueryStatus("succeeded")]),
+        _Transport([QueryStatus("succeeded")]),
         store,
         QueryRequest("SELECT 1", "local", max_result_bytes=len(serialized_result)),
         engine="duckdb",
@@ -437,5 +437,6 @@ def test_queryflux_worker_runner_persists_terminal_state_and_evidence(tmp_path: 
     )
     assert result["state"] == "succeeded"
     execution = executions.get("workspace-1", "project-1", "run-1", "attempt-1")
-    assert execution is not None and execution.state == "succeeded"
+    assert execution is not None
+    assert execution.state == "succeeded"
     assert references.list_evidence_references()[0]["digest"] == result["evidence"]["digest"]

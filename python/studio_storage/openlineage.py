@@ -21,7 +21,8 @@ class SqliteOpenLineageDedupStore:
         with self._connect() as connection:
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS ronin_openlineage_published ("
-                "event_digest TEXT PRIMARY KEY, published_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"
+                "event_digest TEXT PRIMARY KEY, published_at TEXT NOT NULL "
+                "DEFAULT CURRENT_TIMESTAMP)"
             )
 
     def _connect(self) -> sqlite3.Connection:

@@ -16,19 +16,18 @@ from studio_data_engineering import (
     QueryFluxWorkerRunner,
     SqliteQueryEvidenceReferenceStore,
     SqliteQueryFluxExecutionStore,
-    SqliteQueryFluxExecutionStore,
     execute_query,
 )
+from studio_orchestrator import Instant, Job, JobId, JobState, Run, RunId, RunState
 from studio_query_engine import (
     DiscoveredEngine,
     EngineCapabilities,
     EngineHandshake,
     QueryExecutionPolicy,
-    QueryRequest,
     QueryFluxTrinoTransport,
+    QueryRequest,
     TrinoHttpTransport,
 )
-from studio_orchestrator import Instant, Job, JobId, JobState, Run, RunId, RunState
 from studio_storage import LocalArtifactStore, SqliteJobStore
 
 _TRINO_URL = os.environ.get("RONIN_TRINO_TEST_URL")
@@ -168,10 +167,12 @@ def test_queryflux_worker_runner_real_trino_persists_terminal_evidence(tmp_path:
             EngineHandshake(
                 "queryflux",
                 "484",
-                EngineCapabilities((
-                    ("cancel", True),
-                    ("parameter_binding", True),
-                )),
+                EngineCapabilities(
+                    (
+                        ("cancel", True),
+                        ("parameter_binding", True),
+                    )
+                ),
                 True,
             ),
             ("trino",),
@@ -206,7 +207,8 @@ def test_queryflux_worker_runner_real_trino_persists_terminal_evidence(tmp_path:
     assert result["state"] == "succeeded"
     assert result["row_count"] == 1
     execution = executions.get("workspace-real", "project-real", "run-real-worker", "attempt-1")
-    assert execution is not None and execution.state == "succeeded"
+    assert execution is not None
+    assert execution.state == "succeeded"
     assert references.list_evidence_references()[0]["digest"] == result["evidence"]["digest"]
 
 
@@ -267,7 +269,7 @@ def test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate(tmp_pa
         }
     )
     command = [sys.executable, "-m", "studio_cli.entrypoint", "worker"]
-    first = subprocess.Popen(command, cwd=str(Path.cwd()), env=env)
+    first = subprocess.Popen(command, cwd=str(Path.cwd()), env=env)  # noqa: S603
     try:
         deadline = time.monotonic() + 20
         while time.monotonic() < deadline:
@@ -282,7 +284,7 @@ def test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate(tmp_pa
         first.kill()
         first.wait(timeout=10)
         time.sleep(2.5)
-        second = subprocess.Popen(command, cwd=str(Path.cwd()), env=env)
+        second = subprocess.Popen(command, cwd=str(Path.cwd()), env=env)  # noqa: S603
         try:
             deadline = time.monotonic() + 30
             while time.monotonic() < deadline:
@@ -302,8 +304,10 @@ def test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate(tmp_pa
             first.kill()
             first.wait(timeout=10)
     final = store.get_job(JobId("job-queryflux-process"))
-    assert final is not None and final.state is JobState.SUCCEEDED
+    assert final is not None
+    assert final.state is JobState.SUCCEEDED
     execution = SqliteQueryFluxExecutionStore(database).get(
         "workspace-process", "project-process", "run-process", "attempt-1"
     )
-    assert execution is not None and execution.state == "succeeded"
+    assert execution is not None
+    assert execution.state == "succeeded"

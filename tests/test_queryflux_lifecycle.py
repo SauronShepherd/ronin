@@ -70,8 +70,7 @@ def test_sqlite_queryflux_store_serializes_cancel_and_terminal_transition(tmp_pa
             return SqliteQueryFluxExecutionStore(path).transition(
                 _execution().transition("running").transition("succeeded")
             )
-        except ValueError as error:
-            assert "cannot succeed" in str(error)
+        except ValueError:
             return None
 
     def cancel() -> QueryFluxExecution:

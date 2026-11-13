@@ -306,7 +306,6 @@ __all__ = [
     "SUPPORTED_OPENLINEAGE_SCHEMA_VERSIONS",
     "OpenLineageSink",
     "OpenLineageDedupStore",
-    "SqliteOpenLineageDedupStore",
     "OpenLineageTransport",
     "OpenLineageTransportError",
     "PublishReceipt",

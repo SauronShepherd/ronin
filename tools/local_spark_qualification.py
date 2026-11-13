@@ -84,7 +84,9 @@ def run_bounded(timeout_seconds: float) -> dict[str, Any]:
         # JSON object without treating those diagnostics as a failed job.
         decoder = json.JSONDecoder()
         result = None
-        for offset in reversed([index for index, value in enumerate(completed.stdout) if value == "{"]):
+        for offset in reversed(
+            [index for index, value in enumerate(completed.stdout) if value == "{"]
+        ):
             try:
                 candidate, _ = decoder.raw_decode(completed.stdout[offset:])
             except json.JSONDecodeError:

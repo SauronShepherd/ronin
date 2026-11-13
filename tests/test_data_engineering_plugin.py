@@ -4,10 +4,10 @@ from studio_core.plugins import ContributionRegistry, PluginContext
 from studio_data_engineering import (
     DataEnginerringStudioPlugin,
     QueryEngineRuntimeProvider,
+    QueryFluxExecution,
     SqliteCompilationStore,
     SqliteQueryEvidenceReferenceStore,
     SqliteQueryFluxExecutionStore,
-    QueryFluxExecution,
     compile_pipeline,
     preview_pipeline,
 )

@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
+
 from studio_orchestrator import Instant, Job, JobId, JobState, Run, RunId, RunState
 from studio_query_engine import QueryRequest
 
@@ -66,9 +68,7 @@ class QueryFluxWorkerRunner:
             execution = self.execution_store.transition(execution.transition("running"))
 
         def cancelled() -> bool:
-            current = self.execution_store.get(
-                workspace_id, project_id, logical_run_id, attempt_id
-            )
+            current = self.execution_store.get(workspace_id, project_id, logical_run_id, attempt_id)
             return bool(cancellation_requested and cancellation_requested()) or bool(
                 current and current.cancel_requested
             )
@@ -97,26 +97,33 @@ class QueryFluxWorkerRunner:
                 cancellation_requested=cancelled,
             )
         except Exception as error:
-            current = self.execution_store.get(
-                workspace_id, project_id, logical_run_id, attempt_id
-            ) or execution
+            current = (
+                self.execution_store.get(workspace_id, project_id, logical_run_id, attempt_id)
+                or execution
+            )
             if not current.terminal:
                 self.execution_store.transition(
                     current.transition("failed", failure_code=type(error).__name__)
                 )
             raise
-        current = self.execution_store.get(
-            workspace_id, project_id, logical_run_id, attempt_id
-        ) or execution
+        current = (
+            self.execution_store.get(workspace_id, project_id, logical_run_id, attempt_id)
+            or execution
+        )
         target: QueryFluxState = (
-            "succeeded" if result.status.state == "succeeded" else
-            "cancelled" if result.status.state == "cancelled" else "failed"
+            "succeeded"
+            if result.status.state == "succeeded"
+            else "cancelled"
+            if result.status.state == "cancelled"
+            else "failed"
         )
         if not current.terminal:
             self.execution_store.transition(
                 current.transition(
                     target,
-                    failure_code=None if target != "failed" else (result.status.message or "query_failed"),
+                    failure_code=None
+                    if target != "failed"
+                    else (result.status.message or "query_failed"),
                 )
             )
         return {
@@ -147,8 +154,13 @@ def plan_queryflux_execution(
     now: Instant | str,
 ) -> QueryFluxExecutionPlan:
     values = (workspace_id, project_id, run_id, attempt_id, sql, engine, translation_policy)
-    if any(not isinstance(value, str) or not value.strip() or "\n" in value or "\r" in value for value in values):
-        raise ValueError("QueryFlux execution identifiers and SQL must be non-empty single-line text")
+    if any(
+        not isinstance(value, str) or not value.strip() or "\n" in value or "\r" in value
+        for value in values
+    ):
+        raise ValueError(
+            "QueryFlux execution identifiers and SQL must be non-empty single-line text"
+        )
     if any(
         isinstance(value, bool) or not isinstance(value, int) or value < 1
         for value in (max_rows, page_size, max_result_bytes)
@@ -167,7 +179,9 @@ def plan_queryflux_execution(
         "max_result_bytes": max_result_bytes,
         "parameters": list(parameters or []),
     }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    encoded = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode()
     digest = hashlib.sha256(encoded).hexdigest()
     current = Instant(now)
     job_id = JobId(f"job-queryflux-{digest[:32]}")

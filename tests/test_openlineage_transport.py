@@ -7,12 +7,12 @@ from studio_core import (
     OpenLineageTransportError,
     validate_openlineage_event,
 )
-from studio_storage.openlineage import SqliteOpenLineageDedupStore
 from studio_core.openlineage import (
     OPENLINEAGE_COLUMN_LINEAGE_SCHEMA,
     OPENLINEAGE_LINEAGE_FACET_SCHEMA,
 )
 from studio_server.openlineage_http import HttpOpenLineageSink, _RejectRedirects
+from studio_storage.openlineage import SqliteOpenLineageDedupStore
 
 
 class Sink:

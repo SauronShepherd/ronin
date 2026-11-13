@@ -532,7 +532,8 @@ def test_restart_reclaims_queryflux_job_and_executes_once(tmp_path: Path) -> Non
         assert outcome.execution.state.value == "succeeded"
         assert runner.calls == 1
         final_job = store.get_job(JobId("job-queryflux"))
-        assert final_job is not None and final_job.state is JobState.SUCCEEDED
+        assert final_job is not None
+        assert final_job.state is JobState.SUCCEEDED
 
     asyncio.run(scenario())
 

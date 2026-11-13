@@ -1,3 +1,4 @@
+import pytest
 from studio_data_engineering import plan_queryflux_execution
 
 
@@ -20,14 +21,12 @@ def test_queryflux_execution_plan_is_idempotent_for_same_scope_and_attempt() -> 
     second = plan_queryflux_execution(**kwargs)
     assert first.job.id == second.job.id
     assert first.run.id == second.run.id
-    assert first.job.idempotency_key == (
-        "queryflux:workspace-1:project-1:run-1:attempt-1"
-    )
+    assert first.job.idempotency_key == ("queryflux:workspace-1:project-1:run-1:attempt-1")
     assert first.job.target == "data-engineering.queryflux-execution.v1"
 
 
 def test_queryflux_execution_plan_rejects_unbounded_limits() -> None:
-    try:
+    with pytest.raises(ValueError, match="limits"):
         plan_queryflux_execution(
             workspace_id="workspace-1",
             project_id="project-1",
@@ -41,7 +40,3 @@ def test_queryflux_execution_plan_rejects_unbounded_limits() -> None:
             max_result_bytes=4096,
             now="2026-11-12T00:00:00.000000Z",
         )
-    except ValueError as error:
-        assert "limits" in str(error)
-    else:
-        raise AssertionError("invalid QueryFlux limits must be rejected")

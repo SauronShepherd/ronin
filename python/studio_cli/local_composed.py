@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import math
 import os
-import asyncio
 import secrets
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -29,8 +29,8 @@ from studio_core import (
     WorkspaceId,
 )
 from studio_data_engineering import (
-    PostgresQueryFluxExecutionStore,
     PostgresQueryEvidenceReferenceStore,
+    PostgresQueryFluxExecutionStore,
     PostgresRevisionStore,
     RevisionApplication,
     SqliteQueryEvidenceReferenceStore,

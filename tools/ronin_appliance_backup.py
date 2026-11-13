@@ -231,13 +231,10 @@ def _replace_data_volume(
     )
 
 
-def _copy_data_volume_to_host(
-    compose_file: Path, env: dict[str, str], destination: Path
-) -> None:
+def _copy_data_volume_to_host(compose_file: Path, env: dict[str, str], destination: Path) -> None:
     destination.mkdir(parents=True, exist_ok=False)
     _run(
-        _compose_prefix(compose_file)
-        + ["cp", f"server:{_VOLUME_ROOT}/.", str(destination)],
+        _compose_prefix(compose_file) + ["cp", f"server:{_VOLUME_ROOT}/.", str(destination)],
         env=env,
     )
 

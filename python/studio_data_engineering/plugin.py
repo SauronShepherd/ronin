@@ -23,8 +23,8 @@ from .execution import plan_pipeline_execution
 from .ide import IdeCell
 from .previews import preview_pipeline
 from .query_execution import QueryTransport, execute_query
-from .queryflux_lifecycle import QueryFluxExecution
 from .queryflux_execution import plan_queryflux_execution
+from .queryflux_lifecycle import QueryFluxExecution
 from .result_paging import page_query_result
 from .revisions import RevisionApplication, RevisionArtifactStore, RevisionRecordStore
 from .runtimes import QueryEngineRuntimeProvider
@@ -118,9 +118,7 @@ class DataEnginerringStudioPlugin:
             "queryflux_evidence_reference_store"
         )
         self._queryflux_execution_store = context.services.get("queryflux_execution_store")
-        self._queryflux_execution_canceller = context.services.get(
-            "queryflux_execution_canceller"
-        )
+        self._queryflux_execution_canceller = context.services.get("queryflux_execution_canceller")
         self._queryflux_job_submitter = context.services.get("queryflux_job_submitter")
         self._artifact_reference_barrier = context.services.get("artifact_reference_barrier")
         if artifact_store is not None:
@@ -653,10 +651,7 @@ class DataEnginerringStudioPlugin:
         if not isinstance(body, dict):
             raise ValueError("queryflux execution body must be an object")
         required = ("sql", "engine", "run_id", "attempt_id")
-        if any(
-            not isinstance(body.get(key), str) or not body[key].strip()
-            for key in required
-        ):
+        if any(not isinstance(body.get(key), str) or not body[key].strip() for key in required):
             raise ValueError("sql, engine, run_id and attempt_id are required strings")
         parameters = body.get("parameters", [])
         if not isinstance(parameters, list):
@@ -717,7 +712,9 @@ class DataEnginerringStudioPlugin:
             )
         execution = store.get(workspace_id, project_id, run_id, attempt_id)
         if execution is None:
-            return _plugin_error("queryflux_execution_not_found", "QueryFlux execution was not found")
+            return _plugin_error(
+                "queryflux_execution_not_found", "QueryFlux execution was not found"
+            )
         if execution.terminal:
             return {
                 "workspace_id": execution.workspace_id,

@@ -20,7 +20,6 @@ from typing import Literal, cast
 
 from studio_core import GrantSet, ProjectManifest
 from studio_core.canonical_json import decode as decode_canonical_json
-from studio_execution import DurableExecutionService
 from studio_data_engineering import (
     PostgresQueryEvidenceReferenceStore,
     PostgresQueryFluxExecutionStore,
@@ -29,13 +28,7 @@ from studio_data_engineering import (
     SqliteQueryEvidenceReferenceStore,
     SqliteQueryFluxExecutionStore,
 )
-from studio_query_engine import (
-    DiscoveredEngine,
-    EngineCapabilities,
-    EngineHandshake,
-    QueryExecutionPolicy,
-    QueryFluxTrinoTransport,
-)
+from studio_execution import DurableExecutionService
 from studio_migration import (
     IICS_ADAPTER_VERSION,
     BenchmarkResult,
@@ -69,10 +62,21 @@ from studio_notebook import (
     analyze_notebook_dependencies,
 )
 from studio_orchestrator import Instant, JobStore
+from studio_query_engine import (
+    DiscoveredEngine,
+    EngineCapabilities,
+    EngineHandshake,
+    QueryExecutionPolicy,
+    QueryFluxTrinoTransport,
+)
 from studio_server import RoninHTTPServer
 from studio_sql import DuckDbDependencyError, DuckDbSqlEngine
-from studio_storage import PostgresJobReadPort, PostgresMetadataStore, SqliteJobStore
-from studio_storage import LocalArtifactStore
+from studio_storage import (
+    LocalArtifactStore,
+    PostgresJobReadPort,
+    PostgresMetadataStore,
+    SqliteJobStore,
+)
 from studio_storage.migration_registry import MigrationStatusError, migration_status
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
@@ -899,9 +903,7 @@ def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
     if lease_seconds < 2:
         raise CliError("RONIN_WORKER_LEASE_SECONDS must be at least 2")
     try:
-        heartbeat_interval = float(
-            os.environ.get("RONIN_WORKER_HEARTBEAT_INTERVAL_SECONDS", "10")
-        )
+        heartbeat_interval = float(os.environ.get("RONIN_WORKER_HEARTBEAT_INTERVAL_SECONDS", "10"))
     except ValueError as exc:
         raise CliError("RONIN_WORKER_HEARTBEAT_INTERVAL_SECONDS must be numeric") from exc
     if not 0 < heartbeat_interval < lease_seconds:
@@ -926,7 +928,7 @@ class _LoopbackQueryFluxHttpClient:
     """Small JSON client restricted to the explicitly configured provider URL."""
 
     def request(self, method: str, url: str, *, body: str | None = None):
-        request = urllib.request.Request(
+        request = urllib.request.Request(  # noqa: S310
             url,
             data=body.encode("utf-8") if body is not None else None,
             method=method,
@@ -935,7 +937,7 @@ class _LoopbackQueryFluxHttpClient:
                 "X-Trino-User": "ronin-worker",
             },
         )
-        with urllib.request.urlopen(request, timeout=15) as response:
+        with urllib.request.urlopen(request, timeout=15) as response:  # noqa: S310
             payload = json.loads(response.read().decode("utf-8"))
         if not isinstance(payload, dict):
             raise RuntimeError("QueryFlux provider response must be a JSON object")

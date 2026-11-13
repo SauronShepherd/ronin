@@ -36,6 +36,11 @@ from .query_execution import (
     QueryTransport,
     execute_query,
 )
+from .queryflux_execution import (
+    QueryFluxExecutionPlan,
+    QueryFluxWorkerRunner,
+    plan_queryflux_execution,
+)
 from .queryflux_lifecycle import (
     PostgresQueryFluxExecutionStore,
     QueryFluxExecution,
@@ -43,7 +48,6 @@ from .queryflux_lifecycle import (
     QueryFluxTerminalState,
     SqliteQueryFluxExecutionStore,
 )
-from .queryflux_execution import QueryFluxExecutionPlan, QueryFluxWorkerRunner, plan_queryflux_execution
 from .revisions import PipelineRevisionRecord, RevisionApplication, RevisionConflict
 from .runtimes import (
     QueryEngineRuntimeProvider,
