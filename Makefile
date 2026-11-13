@@ -195,7 +195,7 @@ coverage-storage-files:
 		--baseline=scheduler_leadership.py=76.28 \
 		--baseline=scheduler_schedule.py=74.00 \
 		--baseline=scheduler_timeout.py=66.70 \
-		--baseline=workspaces.py=65.10
+		--baseline=workspaces.py=71.88
 
 coverage-storage-files-full:
 	# Opt-in provider-backed lane: this includes PostgreSQL adapters and requires
@@ -226,5 +226,5 @@ coverage-storage-files-full:
 		--baseline=scheduler_leadership.py=76.28 \
 		--baseline=scheduler_schedule.py=74.00 \
 		--baseline=scheduler_timeout.py=66.70 \
-		--baseline=workspaces.py=65.10
+		--baseline=workspaces.py=71.88
 	@rm -f coverage-storage.json
