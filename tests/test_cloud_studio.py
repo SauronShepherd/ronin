@@ -268,6 +268,19 @@ def test_snapshot_store_replaces_only_after_writing_complete_json(tmp_path) -> N
     assert not (tmp_path / "durable.tmp").exists()
 
 
+def test_snapshot_store_cleans_temporary_file_when_fsync_fails(tmp_path, monkeypatch) -> None:
+    store = SnapshotStore(tmp_path)
+
+    def fail_fsync(_descriptor: int) -> None:
+        raise OSError("simulated disk failure")
+
+    monkeypatch.setattr("studio_cloud.engine.os.fsync", fail_fsync)
+    with pytest.raises(OSError, match="simulated disk failure"):
+        store.save("failed", {"resources": [], "edges": []})
+    assert not (tmp_path / "failed.json").exists()
+    assert not (tmp_path / "failed.tmp").exists()
+
+
 def test_external_health_reports_unreachable_without_raising() -> None:
     result = create_backend("floci", "http://127.0.0.1:1").health()
     assert result["available"] is False

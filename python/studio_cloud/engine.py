@@ -300,11 +300,21 @@ class SnapshotStore:
         temporary = target.with_suffix(".tmp")
         temporary.write_text(json.dumps(snapshot, sort_keys=True), encoding="utf-8")
         descriptor = os.open(temporary, os.O_RDWR)
+        sync_error: OSError | None = None
         try:
             os.fsync(descriptor)
+        except OSError as error:
+            sync_error = error
         finally:
             os.close(descriptor)
-        temporary.replace(target)
+        if sync_error is not None:
+            temporary.unlink(missing_ok=True)
+            raise sync_error
+        try:
+            temporary.replace(target)
+        except OSError:
+            temporary.unlink(missing_ok=True)
+            raise
         return snapshot
 
     def load(self, workspace: str) -> dict[str, Any] | None:
