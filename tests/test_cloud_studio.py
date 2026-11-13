@@ -182,3 +182,28 @@ def test_external_health_reports_unreachable_without_raising() -> None:
     result = create_backend("floci", "http://127.0.0.1:1").health()
     assert result["available"] is False
     assert "error" in result
+
+
+def test_external_health_requires_success_readiness_status() -> None:
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from threading import Thread
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            self.send_response(503)
+            self.end_headers()
+
+        def log_message(self, *_args: object) -> None:
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        result = create_backend("floci", f"http://127.0.0.1:{server.server_port}").health()
+        assert result["available"] is False
+        assert result["status_code"] == 503
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
+        server.server_close()

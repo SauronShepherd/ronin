@@ -106,11 +106,11 @@ class HttpEmulatorBackend:
                 raise ValueError("emulator endpoint must use http or https")
             request = Request(self.endpoint, method="GET")  # noqa: S310
             with urlopen(request, timeout=self.timeout_seconds) as response:  # noqa: S310
-                result["available"] = 200 <= response.status < 500
+                result["available"] = 200 <= response.status < 300
                 result["status_code"] = response.status
         except HTTPError as exc:
             exc.close()
-            result["available"] = 200 <= exc.code < 500
+            result["available"] = False
             result["status_code"] = exc.code
         except (OSError, URLError, TimeoutError) as exc:
             result["error"] = str(exc)
