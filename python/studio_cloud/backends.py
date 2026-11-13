@@ -246,17 +246,13 @@ class TerraformEmulatorBackend(HttpEmulatorBackend):
             encoding="utf-8",
         )
         (root / "resources.tf").write_text(export_terraform(topology), encoding="utf-8")
+        lock_template = Path(__file__).with_name("terraform.lock.hcl")
+        (root / ".terraform.lock.hcl").write_text(
+            lock_template.read_text(encoding="utf-8"), encoding="utf-8"
+        )
 
     def _ensure_initialized(self) -> None:
         if not self.initialized:
-            lock_file = Path(self.workspace_dir) / ".terraform.lock.hcl"
-            if lock_file.exists():
-                # This workspace is generated from the bounded topology and
-                # exact provider constraint; regenerate its lock atomically
-                # instead of allowing an incomplete generated lock to poison
-                # plan. User-authored Terraform directories are not managed by
-                # this backend.
-                lock_file.unlink()
             self._run("init", "-upgrade", "-backend=false", "-input=false")
             self.initialized = True
 

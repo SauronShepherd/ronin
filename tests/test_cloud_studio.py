@@ -143,11 +143,14 @@ def test_terraform_backend_writes_exact_pinned_tool_versions(tmp_path) -> None:
     provider = (tmp_path / "provider.tf").read_text(encoding="utf-8")
     variables = (tmp_path / "variables.tf").read_text(encoding="utf-8")
     resources = (tmp_path / "resources.tf").read_text(encoding="utf-8")
+    lock = (tmp_path / ".terraform.lock.hcl").read_text(encoding="utf-8")
     assert 'required_version = "= 1.13.5"' in config
     assert 'version = "= 6.65.0"' in config
     assert "s3 = var.endpoint" in provider
     assert 'variable "endpoint"' in variables
     assert 'resource "aws_s3_bucket"' in resources
+    assert 'version     = "6.65.0"' in lock
+    assert 'constraints = "6.65.0"' in lock
 
 
 def test_factory_reads_backend_from_environment(monkeypatch) -> None:
