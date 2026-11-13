@@ -249,6 +249,11 @@ class TerraformEmulatorBackend(HttpEmulatorBackend):
 
     def _ensure_initialized(self) -> None:
         if not self.initialized:
+            lock_file = Path(self.workspace_dir) / ".terraform.lock.hcl"
+            if lock_file.exists():
+                lock_text = lock_file.read_text(encoding="utf-8")
+                if 'version = "6.65.0"' not in lock_text:
+                    lock_file.unlink()
             self._run("init", "-upgrade", "-backend=false", "-input=false")
             self.initialized = True
 
