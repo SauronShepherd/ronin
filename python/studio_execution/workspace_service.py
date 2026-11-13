@@ -138,9 +138,9 @@ class ProjectService:
         self._workspace(workspace_id, mutable=True)
         if self._store.get_project(workspace_id, project_id) is None:
             raise WorkspaceServiceNotFound(f"project not found: {workspace_id}/{project_id}")
-        if not self._store.archive_project(workspace_id, project_id, now=now):
-            raise WorkspaceServiceNotFound(f"project not found: {workspace_id}/{project_id}")
-        return True
+        # The storage predicate makes an already archived project a safe
+        # no-op, including retries after a process restart.
+        return self._store.archive_project(workspace_id, project_id, now=now)
 
     def unregister(self, workspace_id: WorkspaceId, project_id: ProjectId) -> None:
         self._workspace(workspace_id, mutable=True)

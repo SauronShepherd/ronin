@@ -2897,6 +2897,45 @@ def test_missing_and_archived_project_mutations_map_to_stable_errors() -> None:
         assert store.calls.get("register_project", 0) == 0
 
 
+def test_project_archive_requires_key_and_replays_after_service_restart(tmp_path) -> None:
+    db = tmp_path / "projects.sqlite3"
+    now = "2026-11-13T00:00:00.000000Z"
+    store = SqliteWorkspaceStore(db, migration_now=now)
+    store.create_workspace(Workspace(_WS_A, "A"), now=now)
+    store.register_project(_WS_A, _manifest(), now=now)
+    authorizer = _Authorizer()
+
+    with _server(store, authorizer) as address:
+        status, payload = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/projects/{_PROJECT}/archive",
+        )
+        assert status == 400
+        assert payload["error"]["code"] == "invalid_request"
+
+        status, first = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/projects/{_PROJECT}/archive",
+            headers={"Idempotency-Key": "archive-project-1"},
+        )
+        assert status == 200
+        assert first["idempotent_replay"] is False
+
+    restarted = SqliteWorkspaceStore(db, migration_now=now)
+    with _server(restarted, authorizer) as address:
+        status, replay = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/projects/{_PROJECT}/archive",
+            headers={"Idempotency-Key": "archive-project-1"},
+        )
+        assert status == 200
+        assert replay["archived"] is True
+        assert replay["idempotent_replay"] is True
+
+
 def test_govern_studio_routes_execute_through_real_http_server() -> None:
     store = _Store()
     plugin = SyntheticDataStudioPlugin()

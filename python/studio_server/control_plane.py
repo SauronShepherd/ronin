@@ -2805,33 +2805,6 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 )
                 return
             if (
-                len(segments) == 6
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3] == "projects"
-                and segments[5] == "archive"
-            ):
-                if query:
-                    raise ValueError("project archive does not accept query parameters")
-                if self.headers.get("Content-Length") not in {None, "0"}:
-                    raise ValueError("project archive does not accept a request body")
-                workspace_id = WorkspaceId(segments[2])
-                project_ref = ProjectId(segments[4])
-                if not self._authorize(
-                    actor, workspace_id, "project.write", resource_ref=str(project_ref)
-                ):
-                    return
-                if not self._audit_mutation(
-                    actor, "project.archive", workspace_id, {"resource": str(project_ref)}
-                ):
-                    return
-                archived = self._server().project_service.archive(
-                    workspace_id, project_ref, now=_now()
-                )
-                if not archived:
-                    raise KeyError(f"{workspace_id}/{project_ref}")
-                self._write_json(HTTPStatus.OK, {"archived": True, "project_id": str(project_ref)})
-                return
-            if (
                 len(segments) == 8
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "projects"
@@ -3305,6 +3278,40 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "archive"
+            ):
+                if query:
+                    raise ValueError("project archive does not accept query parameters")
+                if self.headers.get("Content-Length") not in {None, "0"}:
+                    raise ValueError("project archive does not accept a request body")
+                if not self.headers.get("Idempotency-Key", "").strip():
+                    raise ValueError("Idempotency-Key header is required")
+                workspace_id = WorkspaceId(segments[2])
+                project_ref = ProjectId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=str(project_ref)
+                ):
+                    return
+                if not self._audit_mutation(
+                    actor, "project.archive", workspace_id, {"resource": str(project_ref)}
+                ):
+                    return
+                archived = self._server().project_service.archive(
+                    workspace_id, project_ref, now=_now()
+                )
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "archived": True,
+                        "project_id": str(project_ref),
+                        "idempotent_replay": not archived,
+                    },
+                )
+                return
             if (
                 len(segments) == 6
                 and segments[:2] == ("v1", "workspaces")
