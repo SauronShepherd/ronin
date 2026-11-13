@@ -1770,7 +1770,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                                 actor,
                                 workspace_id,
                                 mapped_permission,
-                                resource_ref=project_id if queryflux_project_read else None,
+                                resource_ref=project_id if project_id is not None else None,
                             ):
                                 return
                             if queryflux_project_read and project_id is not None:

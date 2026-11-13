@@ -2409,6 +2409,43 @@ def test_plugin_project_read_replace_delete_routes_use_project_port() -> None:
         manager.stop(plan)
 
 
+def test_project_routes_require_exact_workspace_grant_before_project_lookup() -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    store.workspaces[_WS_B] = Workspace(_WS_B, "B")
+    store.projects[(_WS_A, _PROJECT)] = _manifest()
+    plugin = WorkspacesPlugin()
+    manager = PluginManager()
+    plan = manager.compose(
+        (PluginRecord(plugin.manifest, plugin, "test"),),
+        services={
+            "workspace_service": WorkspaceService(store),
+            "project_service": ProjectService(store),
+        },
+    )
+    host = PluginHost(manager, plan)
+    manager.start(plan)
+    try:
+        actor_b = _Authorizer({(str(_WS_B), "project.read")})
+        with _server(
+            store,
+            actor_b,
+            plugin_host=host,
+            plugin_routes_enabled=True,
+        ) as address:
+            status, payload = _request(
+                address,
+                "GET",
+                f"/v1/workspaces/{_WS_A}/projects/{_PROJECT}",
+            )
+        assert status == 403
+        assert payload["error"]["code"] == "forbidden"
+        assert actor_b.requirements[-1].workspace_id == _WS_A
+        assert actor_b.requirements[-1].resource_ref == str(_PROJECT)
+    finally:
+        manager.stop(plan)
+
+
 def test_workflow_routes_fail_closed_when_scheduler_is_not_configured() -> None:
     assert {
         ("GET", "/v1/workspaces/{workspace_id}/workflows"),
