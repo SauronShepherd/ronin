@@ -133,13 +133,17 @@ def qualify(
     terraform: bool = False,
     *,
     backend: EmulatorBackend | None = None,
+    backend_kind: str = "floci",
+    command_timeout_seconds: float = 120.0,
 ) -> dict[str, Any]:
-    selected = backend or create_backend("floci", endpoint, workspace_dir=workspace)
+    selected = backend or create_backend(backend_kind, endpoint, workspace_dir=workspace)
+    if hasattr(selected, "command_timeout_seconds"):
+        selected.command_timeout_seconds = command_timeout_seconds
     topology = fixture()
     config = export_terraform(topology)
     result: dict[str, Any] = {
         "schema": "ronin.cloud-studio.floci-qualification/v1",
-        "backend": "floci",
+        "backend": backend_kind,
         "endpoint": endpoint,
         "workspace": str(Path(workspace).resolve()),
         "health": None,
@@ -240,6 +244,8 @@ def qualify(
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--endpoint", default="http://127.0.0.1:4566")
+    parser.add_argument("--backend", choices=("floci", "localstack"), default="floci")
+    parser.add_argument("--command-timeout-seconds", type=float, default=120.0)
     parser.add_argument("--workspace", default=".ronin/cloud-studio/qualification/floci")
     parser.add_argument("--evidence", type=Path)
     parser.add_argument(
@@ -248,7 +254,13 @@ def main() -> int:
         help="run plan/apply/refresh/destroy and verify empty state",
     )
     args = parser.parse_args()
-    result = qualify(args.endpoint, args.workspace, args.terraform)
+    result = qualify(
+        args.endpoint,
+        args.workspace,
+        args.terraform,
+        backend_kind=args.backend,
+        command_timeout_seconds=args.command_timeout_seconds,
+    )
     if args.evidence:
         args.evidence.parent.mkdir(parents=True, exist_ok=True)
         args.evidence.write_text(

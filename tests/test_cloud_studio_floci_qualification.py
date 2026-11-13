@@ -46,6 +46,10 @@ class FlociFakeBackend(FakeBackend):
     endpoint = "http://127.0.0.1:4566"
 
 
+class TimeoutBackend(FakeBackend):
+    command_timeout_seconds = 120.0
+
+
 def test_floci_qualification_never_passes_without_terraform() -> None:
     backend = FakeBackend()
 
@@ -54,6 +58,21 @@ def test_floci_qualification_never_passes_without_terraform() -> None:
     assert result["status"] == "blocked"
     assert "no PASS" in result["reason"]
     assert backend.calls == ["health"]
+
+
+def test_qualification_can_select_backend_and_command_timeout() -> None:
+    backend = TimeoutBackend()
+    result = qualify(
+        "http://127.0.0.1:4566",
+        ".tmp/localstack",
+        terraform=False,
+        backend=backend,
+        backend_kind="localstack",
+        command_timeout_seconds=300,
+    )
+    assert result["backend"] == "localstack"
+    assert result["status"] == "blocked"
+    assert backend.command_timeout_seconds == 300
 
 
 def test_floci_terraform_qualification_rejects_non_loopback_before_health_check() -> None:
