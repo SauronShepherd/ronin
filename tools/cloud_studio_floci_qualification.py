@@ -185,14 +185,14 @@ def qualify(
         actual_terraform_version = _verify_terraform_version(selected)
         if actual_terraform_version is not None:
             result["terraform_versions"]["terraform"] = actual_terraform_version
+        plan = selected.plan(topology)
+        result["terraform"]["plan"] = plan
+        _check_command("plan", plan)
         validate = getattr(selected, "validate", None)
         if callable(validate):
             validated = validate()
             result["terraform"]["validate"] = validated
             _check_command("validate", validated)
-        plan = selected.plan(topology)
-        result["terraform"]["plan"] = plan
-        _check_command("plan", plan)
         apply_attempted = True
         applied = selected.apply(topology)
         result["terraform"]["apply"] = applied
