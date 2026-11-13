@@ -1,6 +1,8 @@
+from io import BytesIO
 from pathlib import Path
 
 import pytest
+import studio_cloud.backends as cloud_backends
 from studio_cloud import (
     CloudEmulator,
     CloudResource,
@@ -73,7 +75,57 @@ def test_external_backends_share_the_same_contract() -> None:
     assert floci.health()["endpoint"] == "http://127.0.0.1:4566"
     assert localstack.health()["license_required"] is True
     assert isinstance(floci, TerraformEmulatorBackend)
-    assert isinstance(HttpEmulatorBackend("test", "http://127.0.0.1:4566").apply(topology()), dict)
+    assert isinstance(HttpEmulatorBackend("test", "http://127.0.0.1:4566"), HttpEmulatorBackend)
+
+
+def test_http_backend_posts_real_json_contract(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Response:
+        status = 200
+
+        def __enter__(self) -> "Response":
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return b'{"status":"accepted"}'
+
+    captured: list[object] = []
+
+    def fake_urlopen(request: object, timeout: float) -> Response:
+        captured.append((request, timeout))
+        return Response()
+
+    monkeypatch.setattr(cloud_backends, "urlopen", fake_urlopen)
+    result = HttpEmulatorBackend(
+        "remote", "http://backend:4566", timeout_seconds=7
+    ).apply(topology())
+    request, timeout = captured[0]
+    assert result == {"status": "accepted"}
+    assert request.full_url == "http://backend:4566/v1/cloud-studio/apply"
+    assert request.method == "POST"
+    assert timeout == 7
+    assert b'"aws.s3.bucket"' in request.data
+
+
+def test_http_backend_exposes_rfc9457_problem(monkeypatch: pytest.MonkeyPatch) -> None:
+    from urllib.error import HTTPError
+
+    def failing_urlopen(_request: object, **_kwargs: object) -> object:
+        raise HTTPError(
+            "http://backend/v1/cloud-studio/refresh",
+            422,
+            "invalid topology",
+            {"Content-Type": "application/problem+json"},
+            BytesIO(b'{"type":"urn:ronin:invalid","title":"Invalid topology","detail":"bad edge"}'),
+        )
+
+    monkeypatch.setattr(cloud_backends, "urlopen", failing_urlopen)
+    with pytest.raises(cloud_backends.HttpBackendError) as error:
+        HttpEmulatorBackend("remote", "http://backend").refresh()
+    assert error.value.status_code == 422
+    assert error.value.problem["type"] == "urn:ronin:invalid"
 
 
 def test_terraform_provider_config_is_endpoint_based_and_secret_free() -> None:

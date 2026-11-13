@@ -61,33 +61,91 @@ class InMemoryBackend:
         return {"returncode": 0, "stdout": ""}
 
 
+class HttpBackendError(RuntimeError):
+    """Structured RFC 9457-compatible failure returned by an HTTP backend."""
+
+    def __init__(self, status_code: int, problem: dict[str, object]) -> None:
+        self.status_code = status_code
+        self.problem = problem
+        title = problem.get("title", "HTTP backend request failed")
+        detail = problem.get("detail", "")
+        super().__init__(f"{status_code} {title}: {detail}".rstrip())
+
+
 @dataclass
 class HttpEmulatorBackend:
-    """Connection descriptor for AWS-wire-compatible external emulators.
-
-    The HTTP request adapter is intentionally injected later; Cloud Studio does
-    not make network calls merely by importing or selecting a backend.
-    """
+    """JSON HTTP client for a Cloud Studio-compatible external backend."""
 
     name: str
     endpoint: str | None
     license_required: bool = False
     timeout_seconds: float = 2.0
 
+    def _request(
+        self,
+        method: str,
+        operation: str,
+        payload: dict[str, object] | None = None,
+    ) -> dict[str, object]:
+        if self.endpoint is None:
+            raise ValueError("emulator endpoint is not configured")
+        parsed = urlparse(self.endpoint)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("emulator endpoint must use an absolute http or https URL")
+        url = self.endpoint.rstrip("/") + "/v1/cloud-studio/" + operation
+        data = json.dumps(payload or {}).encode("utf-8") if payload is not None else None
+        request = Request(url, data=data, method=method, headers={"Accept": "application/json"})  # noqa: S310
+        if data is not None:
+            request.add_header("Content-Type", "application/json")
+        try:
+            with urlopen(request, timeout=self.timeout_seconds) as response:  # noqa: S310
+                body = response.read().decode("utf-8")
+                return json.loads(body) if body else {}
+        except HTTPError as exc:
+            try:
+                body = exc.read().decode("utf-8")
+                problem = json.loads(body) if body else {}
+            except (ValueError, UnicodeDecodeError):
+                problem = {}
+            finally:
+                exc.close()
+            if not isinstance(problem, dict):
+                problem = {}
+            problem.setdefault("status", exc.code)
+            problem.setdefault("title", "HTTP backend request failed")
+            raise HttpBackendError(exc.code, problem) from exc
+        except (OSError, URLError, TimeoutError) as exc:
+            raise TimeoutError(f"HTTP backend request failed: {url}: {exc}") from exc
+
     def apply(self, topology: CloudTopology) -> dict[str, object]:
         errors = topology.validate()
         if errors:
             raise ValueError("invalid topology: " + "; ".join(errors))
-        return {"status": "delegated", "backend": self.name, "endpoint": self.endpoint}
+        resources = [
+            {"id": r.id, "type": r.type, "name": r.name, "properties": r.properties}
+            for r in topology.resources
+        ]
+        return self._request(
+            "POST", "apply", {"resources": resources, "edges": list(topology.edges)}
+        )
 
     def plan(self, topology: CloudTopology) -> dict[str, object]:
-        return {"status": "delegated", "backend": self.name, "valid": not topology.validate()}
+        errors = topology.validate()
+        if errors:
+            raise ValueError("invalid topology: " + "; ".join(errors))
+        resources = [
+            {"id": r.id, "type": r.type, "name": r.name, "properties": r.properties}
+            for r in topology.resources
+        ]
+        return self._request(
+            "POST", "plan", {"resources": resources, "edges": list(topology.edges)}
+        )
 
     def refresh(self) -> dict[str, object]:
-        return {"status": "delegated", "backend": self.name}
+        return self._request("GET", "refresh")
 
     def destroy(self) -> dict[str, object]:
-        return {"status": "delegated", "backend": self.name}
+        return self._request("POST", "destroy", {})
 
     def state_list(self) -> dict[str, object]:
         return {"status": "unsupported", "backend": self.name}

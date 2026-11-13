@@ -35,7 +35,7 @@
 
 ### Fase 2 — Runtime de emulación (en progreso)
 
-- [ ] Sustituir la delegación externa por un cliente HTTP real con timeouts, health checks y errores RFC 9457.
+- [x] Sustituir la delegación externa por un cliente HTTP real con timeouts, health checks y errores RFC 9457.
 - [x] Crear ciclo `plan → apply → refresh → destroy` para el backend in-memory.
 - [x] Persistir snapshots JSON atómicos por workspace.
 - [x] Añadir aislamiento de estado por workspace y límites deterministas de recursos.
