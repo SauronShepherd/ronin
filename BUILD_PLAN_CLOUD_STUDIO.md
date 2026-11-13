@@ -38,7 +38,8 @@
 - [ ] Sustituir la delegación externa por un cliente HTTP real con timeouts, health checks y errores RFC 9457.
 - [x] Crear ciclo `plan → apply → refresh → destroy` para el backend in-memory.
 - [x] Persistir snapshots JSON atómicos por workspace.
-- [ ] Añadir aislamiento por proyecto/tenant y límites de recursos.
+- [x] Añadir aislamiento de estado por workspace y límites deterministas de recursos.
+- [ ] Añadir aislamiento multiusuario/tenant de producción (fuera del alcance local actual).
 - [x] Health/readiness real con timeout y errores para backends HTTP.
 - [x] Smoke test manual contra Floci en Docker (contenedor healthy, endpoint HTTP 200).
 - [x] Terraform `init`, `validate`, `apply` y `destroy` verificados contra Floci con AWS provider 6.65.0.
@@ -53,7 +54,7 @@
 - [ ] Generar `provider.tf`, recursos y variables a partir del grafo.
 - [x] Importar el subconjunto HCL escalar generado por Cloud Studio mediante parser controlado.
 - [ ] Probar `init`, `validate`, `plan` y `apply` contra Floci en CI.
-- [ ] Añadir state local aislado por workspace.
+- [x] Añadir state local aislado por workspace.
 - [ ] Evaluar un `terraform-provider-cloud-studio` RPC separado sólo si el export/endpoints no cubre los casos de uso.
 
 ### Fase 4 — Diseñador visual (MVP operativo)
@@ -74,7 +75,8 @@
 ### Fase 5 — Calidad y distribución
 
 - [x] Contract tests contra Terraform y AWS-wire-compatible Floci.
-- [ ] Tests de compatibilidad Floci/LocalStack por servicio.
+- [x] Tests reales de compatibilidad Floci y LocalStack para el subconjunto S3/SQS
+  habilitado por los perfiles fijados; la matriz completa de servicios permanece pendiente.
 - [x] Security review de credenciales, endpoints y ejecución de contenedores.
 - [x] Documentación de contribución de nuevos recursos y backends.
 - [x] Publicación como paquete plugin independiente del wheel Ronin.
