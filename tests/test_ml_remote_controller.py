@@ -36,13 +36,13 @@ class FlakyBackend:
             self.clock_value[0] += self.elapsed_per_call
         if self.attempts <= self.transient_failures:
             raise RemoteTransientError("temporary")
-        return RemoteTrainingResult("run", "artifact://run", "sha256:x", "queued")
+        return RemoteTrainingResult("run", "artifact://run", "sha256:" + "a" * 64, "queued")
 
     def poll(self, run_id: str) -> RemoteTrainingResult:
         return RemoteTrainingResult(run_id, "artifact://run", "sha256:" + "a" * 64, "succeeded")
 
     def cancel(self, run_id: str) -> RemoteTrainingResult:
-        return RemoteTrainingResult(run_id, "artifact://run", "sha256:x", "cancelled")
+        return RemoteTrainingResult(run_id, "artifact://run", "sha256:" + "a" * 64, "cancelled")
 
     def predict(self, _model_ref: str, rows: list[dict[str, object]]) -> list[object]:
         return [0.0] * len(rows)

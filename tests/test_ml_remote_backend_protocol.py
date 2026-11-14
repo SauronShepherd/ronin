@@ -23,13 +23,13 @@ class FakeRemoteBackend:
         timeout_seconds: float | None = None,
     ) -> RemoteTrainingResult:
         del timeout_seconds
-        return RemoteTrainingResult("run-1", "artifact://run-1", "sha256:test", "queued")
+        return RemoteTrainingResult("run-1", "artifact://run-1", "sha256:" + "a" * 64, "queued")
 
     def poll(self, run_id: str) -> RemoteTrainingResult:
         return RemoteTrainingResult(run_id, "artifact://run-1", "sha256:" + "b" * 64, "succeeded")
 
     def cancel(self, run_id: str) -> RemoteTrainingResult:
-        return RemoteTrainingResult(run_id, "artifact://run-1", "sha256:test", "cancelled")
+        return RemoteTrainingResult(run_id, "artifact://run-1", "sha256:" + "a" * 64, "cancelled")
 
     def predict(self, _model_ref: str, rows: list[dict[str, object]]) -> list[object]:
         return [0.0 for _ in rows]
