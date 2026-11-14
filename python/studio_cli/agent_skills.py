@@ -9,6 +9,7 @@ import re
 import sys
 import zipfile
 from dataclasses import dataclass
+from hashlib import sha256
 from pathlib import Path
 
 _FRONTMATTER = re.compile(r"\A---\s*\n(?P<body>.*?)\n---\s*\n", re.DOTALL)
@@ -190,3 +191,115 @@ def skills_payload(skills: tuple[SkillInspection, ...]) -> dict[str, object]:
 
 def render_skills_json(skills: tuple[SkillInspection, ...]) -> str:
     return json.dumps(skills_payload(skills), sort_keys=True, separators=(",", ":"))
+
+
+_INSTALL_MANIFEST = ".ronin/managed-agent-skills.json"
+
+
+def _managed_manifest(destination: Path) -> Path:
+    return destination / _INSTALL_MANIFEST
+
+
+def _safe_destination(destination: Path, relative: str) -> Path:
+    """Resolve a managed path while rejecting traversal and symlink parents."""
+
+    relative_path = Path(relative)
+    if relative_path.is_absolute() or ".." in relative_path.parts or "." in relative_path.parts:
+        raise ValueError(f"skill path is not confined to destination: {relative}")
+    current = destination
+    for part in relative_path.parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError(f"skill path contains a symlink: {relative}")
+    return current
+
+
+def _file_digest(path: Path) -> str:
+    digest = sha256()
+    digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def install_skill(
+    skill: SkillInspection,
+    destination: Path,
+    *,
+    dry_run: bool = False,
+) -> dict[str, object]:
+    """Install a validated skill without overwriting user files.
+
+    Existing identical files are idempotent. Differing files fail closed; the
+    manifest records only files written by this installer, enabling safe
+    uninstall without touching unrelated user content.
+    """
+
+    if not skill.valid:
+        raise ValueError(f"cannot install invalid skill {skill.name}: {'; '.join(skill.errors)}")
+    target = destination.expanduser().resolve()
+    entries: list[dict[str, str]] = []
+    for relative in skill.files:
+        source = skill.path / relative
+        target_file = _safe_destination(target, f"{skill.name}/{relative}")
+        digest = _file_digest(source)
+        if target_file.exists() and (
+            not target_file.is_file() or _file_digest(target_file) != digest
+        ):
+            raise FileExistsError(f"refusing to overwrite existing file: {target_file}")
+        entries.append({"path": f"{skill.name}/{relative}", "sha256": digest})
+    manifest_path = _managed_manifest(target)
+    manifest = {"schema": "ronin.agent-skills-install/v1", "skills": {}}
+    if manifest_path.is_file():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest.setdefault("skills", {})[skill.name] = {"files": entries}
+    if not dry_run:
+        for relative in skill.files:
+            source = skill.path / relative
+            target_file = _safe_destination(target, f"{skill.name}/{relative}")
+            target_file.parent.mkdir(parents=True, exist_ok=True)
+            if not target_file.exists():
+                target_file.write_bytes(source.read_bytes())
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(
+            json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    return {"skill": skill.name, "destination": str(target), "files": entries, "dry_run": dry_run}
+
+
+def uninstall_skill(name: str, destination: Path, *, dry_run: bool = False) -> dict[str, object]:
+    """Remove only files previously managed by :func:`install_skill`."""
+
+    target = destination.expanduser().resolve()
+    manifest_path = _managed_manifest(target)
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"managed skill manifest not found: {manifest_path}")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    record = manifest.get("skills", {}).get(name)
+    if not isinstance(record, dict):
+        raise KeyError(f"skill is not managed: {name}")
+    removed: list[str] = []
+    for item in record.get("files", []):
+        relative = item["path"]
+        path = _safe_destination(target, relative)
+        if path.is_file() and _file_digest(path) == item["sha256"]:
+            removed.append(relative)
+            if not dry_run:
+                path.unlink()
+    if not dry_run:
+        manifest["skills"].pop(name, None)
+        if manifest["skills"]:
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+            )
+        else:
+            manifest_path.unlink()
+        skill_root = target / name
+        for directory in sorted(
+            (path for path in skill_root.rglob("*") if path.is_dir()),
+            key=lambda path: len(path.parts),
+            reverse=True,
+        ):
+            if not any(directory.iterdir()):
+                directory.rmdir()
+        if skill_root.is_dir() and not any(skill_root.iterdir()):
+            skill_root.rmdir()
+    return {"skill": name, "destination": str(target), "removed": removed, "dry_run": dry_run}

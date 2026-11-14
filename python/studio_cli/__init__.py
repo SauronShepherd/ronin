@@ -80,7 +80,14 @@ from studio_storage import (
 from studio_storage.migration_registry import MigrationStatusError, migration_status
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
-from .agent_skills import default_skill_root, discover_skills, package_skill, render_skills_json
+from .agent_skills import (
+    default_skill_root,
+    discover_skills,
+    install_skill,
+    package_skill,
+    render_skills_json,
+    uninstall_skill,
+)
 from .network import TERMINAL_STATES, ControlPlaneClient, ControlPlaneError
 from .retention import run_artifact_retention
 
@@ -172,6 +179,19 @@ def _parser() -> argparse.ArgumentParser:
         "--output", type=Path, help="output directory (default: agent-skills/dist)"
     )
     skills_package.add_argument("--name", help="package one skill by directory name")
+    skills_install = skills_commands.add_parser(
+        "install", help="install one validated skill without overwriting user files"
+    )
+    skills_install.add_argument("name")
+    skills_install.add_argument("--root", type=Path, help="skill directory (default: agent-skills)")
+    skills_install.add_argument("--destination", type=Path, required=True)
+    skills_install.add_argument("--dry-run", action="store_true")
+    skills_uninstall = skills_commands.add_parser(
+        "uninstall", help="remove only files recorded by the managed-skill manifest"
+    )
+    skills_uninstall.add_argument("name")
+    skills_uninstall.add_argument("--destination", type=Path, required=True)
+    skills_uninstall.add_argument("--dry-run", action="store_true")
 
     submit = commands.add_parser("submit", help="submit a project notebook for execution")
     submit.add_argument("project")
@@ -1316,7 +1336,7 @@ def _migration_spark_smoke(namespace: argparse.Namespace) -> int:
 
 
 def _skills(namespace: argparse.Namespace) -> int:
-    root = (namespace.root or default_skill_root()).expanduser().resolve()
+    root = (getattr(namespace, "root", None) or default_skill_root()).expanduser().resolve()
     skills = discover_skills(root)
     if namespace.skills_command == "list":
         if namespace.json:
@@ -1357,6 +1377,25 @@ def _skills(namespace: argparse.Namespace) -> int:
         print(
             json.dumps(
                 {"output": str(output), "packages": [str(path) for path in paths]}, sort_keys=True
+            )
+        )
+        return 0
+    if namespace.skills_command == "install":
+        selected = tuple(skill for skill in skills if skill.name == namespace.name)
+        if not selected:
+            raise CliError(f"agent skill not found: {namespace.name}")
+        print(
+            json.dumps(
+                install_skill(selected[0], namespace.destination, dry_run=namespace.dry_run),
+                sort_keys=True,
+            )
+        )
+        return 0
+    if namespace.skills_command == "uninstall":
+        print(
+            json.dumps(
+                uninstall_skill(namespace.name, namespace.destination, dry_run=namespace.dry_run),
+                sort_keys=True,
             )
         )
         return 0
