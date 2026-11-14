@@ -154,6 +154,7 @@ class BudgetEvaluation:
     limit: Decimal
     exceeded: bool
     recommended_action: BudgetAction | None
+    workspace_id: WorkspaceId | None = None
 
 
 __all__ = (

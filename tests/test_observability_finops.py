@@ -204,7 +204,11 @@ def test_finops_keeps_actual_and_estimated_cost_separate(tmp_path: Path) -> None
     intent = budget_notification(evaluation, now=_T2)
     assert intent is not None
     assert intent.kind == "budget"
-    assert intent.attributes == (("action", "notify"), ("budget_id", "daily"))
+    assert intent.attributes == (
+        ("action", "notify"),
+        ("budget_id", "daily"),
+        ("workspace_id", "workspace"),
+    )
     assert budget_gate(evaluation)
 
 
@@ -227,6 +231,18 @@ def test_budget_gate_denies_only_explicit_hard_budget_action() -> None:
     )
     assert not budget_gate(exceeded)
     assert budget_gate(notify)
+
+
+def test_budgets_with_same_id_are_isolated_by_workspace(tmp_path: Path) -> None:
+    store = SqliteFinOpsStore(tmp_path / "finops.sqlite")
+    start = Instant("2026-09-13T00:00:00.000000Z")
+    end = Instant("2026-09-14T00:00:00.000000Z")
+    first = BudgetPolicy("monthly", WorkspaceId("workspace-a"), "USD", Decimal("10"), start, end)
+    second = BudgetPolicy("monthly", WorkspaceId("workspace-b"), "USD", Decimal("20"), start, end)
+    store.put_budget(first)
+    store.put_budget(second)
+    assert store.list_budgets(first.workspace_id) == (first,)
+    assert store.list_budgets(second.workspace_id) == (second,)
 
 
 def test_forecast_requires_alphabetic_three_letter_currency() -> None:

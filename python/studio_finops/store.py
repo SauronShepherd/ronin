@@ -73,6 +73,28 @@ class SqliteFinOpsStore:
                 """
             )
             connection.commit()
+            budget_pk = connection.execute("PRAGMA table_info(finops_budgets)").fetchall()
+            if budget_pk and next(row[5] for row in budget_pk if row[1] == "budget_id") == 1:
+                connection.execute("ALTER TABLE finops_budgets RENAME TO finops_budgets_legacy")
+                connection.execute(
+                    "CREATE TABLE finops_budgets ("
+                    "budget_id TEXT NOT NULL, workspace_id TEXT NOT NULL, "
+                    "currency TEXT NOT NULL, limit_amount TEXT NOT NULL, "
+                    "period_start TEXT NOT NULL, period_end TEXT NOT NULL, "
+                    "action TEXT NOT NULL, labels_json TEXT NOT NULL, "
+                    "PRIMARY KEY(workspace_id,budget_id))"
+                )
+                connection.execute(
+                    "INSERT INTO finops_budgets SELECT budget_id,workspace_id,currency,"
+                    "limit_amount,period_start,period_end,action,labels_json "
+                    "FROM finops_budgets_legacy"
+                )
+                connection.execute("DROP TABLE finops_budgets_legacy")
+                connection.execute(
+                    "CREATE INDEX IF NOT EXISTS finops_budget_workspace_idx "
+                    "ON finops_budgets(workspace_id, period_start, period_end)"
+                )
+                connection.commit()
         finally:
             connection.close()
 
@@ -235,7 +257,7 @@ class SqliteFinOpsStore:
                 "INSERT INTO finops_budgets("
                 "budget_id,workspace_id,currency,limit_amount,period_start,"
                 "period_end,action,labels_json) VALUES (?,?,?,?,?,?,?,?) "
-                "ON CONFLICT(budget_id) DO UPDATE SET workspace_id=excluded.workspace_id,"
+                "ON CONFLICT(workspace_id,budget_id) DO UPDATE SET "
                 "currency=excluded.currency,limit_amount=excluded.limit_amount,"
                 "period_start=excluded.period_start,period_end=excluded.period_end,"
                 "action=excluded.action,labels_json=excluded.labels_json",

@@ -229,6 +229,7 @@ def evaluate_budget(
         budget.limit,
         exceeded,
         budget.action if exceeded else None,
+        budget.workspace_id,
     )
 
 
@@ -242,7 +243,8 @@ def budget_notification(
     if not evaluation.exceeded:
         return None
     return NotificationIntent(
-        f"budget:{evaluation.budget_id}:{evaluation.total_cost}",
+        f"budget:{evaluation.workspace_id or 'unscoped'}:{evaluation.budget_id}:"
+        f"{evaluation.total_cost}",
         "budget",
         f"Budget exceeded: {evaluation.budget_id}",
         f"Budget total is {evaluation.total_cost} against a limit of {evaluation.limit}.",
@@ -250,6 +252,11 @@ def budget_notification(
         (
             ("budget_id", evaluation.budget_id),
             ("action", evaluation.recommended_action or "notify"),
+            *(
+                (("workspace_id", evaluation.workspace_id.value),)
+                if evaluation.workspace_id is not None
+                else ()
+            ),
         ),
     )
 
