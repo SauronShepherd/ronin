@@ -24,6 +24,7 @@
 /web-tests/node_modules/
 /web-tests/playwright-report/
 /web-tests/test-results/
+/web-tests/test-results-html/
 /packages/*/build/
 /packages/*/dist-*/
 /examples/*/build/
