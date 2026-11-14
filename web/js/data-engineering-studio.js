@@ -40,7 +40,7 @@ function renderPipelineEditor() {
     const { documentValue } = pipelineDocument();
     const nodes = documentValue.pipeline.nodes;
     const edges = documentValue.pipeline.edges;
-    out.innerHTML = `<strong>${nodes.length} node(s), ${edges.length} edge(s)</strong><div class="toolbar">${nodes.map(node => `<button class="button" type="button" data-action="de-node-remove" data-node-id="${node.id}">Remove ${node.id}</button>`).join(' ') || '<span class="muted">No nodes yet.</span>'}</div><pre class="code">${json({ nodes, edges })}</pre>`;
+    out.innerHTML = `<strong>${nodes.length} node(s), ${edges.length} edge(s)</strong><div class="toolbar">${nodes.map(node => `<button class="button" type="button" data-action="de-node-remove" data-node-id="${esc(node.id)}">Remove ${esc(node.id)}</button>`).join(' ') || '<span class="muted">No nodes yet.</span>'}</div><pre class="code">${esc(json({ nodes, edges }))}</pre>`;
   } catch (error) { out.textContent = `Visual editor error: ${error.message}`; }
 }
 function addPipelineEditor() {
@@ -98,7 +98,7 @@ function csvField(value) {
 }
 function refreshPipelineEdgeSelectors() {
   const { documentValue } = pipelineDocument();
-  for (const id of ['#de-edge-from', '#de-edge-to']) { const select = document.querySelector(id); if (select) select.innerHTML = documentValue.pipeline.nodes.map(node => `<option value="${node.id}">${node.id}</option>`).join(''); }
+  for (const id of ['#de-edge-from', '#de-edge-to']) { const select = document.querySelector(id); if (select) select.innerHTML = documentValue.pipeline.nodes.map(node => `<option value="${esc(node.id)}">${esc(node.id)}</option>`).join(''); }
 }
 function createsCycle(edges, source, target) {
   const next = new Map();
@@ -187,7 +187,7 @@ function addSqlContractFields() {
 function renderSqlHistory() {
   const history = document.querySelector('#de-sql-history');
   if (!history) return;
-  history.innerHTML = sqlHistory.map((entry, index) => `<button class="button" type="button" data-sql-history-index="${index}">${entry.profile}: ${entry.sql.slice(0, 48)}</button>`).join(' ') || '<span class="muted">No saved queries in this session.</span>';
+  history.innerHTML = sqlHistory.map((entry, index) => `<button class="button" type="button" data-sql-history-index="${index}">${esc(entry.profile)}: ${esc(entry.sql.slice(0, 48))}</button>`).join(' ') || '<span class="muted">No saved queries in this session.</span>';
 }
 function addSqlHistoryPanel() {
   const form = document.querySelector('#de-sql-form');
@@ -200,7 +200,7 @@ function addSqlHistoryPanel() {
   renderSqlHistory();
 }
 function syncDataEngineeringContext(context = globalThis.roninStudioContext || {}) { for (const form of ['#de-sql-form', '#de-pipeline-form']) { const workspace = document.querySelector(`${form} [name="workspace"]`); const project = document.querySelector(`${form} [name="project"]`); if (workspace && context.workspace) workspace.value = context.workspace; if (project && context.project) project.value = context.project; } }
-function renderSavedSql() { const out = document.querySelector('#de-sql-saved'); if (out) out.innerHTML = savedSql.map((entry, index) => `<button class="button" type="button" data-sql-saved-index="${index}">${entry.name}</button>`).join(' ') || '<span class="muted">No saved queries.</span>'; }
+function renderSavedSql() { const out = document.querySelector('#de-sql-saved'); if (out) out.innerHTML = savedSql.map((entry, index) => `<button class="button" type="button" data-sql-saved-index="${index}">${esc(entry.name)}</button>`).join(' ') || '<span class="muted">No saved queries.</span>'; }
 
 document.addEventListener('change', event => { if (event.target.matches('#de-sql-form [name="profile"]')) updateQueryProfileControls(); });
 window.addEventListener('ronin-context-change', event => { if (location.hash.slice(1) === 'data') { window.setTimeout(render, 0); return; } syncDataEngineeringContext(event.detail); });

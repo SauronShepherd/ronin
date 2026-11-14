@@ -150,6 +150,15 @@ def test_data_engineering_query_surface_renders_routing_evidence() -> None:
         assert marker in source, f"query routing evidence UI missing: {marker}"
 
 
+def test_data_engineering_dynamic_markup_escapes_untrusted_values() -> None:
+    root = Path(__file__).parents[1]
+    source = (root / "web/js/data-engineering-studio.js").read_text(encoding="utf-8")
+    assert 'data-node-id="${esc(node.id)}"' in source
+    assert '<pre class="code">${esc(json({ nodes, edges }))}</pre>' in source
+    assert 'value="${esc(node.id)}">${esc(node.id)}' in source
+    assert '${esc(entry.name)}' in source
+
+
 def test_environment_studio_exposes_deterministic_diff_preview() -> None:
     root = Path(__file__).parents[1]
     source = (root / "web/js/environment-studio.js").read_text(encoding="utf-8")
