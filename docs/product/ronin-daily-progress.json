@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "plan_id": "RONIN-DAILY-BUILD-TEST-2026-11-14",
+  "updated_on": "2026-11-14",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "base_sha": "e22819aeb3429bfe8cdd4d512b9c1a935970f426",
+    "tracked_candidate": false
+  },
+  "operating_policy": {
+    "main_only": true,
+    "branches_allowed": false,
+    "worktrees_allowed": false,
+    "hosted_workflows_allowed": false,
+    "push_command": "git push origin main",
+    "untracked_user_artifacts": "preserve_and_exclude"
+  },
+  "scope": {
+    "id": "A",
+    "families_total": 13,
+    "excluded": [
+      "P9"
+    ],
+    "family_ids": [
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5",
+      "P6",
+      "P7",
+      "P8",
+      "P10",
+      "P11",
+      "P12",
+      "P13",
+      "P14"
+    ],
+    "rule": "P9 is out of scope. A family counts only with a complete candidate-bound journey, applicable provider, security, persistence, recovery, and evidence."
+  },
+  "metrics": {
+    "release_status": "NO-GO",
+    "families_qualified": 0,
+    "families_total": 13,
+    "families_percent": 0.0,
+    "days_passed": 0,
+    "days_total": 39,
+    "days_percent": 0.0,
+    "release_gates_passed": 0,
+    "release_gates_total": 10,
+    "release_gates_percent": 0.0,
+    "implementation_tasks_verified": 0,
+    "implementation_tasks_total": null,
+    "implementation_percent": null,
+    "implementation_baseline": "D01"
+  },
+  "families": [
+    {
+      "id": "P1",
+      "name": "Workspace, project and source control",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P2",
+      "name": "Data connections and ingestion",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P3",
+      "name": "Lakehouse and SQL",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P4",
+      "name": "Data Engineering Studio",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P5",
+      "name": "Planner and scheduler",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P6",
+      "name": "Catalog, lineage, ontology and knowledge graph",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P7",
+      "name": "Data quality and contracts",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P8",
+      "name": "Classical AI/ML Lab Studio",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P10",
+      "name": "Semantic models, metrics and dashboards",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P11",
+      "name": "Real-time and streaming",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P12",
+      "name": "Observability, alerts and FinOps",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P13",
+      "name": "Security and governance, single operator",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    },
+    {
+      "id": "P14",
+      "name": "Deployment and operations",
+      "observed_implementation": "partial",
+      "qualification": "not_started",
+      "receipt": null,
+      "candidate_sha": null
+    }
+  ],
+  "release_gates": [
+    {
+      "id": "G01",
+      "name": "candidate identity",
+      "status": "pending",
+      "receipt": null
+    },
+    {
+      "id": "G02",
+      "name": "quality suite",
+      "status": "pending",
+      "receipt": null
+    },
+    {
+      "id": "G03",
+      "name": "end-to-end journeys",
+      "status": "pending",
+      "receipt": null
+    },
+    {
+      "id": "G04",
+      "name": "security",
+      "status": "pending",
+      "receipt": null
+    },
+    {
+      "id": "G05",
+      "name": "installation and platforms",
+      "status": "pending",
+      "receipt": null
+    },
+    {
+      "id": "G06",
+      "name": "persistence and recovery",
+      "status": "pending",
+      "receipt": null
+    },
+    {
+      "id": "G07",
+      "name": "providers",
+      "status": "pending",
+      "receipt": null
+    },
+    {
+      "id": "G08",
+      "name": "supply chain",
+      "status": "pending",
+      "receipt": null
+    },
+    {
+      "id": "G09",
+      "name": "UI and operation",
+      "status": "pending",
+      "receipt": null
+    },
+    {
+      "id": "G10",
+      "name": "release dossier",
+      "status": "pending",
+      "receipt": null
+    }
+  ],
+  "days": [
+    {"id": "D00", "date": "2026-11-14", "phase": "truth-and-control", "status": "in_progress", "families": [], "evidence": null, "commit_sha": null},
+    {"id": "D01", "date": "2026-11-15", "phase": "candidate-boundary", "status": "pending", "families": [], "evidence": null, "commit_sha": null},
+    {"id": "D02", "date": "2026-11-16", "phase": "baseline-quality", "status": "pending", "families": [], "evidence": null, "commit_sha": null},
+    {"id": "D03", "date": "2026-11-17", "phase": "p1-contracts", "status": "pending", "families": ["P1"], "evidence": null, "commit_sha": null},
+    {"id": "D04", "date": "2026-11-18", "phase": "p1-isolation-restart", "status": "pending", "families": ["P1"], "evidence": null, "commit_sha": null},
+    {"id": "D05", "date": "2026-11-19", "phase": "p1-journey-close", "status": "pending", "families": ["P1"], "evidence": null, "commit_sha": null},
+    {"id": "D06", "date": "2026-11-20", "phase": "p13-security-contracts", "status": "pending", "families": ["P13"], "evidence": null, "commit_sha": null},
+    {"id": "D07", "date": "2026-11-21", "phase": "p13-security-close", "status": "pending", "families": ["P13"], "evidence": null, "commit_sha": null},
+    {"id": "D08", "date": "2026-11-22", "phase": "p2-http-connectors", "status": "pending", "families": ["P2"], "evidence": null, "commit_sha": null},
+    {"id": "D09", "date": "2026-11-23", "phase": "p2-jdbc-postgres", "status": "pending", "families": ["P2"], "evidence": null, "commit_sha": null},
+    {"id": "D10", "date": "2026-11-24", "phase": "p2-object-storage", "status": "pending", "families": ["P2"], "evidence": null, "commit_sha": null},
+    {"id": "D11", "date": "2026-11-25", "phase": "p2-provider-close", "status": "pending", "families": ["P2"], "evidence": null, "commit_sha": null},
+    {"id": "D12", "date": "2026-11-26", "phase": "p3-lakehouse-sql", "status": "pending", "families": ["P3"], "evidence": null, "commit_sha": null},
+    {"id": "D13", "date": "2026-11-27", "phase": "p3-execution-recovery", "status": "pending", "families": ["P3"], "evidence": null, "commit_sha": null},
+    {"id": "D14", "date": "2026-11-28", "phase": "p3-journey-close", "status": "pending", "families": ["P3"], "evidence": null, "commit_sha": null},
+    {"id": "D15", "date": "2026-11-29", "phase": "p4-authoring", "status": "pending", "families": ["P4"], "evidence": null, "commit_sha": null},
+    {"id": "D16", "date": "2026-11-30", "phase": "p4-worker-evidence", "status": "pending", "families": ["P4"], "evidence": null, "commit_sha": null},
+    {"id": "D17", "date": "2026-12-01", "phase": "p4-provider-ui", "status": "pending", "families": ["P4"], "evidence": null, "commit_sha": null},
+    {"id": "D18", "date": "2026-12-02", "phase": "p4-journey-close", "status": "pending", "families": ["P4"], "evidence": null, "commit_sha": null},
+    {"id": "D19", "date": "2026-12-03", "phase": "p5-scheduler-durable", "status": "pending", "families": ["P5"], "evidence": null, "commit_sha": null},
+    {"id": "D20", "date": "2026-12-04", "phase": "p5-restart-failure", "status": "pending", "families": ["P5"], "evidence": null, "commit_sha": null},
+    {"id": "D21", "date": "2026-12-05", "phase": "p5-journey-close", "status": "pending", "families": ["P5"], "evidence": null, "commit_sha": null},
+    {"id": "D22", "date": "2026-12-06", "phase": "p6-catalog-assets", "status": "pending", "families": ["P6"], "evidence": null, "commit_sha": null},
+    {"id": "D23", "date": "2026-12-07", "phase": "p6-graph-lineage", "status": "pending", "families": ["P6"], "evidence": null, "commit_sha": null},
+    {"id": "D24", "date": "2026-12-08", "phase": "p6-journey-close", "status": "pending", "families": ["P6"], "evidence": null, "commit_sha": null},
+    {"id": "D25", "date": "2026-12-09", "phase": "p7-quality-contracts", "status": "pending", "families": ["P7"], "evidence": null, "commit_sha": null},
+    {"id": "D26", "date": "2026-12-10", "phase": "p7-quality-close", "status": "pending", "families": ["P7"], "evidence": null, "commit_sha": null},
+    {"id": "D27", "date": "2026-12-11", "phase": "p8-ml-classical", "status": "pending", "families": ["P8"], "evidence": null, "commit_sha": null},
+    {"id": "D28", "date": "2026-12-12", "phase": "p8-ml-close", "status": "pending", "families": ["P8"], "evidence": null, "commit_sha": null},
+    {"id": "D29", "date": "2026-12-13", "phase": "p10-semantic", "status": "pending", "families": ["P10"], "evidence": null, "commit_sha": null},
+    {"id": "D30", "date": "2026-12-14", "phase": "p10-dashboard-close", "status": "pending", "families": ["P10"], "evidence": null, "commit_sha": null},
+    {"id": "D31", "date": "2026-12-15", "phase": "p11-stream-core", "status": "pending", "families": ["P11"], "evidence": null, "commit_sha": null},
+    {"id": "D32", "date": "2026-12-16", "phase": "p11-stream-close", "status": "pending", "families": ["P11"], "evidence": null, "commit_sha": null},
+    {"id": "D33", "date": "2026-12-17", "phase": "p12-observability", "status": "pending", "families": ["P12"], "evidence": null, "commit_sha": null},
+    {"id": "D34", "date": "2026-12-18", "phase": "p12-finops", "status": "pending", "families": ["P12"], "evidence": null, "commit_sha": null},
+    {"id": "D35", "date": "2026-12-19", "phase": "p12-journey-close", "status": "pending", "families": ["P12"], "evidence": null, "commit_sha": null},
+    {"id": "D36", "date": "2026-12-20", "phase": "p14-install-migrate", "status": "pending", "families": ["P14"], "evidence": null, "commit_sha": null},
+    {"id": "D37", "date": "2026-12-21", "phase": "p14-recovery-close", "status": "pending", "families": ["P14"], "evidence": null, "commit_sha": null},
+    {"id": "D38", "date": "2026-12-22", "phase": "final-candidate", "status": "pending", "families": ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P10", "P11", "P12", "P13", "P14"], "evidence": null, "commit_sha": null}
+  ],
+  "known_blockers": [
+    {
+      "id": "candidate-identity",
+      "status": "open",
+      "summary": "Current receipts and official ledger do not all bind to the current HEAD."
+    },
+    {
+      "id": "provider-certification",
+      "status": "open",
+      "summary": "A provider cannot be certified without a real authorized profile or an explicitly allowed emulator."
+    },
+    {
+      "id": "human-review",
+      "status": "parked_until_christmas",
+      "summary": "License, NOTICE, public claims, visual product review and final release approval remain human-owned."
+    },
+    {
+      "id": "full-baseline",
+      "status": "pending_d01_d02",
+      "summary": "The full current-HEAD baseline must be rerun; historical suite counts are not current evidence."
+    }
+  ],
+  "human_review": {
+    "starts_on": "2026-12-23",
+    "ends_on": "2026-12-31",
+    "required_before_final_go": true,
+    "autonomous_build_must_prepare": [
+      "candidate dossier",
+      "exact-SHA test evidence",
+      "known limitations",
+      "license and NOTICE decision pack",
+      "visual and accessibility review pack",
+      "rollback and support matrix"
+    ]
+  }
+}
