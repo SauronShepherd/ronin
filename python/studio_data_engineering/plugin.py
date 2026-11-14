@@ -906,6 +906,7 @@ class DataEnginerringStudioPlugin:
         pipeline = body.get("pipeline", body)
         fixtures = body.get("fixtures", {})
         row_limit = body.get("row_limit", 100)
+        max_total_rows = body.get("max_total_rows", 10_000)
         if not isinstance(pipeline, dict):
             raise ValueError("pipeline must be an object")
         if not isinstance(fixtures, dict) or not all(
@@ -914,10 +915,13 @@ class DataEnginerringStudioPlugin:
             raise ValueError("fixtures must be an object of arrays")
         if not isinstance(row_limit, int) or isinstance(row_limit, bool):
             raise ValueError("row_limit must be an integer")
+        if not isinstance(max_total_rows, int) or isinstance(max_total_rows, bool):
+            raise ValueError("max_total_rows must be an integer")
         result = preview_pipeline(
             pipeline,
             fixtures=fixtures,
             row_limit=row_limit,
+            max_total_rows=max_total_rows,
         )
         return {
             "status": "completed",

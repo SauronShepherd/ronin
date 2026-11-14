@@ -35,9 +35,12 @@ def preview_pipeline(
     *,
     fixtures: Mapping[str, list[Mapping[str, object]]],
     row_limit: int = 100,
+    max_total_rows: int = 10_000,
 ) -> PreviewResult:
     if row_limit < 1 or row_limit > 10_000:
         raise PreviewError("row_limit must be between 1 and 10000")
+    if max_total_rows < 1 or max_total_rows > 100_000:
+        raise PreviewError("max_total_rows must be between 1 and 100000")
     report = compile_pipeline(data, runtime="local-preview", catalog=builtin_operator_catalog())
     if not report.portable:
         raise PreviewError("pipeline is not valid for local preview")
@@ -55,13 +58,19 @@ def preview_pipeline(
     order = _topological_order(pipeline)
     values: dict[NodeId, tuple[Mapping[str, object], ...]] = {}
     metrics: dict[str, Mapping[str, int]] = {}
+    total_rows = 0
+    budget_truncated = False
 
     for node_id in order:
         node = by_id[node_id]
         operator = node.operator.name
         rows = _input_rows(node, incoming[node_id], values, fixtures)
-        result = _apply(node, operator, rows, row_limit)
+        remaining = max_total_rows - total_rows
+        result = _apply(node, operator, rows, min(row_limit, max(0, remaining)))
+        if remaining < row_limit and len(result) == remaining:
+            budget_truncated = True
         values[node_id] = result
+        total_rows += len(result)
         metrics[node.instance_key] = {
             "input_rows": len(rows),
             "output_rows": len(result),
@@ -71,6 +80,7 @@ def preview_pipeline(
         runtime="local-preview",
         rows_by_node={by_id[node_id].instance_key: rows for node_id, rows in values.items()},
         metrics=metrics,
+        diagnostics=("RONIN-DE-PREVIEW-ROW-BUDGET",) if budget_truncated else (),
     )
 
 

@@ -402,6 +402,42 @@ def test_preview_engine_runs_fixture_filter_select_and_derive() -> None:
     assert result.metrics["source"]["output_rows"] == 2
 
 
+def test_preview_engine_applies_global_row_budget_with_visible_diagnostic() -> None:
+    from studio_core.ir import Node, OperatorRef, Port
+
+    node = Node.create(
+        operator=OperatorRef("source.fixture"),
+        instance_key="source",
+        params={"fixture": "orders"},
+        outputs=(Port("out"),),
+    )
+    payload = {
+        "config": {"name": "orders"},
+        "nodes": [
+            {
+                "id": node.id.value,
+                "instance_key": node.instance_key,
+                "operator": {"name": node.operator.name, "version": 1},
+                "params": {"fixture": "orders"},
+                "inputs": [],
+                "outputs": [{"name": "out", "kind": "batch", "schema": None}],
+                "origin": {"view": "graph", "reference": None},
+                "ownership": "GRAPH",
+                "label": None,
+            }
+        ],
+        "edges": [],
+    }
+    result = preview_pipeline(
+        payload,
+        fixtures={"orders": [{"id": 1}, {"id": 2}]},
+        row_limit=10,
+        max_total_rows=1,
+    )
+    assert result.rows_by_node["source"] == ({"id": 1},)
+    assert result.diagnostics == ("RONIN-DE-PREVIEW-ROW-BUDGET",)
+
+
 def test_plugin_preview_endpoint_returns_real_rows() -> None:
     plugin = DataEnginerringStudioPlugin()
     plugin.startup()
