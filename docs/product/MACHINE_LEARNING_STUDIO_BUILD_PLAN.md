@@ -56,8 +56,14 @@ Añadir a `python/studio_storage/ports.py`:
 
 ```python
 class MLLabStore(Protocol): ...
+
+
 class MLRunStore(Protocol): ...
+
+
 class MLQualityStore(Protocol): ...
+
+
 class MLModelStore(Protocol): ...
 ```
 

@@ -26,21 +26,26 @@ class ExamplePlugin:
 
     def register(self, context: PluginContext) -> None:
         context.contributions.add_route(
-            "GET", "/v1/example", context.plugin_id, self.get,
+            "GET",
+            "/v1/example",
+            context.plugin_id,
+            self.get,
             permission="example:read",
         )
-        context.contributions.add_surface(SurfaceContribution(
-            id="example.get.v1",
-            plugin_id=context.plugin_id,
-            namespace="example",
-            command="get",
-            operation_id="example.get.v1",
-            capability="example.read",
-            permission="example:read",
-            path="/v1/example",
-            method="GET",
-            output_schema={"type": "object"},
-        ))
+        context.contributions.add_surface(
+            SurfaceContribution(
+                id="example.get.v1",
+                plugin_id=context.plugin_id,
+                namespace="example",
+                command="get",
+                operation_id="example.get.v1",
+                capability="example.read",
+                permission="example:read",
+                path="/v1/example",
+                method="GET",
+                output_schema={"type": "object"},
+            )
+        )
 
     def startup(self) -> None:
         pass

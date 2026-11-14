@@ -105,10 +105,10 @@ class ExecutionBackend(Protocol):
 @dataclass(frozen=True)
 class WorkloadSpec:
     run_id: str
-    worker_protocol: str                 # currently worker/v1
-    image: ImageReference                # digest preferred, tag rejected in release mode
+    worker_protocol: str  # currently worker/v1
+    image: ImageReference  # digest preferred, tag rejected in release mode
     command: tuple[str, ...]
-    environment_refs: tuple[str, ...]    # references, never secret values
+    environment_refs: tuple[str, ...]  # references, never secret values
     input_artifacts: tuple[str, ...]
     resource_limits: ResourceLimits
     timeout_seconds: int

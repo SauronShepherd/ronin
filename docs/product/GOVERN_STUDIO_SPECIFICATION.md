@@ -897,8 +897,7 @@ Install into an isolated target and run:
 from importlib.metadata import entry_points
 
 plugin_entry = next(
-    item for item in entry_points(group="ronin.plugins.v1")
-    if item.name == "govern_studio"
+    item for item in entry_points(group="ronin.plugins.v1") if item.name == "govern_studio"
 )
 plugin = plugin_entry.load()()
 assert plugin.manifest.id == "com.ronin.synthetic-data-studio"

@@ -78,13 +78,24 @@ Manifest objetivo:
 ```python
 PluginManifest(
     id="com.sauronshepherd.ronin.ai-studio",
-    name="Ronin AI Studio", version="0.1.0", plugin_api="1.0",
-    host_requires=">=1,<2", isolation="worker",
-    capabilities=("ai-studio.discovery", "ai-studio.proxy",
-                  "ai-studio.exposure", "ai-studio.streaming"),
-    permissions=("ai-studio:read", "ai-studio:write",
-                 "ai-studio:invoke", "ai-studio:admin",
-                 "ai-studio:process"),
+    name="Ronin AI Studio",
+    version="0.1.0",
+    plugin_api="1.0",
+    host_requires=">=1,<2",
+    isolation="worker",
+    capabilities=(
+        "ai-studio.discovery",
+        "ai-studio.proxy",
+        "ai-studio.exposure",
+        "ai-studio.streaming",
+    ),
+    permissions=(
+        "ai-studio:read",
+        "ai-studio:write",
+        "ai-studio:invoke",
+        "ai-studio:admin",
+        "ai-studio:process",
+    ),
 )
 ```
 

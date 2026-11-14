@@ -290,6 +290,7 @@ Exporters implement:
 ```python
 class Exporter(Protocol):
     format_id: str
+
     def export(self, table: SyntheticTable) -> str: ...
 ```
 

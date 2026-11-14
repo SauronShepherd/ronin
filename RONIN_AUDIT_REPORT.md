@@ -309,7 +309,7 @@ An identical `_execute_script_in_transaction` is copy-pasted verbatim into **19 
 `studio_storage`. Each splits the migration file on a bare semicolon:
 
 ```python
-for statement in script.split(";"):     # ×19 identical copies
+for statement in script.split(";"):  # ×19 identical copies
     if statement.strip():
         connection.execute(statement)
 ```
@@ -489,7 +489,7 @@ preserves lexemes via `json.Number`.
 **Fixed in `24c4779`** with the correct boundary:
 
 ```python
-_MAX_EXACT_INTEGER = (2**53) - 1        # == Number.MAX_SAFE_INTEGER
+_MAX_EXACT_INTEGER = (2**53) - 1  # == Number.MAX_SAFE_INTEGER
 if abs(value) > _MAX_EXACT_INTEGER:
     raise ValueError("canonical JSON integers must fit the exact cross-language range")
 ```

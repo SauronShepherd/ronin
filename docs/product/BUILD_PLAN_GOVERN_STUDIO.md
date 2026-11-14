@@ -129,6 +129,7 @@ and stable ordering across processes.
 ```python
 class ColumnGenerator(Protocol):
     manifest: GeneratorManifest
+
     def fit(self, profile, config) -> FitReceipt: ...
     def generate(self, request) -> Iterator[object]: ...
 ```
