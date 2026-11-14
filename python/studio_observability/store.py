@@ -389,21 +389,27 @@ class SqliteTelemetryStore:
         *,
         attribute_filters: tuple[tuple[str, str], ...] = (),
     ) -> MetricPoint | None:
+        filters = dict(attribute_filters)
+        filter_clauses = "".join(" AND json_extract(attributes_json, ?) = ?" for _ in filters)
+        filter_params: list[str] = []
+        for key, value in filters.items():
+            if '"' in key or "\\" in key:
+                raise ValueError("metric attribute filter key contains unsupported JSON path data")
+            filter_params.extend((f'$."{key}"', value))
         connection = self._connect()
         try:
-            rows = connection.execute(
-                "SELECT value,unit,kind,observed_at,attributes_json FROM telemetry_metrics "
-                "WHERE name=? ORDER BY observed_at DESC, metric_id DESC LIMIT 10000",
-                (name,),
+            rows = connection.execute(  # noqa: S608 - clauses contain only fixed SQL fragments
+                "SELECT value,unit,kind,observed_at,attributes_json FROM telemetry_metrics "  # noqa: S608
+                "WHERE name=?"
+                + filter_clauses
+                + " ORDER BY observed_at DESC, metric_id DESC LIMIT 10000",  # noqa: S608
+                (name, *filter_params),
             ).fetchall()
-            filters = dict(attribute_filters)
             for row in rows:
                 attrs_raw = json.loads(row[4])
                 if not isinstance(attrs_raw, dict):
                     raise ValueError("persisted metric attributes are invalid")
                 attrs = {str(key): str(value) for key, value in attrs_raw.items()}
-                if any(attrs.get(key) != value for key, value in filters.items()):
-                    continue
                 return MetricPoint(
                     name,
                     float(row[0]),

@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -83,6 +84,29 @@ def test_latest_metric_applies_attribute_filter_before_selecting_latest(tmp_path
     result = store.latest_metric("jobs", attribute_filters=(("workspace", "a"),))
     assert result is not None
     assert result.value == 4.0
+
+
+def test_latest_metric_filters_before_bounded_candidate_window(tmp_path: Path) -> None:
+    store = SqliteTelemetryStore(tmp_path / "telemetry.sqlite")
+    for index in range(10_001):
+        store.record_metric(
+            MetricPoint(
+                "jobs",
+                float(index),
+                "count",
+                "gauge",
+                Instant(
+                    (
+                        datetime(2026, 9, 13, 10, 0, tzinfo=UTC) + timedelta(microseconds=index)
+                    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                ),
+                (("workspace", "other"),),
+            )
+        )
+    target = MetricPoint("jobs", 42.0, "count", "gauge", _T0, (("workspace", "target"),))
+    store.record_metric(target)
+    result = store.latest_metric("jobs", attribute_filters=(("workspace", "target"),))
+    assert result == target
 
 
 def test_alert_acknowledgement_is_durable_and_idempotent(tmp_path: Path) -> None:
