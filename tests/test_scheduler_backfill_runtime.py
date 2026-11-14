@@ -291,3 +291,14 @@ def test_backfill_preview_rejects_unaligned_range_like_backfill_creation() -> No
             start_at="2026-09-13T00:00:30.000000Z",
             end_at="2026-09-13T00:02:00.000000Z",
         )
+
+
+def test_backfill_preview_rejects_boolean_max_runs() -> None:
+    schedule = Schedule(ScheduleId("preview-bool"), WorkflowId("workflow"), "* * * * *")
+    with pytest.raises(ValueError, match="max_runs"):
+        preview_backfill(
+            schedule,
+            start_at="2026-09-13T00:00:00.000000Z",
+            end_at="2026-09-13T00:01:00.000000Z",
+            max_runs=True,
+        )

@@ -43,7 +43,12 @@ def preview_backfill(
         raise ValueError("backfill range must be aligned to UTC minutes")
     if end < start:
         raise ValueError("backfill end_at must not precede start_at")
-    if max_runs < 1 or max_runs > 10000:
+    if (
+        not isinstance(max_runs, int)
+        or isinstance(max_runs, bool)
+        or max_runs < 1
+        or max_runs > 10000
+    ):
         raise ValueError("max_runs must be between 1 and 10000")
     cursor = _instant_datetime(_previous_minute(start))
     scan_minutes = int((end_dt - cursor).total_seconds() // 60)
