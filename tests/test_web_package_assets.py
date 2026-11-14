@@ -156,7 +156,7 @@ def test_data_engineering_dynamic_markup_escapes_untrusted_values() -> None:
     assert 'data-node-id="${esc(node.id)}"' in source
     assert '<pre class="code">${esc(json({ nodes, edges }))}</pre>' in source
     assert 'value="${esc(node.id)}">${esc(node.id)}' in source
-    assert '${esc(entry.name)}' in source
+    assert "${esc(entry.name)}" in source
 
 
 def test_environment_studio_exposes_deterministic_diff_preview() -> None:
