@@ -1,0 +1,93 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D05",
+  "status": "in_progress",
+  "execution_date": "2026-11-14",
+  "planned_date": "2026-11-19",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "b83589f7fb85544b1658e520ad83ba9162eb689e",
+    "origin_main_sha_when_candidate_was_tested": "b83589f7fb85544b1658e520ad83ba9162eb689e",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b83589f7fb85544b1658e520ad83ba9162eb689e-D05",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b83589f7fb85544b1658e520ad83ba9162eb689e-D05\\candidate-b83589f7fb85544b1658e520ad83ba9162eb689e.tar",
+      "format": "tar",
+      "sha256": "47486f73a892d4b348ace75a3b7b1783cd2202927a4f88827f4360853a5f5187",
+      "size": 16302080
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b83589f7fb85544b1658e520ad83ba9162eb689e-D05\\candidate-b83589f7fb85544b1658e520ad83ba9162eb689e.manifest.json",
+      "sha256": "36bf2ed379607043f2c458a3175d223f8b4e210b502fc8cb01a7fb22958505bb",
+      "size": 209989
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b83589f7fb85544b1658e520ad83ba9162eb689e-D05\\candidate-b83589f7fb85544b1658e520ad83ba9162eb689e.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b83589f7fb85544b1658e520ad83ba9162eb689e-D05\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1370,
+    "total_bytes": 15175704,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "commit": "b83589f7fb85544b1658e520ad83ba9162eb689e",
+    "summary": "Aligned the SDK project-permission parser with the server's canonical matched_permissions field while retaining the matched_roles compatibility alias; added regression coverage for permission parsing and project Bundle export/import.",
+    "production_files_changed": [
+      "packages/pyronin/src/pyronin/__init__.py",
+      "packages/pyronin/tests/test_client.py"
+    ],
+    "reason": "D05 found a real SDK/server contract mismatch. The CLI and web journeys pass, but the operator CLI has no explicit workspace/project lifecycle or project Bundle command surface, so P1 remains open."
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha b83589f7fb85544b1658e520ad83ba9162eb689e --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b83589f7fb85544b1658e520ad83ba9162eb689e-D05",
+    "verify": "python -m tools.ronin_candidate_boundary verify --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b83589f7fb85544b1658e520ad83ba9162eb689e-D05",
+    "cleanup_and_regenerate": "python -m tools.ronin_candidate_boundary cleanup --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b83589f7fb85544b1658e520ad83ba9162eb689e-D05; regenerate the same SHA and verify identical archive/manifest digests"
+  },
+  "d05_matrix": {
+    "python_sdk_cli_studio_contracts": "325 passed, 0 failed, 6 skipped",
+    "bundle_regression": "126 passed, 0 failed",
+    "web_journeys": "38 passed, 0 failed",
+    "web_command": "npx playwright test tests/workspace-workbench.spec.mjs tests/environment-workbench.spec.mjs tests/platform-studio-journeys.spec.mjs tests/deployment-workbench.spec.mjs --workers=2",
+    "result": "in_progress; all executed cells pass, one required CLI surface cell remains open"
+  },
+  "static_baseline": {
+    "format": "pass; 1104 files already formatted",
+    "ruff": "pass",
+    "mypy": "pass; 448 source files",
+    "openapi_snapshot": "pass; 340f0e7091802abc7864ab0081618e8aa7dd8543179842def235e39b846f04d9",
+    "architecture_gate": "pass",
+    "negative_gates": "pass; deliberate violations rejected",
+    "route_consistency": "pass; 199 operations",
+    "studio_surface": "pass; 128/241 published operations matched",
+    "studio_web_audit": "pass; failures=[]",
+    "studio_budget": "pass",
+    "dependency_surfaces": "pass"
+  },
+  "cleanup": {
+    "test_output_cleaned": true,
+    "candidate_regenerated_after_test_cleanup": true,
+    "final_verify": "pass; archive and manifest digests unchanged; sandbox has 0 Git metadata directories and 0 generated test-artifact directories"
+  },
+  "open_cells": [
+    {
+      "cell": "operator CLI workspace/project lifecycle and project Bundle commands",
+      "status": "open",
+      "reason": "The existing operator CLI surface passes its current contract, but it does not expose explicit workspace/project lifecycle or project Bundle import/export commands."
+    }
+  ],
+  "limitations": [
+    "D05 is not P1 family closure; the open CLI cell is a release-blocking gap and P1 remains not_started in the official family qualification.",
+    "The six skips are Docker/Compose/live worker/cancellation opt-in environments and are not counted as PASS.",
+    "No external provider certification, family qualification or release gate is claimed; release remains NO-GO.",
+    "Web test output directories were removed after execution; the exact candidate was verified only after cleanup and regeneration."
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D05",
+  "date": "2026-11-14",
+  "planned_date": "2026-11-19",
+  "status": "IN_PROGRESS",
+  "candidate_sha": "b83589f7fb85544b1658e520ad83ba9162eb689e",
+  "implementation_commit_sha": "b83589f7fb85544b1658e520ad83ba9162eb689e",
+  "evidence": "docs/qualification/candidates/candidate-b83589.json",
+  "handoff": "docs/qualification/handoffs/2026-11-14-D05.md",
+  "execution_scope": "partial-for-D05",
+  "result": {
+    "sdk_permission_contract": "fixed; canonical matched_permissions plus matched_roles compatibility alias",
+    "python_sdk_cli_studio_contracts": "325 passed, 0 failed, 6 skipped",
+    "bundle_regression": "126 passed, 0 failed",
+    "web_journeys": "38 passed, 0 failed",
+    "static_and_surface_checks": "pass",
+    "candidate_reproducibility_after_cleanup": "pass",
+    "open_required_cell": "operator CLI workspace/project lifecycle and project Bundle commands"
+  },
+  "progress_before": {
+    "families": "0/13",
+    "days": "5/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "0/13",
+    "days": "5/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "D05 remains in progress because the existing operator CLI has no explicit workspace/project lifecycle or project Bundle command surface.",
+    "The six Python skips are unavailable Docker/Compose/live worker/cancellation opt-in environments and are not converted into PASS.",
+    "No provider, family or release gate is closed; P1 is not closed."
+  ]
+}
