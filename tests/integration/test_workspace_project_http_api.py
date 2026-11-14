@@ -13,6 +13,7 @@ from pathlib import Path
 from threading import Thread
 
 from ronin_plugin_performance.plugin import PerformancePlugin
+from studio_cli import main
 from studio_connectors import (
     ArtifactDestinationWriter,
     ConnectorRegistry,
@@ -194,6 +195,12 @@ class _Store:
     def unregister_project(self, workspace_id, project_id):
         self._called("unregister_project")
         return self.projects.pop((workspace_id, project_id), None) is not None
+
+    def archive_project(self, workspace_id, project_id, *, now, idempotency_key=None):
+        Instant(str(now))
+        del workspace_id, project_id, idempotency_key
+        self._called("archive_project")
+        return True
 
 
 class _DiscoveryAdapter:
@@ -594,6 +601,106 @@ def _request(
 
 def _json_body(value: object) -> bytes:
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+
+
+def test_operator_cli_runs_workspace_project_and_bundle_journey_over_real_http(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    store = _Store()
+    manifest = _manifest("CLI Project", ProjectId("project-cli"))
+    manifest_file = tmp_path / "project.json"
+    manifest_file.write_text(json.dumps(manifest.to_data()), encoding="utf-8")
+    archive_file = tmp_path / "project.roninbundle"
+
+    with _server(store, _Authorizer()) as address:
+        monkeypatch.setenv("RONIN_CONTROL_PLANE_URL", f"http://{address[0]}:{address[1]}")
+        monkeypatch.setenv("RONIN_TOKEN", "good")
+        assert (
+            main(
+                [
+                    "workspaces",
+                    "create",
+                    "workspace-cli",
+                    "--name",
+                    "CLI Workspace",
+                    "--idempotency-key",
+                    "workspace-cli-create",
+                    "--json",
+                ]
+            )
+            == 0
+        )
+        assert json.loads(capsys.readouterr().out)["id"] == "workspace-cli"
+
+        assert main(["workspaces", "list", "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["items"][0]["id"] == "workspace-cli"
+
+        assert (
+            main(
+                [
+                    "projects",
+                    "create",
+                    "workspace-cli",
+                    str(manifest_file),
+                    "--json",
+                ]
+            )
+            == 0
+        )
+        assert json.loads(capsys.readouterr().out)["project"]["id"] == "project-cli"
+
+        assert (
+            main(
+                [
+                    "projects",
+                    "bundle-export",
+                    "workspace-cli",
+                    "project-cli",
+                    "--output",
+                    str(archive_file),
+                ]
+            )
+            == 0
+        )
+        capsys.readouterr()
+        assert archive_file.is_file()
+
+        assert (
+            main(
+                [
+                    "projects",
+                    "bundle-import",
+                    "workspace-cli",
+                    "project-cli",
+                    str(archive_file),
+                    "--idempotency-key",
+                    "project-cli-import",
+                    "--json",
+                ]
+            )
+            == 0
+        )
+        imported = json.loads(capsys.readouterr().out)
+        assert imported["project"]["project"]["id"] == "project-cli"
+
+        assert main(["projects", "get", "workspace-cli", "project-cli", "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["project"]["id"] == "project-cli"
+
+        assert (
+            main(
+                [
+                    "projects",
+                    "archive",
+                    "workspace-cli",
+                    "project-cli",
+                    "--idempotency-key",
+                    "project-cli-archive",
+                    "--json",
+                ]
+            )
+            == 0
+        )
+        assert json.loads(capsys.readouterr().out)["archived"] is True
 
 
 def test_semantic_bundle_http_export_review_import_integrity_and_authorization(tmp_path) -> None:
