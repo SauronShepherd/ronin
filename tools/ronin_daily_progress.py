@@ -93,6 +93,9 @@ def validate_ledger(ledger: dict[str, Any]) -> list[str]:
             errors.append("every family must be an object")
             continue
         family_id = family.get("id")
+        if not isinstance(family_id, str):
+            errors.append("family id must be a string")
+            continue
         seen_family_ids.append(family_id)
         status = family.get("qualification")
         if status not in FAMILY_STATUSES:
@@ -133,7 +136,11 @@ def validate_ledger(ledger: dict[str, Any]) -> list[str]:
         if not isinstance(day, dict):
             errors.append("every day must be an object")
             continue
-        day_ids.append(day.get("id"))
+        day_id = day.get("id")
+        if not isinstance(day_id, str):
+            errors.append("day id must be a string")
+            continue
+        day_ids.append(day_id)
         if day.get("status") not in DAY_STATUSES:
             errors.append(f"{day.get('id')}: invalid day status {day.get('status')!r}")
         if day.get("status") == "pass":
@@ -176,19 +183,22 @@ def validate_ledger(ledger: dict[str, Any]) -> list[str]:
                 if reported != actual:
                     errors.append(f"metrics.{percent_key} must be {actual}, got {reported}")
         if metrics.get("implementation_tasks_total") is not None:
-            total = metrics.get("implementation_tasks_total")
-            verified = metrics.get("implementation_tasks_verified")
-            if not isinstance(total, int) or total <= 0:
+            implementation_total = metrics.get("implementation_tasks_total")
+            implementation_verified = metrics.get("implementation_tasks_verified")
+            if not isinstance(implementation_total, int) or implementation_total <= 0:
                 errors.append(
                     "implementation_tasks_total must be a positive integer once baselined"
                 )
-            elif not isinstance(verified, int) or not 0 <= verified <= total:
+            elif (
+                not isinstance(implementation_verified, int)
+                or not 0 <= implementation_verified <= implementation_total
+            ):
                 errors.append("implementation_tasks_verified must be between zero and total")
             else:
-                expected = round((verified / total) * 100, 2)
-                if metrics.get("implementation_percent") != expected:
+                expected_percent = round((implementation_verified / implementation_total) * 100, 2)
+                if metrics.get("implementation_percent") != expected_percent:
                     errors.append(
-                        f"metrics.implementation_percent must be {expected}, "
+                        f"metrics.implementation_percent must be {expected_percent}, "
                         f"got {metrics.get('implementation_percent')!r}"
                     )
         elif metrics.get("implementation_percent") is not None:
