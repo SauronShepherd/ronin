@@ -281,3 +281,13 @@ def test_backfill_preview_stops_before_materializing_a_large_matching_window() -
             end_at="2021-01-01T00:00:00.000000Z",
             max_runs=1,
         )
+
+
+def test_backfill_preview_rejects_unaligned_range_like_backfill_creation() -> None:
+    schedule = Schedule(ScheduleId("schedule-aligned"), WorkflowId("workflow-aligned"), "* * * * *")
+    with pytest.raises(ValueError, match="aligned to UTC minutes"):
+        preview_backfill(
+            schedule,
+            start_at="2026-09-13T00:00:30.000000Z",
+            end_at="2026-09-13T00:02:00.000000Z",
+        )

@@ -37,12 +37,15 @@ def preview_backfill(
     """Return bounded matching fire times without touching durable state."""
     start = Instant(start_at)
     end = Instant(end_at)
+    start_dt = _instant_datetime(start)
+    end_dt = _instant_datetime(end)
+    if start_dt.second or start_dt.microsecond or end_dt.second or end_dt.microsecond:
+        raise ValueError("backfill range must be aligned to UTC minutes")
     if end < start:
         raise ValueError("backfill end_at must not precede start_at")
     if max_runs < 1 or max_runs > 10000:
         raise ValueError("max_runs must be between 1 and 10000")
     cursor = _instant_datetime(_previous_minute(start))
-    end_dt = _instant_datetime(end)
     scan_minutes = int((end_dt - cursor).total_seconds() // 60)
     if scan_minutes > 1_000_000:
         raise RuntimeError("backfill preview exceeds the one-million-minute scan limit")
