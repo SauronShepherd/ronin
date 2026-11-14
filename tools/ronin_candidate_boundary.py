@@ -19,7 +19,7 @@ import tempfile
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import BinaryIO
+from typing import IO
 
 SCHEMA = "ronin.candidate-boundary/v1"
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
@@ -195,7 +195,7 @@ def _safe_relative_path(raw_name: str, *, label: str) -> str:
     return value
 
 
-def _hash_stream(stream: BinaryIO) -> tuple[str, int]:
+def _hash_stream(stream: IO[bytes]) -> tuple[str, int]:
     hasher = hashlib.sha256()
     size = 0
     for chunk in iter(lambda: stream.read(_CHUNK_SIZE), b""):
@@ -423,16 +423,16 @@ def _verify_sandbox(sandbox: Path, files: tuple[_FileEntry, ...]) -> None:
     expected = {entry.path: entry for entry in files}
     actual_files: dict[str, Path] = {}
     actual_directories: set[str] = set()
-    for path in sandbox.rglob("*"):
-        relative = path.relative_to(sandbox).as_posix()
-        if path.is_symlink():
+    for sandbox_path in sandbox.rglob("*"):
+        relative = sandbox_path.relative_to(sandbox).as_posix()
+        if sandbox_path.is_symlink():
             raise CandidateBoundaryError(f"sandbox contains a symlink: {relative}")
-        if path.is_dir():
+        if sandbox_path.is_dir():
             actual_directories.add(relative)
-        elif path.is_file():
+        elif sandbox_path.is_file():
             if relative in actual_files:
                 raise CandidateBoundaryError(f"sandbox contains duplicate path: {relative}")
-            actual_files[relative] = path
+            actual_files[relative] = sandbox_path
         else:
             raise CandidateBoundaryError(f"sandbox contains unsupported entry: {relative}")
     if set(actual_files) != set(expected):
@@ -448,10 +448,10 @@ def _verify_sandbox(sandbox: Path, files: tuple[_FileEntry, ...]) -> None:
         raise CandidateBoundaryError(
             f"sandbox directory listing does not match manifest; missing={missing}, extra={extra}"
         )
-    for path, expected_entry in expected.items():
-        digest, size = _hash_file(actual_files[path])
+    for relative, expected_entry in expected.items():
+        digest, size = _hash_file(actual_files[relative])
         if size != expected_entry.size or digest != expected_entry.sha256:
-            raise CandidateBoundaryError(f"sandbox file does not match manifest: {path}")
+            raise CandidateBoundaryError(f"sandbox file does not match manifest: {relative}")
 
 
 def _verify_source(
