@@ -7,6 +7,7 @@ from studio_core import WorkspaceId
 from studio_finops import (
     BudgetPolicy,
     RateCard,
+    RateCardNotFound,
     SqliteFinOpsStore,
     UsageRecord,
     budget_gate,
@@ -299,6 +300,24 @@ def test_rate_card_identity_is_immutable(tmp_path: Path) -> None:
     )
     assert store.put_rate_card(rate) == rate
     assert store.put_rate_card(rate) == rate
+
+
+def test_missing_rate_card_does_not_persist_unpriced_usage(tmp_path: Path) -> None:
+    store = SqliteFinOpsStore(tmp_path / "finops.sqlite")
+    usage = UsageRecord(
+        "unpriced-usage",
+        WorkspaceId("workspace"),
+        "unknown_resource",
+        Decimal("1"),
+        "unit",
+        _T0,
+        _T1,
+        "run:unpriced",
+        "actual",
+    )
+    with pytest.raises(RateCardNotFound):
+        price_usage(store, usage)
+    assert store.list_usage(usage.workspace_id, period_start=_T0, period_end=_T1) == ()
 
 
 def test_alert_cooldown_rejects_clock_rollback() -> None:

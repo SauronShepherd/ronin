@@ -84,18 +84,18 @@ class FinOpsStore(Protocol):
 
 
 def price_usage(store: FinOpsStore, usage: UsageRecord) -> CostRecord:
-    """Persist usage, resolve an effective rate, and persist traceable cost."""
+    """Preflight pricing, then persist usage and its traceable cost."""
 
-    recorded = store.record_usage(usage)
     rate = store.resolve_rate(
-        recorded.resource_type,
-        recorded.unit,
-        at=recorded.period_end,
+        usage.resource_type,
+        usage.unit,
+        at=usage.period_end,
     )
     if rate is None:
         raise RateCardNotFound(
-            f"no rate card for {recorded.resource_type}/{recorded.unit} at {recorded.period_end}"
+            f"no rate card for {usage.resource_type}/{usage.unit} at {usage.period_end}"
         )
+    recorded = store.record_usage(usage)
     amount = recorded.quantity * rate.cost_per_unit
     cost = CostRecord(
         recorded.id,
