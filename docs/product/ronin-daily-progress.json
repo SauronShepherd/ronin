@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "ddcb64ad2295cd5e73c9d96f0497f72c843a0f39",
+    "base_sha": "66f8bca896bc115f762cf6a77fc0b27fedd4e318",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -44,9 +44,9 @@
     "families_qualified": 0,
     "families_total": 13,
     "families_percent": 0.0,
-    "days_passed": 4,
+    "days_passed": 5,
     "days_total": 39,
-    "days_percent": 10.26,
+    "days_percent": 12.82,
     "release_gates_passed": 0,
     "release_gates_total": 10,
     "release_gates_percent": 0.0,
@@ -228,7 +228,7 @@
     {"id": "D01", "date": "2026-11-15", "phase": "candidate-boundary", "status": "pass", "families": [], "evidence": "docs/qualification/handoffs/2026-11-14-D01.md", "commit_sha": "1defda75b7e9b7d19af13316d400017cc9c0cc32"},
     {"id": "D02", "date": "2026-11-16", "phase": "baseline-quality", "status": "pass", "families": [], "evidence": "docs/qualification/handoffs/2026-11-14-D02.md", "commit_sha": "6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f"},
     {"id": "D03", "date": "2026-11-17", "phase": "p1-contracts", "status": "pass", "families": ["P1"], "evidence": "docs/qualification/handoffs/2026-11-14-D03.md", "commit_sha": "ddcb64ad2295cd5e73c9d96f0497f72c843a0f39"},
-    {"id": "D04", "date": "2026-11-18", "phase": "p1-isolation-restart", "status": "pending", "families": ["P1"], "evidence": null, "commit_sha": null},
+    {"id": "D04", "date": "2026-11-18", "phase": "p1-isolation-restart", "status": "pass", "families": ["P1"], "evidence": "docs/qualification/handoffs/2026-11-14-D04.md", "commit_sha": "66f8bca896bc115f762cf6a77fc0b27fedd4e318"},
     {"id": "D05", "date": "2026-11-19", "phase": "p1-journey-close", "status": "pending", "families": ["P1"], "evidence": null, "commit_sha": null},
     {"id": "D06", "date": "2026-11-20", "phase": "p13-security-contracts", "status": "pending", "families": ["P13"], "evidence": null, "commit_sha": null},
     {"id": "D07", "date": "2026-11-21", "phase": "p13-security-close", "status": "pending", "families": ["P13"], "evidence": null, "commit_sha": null},

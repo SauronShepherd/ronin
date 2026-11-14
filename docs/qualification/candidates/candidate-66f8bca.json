@@ -1,0 +1,92 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D04",
+  "status": "pass",
+  "execution_date": "2026-11-14",
+  "planned_date": "2026-11-18",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "66f8bca896bc115f762cf6a77fc0b27fedd4e318",
+    "origin_main_sha_when_candidate_was_tested": "66f8bca896bc115f762cf6a77fc0b27fedd4e318",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-66f8bca896bc115f762cf6a77fc0b27fedd4e318-D04",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-66f8bca896bc115f762cf6a77fc0b27fedd4e318-D04\\candidate-66f8bca896bc115f762cf6a77fc0b27fedd4e318.tar",
+      "format": "tar",
+      "sha256": "66cbbe25af0a0dd968b85242b6e99323caa6a5695061e1a90f95cec2c77a325a",
+      "size": 16281600
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-66f8bca896bc115f762cf6a77fc0b27fedd4e318-D04\\candidate-66f8bca896bc115f762cf6a77fc0b27fedd4e318.manifest.json",
+      "sha256": "5d42172035bf92f01d01c89e709dde8aff5fa33eadac6d03af9945f38d02513b",
+      "size": 209500
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-66f8bca896bc115f762cf6a77fc0b27fedd4e318-D04\\candidate-66f8bca896bc115f762cf6a77fc0b27fedd4e318.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-66f8bca896bc115f762cf6a77fc0b27fedd4e318-D04\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1367,
+    "total_bytes": 15159419,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "commit": "66f8bca896bc115f762cf6a77fc0b27fedd4e318",
+    "summary": "No additional production code change was required after D03; the exact candidate validates the existing P1 authorization, workspace/project isolation, Git revision identity, restart/recovery, mutation audit and redaction contracts.",
+    "production_files_changed": [],
+    "reason": "D04 is a verification and qualification day; the focused contract suites were already green and no justified implementation gap was found."
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 66f8bca896bc115f762cf6a77fc0b27fedd4e318 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-66f8bca896bc115f762cf6a77fc0b27fedd4e318-D04",
+    "verify": "python -m tools.ronin_candidate_boundary verify --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-66f8bca896bc115f762cf6a77fc0b27fedd4e318-D04",
+    "cleanup_and_regenerate": "python -m tools.ronin_candidate_boundary cleanup --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-66f8bca896bc115f762cf6a77fc0b27fedd4e318-D04; regenerate the same SHA and verify identical archive/manifest digests"
+  },
+  "d04_contract_suite": {
+    "command": "python -m pytest -q tests/test_grants.py tests/test_grant_scope_projection.py tests/test_grant_survivor_boundaries.py tests/test_roles.py tests/test_kernel_session.py tests/test_audit.py tests/test_mutation_audit.py tests/test_plugin_audit.py tests/test_security_redaction.py tests/test_http_access_logging.py tests/test_git_source.py tests/test_source_control.py tests/test_source_control_survivor_boundaries.py tests/test_vcs_git.py tests/test_vcs_source.py tests/test_worker_preparation.py tests/test_kernel_execution.py tests/test_projects.py tests/test_workspace_project_services.py tests/test_project_workspace_survivor_boundaries.py tests/test_project_manifest.py tests/test_project_manifest_survivor_boundaries.py tests/test_project_configuration.py tests/integration/test_http_authorized_pagination.py tests/integration/test_workspace_project_http_api.py",
+    "execution_root": "candidate sandbox",
+    "passed": 573,
+    "failed": 0,
+    "skipped": 4,
+    "skip_policy": "4 skips are POSIX executable-mode or Windows symlink-privilege cases; no mandatory D04 contract was counted from a skip.",
+    "duration": "107.70s",
+    "result": "pass",
+    "coverage": [
+      "workspace A/B and project-scoped isolation with negative cross-scope paths",
+      "typed grant scope and viewer/editor/owner role contracts",
+      "authentication and authorization denial-before-body-parse behavior",
+      "Git source binding, exact commit identity, detached checkout and dirty-tree policy",
+      "worker source revision capture and reproducibility identity",
+      "SQLite reopen, idempotent mutation replay and restart-safe recovery",
+      "append-only mutation audit and bounded recursive secret redaction",
+      "structured HTTP access logs without bearer/project/secret leakage"
+    ]
+  },
+  "static_baseline": {
+    "format": "pass; 1103 files already formatted",
+    "ruff": "pass",
+    "mypy": "pass; 448 source files",
+    "openapi_snapshot": "pass; 340f0e7091802abc7864ab0081618e8aa7dd8543179842def235e39b846f04d9",
+    "architecture_gate": "pass",
+    "route_consistency": "pass; 199 operations",
+    "capability_status": "pass"
+  },
+  "cleanup": {
+    "test_output_cleaned": true,
+    "candidate_regenerated_after_test_cleanup": true,
+    "final_verify": "pass; archive and manifest digests unchanged; sandbox has 0 Git metadata directories and 0 generated test-artifact directories"
+  },
+  "limitations": [
+    "D04 validates P1 authorization, isolation, source-control and restart contracts but does not close P1; Studio, SDK/CLI, Bundle and the complete journey remain for D05.",
+    "The four Git/source-control skips are platform-specific Windows limitations and are not counted as PASS; a POSIX lane remains separate evidence.",
+    "No external provider certification, family qualification or release gate is claimed; release remains NO-GO.",
+    "The pre-existing broad AST plugin-inventory drift remains documented from D03 and was not regenerated in D04."
+  ]
+}

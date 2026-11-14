@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D04",
+  "date": "2026-11-14",
+  "planned_date": "2026-11-18",
+  "status": "PASS",
+  "candidate_sha": "66f8bca896bc115f762cf6a77fc0b27fedd4e318",
+  "implementation_commit_sha": "66f8bca896bc115f762cf6a77fc0b27fedd4e318",
+  "evidence": "docs/qualification/candidates/candidate-66f8bca.json",
+  "handoff": "docs/qualification/handoffs/2026-11-14-D04.md",
+  "execution_scope": "complete-for-D04",
+  "result": {
+    "p1_authorization_isolation_source_restart": "573 passed, 0 failed, 4 platform skips",
+    "format_lint_types": "pass",
+    "route_and_openapi_contracts": "pass",
+    "candidate_reproducibility_after_cleanup": "pass",
+    "production_code_change": "none required"
+  },
+  "progress_before": {
+    "families": "0/13",
+    "days": "4/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "0/13",
+    "days": "5/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "D04 is not P1 family closure; D05 remains mandatory for Studio, SDK/CLI, Bundle and the complete candidate-bound journey.",
+    "Platform-specific Git skips are recorded and not converted into PASS.",
+    "No provider or release gate is closed."
+  ]
+}
