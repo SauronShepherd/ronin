@@ -1,5 +1,8 @@
+import pytest
 from studio_observability import (
     NotificationDispatcher,
+    NotificationIntent,
+    NotificationIntentConflict,
     SqliteTelemetryStore,
     scheduler_notification,
 )
@@ -99,3 +102,22 @@ def test_dispatcher_applies_a_durable_retry_delay_after_failure(tmp_path):
         store, Sink(), clock=lambda: "2026-09-21T00:02:00.000000Z"
     ).dispatch_once()
     assert after.delivered == 1
+
+
+def test_notification_intent_rejects_same_id_with_different_payload(tmp_path):
+    store = SqliteTelemetryStore(tmp_path / "telemetry.sqlite")
+    first = scheduler_notification(
+        workflow_run_id="run", workflow_id="wf", state="failed", now="2026-09-21T00:00:00.000000Z"
+    )
+    assert first is not None
+    store.put_notification_intent(first)
+    conflicting = NotificationIntent(
+        first.id,
+        first.kind,
+        first.title,
+        "different body",
+        first.created_at,
+        first.attributes,
+    )
+    with pytest.raises(NotificationIntentConflict, match="different content"):
+        store.put_notification_intent(conflicting)

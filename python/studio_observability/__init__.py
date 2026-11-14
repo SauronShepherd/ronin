@@ -30,7 +30,7 @@ from .prometheus import prometheus_text
 from .quality import evaluate_quality_alerts, record_quality_metrics
 from .scheduler import SchedulerNotificationStore, persist_terminal_notification
 from .smtp import SmtpNotificationError, SmtpNotificationSink
-from .store import SqliteTelemetryStore
+from .store import NotificationIntentConflict, SqliteTelemetryStore
 from .webhook import WebhookNotificationError, WebhookNotificationSink
 
 __all__ = (
@@ -55,6 +55,7 @@ __all__ = (
     "SqliteNotificationIntentStore",
     "Severity",
     "SqliteTelemetryStore",
+    "NotificationIntentConflict",
     "SmtpNotificationError",
     "SmtpNotificationSink",
     "TelemetryEvent",

@@ -15,6 +15,10 @@ from .contracts import AlertInstance, AlertRule, MetricKind, MetricPoint, Teleme
 from .notifications import NotificationIntent
 
 
+class NotificationIntentConflict(RuntimeError):
+    """Raised when an intent ID is reused with different immutable content."""
+
+
 class SqliteTelemetryStore:
     """Persist normalized metrics/events/rules without coupling to an exporter backend."""
 
@@ -108,11 +112,20 @@ class SqliteTelemetryStore:
         )
         connection = self._connect()
         try:
-            connection.execute(
-                "INSERT INTO notification_intents(notification_id,intent_json) VALUES (?,?) "
-                "ON CONFLICT(notification_id) DO NOTHING",
-                (intent.id, payload),
-            )
+            connection.execute("BEGIN IMMEDIATE")
+            existing = connection.execute(
+                "SELECT intent_json FROM notification_intents WHERE notification_id=?",
+                (intent.id,),
+            ).fetchone()
+            if existing is not None and existing[0] != payload:
+                raise NotificationIntentConflict(
+                    f"notification intent ID already has different content: {intent.id}"
+                )
+            if existing is None:
+                connection.execute(
+                    "INSERT INTO notification_intents(notification_id,intent_json) VALUES (?,?)",
+                    (intent.id, payload),
+                )
             connection.commit()
             return intent
         finally:
@@ -612,4 +625,4 @@ class SqliteTelemetryStore:
             connection.close()
 
 
-__all__ = ("SqliteTelemetryStore",)
+__all__ = ("NotificationIntentConflict", "SqliteTelemetryStore")
