@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-  await page.route('**/v1/ml-studio/backends', route => route.fulfill({json: {
+  await page.route('**/v1/ml-studio/backends**', route => route.fulfill({json: {
     items: [{id: 'local.sklearn', status: 'available'}],
   }}));
 });

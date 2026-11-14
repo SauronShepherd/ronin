@@ -131,7 +131,7 @@ async function loadMLLabs() {
     let backends = [];
     let backendStatusError = false;
     try {
-      const backendData = await get('/v1/ml-studio/backends');
+      const backendData = await get(`/v1/ml-studio/backends?workspace_id=${encodeURIComponent(mlWorkspace())}`);
       backends = backendData.items || [];
     } catch (_) {
       backendStatusError = true;

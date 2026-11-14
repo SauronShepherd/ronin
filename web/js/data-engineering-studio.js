@@ -322,7 +322,7 @@ document.addEventListener('click', async event => {
       lastSqlResult = getLoadedQueryFluxResult();
       return;
     }
-    if (action === 'de-health') out.textContent = json(await get('/v1/data-engineering/health'));
+    if (action === 'de-health') out.textContent = json(await get(`/v1/data-engineering/health?workspace_id=${encodeURIComponent(workspaceId())}`));
     else if (action === 'de-sql-export') {
       if (getQueryFluxResultState()?.nextCursor) {
         throw new Error('Load every QueryFlux results page before exporting the complete CSV.');
