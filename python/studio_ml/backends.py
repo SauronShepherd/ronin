@@ -208,7 +208,7 @@ class RemoteTrainingResult:
             raise ValueError("remote artifact reference must be trimmed single-line text")
         if self.status == "succeeded" and not self.artifact_ref:
             raise ValueError("successful remote results require a durable artifact reference")
-        if self.status == "succeeded" and self.artifact_digest:
+        if self.artifact_digest:
             if not self.artifact_digest.startswith("sha256:"):
                 raise ValueError("remote artifact digest must use the sha256 namespace")
             digest = self.artifact_digest.removeprefix("sha256:")

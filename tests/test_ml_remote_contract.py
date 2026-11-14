@@ -10,7 +10,7 @@ from studio_ml.backends import (
 def test_remote_training_contract_validates_limits_and_identity() -> None:
     request = RemoteTrainingRequest("dataset://x", "lab", 1, "spark.gbt", idempotency_key="k")
     assert request.timeout_seconds == 3600
-    result = RemoteTrainingResult("run-1", "artifact://x", "sha256:abc", "queued")
+    result = RemoteTrainingResult("run-1", "artifact://x", "sha256:" + "a" * 64, "queued")
     assert result.status == "queued"
     with pytest.raises(ValueError, match="idempotency"):
         RemoteTrainingRequest("dataset://x", "lab", 1, "spark.gbt")
@@ -31,3 +31,9 @@ def test_succeeded_remote_result_requires_full_lowercase_sha256(digest: str) -> 
 def test_succeeded_remote_result_accepts_full_lowercase_sha256() -> None:
     result = RemoteTrainingResult("run-1", "artifact://x", "sha256:" + "a" * 64, "succeeded")
     assert result.status == "succeeded"
+
+
+@pytest.mark.parametrize("status", ["queued", "running", "failed", "cancelled"])
+def test_non_success_remote_result_also_requires_full_lowercase_sha256(status: str) -> None:
+    with pytest.raises(ValueError, match="64 lowercase hexadecimal"):
+        RemoteTrainingResult("run-1", "artifact://x", "sha256:abc", status)
