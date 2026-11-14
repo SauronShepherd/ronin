@@ -1,0 +1,115 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D01",
+  "status": "pass",
+  "execution_date": "2026-11-14",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "fca464cbd63eb4baf261102052ec5112be5dd935",
+    "implementation_commit_sha": "1defda75b7e9b7d19af13316d400017cc9c0cc32",
+    "origin_main_sha_after_implementation_push": "1defda75b7e9b7d19af13316d400017cc9c0cc32",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fca464cbd63eb4baf261102052ec5112be5dd935-D01",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fca464cbd63eb4baf261102052ec5112be5dd935-D01\\candidate-fca464cbd63eb4baf261102052ec5112be5dd935.tar",
+      "format": "tar",
+      "sha256": "2af7062f00aae28d363a14fe091d59682fcf4439bc33ca068d4801f8109e045e",
+      "size": 16189440
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fca464cbd63eb4baf261102052ec5112be5dd935-D01\\candidate-fca464cbd63eb4baf261102052ec5112be5dd935.manifest.json",
+      "sha256": "29ac038bd0c56d295076713a01000903215688c592153a61c22221f6bed2d771",
+      "size": 207729
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fca464cbd63eb4baf261102052ec5112be5dd935-D01\\candidate-fca464cbd63eb4baf261102052ec5112be5dd935.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fca464cbd63eb4baf261102052ec5112be5dd935-D01\\sandbox",
+      "git_metadata_present": false
+    },
+    "file_count": 1356,
+    "total_bytes": 15075910,
+    "file_listing_sorted": true,
+    "output_outside_repository": true,
+    "untracked_d01_files_in_candidate": false
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha fca464cbd63eb4baf261102052ec5112be5dd935 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fca464cbd63eb4baf261102052ec5112be5dd935-D01",
+    "verify_with_git": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fca464cbd63eb4baf261102052ec5112be5dd935-D01",
+    "verify_without_git": "python C:\\Users\\angel.alvarez\\Documents\\ChatGPT\\ronin\\.build-plan-implementation\\tools\\ronin_candidate_boundary.py verify --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fca464cbd63eb4baf261102052ec5112be5dd935-D01",
+    "cleanup_test": "python -m tools.ronin_candidate_boundary cleanup --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fca464cbd63eb4baf261102052ec5112be5dd935-D01-cleanup-test"
+  },
+  "verification": {
+    "generation_from_exact_sha": "pass",
+    "tracked_tree_only": "pass",
+    "untracked_sentinel_excluded": "pass",
+    "archive_and_manifest_reproducible": "pass",
+    "archive_digest_matches_manifest": "pass",
+    "manifest_digest_matches_digest_file": "pass",
+    "archive_tamper_rejected": "pass",
+    "manifest_tamper_rejected": "pass",
+    "sandbox_extra_file_rejected": "pass",
+    "invalid_or_missing_sha_rejected": "pass",
+    "sandbox_without_git_metadata": "pass",
+    "cleanup_and_process_check": "pass"
+  },
+  "tests": [
+    {
+      "command": "python -m pytest -q tests/test_ronin_candidate_boundary.py",
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "result": "pass"
+    },
+    {
+      "command": "python -m pytest -q tests/test_ronin_daily_progress.py tests/test_artifact_identity.py tests/test_reproducible_manifest.py",
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0,
+      "result": "pass"
+    },
+    {
+      "command": "python -m ruff check tools/ronin_candidate_boundary.py tests/test_ronin_candidate_boundary.py",
+      "result": "pass"
+    },
+    {
+      "command": "python -m ruff format --check tools/ronin_candidate_boundary.py tests/test_ronin_candidate_boundary.py",
+      "result": "pass"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    },
+    {
+      "command": "python -m pytest -q tests/test_public_capability_matrix.py",
+      "passed": 2,
+      "failed": 1,
+      "skipped": 0,
+      "result": "preexisting-failure-separated"
+    }
+  ],
+  "cleanup": {
+    "temporary_candidate_output": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fca464cbd63eb4baf261102052ec5112be5dd935-D01-cleanup-test",
+    "temporary_output_exists_after_cleanup": false,
+    "candidate_processes_after_cleanup": 0,
+    "retained_candidate_reason": "The verified D01 candidate remains outside the repository for D02 reception."
+  },
+  "preexisting_failures": [
+    {
+      "test": "tests/test_public_capability_matrix.py::test_matrix_observed_source_baseline_matches_status_ledger",
+      "observed_matrix_sha": "152f6388bf3b956270da461c0653b89c9c5908a1",
+      "ledger_sha": "8790dbc190fb45ac00a2f7af019c39c6cf457957",
+      "classification": "known ledger reconciliation debt; not caused by D01"
+    }
+  ],
+  "scope_limits": [
+    "D01 does not qualify or close any Public v1 family.",
+    "D01 does not pass a release gate.",
+    "The candidate source is the exact pre-D01 HEAD; D01 implementation files are intentionally not part of that source archive."
+  ]
+}

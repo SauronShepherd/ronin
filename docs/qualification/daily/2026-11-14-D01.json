@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D01",
+  "date": "2026-11-14",
+  "planned_date": "2026-11-15",
+  "status": "PASS",
+  "candidate_sha": "fca464cbd63eb4baf261102052ec5112be5dd935",
+  "implementation_commit_sha": "1defda75b7e9b7d19af13316d400017cc9c0cc32",
+  "evidence": "docs/qualification/candidates/candidate-fca464c.json",
+  "handoff": "docs/qualification/handoffs/2026-11-14-D01.md",
+  "execution_scope": "complete-for-D01",
+  "result": {
+    "archive_generated_from_exact_commit": true,
+    "tracked_files_only": true,
+    "sandbox_has_no_git_metadata": true,
+    "repeated_archive_digest_equal": true,
+    "repeated_manifest_digest_equal": true,
+    "tamper_rejection_closed": true,
+    "cleanup_reproduced": true
+  },
+  "progress_before": {
+    "families": "0/13",
+    "days": "1/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "0/13",
+    "days": "2/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The known PUBLIC_V1_CAPABILITY_MATRIX.md versus public-v1-status.json observed-SHA mismatch remains open and is not a D01 failure.",
+    "No family or release gate is closed by this receipt."
+  ]
+}
