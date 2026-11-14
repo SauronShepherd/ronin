@@ -909,17 +909,82 @@ def test_project_permission_inspection_is_resource_scoped() -> None:
                     "project.read": {
                         "allowed": True,
                         "reason": "allowed",
-                        "matched_roles": ["viewer"],
+                        "matched_permissions": ["project.read"],
                     },
-                    "project.write": {"allowed": False, "reason": "denied", "matched_roles": []},
+                    "project.write": {
+                        "allowed": False,
+                        "reason": "denied",
+                        "matched_permissions": [],
+                    },
                 },
             }
         ]
     )
     permissions = Ronin(transport=transport).inspect_project_permissions("workspace-a", "project-1")
     assert permissions.decision("project.read").allowed is True
+    assert permissions.decision("project.read").matched_permissions == ("project.read",)
+    assert permissions.decision("project.read").matched_roles == ("project.read",)
     assert permissions.decision("project.write").allowed is False
     assert transport.calls[0][1] == "/v1/workspaces/workspace-a/projects/project-1/permissions"
+
+
+def test_project_permission_inspection_accepts_legacy_role_field() -> None:
+    transport = FakeTransport(
+        [
+            {
+                "workspace_id": "workspace-a",
+                "project_id": "project-1",
+                "permissions": {
+                    "project.read": {
+                        "allowed": True,
+                        "reason": "legacy response",
+                        "matched_roles": ["viewer"],
+                    }
+                },
+            }
+        ]
+    )
+
+    decision = (
+        Ronin(transport=transport)
+        .inspect_project_permissions("workspace-a", "project-1")
+        .decision("project.read")
+    )
+    assert decision is not None
+    assert decision.matched_permissions == ("viewer",)
+
+
+def test_project_bundle_sdk_round_trip_contracts_are_scoped_and_verified() -> None:
+    archive = b"deterministic bundle"
+    import_payload = {"project": {"id": "project-1"}, "bundle_digest": "digest"}
+    transport = FakeTransport(
+        [
+            {"schema": "ronin.project/v1", "project": {"id": "project-1"}},
+            {
+                "media_type": "application/vnd.ronin.bundle+zip",
+                "content_base64": "ZGV0ZXJtaW5pc3RpYyBidW5kbGU=",
+                "digest": "848ffd38857f04e799eaefb9a5ba4574925444ace6874bedad596c0f16a878f6",
+                "size_bytes": len(archive),
+            },
+            import_payload,
+        ]
+    )
+    client = Ronin(transport=transport)
+
+    assert client.export_project_bundle_manifest("workspace/1", "project/1")["schema"] == (
+        "ronin.project/v1"
+    )
+    # The response digest is validated before bytes cross the SDK boundary.
+    assert client.export_project_bundle_archive("workspace/1", "project/1") == archive
+    assert (
+        client.import_project_bundle_archive(
+            "workspace/1", "project/1", archive, idempotency_key="bundle-import-1"
+        )
+        == import_payload
+    )
+    assert transport.calls[0][1] == "/v1/workspaces/workspace%2F1/projects/project%2F1/bundle"
+    assert transport.calls[1][1].endswith("/bundle/archive")
+    assert transport.calls[2][3] == {"Idempotency-Key": "bundle-import-1"}
 
 
 def test_project_permission_models_reject_invalid_decisions() -> None:

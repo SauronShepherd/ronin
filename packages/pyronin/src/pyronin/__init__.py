@@ -375,6 +375,11 @@ class ProjectPermissionDecision:
             raise ValueError("matched_roles must be unique")
         object.__setattr__(self, "matched_roles", tuple(sorted(roles)))
 
+    @property
+    def matched_permissions(self) -> tuple[str, ...]:
+        """Canonical server terminology for the legacy role-named field."""
+        return self.matched_roles
+
 
 @dataclass(frozen=True, slots=True)
 class ProjectPermissions:
@@ -423,11 +428,23 @@ def _parse_project_permissions(payload: object) -> ProjectPermissions:
             or not isinstance(value.get("reason"), str)
         ):
             raise ProtocolError("project permissions response has invalid decision")
-        roles = value.get("matched_roles", [])
-        if not isinstance(roles, list) or not all(isinstance(role, str) and role for role in roles):
-            raise ProtocolError("project permissions response has invalid matched roles")
+        matched_permissions = value.get("matched_permissions")
+        legacy_roles = value.get("matched_roles")
+        if matched_permissions is None:
+            matched_permissions = legacy_roles if legacy_roles is not None else []
+        elif legacy_roles is not None and legacy_roles != matched_permissions:
+            raise ProtocolError("project permissions response has ambiguous matched permissions")
+        if not isinstance(matched_permissions, list) or not all(
+            isinstance(permission, str) and permission for permission in matched_permissions
+        ):
+            raise ProtocolError("project permissions response has invalid matched permissions")
         decisions.append(
-            (permission, ProjectPermissionDecision(value["allowed"], value["reason"], tuple(roles)))
+            (
+                permission,
+                ProjectPermissionDecision(
+                    value["allowed"], value["reason"], tuple(matched_permissions)
+                ),
+            )
         )
     return ProjectPermissions(workspace_id, project_id, tuple(sorted(decisions)))
 
