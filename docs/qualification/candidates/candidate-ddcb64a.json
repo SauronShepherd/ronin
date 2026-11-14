@@ -1,0 +1,114 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D03",
+  "status": "pass",
+  "execution_date": "2026-11-14",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "ddcb64ad2295cd5e73c9d96f0497f72c843a0f39",
+    "origin_main_sha_when_candidate_was_tested": "ddcb64ad2295cd5e73c9d96f0497f72c843a0f39",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ddcb64ad2295cd5e73c9d96f0497f72c843a0f39-D03",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ddcb64ad2295cd5e73c9d96f0497f72c843a0f39-D03\\candidate-ddcb64ad2295cd5e73c9d96f0497f72c843a0f39.tar",
+      "format": "tar",
+      "sha256": "82297b91e5c77cb65ddd372cb6b0411f4da77b081b3ce31f9bf4e4a8b7f37633",
+      "size": 16271360
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ddcb64ad2295cd5e73c9d96f0497f72c843a0f39-D03\\candidate-ddcb64ad2295cd5e73c9d96f0497f72c843a0f39.manifest.json",
+      "sha256": "0eb35ab17b8eb10212eb993492125d5c58e9aaee56b3c92e4328b76a1e9e9969",
+      "size": 209011
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ddcb64ad2295cd5e73c9d96f0497f72c843a0f39-D03\\candidate-ddcb64ad2295cd5e73c9d96f0497f72c843a0f39.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ddcb64ad2295cd5e73c9d96f0497f72c843a0f39-D03\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1364,
+    "total_bytes": 15144814,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "commit": "ddcb64ad2295cd5e73c9d96f0497f72c843a0f39",
+    "summary": "Declared the existing project PUT and DELETE routes as versioned plugin surfaces, preserving the CRUD contract through the plugin manifest and client operation registry.",
+    "files": [
+      "python/studio_plugin_workspaces/plugin.py",
+      "tests/test_plugins.py"
+    ],
+    "surface_ids_added": [
+      "projects.replace.v1",
+      "projects.delete.v1"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha ddcb64ad2295cd5e73c9d96f0497f72c843a0f39 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ddcb64ad2295cd5e73c9d96f0497f72c843a0f39-D03",
+    "verify": "python -m tools.ronin_candidate_boundary verify --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ddcb64ad2295cd5e73c9d96f0497f72c843a0f39-D03",
+    "cleanup_and_regenerate": "python -m tools.ronin_candidate_boundary cleanup --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ddcb64ad2295cd5e73c9d96f0497f72c843a0f39-D03; regenerate the same SHA and verify identical archive/manifest digests"
+  },
+  "baseline": {
+    "format": "pass; 1102 files already formatted",
+    "ruff": "pass",
+    "mypy": "pass; 448 source files",
+    "mypy_p1_target": "pass; 4 source files in studio_plugin_workspaces",
+    "openapi_snapshot": "pass; 340f0e7091802abc7864ab0081618e8aa7dd8543179842def235e39b846f04d9",
+    "architecture_gate": "pass",
+    "route_consistency": "pass; 199 operations",
+    "studio_surface": "pass; 128/241 published operations matched",
+    "studio_web_audit": "pass; 72 files and 0 failures",
+    "studio_budget": "pass; asset_bytes 2168135, asset_requests 71, module_requests 37, stylesheet_requests 15, html_bytes 5838",
+    "dependency_surfaces": "pass",
+    "canonical_json": "pass; 10 vectors and 5 rejections",
+    "runner_protocol": "pass; 2 fixtures",
+    "capability_status": "pass"
+  },
+  "p1_contract_suite": {
+    "command": "python -m pytest -q tests/test_plugins.py tests/test_workspace_plugin_ports.py tests/test_workspace_plugin_events.py tests/test_workspace_project_services.py tests/test_projects.py tests/test_project_workspace_survivor_boundaries.py tests/test_project_manifest.py tests/test_project_manifest_survivor_boundaries.py tests/test_project_configuration.py tests/test_project_ui_contract.py tests/integration/test_workspace_project_http_api.py",
+    "execution_root": "candidate sandbox",
+    "passed": 238,
+    "failed": 0,
+    "skipped": 0,
+    "duration": "47.57s",
+    "result": "pass",
+    "coverage": [
+      "workspace and project domain identity",
+      "SQLite persistence and reopen",
+      "create/read/list/replace/delete API routes",
+      "invalid requests and not-found/conflict errors",
+      "workspace/project scope and permission checks",
+      "plugin route and client-surface composition",
+      "versioned project lifecycle events"
+    ]
+  },
+  "web_contract_suite": {
+    "dependency_command": "node web-tests/ensure-dependencies.mjs",
+    "dependency_result": "pass; npm audit found 0 vulnerabilities; Chromium available",
+    "command": "npm --prefix web-tests test -- tests/workspace-workbench.spec.mjs tests/environment-workbench.spec.mjs --workers=1",
+    "execution_root": "candidate sandbox before final cleanup",
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0,
+    "workers": 1,
+    "result": "pass"
+  },
+  "cleanup": {
+    "test_output_cleaned": true,
+    "candidate_regenerated_after_test_cleanup": true,
+    "final_verify": "pass; archive and manifest digests unchanged; sandbox has 0 Git metadata directories and 0 generated test-artifact directories"
+  },
+  "limitations": [
+    "D03 covers the workspace/project CRUD contract and does not close P1; authorization-depth, Git/source-control, restart, Bundle, SDK/CLI and complete family journey remain for D04/D05.",
+    "The first direct npm-exec Web invocation was invalid because it did not load the configured baseURL; the official npm test invocation was rerun and passed 8/8.",
+    "The AST plugin inventory file differs from a freshly generated inventory by broad pre-existing drift; it was not regenerated in D03 to avoid unrelated repository-wide changes.",
+    "No family or release gate is closed by this receipt; release remains NO-GO."
+  ]
+}
