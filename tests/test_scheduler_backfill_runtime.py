@@ -302,3 +302,26 @@ def test_backfill_preview_rejects_boolean_max_runs() -> None:
             end_at="2026-09-13T00:01:00.000000Z",
             max_runs=True,
         )
+
+
+def test_backfill_tick_rejects_boolean_limits(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    service = SchedulerBackfillService(store)
+
+    async def scenario() -> None:
+        with pytest.raises(ValueError, match="max_scan_minutes"):
+            await service.tick(
+                _WS,
+                BackfillId("backfill-1"),
+                now=_T0,
+                max_scan_minutes=True,
+            )
+        with pytest.raises(ValueError, match="max_new_runs"):
+            await service.tick(
+                _WS,
+                BackfillId("backfill-1"),
+                now=_T0,
+                max_new_runs=True,
+            )
+
+    asyncio.run(scenario())

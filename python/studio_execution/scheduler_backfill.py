@@ -106,9 +106,13 @@ class SchedulerBackfillService:
         max_scan_minutes: int = 1440,
         max_new_runs: int = 100,
     ) -> BackfillTickResult:
-        if max_scan_minutes < 1:
+        if (
+            not isinstance(max_scan_minutes, int)
+            or isinstance(max_scan_minutes, bool)
+            or max_scan_minutes < 1
+        ):
             raise ValueError("max_scan_minutes must be positive")
-        if max_new_runs < 1:
+        if not isinstance(max_new_runs, int) or isinstance(max_new_runs, bool) or max_new_runs < 1:
             raise ValueError("max_new_runs must be positive")
         plan = await asyncio.to_thread(
             self._store.get_backfill_plan,
