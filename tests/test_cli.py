@@ -190,6 +190,119 @@ def test_connectors_sync_submit_reads_bounded_definition_and_requires_key(
     assert json.loads(capsys.readouterr().out) == {"id": "job-1", "state": "queued"}
 
 
+def test_workspace_and_project_cli_lifecycle_forwards_scopes(monkeypatch, capsys, tmp_path) -> None:
+    manifest = {"schema": "ronin.project/v1", "project": {"id": "project-1"}}
+    manifest_file = tmp_path / "project.json"
+    manifest_file.write_text(json.dumps(manifest), encoding="utf-8")
+
+    class _Client:
+        def list_workspaces(self, *, limit, cursor):
+            assert (limit, cursor) == (25, "cursor-1")
+            return {"items": [{"id": "workspace-1", "name": "Main"}], "next_cursor": None}
+
+        def create_project(self, workspace_id, payload, *, idempotency_key=None):
+            assert (workspace_id, payload, idempotency_key) == ("workspace-1", manifest, "p-1")
+            return {"id": "project-1", "name": "ETL"}
+
+        def archive_project(self, workspace_id, project_id, *, idempotency_key):
+            assert (workspace_id, project_id, idempotency_key) == (
+                "workspace-1",
+                "project-1",
+                "p-archive",
+            )
+            return {"archived": True, "project_id": project_id}
+
+    monkeypatch.setattr("studio_cli._control_plane_client", lambda: _Client())
+    assert main(["workspaces", "list", "--limit", "25", "--cursor", "cursor-1", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out)["items"][0]["id"] == "workspace-1"
+    assert (
+        main(
+            [
+                "projects",
+                "create",
+                "workspace-1",
+                str(manifest_file),
+                "--idempotency-key",
+                "p-1",
+                "--json",
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out)["id"] == "project-1"
+    assert (
+        main(
+            [
+                "projects",
+                "archive",
+                "workspace-1",
+                "project-1",
+                "--idempotency-key",
+                "p-archive",
+                "--json",
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out)["archived"] is True
+
+
+def test_project_bundle_cli_round_trip_uses_bounded_files(monkeypatch, capsys, tmp_path) -> None:
+    archive = b"deterministic-bundle"
+    exported = tmp_path / "export.roninbundle"
+    imported = tmp_path / "import.roninbundle"
+    imported.write_bytes(archive)
+
+    class _Client:
+        def export_project_bundle_archive(self, workspace_id, project_id):
+            assert (workspace_id, project_id) == ("workspace-1", "project-1")
+            return archive
+
+        def import_project_bundle_archive(
+            self, workspace_id, project_id, payload, *, idempotency_key
+        ):
+            assert (workspace_id, project_id, payload, idempotency_key) == (
+                "workspace-1",
+                "project-1",
+                archive,
+                "bundle-1",
+            )
+            return {"project": {"id": project_id}, "bundle_digest": "digest"}
+
+    monkeypatch.setattr("studio_cli._control_plane_client", lambda: _Client())
+    assert (
+        main(
+            [
+                "projects",
+                "bundle-export",
+                "workspace-1",
+                "project-1",
+                "--output",
+                str(exported),
+            ]
+        )
+        == 0
+    )
+    assert exported.read_bytes() == archive
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "projects",
+                "bundle-import",
+                "workspace-1",
+                "project-1",
+                str(imported),
+                "--idempotency-key",
+                "bundle-1",
+                "--json",
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out)["project"]["id"] == "project-1"
+
+
 @pytest.mark.parametrize("command", ["sync-status", "sync-cancel"])
 def test_connectors_sync_status_and_cancel_forward_resource_scope(
     monkeypatch, capsys, command

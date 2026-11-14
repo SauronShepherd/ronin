@@ -148,6 +148,74 @@ def _parser() -> argparse.ArgumentParser:
     connectors.add_argument("--job-id")
     connectors.add_argument("--definition-file", type=Path)
     connectors.add_argument("--idempotency-key")
+    workspaces = commands.add_parser("workspaces", help="manage control-plane workspaces")
+    workspace_commands = workspaces.add_subparsers(dest="workspaces_command", required=True)
+    workspace_list = workspace_commands.add_parser("list", help="list visible workspaces")
+    workspace_list.add_argument("--limit", type=int, default=100)
+    workspace_list.add_argument("--cursor")
+    workspace_list.add_argument("--json", action="store_true")
+    workspace_get = workspace_commands.add_parser("get", help="show one workspace")
+    workspace_get.add_argument("workspace_id")
+    workspace_get.add_argument("--json", action="store_true")
+    workspace_create = workspace_commands.add_parser("create", help="create a workspace")
+    workspace_create.add_argument("workspace_id")
+    workspace_create.add_argument("--name", required=True)
+    workspace_create.add_argument("--description")
+    workspace_create.add_argument("--idempotency-key", required=True)
+    workspace_create.add_argument("--json", action="store_true")
+    workspace_archive = workspace_commands.add_parser("archive", help="archive a workspace")
+    workspace_archive.add_argument("workspace_id")
+    workspace_archive.add_argument("--json", action="store_true")
+
+    projects = commands.add_parser("projects", help="manage control-plane projects")
+    project_commands = projects.add_subparsers(dest="projects_command", required=True)
+    project_list = project_commands.add_parser("list", help="list projects in a workspace")
+    project_list.add_argument("workspace_id")
+    project_list.add_argument("--limit", type=int, default=100)
+    project_list.add_argument("--cursor")
+    project_list.add_argument("--json", action="store_true")
+    project_get = project_commands.add_parser("get", help="show one project")
+    project_get.add_argument("workspace_id")
+    project_get.add_argument("project_id")
+    project_get.add_argument("--json", action="store_true")
+    project_create = project_commands.add_parser("create", help="register a project manifest")
+    project_create.add_argument("workspace_id")
+    project_create.add_argument("manifest", type=Path)
+    project_create.add_argument("--idempotency-key")
+    project_create.add_argument("--json", action="store_true")
+    project_update = project_commands.add_parser("update", help="replace a project manifest")
+    project_update.add_argument("workspace_id")
+    project_update.add_argument("project_id")
+    project_update.add_argument("manifest", type=Path)
+    project_update.add_argument("--if-match")
+    project_update.add_argument("--json", action="store_true")
+    project_archive = project_commands.add_parser("archive", help="archive a project")
+    project_archive.add_argument("workspace_id")
+    project_archive.add_argument("project_id")
+    project_archive.add_argument("--idempotency-key", required=True)
+    project_archive.add_argument("--json", action="store_true")
+    project_delete = project_commands.add_parser("delete", help="unregister a project")
+    project_delete.add_argument("workspace_id")
+    project_delete.add_argument("project_id")
+    project_delete.add_argument("--json", action="store_true")
+    project_bundle_export = project_commands.add_parser(
+        "bundle-export", help="export a project manifest or Bundle archive"
+    )
+    project_bundle_export.add_argument("workspace_id")
+    project_bundle_export.add_argument("project_id")
+    project_bundle_export.add_argument(
+        "--format", choices=("manifest", "archive"), default="archive"
+    )
+    project_bundle_export.add_argument("--output", type=Path)
+    project_bundle_export.add_argument("--json", action="store_true")
+    project_bundle_import = project_commands.add_parser(
+        "bundle-import", help="import a project Bundle archive"
+    )
+    project_bundle_import.add_argument("workspace_id")
+    project_bundle_import.add_argument("project_id")
+    project_bundle_import.add_argument("archive", type=Path)
+    project_bundle_import.add_argument("--idempotency-key", required=True)
+    project_bundle_import.add_argument("--json", action="store_true")
     plugins = commands.add_parser("plugins", help="inspect installed Ronin plugins")
     plugins.add_argument(
         "plugins_command", choices=("list", "surfaces", "validate", "lock", "rollback")
@@ -600,6 +668,148 @@ def _jobs(namespace: argparse.Namespace) -> int:
 def _cancel(namespace: argparse.Namespace) -> int:
     job = _client().cancel(cast(str, namespace.job_id))
     _emit_job(job, as_json=cast(bool, namespace.json))
+    return 0
+
+
+def _emit_control_result(result: dict[str, object], *, as_json: bool) -> None:
+    if as_json:
+        print(json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
+        return
+    items = result.get("items")
+    if isinstance(items, list):
+        for item in items:
+            if isinstance(item, dict):
+                identifier = item.get("id", item.get("project_id", ""))
+                label = item.get("name", item.get("status", ""))
+                print(f"{identifier}\t{label}")
+        if result.get("next_cursor") is not None:
+            print(f"next_cursor\t{result['next_cursor']}")
+        return
+    print(json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
+
+
+def _read_json_object_file(path: Path, label: str) -> dict[str, object]:
+    resolved = path.resolve(strict=True)
+    if not resolved.is_file():
+        raise CliError(f"{label} is not a file: {resolved}")
+    if resolved.stat().st_size > 8 * 1024 * 1024:
+        raise CliError(f"{label} exceeds the 8 MiB CLI limit: {resolved}")
+    try:
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CliError(f"{label} must contain valid UTF-8 JSON: {resolved}") from exc
+    if not isinstance(payload, dict):
+        raise CliError(f"{label} must contain a JSON object: {resolved}")
+    return payload
+
+
+def _write_new_file(path: Path, content: bytes, label: str) -> Path:
+    target = path.resolve()
+    if target.exists():
+        raise CliError(f"refusing to overwrite {label}: {target}")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        target.write_bytes(content)
+    except OSError as exc:
+        raise CliError(f"cannot write {label}: {target}") from exc
+    return target
+
+
+def _workspaces(namespace: argparse.Namespace) -> int:
+    client = _control_plane_client()
+    command = cast(str, namespace.workspaces_command)
+    if command == "list":
+        result = client.list_workspaces(limit=cast(int, namespace.limit), cursor=namespace.cursor)
+    elif command == "get":
+        result = client.get_workspace(cast(str, namespace.workspace_id))
+    elif command == "create":
+        result = client.create_workspace(
+            cast(str, namespace.workspace_id),
+            cast(str, namespace.name),
+            cast(str | None, namespace.description),
+            idempotency_key=cast(str, namespace.idempotency_key),
+        )
+    elif command == "archive":
+        result = client.archive_workspace(cast(str, namespace.workspace_id))
+    else:
+        raise CliError(f"unsupported workspaces command: {command}")
+    _emit_control_result(result, as_json=bool(namespace.json))
+    return 0
+
+
+def _projects(namespace: argparse.Namespace) -> int:
+    client = _control_plane_client()
+    command = cast(str, namespace.projects_command)
+    workspace_id = cast(str, namespace.workspace_id)
+    project_id = cast(str | None, getattr(namespace, "project_id", None))
+    if command == "list":
+        result = client.list_projects(
+            workspace_id, limit=cast(int, namespace.limit), cursor=namespace.cursor
+        )
+        _emit_control_result(result, as_json=bool(namespace.json))
+        return 0
+    if command == "get":
+        result = client.get_project(workspace_id, cast(str, project_id))
+    elif command == "create":
+        result = client.create_project(
+            workspace_id,
+            _read_json_object_file(cast(Path, namespace.manifest), "project manifest"),
+            idempotency_key=cast(str | None, namespace.idempotency_key),
+        )
+    elif command == "update":
+        result = client.update_project(
+            workspace_id,
+            cast(str, project_id),
+            _read_json_object_file(cast(Path, namespace.manifest), "project manifest"),
+            if_match=cast(str | None, namespace.if_match),
+        )
+    elif command == "archive":
+        result = client.archive_project(
+            workspace_id,
+            cast(str, project_id),
+            idempotency_key=cast(str, namespace.idempotency_key),
+        )
+    elif command == "delete":
+        result = client.delete_project(workspace_id, cast(str, project_id))
+    elif command == "bundle-export":
+        output = cast(Path | None, namespace.output)
+        if cast(str, namespace.format) == "manifest":
+            manifest = client.export_project_bundle_manifest(workspace_id, cast(str, project_id))
+            if output is None:
+                print(
+                    json.dumps(manifest, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+                )
+            else:
+                target = _write_new_file(
+                    output,
+                    (
+                        json.dumps(manifest, sort_keys=True, indent=2, ensure_ascii=False) + "\n"
+                    ).encode("utf-8"),
+                    "project manifest export",
+                )
+                print(f"project manifest written: {target}")
+            return 0
+        if output is None:
+            raise CliError("projects bundle-export --format archive requires --output")
+        archive = client.export_project_bundle_archive(workspace_id, cast(str, project_id))
+        target = _write_new_file(output, archive, "project Bundle export")
+        print(f"project Bundle written: {target}")
+        return 0
+    elif command == "bundle-import":
+        archive_path = cast(Path, namespace.archive).resolve(strict=True)
+        if not archive_path.is_file():
+            raise CliError(f"project Bundle archive is not a file: {archive_path}")
+        if archive_path.stat().st_size > 8 * 1024 * 1024:
+            raise CliError(f"project Bundle archive exceeds the 8 MiB CLI limit: {archive_path}")
+        result = client.import_project_bundle_archive(
+            workspace_id,
+            cast(str, project_id),
+            archive_path.read_bytes(),
+            idempotency_key=cast(str, namespace.idempotency_key),
+        )
+    else:
+        raise CliError(f"unsupported projects command: {command}")
+    _emit_control_result(result, as_json=bool(namespace.json))
     return 0
 
 
@@ -1546,6 +1756,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cancel(namespace)
         if command == "connectors":
             return _connectors(namespace)
+        if command == "workspaces":
+            return _workspaces(namespace)
+        if command == "projects":
+            return _projects(namespace)
         if command == "migrate":
             if namespace.migrate_command == "inventory":
                 return _migration_inventory(namespace)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import os
 import re
@@ -141,20 +143,23 @@ class ControlPlaneClient:
         payload: dict[str, object] | None = None,
         query: dict[str, str] | None = None,
         idempotency_key: str | None = None,
+        headers: dict[str, str] | None = None,
     ) -> object:
         if not path.startswith("/") or path.startswith("//"):
             raise ValueError("path must be origin-relative")
         url = self.base_url.rstrip("/") + path
         if query:
             url += "?" + urlencode(query)
-        headers = {"Accept": "application/json", "Authorization": f"Bearer {self.token}"}
+        request_headers = {"Accept": "application/json", "Authorization": f"Bearer {self.token}"}
+        if headers:
+            request_headers.update(headers)
         body = None
         if payload is not None:
-            headers["Content-Type"] = "application/json"
+            request_headers["Content-Type"] = "application/json"
             body = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         if idempotency_key is not None:
-            headers["Idempotency-Key"] = idempotency_key
-        request = Request(url, data=body, headers=headers, method=method)  # noqa: S310
+            request_headers["Idempotency-Key"] = idempotency_key
+        request = Request(url, data=body, headers=request_headers, method=method)  # noqa: S310
         try:
             with self._opener.open(request, timeout=self.timeout) as response:  # noqa: S310
                 data = response.read(_MAX_RESPONSE_BYTES + 1)
@@ -181,6 +186,173 @@ class ControlPlaneClient:
             return json.loads(data)
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             raise ControlPlaneError("Ronin endpoint returned invalid JSON") from exc
+
+    def list_workspaces(self, *, limit: int = 100, cursor: str | None = None) -> dict[str, object]:
+        return _page_result(
+            self.request(
+                "GET",
+                "/v1/workspaces",
+                query={"limit": str(limit), **({"cursor": cursor} if cursor else {})},
+            ),
+            "workspaces",
+        )
+
+    def get_workspace(self, workspace_id: str) -> dict[str, object]:
+        return _object_result(self.request("GET", f"/v1/workspaces/{quote(workspace_id, safe='')}"))
+
+    def create_workspace(
+        self,
+        workspace_id: str,
+        name: str,
+        description: str | None,
+        *,
+        idempotency_key: str,
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "POST",
+                "/v1/workspaces",
+                payload={"id": workspace_id, "name": name, "description": description},
+                idempotency_key=idempotency_key,
+            )
+        )
+
+    def archive_workspace(self, workspace_id: str) -> dict[str, object]:
+        return _object_result(
+            self.request("POST", f"/v1/workspaces/{quote(workspace_id, safe='')}/archive")
+        )
+
+    def list_projects(
+        self, workspace_id: str, *, limit: int = 100, cursor: str | None = None
+    ) -> dict[str, object]:
+        return _page_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/projects",
+                query={"limit": str(limit), **({"cursor": cursor} if cursor else {})},
+            ),
+            "projects",
+        )
+
+    def get_project(self, workspace_id: str, project_id: str) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+                f"{quote(project_id, safe='')}",
+            )
+        )
+
+    def create_project(
+        self,
+        workspace_id: str,
+        manifest: dict[str, object],
+        *,
+        idempotency_key: str | None = None,
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "POST",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/projects",
+                payload=manifest,
+                idempotency_key=idempotency_key,
+            )
+        )
+
+    def update_project(
+        self,
+        workspace_id: str,
+        project_id: str,
+        manifest: dict[str, object],
+        *,
+        if_match: str | None = None,
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "PUT",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+                f"{quote(project_id, safe='')}",
+                payload=manifest,
+                headers={"If-Match": if_match} if if_match else None,
+            )
+        )
+
+    def delete_project(self, workspace_id: str, project_id: str) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "DELETE",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+                f"{quote(project_id, safe='')}",
+            )
+        )
+
+    def archive_project(
+        self, workspace_id: str, project_id: str, *, idempotency_key: str
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "POST",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+                f"{quote(project_id, safe='')}/archive",
+                idempotency_key=idempotency_key,
+            )
+        )
+
+    def export_project_bundle_manifest(
+        self, workspace_id: str, project_id: str
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+                f"{quote(project_id, safe='')}/bundle",
+            )
+        )
+
+    def export_project_bundle_archive(self, workspace_id: str, project_id: str) -> bytes:
+        payload = _object_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+                f"{quote(project_id, safe='')}/bundle/archive",
+            )
+        )
+        if payload.get("media_type") != "application/vnd.ronin.bundle+zip":
+            raise ControlPlaneError("Ronin project Bundle archive media type is invalid")
+        encoded, digest, size = (
+            payload.get("content_base64"),
+            payload.get("digest"),
+            payload.get("size_bytes"),
+        )
+        if not isinstance(encoded, str) or not isinstance(digest, str) or not isinstance(size, int):
+            raise ControlPlaneError("Ronin project Bundle archive fields are invalid")
+        try:
+            archive = base64.b64decode(encoded, validate=True)
+        except (TypeError, ValueError) as exc:
+            raise ControlPlaneError("Ronin project Bundle archive is not valid base64") from exc
+        if len(archive) != size or hashlib.sha256(archive).hexdigest() != digest:
+            raise ControlPlaneError("Ronin project Bundle archive digest does not match content")
+        return archive
+
+    def import_project_bundle_archive(
+        self,
+        workspace_id: str,
+        project_id: str,
+        archive: bytes,
+        *,
+        idempotency_key: str,
+    ) -> dict[str, object]:
+        if not archive:
+            raise ValueError("project Bundle archive must be non-empty")
+        return _object_result(
+            self.request(
+                "POST",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+                f"{quote(project_id, safe='')}/bundle/import",
+                payload={"content_base64": base64.b64encode(archive).decode("ascii")},
+                idempotency_key=idempotency_key,
+            )
+        )
 
     def submit(
         self,
@@ -417,6 +589,21 @@ def _connector_result(payload: object) -> dict[str, object]:
     if not isinstance(payload, dict):
         raise ControlPlaneError("Ronin connector response must be a JSON object")
     return payload
+
+
+def _object_result(payload: object) -> dict[str, object]:
+    if not isinstance(payload, dict):
+        raise ControlPlaneError("Ronin control-plane response must be a JSON object")
+    return payload
+
+
+def _page_result(payload: object, resource: str) -> dict[str, object]:
+    if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+        raise ControlPlaneError(f"Ronin {resource} response must contain an items array")
+    next_cursor = payload.get("next_cursor")
+    if next_cursor is not None and not isinstance(next_cursor, str):
+        raise ControlPlaneError(f"Ronin {resource} response has an invalid next_cursor")
+    return {"items": payload["items"], "next_cursor": next_cursor}
 
 
 def _job(payload: object) -> dict[str, object]:
