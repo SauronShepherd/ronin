@@ -11,6 +11,7 @@ import zipfile
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
+from typing import Any
 
 _FRONTMATTER = re.compile(r"\A---\s*\n(?P<body>.*?)\n---\s*\n", re.DOTALL)
 _FIELD = re.compile(r"(?m)^([A-Za-z][A-Za-z0-9_-]*):\s*(.+?)\s*$")
@@ -247,7 +248,7 @@ def install_skill(
             raise FileExistsError(f"refusing to overwrite existing file: {target_file}")
         entries.append({"path": f"{skill.name}/{relative}", "sha256": digest})
     manifest_path = _managed_manifest(target)
-    manifest = {"schema": "ronin.agent-skills-install/v1", "skills": {}}
+    manifest: dict[str, Any] = {"schema": "ronin.agent-skills-install/v1", "skills": {}}
     if manifest_path.is_file():
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest.setdefault("skills", {})[skill.name] = {"files": entries}
@@ -272,7 +273,7 @@ def uninstall_skill(name: str, destination: Path, *, dry_run: bool = False) -> d
     manifest_path = _managed_manifest(target)
     if not manifest_path.is_file():
         raise FileNotFoundError(f"managed skill manifest not found: {manifest_path}")
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest: dict[str, Any] = json.loads(manifest_path.read_text(encoding="utf-8"))
     record = manifest.get("skills", {}).get(name)
     if not isinstance(record, dict):
         raise KeyError(f"skill is not managed: {name}")
