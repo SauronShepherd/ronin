@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "fca464cbd63eb4baf261102052ec5112be5dd935",
+    "base_sha": "6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -44,9 +44,9 @@
     "families_qualified": 0,
     "families_total": 13,
     "families_percent": 0.0,
-    "days_passed": 2,
+    "days_passed": 3,
     "days_total": 39,
-    "days_percent": 5.13,
+    "days_percent": 7.69,
     "release_gates_passed": 0,
     "release_gates_total": 10,
     "release_gates_percent": 0.0,
@@ -226,7 +226,7 @@
   "days": [
     {"id": "D00", "date": "2026-11-14", "phase": "truth-and-control", "status": "pass", "families": [], "evidence": "docs/qualification/handoffs/2026-11-14.md", "commit_sha": "a31132183f977fb3834ed5e86e6c619942cc8dc0"},
     {"id": "D01", "date": "2026-11-15", "phase": "candidate-boundary", "status": "pass", "families": [], "evidence": "docs/qualification/handoffs/2026-11-14-D01.md", "commit_sha": "1defda75b7e9b7d19af13316d400017cc9c0cc32"},
-    {"id": "D02", "date": "2026-11-16", "phase": "baseline-quality", "status": "pending", "families": [], "evidence": null, "commit_sha": null},
+    {"id": "D02", "date": "2026-11-16", "phase": "baseline-quality", "status": "pass", "families": [], "evidence": "docs/qualification/handoffs/2026-11-14-D02.md", "commit_sha": "6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f"},
     {"id": "D03", "date": "2026-11-17", "phase": "p1-contracts", "status": "pending", "families": ["P1"], "evidence": null, "commit_sha": null},
     {"id": "D04", "date": "2026-11-18", "phase": "p1-isolation-restart", "status": "pending", "families": ["P1"], "evidence": null, "commit_sha": null},
     {"id": "D05", "date": "2026-11-19", "phase": "p1-journey-close", "status": "pending", "families": ["P1"], "evidence": null, "commit_sha": null},
@@ -282,8 +282,8 @@
     },
     {
       "id": "full-baseline",
-      "status": "pending_d01_d02",
-      "summary": "The full current-HEAD baseline must be rerun; historical suite counts are not current evidence."
+      "status": "open",
+      "summary": "D02 baseline is green on the exact clean candidate and Chromium; 80 Python tests remain skipped for unavailable Docker, database, provider, POSIX and external CLI environments and are not counted as PASS."
     }
   ],
   "human_review": {

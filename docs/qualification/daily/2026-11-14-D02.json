@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D02",
+  "date": "2026-11-14",
+  "planned_date": "2026-11-16",
+  "status": "PASS",
+  "candidate_sha": "6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f",
+  "implementation_commit_sha": "6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f",
+  "evidence": "docs/qualification/candidates/candidate-6e1adbc.json",
+  "handoff": "docs/qualification/handoffs/2026-11-14-D02.md",
+  "execution_scope": "complete-for-D02",
+  "result": {
+    "format_lint_types": "pass",
+    "contracts": "pass",
+    "python_suite": "4610 passed, 80 skipped, 0 failed",
+    "web_suite": "180 passed, 0 failed",
+    "candidate_reproducibility_after_cleanup": "pass"
+  },
+  "progress_before": {
+    "families": "0/13",
+    "days": "2/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "0/13",
+    "days": "3/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "80 Python tests are explicitly skipped for unavailable Docker, database, provider, POSIX and external CLI environments; skips are not counted as PASS.",
+    "Git-dependent Python checks ran from the clean checkout at the exact candidate SHA because the reproducible candidate sandbox deliberately contains no .git metadata.",
+    "No family qualification, provider certification or release gate is claimed by D02."
+  ]
+}

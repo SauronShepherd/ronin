@@ -1,0 +1,128 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D02",
+  "status": "pass",
+  "execution_date": "2026-11-14",
+  "planned_date": "2026-11-16",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f",
+    "origin_main_sha_when_candidate_was_tested": "6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f-D02",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f-D02\\candidate-6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f.tar",
+      "format": "tar",
+      "sha256": "dd0cd7f31e63950176f18c29d8d161edf34d79ad7f3696225af0693d96d0deb2",
+      "size": 16250880
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f-D02\\candidate-6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f.manifest.json",
+      "sha256": "7a971407428cef61922a1c80d1d86288e95a0a3d5b9a26758c15cee596b28898",
+      "size": 208522
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f-D02\\candidate-6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f-D02\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1361,
+    "total_bytes": 15127769,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation_corrections": [
+    {
+      "commit": "86337ff3c36b819c9a29db62e695cb8ddbc2fb85",
+      "summary": "formatted nine tracked Markdown files containing Python fences so the reproducible format baseline passes"
+    },
+    {
+      "commit": "4d10bd4f59edb9a731f321092d3d7ebf9b426ac9",
+      "summary": "fixed four mypy errors in tools/ronin_daily_progress.py"
+    },
+    {
+      "commit": "385cb79d9e6b01b8c30cdfad5150ed8cb6fd7c59",
+      "summary": "fixed three mypy errors in tools/ronin_candidate_boundary.py"
+    },
+    {
+      "commit": "11de7cff7b334a7a273ce23c7364154a4e417d39",
+      "summary": "ratified the Web asset budget from 2168035 to the observed 2168135 bytes after the 30cad9f0 workspace-scope change"
+    },
+    {
+      "commit": "ef10a2196dad615ac7eaaa572ce713fb1c264624",
+      "summary": "aligned stale remote-training test fixtures with the enforced 64-character lowercase SHA-256 digest contract"
+    },
+    {
+      "commit": "6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f",
+      "summary": "reconciled the public status JSON, implementation ledger and capability matrix to the exact current source SHA"
+    }
+  ],
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f-D02",
+    "verify": "python -m tools.ronin_candidate_boundary verify --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f-D02",
+    "cleanup_and_regenerate": "python -m tools.ronin_candidate_boundary cleanup --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-6e1adbcbb80e6fd62d78caa55406b6a463fbbe8f-D02; regenerate the same SHA and verify identical archive/manifest digests"
+  },
+  "baseline": {
+    "format": "pass; 1101 files already formatted",
+    "ruff": "pass",
+    "mypy": "pass; 448 source files",
+    "openapi_snapshot": "pass; 340f0e7091802abc7864ab0081618e8aa7dd8543179842def235e39b846f04d9",
+    "architecture_gate": "pass",
+    "negative_architecture_gate": "pass; deliberate violations rejected",
+    "route_consistency": "pass; 199 operations",
+    "studio_surface": "pass; 128/241 published operations matched",
+    "studio_web_audit": "pass; 72 files, 667120 text bytes, 2177488 asset bytes, 39 modules, 183 route invocations, 0 failures",
+    "studio_budget": "pass; asset_bytes 2168135, asset_requests 71, module_requests 37, stylesheet_requests 15, html_bytes 5838",
+    "dependency_surfaces": "pass",
+    "canonical_json": "pass; 10 vectors and 5 rejections",
+    "runner_protocol": "pass; 2 fixtures",
+    "capability_status": "pass",
+    "skills_validation": "pass; all 3 bundled skills valid",
+    "public_status_checkout_check": "pass on the clean checkout at the candidate SHA",
+    "public_status_sandbox_check": "not applicable without Git metadata; the command cannot compute rev-list distance in the deliberate no-.git sandbox"
+  },
+  "suites": {
+    "python": {
+      "command": "python -m pytest --ignore=tests/perf -q",
+      "execution_root": "clean checkout at candidate source SHA",
+      "passed": 4610,
+      "failed": 0,
+      "skipped": 80,
+      "duration": "541.91s",
+      "result": "pass-with-explicit-environment-skips",
+      "skip_classes": [
+        "Docker and built qualification image absent",
+        "PostgreSQL, S3-compatible, Trino, OTLP and external SDP endpoints absent",
+        "Windows symlink privilege and POSIX-only behavior unavailable"
+      ]
+    },
+    "web": {
+      "dependency_command": "node web-tests/ensure-dependencies.mjs",
+      "dependency_result": "pass; npm audit found 0 vulnerabilities; Chromium already available",
+      "command": "npm --prefix web-tests test -- --workers=1",
+      "execution_root": "candidate sandbox before final cleanup",
+      "passed": 180,
+      "failed": 0,
+      "skipped": 0,
+      "workers": 1,
+      "result": "pass"
+    }
+  },
+  "cleanup": {
+    "test_output_cleaned": true,
+    "candidate_regenerated_after_test_cleanup": true,
+    "final_verify": "pass; archive and manifest digests unchanged; sandbox has 0 Git metadata directories and 0 generated test-artifact directories"
+  },
+  "limitations": [
+    "The Python suite was executed from the clean checkout at the exact candidate SHA because several tests intentionally exercise Git-backed project/source behavior; the candidate sandbox itself has no Git metadata by design.",
+    "The 80 skips are not counted as PASS and leave provider, platform and external-service qualification open.",
+    "No Public v1 family or release gate is closed by this D02 baseline receipt; release remains NO-GO."
+  ]
+}
