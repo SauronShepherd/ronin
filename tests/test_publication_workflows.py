@@ -3,31 +3,14 @@ from pathlib import Path
 ROOT = Path(__file__).parents[1]
 
 
-def _workflow(name: str) -> str:
-    return (ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
-
-
-def test_dockerhub_publisher_only_accepts_explicit_mutable_aliases() -> None:
-    workflow = _workflow("publish-dockerhub.yml")
-
-    assert "type: choice" in workflow
-    assert "options:\n          - dev\n          - edge" in workflow
-    assert "inputs.tag" not in workflow
-    assert "${{ inputs.alias }}" in workflow
-    assert "environment: dockerhub-development" in workflow
-    assert "@v" not in workflow
-
-
 def test_duplicate_reservation_workflow_is_removed() -> None:
     assert not (ROOT / ".github" / "workflows" / "reserve-names.yml").exists()
 
 
 def test_validation_workflows_are_removed_from_the_repository() -> None:
     workflows = ROOT / ".github" / "workflows"
-    assert {path.name for path in workflows.glob("*.yml")} == {
-        "publish-dockerhub.yml",
-        "quality.yml",
-    }
+    assert not tuple(workflows.glob("*.yml"))
+    assert not tuple(workflows.glob("*.yaml"))
     for name in (
         "ci.yml",
         "docker-qualification.yml",
@@ -37,3 +20,11 @@ def test_validation_workflows_are_removed_from_the_repository() -> None:
         "web-qualification.yml",
     ):
         assert not (workflows / name).exists()
+
+
+def test_manual_release_runbook_replaces_automation() -> None:
+    runbook = (ROOT / "docs" / "operations" / "MANUAL_RELEASE_AND_UPLOAD_RUNBOOK.md").read_text(
+        encoding="utf-8"
+    )
+    assert "Ronin no utiliza GitHub Actions" in runbook
+    assert "git push origin main" in runbook

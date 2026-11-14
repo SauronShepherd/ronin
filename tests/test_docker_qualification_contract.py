@@ -556,15 +556,8 @@ def test_ci_docker_qualification_workflow_is_removed() -> None:
 
 
 def test_dockerhub_publisher_restricts_mutable_aliases() -> None:
-    workflow = (ROOT / ".github" / "workflows" / "publish-dockerhub.yml").read_text(
+    runbook = (ROOT / "docs" / "operations" / "MANUAL_RELEASE_AND_UPLOAD_RUNBOOK.md").read_text(
         encoding="utf-8"
     )
-
-    assert "type: choice" in workflow
-    assert "options:" in workflow
-    assert "          - dev" in workflow
-    assert "          - edge" in workflow
-    assert 'case "$ALIAS" in' in workflow
-    assert "dev|edge" in workflow
-    assert "Refusing non-development Docker alias" in workflow
-    assert "${{ inputs.alias }}" in workflow
+    assert "docker build" in runbook
+    assert "Nunca usar alias mutables" in runbook
