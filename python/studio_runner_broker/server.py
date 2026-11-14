@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import hmac
 import re
 import threading
@@ -44,6 +45,7 @@ class RunnerBrokerConfig:
     engine_path: str | None = None
     request_timeout_seconds: float = 15.0
     max_body_bytes: int = _MAX_BODY_BYTES
+    completed_cache_size: int = 1024
 
     def __post_init__(self) -> None:
         if (
@@ -59,6 +61,8 @@ class RunnerBrokerConfig:
             raise ValueError("runner broker request timeout must be in (0, 300]")
         if self.max_body_bytes < 1 or self.max_body_bytes > 64 * 1024 * 1024:
             raise ValueError("runner broker body limit must be between 1 byte and 64 MiB")
+        if self.completed_cache_size < 1 or self.completed_cache_size > 100_000:
+            raise ValueError("runner broker completed cache size must be between 1 and 100000")
 
 
 class _BrokerHandler(BaseHTTPRequestHandler):
@@ -172,6 +176,19 @@ class _BrokerHandler(BaseHTTPRequestHandler):
         except ValueError as exc:
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
             return
+        fingerprint = hashlib.sha256(encode_canonical_json(payload)).hexdigest()
+        cached = self._broker().completed_execution(execution_id)
+        if cached is not None:
+            cached_fingerprint, cached_result = cached
+            if not hmac.compare_digest(cached_fingerprint, fingerprint):
+                self._error(
+                    HTTPStatus.CONFLICT,
+                    "execution_replay_mismatch",
+                    "completed execution id was reused with a different request",
+                )
+                return
+            self._write_json(HTTPStatus.OK, self._broker().result_payload(cached_result))
+            return
         token = self._broker().begin_execution(execution_id)
         if token is None:
             self._error(
@@ -191,6 +208,7 @@ class _BrokerHandler(BaseHTTPRequestHandler):
             return
         finally:
             self._broker().finish_execution(execution_id, token)
+        self._broker().remember_completed(execution_id, fingerprint, result)
         self._write_json(HTTPStatus.OK, self._broker().result_payload(result))
 
     def do_DELETE(self) -> None:  # noqa: N802
@@ -228,6 +246,7 @@ class RunnerBrokerServer(ThreadingHTTPServer):
     ) -> None:
         self.config = config
         self._active: dict[str, CancellationToken] = {}
+        self._completed: dict[str, tuple[str, CellExecutionResult]] = {}
         self._active_lock = threading.Lock()
         config.evidence_root.mkdir(parents=True, exist_ok=True)
         super().__init__(server_address, _BrokerHandler)
@@ -288,6 +307,18 @@ class RunnerBrokerServer(ThreadingHTTPServer):
         with self._active_lock:
             if self._active.get(execution_id) is token:
                 del self._active[execution_id]
+
+    def completed_execution(self, execution_id: str) -> tuple[str, CellExecutionResult] | None:
+        with self._active_lock:
+            return self._completed.get(execution_id)
+
+    def remember_completed(
+        self, execution_id: str, fingerprint: str, result: CellExecutionResult
+    ) -> None:
+        with self._active_lock:
+            self._completed[execution_id] = (fingerprint, result)
+            while len(self._completed) > self.config.completed_cache_size:
+                self._completed.pop(next(iter(self._completed)))
 
     def cancel_execution(self, execution_id: str) -> bool:
         with self._active_lock:

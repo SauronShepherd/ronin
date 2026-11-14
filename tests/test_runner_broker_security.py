@@ -46,6 +46,17 @@ class _FakeBrokerServer(RunnerBrokerServer):
         return CellExecutionResult(cell.cell_id, "cancelled")
 
 
+class _ReplayBrokerServer(RunnerBrokerServer):
+    def __init__(self, *args, **kwargs):
+        self.execute_count = 0
+        super().__init__(*args, **kwargs)
+
+    async def execute(self, attempt_id, cell, cancellation):
+        del attempt_id, cancellation
+        self.execute_count += 1
+        return CellExecutionResult(cell.cell_id, "succeeded")
+
+
 class _PayloadClient(BrokerClient):
     def __init__(self, config: BrokerExecutorConfig, payload: dict[str, object]) -> None:
         super().__init__(config)
@@ -180,6 +191,65 @@ def test_duplicate_active_execution_id_is_rejected(tmp_path: Path) -> None:
         assert token.is_cancelled
         server.finish_execution("exec-" + "1" * 32, token)
         assert not server.cancel_execution("exec-" + "1" * 32)
+    finally:
+        _close(server, thread)
+
+
+def test_completed_dispatch_replays_without_second_execution(tmp_path: Path) -> None:
+    server = _ReplayBrokerServer(("127.0.0.1", 0), _config(tmp_path))
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    execution_id = "exec-" + "2" * 32
+    payload = encode_canonical_json(
+        {
+            "version": 1,
+            "attempt_id": "attempt-1",
+            "cell": {
+                "cell_id": "cell-1",
+                "language": "python",
+                "executable_source": "print('ok')",
+            },
+        }
+    )
+    request_url = f"http://127.0.0.1:{server.server_port}/v1/executions/{execution_id}"
+    request = Request(
+        request_url,
+        data=payload,
+        headers={"Authorization": f"Bearer {_TOKEN}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        first = urlopen(request, timeout=1.0)  # noqa: S310
+        first_body = first.read()
+        first.close()
+        second = urlopen(request, timeout=1.0)  # noqa: S310
+        second_body = second.read()
+        second.close()
+        assert first_body == second_body
+        assert server.execute_count == 1
+
+        changed = encode_canonical_json(
+            {
+                "version": 1,
+                "attempt_id": "attempt-2",
+                "cell": {
+                    "cell_id": "cell-1",
+                    "language": "python",
+                    "executable_source": "print('ok')",
+                },
+            }
+        )
+        mismatch = Request(
+            request_url,
+            data=changed,
+            headers={"Authorization": f"Bearer {_TOKEN}", "Content-Type": "application/json"},
+            method="POST",
+        )
+        with pytest.raises(HTTPError) as error:
+            urlopen(mismatch, timeout=1.0)  # noqa: S310
+        assert error.value.code == 409
+        error.value.close()
+        assert server.execute_count == 1
     finally:
         _close(server, thread)
 
