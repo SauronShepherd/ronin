@@ -30,6 +30,27 @@ def test_outbox_is_idempotent_and_publishable(tmp_path: Path) -> None:
     }
     assert store.enqueue(**event) is True
     assert store.enqueue(**event) is False
+
+
+def test_report_and_outbox_are_persisted_as_one_operation(tmp_path: Path) -> None:
+    store = SqliteCompilationStore(tmp_path / "ronin.db")
+    report = CompilationReport(
+        runtime="local-preview", portable=True, node_count=0, edge_count=0, diagnostics=()
+    )
+    assert (
+        store.save_report_and_enqueue(
+            revision_key="p/main/1",
+            ir_digest="ir-1",
+            report=report,
+            event_id="event-1",
+            event_type="data-engineering.compilation-completed.v1",
+            aggregate_key="p/main/1",
+            payload={"revision_key": "p/main/1", "ir_digest": "ir-1"},
+        )
+        is True
+    )
+    assert store.get_report(revision_key="p/main/1", runtime="local-preview", ir_digest="ir-1")
+    assert tuple(item["event_id"] for item in store.pending_events()) == ("event-1",)
     assert len(store.pending_events()) == 1
     assert store.mark_published("event-1") is True
     assert store.mark_published("event-1") is False

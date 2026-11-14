@@ -88,6 +88,66 @@ class SqliteCompilationStore:
         finally:
             connection.close()
 
+    def save_report_and_enqueue(
+        self,
+        *,
+        revision_key: str,
+        ir_digest: str,
+        report: CompilationReport,
+        event_id: str,
+        event_type: str,
+        aggregate_key: str,
+        payload: Mapping[str, object],
+    ) -> bool:
+        """Persist a compilation report and its event as one durable unit."""
+
+        report_payload = {
+            "runtime": report.runtime,
+            "portable": report.portable,
+            "node_count": report.node_count,
+            "edge_count": report.edge_count,
+            "diagnostics": [
+                {
+                    "code": item.code,
+                    "message": item.message,
+                    "path": item.path,
+                    "severity": item.severity,
+                }
+                for item in report.diagnostics
+            ],
+        }
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN")
+            connection.execute(
+                "INSERT OR REPLACE INTO de_compilation_reports "
+                "(revision_key,runtime,ir_digest,portable,report_json) VALUES (?,?,?,?,?)",
+                (
+                    revision_key,
+                    report.runtime,
+                    ir_digest,
+                    int(report.portable),
+                    json.dumps(report_payload, sort_keys=True, separators=(",", ":")),
+                ),
+            )
+            cursor = connection.execute(
+                "INSERT OR IGNORE INTO de_outbox(event_id,event_type,aggregate_key,payload_json) "
+                "VALUES (?,?,?,?)",
+                (
+                    event_id,
+                    event_type,
+                    aggregate_key,
+                    json.dumps(dict(payload), sort_keys=True, separators=(",", ":")),
+                ),
+            )
+            connection.commit()
+            return cursor.rowcount == 1
+        except BaseException:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
     def get_report(
         self, *, revision_key: str, runtime: str, ir_digest: str
     ) -> Mapping[str, object] | None:

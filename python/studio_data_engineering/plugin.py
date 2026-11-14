@@ -864,12 +864,10 @@ class DataEnginerringStudioPlugin:
         ).hexdigest()
         revision_key = str(body.get("revision_key", "unpersisted"))
         if self._compilations is not None:
-            self._compilations.save_report(
+            self._compilations.save_report_and_enqueue(
                 revision_key=revision_key,
                 ir_digest=ir_digest,
                 report=report,
-            )
-            self._compilations.enqueue(
                 event_id=f"compilation:{revision_key}:{runtime}:{ir_digest}",
                 event_type="data-engineering.compilation-completed.v1",
                 aggregate_key=revision_key,
