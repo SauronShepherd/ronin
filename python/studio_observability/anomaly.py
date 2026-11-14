@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from statistics import median
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,15 +42,30 @@ def detect_anomaly(
         raise ValueError("metric_name must be non-empty and trimmed")
     if not history or len(history) > 10_000:
         raise ValueError("anomaly history must contain between 1 and 10000 values")
-    if threshold <= 0 or threshold != threshold or abs(threshold) == float("inf"):
+    if isinstance(threshold, bool) or not math.isfinite(threshold) or threshold <= 0:
         raise ValueError("anomaly threshold must be positive and finite")
     values = (*history, value)
-    if any(item != item or abs(item) == float("inf") for item in values):
+    if any(isinstance(item, bool) or not math.isfinite(item) for item in values):
         raise ValueError("anomaly values must be finite")
-    baseline = median(history)
-    mad = median(tuple(abs(item - baseline) for item in history))
+    ordered = sorted(history)
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        baseline = ordered[middle]
+    else:
+        baseline = ordered[middle - 1] / 2 + ordered[middle] / 2
+    deviations = tuple(abs(item - baseline) for item in history)
+    if any(not math.isfinite(item) for item in deviations):
+        raise ValueError("anomaly values are numerically unstable")
+    ordered_deviations = sorted(deviations)
+    middle = len(ordered_deviations) // 2
+    if len(ordered_deviations) % 2:
+        mad = ordered_deviations[middle]
+    else:
+        mad = ordered_deviations[middle - 1] / 2 + ordered_deviations[middle] / 2
     scale = mad if mad > 0 else max(abs(baseline) * 0.01, 1.0)
     deviation = abs(value - baseline) / scale
+    if not all(math.isfinite(item) for item in (baseline, mad, scale, deviation)):
+        raise ValueError("anomaly calculation is numerically unstable")
     anomalous = deviation > threshold
     reason = (
         f"value deviates {deviation:.3f} scaled units from median baseline"
