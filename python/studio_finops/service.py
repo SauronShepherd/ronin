@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Protocol, runtime_checkable
 
 from studio_core import WorkspaceId
@@ -159,9 +159,18 @@ def forecast_cost(
         or not currency.isalpha()
     ):
         raise ValueError("forecast currency must be a three-letter code")
+    if not isinstance(observed_cost, Decimal) or not observed_cost.is_finite():
+        raise ValueError("forecast observed_cost must be finite")
+    if not isinstance(elapsed_fraction, Decimal) or not elapsed_fraction.is_finite():
+        raise ValueError("forecast elapsed_fraction must be finite")
     if observed_cost < 0 or elapsed_fraction <= 0 or elapsed_fraction > 1:
         raise ValueError("forecast values are outside their allowed bounds")
-    projected = observed_cost / elapsed_fraction
+    try:
+        projected = observed_cost / elapsed_fraction
+    except (ArithmeticError, InvalidOperation) as exc:
+        raise ValueError("forecast projection must be finite") from exc
+    if not projected.is_finite():
+        raise ValueError("forecast projection must be finite")
     return CostForecast(
         "ronin.finops.forecast/v1",
         source_ref,

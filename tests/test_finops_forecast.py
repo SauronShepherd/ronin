@@ -24,3 +24,31 @@ def test_forecast_rejects_zero_elapsed_fraction():
             observed_cost=Decimal("1"),
             elapsed_fraction=Decimal("0"),
         )
+
+
+@pytest.mark.parametrize("value", [Decimal("NaN"), Decimal("Infinity"), Decimal("-Infinity")])
+def test_forecast_rejects_non_finite_inputs(value):
+    with pytest.raises(ValueError, match="finite"):
+        forecast_cost(
+            source_ref="usage:period-1",
+            currency="EUR",
+            observed_cost=value,
+            elapsed_fraction=Decimal("0.5"),
+        )
+    with pytest.raises(ValueError, match="finite"):
+        forecast_cost(
+            source_ref="usage:period-1",
+            currency="EUR",
+            observed_cost=Decimal("1"),
+            elapsed_fraction=value,
+        )
+
+
+def test_forecast_rejects_non_finite_projection():
+    with pytest.raises(ValueError, match="finite"):
+        forecast_cost(
+            source_ref="usage:period-1",
+            currency="EUR",
+            observed_cost=Decimal("1e999999"),
+            elapsed_fraction=Decimal("1e-999999"),
+        )
