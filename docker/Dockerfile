@@ -8,7 +8,7 @@ COPY web ./web
 COPY agent-skills ./agent-skills
 RUN python -m pip wheel --no-deps --wheel-dir /wheels .
 
-FROM docker:29.10.0-rc.1-cli-alpine3.24@sha256:8d076a8d79ac8e6f5ee4134a3327c46e48ef6db5130c1106aafd53ef05d5846d AS docker-cli
+FROM docker:29.10.0-rc.2-cli-alpine3.24@sha256:231dcc6a1ff0bf3e4b267ac308eafb19ae8d616839240ee03731a65c13525971 AS docker-cli
 
 FROM ${PYTHON_IMAGE} AS runtime
 
