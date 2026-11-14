@@ -41,15 +41,19 @@ def preview_backfill(
         raise ValueError("backfill end_at must not precede start_at")
     if max_runs < 1 or max_runs > 10000:
         raise ValueError("max_runs must be between 1 and 10000")
-    minutes = evaluated_minutes(
-        cursor=_previous_minute(start),
-        through=end,
-        max_scan_minutes=1_000_000,
-    )
-    matches = tuple(minute for minute in minutes if schedule_matches(schedule, minute))
-    if len(matches) > max_runs:
-        raise ValueError("backfill preview exceeds max_runs")
-    return matches
+    cursor = _instant_datetime(_previous_minute(start))
+    end_dt = _instant_datetime(end)
+    scan_minutes = int((end_dt - cursor).total_seconds() // 60)
+    if scan_minutes > 1_000_000:
+        raise RuntimeError("backfill preview exceeds the one-million-minute scan limit")
+    matches: list[Instant] = []
+    for offset in range(1, scan_minutes + 1):
+        minute = _minute_instant(cursor + timedelta(minutes=offset))
+        if schedule_matches(schedule, minute):
+            matches.append(minute)
+            if len(matches) > max_runs:
+                raise ValueError("backfill preview exceeds max_runs")
+    return tuple(matches)
 
 
 def _instant_datetime(value: Instant | str) -> datetime:

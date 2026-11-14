@@ -270,3 +270,14 @@ def test_backfill_preview_is_pure_and_bounded() -> None:
         "2026-09-13T00:01:00.000000Z",
         "2026-09-13T00:02:00.000000Z",
     )
+
+
+def test_backfill_preview_stops_before_materializing_a_large_matching_window() -> None:
+    schedule = Schedule(ScheduleId("schedule-large"), WorkflowId("workflow-large"), "* * * * *")
+    with pytest.raises(ValueError, match="exceeds max_runs"):
+        preview_backfill(
+            schedule,
+            start_at="2020-01-01T00:00:00.000000Z",
+            end_at="2021-01-01T00:00:00.000000Z",
+            max_runs=1,
+        )
