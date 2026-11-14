@@ -17,6 +17,7 @@ from studio_finops import (
 )
 from studio_observability import (
     AlertHTTPAdapter,
+    AlertInstance,
     AlertRule,
     MetricPoint,
     SqliteTelemetryStore,
@@ -126,6 +127,29 @@ def test_alert_acknowledgement_is_durable_and_idempotent(tmp_path: Path) -> None
     refreshed = evaluate_alert(store, rule, now=_T2)
     assert refreshed.current is not None
     assert refreshed.current.acknowledged_at == _T2
+
+
+def test_alert_state_update_preserves_acknowledgement(tmp_path: Path) -> None:
+    store = SqliteTelemetryStore(tmp_path / "telemetry.sqlite")
+    rule = store.put_alert_rule(AlertRule("preserve", "Preserve", "metric", "gt", 1.0))
+    store.record_metric(MetricPoint("metric", 2.0, "count", "gauge", _T0))
+    opened = evaluate_alert(store, rule, now=_T1)
+    assert opened.current is not None
+    acknowledged = store.acknowledge_alert(rule.id, opened.current.fingerprint, acknowledged_at=_T2)
+    assert acknowledged is not None
+    store.put_alert_instance(
+        AlertInstance(
+            rule.id,
+            opened.current.fingerprint,
+            "firing",
+            3.0,
+            opened.current.opened_at,
+            _T2,
+        )
+    )
+    persisted = store.get_alert_instance(rule.id, opened.current.fingerprint)
+    assert persisted is not None
+    assert persisted.acknowledged_at == _T2
 
 
 def test_alert_cooldown_suppresses_reopen_until_window_expires(tmp_path: Path) -> None:

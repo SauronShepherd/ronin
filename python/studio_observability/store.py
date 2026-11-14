@@ -540,6 +540,40 @@ class SqliteTelemetryStore:
         )
         connection = self._connect()
         try:
+            connection.execute("BEGIN IMMEDIATE")
+            existing = connection.execute(
+                "SELECT state_json FROM alert_instances WHERE rule_id=? AND fingerprint=?",
+                (instance.rule_id, instance.fingerprint),
+            ).fetchone()
+            if existing is not None and instance.acknowledged_at is None:
+                existing_value = json.loads(existing[0])
+                if existing_value.get("acknowledged_at") is not None:
+                    instance = AlertInstance(
+                        instance.rule_id,
+                        instance.fingerprint,
+                        instance.status,
+                        instance.value,
+                        instance.opened_at,
+                        instance.updated_at,
+                        instance.resolved_at,
+                        Instant(existing_value["acknowledged_at"]),
+                    )
+                    payload = json.dumps(
+                        {
+                            "rule_id": instance.rule_id,
+                            "fingerprint": instance.fingerprint,
+                            "status": instance.status,
+                            "value": instance.value,
+                            "opened_at": str(instance.opened_at),
+                            "updated_at": str(instance.updated_at),
+                            "resolved_at": (
+                                None if instance.resolved_at is None else str(instance.resolved_at)
+                            ),
+                            "acknowledged_at": str(instance.acknowledged_at),
+                        },
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    )
             connection.execute(
                 "INSERT INTO alert_instances(rule_id,fingerprint,state_json) VALUES (?,?,?) "
                 "ON CONFLICT(rule_id,fingerprint) DO UPDATE SET state_json=excluded.state_json",
@@ -556,6 +590,7 @@ class SqliteTelemetryStore:
         """Persist an idempotent acknowledgement for an active alert."""
         connection = self._connect()
         try:
+            connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
                 "SELECT state_json FROM alert_instances WHERE rule_id=? AND fingerprint=?",
                 (rule_id, fingerprint),
