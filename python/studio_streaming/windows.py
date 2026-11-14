@@ -34,7 +34,9 @@ def window_records(
     """Assign timestamped records to fixed windows and classify late records."""
     if window_ms < 1 or allowed_lateness_ms < 0:
         raise ValueError("window size must be positive and lateness must be non-negative")
-    timestamped = tuple(record for record in records if record.timestamp_ms is not None)
+    if any(record.timestamp_ms is None for record in records):
+        raise ValueError("stream records without event timestamps require an explicit DLQ policy")
+    timestamped = records
     if not timestamped:
         return WindowedBatch((), previous_watermark_ms, ())
     timestamps = tuple(
@@ -49,9 +51,10 @@ def window_records(
         if timestamp is not None and timestamp < baseline:
             late_values.append(record)
     late = tuple(late_values)
+    late_keys = {(record.partition, record.offset) for record in late}
     grouped: dict[EventTimeWindow, list[StreamRecord]] = {}
     for record in timestamped:
-        if record in late:
+        if (record.partition, record.offset) in late_keys:
             continue
         timestamp = record.timestamp_ms
         if timestamp is None:

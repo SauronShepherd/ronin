@@ -30,15 +30,25 @@ class SqliteStreamTable:
         with closing(sqlite3.connect(self._path)) as connection, connection:
             inserted = 0
             for record in batch.records:
+                value_json = json.dumps(dict(record.value), sort_keys=True, separators=(",", ":"))
+                existing = connection.execute(
+                    "SELECT timestamp_ms,key_value,value_json FROM stream_table "
+                    "WHERE stream_id=? AND partition_id=? AND offset_value=?",
+                    (stream_id, record.partition, record.offset),
+                ).fetchone()
+                if existing is not None:
+                    if existing != (record.timestamp_ms, record.key, value_json):
+                        raise ValueError("stream table replay conflicts with an existing record")
+                    continue
                 cursor = connection.execute(
-                    "INSERT OR IGNORE INTO stream_table VALUES (?,?,?,?,?,?)",
+                    "INSERT INTO stream_table VALUES (?,?,?,?,?,?)",
                     (
                         stream_id,
                         record.partition,
                         record.offset,
                         record.timestamp_ms,
                         record.key,
-                        json.dumps(dict(record.value), sort_keys=True, separators=(",", ":")),
+                        value_json,
                     ),
                 )
                 inserted += cursor.rowcount
