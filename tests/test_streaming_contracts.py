@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 from studio_streaming import (
+    SqliteStreamCheckpointStore,
     SqliteStreamTable,
     StreamBatch,
     StreamCheckpoint,
@@ -40,3 +41,18 @@ def test_stream_table_rejects_conflicting_replay(tmp_path: Path) -> None:
     conflicting = StreamRecord(0, 1, 1_000, "k", {"value": 2})
     with pytest.raises(ValueError, match="replay conflicts"):
         table.append("orders", StreamBatch((conflicting,), batch.checkpoint))
+
+
+def test_checkpoint_rejects_offset_regression_and_partition_removal(tmp_path: Path) -> None:
+    store = SqliteStreamCheckpointStore(tmp_path / "checkpoint.sqlite")
+    initial = StreamCheckpoint((StreamPosition(0, 10), StreamPosition(1, 20)))
+    assert store.compare_and_set("orders", StreamCheckpoint(), initial)
+    with pytest.raises(ValueError, match="move backwards"):
+        store.compare_and_set(
+            "orders",
+            initial,
+            StreamCheckpoint((StreamPosition(0, 9), StreamPosition(1, 20))),
+        )
+    with pytest.raises(ValueError, match="remove an existing partition"):
+        store.compare_and_set("orders", initial, StreamCheckpoint((StreamPosition(0, 11),)))
+    assert store.get("orders") == initial

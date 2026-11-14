@@ -229,6 +229,15 @@ class SqliteStreamCheckpointStore:
         next_checkpoint: StreamCheckpoint,
     ) -> bool:
         self._validate_stream_id(stream_id)
+        expected_offsets = {item.partition: item.offset for item in expected.positions}
+        next_offsets = {item.partition: item.offset for item in next_checkpoint.positions}
+        if set(next_offsets) != set(expected_offsets) and expected_offsets:
+            raise ValueError("stream checkpoint cannot remove an existing partition")
+        if any(
+            next_offsets.get(partition, -1) < offset
+            for partition, offset in expected_offsets.items()
+        ):
+            raise ValueError("stream checkpoint offsets must not move backwards")
         with closing(self._connect()) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
