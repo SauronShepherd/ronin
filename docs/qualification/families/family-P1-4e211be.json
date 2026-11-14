@@ -1,0 +1,48 @@
+{
+  "schema": "ronin.family-receipt/v1",
+  "family_id": "P1",
+  "family_name": "Workspace, project and source control",
+  "status": "PASS",
+  "execution_date": "2026-11-14",
+  "planned_date": "2026-11-19",
+  "candidate_sha": "4e211be11bae1c47025166d763feda38b598c6cb",
+  "candidate_archive_sha256": "092fe4cc55674e9bf81858eba2c516c8a89fb94df1c3fa4edc3b8bf8cea89896",
+  "candidate_manifest_sha256": "2454e2f35197a1eaf6b6d15eeba0ad8cf2141ce722b98c4f8a53142261a4ed71",
+  "evidence": {
+    "candidate": "docs/qualification/candidates/candidate-4e211be.json",
+    "daily": "docs/qualification/daily/2026-11-14-D05.json",
+    "handoff": "docs/qualification/handoffs/2026-11-14-D05.md",
+    "contracts": [
+      "docs/qualification/handoffs/2026-11-14-D03.md",
+      "docs/qualification/handoffs/2026-11-14-D04.md"
+    ]
+  },
+  "journey": {
+    "workspace_project_source": "pass; workspace/project lifecycle, Git identity and source binding contracts",
+    "studio_api": "pass; 38 candidate-bound Chromium journeys",
+    "sdk": "pass; permissions, environments, bindings and project Bundle contracts",
+    "cli": "pass; workspace/project lifecycle and Bundle import/export over real HTTP",
+    "bundle": "pass; 126 regression tests plus verified archive digest/size and idempotent import",
+    "authorization_isolation": "pass; 574 exact-candidate contract tests with 4 platform skips",
+    "restart_recovery": "pass; exact-candidate D04 restart/replay coverage",
+    "source_control": "pass; exact revision, detached checkout and dirty-tree policy coverage"
+  },
+  "results": {
+    "d04_contract_suite": "574 passed, 0 failed, 4 skipped",
+    "d05_matrix": "348 passed, 0 failed, 6 skipped",
+    "operator_cli_http_journey": "1 passed, 0 failed",
+    "bundle_regression": "126 passed, 0 failed",
+    "web_journeys": "38 passed, 0 failed",
+    "candidate_verify": "pass after cleanup and regeneration"
+  },
+  "qualification": {
+    "status": "qualified",
+    "reason": "All P1 acceptance cells are demonstrated on one exact candidate; skipped platform/opt-in environments are recorded and not converted to PASS.",
+    "release_status": "NO-GO"
+  },
+  "limitations": [
+    "P1 qualification does not qualify any other family or release gate.",
+    "Four Windows platform skips and six Docker/Compose/live-worker/cancellation skips remain explicit limitations.",
+    "Human-owned release review, provider certification outside this family and the remaining 12 families remain pending."
+  ]
+}

@@ -14,6 +14,8 @@ def test_daily_progress_ledger_is_consistent() -> None:
 def test_qualified_family_requires_candidate_bound_evidence() -> None:
     ledger = copy.deepcopy(load_ledger())
     ledger["families"][0]["qualification"] = "qualified"
+    ledger["families"][0]["receipt"] = None
+    ledger["families"][0]["candidate_sha"] = None
 
     errors = validate_ledger(ledger)
 
@@ -24,7 +26,7 @@ def test_qualified_family_requires_candidate_bound_evidence() -> None:
 def test_report_keeps_family_and_day_progress_separate() -> None:
     report = render_report(load_ledger())
 
-    assert "Families: 0/13 (0.00%)" in report
-    assert "Days: 5/39 (12.82%)" in report
+    assert "Families: 1/13 (7.69%)" in report
+    assert "Days: 6/39 (15.38%)" in report
     assert "Release gates: 0/10 (0.00%)" in report
     assert "Implementation tasks: not baselined" in report

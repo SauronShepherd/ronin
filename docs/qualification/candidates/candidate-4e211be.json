@@ -1,0 +1,93 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D05",
+  "status": "pass",
+  "execution_date": "2026-11-14",
+  "planned_date": "2026-11-19",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "4e211be11bae1c47025166d763feda38b598c6cb",
+    "origin_main_sha_when_candidate_was_tested": "4e211be11bae1c47025166d763feda38b598c6cb",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4e211be11bae1c47025166d763feda38b598c6cb-D05",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4e211be11bae1c47025166d763feda38b598c6cb-D05\\candidate-4e211be11bae1c47025166d763feda38b598c6cb.tar",
+      "format": "tar",
+      "sha256": "092fe4cc55674e9bf81858eba2c516c8a89fb94df1c3fa4edc3b8bf8cea89896",
+      "size": 16343040
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4e211be11bae1c47025166d763feda38b598c6cb-D05\\candidate-4e211be11bae1c47025166d763feda38b598c6cb.manifest.json",
+      "sha256": "2454e2f35197a1eaf6b6d15eeba0ad8cf2141ce722b98c4f8a53142261a4ed71",
+      "size": 210477
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4e211be11bae1c47025166d763feda38b598c6cb-D05\\candidate-4e211be11bae1c47025166d763feda38b598c6cb.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4e211be11bae1c47025166d763feda38b598c6cb-D05\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1373,
+    "total_bytes": 15212488,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "commit": "4e211be11bae1c47025166d763feda38b598c6cb",
+    "summary": "Aligned SDK permission parsing with the server's canonical matched_permissions field and exposed a bounded operator CLI for workspace/project lifecycle and verified project Bundle import/export.",
+    "production_files_changed": [
+      "packages/pyronin/src/pyronin/__init__.py",
+      "python/studio_cli/__init__.py",
+      "python/studio_cli/network.py"
+    ],
+    "test_files_changed": [
+      "packages/pyronin/tests/test_client.py",
+      "tests/test_cli.py",
+      "tests/integration/test_workspace_project_http_api.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 4e211be11bae1c47025166d763feda38b598c6cb --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4e211be11bae1c47025166d763feda38b598c6cb-D05",
+    "verify": "python -m tools.ronin_candidate_boundary verify --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4e211be11bae1c47025166d763feda38b598c6cb-D05",
+    "cleanup_and_regenerate": "cleanup, regenerate the same SHA and verify identical archive/manifest digests"
+  },
+  "qualification_matrix": {
+    "d04_authorization_isolation_source_restart": "574 passed, 0 failed, 4 platform skips",
+    "python_sdk_cli_studio_contracts": "348 passed, 0 failed, 6 skips",
+    "operator_cli_http_journey": "1 passed, 0 failed",
+    "bundle_regression": "126 passed, 0 failed",
+    "web_journeys": "38 passed, 0 failed",
+    "result": "pass"
+  },
+  "static_baseline": {
+    "format": "pass; 1105 files already formatted",
+    "ruff": "pass",
+    "mypy": "pass; 448 source files",
+    "openapi_snapshot": "pass; 340f0e7091802abc7864ab0081618e8aa7dd8543179842def235e39b846f04d9",
+    "architecture_gate": "pass",
+    "negative_gates": "pass; deliberate violations rejected",
+    "route_consistency": "pass; 199 operations",
+    "studio_surface": "pass; 128/241 published operations matched",
+    "studio_web_audit": "pass; failures=[]",
+    "studio_budget": "pass",
+    "dependency_surfaces": "pass"
+  },
+  "cleanup": {
+    "test_output_cleaned": true,
+    "candidate_regenerated_after_test_cleanup": true,
+    "final_verify": "pass; archive and manifest digests unchanged; sandbox has 0 Git metadata directories and 0 generated test-artifact directories"
+  },
+  "open_cells": [],
+  "limitations": [
+    "Four Git/source-control checks remain platform-specific Windows skips and are not counted as PASS.",
+    "Six D05 skips require unavailable Docker/Compose/live worker/cancellation opt-in environments and are not counted as PASS.",
+    "P1 is qualified; no external provider certification, other family qualification or release gate is claimed.",
+    "Release remains NO-GO and human-owned release review remains pending."
+  ]
+}
