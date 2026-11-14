@@ -238,7 +238,26 @@ El siguiente agente no necesita preguntar qué hacer: si el handoff dice FAIL o
 BLOCKED, empieza reproduciendo el comando indicado; si dice PASS, ejecuta el
 smoke de recepción y continúa con la fecha siguiente.
 
-## 9. Comandos del ciclo diario
+## 9. Higiene y retención del repositorio
+
+El repositorio conserva únicamente documentación que tiene una función actual:
+
+- contratos, alcance, arquitectura, runbooks, inventario de casos, checklist de
+  release y el plan diario;
+- recibos nuevos bajo daily, families, candidates y handoffs;
+- assets usados por README, Studio o el diseño vigente.
+
+Los recibos fechados PHASE de las pasadas anteriores, prototipos sin consumidor
+y duplicados de assets se eliminan de main cuando dejan de ser la fuente de
+ trabajo. Siguen recuperables en el historial Git si una auditoría los
+ necesita; no se usan como evidencia de un candidato nuevo.
+
+Los sandboxes, cachés, entornos instalados, coverage shards, reports, ZIPs y
+directorios de resultados viven fuera del árbol versionado y están ignorados
+explícitamente. Un candidato se construye desde git archive y no necesita
+ conservar copias de ejecuciones anteriores dentro del repo.
+
+## 10. Comandos del ciclo diario
 
     python -m tools.ronin_daily_progress --check
     python -m tools.ronin_daily_progress --report
@@ -256,7 +275,7 @@ Para cerrar un día PASS, el agente añade solo las rutas del día:
 El SHA de ls-remote debe coincidir con git rev-parse HEAD. Si no coincide, el
 handoff es BLOCKED y no se anuncia cierre remoto.
 
-## 10. Regla de fracaso y replanificación
+## 11. Regla de fracaso y replanificación
 
 - Un fallo reproducible de código se corrige en la misma fase; el test se
   ejecuta de nuevo y se conserva el primer fallo en el recibo.
@@ -271,7 +290,7 @@ handoff es BLOCKED y no se anuncia cierre remoto.
   análisis/fixes de calidad hasta recuperar el baseline. No se cuentan días
   nominales como avance funcional.
 
-## 11. Handoff inicial y estado de hoy
+## 12. Handoff inicial y estado de hoy
 
 El cierre verificable de D00 queda registrado en el commit
 a31132183f977fb3834ed5e86e6c619942cc8dc0 y en origin/main. El contador de

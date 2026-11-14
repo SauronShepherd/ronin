@@ -41,3 +41,16 @@ __pycache__/
 python/ronin_studio.egg-info/
 *.egg-info/
 /.coverage
+
+# Local candidate sandboxes, test reports and transient coverage shards
+/.coverage.*
+/.tmp/
+/build-*/
+/clean-*/
+/installed-venv-*/
+/test-results/
+/test-results-html/
+/source-head-*.zip
+/artifact-identity-*.json
+/web-tests/playwright-report/
+/web-tests/test-results/
