@@ -505,8 +505,8 @@ def test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies() ->
         "bb1d70c1df30d8ee1e05214dbe82d6cdfd29833c1f47ce917f20991aca93acaa"
     )
     docker_cli = (
-        "docker:29.10.0-rc.1-cli-alpine3.24@sha256:"
-        "8d076a8d79ac8e6f5ee4134a3327c46e48ef6db5130c1106aafd53ef05d5846d"
+        "docker:29.10.0-rc.2-cli-alpine3.24@sha256:"
+        "231dcc6a1ff0bf3e4b267ac308eafb19ae8d616839240ee03731a65c13525971"
     )
 
     assert f"ARG PYTHON_IMAGE={python_image}" in dockerfile
