@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D06",
+  "date": "2026-11-14",
+  "planned_date": "2026-11-20",
+  "status": "PASS",
+  "candidate_sha": "b2f03725c92867a238e829f564c80c415bccc72a",
+  "implementation_commit_sha": "b2f03725c92867a238e829f564c80c415bccc72a",
+  "evidence": "docs/qualification/candidates/candidate-b2f0372.json",
+  "handoff": "docs/qualification/handoffs/2026-11-14-D06.md",
+  "execution_scope": "complete-for-D06-security-contracts",
+  "result": {
+    "security_contract_suite": "302 passed, 0 failed, 2 skipped",
+    "authorized_pagination_http_integration": "3 passed, 0 failed",
+    "static_and_surface_checks": "format, ruff, mypy, architecture, negative-gates, route-consistency and dependency-surfaces pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "p13_boundary": "security contracts inventoried; P13 family remains open for D07 audit/redaction/isolation/scans/recovery"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "6/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "7/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The symlink and POSIX-mode checks are Windows platform skips and are not converted into PASS.",
+    "This receipt does not qualify P13, close a release gate or certify a provider; D07 remains required.",
+    "Repository-level public-status validation is performed after the documentation commit, because the exact candidate sandbox has no Git metadata."
+  ]
+}

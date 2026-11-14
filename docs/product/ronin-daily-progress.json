@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "4e211be11bae1c47025166d763feda38b598c6cb",
+    "base_sha": "b2f03725c92867a238e829f564c80c415bccc72a",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -44,9 +44,9 @@
     "families_qualified": 1,
     "families_total": 13,
     "families_percent": 7.69,
-    "days_passed": 6,
+    "days_passed": 7,
     "days_total": 39,
-    "days_percent": 15.38,
+    "days_percent": 17.95,
     "release_gates_passed": 0,
     "release_gates_total": 10,
     "release_gates_percent": 0.0,
@@ -230,7 +230,7 @@
     {"id": "D03", "date": "2026-11-17", "phase": "p1-contracts", "status": "pass", "families": ["P1"], "evidence": "docs/qualification/handoffs/2026-11-14-D03.md", "commit_sha": "ddcb64ad2295cd5e73c9d96f0497f72c843a0f39"},
     {"id": "D04", "date": "2026-11-18", "phase": "p1-isolation-restart", "status": "pass", "families": ["P1"], "evidence": "docs/qualification/handoffs/2026-11-14-D04.md", "commit_sha": "66f8bca896bc115f762cf6a77fc0b27fedd4e318"},
     {"id": "D05", "date": "2026-11-19", "phase": "p1-journey-close", "status": "pass", "families": ["P1"], "evidence": "docs/qualification/handoffs/2026-11-14-D05.md", "commit_sha": "4e211be11bae1c47025166d763feda38b598c6cb"},
-    {"id": "D06", "date": "2026-11-20", "phase": "p13-security-contracts", "status": "pending", "families": ["P13"], "evidence": null, "commit_sha": null},
+    {"id": "D06", "date": "2026-11-20", "phase": "p13-security-contracts", "status": "pass", "families": ["P13"], "evidence": "docs/qualification/handoffs/2026-11-14-D06.md", "commit_sha": "b2f03725c92867a238e829f564c80c415bccc72a"},
     {"id": "D07", "date": "2026-11-21", "phase": "p13-security-close", "status": "pending", "families": ["P13"], "evidence": null, "commit_sha": null},
     {"id": "D08", "date": "2026-11-22", "phase": "p2-http-connectors", "status": "pending", "families": ["P2"], "evidence": null, "commit_sha": null},
     {"id": "D09", "date": "2026-11-23", "phase": "p2-jdbc-postgres", "status": "pending", "families": ["P2"], "evidence": null, "commit_sha": null},

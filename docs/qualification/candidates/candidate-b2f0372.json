@@ -1,0 +1,107 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D06",
+  "status": "pass",
+  "execution_date": "2026-11-14",
+  "planned_date": "2026-11-20",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "b2f03725c92867a238e829f564c80c415bccc72a",
+    "origin_main_sha_when_candidate_was_tested": "b2f03725c92867a238e829f564c80c415bccc72a",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b2f03725c92867a238e829f564c80c415bccc72a-D06",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b2f03725c92867a238e829f564c80c415bccc72a-D06\\candidate-b2f03725c92867a238e829f564c80c415bccc72a.tar",
+      "format": "tar",
+      "sha256": "90cc04bc84cbf6d548a1e025663ecd835c9cf8da9a9924278eeca1c44aa25e6f",
+      "size": 16353280
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b2f03725c92867a238e829f564c80c415bccc72a-D06\\candidate-b2f03725c92867a238e829f564c80c415bccc72a.manifest.json",
+      "sha256": "e46023321a5de753e10ddb1891ba6115732ad97ab739f0b87bd75fbc70f15334",
+      "size": 210812
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b2f03725c92867a238e829f564c80c415bccc72a-D06\\candidate-b2f03725c92867a238e829f564c80c415bccc72a.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b2f03725c92867a238e829f564c80c415bccc72a-D06\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1375,
+    "total_bytes": 15220758,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "commit": "b2f03725c92867a238e829f564c80c415bccc72a",
+    "summary": "Executed the bearer/auth, secrets, classification and fail-closed policy inventory against the exact D06 candidate; no production change was required.",
+    "production_files_changed": [],
+    "test_files_changed": []
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha b2f03725c92867a238e829f564c80c415bccc72a --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b2f03725c92867a238e829f564c80c415bccc72a-D06",
+    "verify": "python -m tools.ronin_candidate_boundary verify --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b2f03725c92867a238e829f564c80c415bccc72a-D06",
+    "cleanup_and_regenerate": "cleanup, regenerate the same SHA and verify identical archive/manifest digests"
+  },
+  "security_inventory": {
+    "bearer_auth": "Static bearer parsing, canonical grant projection, exact scope validation, authorization denial and HTTP access-log redaction are covered by the selected contract suite.",
+    "secrets": "Environment, file and custom secret resolvers enforce bounded material, safe paths, symlink/permission/change checks and redacted representations.",
+    "classification": "Public/internal/confidential/restricted labels enforce a maximum classification and require explicit authorization for high-sensitivity access.",
+    "policy": "Classification is evaluated before authorization; missing, malformed or denied requirements fail closed without executor side effects.",
+    "evidence_files": [
+      "python/studio_storage/secrets.py",
+      "python/studio_security/redaction.py",
+      "python/studio_security/classification_policy.py",
+      "python/studio_security/policy_actions.py",
+      "python/studio_server/static_control_plane.py",
+      "python/studio_server/http.py",
+      "tests/test_grants.py",
+      "tests/test_grant_scope_projection.py",
+      "tests/test_grant_survivor_boundaries.py",
+      "tests/test_security_policy.py",
+      "tests/test_classification_policy.py",
+      "tests/test_secret_resolvers.py",
+      "tests/test_mounted_file_secrets.py",
+      "tests/test_security_redaction.py",
+      "tests/test_policy_actions.py",
+      "tests/test_runner_broker_security.py",
+      "tests/integration/test_http_authorized_pagination.py"
+    ]
+  },
+  "qualification_matrix": {
+    "security_contract_suite": "302 passed, 0 failed, 2 platform skips",
+    "authorized_pagination_http_integration": "3 passed, 0 failed",
+    "daily_progress_contract": "3 passed, 0 failed",
+    "result": "pass"
+  },
+  "static_baseline": {
+    "format": "pass; 1105 files already formatted",
+    "ruff": "pass",
+    "mypy": "pass; 448 source files",
+    "architecture_gate": "pass",
+    "negative_gates": "pass; deliberate violations rejected",
+    "route_consistency": "pass; 199 operations",
+    "dependency_surfaces": "pass"
+  },
+  "cleanup": {
+    "test_output_cleaned": true,
+    "candidate_regenerated_after_test_cleanup": true,
+    "final_verify": "pass; archive and manifest digests unchanged; sandbox has 0 Git metadata directories and 0 generated test-artifact directories"
+  },
+  "open_cells": [
+    "P13 remains not_started as a family; D07 must demonstrate audit, redaction, isolation, scans and recovery before any family qualification.",
+    "No release gate is closed and release remains NO-GO."
+  ],
+  "limitations": [
+    "One secret-resolver symlink test is unavailable on Windows.",
+    "One mounted-file-secret POSIX-mode test is not authoritative on Windows.",
+    "The gitless candidate sandbox cannot run repository-level public-status checks; those checks remain a post-commit repository audit.",
+    "No provider certification, human approval or P13 family qualification is claimed."
+  ]
+}
