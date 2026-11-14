@@ -71,10 +71,10 @@ La revisión de esta versión documental acaba de encontrar y corregir estado ob
 
 ## 47. Iteración de consolidación local-only (2026-10-27)
 
-Se retiraron los workflows de validación, seguridad, cualificación y evidencia
-de GitHub Actions por decisión explícita del usuario. Se conserva únicamente el
-publicador manual de alias de Docker Hub, que no ejecuta validaciones. Los
-contratos de pruebas se actualizaron para verificar este modelo y el módulo
+Se retiraron todos los workflows de GitHub Actions por decisión explícita del
+usuario, incluido el publicador de Docker Hub. Las validaciones, commits,
+subidas y publicaciones se hacen manualmente según
+`docs/operations/MANUAL_RELEASE_AND_UPLOAD_RUNBOOK.md`. Los contratos de pruebas se actualizaron para verificar este modelo y el módulo
 `queryflux-studio.js` quedó incluido en el paquete web.
 
 La verificación focalizada pasó 30 pruebas Python, la auditoría estructural web
