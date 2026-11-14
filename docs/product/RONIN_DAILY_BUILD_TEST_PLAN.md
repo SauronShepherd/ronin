@@ -274,7 +274,7 @@ handoff es BLOCKED y no se anuncia cierre remoto.
 ## 11. Handoff inicial y estado de hoy
 
 El cierre verificable de D00 queda registrado en el commit
-a8a862d5dec13e19258608fc5afeed31f634ece0 y en origin/main. El contador de
+a31132183f977fb3834ed5e86e6c619942cc8dc0 y en origin/main. El contador de
 ejecución pasa a 1/39 días (2.56%); el contador de release no cambia:
 0/13 familias y 0/10 gates. El siguiente corte operativo es D01.
 

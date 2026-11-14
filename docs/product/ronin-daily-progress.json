@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "a8a862d5dec13e19258608fc5afeed31f634ece0",
+    "base_sha": "a31132183f977fb3834ed5e86e6c619942cc8dc0",
     "tracked_candidate": false
   },
   "operating_policy": {
@@ -224,7 +224,7 @@
     }
   ],
   "days": [
-    {"id": "D00", "date": "2026-11-14", "phase": "truth-and-control", "status": "pass", "families": [], "evidence": "docs/qualification/handoffs/2026-11-14.md", "commit_sha": "a8a862d5dec13e19258608fc5afeed31f634ece0"},
+    {"id": "D00", "date": "2026-11-14", "phase": "truth-and-control", "status": "pass", "families": [], "evidence": "docs/qualification/handoffs/2026-11-14.md", "commit_sha": "a31132183f977fb3834ed5e86e6c619942cc8dc0"},
     {"id": "D01", "date": "2026-11-15", "phase": "candidate-boundary", "status": "pending", "families": [], "evidence": null, "commit_sha": null},
     {"id": "D02", "date": "2026-11-16", "phase": "baseline-quality", "status": "pending", "families": [], "evidence": null, "commit_sha": null},
     {"id": "D03", "date": "2026-11-17", "phase": "p1-contracts", "status": "pending", "families": ["P1"], "evidence": null, "commit_sha": null},
