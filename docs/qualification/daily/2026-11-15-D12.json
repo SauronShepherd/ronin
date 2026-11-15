@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D12",
+  "date": "2026-11-15",
+  "planned_date": "2026-11-26",
+  "status": "PASS",
+  "candidate_sha": "af3d8e30ee939a6be5588e6458dafac96f0b2398",
+  "implementation_commit_sha": "af3d8e30ee939a6be5588e6458dafac96f0b2398",
+  "evidence": "docs/qualification/candidates/candidate-af3d8e30-d12.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D12.md",
+  "execution_scope": "complete-for-D12-lakehouse-sql-bounds-and-local-reopen; P3-family-open",
+  "result": {
+    "candidate_focused_suite": "174 passed, 0 failed, 0 skipped from exact candidate selections",
+    "full_checkout_regression": "4640 passed, 81 skipped, 1 documentation-freshness failure before public-status refresh; targeted public-status module passed 3/3 after refresh",
+    "candidate_sandbox_regression": "4633 passed, 81 skipped, 8 Git-metadata/checkout-bound failures; not counted as PASS",
+    "static_and_surface_checks": "format 1113 files, Ruff, mypy 355 files, architecture, negative-gates, route-consistency 200 operations, dependency-surfaces, OpenAPI, Studio, public imports, capability, daily ledger, public status and git diff pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "scans": "Gitleaks 0 findings; pip-audit 0 vulnerabilities across 99 dependencies; Trivy 0 vulnerabilities and 0 secrets",
+    "p3_boundary": "D12 lakehouse/SQL and local project-scoped reopen cells pass; P3 remains in_progress until the complete execution/recovery/provider journey is evidenced"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "11/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "12/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The 81 full-suite skips and 8 candidate-sandbox Git-bound failures are explicitly recorded and are not counted as PASS.",
+    "D12 did not qualify P3, close a release gate or change the P13 blocker.",
+    "No external provider or hosted workflow claim was made."
+  ]
+}

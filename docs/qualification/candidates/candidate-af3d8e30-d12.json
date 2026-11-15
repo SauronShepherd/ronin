@@ -1,0 +1,101 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D12",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-11-26",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "af3d8e30ee939a6be5588e6458dafac96f0b2398",
+    "origin_main_sha_when_candidate_was_tested": "af3d8e30ee939a6be5588e6458dafac96f0b2398",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-af3d8e30-d12",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-af3d8e30-d12\\candidate-af3d8e30ee939a6be5588e6458dafac96f0b2398.tar",
+      "format": "tar",
+      "sha256": "b0a427669a3a112ab1eb7db2b6402f861391a7c810a385dc03b44fa89467b05a",
+      "size": 16486400
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-af3d8e30-d12\\candidate-af3d8e30ee939a6be5588e6458dafac96f0b2398.manifest.json",
+      "sha256": "dba906324c1bf3df1e93b239f43f8664e6728452b58a7027754bbe13a8d51c41",
+      "size": 214115
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-af3d8e30-d12\\candidate-af3d8e30ee939a6be5588e6458dafac96f0b2398.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-af3d8e30-d12\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1395,
+    "total_bytes": 15335634,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commits": [
+      "7ab8893481fbb6330510f43ca575823b6d19e5cb",
+      "af3d8e30ee939a6be5588e6458dafac96f0b2398"
+    ],
+    "candidate_docs_commit": "af3d8e30ee939a6be5588e6458dafac96f0b2398",
+    "summary": "Closed fail-open boolean bounds in the Parquet reader and DuckDB reference engine while preserving internal SQL budgets above the HTTP cap; added negative coverage and a real local HTTP, project-scoped Parquet/SQL, server-reopen journey.",
+    "production_files_changed": [
+      "python/studio_lakehouse/parquet.py",
+      "python/studio_sql/duckdb_engine.py"
+    ],
+    "test_files_changed": [
+      "tests/test_open_data_plane.py",
+      "tests/integration/test_http_submit_status.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha af3d8e30ee939a6be5588e6458dafac96f0b2398 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-af3d8e30-d12",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-af3d8e30-d12",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed the sandbox after testing; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "candidate_focused": "Exact-candidate selections covering lakehouse/open-table/metadata, SQL engine, HTTP SQL and Data Engineering HTTP query routes",
+    "full_regression": "$env:PYTHONDONTWRITEBYTECODE='1'; python -m pytest -q -p no:cacheprovider"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "174 passed, 0 failed, 0 skipped from the exact candidate selections; the HTTP SQL lane had 4 deselected and the Data Engineering HTTP lane had 3 deselected",
+    "lakehouse_and_metadata": "37 passed, 0 failed, 0 skipped; Parquet round trips, metadata, project isolation, bounded reads and negative boolean limits",
+    "sql_engine": "132 passed, 0 failed, 0 skipped; DuckDB/reference SQL limits, explain/result budgets, typed bindings, rejection boundaries and internal max_rows above the HTTP cap",
+    "real_http_sql": "4 passed, 0 failed, 4 deselected; real local HTTP route exercised with project-scoped SQL and the reopened server/engine journey",
+    "data_engineering_http": "1 passed, 0 failed, 3 deselected; real HTTP query surface remained bounded and project-scoped",
+    "full_checkout_regression": "4640 passed, 81 skipped, 1 failed before the public-status refresh; the sole failure was test_status_check_is_fail_closed_for_divergence because the tracked observed SHA was stale. After refreshing public status to af3d8e30, tests/test_public_v1_status.py passed 3/3. The full suite was not rerun solely for this documentation-only refresh.",
+    "full_candidate_sandbox_regression": "4633 passed, 81 skipped, 8 failed; all failures were Git-metadata/checkout-bound worker-runtime or public-status tests because the candidate sandbox intentionally has no .git metadata. This is a limitation, not a PASS claim.",
+    "static_and_surface_checks": "ruff format --check (1113 files), Ruff, mypy (355 source files), architecture, negative-gates, route-consistency (200 operations), dependency-surfaces, canonical OpenAPI (315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708), Studio (128/242), public imports, capability status, daily ledger, public status and git diff checks pass",
+    "result": "D12 pass for the bounded lakehouse/SQL and local project-scoped reopen cells; P3 remains in_progress because the complete family journey, execution/cancellation/permissions, applicable provider and recovery evidence are not closed"
+  },
+  "security_and_recovery": {
+    "bounds": "Boolean read and direct-engine execution budgets are rejected before work; positive internal max_rows above the HTTP cap remains accepted for the internal engine contract",
+    "real_service_scope": "The HTTP integration uses a real loopback HTTP server and local DuckDB/Parquet components; no production cloud provider or secret is claimed",
+    "persistence_and_recovery": "Project-scoped Parquet data remained isolated across two projects and was queryable after closing and reopening the server and engine; this is local persistence evidence, not a provider or release recovery certification",
+    "scan_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d12-scans-af3d8e30",
+    "scans": {
+      "gitleaks": "8.30.1; clean regenerated candidate sandbox; 15,335,634 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1; filesystem scanners vuln,secret; 0 vulnerabilities and 0 secrets; image digest sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+    }
+  },
+  "open_cells": [
+    "P3 remains in_progress, not qualified: D12 covered lakehouse/SQL bounds and local reopen, but the complete execution, cancellation, permissions, provider, restart/recovery and end-to-end family journey are not closed.",
+    "P2 remains in_progress; D12 made no new connector/provider claim and the prior provider evidence remains bound to its exact D10/D11 receipts.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates.",
+    "The 81 full-suite skips are real unavailable-provider, Docker opt-in, POSIX/symlink, Windows privilege and external CLI cases; they are not PASS.",
+    "The 8 candidate-sandbox failures are Git-metadata/checkout-bound limitations and are not counted as PASS."
+  ],
+  "limitations": [
+    "The candidate sandbox has no Git metadata; repository-level public-status and daily-ledger validation ran on main.",
+    "The local loopback HTTP/DuckDB/Parquet journey is not evidence for a production object-store, JDBC, external secret provider or hosted workflow.",
+    "The full checkout regression was not rerun after the documentation-only public-status refresh; the targeted public-status module passed 3/3 and the pre-refresh failure had no product-code traceback.",
+    "The full suite was run without the optional PostgreSQL DSNs, external object-storage endpoints, Docker qualification opt-in and external CLI endpoints listed in its skip summary.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
