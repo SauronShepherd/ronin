@@ -785,24 +785,43 @@ for (const route of routes) {
         total_lag: 12,
       });
       await page.locator('#stream-health-form [name="limit"]').fill('2');
+      let remainingPartitionedRecords = 12;
       for (let batch = 0; batch < 6; batch += 1) {
-        const partitionedRunResponse = waitForStreamResponse('POST', partitionedRunPath);
-        await page.getByRole('button', { name: 'Run one batch', exact: true }).click();
-        const partitionedRun = await partitionedRunResponse;
-        expect(partitionedRun.status(), await partitionedRun.text()).toBe(200);
-        expect(await partitionedRun.json()).toMatchObject({
+        let partitionedRunPayload;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          const partitionedRunResponse = waitForStreamResponse('POST', partitionedRunPath);
+          await page.getByRole('button', { name: 'Run one batch', exact: true }).click();
+          const partitionedRun = await partitionedRunResponse;
+          expect(partitionedRun.status(), await partitionedRun.text()).toBe(200);
+          partitionedRunPayload = await partitionedRun.json();
+          if (partitionedRunPayload.status === 'succeeded') break;
+          // A bounded Kafka poll may legitimately return idle while the broker
+          // still reports lag. Retry without accepting any checkpoint advance.
+          expect(partitionedRunPayload).toMatchObject({
+            stream_id: 'events/partitioned',
+            status: 'idle',
+            records: 0,
+            rows: 0,
+          });
+          partitionedHealthResponse = waitForStreamResponse('GET', partitionedHealthPath);
+          await page.getByRole('button', { name: 'Check health', exact: true }).click();
+          const idleHealth = await partitionedHealthResponse;
+          expect(idleHealth.status(), await idleHealth.text()).toBe(200);
+          expect((await idleHealth.json()).total_lag).toBe(remainingPartitionedRecords);
+        }
+        expect(partitionedRunPayload).toMatchObject({
           stream_id: 'events/partitioned',
           status: 'succeeded',
           records: 2,
           rows: 2,
         });
+        remainingPartitionedRecords -= 2;
         partitionedHealthResponse = waitForStreamResponse('GET', partitionedHealthPath);
         await page.getByRole('button', { name: 'Check health', exact: true }).click();
         const partitionedHealth = await partitionedHealthResponse;
         expect(partitionedHealth.status(), await partitionedHealth.text()).toBe(200);
-        const expectedRemaining = 10 - (batch * 2);
         const partitionedPayload = await partitionedHealth.json();
-        expect(partitionedPayload.total_lag).toBe(expectedRemaining);
+        expect(partitionedPayload.total_lag).toBe(remainingPartitionedRecords);
         expect(Object.keys(partitionedPayload.lag)).toEqual(['0', '1']);
       }
       partitionedHealthResponse = waitForStreamResponse('GET', partitionedHealthPath);
