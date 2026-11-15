@@ -7,30 +7,31 @@
 
 ## Current exact-SHA qualification — 15 November 2026
 
-The current code candidate is `360ce3092afcf485c113ccfb781069914abc3ee0`.
-D28 adds candidate-bound evidence for a real local HTTP/SQLite ML lifecycle:
-evaluation-gated promotion, digest-pinned deployment, health, prediction
-telemetry, numeric drift policy/reporting, rollback, post-rollback rejection,
-workspace denial and restart recovery. The selected D28 journey is `1/1`; the
-full local-composed suite is `27/27`, ML unit tests are `298/298` and ML HTTP
-integration is `3/3`.
+The current code candidate is `567ee82eafd30661c5e6c10ea5fe26f3eaad6dce`.
+D29 adds candidate-bound evidence for a real local HTTP/SQLite/DuckDB/Parquet
+semantic lifecycle: model listing and query, dashboard execution, tile-budget
+rejection, semantic Bundle digest/plan/import, workspace denial and restart
+recovery. The selected D29 journey is `1/1`; the full local-composed suite is
+`28/28`, selected semantic unit/HTTP tests are `36/36`, ML unit tests are
+`298/298` and ML HTTP integration is `3/3`.
 
-Candidate static gates pass: Ruff format/check, mypy on `389` source files,
+Candidate static gates pass: Ruff format/check, mypy on `451` source files,
 architecture and negative gates, route consistency on `200` operations, exact
 dependency surfaces, OpenAPI digest
 `315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708`, Studio
 surface `129/242`, web audit, budget and asset checks. Gitleaks reports zero
 findings and pip-audit reports no known vulnerabilities. The exact candidate
 browser lane is `SKIP` because `@playwright/test` is not packaged; the checkout
-Catalog + Quality Studio contract passes `9/9`. Trivy is skipped because no
-local binary is available.
+Semantic Studio contract passes `6/6`. Trivy is skipped because no local binary
+is available.
 
 This is bounded technical evidence only. Public v1 remains **1/13 families
-qualified, 0/10 gates, NO-GO**: P8 is `in_progress` and the local slice does
-not establish PostgreSQL/S3/MLflow/external serving providers, broader
-algorithm/search performance or complete Studio/provider qualification. P13
-external evidence, manual visual/product review, legal/NOTICE/claims, security
-acceptance, rollback/support and release governance remain open.
+qualified, 0/10 gates, NO-GO**: P10 is `in_progress` and the local slice does
+not establish PostgreSQL semantic persistence/import, external warehouse/
+provider compatibility, dashboard cancellation/fan-out evidence or complete
+Studio/provider qualification. P13 external evidence, manual visual/product
+review, legal/NOTICE/claims, security acceptance, rollback/support and release
+governance remain open.
 
 ### Historical exact-SHA qualification — `4157181`
 
@@ -100,7 +101,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `360ce3092afcf485c113ccfb781069914abc3ee0` (2026-11-15).
+**Observed source head:** `567ee82eafd30661c5e6c10ea5fe26f3eaad6dce` (2026-11-15).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
@@ -214,6 +215,22 @@ serving providers, broader algorithm/search performance and complete P8
 qualification remain open. P8 remains `in_progress`, the ledger is 1/13
 families and 0/10 gates, and release remains **NO-GO**. See
 `docs/qualification/candidates/candidate-360ce309-d28.json`.
+
+**D29 semantic evidence update (2026-11-15):** exact candidate
+`567ee82eafd30661c5e6c10ea5fe26f3eaad6dce` adds the missing real local
+HTTP/SQLite/DuckDB/Parquet journey from persisted semantic model/query through
+dashboard execution, tile-budget rejection, semantic Bundle digest/plan/import,
+workspace denial and full composition restart. The D29 journey passes 1/1, the
+composed local suite passes 28/28, selected semantic unit/HTTP tests pass
+36/36, ML unit tests pass 298/298 and ML HTTP integration passes 3/3. Candidate
+browser evidence is explicitly `SKIP` because `@playwright/test` is not
+packaged; the checkout Semantic Studio contract passes 6/6. Candidate static
+checks and clean Gitleaks/pip-audit pass, while Trivy remains unavailable.
+PostgreSQL semantic persistence/import, external warehouse/provider
+compatibility, dashboard cancellation/fan-out evidence and complete P10
+qualification remain open. P10 remains `in_progress`, the ledger is 1/13
+families and 0/10 gates, and release remains **NO-GO**. See
+`docs/qualification/candidates/candidate-567ee82e-d29.json`.
 
 **Current worktree update (2026-10-30; dirty diagnostic candidate):** P3 now includes a project-authorized local DuckDB `POST .../sql/explain` route and a SQL Studio action. The route reuses project-read authorization, validates the shared read-only SELECT contract and registered relation scope, forwards a bounded execution deadline, incrementally caps serialized plan rows, and redacts paths, URLs and inline secret assignments. Providers without the optional capability return an explicit 501. Targeted verification is recorded in `PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`; this does not qualify P3 or the release, and the historical notes below remain historical snapshots.
 

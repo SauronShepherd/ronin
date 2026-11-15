@@ -1,0 +1,73 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D29",
+  "date": "2026-11-15",
+  "status": "pass",
+  "cell": "P10 bounded semantic model, query, dashboard, Bundle and recovery journey over the real local composition",
+  "candidate_sha": "567ee82eafd30661c5e6c10ea5fe26f3eaad6dce",
+  "candidate_receipt": "docs/qualification/candidates/candidate-567ee82e-d29.json",
+  "code_commit": "567ee82eafd30661c5e6c10ea5fe26f3eaad6dce",
+  "origin_main_at_code_commit": "567ee82eafd30661c5e6c10ea5fe26f3eaad6dce",
+  "implementation": {
+    "journey": "Added a real local composed HTTP regression that loads semantic definitions into the SQLite store, queries an independent Parquet fixture through project-scoped DuckDB, executes a dashboard, rejects an over-budget dashboard, exports and rechecks a semantic Bundle digest, plans and imports it into a separate project scope, denies an unknown workspace and recovers both source and imported definitions after restart.",
+    "evidence_gap": "Existing semantic store/runtime tests and isolated HTTP tests did not bind the full dashboard/query/Bundle/recovery path to the local composed server. The new test exercises the public routes against the real SQLite semantic store and DuckDB/Parquet runtime without provider mocks.",
+    "recovery": "The SQLite semantic definitions and imported target project survive a full local composition restart; the independent Parquet fixture remains readable and dashboard results remain identical."
+  },
+  "tests": {
+    "candidate_d29_journey": "1 passed, 27 deselected, 0 failed, 0 skipped",
+    "candidate_local_composed": "28 passed, 0 failed, 0 skipped",
+    "candidate_semantic": "36 passed, 58 deselected, 0 failed, 0 skipped",
+    "candidate_ml_unit": "298 passed, 0 failed, 0 skipped",
+    "candidate_ml_http": "3 passed, 0 failed, 0 skipped",
+    "candidate_web": "SKIP; @playwright/test is not present in the exact candidate archive and the offline browser command could not resolve it",
+    "checkout_web": "6 passed, 0 failed, 0 skipped in 11.0 seconds",
+    "negative_paths": [
+      "13-tile dashboard execution returns HTTP 400 before SQL execution",
+      "semantic Bundle import with a mismatched expected digest returns HTTP 400",
+      "unknown-workspace semantic model read returns HTTP 403",
+      "source and imported semantic definitions survive full composition restart"
+    ],
+    "static": {
+      "ruff_format": "PASS; 951 files",
+      "ruff": "PASS",
+      "mypy": "PASS; 451 source files",
+      "architecture": "PASS",
+      "negative_gates": "PASS",
+      "route_consistency": "PASS; 200 operations",
+      "dependency_surfaces": "PASS",
+      "openapi": "PASS; 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708",
+      "studio_surface": "PASS; 129/242",
+      "studio_web_audit": "PASS; 72 files, 184 route invocations",
+      "studio_budget": "PASS; 2170472 actual asset bytes against the 2170474-byte baseline",
+      "daily_progress": "PASS in candidate at archived ledger state 28/39; checkout after evidence update at 29/39",
+      "public_status": "SKIP in archive; command requires Git metadata; PASS on checkout",
+      "capability_status": "PASS",
+      "git_diff_check": "PASS on checkout"
+    }
+  },
+  "scans": {
+    "gitleaks": "PASS; 8.30.1; 0 findings over 15.78 MB of the final clean candidate",
+    "pip_audit": "PASS; 2.10.1; no known vulnerabilities from requirements-test.lock",
+    "trivy": "SKIP; no local binary"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "28/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "29/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    }
+  },
+  "limitations": [
+    "P10 remains in_progress: this is a bounded local evidence slice, not complete family/provider/Studio qualification.",
+    "PostgreSQL semantic persistence/import, external warehouse/provider compatibility, dashboard cancellation/fan-out operational evidence and complete P10 provider matrix were not exercised.",
+    "Candidate browser evidence is a recorded SKIP, not a PASS; no skip counts as a gate or family PASS.",
+    "No release gate changed to closed and P13 remains blocked."
+  ]
+}
