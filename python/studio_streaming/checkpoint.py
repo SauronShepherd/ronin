@@ -231,7 +231,7 @@ class SqliteStreamCheckpointStore:
         self._validate_stream_id(stream_id)
         expected_offsets = {item.partition: item.offset for item in expected.positions}
         next_offsets = {item.partition: item.offset for item in next_checkpoint.positions}
-        if set(next_offsets) != set(expected_offsets) and expected_offsets:
+        if not set(expected_offsets).issubset(next_offsets):
             raise ValueError("stream checkpoint cannot remove an existing partition")
         if any(
             next_offsets.get(partition, -1) < offset

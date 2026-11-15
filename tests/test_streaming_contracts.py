@@ -56,3 +56,8 @@ def test_checkpoint_rejects_offset_regression_and_partition_removal(tmp_path: Pa
     with pytest.raises(ValueError, match="remove an existing partition"):
         store.compare_and_set("orders", initial, StreamCheckpoint((StreamPosition(0, 11),)))
     assert store.get("orders") == initial
+    expanded = StreamCheckpoint(
+        (StreamPosition(0, 11), StreamPosition(1, 20), StreamPosition(2, 0))
+    )
+    assert store.compare_and_set("orders", initial, expanded)
+    assert store.get("orders") == expanded
