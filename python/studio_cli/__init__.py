@@ -216,6 +216,68 @@ def _parser() -> argparse.ArgumentParser:
     project_bundle_import.add_argument("archive", type=Path)
     project_bundle_import.add_argument("--idempotency-key", required=True)
     project_bundle_import.add_argument("--json", action="store_true")
+    catalog = commands.add_parser("catalog", help="inspect governed catalog data")
+    catalog_commands = catalog.add_subparsers(dest="catalog_command", required=True)
+    catalog_assets = catalog_commands.add_parser("assets", help="list visible catalog assets")
+    catalog_assets.add_argument("workspace_id")
+    catalog_assets.add_argument("--query")
+    catalog_assets.add_argument("--limit", type=int, default=100)
+    catalog_assets.add_argument("--cursor")
+    catalog_assets.add_argument("--json", action="store_true")
+    catalog_lineage = catalog_commands.add_parser("lineage", help="inspect catalog lineage")
+    catalog_lineage.add_argument("workspace_id")
+    catalog_lineage.add_argument("asset_id")
+    catalog_lineage.add_argument("version")
+    catalog_lineage.add_argument(
+        "--direction", choices=("upstream", "downstream"), default="upstream"
+    )
+    catalog_lineage.add_argument("--limit", type=int, default=100)
+    catalog_lineage.add_argument("--json", action="store_true")
+    catalog_revisions = catalog_commands.add_parser(
+        "revisions", help="list catalog asset revisions"
+    )
+    catalog_revisions.add_argument("workspace_id")
+    catalog_revisions.add_argument("asset_id")
+    catalog_revisions.add_argument("--json", action="store_true")
+    catalog_revision = catalog_commands.add_parser(
+        "revision", help="read one catalog asset revision"
+    )
+    catalog_revision.add_argument("workspace_id")
+    catalog_revision.add_argument("asset_id")
+    catalog_revision.add_argument("version")
+    catalog_revision.add_argument("--json", action="store_true")
+    ontology = commands.add_parser("ontology", help="inspect published ontology schemas")
+    ontology_commands = ontology.add_subparsers(dest="ontology_command", required=True)
+    ontology_versions = ontology_commands.add_parser("versions", help="list ontology versions")
+    ontology_versions.add_argument("workspace_id")
+    ontology_versions.add_argument("ontology_id")
+    ontology_versions.add_argument("--json", action="store_true")
+    ontology_schema = ontology_commands.add_parser("schema", help="read one ontology schema")
+    ontology_schema.add_argument("workspace_id")
+    ontology_schema.add_argument("ontology_id")
+    ontology_schema.add_argument("version")
+    ontology_schema.add_argument("--json", action="store_true")
+    graphs = commands.add_parser("graphs", help="query workspace-scoped knowledge graphs")
+    graph_commands = graphs.add_subparsers(dest="graphs_command", required=True)
+    graph_query = graph_commands.add_parser("query", help="run a bounded read-only graph query")
+    graph_query.add_argument("workspace_id")
+    graph_query.add_argument("graph_id")
+    graph_query.add_argument("query")
+    graph_query.add_argument("--max-limit", type=int, default=1000)
+    graph_query.add_argument("--json", action="store_true")
+    graph_objects = graph_commands.add_parser("objects", help="list graph objects by type")
+    graph_objects.add_argument("workspace_id")
+    graph_objects.add_argument("graph_id")
+    graph_objects.add_argument("object_type")
+    graph_objects.add_argument("--limit", type=int, default=100)
+    graph_objects.add_argument("--json", action="store_true")
+    graph_neighbors = graph_commands.add_parser("neighbors", help="list graph neighbors")
+    graph_neighbors.add_argument("workspace_id")
+    graph_neighbors.add_argument("graph_id")
+    graph_neighbors.add_argument("object_type")
+    graph_neighbors.add_argument("key_json", help="object key as a JSON array")
+    graph_neighbors.add_argument("--limit", type=int, default=100)
+    graph_neighbors.add_argument("--json", action="store_true")
     plugins = commands.add_parser("plugins", help="inspect installed Ronin plugins")
     plugins.add_argument(
         "plugins_command", choices=("list", "surfaces", "validate", "lock", "rollback")
@@ -809,6 +871,100 @@ def _projects(namespace: argparse.Namespace) -> int:
         )
     else:
         raise CliError(f"unsupported projects command: {command}")
+    _emit_control_result(result, as_json=bool(namespace.json))
+    return 0
+
+
+def _catalog(namespace: argparse.Namespace) -> int:
+    client = _control_plane_client()
+    command = cast(str, namespace.catalog_command)
+    workspace_id = cast(str, namespace.workspace_id)
+    if command == "assets":
+        result = client.list_catalog_assets(
+            workspace_id,
+            query=cast(str | None, namespace.query),
+            limit=cast(int, namespace.limit),
+            cursor=cast(str | None, namespace.cursor),
+        )
+    elif command == "lineage":
+        result = client.list_catalog_lineage(
+            workspace_id,
+            cast(str, namespace.asset_id),
+            cast(str, namespace.version),
+            direction=cast(str, namespace.direction),
+            limit=cast(int, namespace.limit),
+        )
+    elif command == "revisions":
+        result = client.list_catalog_revisions(workspace_id, cast(str, namespace.asset_id))
+    elif command == "revision":
+        result = client.get_catalog_revision(
+            workspace_id,
+            cast(str, namespace.asset_id),
+            cast(str, namespace.version),
+        )
+    else:
+        raise CliError(f"unsupported catalog command: {command}")
+    _emit_control_result(result, as_json=bool(namespace.json))
+    return 0
+
+
+def _ontology(namespace: argparse.Namespace) -> int:
+    client = _control_plane_client()
+    command = cast(str, namespace.ontology_command)
+    workspace_id = cast(str, namespace.workspace_id)
+    if command == "versions":
+        result = client.list_ontology_versions(workspace_id, cast(str, namespace.ontology_id))
+    elif command == "schema":
+        result = client.get_ontology_schema(
+            workspace_id,
+            cast(str, namespace.ontology_id),
+            cast(str, namespace.version),
+        )
+    else:
+        raise CliError(f"unsupported ontology command: {command}")
+    _emit_control_result(result, as_json=bool(namespace.json))
+    return 0
+
+
+def _graph_key(raw: str) -> list[object]:
+    try:
+        value = json.loads(raw)
+    except (json.JSONDecodeError, TypeError) as exc:
+        raise CliError("graph key must be valid JSON") from exc
+    if not isinstance(value, list):
+        raise CliError("graph key must be a JSON array")
+    return cast(list[object], value)
+
+
+def _graphs(namespace: argparse.Namespace) -> int:
+    client = _control_plane_client()
+    command = cast(str, namespace.graphs_command)
+    workspace_id = cast(str, namespace.workspace_id)
+    graph_id = cast(str, namespace.graph_id)
+    if command == "query":
+        result = client.query_graph(
+            workspace_id,
+            graph_id,
+            cast(str, namespace.query),
+            max_limit=cast(int, namespace.max_limit),
+        )
+    elif command == "objects":
+        result = client.list_graph_objects(
+            workspace_id,
+            graph_id,
+            cast(str, namespace.object_type),
+            limit=cast(int, namespace.limit),
+        )
+    elif command == "neighbors":
+        result = client.graph_neighbors(
+            workspace_id,
+            graph_id,
+            cast(str, namespace.object_type),
+            _graph_key(cast(str, namespace.key_json)),
+            limit=cast(int, namespace.limit),
+        )
+    else:
+        raise CliError(f"unsupported graphs command: {command}")
     _emit_control_result(result, as_json=bool(namespace.json))
     return 0
 
@@ -1760,6 +1916,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _workspaces(namespace)
         if command == "projects":
             return _projects(namespace)
+        if command == "catalog":
+            return _catalog(namespace)
+        if command == "ontology":
+            return _ontology(namespace)
+        if command == "graphs":
+            return _graphs(namespace)
         if command == "migrate":
             if namespace.migrate_command == "inventory":
                 return _migration_inventory(namespace)

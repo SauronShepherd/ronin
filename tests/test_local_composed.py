@@ -10,6 +10,8 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
+from pyronin import APIError, HTTPTransport, Ronin
+from studio_cli import main as cli_main
 from studio_cli.local_composed import (
     _catalog_reader_for_backend,
     _workflow_reader_for_backend,
@@ -75,6 +77,8 @@ from studio_storage import (
 from studio_storage.local_files import LocalFileConnector
 from studio_synthetic_data import ColumnSpec, GenerationPlan, TableSpec
 from studio_synthetic_data.application import GovernStudioService, SqliteRunStore
+
+_CONTROL_VALUE = "control-token"
 
 
 def _environment(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
@@ -439,7 +443,7 @@ def test_local_composed_catalog_journey_persists_and_isolates_workspace_data(
 
 
 def test_local_composed_graph_and_ontology_journey_isolates_workspaces(
-    monkeypatch: pytest.MonkeyPatch, tmp_path
+    monkeypatch: pytest.MonkeyPatch, tmp_path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     _environment(monkeypatch, tmp_path)
     monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
@@ -504,6 +508,37 @@ def test_local_composed_graph_and_ontology_journey_isolates_workspaces(
     try:
         composition.start()
         address = composition.control_plane_server.server_address
+        base_url = f"http://{address[0]}:{address[1]}"
+        sdk = Ronin(
+            transport=HTTPTransport(
+                base_url,
+                token=_CONTROL_VALUE,
+                allow_insecure_localhost=True,
+                max_retries=0,
+            )
+        )
+        monkeypatch.setenv("RONIN_CONTROL_PLANE_URL", base_url)
+        monkeypatch.setenv("RONIN_TOKEN", _CONTROL_VALUE)
+
+        sdk_assets = sdk.list_catalog_assets("workspace-1")
+        assert sdk_assets
+        assert sdk_assets[0].id == "customers"
+        sdk_revisions = sdk.list_catalog_revisions("workspace-1", "customers")
+        assert sdk_revisions[0]["ref"]["version"] == "1"
+        assert (
+            sdk.get_catalog_revision("workspace-1", "customers", "1")["ref"]["asset_id"]
+            == "customers"
+        )
+        assert sdk.list_catalog_lineage("workspace-1", "customers", "1") == ()
+        assert sdk.list_ontology_versions("workspace-1", "sales")[0]["version"] == "v1"
+        assert sdk.get_ontology_schema("workspace-1", "sales", "v1")["id"] == "sales"
+
+        assert cli_main(["catalog", "assets", "workspace-1", "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["items"][0]["id"] == "customers"
+        assert cli_main(["catalog", "revision", "workspace-1", "customers", "1", "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["ref"]["asset_id"] == "customers"
+        assert cli_main(["ontology", "schema", "workspace-1", "sales", "v1", "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["id"] == "sales"
 
         status, versions = request(address, "GET", "/v1/workspaces/workspace-1/ontologies/sales")
         assert status == 200, versions
@@ -526,6 +561,23 @@ def test_local_composed_graph_and_ontology_journey_isolates_workspaces(
                 "properties": [["name", "Ada"]],
             }
         ]
+        assert sdk.query_graph("workspace-1", "sales", "SELECT Person WHERE name = 'Ada' LIMIT 10")[
+            "objects"
+        ][0]["properties"] == [["name", "Ada"]]
+        assert (
+            cli_main(
+                [
+                    "graphs",
+                    "query",
+                    "workspace-1",
+                    "sales",
+                    "SELECT Person WHERE name = 'Ada' LIMIT 10",
+                    "--json",
+                ]
+            )
+            == 0
+        )
+        assert json.loads(capsys.readouterr().out)["objects"][0]["key"] == [["id", "1"]]
         status, objects = request(
             address,
             "GET",
@@ -533,6 +585,9 @@ def test_local_composed_graph_and_ontology_journey_isolates_workspaces(
         )
         assert status == 200, objects
         assert objects["items"][0]["key"] == [["id", "1"]]
+        assert sdk.list_graph_objects("workspace-1", "sales", "Person")[0]["key"] == [["id", "1"]]
+        assert cli_main(["graphs", "objects", "workspace-1", "sales", "Person", "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["items"][0]["object_type"] == "Person"
         status, neighbors = request(
             address,
             "POST",
@@ -541,6 +596,30 @@ def test_local_composed_graph_and_ontology_journey_isolates_workspaces(
         )
         assert status == 200, neighbors
         assert neighbors["items"] == [{"object_type": "Order", "key": [["id", "10"]]}]
+        assert sdk.graph_neighbors("workspace-1", "sales", "Person", [["id", "1"]])[0] == {
+            "object_type": "Order",
+            "key": [["id", "10"]],
+        }
+        assert (
+            cli_main(
+                [
+                    "graphs",
+                    "neighbors",
+                    "workspace-1",
+                    "sales",
+                    "Person",
+                    '[["id","1"]]',
+                    "--json",
+                ]
+            )
+            == 0
+        )
+        assert json.loads(capsys.readouterr().out)["items"][0]["object_type"] == "Order"
+        assert cli_main(["graphs", "neighbors", "workspace-1", "sales", "Person", "not-json"]) == 2
+        assert "graph key must be valid JSON" in capsys.readouterr().err
+        with pytest.raises(APIError) as sdk_denied:
+            sdk.query_graph("workspace-unknown", "sales", "SELECT Person LIMIT 1")
+        assert sdk_denied.value.status_code == 403
 
         status, isolated_query = request(
             address,
@@ -572,6 +651,9 @@ def test_local_composed_graph_and_ontology_journey_isolates_workspaces(
     restarted = build_local_composed_from_env()
     try:
         restarted.start()
+        assert sdk.query_graph("workspace-1", "sales", "SELECT Person WHERE name = 'Ada' LIMIT 10")[
+            "objects"
+        ][0]["properties"] == [["name", "Ada"]]
         status, persisted = request(
             restarted.control_plane_server.server_address,
             "POST",

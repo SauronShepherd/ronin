@@ -6,14 +6,18 @@ function render() {
   if (location.hash.slice(1) !== 'graphs') return;
   const view = document.querySelector('#view');
   if (!view) return;
+  const workspace = globalThis.roninStudioContext?.workspace || sessionStorage.getItem('ronin.workspace') || 'default';
   view.innerHTML = `${page('Knowledge Graph', 'CATALOG · ONTOLOGY')}<section class="panel">
     <p class="muted">Run bounded, read-only RQL queries against a project graph.</p>
     <form id="graph-query-form" class="grid two">
       <label>Graph ID<input class="field" name="graph" value="graph-1" required></label>
-      <label>Workspace<input class="field" name="workspace" value="default" required></label>
+      <label>Workspace<input class="field" name="workspace" value="${workspace}" required></label>
       <label class="span-two">RQL query<textarea class="field sql-editor" name="query" rows="4" required>SELECT Person LIMIT 20</textarea></label>
       <button class="button primary" type="submit">Run query</button>
     </form><pre id="graph-result" class="code" aria-live="polite">No query executed.</pre>
+  </section><section class="panel"><h2>Ontology schema</h2>
+    <p class="muted">Inspect the published schema that binds graph object types to governed catalog revisions.</p>
+    <form id="ontology-form" class="grid two"><label>Ontology ID<input class="field" name="ontology" value="sales" required></label><label>Version<input class="field" name="version" value="v1" required></label><button class="button" type="submit">Load schema</button></form><pre id="ontology-result" class="code" aria-live="polite">No ontology schema loaded.</pre>
   </section><section class="panel"><h2>Objects</h2>
     <form id="graph-objects-form" class="toolbar"><input class="field" name="type" value="Person" required><input class="field" name="limit" type="number" min="1" max="100" value="100"><button class="button" type="submit">List objects</button></form>
   </section><section class="panel"><h2>Neighbors</h2>
@@ -36,6 +40,19 @@ document.addEventListener('submit', async event => {
       const graph = encodeURIComponent(String(data.get('graph')));
       result.textContent = json(await post(`/v1/workspaces/${workspace}/graphs/${graph}/query`, {query: String(data.get('query')), max_limit: 1000}));
     } catch (error) { result.textContent = `Query failed: ${error.message}`; }
+  } else if (form.id === 'ontology-form') {
+    event.preventDefault();
+    const queryForm = document.querySelector('#graph-query-form');
+    const queryData = new FormData(queryForm);
+    const data = new FormData(form);
+    const result = document.querySelector('#ontology-result');
+    result.textContent = 'Loading schema…';
+    try {
+      const workspace = encodeURIComponent(String(queryData.get('workspace')));
+      const ontology = encodeURIComponent(String(data.get('ontology')));
+      const version = encodeURIComponent(String(data.get('version')));
+      result.textContent = json(await get(`/v1/workspaces/${workspace}/ontologies/${ontology}/${version}`));
+    } catch (error) { result.textContent = `Ontology lookup failed: ${error.message}`; }
   } else if (form.id === 'graph-objects-form') {
     event.preventDefault();
     const queryForm = document.querySelector('#graph-query-form');
@@ -76,5 +93,6 @@ document.addEventListener('submit', async event => {
 // Register after the host shell's initial render so the graph view owns its route.
 setTimeout(() => {
   window.addEventListener('hashchange', render);
+  window.addEventListener('ronin-context-change', () => { if (location.hash.slice(1) === 'graphs') render(); });
   if (location.hash.slice(1) === 'graphs') render();
 }, 0);

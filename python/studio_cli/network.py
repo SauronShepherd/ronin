@@ -354,6 +354,133 @@ class ControlPlaneClient:
             )
         )
 
+    def list_catalog_assets(
+        self,
+        workspace_id: str,
+        *,
+        query: str | None = None,
+        limit: int = 100,
+        cursor: str | None = None,
+    ) -> dict[str, object]:
+        params = {"limit": str(limit)}
+        if query is not None:
+            params["q"] = query
+        if cursor is not None:
+            params["cursor"] = cursor
+        return _page_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/catalog/assets",
+                query=params,
+            ),
+            "catalog assets",
+        )
+
+    def list_catalog_lineage(
+        self,
+        workspace_id: str,
+        asset_id: str,
+        version: str,
+        *,
+        direction: str = "upstream",
+        limit: int = 100,
+    ) -> dict[str, object]:
+        return _page_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/catalog/lineage/"
+                f"{quote(asset_id, safe='')}/{quote(version, safe='')}",
+                query={"direction": direction, "limit": str(limit)},
+            ),
+            "catalog lineage",
+        )
+
+    def list_catalog_revisions(self, workspace_id: str, asset_id: str) -> dict[str, object]:
+        return _page_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/catalog/assets/"
+                f"{quote(asset_id, safe='')}/revisions",
+            ),
+            "catalog revisions",
+        )
+
+    def get_catalog_revision(
+        self, workspace_id: str, asset_id: str, version: str
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/catalog/assets/"
+                f"{quote(asset_id, safe='')}/revisions/{quote(version, safe='')}",
+            )
+        )
+
+    def list_ontology_versions(self, workspace_id: str, ontology_id: str) -> dict[str, object]:
+        return _page_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/ontologies/"
+                f"{quote(ontology_id, safe='')}",
+            ),
+            "ontology versions",
+        )
+
+    def get_ontology_schema(
+        self, workspace_id: str, ontology_id: str, version: str
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/ontologies/"
+                f"{quote(ontology_id, safe='')}/{quote(version, safe='')}",
+            )
+        )
+
+    def query_graph(
+        self, workspace_id: str, graph_id: str, query: str, *, max_limit: int = 1000
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "POST",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/graphs/"
+                f"{quote(graph_id, safe='')}/query",
+                payload={"query": query, "max_limit": max_limit},
+            )
+        )
+
+    def list_graph_objects(
+        self, workspace_id: str, graph_id: str, object_type: str, *, limit: int = 100
+    ) -> dict[str, object]:
+        return _page_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/graphs/"
+                f"{quote(graph_id, safe='')}/objects/{quote(object_type, safe='')}",
+                query={"limit": str(limit)},
+            ),
+            "graph objects",
+        )
+
+    def graph_neighbors(
+        self,
+        workspace_id: str,
+        graph_id: str,
+        object_type: str,
+        key: list[object],
+        *,
+        limit: int = 100,
+    ) -> dict[str, object]:
+        return _page_result(
+            self.request(
+                "POST",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/graphs/"
+                f"{quote(graph_id, safe='')}/neighbors",
+                payload={"object_type": object_type, "key": key, "limit": limit},
+            ),
+            "graph neighbors",
+        )
+
     def submit(
         self,
         *,
