@@ -1865,6 +1865,319 @@ def test_local_composed_ml_train_register_predict_and_recover(
         restarted.stop()
 
 
+def test_local_composed_ml_promote_serve_drift_rollback_and_recover(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """Exercise real local promotion, serving, drift and rollback over HTTP."""
+
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS",
+        "workspace.read,workspace.write,workspace.admin,project.read,project.write,scheduler.write",
+    )
+    now = Instant("2026-10-17T00:00:00.000000Z")
+    dataset = CatalogAsset(AssetId("customers"), "table", "Customers", project_id="project-1")
+    dataset_revision = AssetRevision(
+        AssetRef(dataset.id, AssetVersion("1")), schema_digest="customers-schema-v1"
+    )
+    rows = [{"x": value, "target": value % 2} for value in range(1, 21)]
+    lab_id = "local-ml-lab-d28"
+    model_id = "local-customers-d28"
+    model_version = "v1"
+    run_id = "local-ml-run-d28"
+    deployment_id = "local-customers-deployment"
+    lab_payload = {
+        "schema": "ronin.ml-lab/v1",
+        "id": lab_id,
+        "name": "Local ML D28 lab",
+        "project_id": "project-1",
+        "dataset": {"asset_id": "customers", "version": "1"},
+        "target": "target",
+        "task": "classification",
+        "features": [{"column": "x", "role": "numeric"}],
+        "backend_id": "local.sklearn",
+        "seed": 7,
+        "test_fraction": 0.25,
+    }
+
+    def request(
+        address: tuple[str, int], method: str, path: str, body: object | None = None
+    ) -> tuple[int, dict[str, object]]:
+        payload = None if body is None else json.dumps(body, separators=(",", ":")).encode("utf-8")
+        headers = {"Authorization": "Bearer control-token"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
+        connection = http.client.HTTPConnection(*address, timeout=20)
+        try:
+            connection.request(method, path, body=payload, headers=headers)
+            response = connection.getresponse()
+            return response.status, cast(
+                dict[str, object], json.loads(response.read().decode("utf-8"))
+            )
+        finally:
+            connection.close()
+
+    def wait_for_execution(address: tuple[str, int]) -> dict[str, object]:
+        deadline = time.monotonic() + 45
+        last: dict[str, object] = {}
+        while time.monotonic() < deadline:
+            status, last = request(
+                address,
+                "GET",
+                f"/v1/ml-studio/executions/{run_id}?workspace_id=workspace-1",
+            )
+            assert status == 200, last
+            if last.get("state") in {"succeeded", "failed"}:
+                return last
+            time.sleep(0.05)
+        raise AssertionError(f"timed out waiting for ML execution: {last!r}")
+
+    composition = build_local_composed_from_env()
+    catalog = composition.control_plane_server.catalog_reader
+    assert catalog is not None
+    catalog.create_asset(WorkspaceId("workspace-1"), dataset, now=now)
+    catalog.put_revision(WorkspaceId("workspace-1"), dataset_revision, now=now)
+    try:
+        composition.start()
+        address = composition.control_plane_server.server_address
+
+        status, created = request(
+            address, "POST", "/v1/ml-studio/labs?workspace_id=workspace-1", lab_payload
+        )
+        assert status == 200, created
+        lab_digest = Lab.from_payload(created).digest
+
+        status, quality = request(
+            address,
+            "POST",
+            f"/v1/ml-studio/labs/{lab_id}/quality?workspace_id=workspace-1",
+            {"rows": rows},
+        )
+        assert status == 200, quality
+        assert quality["passed"] is True
+
+        status, submitted = request(
+            address,
+            "POST",
+            f"/v1/ml-studio/labs/{lab_id}/executions?workspace_id=workspace-1",
+            {
+                "run_id": run_id,
+                "rows": rows,
+                "algorithm": "decision_tree_classifier",
+                "preprocessor": "standard_scale",
+            },
+        )
+        assert status == 200, submitted
+        execution = wait_for_execution(address)
+        assert execution["state"] == "succeeded", execution
+        result = cast(dict[str, object], execution["result"])
+        raw_artifact_digest = result["artifact_digest"]
+        assert isinstance(raw_artifact_digest, str)
+        assert raw_artifact_digest.startswith("sha256:")
+        artifact_digest = raw_artifact_digest.removeprefix("sha256:")
+        assert len(artifact_digest) == 64
+
+        status, registered = request(
+            address,
+            "POST",
+            f"/v1/ml-studio/executions/{run_id}/register?workspace_id=workspace-1",
+            {"model_id": model_id, "version": model_version},
+        )
+        assert status == 200, registered
+        assert registered["artifact_digest"] == artifact_digest
+
+        model_path = f"/v1/ml-studio/models/{model_id}/{model_version}"
+        status, blocked = request(
+            address,
+            "POST",
+            f"{model_path}/promote?workspace_id=workspace-1",
+            {"reason": "promotion requires review"},
+        )
+        assert status == 409, blocked
+
+        status, evaluation = request(
+            address,
+            "POST",
+            f"{model_path}/evaluations?workspace_id=workspace-1",
+            {"status": "passed", "review_ref": "d28-operator-review"},
+        )
+        assert status == 200, evaluation
+        evaluation_payload = cast(dict[str, object], evaluation["evaluation"])
+        assert evaluation_payload["status"] == "passed"
+        assert evaluation_payload["dataset"] == dataset_revision.ref.to_payload()
+
+        status, promoted = request(
+            address,
+            "POST",
+            f"{model_path}/promote?workspace_id=workspace-1",
+            {"reason": "d28 operator review passed"},
+        )
+        assert status == 200, promoted
+        assert promoted["stage"] == "champion"
+        assert promoted["artifact_digest"] == artifact_digest
+
+        status, deployment = request(
+            address,
+            "POST",
+            "/v1/ml-studio/deployments?workspace_id=workspace-1",
+            {
+                "deployment_id": deployment_id,
+                "model_id": model_id,
+                "version": model_version,
+                "endpoint": "local",
+            },
+        )
+        assert status == 200, deployment
+        assert deployment["status"] == "ready"
+        assert deployment["readiness"] == "ready"
+        assert deployment["artifact_digest"] == artifact_digest
+
+        status, health = request(
+            address,
+            "GET",
+            f"/v1/ml-studio/deployments/{deployment_id}/health?workspace_id=workspace-1",
+        )
+        assert status == 200, health
+        assert health["healthy"] is True
+        assert health["artifact_digest"] == artifact_digest
+
+        status, served = request(
+            address,
+            "POST",
+            f"/v1/ml-studio/deployments/{deployment_id}/predict?workspace_id=workspace-1",
+            {"rows": [{"x": 2.0}, {"x": 19.0}]},
+        )
+        assert status == 200, served
+        assert served["predictions"] == [0, 1]
+        served_telemetry = cast(dict[str, object], served["telemetry"])
+        assert served_telemetry["request_count"] == 1
+
+        drift_policy = {
+            "schema": "ronin.ml-drift-policy/v1",
+            "id": "customer-drift",
+            "version": 1,
+            "thresholds": [{"feature": "x", "mean_delta": 2.0, "variance_delta": 1000.0}],
+        }
+        status, saved_policy = request(
+            address,
+            "POST",
+            f"/v1/ml-studio/labs/{lab_id}/drift-policies?workspace_id=workspace-1",
+            drift_policy,
+        )
+        assert status == 200, saved_policy
+        assert saved_policy["version"] == 1
+        status, policies = request(
+            address,
+            "GET",
+            f"/v1/ml-studio/labs/{lab_id}/drift-policies?workspace_id=workspace-1",
+        )
+        assert status == 200, policies
+        assert policies["items"] == [drift_policy]
+
+        status, drift = request(
+            address,
+            "POST",
+            f"/v1/ml-studio/labs/{lab_id}/drift?workspace_id=workspace-1",
+            {
+                "baseline_rows": [{"x": 1.0}, {"x": 2.0}, {"x": 3.0}],
+                "current_rows": [{"x": 1.0}, {"x": 2.0}, {"x": 50.0}],
+                "policy": drift_policy,
+            },
+        )
+        assert status == 200, drift
+        drift_assessment = cast(dict[str, object], drift["assessment"])
+        assert drift_assessment["status"] == "drifted"
+        assert drift_assessment["drifted_features"] == ["x"]
+        assert drift["lab_id"] == lab_id
+        assert drift["policy"] == drift_policy
+
+        status, invalid_drift = request(
+            address,
+            "POST",
+            f"/v1/ml-studio/labs/{lab_id}/drift?workspace_id=workspace-1",
+            {
+                "baseline_rows": [{"x": 1.0}],
+                "current_rows": [{"x": 2.0}],
+                "policy": {**drift_policy, "thresholds": []},
+            },
+        )
+        assert status == 400, invalid_drift
+
+        status, rolled_back = request(
+            address,
+            "POST",
+            f"/v1/ml-studio/deployments/{deployment_id}/rollback?workspace_id=workspace-1",
+            {"reason": "d28 rollback rehearsal"},
+        )
+        assert status == 200, rolled_back
+        assert rolled_back["status"] == "rolled_back"
+        assert rolled_back["readiness"] == "unready"
+        assert rolled_back["artifact_digest"] == artifact_digest
+
+        status, rejected_prediction = request(
+            address,
+            "POST",
+            f"/v1/ml-studio/deployments/{deployment_id}/predict?workspace_id=workspace-1",
+            {"rows": [{"x": 2.0}]},
+        )
+        assert status == 400, rejected_prediction
+
+        status, unhealthy = request(
+            address,
+            "GET",
+            f"/v1/ml-studio/deployments/{deployment_id}/health?workspace_id=workspace-1",
+        )
+        assert status == 200, unhealthy
+        assert unhealthy["healthy"] is False
+    finally:
+        composition.stop()
+
+    restarted = build_local_composed_from_env()
+    try:
+        restarted.start()
+        address = restarted.control_plane_server.server_address
+        status, recovered_card = request(
+            address,
+            "GET",
+            f"{model_path}/card?workspace_id=workspace-1",
+        )
+        assert status == 200, recovered_card
+        recovered_identity = cast(dict[str, object], recovered_card["identity"])
+        assert recovered_identity["stage"] == "champion"
+        recovered_provenance = cast(dict[str, object], recovered_card["provenance"])
+        assert recovered_provenance["artifact_digest"] == artifact_digest
+        assert recovered_provenance["source_revision"] == lab_digest
+
+        status, recovered_deployment = request(
+            address,
+            "GET",
+            f"/v1/ml-studio/deployments/{deployment_id}?workspace_id=workspace-1",
+        )
+        assert status == 200, recovered_deployment
+        assert recovered_deployment["status"] == "rolled_back"
+        assert recovered_deployment["revision"] == 2
+
+        status, recovered_policies = request(
+            address,
+            "GET",
+            f"/v1/ml-studio/labs/{lab_id}/drift-policies?workspace_id=workspace-1",
+        )
+        assert status == 200, recovered_policies
+        assert recovered_policies["items"] == [drift_policy]
+
+        status, denied = request(
+            address,
+            "GET",
+            f"/v1/ml-studio/deployments/{deployment_id}?workspace_id=workspace-unknown",
+        )
+        assert status == 403, denied
+    finally:
+        restarted.stop()
+
+
 def test_build_local_composed_rejects_unknown_permission(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
