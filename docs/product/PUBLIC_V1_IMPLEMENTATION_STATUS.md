@@ -111,7 +111,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `870484a5b749b14a443d2bbf062c3ec10183ab31` (2026-11-15).
+**Observed source head:** `2da767235dd633159e8e13dda73723bdef052cba` (2026-11-15).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
@@ -164,6 +164,22 @@ PostgreSQL/operator, Docker worker/provider and complete family qualification
 remain open. P6 remains `in_progress`, the ledger is 1/13 families and 0/10
 gates, and release remains **NO-GO**. See
 `docs/qualification/candidates/candidate-870484a5-d24.json`.
+
+**D25 quality evidence update (2026-11-15):** exact candidate
+`2da767235dd633159e8e13dda73723bdef052cba` passes the bounded local
+SQLite/HTTP quality journey through direct server behavior, PyRonin and the
+new public CLI operations for contract get/put, run, history and state. The
+journey pins a canonical contract digest, proves a passed result, records a
+failed threshold without a false PASS, rejects malformed rows with 400,
+preserves state/history after restart and denies an unknown workspace with 403.
+Quality Studio now inherits the active workspace context. Candidate static
+gates and clean-sandbox Gitleaks/pip-audit pass; candidate browser launch is
+explicitly `SKIP` after Chromium timed out twice, while the checkout UI
+contract passed 2/2. PostgreSQL/custom-rule providers, external alerts,
+complete catalog/lineage quality integration and full P7 provider/consumer
+qualification remain open. P7 remains `in_progress`, the ledger is 1/13
+families and 0/10 gates, and release remains **NO-GO**. See
+`docs/qualification/candidates/candidate-2da76723-d25.json`.
 
 **Current worktree update (2026-10-30; dirty diagnostic candidate):** P3 now includes a project-authorized local DuckDB `POST .../sql/explain` route and a SQL Studio action. The route reuses project-read authorization, validates the shared read-only SELECT contract and registered relation scope, forwards a bounded execution deadline, incrementally caps serialized plan rows, and redacts paths, URLs and inline secret assignments. Providers without the optional capability return an explicit 501. Targeted verification is recorded in `PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`; this does not qualify P3 or the release, and the historical notes below remain historical snapshots.
 

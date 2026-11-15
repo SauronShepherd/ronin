@@ -1,0 +1,100 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D25",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-12-09",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "2da767235dd633159e8e13dda73723bdef052cba",
+    "origin_main_sha_when_candidate_was_tested": "2da767235dd633159e8e13dda73723bdef052cba",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2da76723-d25",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2da76723-d25\\candidate-2da767235dd633159e8e13dda73723bdef052cba.tar",
+      "format": "tar",
+      "sha256": "559cc8ae65b0acf15994c3744ab294577c9c247a009f725d5753259d2a131f5a",
+      "size": 16834560
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2da76723-d25\\candidate-2da767235dd633159e8e13dda73723bdef052cba.manifest.json",
+      "sha256": "2fc39902688690aba685b984120daaee33f6a13b5f482b52322a3a3a2ffa3245",
+      "size": 221153
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2da76723-d25\\candidate-2da767235dd633159e8e13dda73723bdef052cba.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2da76723-d25\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1438,
+    "total_bytes": 15654188,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "2da767235dd633159e8e13dda73723bdef052cba",
+    "candidate_docs_commit": null,
+    "summary": "D25 closes the bounded local P7 contract/check/result/report journey over the real SQLite/HTTP composition, exposes versioned quality contracts and durable evidence through the public CLI, and makes Quality Studio inherit the active workspace context.",
+    "production_files_changed": [
+      "python/studio_cli/__init__.py",
+      "python/studio_cli/network.py",
+      "web/js/quality-studio.js",
+      "docs/ui/web-budget.json",
+      "agent-skills/ronin-core/references/cli-contract.md"
+    ],
+    "test_files_changed": [
+      "tests/test_local_composed.py",
+      "web-tests/tests/quality-studio.spec.mjs"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 2da767235dd633159e8e13dda73723bdef052cba --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2da76723-d25",
+    "verify": "python -m tools.ronin_candidate_boundary verify --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2da76723-d25",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after test caches and browser dependencies; the same SHA was regenerated with identical archive and manifest hashes; final verify passed",
+    "candidate_focused": "exact candidate sandbox pytest local-composed quality/graph journey, quality HTTP/runtime/store tests, PyRonin catalog/ontology/graph tests and CLI integration tests",
+    "candidate_web": "exact candidate sandbox npm ci --offline --ignore-scripts followed by Playwright Quality Studio; SKIP because Chromium headless launch timed out at 180000 ms on two attempts; checkout equivalent passed 2/2",
+    "candidate_static": "exact candidate sandbox ruff format --check, ruff check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio surface, web audit, web budget, daily progress and capability status",
+    "scans": "Gitleaks directory scan and pip-audit -r requirements-test.lock over the final clean exact candidate; Trivy skipped because no local binary was available"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "2 local-composed journeys passed (quality and prior graph/ontology), 47 quality HTTP/runtime/store tests passed, and 7 PyRonin/CLI catalog-quality-graph tests passed; no failures or skips in these focused suites",
+    "candidate_web": "SKIP; browserType.launch timed out at 180000 ms twice in the candidate sandbox; checkout Quality Studio browser suite passed 2/2 in 1.3 minutes",
+    "checkout_web": "2 passed, 0 failed, 0 skipped in 1.3 minutes against the checkout static server",
+    "candidate_static": "ruff format 1129 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI digest 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 129/242, web audit 72 files/184 route invocations and web budget 2169891 bytes passed",
+    "ledger_checks": "ronin_daily_progress --check --report passed in the exact archive at the archived D24 ledger state (24/39, NO-GO); generate_public_v1_status --check is SKIP in the archive because it requires Git metadata; checkout checks are recorded after the D25 evidence commit",
+    "candidate_reproducibility_after_cleanup": "pass; cleanup/regeneration produced the same archive and manifest hashes and final verify passed",
+    "checkout_integrity_checks": "host checkout git diff --check and main/origin identity are checked separately; the candidate sandbox intentionally has no .git metadata",
+    "result": "D25 pass for bounded local workspace-scoped quality contract/check/result/report evidence through real HTTP, PyRonin and CLI; P7 remains in_progress and is not qualified"
+  },
+  "security_and_recovery": {
+    "workspace_scope": "The real local composition stores the contract and runs in workspace-1; an unknown workspace receives HTTP/SDK 403 and malformed row input receives HTTP/SDK 400 before evidence is recorded.",
+    "contract_and_gate": "A canonical row-count contract is PUT and read back, its digest is pinned for execution, a populated row set returns gate_passed true, and an empty row set returns gate_passed false without enforce_blocking; no failed threshold is reported as PASS.",
+    "persistence_and_recovery": "The contract, passed/failed history and latest failed state are read through SDK and CLI, then recovered from the same SQLite database after composition restart.",
+    "operator_surface": "CLI exposes contract get/put, run, history and state over the same authenticated control-plane routes; Quality Studio initializes from the active workspace query/context instead of always defaulting to default.",
+    "provider_scope": "Only the real local SQLite composition was exercised. PostgreSQL quality storage, optional SQL/Python custom-rule providers, external alert delivery and provider/operator certification were not run and are not claimed.",
+    "scans": {
+      "gitleaks": "8.30.1; final clean exact-candidate directory scan of 15,654,188 bytes; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; no known vulnerabilities",
+      "trivy": "SKIP; no local Trivy binary; no substitute scan claimed"
+    }
+  },
+  "open_cells": [
+    "P7 remains in_progress, not qualified: provider-backed quality storage, optional SQL/Python rule execution, complete catalog/lineage quality-state integration, broader alert/product journeys and provider/consumer certification remain open.",
+    "Candidate browser evidence is SKIP because the sandbox Chromium process did not launch within 180000 ms; the checkout UI contract passed separately and is not substituted for candidate provider evidence.",
+    "P6, P13 and all other non-P1 families retain their ledger states; P13 remains blocked by the external secret-provider and release evidence boundary.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The exact candidate sandbox has no .git metadata by design; generate_public_v1_status --check therefore remains a candidate SKIP and was not converted into PASS.",
+    "Playwright dependencies were installed offline only in the temporary candidate sandbox for the attempted browser run and were removed by cleanup before regeneration; node_modules is not part of the candidate archive.",
+    "Static checks and scans were rerun on the final clean regenerated candidate; final verify passed with no generated caches or test artifacts.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

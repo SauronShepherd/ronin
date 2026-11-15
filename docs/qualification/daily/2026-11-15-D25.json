@@ -1,0 +1,71 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D25",
+  "date": "2026-11-15",
+  "status": "pass",
+  "cell": "P7 bounded quality contract + threshold result + invalid data + persistence/recovery + SDK/CLI + Quality Studio context",
+  "candidate_sha": "2da767235dd633159e8e13dda73723bdef052cba",
+  "candidate_receipt": "docs/qualification/candidates/candidate-2da76723-d25.json",
+  "code_commit": "2da767235dd633159e8e13dda73723bdef052cba",
+  "origin_main_at_code_commit": "2da767235dd633159e8e13dda73723bdef052cba",
+  "implementation": {
+    "cli": "Added authenticated quality contract get/put, run, history and state commands over the control-plane client, with bounded JSON object files and the existing canonical error path.",
+    "sdk_and_http": "Exercised the existing PyRonin quality methods against the real local SQLite/HTTP composition; no provider was replaced by a mock for certification.",
+    "studio": "Quality Studio now uses the active workspace context from the shell/query and the browser contract test asserts that scope.",
+    "quality_journey": "The real journey pins a DataContract digest, records a passed run, records a failed threshold without enforcing a false pass, rejects malformed rows, reads state/history, and recovers after restart.",
+    "recovery": "The same SQLite database preserves the versioned contract and both durable results after composition restart; unknown-workspace reads remain denied."
+  },
+  "tests": {
+    "candidate_local_composed": "2 passed, 23 deselected, 0 failed, 0 skipped for the quality and prior graph/ontology journeys",
+    "candidate_quality_http_runtime_store": "47 passed, 0 failed, 0 skipped",
+    "candidate_pyronin_cli_catalog_quality_graph": "7 passed, 82 deselected, 0 failed, 0 skipped",
+    "candidate_web_quality_studio": "SKIP; Chromium headless launch timed out at 180000 ms on two attempts",
+    "checkout_web_quality_studio": "2 passed, 0 failed, 0 skipped in 1.3 minutes",
+    "negative_paths": [
+      "unknown workspace returns HTTP/SDK 403",
+      "quality rows containing a non-object return HTTP/SDK 400",
+      "empty rows fail the blocking row-count threshold with gate_passed false when enforcement is disabled",
+      "Quality Studio keeps the selected scope recoverable after a state error"
+    ],
+    "static": {
+      "ruff_format": "PASS; 1129 files",
+      "ruff": "PASS",
+      "mypy": "PASS; 451 source files",
+      "architecture": "PASS",
+      "negative_gates": "PASS",
+      "route_consistency": "PASS; 200 operations",
+      "dependency_surfaces": "PASS",
+      "openapi": "PASS; 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708",
+      "studio_surface": "PASS; 129/242",
+      "studio_web_audit": "PASS; 72 files, 184 route invocations",
+      "studio_budget": "PASS; 2169891 asset bytes",
+      "daily_progress": "PASS in candidate at archived ledger state 24/39; PASS on checkout after evidence update at 25/39",
+      "public_status": "SKIP in archive; command requires Git metadata; PASS on checkout after evidence update",
+      "capability_status": "PASS"
+    }
+  },
+  "scans": {
+    "gitleaks": "PASS; 8.30.1; 0 findings over 15,654,188 clean candidate bytes",
+    "pip_audit": "PASS; 2.10.1; no known vulnerabilities from requirements-test.lock",
+    "trivy": "SKIP; no local binary"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "24/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "25/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    }
+  },
+  "limitations": [
+    "P7 is not qualified: only the local SQLite profile is exercised; PostgreSQL, optional SQL/Python custom providers, complete catalog/lineage integration, external alerts and provider/consumer certification remain open.",
+    "Candidate browser launch is a recorded SKIP, not a PASS; the checkout browser contract is separate evidence.",
+    "No gate changes to closed and no skip counts as PASS."
+  ]
+}
