@@ -11,9 +11,8 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Protocol
 
-from studio_core import redact_sensitive_text
-
 from .notifications import NotificationIntent, NotificationSink
+from .redaction import redact_sensitive_text
 from .store import NotificationIntentConflict
 
 _MAX_NOTIFICATION_ERROR_LENGTH = 1024
