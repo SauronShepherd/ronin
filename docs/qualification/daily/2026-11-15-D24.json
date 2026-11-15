@@ -1,0 +1,67 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D24",
+  "date": "2026-11-15",
+  "status": "pass",
+  "cell": "P6 bounded local catalog + ontology + graph/RQL + SDK/CLI + Graph Studio journey",
+  "candidate_sha": "870484a5b749b14a443d2bbf062c3ec10183ab31",
+  "candidate_receipt": "docs/qualification/candidates/candidate-870484a5-d24.json",
+  "code_commit": "870484a5b749b14a443d2bbf062c3ec10183ab31",
+  "origin_main_at_code_commit": "870484a5b749b14a443d2bbf062c3ec10183ab31",
+  "implementation": {
+    "cli": "Added catalog assets/lineage/revisions/revision, ontology versions/schema and bounded graph query/objects/neighbors commands over the control-plane client.",
+    "sdk": "Exercised the existing PyRonin catalog, ontology and graph methods against the real local HTTP composition, including restart and 403 isolation paths.",
+    "studio": "Graph Studio now inherits active workspace context, reloads on context changes and exposes ontology schema reads tied to catalog revisions.",
+    "recovery": "SQLite-backed catalog, ontology and graph data was read before and after composition restart; same graph id remains isolated across two workspaces."
+  },
+  "tests": {
+    "candidate_local_composed": "1 passed, 23 deselected, 0 failed, 0 skipped",
+    "candidate_pyronin_catalog_ontology_graph": "7 passed, 80 deselected, 0 failed, 0 skipped",
+    "candidate_cli_operator": "2 passed, 0 failed, 0 skipped",
+    "candidate_web_graph_studio": "2 passed, 0 failed, 0 skipped in 53.2s",
+    "negative_paths": [
+      "unknown workspace returns HTTP/SDK 403",
+      "CLI rejects non-JSON graph key with exit code 2",
+      "Graph Studio renders a recoverable error and succeeds on retry"
+    ],
+    "static": {
+      "ruff_format": "PASS; 1128 files",
+      "ruff": "PASS",
+      "mypy": "PASS; 451 source files",
+      "architecture": "PASS",
+      "negative_gates": "PASS",
+      "route_consistency": "PASS; 200 operations",
+      "dependency_surfaces": "PASS",
+      "openapi": "PASS; 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708",
+      "studio_surface": "PASS; 129/242",
+      "studio_web_audit": "PASS; 72 files, 184 route invocations",
+      "daily_progress": "PASS; report 24/39 and release NO-GO",
+      "public_status": "SKIP in archive; command requires Git metadata",
+      "capability_status": "PASS"
+    }
+  },
+  "scans": {
+    "gitleaks": "PASS; 8.30.1; 0 findings over 15,622,621 manifest bytes",
+    "pip_audit": "PASS; 2.10.1; no known vulnerabilities from requirements-test.lock",
+    "trivy": "SKIP; no local binary"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "23/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "24/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    }
+  },
+  "limitations": [
+    "P6 is not qualified: project-level catalog scope, graph actions, external providers, PostgreSQL/operator and complete release recovery evidence remain open.",
+    "Browser route fulfillment proves UI contract behavior only; it does not certify a provider.",
+    "No gate is closed and no skip is counted as PASS."
+  ]
+}
