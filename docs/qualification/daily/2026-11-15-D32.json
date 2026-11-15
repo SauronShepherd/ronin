@@ -4,10 +4,10 @@
   "date": "2026-11-15",
   "status": "pass",
   "cell": "P11 real two-partition streaming campaign, checkpoint expansion and exact-candidate evidence",
-  "candidate_sha": "d71dad4eef4746154d1bd56b2baf45feef9ea337",
-  "candidate_receipt": "docs/qualification/candidates/candidate-d71dad4e-d32.json",
-  "code_commit": "d71dad4eef4746154d1bd56b2baf45feef9ea337",
-  "origin_main_at_code_commit": "d71dad4eef4746154d1bd56b2baf45feef9ea337",
+  "candidate_sha": "a707b8c5a77e165f03458050c98e27a4545d3bb3",
+  "candidate_receipt": "docs/qualification/candidates/candidate-a707b8c5-d32.json",
+  "code_commit": "a707b8c5a77e165f03458050c98e27a4545d3bb3",
+  "origin_main_at_code_commit": "a707b8c5a77e165f03458050c98e27a4545d3bb3",
   "implementation": {
     "journey": "Added a real Redpanda topic with two partitions and 12 JSON records, ran six bounded micro-batches of two records, verified per-partition lag 6/6 to 0/0, and retained the existing poison/oversized/recovery path.",
     "evidence_gap": "D31 proved one bounded streaming provider path but left multi-partition drain and checkpoint expansion untested against a real provider.",
@@ -15,7 +15,8 @@
   },
   "tests": {
     "candidate_streaming": "34 passed, 0 failed, 0 skipped",
-    "live_provider": "1 passed, 0 skipped, 0 failed; Redpanda/Kafka true, Ronin API true, PostgreSQL false, worker null; 52 real API events, 52 correlated logs, 48 OK and 4 expected WARN",
+    "candidate_status_tests": "7 passed, 0 failed for public matrix/status contracts",
+    "live_provider": "1 passed, 0 skipped, 0 failed in 79.69 seconds; Redpanda/Kafka true, Ronin API true, PostgreSQL false, worker null; 52 real API events, 52 correlated logs, 48 OK and 4 expected WARN",
     "checkout_streaming_web": "1 passed, 0 skipped, 0 failed in the real Chromium journey; node --check passed",
     "candidate_web": "SKIP; @playwright/test is not present in the exact candidate archive",
     "negative_paths": [
@@ -27,7 +28,7 @@
     "static": {
       "ruff_format": "PASS; changed Python files and final checkout full check",
       "ruff": "PASS; changed Python files and final checkout full check",
-      "mypy": "PASS; checkpoint module and final checkout full check",
+      "mypy": "PASS; 451 source files",
       "architecture": "PASS",
       "negative_gates": "PASS",
       "route_consistency": "PASS",
@@ -44,17 +45,17 @@
     }
   },
   "candidate": {
-    "archive_sha256": "102dd899900e7583c03bd0e5b4a4dbfcf9c34900589f6e02fae0d95af1c9cd76",
-    "archive_size": 17049600,
-    "manifest_sha256": "af107be66cfb66c76554dd3b3fb9b9a26e64f805ce9ea032801fae5a296e5d2d",
-    "manifest_size": 224612,
+    "archive_sha256": "4b77129e0800a0adabadee9e380c6a5389bec06ea099bb8b8c0da326f442d090",
+    "archive_size": 17059840,
+    "manifest_sha256": "46be3cf92c0d5ec9da6373fdcf7be6d632b28dd723ccff136c0bf9c6636a4bca",
+    "manifest_size": 225106,
     "digest_size": 252,
-    "file_count": 1459,
-    "total_bytes": 15850347,
+    "file_count": 1462,
+    "total_bytes": 15868223,
     "cleanup_regenerate_verify": "PASS; identical archive and manifest hashes after cleanup/regeneration; final sandbox has no caches or test artifacts"
   },
   "scans": {
-    "gitleaks": "PASS; 0 findings over 15,850,347 bytes of the final clean candidate",
+    "gitleaks": "PASS; 0 findings over 15,868,223 bytes of the final clean candidate",
     "pip_audit": "PASS; no known vulnerabilities from requirements-test.lock",
     "trivy": "SKIP; no local binary"
   },

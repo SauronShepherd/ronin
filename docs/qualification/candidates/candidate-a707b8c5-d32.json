@@ -1,0 +1,101 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D32",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-12-16",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "a707b8c5a77e165f03458050c98e27a4545d3bb3",
+    "origin_main_sha_when_candidate_was_tested": "a707b8c5a77e165f03458050c98e27a4545d3bb3",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a707b8c5-d32",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a707b8c5-d32\\candidate-a707b8c5a77e165f03458050c98e27a4545d3bb3.tar",
+      "format": "tar",
+      "sha256": "4b77129e0800a0adabadee9e380c6a5389bec06ea099bb8b8c0da326f442d090",
+      "size": 17059840
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a707b8c5-d32\\candidate-a707b8c5a77e165f03458050c98e27a4545d3bb3.manifest.json",
+      "sha256": "46be3cf92c0d5ec9da6373fdcf7be6d632b28dd723ccff136c0bf9c6636a4bca",
+      "size": 225106
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a707b8c5-d32\\candidate-a707b8c5a77e165f03458050c98e27a4545d3bb3.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a707b8c5-d32\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1462,
+    "total_bytes": 15868223,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "a707b8c5a77e165f03458050c98e27a4545d3bb3",
+    "candidate_docs_commit": null,
+    "summary": "D32 adds a real two-partition streaming campaign and fixes checkpoint partition expansion. The live fixture produces 12 records across partitions 0 and 1, drains six bounded micro-batches of two records, verifies per-partition lag 6/6 to 0/0, and retains the existing poison, oversized-record and recovery assertions. The candidate also carries the corrected capability-progress consistency test.",
+    "production_files_changed": [
+      "python/studio_streaming/checkpoint.py"
+    ],
+    "test_files_changed": [
+      "tests/test_streaming_contracts.py",
+      "tests/test_public_capability_matrix.py",
+      "tools/seed_live_streaming.py",
+      "web-tests/tests/product-live.spec.mjs"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha a707b8c5a77e165f03458050c98e27a4545d3bb3 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a707b8c5-d32",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a707b8c5-d32",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after candidate tests and scans; the same source SHA regenerated the identical archive and manifest hashes; final verify passed",
+    "candidate_streaming": "exact candidate sandbox pytest -q tests/test_streaming_contracts.py tests/test_streaming_runtime.py tests/test_streaming_kafka.py tests/test_streaming_health.py tests/test_streaming_bundle.py tests/test_stream_table.py tests/test_stream_scheduler_bridge.py: 34 passed, 0 failed, 0 skipped",
+    "candidate_status_tests": "exact candidate sandbox public matrix/status tests: 7 passed, 0 failed",
+    "candidate_web": "SKIP for browser execution; the exact candidate archive does not package @playwright/test. node --check web-tests/tests/product-live.spec.mjs passed.",
+    "live_provider": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -TestGrep streaming -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d32f-streaming-20261115",
+    "candidate_static": "exact candidate sandbox Ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio surface, web audit, budget, assets, daily progress and JavaScript syntax all passed; public status check requires Git metadata and passed on the checkout",
+    "scans": "final clean candidate gitleaks dir scan and pip-audit -r sandbox\\requirements-test.lock; Trivy skipped because no local binary was available"
+  },
+  "qualification_matrix": {
+    "candidate_streaming": "34 passed, 0 failed, 0 skipped across streaming source/runtime/health/Bundle/contracts/table/scheduler bridge selections",
+    "candidate_status_tests": "7 passed, 0 failed for the public matrix and public status contracts",
+    "live_provider": "1 passed, 0 skipped, 0 failed in 79.69 seconds; Redpanda/Kafka true, Ronin API true, Chromium true, PostgreSQL false and worker null; 52 real API events, all 52 correlated with structured logs, 48 OK, 4 expected WARN and 0 server/network errors",
+    "checkout_streaming_web": "1 passed, 0 skipped, 0 failed in the real live browser journey; node syntax check also passed",
+    "candidate_web": "SKIP; the exact candidate archive lacks @playwright/test and no browser PASS is claimed for the archive",
+    "candidate_static": "Ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI digest 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 129/242, web audit 72 files/184 route invocations, web budget and 53 assets passed",
+    "ledger_checks": "The exact candidate was generated from clean main a707b8c5 and verified; daily progress passed in the archive and public status passed on the checkout",
+    "candidate_reproducibility_after_cleanup": "pass; cleanup/regeneration produced the same archive SHA 4b77129e0800a0adabadee9e380c6a5389bec06ea099bb8b8c0da326f442d090 and manifest SHA 46be3cf92c0d5ec9da6373fdcf7be6d632b28dd723ccff136c0bf9c6636a4bca; final verify passed",
+    "checkout_integrity_checks": "host checkout main/origin identity and git diff --check are checked separately; the candidate sandbox intentionally has no .git metadata",
+    "result": "D32 pass for the bounded real two-partition campaign and checkpoint partition-expansion fix; P11 remains in_progress and unqualified"
+  },
+  "security_and_recovery": {
+    "live_provider": "The live runner started an isolated real Redpanda broker and Ronin API, seeded a two-partition topic, ran Chromium against the Streaming Studio journey, correlated every API event to structured logs and removed the isolated container/network.",
+    "negative_paths": "The journey retains invalid/poison/oversized input WARN assertions and checks that failed poison processing does not advance lag; partitioned polling also checks bounded idle retries and unchanged lag. The capability progress test rejects a false zero-progress claim while requiring release_ready=false.",
+    "provider_scope": "Redpanda/Kafka was exercised as a real local provider. PostgreSQL and the worker were not started in this streaming-only campaign; no external broker or full provider matrix is claimed.",
+    "recovery_scope": "The campaign proves bounded multi-partition drain, checkpoint expansion and final zero lag. It does not establish continuous operation, broker/process failure recovery, backpressure exhaustion, operator rollback or complete P11 qualification.",
+    "scans": {
+      "gitleaks": "direct final clean gitleaks dir scan; 0 findings over 15,868,223 bytes",
+      "pip_audit": "final clean pip-audit requirements-test.lock; no known vulnerabilities",
+      "trivy": "SKIP; no local Trivy binary; no substitute scan claimed"
+    }
+  },
+  "open_cells": [
+    "P11 remains in_progress, not qualified: this is one real Redpanda multi-partition slice; continuous operation, broader backpressure/failure recovery, operator evidence and the full provider matrix remain open.",
+    "The exact candidate browser lane is SKIP because the archive lacks @playwright/test; the live Chromium result is bound to the clean source SHA a707b8c5a77e165f03458050c98e27a4545d3bb3 and is not substituted for archive packaging evidence.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary; P10 and all other families retain their ledger states.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "Two earlier live D32 diagnostic attempts failed before the final fixes: the first exposed a one-second poll timeout, and the second exposed checkpoint CAS rejection when a new partition appeared. The final a707b8c5 candidate is the only result recorded as PASS for the final candidate.",
+    "The exact candidate sandbox has no .git metadata by design; public status verification requires the checkout and is not converted into a candidate PASS.",
+    "The candidate archive intentionally does not package browser dependencies; no browser skip is counted as PASS.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

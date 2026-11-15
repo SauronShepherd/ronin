@@ -2,7 +2,7 @@
 
 ## Current exact-SHA snapshot — 15 November 2026
 
-The current code/evidence candidate is `d71dad4eef4746154d1bd56b2baf45feef9ea337`.
+The current code/evidence candidate is `a707b8c5a77e165f03458050c98e27a4545d3bb3`.
 Its D32 evidence adds a real two-partition Redpanda/Kafka campaign with the
 Ronin API and Chromium: the selected live journey is `1/1`, with `52/52`
 correlated API events (`48` `OK`, `4` expected `WARN`) and zero server/network
@@ -131,7 +131,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `d71dad4eef4746154d1bd56b2baf45feef9ea337` (current exact candidate; implementation evidence remains bound to the stated product candidate, this is not a release qualification claim, and the required human/provider gates remain open).
+**Observed source baseline:** `a707b8c5a77e165f03458050c98e27a4545d3bb3` (current exact candidate; implementation evidence remains bound to the stated product candidate, this is not a release qualification claim, and the required human/provider gates remain open).
 
 The D21 scheduler slice adds exact-candidate evidence for the bounded local
 API/SQLite/daemon journey and fail-closed identity input boundaries at
