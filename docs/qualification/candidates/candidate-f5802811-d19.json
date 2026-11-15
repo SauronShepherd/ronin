@@ -1,0 +1,91 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D19",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-12-03",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "f5802811e14a5e95b52725a7a29fbd17b4262af4",
+    "origin_main_sha_when_candidate_was_tested": "f5802811e14a5e95b52725a7a29fbd17b4262af4",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f5802811-d19",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f5802811-d19\\candidate-f5802811e14a5e95b52725a7a29fbd17b4262af4.tar",
+      "format": "tar",
+      "sha256": "2ed497660870bb2e55c4062385d220b9df4a6afab8c8d4c0e3ea22c199d2ba7d",
+      "size": 16650240
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f5802811-d19\\candidate-f5802811e14a5e95b52725a7a29fbd17b4262af4.manifest.json",
+      "sha256": "92b5811e995587b2e0db51061a0aecfce0d93b2f383be8890871da7cc85362e4",
+      "size": 217879
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f5802811-d19\\candidate-f5802811e14a5e95b52725a7a29fbd17b4262af4.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f5802811-d19\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1418,
+    "total_bytes": 15482811,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "f5802811e14a5e95b52725a7a29fbd17b4262af4",
+    "candidate_docs_commit": "f5802811e14a5e95b52725a7a29fbd17b4262af4",
+    "summary": "D19 hardened durable cron evaluation and schedule ticks against non-integer, boolean, non-positive and over-bound scan/fire limits, with reproducible negative coverage. Scheduler persistence, idempotence, leadership and outbox behavior remain unchanged and were revalidated.",
+    "production_files_changed": [
+      "python/studio_execution/scheduler_cron.py",
+      "python/studio_execution/scheduler_schedule_service.py"
+    ],
+    "test_files_changed": [
+      "tests/test_scheduler_cron.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha f5802811e14a5e95b52725a7a29fbd17b4262af4 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f5802811-d19",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f5802811-d19",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed generated __pycache__, mypy/ruff caches and test artifacts; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "candidate_focused": "PYTHONDONTWRITEBYTECODE=1; exact candidate sandbox pytest -q -p no:cacheprovider over all scheduler tests plus control-plane pagination, static control-plane and local-composed selections",
+    "candidate_static": "exact candidate sandbox ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI and Studio surface",
+    "scans": "Gitleaks --no-git; pip-audit -r requirements-test.lock; pinned Trivy filesystem vuln,secret scan"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "204 passed, 0 failed, 0 skipped from the exact candidate sandbox",
+    "checkout_scheduler_suite": "160 passed, 0 failed, 0 skipped across all test_scheduler*.py files",
+    "checkout_control_plane_selection": "44 passed, 0 failed, 0 skipped across control-plane pagination, static control-plane and local-composed tests",
+    "full_checkout_regression": "4661 passed, 81 skipped, 1 failed in 629.34s; the single failure was test_local_composed_sql_route_executes_scoped_queries_and_closes_engine, a socket timeout during the broad run. The same test passed in an isolated rerun (1 passed in 8.11s), but the broad regression is not claimed as clean PASS.",
+    "static_and_surface_checks": "candidate format 933 files, Ruff, mypy 450 source files, architecture, negative-gates, route consistency 200 operations, dependency-surfaces, canonical OpenAPI 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708 and Studio 128/242 pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests were unchanged after cleanup and regeneration",
+    "result": "D19 pass for the bounded local scheduler implementation and candidate-bound evidence; P5 remains in_progress and is not qualified"
+  },
+  "security_and_recovery": {
+    "scheduler_scope": "The candidate suite covers cron grammar/timezone semantics, catch-up and fire limits, durable cursor/fire idempotence, workflow deployment/dispatch, leadership takeover/fencing, cancellation, timeout, notification/outbox and scheduler process recovery paths. No provider certification is inferred from SQLite tests.",
+    "provider_scope": "RONIN_POSTGRES_TEST_DSN is absent, so PostgreSQL scheduler persistence and operator/provider qualification remain pending/blocked. No mock was counted as PostgreSQL evidence.",
+    "scans": {
+      "gitleaks": "8.30.1; --no-git clean exact candidate sandbox; 15,482,811 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 known vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1 pinned image sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c; clean filesystem vuln,secret scan exited 0 with no Results object, hence 0 vulnerabilities and 0 secrets; development-dependency/license analysis was not claimed"
+    }
+  },
+  "open_cells": [
+    "P5 remains in_progress, not qualified: PostgreSQL/operator-backed scheduler persistence, complete API/Studio/worker same-candidate journey and family-level notification/recovery evidence remain open.",
+    "The broad checkout regression has one isolated local-composed socket timeout; the focal rerun passed, but the broad result remains recorded as 4661/81/1 rather than relabeled PASS.",
+    "P4 remains in_progress and is not affected by D19; P2 and P3 remain in_progress; P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The exact candidate sandbox has no .git metadata by design, so Git-dependent tests and repository status checks are not claimed from it; main checkout checks run separately.",
+    "The candidate focused selection is local SQLite/control-plane evidence. It does not certify PostgreSQL or another external scheduler provider.",
+    "The first generate attempt used a mistyped SHA and was rejected before any candidate was created; the corrected full SHA generation is the only candidate evidence.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D19",
+  "date": "2026-11-15",
+  "planned_date": "2026-12-03",
+  "status": "PASS",
+  "candidate_sha": "f5802811e14a5e95b52725a7a29fbd17b4262af4",
+  "implementation_commit_sha": "f5802811e14a5e95b52725a7a29fbd17b4262af4",
+  "evidence": "docs/qualification/candidates/candidate-f5802811-d19.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D19.md",
+  "execution_scope": "complete-for-D19-bounded-local-scheduler-and-candidate-regression; PostgreSQL-operator-and-P5-family-close-pending; broad-checkout-regression-has-one-recorded-transient-failure",
+  "result": {
+    "implementation": "Scheduler cron scans now require integer 1..1000000; schedule ticks reject boolean/non-integer/non-positive/over-bound scan and fire limits with fire cap 1000",
+    "candidate_focused_suite": "204 passed, 0 failed, 0 skipped in exact candidate sandbox",
+    "checkout_scheduler_suite": "160 passed, 0 failed, 0 skipped",
+    "checkout_control_plane_selection": "44 passed, 0 failed, 0 skipped",
+    "full_checkout_regression": "4661 passed, 81 skipped, 1 failed; isolated rerun of the failing local-composed test passed 1/1, so the broad run remains non-clean and is not called PASS",
+    "static_and_surface_checks": "candidate format 933 files, Ruff, mypy 450 files, architecture, negative gates, route/dependency surfaces (200 operations), OpenAPI, Studio 128/242 pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "scans": "Gitleaks 0 findings over 15,482,811 candidate bytes; pip-audit 0 vulnerabilities across 99 dependencies; clean pinned Trivy scan exited 0 with 0 vulnerabilities and 0 secrets",
+    "p5_boundary": "D19 closes the bounded local scheduler implementation cell but does not qualify P5; PostgreSQL/operator evidence and complete API/Studio/worker family recovery remain open"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "18/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "19/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "PostgreSQL scheduler DSN and operator/provider credentials are absent; no mock was substituted.",
+    "The broad Python regression has one local-composed socket timeout despite the isolated rerun passing; this is a recorded FAIL in that run, not a hidden skip.",
+    "The candidate sandbox has no .git metadata; repository status, public ledger and diff checks run separately on main.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
