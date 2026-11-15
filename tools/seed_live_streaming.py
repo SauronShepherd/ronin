@@ -40,23 +40,26 @@ def main() -> int:
     poison_topic = "ronin-live-poison-events"
     oversized_topic = "ronin-live-oversized-events"
     recovery_topic = "ronin-live-recovery-events"
+    partitioned_topic = "ronin-live-partitioned-events"
     stream_id = "events/main"
     poison_stream_id = "events/poison"
     oversized_stream_id = "events/oversized"
+    partitioned_stream_id = "events/partitioned"
 
     kafka_admin = import_module("confluent_kafka.admin")
     admin = kafka_admin.AdminClient({"bootstrap.servers": bootstrap})
-    for topic_name, topic_config in (
-        (topic, {}),
-        (poison_topic, {}),
-        (oversized_topic, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
-        (recovery_topic, {}),
+    for topic_name, num_partitions, topic_config in (
+        (topic, 1, {}),
+        (poison_topic, 1, {}),
+        (oversized_topic, 1, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
+        (recovery_topic, 1, {}),
+        (partitioned_topic, 2, {}),
     ):
         results = admin.create_topics(
             [
                 kafka_admin.NewTopic(
                     topic_name,
-                    num_partitions=1,
+                    num_partitions=num_partitions,
                     replication_factor=1,
                     config=topic_config,
                 )
@@ -92,6 +95,13 @@ def main() -> int:
         key="ronin-live-recovery-1",
         value=json.dumps({"event": "recovered"}),
     )
+    for index in range(12):
+        producer.produce(
+            partitioned_topic,
+            partition=index % 2,
+            key=f"ronin-live-partitioned-{index}",
+            value=json.dumps({"event": f"partitioned-{index}"}),
+        )
     if producer.flush(15) != 0:
         raise SystemExit("Kafka did not acknowledge the live qualification record")
 
@@ -147,13 +157,29 @@ def main() -> int:
         schema=schema,
         runtime=StreamRuntimeBinding("local", batch_limit=1, timeout_seconds=1.0),
     )
+    partitioned_definition = StreamDefinition(
+        id=partitioned_stream_id,
+        name="Live partitioned bounded streaming qualification",
+        source=StreamSourceDefinition("live-kafka", partitioned_topic, (0, 1)),
+        sink=StreamSinkDefinition("table", "live-partitioned-events"),
+        schema=schema,
+        runtime=StreamRuntimeBinding("local", batch_limit=2, timeout_seconds=1.0),
+    )
     store = SqliteStreamCheckpointStore(database)
     store.commit_stream_bundle_import(
         workspace_id,
-        (definition, poison_definition, oversized_definition),
-        {stream_id: "reset", poison_stream_id: "reset", oversized_stream_id: "reset"},
+        (definition, poison_definition, oversized_definition, partitioned_definition),
+        {
+            stream_id: "reset",
+            poison_stream_id: "reset",
+            oversized_stream_id: "reset",
+            partitioned_stream_id: "reset",
+        },
     )
-    print("Seeded valid/poison broker topics, connection, and durable stream definitions.")
+    print(
+        "Seeded valid/poison/oversized/recovery broker topics, a two-partition topic, "
+        "connection, and durable stream definitions."
+    )
     return 0
 
 

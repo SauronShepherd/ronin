@@ -593,8 +593,8 @@ for (const route of routes) {
       expect(bundlePlanResponseValue.status(), await bundlePlanResponseValue.text()).toBe(200);
       const bundlePlan = await bundlePlanResponseValue.json();
       expect(bundlePlan.bundle_digest).toBe(bundleExport.digest);
-      expect(bundlePlan.items.map(item => item.id).sort()).toEqual(['events/main', 'events/oversized', 'events/poison']);
-      await expect(page.locator('#stream-bundle-import-review')).toContainText('Verified 3 stream definition(s)');
+      expect(bundlePlan.items.map(item => item.id).sort()).toEqual(['events/main', 'events/oversized', 'events/partitioned', 'events/poison']);
+      await expect(page.locator('#stream-bundle-import-review')).toContainText('Verified 4 stream definition(s)');
       await expect(page.locator('#stream-bundle-import-commit')).toBeDisabled();
       for (const policy of await page.locator('[data-checkpoint-stream]').all()) await policy.selectOption('reset');
       const bundleImportResponse = waitForStreamResponse('POST', `/v1/workspaces/${encodeURIComponent(workspace)}/streams/bundle/import`);
@@ -603,8 +603,8 @@ for (const route of routes) {
       expect(bundleImportResponseValue.status(), await bundleImportResponseValue.text()).toBe(200);
       const bundleImport = await bundleImportResponseValue.json();
       expect(bundleImport.bundle_digest).toBe(bundlePlan.bundle_digest);
-      expect(bundleImport.checkpoint_policies).toEqual({ 'events/main': 'reset', 'events/oversized': 'reset', 'events/poison': 'reset' });
-      await expect(page.locator('#stream-bundle-result')).toContainText('Imported 3 stream definition(s)');
+      expect(bundleImport.checkpoint_policies).toEqual({ 'events/main': 'reset', 'events/oversized': 'reset', 'events/partitioned': 'reset', 'events/poison': 'reset' });
+      await expect(page.locator('#stream-bundle-result')).toContainText('Imported 4 stream definition(s)');
       await page.locator('#stream-health-form [name="workspace"]').fill(process.env.RONIN_LIVE_WORKSPACE);
       await page.locator('#stream-health-form [name="stream"]').fill('events/main');
       const healthPath = `/v1/workspaces/${encodeURIComponent(workspace)}/streams/events%2Fmain/health`;
@@ -636,7 +636,7 @@ for (const route of routes) {
       await page.getByRole('button', { name: 'Import reviewed Bundle' }).click();
       const bundleResume = await bundleResumeResponse;
       expect(bundleResume.status(), await bundleResume.text()).toBe(200);
-      expect((await bundleResume.json()).checkpoint_policies).toEqual({ 'events/main': 'resume', 'events/oversized': 'resume', 'events/poison': 'resume' });
+      expect((await bundleResume.json()).checkpoint_policies).toEqual({ 'events/main': 'resume', 'events/oversized': 'resume', 'events/partitioned': 'resume', 'events/poison': 'resume' });
       const healthAfterBundleResumeResponse = waitForStreamResponse('GET', healthPath);
       await page.getByRole('button', { name: 'Check health', exact: true }).click();
       const healthAfterBundleResume = await healthAfterBundleResumeResponse;
@@ -764,6 +764,51 @@ for (const route of routes) {
       await page.getByRole('button', { name: 'Check health', exact: true }).click();
       const recoveredHealth = await recoveredHealthResponse;
       expect((await recoveredHealth.json()).total_lag).toBe(0);
+
+      // Exercise both explicit Kafka partitions with a bounded micro-batch. Six
+      // real batches must drain twelve records while preserving per-partition lag;
+      // this is bounded backpressure evidence, not a sustained-load claim.
+      await page.locator('#stream-list').selectOption('events/partitioned');
+      await expect(page.locator('#stream-definition-form [name="id"]')).toHaveValue('events/partitioned');
+      await expect(page.locator('#stream-definition-form [name="resource"]')).toHaveValue('ronin-live-partitioned-events');
+      await page.locator('#stream-health-form [name="stream"]').fill('events/partitioned');
+      const partitionedHealthPath = `/v1/workspaces/${encodeURIComponent(workspace)}/streams/events%2Fpartitioned/health`;
+      const partitionedRunPath = `/v1/workspaces/${encodeURIComponent(workspace)}/streams/events%2Fpartitioned/run`;
+      let partitionedHealthResponse = waitForStreamResponse('GET', partitionedHealthPath);
+      await page.getByRole('button', { name: 'Check health', exact: true }).click();
+      const partitionedInitialHealth = await partitionedHealthResponse;
+      expect(partitionedInitialHealth.status(), await partitionedInitialHealth.text()).toBe(200);
+      expect(await partitionedInitialHealth.json()).toMatchObject({
+        source_status: 'available',
+        partitions: 2,
+        lag: { '0': 6, '1': 6 },
+        total_lag: 12,
+      });
+      await page.locator('#stream-health-form [name="limit"]').fill('2');
+      for (let batch = 0; batch < 6; batch += 1) {
+        const partitionedRunResponse = waitForStreamResponse('POST', partitionedRunPath);
+        await page.getByRole('button', { name: 'Run one batch', exact: true }).click();
+        const partitionedRun = await partitionedRunResponse;
+        expect(partitionedRun.status(), await partitionedRun.text()).toBe(200);
+        expect(await partitionedRun.json()).toMatchObject({
+          stream_id: 'events/partitioned',
+          status: 'succeeded',
+          records: 2,
+          rows: 2,
+        });
+        partitionedHealthResponse = waitForStreamResponse('GET', partitionedHealthPath);
+        await page.getByRole('button', { name: 'Check health', exact: true }).click();
+        const partitionedHealth = await partitionedHealthResponse;
+        expect(partitionedHealth.status(), await partitionedHealth.text()).toBe(200);
+        const expectedRemaining = 10 - (batch * 2);
+        const partitionedPayload = await partitionedHealth.json();
+        expect(partitionedPayload.total_lag).toBe(expectedRemaining);
+        expect(Object.keys(partitionedPayload.lag)).toEqual(['0', '1']);
+      }
+      partitionedHealthResponse = waitForStreamResponse('GET', partitionedHealthPath);
+      await page.getByRole('button', { name: 'Check health', exact: true }).click();
+      expect((await partitionedHealthResponse).status()).toBe(200);
+      expect((await partitionedHealthResponse.json()).total_lag).toBe(0);
     } else if (route.id === 'graphs') {
       const workspace = process.env.RONIN_LIVE_WORKSPACE;
       await page.locator('#graph-query-form [name="workspace"]').fill(workspace);
