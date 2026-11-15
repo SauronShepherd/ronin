@@ -1,0 +1,102 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D16",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-11-30",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "c6a8ace6a1010e63af669996425218e05619b7bb",
+    "origin_main_sha_when_candidate_was_tested": "c6a8ace6a1010e63af669996425218e05619b7bb",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-c6a8ace6-d16",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-c6a8ace6-d16\\candidate-c6a8ace6a1010e63af669996425218e05619b7bb.tar",
+      "format": "tar",
+      "sha256": "decb35313fb9a0271ec39a9cb2c11917654456994ac914e59001d915f1219773",
+      "size": 16588800
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-c6a8ace6-d16\\candidate-c6a8ace6a1010e63af669996425218e05619b7bb.manifest.json",
+      "sha256": "6d4797ce863fda5f8fd0c0ffb875aeb73f3456f5f14bb94d96ef00c1a2cedccf",
+      "size": 216396
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-c6a8ace6-d16\\candidate-c6a8ace6a1010e63af669996425218e05619b7bb.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-c6a8ace6-d16\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1409,
+    "total_bytes": 15434872,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "c6a8ace6a1010e63af669996425218e05619b7bb",
+    "candidate_docs_commit": "c6a8ace6a1010e63af669996425218e05619b7bb",
+    "summary": "Preserved failed and cancelled terminal states from pipeline and QueryFlux scheduler runners through durable evidence and attempt completion; forwarded cooperative cancellation to those runners; rejected invalid status and non-portable results; bounded pipeline row limits and Spark endpoint forms; and redacted provider error payloads before evidence persistence.",
+    "production_files_changed": [
+      "python/studio_core/redaction.py",
+      "python/studio_core/__init__.py",
+      "python/studio_kernel/redaction.py",
+      "python/studio_data_engineering/spark_connect.py",
+      "python/studio_data_engineering/worker.py",
+      "python/studio_execution/scheduler_adapters.py",
+      "python/studio_worker/execution.py",
+      "python/studio_worker/runtime.py"
+    ],
+    "test_files_changed": [
+      "tests/test_data_engineering_spark_connect.py",
+      "tests/test_data_engineering_worker.py",
+      "tests/test_scheduler_adapters.py",
+      "tests/test_worker_runtime.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha c6a8ace6a1010e63af669996425218e05619b7bb --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-c6a8ace6-d16",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-c6a8ace6-d16",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed the sandbox after testing; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "candidate_focused": "PYTHONDONTWRITEBYTECODE=1; exact candidate sandbox pytest -q -p no:cacheprovider tests/test_data_engineering_worker.py tests/test_data_engineering_spark_connect.py tests/test_scheduler_adapters.py tests/test_worker_runtime.py::test_restart_reclaims_queryflux_job_and_executes_once tests/test_worker_runtime.py::test_pipeline_scheduler_failure_persists_terminal_evidence tests/test_worker_runtime.py::test_pipeline_scheduler_cancellation_persists_cancelled_evidence",
+    "candidate_static": "exact candidate sandbox ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI and Studio surface",
+    "checkout_full_regression": "python -m pytest -q -p no:cacheprovider"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "51 passed, 0 failed, 0 skipped from the exact candidate sandbox",
+    "checkout_focused_regression": "75 passed, 0 failed in the D16 worker/data-engineering/scheduler selections; the post-redaction compatibility selection passed 59/59",
+    "full_checkout_regression": "4660 passed, 81 skipped, 0 failed from the exact c6a8ace6 code state",
+    "static_and_surface_checks": "candidate-bound ruff format --check 933 files, Ruff, mypy 450 source files, architecture, negative-gates, route-consistency 200 operations, dependency-surfaces, canonical OpenAPI 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708 and Studio 128/242 pass",
+    "repository_status_checks": "main checkout daily-progress and public-v1 status checks were run separately; the candidate sandbox deliberately has no Git metadata",
+    "result": "D16 pass for durable scheduler terminal-state, cancellation, error-redaction and correlated-evidence cells; P4 remains in_progress and is not qualified"
+  },
+  "security_and_recovery": {
+    "worker_evidence": "A failed or cancelled pipeline result is written as scheduler-result evidence before durable attempt completion, with run correlation, terminal state and bounded/redacted failure code.",
+    "cancellation": "The exact candidate exercised a real local SQLite worker runtime that observed a durable cancellation request, returned a cancelled runner state and persisted cancelled evidence; the existing QueryFlux restart/reclaim journey also passed.",
+    "provider": "No new external provider was certified in D16. Injected pipeline runners exercise the scheduler boundary only; Spark Connect, SDP, PostgreSQL and other external profiles remain subject to their real-provider prerequisites.",
+    "scans": {
+      "gitleaks": "8.30.1; --no-git exact candidate sandbox; 15,434,872 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1 pinned image; filesystem vuln,secret scanners; 0 vulnerabilities and 0 secrets; the tool reported no supported language files for vulnerability scanning and did scan for secrets"
+    }
+  },
+  "open_cells": [
+    "P4 remains in_progress, not qualified: complete notebook/SQL/pipeline public CRUD, PostgreSQL runtime, UI/SDK/CLI journeys, applicable external providers and family-level recovery/lineage evidence remain open.",
+    "The 81 full-suite skips remain explicit Docker/Compose, PostgreSQL, Spark/SDP, Trino, S3/Azurite, symlink/Windows privilege and other opt-in provider limitations; they are not PASS.",
+    "The candidate sandbox has no Git metadata; repository-level status, public matrix and daily-ledger checks ran on main rather than being attributed to the sandbox.",
+    "P3 and P2 remain in_progress; P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "D16 proves the durable worker/scheduler evidence boundary and local cancellation path, not an external pipeline provider or a complete P4 family journey.",
+    "Real PostgreSQL, Spark Connect, SDP, Trino, Docker and object-storage cases remain skipped unless their real DSNs/services are configured; no mock was counted as provider qualification.",
+    "Trivy found no secrets but reported no supported language files for vulnerability scanning in this source-only candidate; this is recorded as a scan limitation, not as broad dependency-vulnerability coverage.",
+    "The exact candidate sandbox has no .git metadata by design, so Git-dependent tests and repository status checks are not claimed from it.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

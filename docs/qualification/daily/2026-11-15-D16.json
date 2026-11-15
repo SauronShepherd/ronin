@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D16",
+  "date": "2026-11-15",
+  "planned_date": "2026-11-30",
+  "status": "PASS",
+  "candidate_sha": "c6a8ace6a1010e63af669996425218e05619b7bb",
+  "implementation_commit_sha": "c6a8ace6a1010e63af669996425218e05619b7bb",
+  "evidence": "docs/qualification/candidates/candidate-c6a8ace6-d16.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D16.md",
+  "execution_scope": "complete-for-D16-durable-worker-scheduler-terminal-states-cancellation-and-correlated-evidence; P4-family-open",
+  "result": {
+    "candidate_focused_suite": "51 passed, 0 failed, 0 skipped in the exact candidate sandbox",
+    "checkout_focused_regression": "75 passed, 0 failed in worker/data-engineering/scheduler selections",
+    "full_checkout_regression": "4660 passed, 81 skipped, 0 failed; skips remain explicit and are not PASS",
+    "static_and_surface_checks": "candidate format 933 files, Ruff, mypy 450 files, architecture, negative-gates, route/dependency surfaces (200 operations), OpenAPI, Studio 128/242 and git diff checks pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "scans": "Gitleaks 0 findings over 15,434,872 candidate bytes; pip-audit 0 vulnerabilities across 99 dependencies; Trivy 0 vulnerabilities and 0 secrets with no supported vulnerability-language files reported",
+    "p4_boundary": "D16 durable worker terminal-state, cancellation and evidence cells pass; P4 remains in_progress until complete CRUD, PostgreSQL/provider, UI/SDK/CLI and family journey evidence is complete"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "15/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "16/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The exact candidate sandbox has no Git metadata; repository-level status, public matrix and daily-ledger checks ran separately on main.",
+    "The 81 full-suite skips cover unavailable or opt-in external providers, Docker/Compose, PostgreSQL, Spark/SDP, Trino, S3/Azurite, symlinks and Windows privileges; none was converted into PASS.",
+    "D16 does not qualify P4, close a release gate or change the P13 blocker.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
