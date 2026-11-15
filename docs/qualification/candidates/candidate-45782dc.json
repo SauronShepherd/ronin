@@ -1,0 +1,97 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D07",
+  "status": "blocked",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-11-21",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "45782dc1915a14e0e570b2ce8710b2fb0734127b",
+    "origin_main_sha_when_candidate_was_tested": "6962c916eb2c5007c3c50b00dcc50092887264f6",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-45782dc1-final-80ab0a31f31645e89d9dac9e5d3448ad",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-45782dc1-final-80ab0a31f31645e89d9dac9e5d3448ad\\candidate-45782dc1915a14e0e570b2ce8710b2fb0734127b.tar",
+      "format": "tar",
+      "sha256": "8def751d49057455e1388b961c534bfe71697fbd69c47dff94d4ddab9b9fcaa1",
+      "size": 16384000
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-45782dc1-final-80ab0a31f31645e89d9dac9e5d3448ad\\candidate-45782dc1915a14e0e570b2ce8710b2fb0734127b.manifest.json",
+      "sha256": "6d073e6f1deacb94f5bf6f6a93fcba6127756e43afbf760b8b81b6c94a7068f4",
+      "size": 211302
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-45782dc1-final-80ab0a31f31645e89d9dac9e5d3448ad\\candidate-45782dc1915a14e0e570b2ce8710b2fb0734127b.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-45782dc1-final-80ab0a31f31645e89d9dac9e5d3448ad\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1378,
+    "total_bytes": 15245240,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "ed1bf7be3f05bf295a3df98420754616738df51c",
+    "candidate_docs_commit": "45782dc1915a14e0e570b2ce8710b2fb0734127b",
+    "summary": "Audit rows are verified against canonical payload, digest and denormalized columns; SQLite and PostgreSQL expose bounded workspace listing; the local composed control plane exposes an authorized paginated audit route and its OpenAPI contract.",
+    "production_files_changed": [
+      "python/studio_storage/audit.py",
+      "python/studio_storage/postgres_audit.py",
+      "python/studio_server/control_plane.py",
+      "python/studio_cli/local_composed.py",
+      "api/openapi-v1.json",
+      "api/openapi-v1.sha256"
+    ],
+    "test_files_changed": [
+      "tests/test_audit.py",
+      "tests/test_postgres_audit_store_unit.py",
+      "tests/integration/test_postgres_audit_store.py",
+      "tests/integration/test_workspace_project_http_api.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 45782dc1915a14e0e570b2ce8710b2fb0734127b --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-45782dc1-final-80ab0a31f31645e89d9dac9e5d3448ad",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-45782dc1-final-80ab0a31f31645e89d9dac9e5d3448ad",
+    "cleanup_and_regenerate": "clean candidate output was removed with candidate-boundary cleanup, regenerated from the same SHA, and verified with identical archive/manifest digests"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "134 passed, 0 failed, 0 skipped; executed from the exact candidate sandbox",
+    "full_python_postgres_suite": "4674 passed, 0 failed, 30 skipped, 12 warnings; real PostgreSQL 16.4; evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d07-pg-final-316531079a05438c995fdab70c35fbd8",
+    "postgres_audit_focus": "5 passed, 0 failed, 0 skipped; real PostgreSQL 16.4; idempotency, conflict, bounded listing, tamper detection and invalid-outcome checks",
+    "docker_real_qualification": "27 passed, 0 failed, 0 skipped; image sha256:f499fb2cd9b506154c16d366d7158b8e5a53e03fc51f501b46109ef5ad23dd60; strict v0.1 15/15; evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d07-docker-final-cdf9ae0b8ffb48219ace796e45248740",
+    "static_and_surface_checks": "format, ruff, mypy, architecture, negative-gates, route-consistency, dependency-surfaces, OpenAPI snapshot, public-status and git diff checks pass",
+    "result": "technical D07 evidence pass; P13 family close blocked by open provider/release evidence"
+  },
+  "security_and_recovery": {
+    "audit": "SQLite and PostgreSQL reject tampered payloads, digest values and denormalized columns; authorized GET /v1/workspaces/{workspace_id}/audit is bounded and cursor-paginates newest-first events.",
+    "redaction": "The full candidate suite includes bearer/access-log, recursive secret-redaction, audit metadata and classification negative paths; no secret-bearing metadata is accepted.",
+    "isolation": "Real Docker acceptance passed workspace/worker/container isolation, CPU/memory limits, cleanup and denial/reclaim paths.",
+    "recovery": "Real Docker acceptance passed SIGKILL lease reclaim, restart/cancel/idempotency journeys and PostgreSQL plus local-volume backup/restore; full Python/PostgreSQL recovery contracts also passed.",
+    "scan_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d07-scans-45782dc1-526d9493eacb4fa68d952173e3d90ce4",
+    "scans": {
+      "gitleaks": "8.30.1; clean candidate sandbox; 15,245,240 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1; filesystem scanners vuln,secret; 0 vulnerabilities and 0 secrets; image digest sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+    }
+  },
+  "open_cells": [
+    "P13 remains candidate_ready/partial, not qualified: the public matrix still identifies external secret-provider qualification and release evidence as incomplete.",
+    "No release gate is closed; the release remains NO-GO at 1/13 families and 0/10 gates.",
+    "Human/legal/NOTICE, support-matrix, release-governance and final Public v1 approval remain open.",
+    "Thirty full-suite skips are not PASS: they cover opt-in external providers/services, Docker cases outside the Python runner, Windows symlink privileges and POSIX-only mode/process semantics."
+  ],
+  "limitations": [
+    "The candidate sandbox has no Git metadata; repository-level public-status checks were run separately on main and passed.",
+    "No OIDC, multi-user, external secret backend or production-provider claim is made; those belong to Ronin Pro or remain open.",
+    "The full suite emitted 12 ResourceWarning warnings; no test failed and the warnings are recorded rather than treated as a clean warning-free claim.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
