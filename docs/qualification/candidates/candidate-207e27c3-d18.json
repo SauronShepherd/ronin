@@ -1,0 +1,90 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D18",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-12-02",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "207e27c3ff15b2c064ca1439277bf5f839ccdfc6",
+    "origin_main_sha_when_candidate_was_tested": "207e27c3ff15b2c064ca1439277bf5f839ccdfc6",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-207e27c3-d18",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-207e27c3-d18\\candidate-207e27c3ff15b2c064ca1439277bf5f839ccdfc6.tar",
+      "format": "tar",
+      "sha256": "46f476385721071d1ac380527290db489c521510dd54603ccf5bdb081aa5787a",
+      "size": 16629760
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-207e27c3-d18\\candidate-207e27c3ff15b2c064ca1439277bf5f839ccdfc6.manifest.json",
+      "sha256": "69941cad7fdd64859d3aa1c37ce540fd536e006723eb09adad4fdb14f537ddf8",
+      "size": 217384
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-207e27c3-d18\\candidate-207e27c3ff15b2c064ca1439277bf5f839ccdfc6.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-207e27c3-d18\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1415,
+    "total_bytes": 15465292,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "207e27c3ff15b2c064ca1439277bf5f839ccdfc6",
+    "candidate_docs_commit": "207e27c3ff15b2c064ca1439277bf5f839ccdfc6",
+    "summary": "D18 added no product code. It completed the source-SHA-bound backend and Studio regression for the available local surface, rechecked worker recovery boundaries, and preserved the P4 provider and family gaps as open.",
+    "production_files_changed": [],
+    "test_files_changed": []
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 207e27c3ff15b2c064ca1439277bf5f839ccdfc6 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-207e27c3-d18",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-207e27c3-d18",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed generated caches/artifacts from the sandbox; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "candidate_focused": "PYTHONDONTWRITEBYTECODE=1; exact candidate sandbox pytest -q -p no:cacheprovider over Data Engineering, QueryFlux, SQL, notebook, pipeline, artifact, worker, scheduler and local-composed selections, excluding only four Git-checkout-bound runtime cases",
+    "checkout_git_bound_cases": "pytest tests/test_worker_runtime.py -k test_execution_failure_is_logged_as_error_and_persisted or test_run_once_executes_claim_through_sqlite_and_container_boundary or test_restart_reclaims_same_run_and_reuses_persisted_cells or test_run_forever_shutdown_abandons_active_claim_immediately",
+    "browser_regression": "npm --prefix web-tests test; source checkout was clean at candidate SHA and the static server served the candidate files",
+    "candidate_static": "exact candidate sandbox ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI and Studio surface",
+    "scans": "Gitleaks --no-git; pip-audit -r requirements-test.lock; pinned Trivy filesystem vuln,secret scan"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "325 passed, 4 deselected, 0 failed in the exact candidate sandbox; the four deselected cases require .git metadata and were not counted as PASS",
+    "checkout_git_bound_cases": "4 passed, 12 deselected, 0 failed in the clean main checkout; this verifies the four candidate-sandbox limitations without attributing .git to the archive",
+    "browser_regression": "180 passed, 0 skipped, 0 failed in 3.4 minutes; Data Engineering/Notebook/Pipeline focused selection was 12 passed, 0 skipped, 0 failed",
+    "full_checkout_python_regression": "The last code-bearing full checkout regression at c6a8ace6 was 4660 passed, 81 skipped, 0 failed; D17 and D18 changed no product code, and D18 added the exact-source browser regression",
+    "static_and_surface_checks": "candidate format 933 files, Ruff, mypy 450 source files, architecture, negative-gates, route consistency 200 operations, dependency-surfaces, canonical OpenAPI 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708 and Studio 128/242 pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests were unchanged after cleanup and regeneration",
+    "result": "D18 pass for the executed candidate-bound backend and Studio regression scope; P4 remains in_progress and is not qualified"
+  },
+  "security_and_recovery": {
+    "browser_scope": "The static browser tests exercise Data Engineering, Notebook and Pipeline forms, stable result rendering, authorization/error presentation, bounded retries, visual pipeline validation and responsive shell behavior. They use deterministic route fixtures and do not certify a live backend provider.",
+    "provider_scope": "D17 remains the latest real Spark Connect provider receipt. D18 did not relabel missing PostgreSQL or SDP configuration as provider evidence.",
+    "scans": {
+      "gitleaks": "8.30.1; --no-git clean exact candidate sandbox; 15,465,292 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 known vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1 pinned image sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c; clean filesystem vuln,secret scan exited 0 with no Results object, hence 0 vulnerabilities and 0 secrets; development-dependency/license analysis was not claimed"
+    }
+  },
+  "open_cells": [
+    "P4 remains in_progress, not qualified: a complete same-candidate notebook/SQL/pipeline public CRUD journey, PostgreSQL runtime, provider matrix, family-level lineage and recovery evidence remain open.",
+    "SDP Studio remains pending/blocked: SDP_STUDIO_COMMAND and SDP_PROJECT_ID were absent, so no official CLI or project validation was claimed.",
+    "PostgreSQL remains pending/blocked: RONIN_POSTGRES_TEST_DSN and RONIN_CONNECTOR_POSTGRES_DSN were absent; no mock was substituted.",
+    "The 81 full-suite skips remain explicit Docker/Compose, PostgreSQL, Spark/SDP, Trino, S3/Azurite, symlink/Windows privilege and other opt-in provider limitations; they are not PASS.",
+    "P3 and P2 remain in_progress; P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The first broad candidate selection included four worker runtime cases that correctly failed because the exact archive sandbox has no .git metadata; the corrected selection excluded only those cases, and the same four passed in the clean checkout.",
+    "The first Trivy attempt timed out while analyzing a generated Python bytecode cache after testing; the candidate-boundary cleanup/regeneration removed generated artifacts, and the clean source-only retry exited 0. The timeout is retained as a limitation, not hidden.",
+    "The exact candidate sandbox has no .git metadata by design, so Git-dependent tests and repository status checks are not claimed from it; main checkout ledger/status checks run separately.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
