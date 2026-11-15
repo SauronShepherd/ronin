@@ -2381,6 +2381,134 @@ def test_local_composed_semantic_dashboard_bundle_and_recover(
         restarted.stop()
 
 
+def test_local_composed_semantic_authoring_filter_and_recover(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """Exercise semantic dashboard authoring and filtered metrics over real HTTP."""
+
+    from urllib.parse import quote
+
+    from studio_semantic import (
+        DashboardDefinition,
+        DashboardTile,
+        MetricQuery,
+        SemanticDimension,
+        SemanticFilter,
+        SemanticMeasure,
+        SemanticModel,
+        semantic_project_scope,
+    )
+
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS",
+        "workspace.read,workspace.write,workspace.admin,project.read,project.write",
+    )
+    project_id = "semantic-authoring-d30"
+    workspace_id = "workspace-1"
+    semantic_scope = semantic_project_scope(workspace_id, project_id)
+    parquet_root = tmp_path / "sql-parquet"
+    monkeypatch.setenv("RONIN_SQL_PARQUET_ROOT", str(parquet_root))
+    write_parquet_rows(
+        parquet_root / quote(semantic_scope, safe="") / "orders.parquet",
+        (
+            {"country": "ES", "amount": 5},
+            {"country": "US", "amount": 7},
+        ),
+    )
+    model = SemanticModel(
+        "sales",
+        "Sales",
+        "orders",
+        (SemanticDimension("country", "country"),),
+        (SemanticMeasure("revenue", "sum", "amount"),),
+    )
+    dashboard = DashboardDefinition(
+        "overview",
+        "Overview",
+        (
+            DashboardTile(
+                "revenue_by_country",
+                "Revenue by country",
+                "bar",
+                MetricQuery("sales", ("revenue",), ("country",), limit=10),
+            ),
+        ),
+    )
+
+    def request(
+        address: tuple[str, int], method: str, path: str, body: object | None = None
+    ) -> tuple[int, dict[str, object]]:
+        payload = None if body is None else json.dumps(body, separators=(",", ":")).encode("utf-8")
+        headers = {"Authorization": "Bearer control-token"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
+        connection = http.client.HTTPConnection(*address, timeout=20)
+        try:
+            connection.request(method, path, body=payload, headers=headers)
+            response = connection.getresponse()
+            return response.status, cast(
+                dict[str, object], json.loads(response.read().decode("utf-8"))
+            )
+        finally:
+            connection.close()
+
+    composition = build_local_composed_from_env()
+    semantic_reader = composition.control_plane_server.semantic_reader
+    assert semantic_reader is not None
+    semantic_reader.put_model(semantic_scope, model.to_payload())
+    semantic_reader.put_dashboard(semantic_scope, dashboard.to_payload())
+    dashboard_path = (
+        f"/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/dashboards/overview"
+    )
+    query_path = f"/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/query"
+    try:
+        composition.start()
+        address = composition.control_plane_server.server_address
+        edited = dashboard.to_payload()
+        edited["name"] = "Revenue Overview"
+        status, saved = request(address, "PUT", dashboard_path, edited)
+        assert status == 200, saved
+        assert saved["name"] == "Revenue Overview"
+
+        filtered = MetricQuery(
+            "sales",
+            ("revenue",),
+            ("country",),
+            (SemanticFilter("country", "eq", ("ES",)),),
+            limit=10,
+        ).to_payload()
+        status, result = request(address, "POST", query_path, filtered)
+        assert status == 200, result
+        assert result["rows"] == [["ES", 5]]
+
+        invalid_filter = {
+            **filtered,
+            "filters": [{"dimension": "country", "operator": "eq", "values": []}],
+        }
+        status, invalid = request(address, "POST", query_path, invalid_filter)
+        assert status == 400, invalid
+        assert cast(dict[str, object], invalid["error"])["code"] == "invalid_request"
+    finally:
+        composition.stop()
+
+    restarted = build_local_composed_from_env()
+    try:
+        restarted.start()
+        address = restarted.control_plane_server.server_address
+        status, recovered_dashboard = request(address, "GET", dashboard_path)
+        assert status == 200, recovered_dashboard
+        assert recovered_dashboard["name"] == "Revenue Overview"
+        status, recovered_result = request(address, "POST", query_path, filtered)
+        assert status == 200, recovered_result
+        assert recovered_result["rows"] == [["ES", 5]]
+    finally:
+        restarted.stop()
+
+
 def test_build_local_composed_rejects_unknown_permission(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:

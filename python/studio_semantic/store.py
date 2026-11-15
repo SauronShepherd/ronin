@@ -90,6 +90,23 @@ class SqliteSemanticStore:
             )
         return dashboard
 
+    def replace_dashboard(
+        self, project_id: str, dashboard: DashboardDefinition
+    ) -> DashboardDefinition:
+        """Create or replace one dashboard for the public PUT contract."""
+
+        self._validate_project(project_id)
+        payload = dashboard.to_json()
+        with closing(sqlite3.connect(self._path)) as connection, connection:
+            connection.execute(
+                "INSERT INTO semantic_dashboards(project_id,dashboard_id,dashboard_json) "
+                "VALUES (?,?,?) "
+                "ON CONFLICT(project_id,dashboard_id) DO UPDATE SET "
+                "dashboard_json=excluded.dashboard_json",
+                (project_id, dashboard.id, payload),
+            )
+        return dashboard
+
     def commit_bundle_import(
         self,
         project_id: str,

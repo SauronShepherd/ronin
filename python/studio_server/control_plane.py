@@ -679,6 +679,8 @@ class SemanticReader(Protocol):
 
     def put_dashboard(self, project_id: str, body: object) -> dict[str, object]: ...
 
+    def replace_dashboard(self, project_id: str, body: object) -> dict[str, object]: ...
+
     def export_bundle(self, project_id: str) -> bytes: ...
 
     def plan_bundle(self, archive: bytes) -> dict[str, object]: ...
@@ -5542,7 +5544,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": f"{project_id}/{dashboard_id}"},
                 ):
                     return
-                self._write_json(HTTPStatus.OK, semantic_reader.put_dashboard(semantic_scope, body))
+                self._write_json(
+                    HTTPStatus.OK, semantic_reader.replace_dashboard(semantic_scope, body)
+                )
                 return
             if (
                 len(segments) == 7

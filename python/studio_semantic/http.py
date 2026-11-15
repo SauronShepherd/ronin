@@ -74,6 +74,10 @@ class SemanticHTTPAdapter:
         dashboard = DashboardDefinition.from_payload(_object_body(body))
         return self._store.put_dashboard(project_id, dashboard).to_payload()
 
+    def replace_dashboard(self, project_id: str, body: object) -> dict[str, object]:
+        dashboard = DashboardDefinition.from_payload(_object_body(body))
+        return self._store.replace_dashboard(project_id, dashboard).to_payload()
+
     def list_dashboards(self, project_id: str) -> dict[str, object]:
         return {
             "items": [
