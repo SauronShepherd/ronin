@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D14",
+  "date": "2026-11-15",
+  "planned_date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "3bb2f41e871bd81badb77b2e08bb97660cab3b84",
+  "implementation_commit_sha": "3bb2f41e871bd81badb77b2e08bb97660cab3b84",
+  "evidence": "docs/qualification/candidates/candidate-3bb2f41-d14.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D14.md",
+  "execution_scope": "complete-for-D14-real-trino-provider-and-bundle-regression; P3-family-open",
+  "result": {
+    "candidate_focused_suite": "4 passed, 0 failed, 0 skipped in the exact candidate sandbox against real Trino 484",
+    "clean_checkout_trino_runner": "4 passed, 0 failed, 0 skipped; pinned digest; container cleanup succeeded",
+    "bundle_regression": "99 pure Bundle tests passed; expanded Bundle-named selection 159 passed and 2 skipped for missing RONIN_POSTGRES_TEST_DSN",
+    "full_checkout_regression": "latest D13 code run 4641 passed, 81 skipped, 1 stale-documentation failure before refresh; targeted post-refresh public/ledger suite 9 passed",
+    "static_and_surface_checks": "format 1116 files, Ruff, mypy 448 files, architecture, negative-gates, route/dependency surfaces (200 operations), OpenAPI, Studio 128/242, public status, daily ledger and git diff checks pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "scans": "Gitleaks 0 findings over 15,371,729 candidate bytes; pip-audit 0 vulnerabilities across 99 dependencies; Trivy 0 vulnerabilities and 0 secrets",
+    "p3_boundary": "D14 provider-backed execution/recovery and Bundle cells pass; P3 remains in_progress until the complete family journey and applicable provider/recovery matrix are evidenced"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "13/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "14/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The two PostgreSQL Bundle skips require RONIN_POSTGRES_TEST_DSN and are not counted as PASS.",
+    "D14 does not qualify P3, close a release gate or change the P13 blocker.",
+    "No external Trino deployment, production worker coordinator, hosted workflow or other-provider claim was made."
+  ]
+}

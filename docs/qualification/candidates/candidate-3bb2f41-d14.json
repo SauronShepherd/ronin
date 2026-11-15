@@ -1,0 +1,90 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D14",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-11-28",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "3bb2f41e871bd81badb77b2e08bb97660cab3b84",
+    "origin_main_sha_when_candidate_was_tested": "3bb2f41e871bd81badb77b2e08bb97660cab3b84",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-3bb2f41-d14",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-3bb2f41-d14\\candidate-3bb2f41e871bd81badb77b2e08bb97660cab3b84.tar",
+      "format": "tar",
+      "sha256": "111447c9fc43fe934b422948c003a8cb350eaa9b3c26f0a4160a5b555f9bd374",
+      "size": 16527360
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-3bb2f41-d14\\candidate-3bb2f41e871bd81badb77b2e08bb97660cab3b84.manifest.json",
+      "sha256": "16708bf5cf53840b07788a9a59e67226d98bd8363734eb1d5da7ebdc0c848c5e",
+      "size": 215103
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-3bb2f41-d14\\candidate-3bb2f41e871bd81badb77b2e08bb97660cab3b84.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-3bb2f41-d14\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1401,
+    "total_bytes": 15371729,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "3bb2f41e871bd81badb77b2e08bb97660cab3b84",
+    "candidate_docs_commit": "3bb2f41e871bd81badb77b2e08bb97660cab3b84",
+    "summary": "Qualified the existing QueryFlux/SQL path against a real Trino 484 service, including prepared scalar bindings, exact result-byte limits, durable terminal evidence and SIGKILL worker recovery; verified the Bundle surface on the same exact candidate.",
+    "production_files_changed": [],
+    "test_files_changed": []
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 3bb2f41e871bd81badb77b2e08bb97660cab3b84 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-3bb2f41-d14",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-3bb2f41-d14",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed the sandbox after testing; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "candidate_focused": "PYTHONDONTWRITEBYTECODE=1; exact candidate sandbox pytest selection tests/integration/test_query_engine_trino_real.py against the pinned local Trino service",
+    "bundle_selection": "PYTHONDONTWRITEBYTECODE=1; pytest over all bundle-named tests and the real PostgreSQL bundle integration selection"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "4 passed, 0 failed, 0 skipped from the exact candidate sandbox against real Trino 484",
+    "real_provider_qualification": "Clean main checkout runner passed 4/4 selected Trino tests with 0 skips/failures; the exact candidate sandbox repeated the same 4/4 selection. Image trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f, version 484, cleanup succeeded.",
+    "bundle_regression": "Pure Bundle selection: 99 passed, 0 failed, 0 skipped. Expanded 19-file Bundle-named selection: 159 passed, 0 failed, 2 skipped; both skips require RONIN_POSTGRES_TEST_DSN and are not counted as PASS.",
+    "full_checkout_regression": "The latest full checkout run after D13 code was 4641 passed, 81 skipped, 1 stale-documentation failure before the public-ledger refresh; the targeted post-refresh public/ledger suite was 9 passed. D14 added no product code and did not claim a new full-suite run.",
+    "static_and_surface_checks": "ruff format --check 1116 files, Ruff, mypy 448 source files, architecture, negative-gates, route-consistency 200 operations, dependency-surfaces, canonical OpenAPI 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 128/242, public imports/capability/daily/public status and git diff checks pass.",
+    "result": "D14 pass for the real Trino provider and Bundle regression cells; P3 remains in_progress because the complete API/SDK/Studio journey, all applicable providers, and family-level recovery evidence are not closed"
+  },
+  "security_and_recovery": {
+    "provider": "The real Trino selection covered prepared scalar parameter bindings and exact result-byte budget enforcement.",
+    "recovery": "The real Trino selection covered durable QueryFlux terminal evidence and a worker process SIGKILL followed by lease reclamation without duplicate completion.",
+    "candidate_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d14-trino-candidate-3bb2f41",
+    "clean_checkout_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d14-trino-3bb2f41",
+    "scan_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d14-scans-3bb2f41",
+    "scans": {
+      "gitleaks": "8.30.1; --no-git exact candidate sandbox; 15,371,729 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1 pinned image; filesystem vuln,secret scanners; 0 vulnerabilities and 0 secrets"
+    }
+  },
+  "open_cells": [
+    "P3 remains in_progress, not qualified: the complete API/SDK/Studio journey, broader provider matrix, and family-level end-to-end evidence remain open.",
+    "The two PostgreSQL Bundle integration skips require RONIN_POSTGRES_TEST_DSN and are not converted into PASS.",
+    "The 81 full-suite skips from the latest broad checkout run remain explicit unavailable-provider, Docker opt-in, POSIX/symlink, Windows privilege and external CLI cases; they are not PASS.",
+    "P2 remains in_progress; D14 did not certify a new connector family.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The Trino service was a pinned local Docker provider; this does not certify an external deployment or other providers.",
+    "The candidate sandbox has no Git metadata; repository-level status, matrix and daily-ledger validation ran on main.",
+    "D14 added no product code, so the latest broad regression remains the D13 result explicitly described above.",
+    "Trivy was executed through the pinned local Docker image because no host trivy executable was available; the image digest is recorded above.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
