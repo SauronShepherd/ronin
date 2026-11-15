@@ -244,6 +244,12 @@ def test_duckdb_engine_rejects_boolean_execution_budgets(argument: str) -> None:
         engine.execute("SELECT 1", **{argument: True})
 
 
+def test_duckdb_engine_keeps_internal_query_budget_above_http_cap() -> None:
+    with DuckDbSqlEngine() as engine:
+        result = engine.execute("SELECT 1", max_rows=100_001)
+    assert result.rows == ((1,),)
+
+
 def test_sql_reference_engine_bounds_query_text() -> None:
     with DuckDbSqlEngine() as engine, pytest.raises(ValueError, match="SQL text exceeds"):
         engine.execute("SELECT 1 -- " + "x" * (1024 * 1024))

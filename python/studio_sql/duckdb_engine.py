@@ -303,12 +303,8 @@ class DuckDbSqlEngine:
             raise SqlValidationError("SQL text exceeds the configured byte limit")
         if _UNSAFE_SQL.search(sql):
             raise SqlValidationError("SQL external filesystem and network access is disabled")
-        if (
-            not isinstance(max_rows, int)
-            or isinstance(max_rows, bool)
-            or not 1 <= max_rows <= 10_000
-        ):
-            raise SqlValidationError("max_rows must be between 1 and 10000")
+        if not isinstance(max_rows, int) or isinstance(max_rows, bool) or max_rows < 1:
+            raise SqlValidationError("max_rows must be a positive integer")
         if (
             not isinstance(timeout_ms, int)
             or isinstance(timeout_ms, bool)
