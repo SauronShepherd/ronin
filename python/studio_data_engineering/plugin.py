@@ -14,7 +14,7 @@ from studio_core.plugins import (
     PluginManifest,
     SurfaceContribution,
 )
-from studio_query_engine import DEFAULT_MAX_RESULT_BYTES, QueryRequest
+from studio_query_engine import DEFAULT_MAX_RESULT_BYTES, MAX_RESULT_BYTES, QueryRequest
 
 from .compilations import SqliteCompilationStore
 from .compiler import compile_pipeline
@@ -34,6 +34,14 @@ from .worker import PipelineExecutionError, execute_pipeline_job
 
 def _plugin_error(code: str, message: str) -> dict[str, object]:
     return {"error": {"code": code, "message": message}}
+
+
+def _bounded_queryflux_int(value: object, name: str, *, maximum: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{name} must be an integer")
+    if not 1 <= value <= maximum:
+        raise ValueError(f"{name} is outside the configured bound")
+    return value
 
 
 class DataEnginerringStudioPlugin:
@@ -653,9 +661,36 @@ class DataEnginerringStudioPlugin:
         required = ("sql", "engine", "run_id", "attempt_id")
         if any(not isinstance(body.get(key), str) or not body[key].strip() for key in required):
             raise ValueError("sql, engine, run_id and attempt_id are required strings")
+        allowed = {
+            "sql",
+            "engine",
+            "translation_policy",
+            "max_rows",
+            "page_size",
+            "max_result_bytes",
+            "parameters",
+            "run_id",
+            "attempt_id",
+        }
+        if set(body) - allowed:
+            raise ValueError("queryflux execution body contains unknown fields")
         parameters = body.get("parameters", [])
         if not isinstance(parameters, list):
             raise ValueError("parameters must be an array")
+        translation_policy = body.get("translation_policy", "native_only")
+        if translation_policy not in {"native_only", "best_effort", "strict"}:
+            raise ValueError("translation_policy is unsupported")
+        max_rows = _bounded_queryflux_int(
+            body.get("max_rows", 1_000), "max_rows", maximum=1_000_000
+        )
+        page_size = _bounded_queryflux_int(
+            body.get("page_size", 1_000), "page_size", maximum=10_000
+        )
+        max_result_bytes = _bounded_queryflux_int(
+            body.get("max_result_bytes", DEFAULT_MAX_RESULT_BYTES),
+            "max_result_bytes",
+            maximum=MAX_RESULT_BYTES,
+        )
         plan = plan_queryflux_execution(
             workspace_id=workspace_id,
             project_id=project_id,
@@ -663,10 +698,10 @@ class DataEnginerringStudioPlugin:
             attempt_id=cast(str, body["attempt_id"]),
             sql=cast(str, body["sql"]),
             engine=cast(str, body["engine"]),
-            translation_policy=str(body.get("translation_policy", "native_only")),
-            max_rows=int(body.get("max_rows", 1_000)),
-            page_size=int(body.get("page_size", 1_000)),
-            max_result_bytes=int(body.get("max_result_bytes", DEFAULT_MAX_RESULT_BYTES)),
+            translation_policy=cast(str, translation_policy),
+            max_rows=max_rows,
+            page_size=page_size,
+            max_result_bytes=max_result_bytes,
             parameters=parameters,
             now="2026-11-12T00:00:00.000000Z",
         )

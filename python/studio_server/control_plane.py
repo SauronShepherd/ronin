@@ -1072,7 +1072,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         status = HTTPStatus.NOT_FOUND
                     elif code == "conflict" or code.endswith("_conflict"):
                         status = HTTPStatus.CONFLICT
-                    elif code in {"unavailable", "not_configured", "provider_unavailable"}:
+                    elif (
+                        code in {"unavailable", "not_configured", "provider_unavailable"}
+                        or code.endswith("_unavailable")
+                        or code.endswith("_not_configured")
+                    ):
                         status = HTTPStatus.SERVICE_UNAVAILABLE
                     elif code.startswith(("invalid_", "missing_", "validation_")):
                         status = HTTPStatus.BAD_REQUEST
@@ -1725,10 +1729,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         project_id = parameters.get("project_id")
                         queryflux_project_read = permission == "data-engineering:read" and getattr(
                             route, "path", ""
-                        ) == (
+                        ) in {
                             "/v1/workspaces/{workspace_id}/projects/{project_id}/"
-                            "data-engineering/queryflux/executions/{run_id}/{attempt_id}/results"
-                        )
+                            "data-engineering/queryflux/executions/{run_id}/{attempt_id}",
+                            "/v1/workspaces/{workspace_id}/projects/{project_id}/"
+                            "data-engineering/queryflux/executions/{run_id}/{attempt_id}/results",
+                        }
                         if workspace_value is None and (
                             permission.startswith("data-engineering:")
                             or permission.startswith("ml-studio:")
@@ -3872,16 +3878,21 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         project_scoped_execute = (
                             permission == "data-engineering:execute"
                             and getattr(route, "path", "")
-                            == (
+                            in {
                                 "/v1/workspaces/{workspace_id}/projects/{project_id}/"
-                                "data-engineering/queryflux/execute"
-                            )
+                                "data-engineering/queryflux/execute",
+                                "/v1/workspaces/{workspace_id}/projects/{project_id}/"
+                                "data-engineering/queryflux/executions",
+                                "/v1/workspaces/{workspace_id}/projects/{project_id}/"
+                                "data-engineering/queryflux/executions/{run_id}/{attempt_id}/cancel",
+                            }
                         )
                         if project_scoped_execute and project_id is None:
                             self._error(
                                 HTTPStatus.FORBIDDEN,
                                 "plugin_project_scope_required",
-                                "data engineering execution requires a project-scoped route",
+                                "data engineering QueryFlux mutation requires a "
+                                "project-scoped route",
                             )
                             return
                         if not self._authorize(

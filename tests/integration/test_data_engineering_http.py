@@ -11,6 +11,7 @@ from studio_data_engineering import (
     DataEnginerringStudioPlugin,
     QueryEngineRuntimeProvider,
     SqliteQueryEvidenceReferenceStore,
+    SqliteQueryFluxExecutionStore,
 )
 from studio_plugin_workspaces import WorkspacesPlugin
 from studio_query_engine import (
@@ -85,6 +86,14 @@ class _QueryFluxTransport:
     def cancel(self, handle: QueryHandle) -> CancellationResult:
         del handle
         return CancellationResult(False, "succeeded")
+
+
+class _QueryFluxJobSubmitter:
+    def __init__(self) -> None:
+        self.submissions: list[tuple[object, object]] = []
+
+    def __call__(self, job: object, run: object) -> None:
+        self.submissions.append((job, run))
 
 
 def test_data_engineering_routes_execute_through_real_control_plane() -> None:
@@ -330,6 +339,97 @@ def test_queryflux_execution_is_bound_to_an_existing_project_in_workspace(tmp_pa
             "project-1",
             "project-2",
         ]
+    finally:
+        host.stop()
+
+
+def test_queryflux_async_create_is_project_scoped_and_fail_closed_on_bounds(tmp_path) -> None:
+    plugin = DataEnginerringStudioPlugin()
+    workspaces_plugin = WorkspacesPlugin()
+    execution_store = SqliteQueryFluxExecutionStore(tmp_path / "queryflux.db")
+    submitter = _QueryFluxJobSubmitter()
+    manager = PluginManager()
+    plan = manager.compose(
+        (
+            PluginRecord(workspaces_plugin.manifest, workspaces_plugin, "test"),
+            PluginRecord(plugin.manifest, plugin, "test"),
+        ),
+        services={
+            "queryflux_execution_store": execution_store,
+            "queryflux_job_submitter": submitter,
+        },
+    )
+    host = PluginHost(manager, plan)
+    host.start()
+
+    store = _Store()
+    workspace_a = WorkspaceId("workspace-a")
+    workspace_b = WorkspaceId("workspace-b")
+    store.workspaces[workspace_a] = Workspace(workspace_a, "Workspace A")
+    store.workspaces[workspace_b] = Workspace(workspace_b, "Workspace B")
+    store.projects[(workspace_a, ProjectId("project-1"))] = _manifest()
+    store.projects[(workspace_b, ProjectId("project-2"))] = _manifest(
+        name="Project B", project_id=ProjectId("project-2")
+    )
+    body = {
+        "sql": "SELECT 1",
+        "engine": "duckdb",
+        "run_id": "run-1",
+        "attempt_id": "attempt-1",
+    }
+    try:
+        with _server(
+            store,
+            _Authorizer(),
+            plugin_host=host,
+            plugin_routes_enabled=True,
+        ) as address:
+            invalid_status, invalid = _request(
+                address,
+                "POST",
+                "/v1/workspaces/workspace-a/projects/project-1/"
+                "data-engineering/queryflux/executions",
+                {**body, "max_rows": True},
+            )
+            cross_workspace_status, cross_workspace = _request(
+                address,
+                "POST",
+                "/v1/workspaces/workspace-a/projects/project-2/"
+                "data-engineering/queryflux/executions",
+                body,
+            )
+            created_status, created = _request(
+                address,
+                "POST",
+                "/v1/workspaces/workspace-a/projects/project-1/"
+                "data-engineering/queryflux/executions",
+                body,
+            )
+            cross_workspace_read_status, cross_workspace_read = _request(
+                address,
+                "GET",
+                "/v1/workspaces/workspace-a/projects/project-2/"
+                "data-engineering/queryflux/executions/run-1/attempt-1",
+            )
+            unavailable_cancel_status, unavailable_cancel = _request(
+                address,
+                "POST",
+                "/v1/workspaces/workspace-a/projects/project-1/"
+                "data-engineering/queryflux/executions/run-1/attempt-1/cancel",
+                {},
+            )
+
+        assert invalid_status == 400
+        assert invalid["error"]["code"] == "invalid_request"
+        assert cross_workspace_status == 404
+        assert cross_workspace["error"]["code"] == "project_not_found"
+        assert created_status == 200
+        assert created["state"] == "queued"
+        assert cross_workspace_read_status == 404
+        assert cross_workspace_read["error"]["code"] == "project_not_found"
+        assert unavailable_cancel_status == 503
+        assert unavailable_cancel["error"]["code"] == "query_execution_cancel_unavailable"
+        assert len(submitter.submissions) == 1
     finally:
         host.stop()
 
