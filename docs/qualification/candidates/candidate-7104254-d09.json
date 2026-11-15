@@ -1,0 +1,98 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D09",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-11-23",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "7104254f8ae74b29bfe4cf4ba47e7370cac0ede7",
+    "origin_main_sha_when_candidate_was_tested": "7104254f8ae74b29bfe4cf4ba47e7370cac0ede7",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7104254-d09",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7104254-d09\\candidate-7104254f8ae74b29bfe4cf4ba47e7370cac0ede7.tar",
+      "format": "tar",
+      "sha256": "e996c0ba4589e27178f8f16157ff818df716daf50a00e4d532d0ff0ee8dd6811",
+      "size": 16424960
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7104254-d09\\candidate-7104254f8ae74b29bfe4cf4ba47e7370cac0ede7.manifest.json",
+      "sha256": "1b9abafb72d0996957e63171d15f5f997551a2bce7c7f4c005169036edffce05",
+      "size": 212634
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7104254-d09\\candidate-7104254f8ae74b29bfe4cf4ba47e7370cac0ede7.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7104254-d09\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1386,
+    "total_bytes": 15288620,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "7104254f8ae74b29bfe4cf4ba47e7370cac0ede7",
+    "candidate_docs_commit": "7104254f8ae74b29bfe4cf4ba47e7370cac0ede7",
+    "summary": "Rejected boolean limits as integers on PostgreSQL and JDBC connector surfaces and the provider-neutral registry; added a real PostgreSQL-backed control-plane journey covering schema discovery, invalid page bounds, preview and persistence across composition reopen.",
+    "production_files_changed": [
+      "python/studio_connectors/postgres.py",
+      "python/studio_connectors/jdbc.py",
+      "python/studio_connectors/registry.py"
+    ],
+    "test_files_changed": [
+      "tests/test_postgres_connector.py",
+      "tests/test_jdbc_connector.py",
+      "tests/test_connector_registry.py",
+      "tests/integration/test_postgres_connector_control_plane_real.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 7104254f8ae74b29bfe4cf4ba47e7370cac0ede7 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7104254-d09",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7104254-d09",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed the sandbox after testing; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "real_control_plane": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d09-pg-control-7104254 -TestPath tests/integration/test_postgres_connector_control_plane_real.py",
+    "full_python_postgres": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d09-pg-full-7104254"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "69 passed, 0 failed, 6 skipped from the exact candidate sandbox; no generated cache artifacts remained",
+    "postgres_connector_control_plane_real": "1 passed, 0 failed, 0 skipped against isolated PostgreSQL 16.4; public connection creation, schema-filtered discovery, invalid page bound, preview and reopen without re-registration",
+    "postgres_connector_real_profile": "2 direct connector tests and 3 real checkpoint/worker tests passed in the full PostgreSQL run; snapshot, typed watermark, schema drift, fencing, scoped checkpoint persistence and recovery were exercised",
+    "jdbc_bounds_and_registry": "4 local negative tests passed; boolean limits are rejected before provider execution, but no JDBC bridge/driver provider claim is made",
+    "full_python_postgres_suite": "4682 passed, 0 failed, 30 skipped, 12 warnings; real PostgreSQL 16.4; evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d09-pg-full-7104254",
+    "static_and_surface_checks": "format (948 files), ruff, mypy (448 source files), architecture, negative-gates, route-consistency (200 operations), Studio surface (128/242), web audit, budget, dependency-surfaces, OpenAPI, public-status, daily-ledger and git diff checks pass",
+    "result": "D09 pass for the real local PostgreSQL and bounded JDBC/registry validation cell; P2 remains in_progress because JDBC provider provenance, D10 provider profiles and D11 retry/idempotency/Studio/SDK/CLI completion remain open"
+  },
+  "security_and_recovery": {
+    "authorization": "The real control-plane journey authenticated connection creation, discovery and preview with workspace-scoped control-plane permissions",
+    "schema_and_bounds": "A unique real PostgreSQL schema was discovered through the public route; schema filtering, page_size=1 and page_size=true rejection were asserted",
+    "persistence_and_reopen": "The PostgreSQL storage composition was stopped and rebuilt; the persisted connection was reused for a second real preview without re-registration",
+    "incremental_and_checkpoint": "The real suite exercised typed snapshot/watermark behavior, same-timestamp tie-breakers, schema-drift rejection, checkpoint fencing, worker output commit and scoped checkpoint reopen",
+    "scan_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d09-scans-7104254",
+    "scans": {
+      "gitleaks": "8.30.1; clean regenerated candidate sandbox; 15,288,620 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1; filesystem scanners vuln,secret; 0 vulnerabilities and 0 secrets; image digest sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+    }
+  },
+  "open_cells": [
+    "P2 remains in_progress, not qualified: no JDBC bridge/driver provenance was certified; D10 provider profiles and D11 retry/idempotency/Studio/SDK/CLI journey remain open.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates.",
+    "Thirty full-suite skips are not PASS: they cover opt-in external providers/services, Docker cases outside the Python runner, Windows symlink privileges and POSIX-only mode/process semantics."
+  ],
+  "limitations": [
+    "The candidate sandbox has no Git metadata; repository-level public-status and daily-ledger validation ran on main.",
+    "The PostgreSQL provider is an isolated local PostgreSQL 16.4 service; no production appliance or external provider claim is made.",
+    "JDBC remains fail-closed without an injected deployment-local bridge and explicit driver provenance; the D09 evidence covers validation only, not a JDBC provider qualification.",
+    "The full suite emitted 12 ResourceWarning warnings; no test failed and the warnings are recorded rather than treated as a warning-free claim.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

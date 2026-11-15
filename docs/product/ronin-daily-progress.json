@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "25a579b40586f55ef93e56ef23b1bc2694bb6ef4",
+    "base_sha": "7104254f8ae74b29bfe4cf4ba47e7370cac0ede7",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -44,9 +44,9 @@
     "families_qualified": 1,
     "families_total": 13,
     "families_percent": 7.69,
-    "days_passed": 8,
+    "days_passed": 9,
     "days_total": 39,
-    "days_percent": 20.51,
+    "days_percent": 23.08,
     "release_gates_passed": 0,
     "release_gates_total": 10,
     "release_gates_percent": 0.0,
@@ -69,8 +69,8 @@
       "name": "Data connections and ingestion",
       "observed_implementation": "partial",
       "qualification": "in_progress",
-      "receipt": "docs/qualification/candidates/candidate-25a579b4-d08.json",
-      "candidate_sha": "25a579b40586f55ef93e56ef23b1bc2694bb6ef4"
+      "receipt": "docs/qualification/candidates/candidate-7104254-d09.json",
+      "candidate_sha": "7104254f8ae74b29bfe4cf4ba47e7370cac0ede7"
     },
     {
       "id": "P3",
@@ -233,7 +233,7 @@
     {"id": "D06", "date": "2026-11-20", "phase": "p13-security-contracts", "status": "pass", "families": ["P13"], "evidence": "docs/qualification/handoffs/2026-11-14-D06.md", "commit_sha": "b2f03725c92867a238e829f564c80c415bccc72a"},
     {"id": "D07", "date": "2026-11-21", "phase": "p13-security-close", "status": "blocked", "families": ["P13"], "evidence": "docs/qualification/handoffs/2026-11-15-D07.md", "commit_sha": "45782dc1915a14e0e570b2ce8710b2fb0734127b"},
     {"id": "D08", "date": "2026-11-22", "phase": "p2-http-connectors", "status": "pass", "families": ["P2"], "evidence": "docs/qualification/handoffs/2026-11-15-D08.md", "commit_sha": "25a579b40586f55ef93e56ef23b1bc2694bb6ef4"},
-    {"id": "D09", "date": "2026-11-23", "phase": "p2-jdbc-postgres", "status": "pending", "families": ["P2"], "evidence": null, "commit_sha": null},
+    {"id": "D09", "date": "2026-11-23", "phase": "p2-jdbc-postgres", "status": "pass", "families": ["P2"], "evidence": "docs/qualification/handoffs/2026-11-15-D09.md", "commit_sha": "7104254f8ae74b29bfe4cf4ba47e7370cac0ede7"},
     {"id": "D10", "date": "2026-11-24", "phase": "p2-object-storage", "status": "pending", "families": ["P2"], "evidence": null, "commit_sha": null},
     {"id": "D11", "date": "2026-11-25", "phase": "p2-provider-close", "status": "pending", "families": ["P2"], "evidence": null, "commit_sha": null},
     {"id": "D12", "date": "2026-11-26", "phase": "p3-lakehouse-sql", "status": "pending", "families": ["P3"], "evidence": null, "commit_sha": null},
@@ -283,7 +283,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D02 baseline is green on the exact clean candidate and Chromium; 80 Python tests remain skipped for unavailable Docker, database, provider, POSIX and external CLI environments and are not counted as PASS."
+      "summary": "D02 baseline is green on the exact clean candidate and Chromium; the current full Python/PostgreSQL lane has 30 skips for unavailable Docker, provider, POSIX and external CLI environments, and they are not counted as PASS."
     }
   ],
   "human_review": {
