@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from threading import Thread
 from urllib.error import HTTPError
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 import pytest
@@ -15,7 +16,7 @@ from studio_execution import DurableExecutionService
 from studio_lakehouse import write_parquet_rows
 from studio_orchestrator import AttemptId, Instant, JobId, LeaseToken, StoredExecutionEvent
 from studio_server import CONTROL_PLANE_ROUTES, SUPPORTED_ROUTES, RoninHTTPServer
-from studio_sql import DuckDbSqlEngine, SqlQueryResult
+from studio_sql import DuckDbSqlEngine, ProjectScopedDuckDbSqlEngine, SqlQueryResult
 from studio_storage import SqliteJobStore
 
 _MIGRATION_NOW = Instant("2026-09-07T06:00:00.000000Z")
@@ -555,6 +556,88 @@ def test_http_sql_route_requires_project_read_and_returns_bounded_result(tmp_pat
         engine.close()
         thread.join(timeout=5.0)
         assert not thread.is_alive()
+
+
+def test_http_project_scoped_sql_survives_server_reopen(tmp_path: Path) -> None:
+    pytest.importorskip("pyarrow")
+    pytest.importorskip("duckdb")
+    parquet_root = tmp_path / "parquet"
+    project = "workspace:project-a"
+    other_project = "workspace:project-b"
+    write_parquet_rows(
+        parquet_root / quote(project, safe="") / "events.parquet",
+        ({"value": 3}, {"value": 4}),
+    )
+    write_parquet_rows(
+        parquet_root / quote(other_project, safe="") / "events.parquet",
+        ({"value": 11},),
+    )
+
+    engine = ProjectScopedDuckDbSqlEngine(parquet_root=parquet_root)
+    service = DurableExecutionService(
+        SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
+    )
+    server = RoninHTTPServer(
+        ("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=_GRANTS, sql_engine=engine
+    )
+    thread = Thread(target=server.serve_forever, name="ronin-project-sql-http", daemon=True)
+    thread.start()
+    try:
+        transport = HTTPTransport(
+            f"http://127.0.0.1:{server.server_port}",
+            token=_AUTHORIZATION,
+            allow_insecure_localhost=True,
+            max_retries=0,
+        )
+        ronin = Ronin(transport=transport)
+        first = ronin.execute_sql(project=project, sql="SELECT sum(value) AS total FROM events")
+        second = ronin.execute_sql(
+            project=other_project, sql="SELECT sum(value) AS total FROM events"
+        )
+        assert first.rows == ((7,),)
+        assert second.rows == ((11,),)
+        assert first.query_evidence["selected_engine"] == "duckdb"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5.0)
+        engine.close()
+        asyncio.run(service.aclose())
+        assert not thread.is_alive()
+
+    reopened_engine = ProjectScopedDuckDbSqlEngine(parquet_root=parquet_root)
+    reopened_service = DurableExecutionService(
+        SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
+    )
+    reopened_server = RoninHTTPServer(
+        ("127.0.0.1", 0),
+        reopened_service,
+        token=_AUTHORIZATION,
+        grants=_GRANTS,
+        sql_engine=reopened_engine,
+    )
+    reopened_thread = Thread(
+        target=reopened_server.serve_forever, name="ronin-project-sql-reopen", daemon=True
+    )
+    reopened_thread.start()
+    try:
+        transport = HTTPTransport(
+            f"http://127.0.0.1:{reopened_server.server_port}",
+            token=_AUTHORIZATION,
+            allow_insecure_localhost=True,
+            max_retries=0,
+        )
+        result = Ronin(transport=transport).execute_sql(
+            project=project, sql="SELECT sum(value) AS total FROM events"
+        )
+        assert result.rows == ((7,),)
+    finally:
+        reopened_server.shutdown()
+        reopened_server.server_close()
+        reopened_thread.join(timeout=5.0)
+        reopened_engine.close()
+        asyncio.run(reopened_service.aclose())
+        assert not reopened_thread.is_alive()
 
 
 def test_http_server_rejects_invalid_static_token(tmp_path: Path) -> None:

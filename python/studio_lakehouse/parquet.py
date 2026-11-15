@@ -132,7 +132,9 @@ def read_parquet_rows(
 ) -> tuple[dict[str, object], ...]:
     """Read local Parquet rows with optional projection and result bound."""
 
-    if limit is not None and not 0 <= limit <= 100_000:
+    if limit is not None and (
+        not isinstance(limit, int) or isinstance(limit, bool) or not 0 <= limit <= 100_000
+    ):
         raise ValueError("Parquet read limit must be between 0 and 100000")
     if columns is not None and any(not column or column != column.strip() for column in columns):
         raise ValueError("Parquet projection columns must be non-empty and trimmed")

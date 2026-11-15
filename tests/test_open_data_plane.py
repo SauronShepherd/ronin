@@ -88,6 +88,14 @@ def test_parquet_reads_enforce_bounds_and_projection_shape(tmp_path: Path) -> No
         read_parquet_rows(path, columns=("id", "id"))
 
 
+@pytest.mark.parametrize("limit", [True, False])
+def test_parquet_reads_reject_boolean_limits(tmp_path: Path, limit: bool) -> None:
+    path = tmp_path / "events.parquet"
+    write_parquet_rows(path, ({"id": 1},))
+    with pytest.raises(ValueError, match="between 0 and 100000"):
+        read_parquet_rows(path, limit=limit)
+
+
 def test_duckdb_reference_engine_queries_registered_parquet(tmp_path: Path) -> None:
     path = tmp_path / "events.parquet"
     write_parquet_rows(
@@ -228,6 +236,12 @@ def test_sql_reference_engine_bounds_materialized_results(tmp_path: Path) -> Non
         engine.register_parquet("events", str(path))
         with pytest.raises(ValueError, match="max_rows"):
             engine.execute("SELECT * FROM events ORDER BY id", max_rows=1)
+
+
+@pytest.mark.parametrize("argument", ["max_rows", "timeout_ms", "max_result_bytes"])
+def test_duckdb_engine_rejects_boolean_execution_budgets(argument: str) -> None:
+    with DuckDbSqlEngine() as engine, pytest.raises(SqlValidationError):
+        engine.execute("SELECT 1", **{argument: True})
 
 
 def test_sql_reference_engine_bounds_query_text() -> None:

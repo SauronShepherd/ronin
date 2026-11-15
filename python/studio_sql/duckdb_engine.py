@@ -303,11 +303,23 @@ class DuckDbSqlEngine:
             raise SqlValidationError("SQL text exceeds the configured byte limit")
         if _UNSAFE_SQL.search(sql):
             raise SqlValidationError("SQL external filesystem and network access is disabled")
-        if max_rows < 1:
-            raise SqlValidationError("max_rows must be positive")
-        if not 1 <= timeout_ms <= 60_000:
+        if (
+            not isinstance(max_rows, int)
+            or isinstance(max_rows, bool)
+            or not 1 <= max_rows <= 10_000
+        ):
+            raise SqlValidationError("max_rows must be between 1 and 10000")
+        if (
+            not isinstance(timeout_ms, int)
+            or isinstance(timeout_ms, bool)
+            or not 1 <= timeout_ms <= 60_000
+        ):
             raise SqlValidationError("timeout_ms must be between 1 and 60000")
-        if not 1 <= max_result_bytes <= 10_485_760:
+        if (
+            not isinstance(max_result_bytes, int)
+            or isinstance(max_result_bytes, bool)
+            or not 1 <= max_result_bytes <= 10_485_760
+        ):
             raise SqlValidationError("max_result_bytes must be between 1 and 10485760")
         _validate_relation_sources(sql, {name.casefold() for name in self.list_relations()})
 
