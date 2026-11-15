@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "37bdd2fa8c6292d7641f586616cb52e2bfe5409f",
+    "base_sha": "f667460650525a5d8a155cad1be5dcff2fc3fd14",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -44,9 +44,9 @@
     "families_qualified": 1,
     "families_total": 13,
     "families_percent": 7.69,
-    "days_passed": 20,
+    "days_passed": 21,
     "days_total": 39,
-    "days_percent": 51.28,
+    "days_percent": 53.85,
     "release_gates_passed": 0,
     "release_gates_total": 10,
     "release_gates_percent": 0.0,
@@ -93,8 +93,8 @@
       "name": "Planner and scheduler",
       "observed_implementation": "partial",
       "qualification": "in_progress",
-      "receipt": "docs/qualification/candidates/candidate-37bdd2fa-d20.json",
-      "candidate_sha": "37bdd2fa8c6292d7641f586616cb52e2bfe5409f"
+      "receipt": "docs/qualification/candidates/candidate-f6674606-d21.json",
+      "candidate_sha": "f667460650525a5d8a155cad1be5dcff2fc3fd14"
     },
     {
       "id": "P6",
@@ -245,7 +245,7 @@
     {"id": "D18", "date": "2026-12-02", "phase": "p4-journey-close", "status": "pass", "families": ["P4"], "evidence": "docs/qualification/handoffs/2026-11-15-D18.md", "commit_sha": "207e27c3ff15b2c064ca1439277bf5f839ccdfc6"},
     {"id": "D19", "date": "2026-12-03", "phase": "p5-scheduler-durable", "status": "pass", "families": ["P5"], "evidence": "docs/qualification/handoffs/2026-11-15-D19.md", "commit_sha": "f5802811e14a5e95b52725a7a29fbd17b4262af4"},
     {"id": "D20", "date": "2026-12-04", "phase": "p5-restart-failure", "status": "pass", "families": ["P5"], "evidence": "docs/qualification/handoffs/2026-11-15-D20.md", "commit_sha": "37bdd2fa8c6292d7641f586616cb52e2bfe5409f"},
-    {"id": "D21", "date": "2026-12-05", "phase": "p5-journey-close", "status": "pending", "families": ["P5"], "evidence": null, "commit_sha": null},
+    {"id": "D21", "date": "2026-12-05", "phase": "p5-journey-close", "status": "pass", "families": ["P5"], "evidence": "docs/qualification/handoffs/2026-11-15-D21.md", "commit_sha": "f667460650525a5d8a155cad1be5dcff2fc3fd14"},
     {"id": "D22", "date": "2026-12-06", "phase": "p6-catalog-assets", "status": "pending", "families": ["P6"], "evidence": null, "commit_sha": null},
     {"id": "D23", "date": "2026-12-07", "phase": "p6-graph-lineage", "status": "pending", "families": ["P6"], "evidence": null, "commit_sha": null},
     {"id": "D24", "date": "2026-12-08", "phase": "p6-journey-close", "status": "pending", "families": ["P6"], "evidence": null, "commit_sha": null},

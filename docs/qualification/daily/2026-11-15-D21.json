@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D21",
+  "date": "2026-11-15",
+  "planned_date": "2026-12-05",
+  "status": "PASS",
+  "candidate_sha": "f667460650525a5d8a155cad1be5dcff2fc3fd14",
+  "implementation_commit_sha": "f667460650525a5d8a155cad1be5dcff2fc3fd14",
+  "evidence": "docs/qualification/candidates/candidate-f6674606-d21.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D21.md",
+  "execution_scope": "complete-for-D21-bounded-local-scheduler-api-studio-daemon-journey-and-input-boundaries; PostgreSQL-operator-worker-provider-and-P5-family-close-pending",
+  "result": {
+    "implementation": "Scheduler identity, event-scope and backfill identifiers now reject non-text input at the boundary instead of leaking AttributeError/500 paths. A real local composed regression covers API, SQLite persistence, daemon delivery, workflow-run cancellation, backfill lifecycle and malformed HTTP inputs.",
+    "candidate_focused_suite": "254 passed, 0 failed, 0 skipped in 97.61s in the exact candidate sandbox",
+    "checkout_focused_suite": "254 passed, 0 failed, 0 skipped in 98.08s",
+    "web_regression": "180 passed, 0 failed, 0 skipped in 16.1 minutes on clean checkout source at the candidate SHA",
+    "static_and_surface_checks": "candidate format 1125 files, Ruff, mypy 451 files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI and Studio 128/242 pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged after cleanup/regeneration; final verify pass",
+    "scans": "Gitleaks 0 findings over 15,531,420 candidate bytes; pip-audit 0 vulnerabilities across 99 dependencies; Trivy skipped because no local binary or responsive Docker daemon",
+    "p5_boundary": "D21 closes the bounded local API/Studio/daemon and input-boundary cell but does not qualify P5; PostgreSQL/operator, Docker worker, real notification-provider and complete same-candidate journey evidence remain open"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "20/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "21/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "RONIN_POSTGRES_TEST_DSN is absent and Docker daemon probes are unavailable; no PostgreSQL, worker or external provider was substituted with a mock or counted as PASS.",
+    "The candidate sandbox has no .git metadata; Git diff/status and public ledger checks run separately on main. Web node_modules is outside the candidate archive.",
+    "A smoke test created .ronin/cloud-studio and was rejected by candidate verify; cleanup, regeneration and final verify then passed with matching digests.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D21",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-12-05",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "f667460650525a5d8a155cad1be5dcff2fc3fd14",
+    "origin_main_sha_when_candidate_was_tested": "f667460650525a5d8a155cad1be5dcff2fc3fd14",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f6674606-d21",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f6674606-d21\\candidate-f667460650525a5d8a155cad1be5dcff2fc3fd14.tar",
+      "format": "tar",
+      "sha256": "e6f31c54ccdf3b0e083cac1e1ebec8de8c356958bb2fe9abd3a4a363c8e4f8d1",
+      "size": 16701440
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f6674606-d21\\candidate-f667460650525a5d8a155cad1be5dcff2fc3fd14.manifest.json",
+      "sha256": "45597730f6aa9b8c144ef00a47c6757df7fd859f650f7238296d611bc6969b25",
+      "size": 219023
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f6674606-d21\\candidate-f667460650525a5d8a155cad1be5dcff2fc3fd14.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f6674606-d21\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1425,
+    "total_bytes": 15531420,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "f667460650525a5d8a155cad1be5dcff2fc3fd14",
+    "candidate_docs_commit": null,
+    "summary": "D21 hardens scheduler identity, event-scope and backfill input boundaries and adds a real local composed API/SQLite/daemon journey with positive and negative coverage. The bounded cell passes; P5 is not qualified.",
+    "production_files_changed": [
+      "python/studio_core/scheduler.py",
+      "python/studio_storage/scheduler_backfill.py",
+      "python/studio_storage/scheduler_events.py",
+      "python/studio_storage/scheduler_fencing.py"
+    ],
+    "test_files_changed": [
+      "tests/test_core_integer_invariants.py",
+      "tests/test_local_composed.py",
+      "tests/test_scheduler_backfill_store.py",
+      "tests/test_scheduler_events.py",
+      "tests/test_scheduler_fencing.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha f667460650525a5d8a155cad1be5dcff2fc3fd14 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f6674606-d21",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f6674606-d21",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed generated caches/artifacts; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "candidate_focused": "PYTHONDONTWRITEBYTECODE=1; PYTHONPATH=python; exact candidate sandbox pytest -q -p no:cacheprovider over scheduler tests, identity-boundary tests, the local composed journey and workspace/project HTTP API",
+    "checkout_focused": "scheduler tests, identity-boundary tests, local composed journey and workspace/project HTTP API on the clean checkout at the candidate source SHA",
+    "web_regression": "web-tests: npm test -- --workers=1 against the clean checkout source SHA; node_modules is outside the candidate archive",
+    "candidate_static": "exact candidate sandbox ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI and Studio surface",
+    "scans": "Gitleaks directory scan over the no-git sandbox; pip-audit -r requirements-test.lock; Trivy not run because no local binary and Docker daemon unavailable"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "254 passed, 0 failed, 0 skipped in 97.61s in the exact candidate sandbox",
+    "checkout_focused_suite": "254 passed, 0 failed, 0 skipped in 98.08s",
+    "web_regression": "180 passed, 0 failed, 0 skipped in 16.1 minutes; clean checkout source at the candidate SHA, web dependencies outside the archive",
+    "full_checkout_regression": "not rerun for D21; D20's 4668 passed/81 skipped/0 failed result is not attributed to this candidate",
+    "static_and_surface_checks": "candidate format 1125 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, canonical OpenAPI 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708 and Studio 128/242 pass",
+    "candidate_reproducibility_after_cleanup": "pass; final cleanup/regeneration produced the same archive and manifest digests, and final verify passed",
+    "checkout_integrity_checks": "daily progress check, public v1 status check and git diff --check pass on main; git diff --check is not claimed inside the no-git sandbox",
+    "result": "D21 pass for bounded local scheduler API/Studio/daemon integration and input-boundary evidence; P5 remains in_progress and is not qualified"
+  },
+  "security_and_recovery": {
+    "scheduler_scope": "The real local composed test builds the actual local API/daemon composition with SQLite persistence, schedules a workflow, observes next runs, creates and cancels a workflow run, registers and delivers an event trigger, previews/starts/cancels a backfill, and exercises malformed non-text event and backfill identities with HTTP 400 responses. The new identity tests reject non-text scheduler IDs before AttributeError paths can become 500 responses.",
+    "provider_scope": "RONIN_POSTGRES_TEST_DSN is absent and Docker does not provide a responsive daemon. No PostgreSQL operator, Docker worker or external notification provider was certified, and no mock was substituted.",
+    "scans": {
+      "gitleaks": "8.30.1; directory scan of the intentionally no-git exact candidate sandbox; 15,531,420 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 known vulnerabilities",
+      "trivy": "SKIP; no local Trivy binary and Docker daemon unavailable; no substitute scan claimed"
+    }
+  },
+  "open_cells": [
+    "P5 remains in_progress, not qualified: PostgreSQL/operator-backed scheduler persistence, the complete same-candidate API/Studio/worker schedule-to-notify journey and real notification-provider qualification remain open.",
+    "The local composed journey uses real SQLite and the daemon/API components but does not certify a Docker worker or external provider; no provider credentials or PostgreSQL DSN were available.",
+    "P4 remains in_progress and is not affected by D21; P2 and P3 remain in_progress; P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The exact candidate sandbox has no .git metadata by design, so Git-dependent tests and repository status checks are not claimed from it; main checkout checks run separately.",
+    "A post-regeneration smoke selection created .ronin/cloud-studio inside the sandbox and correctly caused verify to reject extra files; that sandbox was discarded, cleanup was rerun, the candidate was regenerated from the same SHA, and final verify passed before the recorded scans.",
+    "The web regression used the clean checkout source at the candidate SHA because web node_modules is not part of the candidate archive; it is not presented as an exact-sandbox web result.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
