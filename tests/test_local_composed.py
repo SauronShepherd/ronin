@@ -19,14 +19,20 @@ from studio_core import (
     ConnectionDefinition,
     ConnectionId,
     ExecutionProfile,
+    Pipeline,
     Project,
     ProjectId,
     ProjectManifest,
     RepositoryBinding,
     RuntimeProfileRef,
+    Schedule,
+    ScheduleId,
+    WorkflowDefinition,
+    WorkflowId,
     WorkspaceId,
 )
 from studio_core.canonical_json import decode as decode_canonical_json
+from studio_core.scheduler_events import EventTriggerDefinition, EventTriggerId
 from studio_execution import PostgresWorkflowHTTPAdapter, SqliteWorkflowHTTPAdapter
 from studio_lakehouse import write_parquet_rows
 from studio_ml import FeatureSpec, Lab
@@ -542,6 +548,182 @@ def test_local_composed_sql_route_executes_scoped_queries_and_closes_engine(
     finally:
         composition.stop()
     assert engine._closed
+
+
+def test_local_composed_scheduler_api_and_daemon_journey(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """Exercise the real local HTTP adapter, durable store and daemon together."""
+
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    composition = build_local_composed_from_env()
+    workspace_id = WorkspaceId("workspace-1")
+    now = Instant("2026-09-17T00:00:00.000000Z")
+    workflow = WorkflowDefinition(WorkflowId("workflow-1"), "Local scheduler workflow", Pipeline())
+    workflow_reader = composition.control_plane_server.workflow_reader
+    assert workflow_reader is not None
+    store = workflow_reader._store  # type: ignore[attr-defined]
+    store.put_workflow(workspace_id, workflow, now=now)
+    schedule = Schedule(ScheduleId("daily"), workflow.id, "0 * * * *", "UTC", True)
+    schedule_path = "/v1/workspaces/workspace-1/schedules/daily"
+    run_path = "/v1/workspaces/workspace-1/workflows/workflow-1/runs"
+
+    def request(method: str, path: str, body: object | None = None) -> tuple[int, object]:
+        connection = http.client.HTTPConnection(
+            *composition.control_plane_server.server_address, timeout=5
+        )
+        payload = None if body is None else json.dumps(body, separators=(",", ":"))
+        headers = {"Authorization": "Bearer control-token"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
+        try:
+            connection.request(method, path, body=payload, headers=headers)
+            response = connection.getresponse()
+            return response.status, json.loads(response.read().decode("utf-8"))
+        finally:
+            connection.close()
+
+    def wait_for(path: str, predicate, *, timeout: float = 12.0) -> object:
+        deadline = time.monotonic() + timeout
+        last: object = None
+        while time.monotonic() < deadline:
+            status, last = request("GET", path)
+            if status == 200 and predicate(last):
+                return last
+            time.sleep(0.1)
+        raise AssertionError(f"timed out waiting for {path}: {last!r}")
+
+    try:
+        composition.start()
+        assert composition.ready
+
+        status, payload = request(
+            "PUT",
+            schedule_path,
+            schedule.to_payload(),
+        )
+        assert status == 200, payload
+        status, payload = request("GET", schedule_path)
+        assert status == 200, payload
+        assert payload["id"] == "daily"  # type: ignore[index]
+
+        status, payload = request("GET", f"{schedule_path}/next-runs?after={now}&count=2")
+        assert status == 200, payload
+        assert len(payload["items"]) == 2  # type: ignore[index]
+
+        status, payload = request(
+            "POST",
+            run_path,
+            {
+                "trigger": {"kind": "api", "key": "studio-run-1", "source_ref": "studio"},
+                "idempotency_key": "studio-run-1",
+            },
+        )
+        assert status == 201, payload
+        run_id = payload["id"]  # type: ignore[index]
+        status, payload = request(
+            "POST",
+            f"/v1/workspaces/workspace-1/workflow-runs/{run_id}/cancel",
+        )
+        assert status == 200, payload
+
+        trigger = EventTriggerDefinition(
+            EventTriggerId("on-data"), workflow.id, "dataset.ready", source_ref="studio"
+        )
+        status, payload = request(
+            "PUT",
+            "/v1/workspaces/workspace-1/event-triggers/on-data",
+            trigger.to_payload(),
+        )
+        assert status == 200, payload
+
+        invalid_event = {
+            "event_id": "event-invalid",
+            "event_type": "dataset.ready",
+            "payload_digest": "a" * 64,
+            "occurred_at": str(now),
+            "source_ref": 42,
+        }
+        status, payload = request("POST", "/v1/workspaces/workspace-1/events", invalid_event)
+        assert status == 400, payload
+        assert payload["error"]["code"] == "invalid_request"  # type: ignore[index]
+
+        invalid_backfill = {
+            "id": 42,
+            "schedule_id": "daily",
+            "start_at": "2026-09-16T00:00:00.000000Z",
+            "end_at": "2026-09-16T02:00:00.000000Z",
+        }
+        status, payload = request("POST", "/v1/workspaces/workspace-1/backfills", invalid_backfill)
+        assert status == 400, payload
+        assert payload["error"]["code"] == "invalid_request"  # type: ignore[index]
+
+        status, payload = request(
+            "POST",
+            "/v1/workspaces/workspace-1/events",
+            {
+                "event_id": "event-1",
+                "event_type": "dataset.ready",
+                "payload_digest": "a" * 64,
+                "occurred_at": str(now),
+                "source_ref": "studio",
+            },
+        )
+        assert status == 202, payload
+        assert payload["deliveries"] == ["pending"]  # type: ignore[index]
+        deliveries = wait_for(
+            "/v1/workspaces/workspace-1/event-deliveries",
+            lambda result: bool(
+                isinstance(result, dict)
+                and result.get("items")
+                and result["items"][0]["state"] == "delivered"
+            ),
+        )
+        assert deliveries["items"][0]["workflow_run_id"].startswith(  # type: ignore[index]
+            "workflow-run-event-"
+        )
+
+        status, payload = request(
+            "POST",
+            "/v1/workspaces/workspace-1/backfills/preview",
+            {
+                "schedule_id": "daily",
+                "start_at": "2026-09-16T00:00:00.000000Z",
+                "end_at": "2026-09-16T02:00:00.000000Z",
+                "max_runs": 3,
+            },
+        )
+        assert status == 200, payload
+        assert len(payload["items"]) == 3  # type: ignore[index]
+
+        status, payload = request(
+            "POST",
+            "/v1/workspaces/workspace-1/backfills",
+            {
+                "id": "backfill-1",
+                "schedule_id": "daily",
+                "start_at": "2026-09-16T00:00:00.000000Z",
+                "end_at": "2026-09-16T02:00:00.000000Z",
+            },
+        )
+        assert status == 201, payload
+        backfill = wait_for(
+            "/v1/workspaces/workspace-1/backfills/backfill-1",
+            lambda result: (
+                isinstance(result, dict) and result.get("state") in {"running", "completed"}
+            ),
+        )
+        assert backfill["state"] == "running"  # type: ignore[index]
+        status, payload = request(
+            "POST", "/v1/workspaces/workspace-1/backfills/backfill-1/cancel", {}
+        )
+        assert status == 200, payload
+        assert payload["state"] == "cancelled"  # type: ignore[index]
+    finally:
+        composition.stop()
 
 
 def test_local_composed_migration_route_is_authenticated_and_persists_sessions(

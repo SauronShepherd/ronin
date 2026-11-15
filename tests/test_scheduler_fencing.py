@@ -31,6 +31,11 @@ _T31 = Instant("2026-09-12T00:00:31.000000Z")
 _WS = WorkspaceId("ws-1")
 
 
+def test_task_attempt_id_rejects_non_text() -> None:
+    with pytest.raises(ValueError, match="non-empty and trimmed"):
+        TaskAttemptId(123)  # type: ignore[arg-type]
+
+
 def _workflow(*, retries: int = 1) -> tuple[WorkflowDefinition, Node, Node]:
     source = Node.create(
         operator=OperatorRef("source.table"),

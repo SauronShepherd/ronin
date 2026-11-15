@@ -55,6 +55,8 @@ def _store(path: Path) -> SchedulerBackfillStore:
 
 def test_backfill_value_objects_reject_invalid_identity_state_and_range() -> None:
     with pytest.raises(ValueError, match="non-empty, trimmed, and single-line"):
+        BackfillId(123)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="non-empty, trimmed, and single-line"):
         BackfillId("bad\nbackfill")
     with pytest.raises(ValueError, match="at most 256"):
         BackfillId("x" * 257)

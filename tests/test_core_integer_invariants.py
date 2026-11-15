@@ -7,6 +7,7 @@ from studio_core.plugin_workers import WorkerLimits, WorkerProtocolError
 from studio_core.portability import BundleEntry
 from studio_core.scheduler import (
     RetryPolicy,
+    ScheduleId,
     TaskPolicy,
     TaskRun,
     TaskRunId,
@@ -40,6 +41,12 @@ def test_numeric_domain_fields_reject_booleans_as_integers() -> None:
         WorkflowDefinition(WorkflowId("workflow"), "Workflow", Pipeline(()), max_concurrency=True)
     with pytest.raises(ValueError, match="attempt_count must be an integer"):
         TaskRun(TaskRunId("task"), WorkflowRunId("run"), NodeId("node"), attempt_count=True)
+
+
+@pytest.mark.parametrize("identity_type", [ScheduleId, WorkflowId, WorkflowRunId, TaskRunId])
+def test_scheduler_identity_fields_reject_non_text(identity_type: type[object]) -> None:
+    with pytest.raises(ValueError, match="non-empty, trimmed"):
+        identity_type(123)  # type: ignore[call-arg]
 
 
 @pytest.mark.parametrize(

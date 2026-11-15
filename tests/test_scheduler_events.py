@@ -84,6 +84,27 @@ def test_event_trigger_round_trip_and_exact_matching() -> None:
     )
 
 
+@pytest.mark.parametrize("field", ["source_ref", "subject_ref"])
+def test_scheduler_event_rejects_non_text_scope_reference(field: str) -> None:
+    values: dict[str, object] = {
+        "source_ref": "connector://local/orders",
+        "subject_ref": "asset://orders/v1",
+    }
+    values[field] = 123
+
+    with pytest.raises(ValueError, match=rf"scheduler event {field} is invalid"):
+        SchedulerEventRecord(
+            WorkspaceId("workspace-1"),
+            SchedulerEventId("event-1"),
+            "dataset.snapshot.committed",
+            values["source_ref"],  # type: ignore[arg-type]
+            values["subject_ref"],  # type: ignore[arg-type]
+            "a" * 64,
+            NOW,
+            NOW,
+        )
+
+
 def test_event_ingest_freezes_matching_trigger_set_on_first_receipt(tmp_path: Path) -> None:
     store, workspace_id, workflow = _store(tmp_path)
     first_trigger = EventTriggerDefinition(

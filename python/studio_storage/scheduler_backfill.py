@@ -27,7 +27,12 @@ class BackfillId:
     value: str
 
     def __post_init__(self) -> None:
-        if not self.value or self.value != self.value.strip() or "\n" in self.value:
+        if (
+            not isinstance(self.value, str)
+            or not self.value
+            or self.value != self.value.strip()
+            or "\n" in self.value
+        ):
             raise ValueError("backfill id must be non-empty, trimmed, and single-line")
         if len(self.value) > 256:
             raise ValueError("backfill id must be at most 256 characters")

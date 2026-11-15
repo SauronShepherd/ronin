@@ -35,7 +35,7 @@ class TaskAttemptId:
     value: str
 
     def __post_init__(self) -> None:
-        if not self.value or self.value != self.value.strip():
+        if not isinstance(self.value, str) or not self.value or self.value != self.value.strip():
             raise ValueError("task attempt id must be non-empty and trimmed")
 
     def __str__(self) -> str:

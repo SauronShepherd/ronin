@@ -58,7 +58,13 @@ class SchedulerEventRecord:
         for name, value in (("source_ref", self.source_ref), ("subject_ref", self.subject_ref)):
             if value is None:
                 continue
-            if not value or value != value.strip() or "\n" in value or "\r" in value:
+            if (
+                not isinstance(value, str)
+                or not value
+                or value != value.strip()
+                or "\n" in value
+                or "\r" in value
+            ):
                 raise ValueError(f"scheduler event {name} is invalid")
             folded = value.casefold()
             if any(term in folded for term in _SENSITIVE_TERMS):
