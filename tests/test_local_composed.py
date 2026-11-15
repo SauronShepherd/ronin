@@ -25,6 +25,7 @@ from studio_core import (
     CatalogAsset,
     ConnectionDefinition,
     ConnectionId,
+    DataContract,
     ExecutionProfile,
     KnowledgeGraph,
     KnowledgeObject,
@@ -39,6 +40,8 @@ from studio_core import (
     ProjectId,
     ProjectManifest,
     PropertyDefinition,
+    QualityRule,
+    QualityRuleId,
     RepositoryBinding,
     RuntimeProfileRef,
     Schedule,
@@ -662,6 +665,165 @@ def test_local_composed_graph_and_ontology_journey_isolates_workspaces(
         )
         assert status == 200, persisted
         assert persisted["objects"][0]["properties"] == [["name", "Ada"]]
+    finally:
+        restarted.stop()
+
+
+def test_local_composed_quality_contract_journey_is_durable_and_operator_visible(
+    monkeypatch: pytest.MonkeyPatch, tmp_path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS",
+        "workspace.read,workspace.write,workspace.admin,project.read,project.write",
+    )
+    workspace = WorkspaceId("workspace-1")
+    now = Instant("2026-10-17T00:00:00.000000Z")
+    asset = CatalogAsset(AssetId("orders"), "table", "Orders", project_id="project-a")
+    revision = AssetRevision(AssetRef(asset.id, AssetVersion("1")), schema_digest="orders-v1")
+    contract = DataContract(
+        revision.ref,
+        "exact",
+        (
+            QualityRule(
+                QualityRuleId("non-empty"),
+                "row_count",
+                "At least one order",
+                blocking=True,
+                parameters=(("min", "1"),),
+            ),
+        ),
+    )
+    composition = build_local_composed_from_env()
+    catalog = composition.control_plane_server.catalog_reader
+    assert catalog is not None
+    catalog.create_asset(workspace, asset, now=now)
+    catalog.put_revision(workspace, revision, now=now)
+    composition.start()
+    address = composition.control_plane_server.server_address
+    base_url = f"http://{address[0]}:{address[1]}"
+    sdk = Ronin(
+        transport=HTTPTransport(
+            base_url,
+            token=_CONTROL_VALUE,
+            allow_insecure_localhost=True,
+            max_retries=0,
+        )
+    )
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_URL", base_url)
+    monkeypatch.setenv("RONIN_TOKEN", _CONTROL_VALUE)
+    contract_file = tmp_path / "quality-contract.json"
+    contract_file.write_text(json.dumps(contract.to_payload()), encoding="utf-8")
+    passed_file = tmp_path / "quality-run-passed.json"
+    passed_file.write_text(
+        json.dumps(
+            {
+                "asset": {"asset_id": "orders", "version": "1"},
+                "rows": [{"id": 1}],
+                "run_id": "quality-local-passed",
+                "contract_digest": contract.digest,
+                "enforce_blocking": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    try:
+        assert (
+            sdk.put_quality_contract("workspace-1", "orders", "1", contract.to_payload())
+            == contract.to_payload()
+        )
+        assert sdk.get_quality_contract("workspace-1", "orders", "1") == contract.to_payload()
+        passed = sdk.run_quality(
+            "workspace-1",
+            {
+                "asset": {"asset_id": "orders", "version": "1"},
+                "rows": [{"id": 1}],
+                "run_id": "quality-local-passed",
+                "contract_digest": contract.digest,
+                "enforce_blocking": True,
+            },
+        )
+        assert passed["gate_passed"] is True
+        assert cast(dict[str, object], passed["run"])["status"] == "passed"
+        assert sdk.list_quality_runs("workspace-1", "orders", "1")[0]["id"] == (
+            "quality-local-passed"
+        )
+        assert sdk.get_quality_state("workspace-1", "orders", "1")["latest_status"] == ("passed")
+
+        assert cli_main(["quality", "contract", "get", "workspace-1", "orders", "1", "--json"]) == 0
+        assert json.loads(capsys.readouterr().out) == contract.to_payload()
+        assert (
+            cli_main(
+                [
+                    "quality",
+                    "contract",
+                    "put",
+                    "workspace-1",
+                    "orders",
+                    "1",
+                    str(contract_file),
+                    "--json",
+                ]
+            )
+            == 0
+        )
+        assert json.loads(capsys.readouterr().out) == contract.to_payload()
+        assert cli_main(["quality", "run", "workspace-1", str(passed_file), "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["gate_passed"] is True
+
+        failed = sdk.run_quality(
+            "workspace-1",
+            {
+                "asset": {"asset_id": "orders", "version": "1"},
+                "rows": [],
+                "run_id": "quality-local-failed",
+                "contract_digest": contract.digest,
+                "enforce_blocking": False,
+            },
+        )
+        assert failed["gate_passed"] is False
+        assert cast(dict[str, object], failed["run"])["status"] == "failed"
+        assert sdk.get_quality_state("workspace-1", "orders", "1")["latest_status"] == ("failed")
+        with pytest.raises(APIError) as malformed:
+            sdk.run_quality(
+                "workspace-1",
+                {
+                    "asset": {"asset_id": "orders", "version": "1"},
+                    "rows": [["not", "an", "object"]],
+                    "run_id": "quality-local-malformed",
+                    "contract_digest": contract.digest,
+                    "enforce_blocking": False,
+                },
+            )
+        assert malformed.value.status_code == 400
+
+        assert cli_main(["quality", "history", "workspace-1", "orders", "1", "--json"]) == 0
+        history = json.loads(capsys.readouterr().out)
+        assert [item["id"] for item in history["items"]] == [
+            "quality-local-passed",
+            "quality-local-failed",
+        ]
+        assert cli_main(["quality", "state", "workspace-1", "orders", "1", "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["latest_run_id"] == "quality-local-failed"
+        with pytest.raises(APIError) as denied:
+            sdk.get_quality_state("workspace-unknown", "orders", "1")
+        assert denied.value.status_code == 403
+    finally:
+        composition.stop()
+
+    restarted = build_local_composed_from_env()
+    try:
+        restarted.start()
+        assert sdk.get_quality_contract("workspace-1", "orders", "1") == contract.to_payload()
+        recovered = sdk.get_quality_state("workspace-1", "orders", "1")
+        assert recovered["latest_run_id"] == "quality-local-failed"
+        assert [item["status"] for item in cast(list[dict[str, object]], recovered["history"])] == [
+            "passed",
+            "failed",
+        ]
     finally:
         restarted.stop()
 

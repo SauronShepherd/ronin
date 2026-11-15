@@ -481,6 +481,65 @@ class ControlPlaneClient:
             "graph neighbors",
         )
 
+    def get_quality_contract(
+        self, workspace_id: str, asset_id: str, version: str
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/quality/contracts/"
+                f"{quote(asset_id, safe='')}/{quote(version, safe='')}",
+            )
+        )
+
+    def put_quality_contract(
+        self,
+        workspace_id: str,
+        asset_id: str,
+        version: str,
+        contract: dict[str, object],
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "PUT",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/quality/contracts/"
+                f"{quote(asset_id, safe='')}/{quote(version, safe='')}",
+                payload=contract,
+            )
+        )
+
+    def run_quality(self, workspace_id: str, request: dict[str, object]) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "POST",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/quality/runs",
+                payload=request,
+            )
+        )
+
+    def list_quality_runs(
+        self, workspace_id: str, asset_id: str, version: str
+    ) -> dict[str, object]:
+        return _page_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/quality/runs/"
+                f"{quote(asset_id, safe='')}/{quote(version, safe='')}",
+            ),
+            "quality runs",
+        )
+
+    def get_quality_state(
+        self, workspace_id: str, asset_id: str, version: str
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/quality/state/"
+                f"{quote(asset_id, safe='')}/{quote(version, safe='')}",
+            )
+        )
+
     def submit(
         self,
         *,

@@ -31,8 +31,9 @@ test('Quality Studio presents an evidence-first decision workbench', async ({ pa
     throw new Error(`Unexpected quality request ${request.method()} ${url.pathname}`);
   });
 
-  await page.goto('./#quality', { waitUntil: 'domcontentloaded' });
+  await page.goto('./?workspace=ws-context#quality', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.quality-hero')).toContainText('Make data quality a decision');
+  await expect(page.locator('#quality-workspace')).toHaveValue('ws-context');
   await expect(page.locator('.quality-playbook li')).toHaveCount(3);
   await expect(page.locator('#quality-controls')).toContainText('Contract JSON');
   await expect(page.locator('#quality-controls')).toContainText('Dry-run rows');

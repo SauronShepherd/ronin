@@ -278,6 +278,41 @@ def _parser() -> argparse.ArgumentParser:
     graph_neighbors.add_argument("key_json", help="object key as a JSON array")
     graph_neighbors.add_argument("--limit", type=int, default=100)
     graph_neighbors.add_argument("--json", action="store_true")
+    quality = commands.add_parser("quality", help="govern data-quality contracts and evidence")
+    quality_commands = quality.add_subparsers(dest="quality_command", required=True)
+    quality_contract = quality_commands.add_parser("contract", help="read or replace a contract")
+    quality_contract_commands = quality_contract.add_subparsers(
+        dest="quality_contract_command", required=True
+    )
+    quality_contract_get = quality_contract_commands.add_parser(
+        "get", help="read one versioned quality contract"
+    )
+    quality_contract_get.add_argument("workspace_id")
+    quality_contract_get.add_argument("asset_id")
+    quality_contract_get.add_argument("version")
+    quality_contract_get.add_argument("--json", action="store_true")
+    quality_contract_put = quality_contract_commands.add_parser(
+        "put", help="replace one versioned quality contract"
+    )
+    quality_contract_put.add_argument("workspace_id")
+    quality_contract_put.add_argument("asset_id")
+    quality_contract_put.add_argument("version")
+    quality_contract_put.add_argument("contract", type=Path)
+    quality_contract_put.add_argument("--json", action="store_true")
+    quality_run = quality_commands.add_parser("run", help="execute a quality contract")
+    quality_run.add_argument("workspace_id")
+    quality_run.add_argument("request", type=Path, help="quality run request JSON")
+    quality_run.add_argument("--json", action="store_true")
+    quality_history = quality_commands.add_parser("history", help="list durable quality runs")
+    quality_history.add_argument("workspace_id")
+    quality_history.add_argument("asset_id")
+    quality_history.add_argument("version")
+    quality_history.add_argument("--json", action="store_true")
+    quality_state = quality_commands.add_parser("state", help="read the latest quality state")
+    quality_state.add_argument("workspace_id")
+    quality_state.add_argument("asset_id")
+    quality_state.add_argument("version")
+    quality_state.add_argument("--json", action="store_true")
     plugins = commands.add_parser("plugins", help="inspect installed Ronin plugins")
     plugins.add_argument(
         "plugins_command", choices=("list", "surfaces", "validate", "lock", "rollback")
@@ -965,6 +1000,44 @@ def _graphs(namespace: argparse.Namespace) -> int:
         )
     else:
         raise CliError(f"unsupported graphs command: {command}")
+    _emit_control_result(result, as_json=bool(namespace.json))
+    return 0
+
+
+def _quality(namespace: argparse.Namespace) -> int:
+    client = _control_plane_client()
+    command = cast(str, namespace.quality_command)
+    workspace_id = cast(str, namespace.workspace_id)
+    if command == "contract":
+        contract_command = cast(str, namespace.quality_contract_command)
+        asset_id = cast(str, namespace.asset_id)
+        version = cast(str, namespace.version)
+        if contract_command == "get":
+            result = client.get_quality_contract(workspace_id, asset_id, version)
+        elif contract_command == "put":
+            result = client.put_quality_contract(
+                workspace_id,
+                asset_id,
+                version,
+                _read_json_object_file(cast(Path, namespace.contract), "quality contract"),
+            )
+        else:
+            raise CliError(f"unsupported quality contract command: {contract_command}")
+    elif command == "run":
+        result = client.run_quality(
+            workspace_id,
+            _read_json_object_file(cast(Path, namespace.request), "quality run request"),
+        )
+    elif command == "history":
+        result = client.list_quality_runs(
+            workspace_id, cast(str, namespace.asset_id), cast(str, namespace.version)
+        )
+    elif command == "state":
+        result = client.get_quality_state(
+            workspace_id, cast(str, namespace.asset_id), cast(str, namespace.version)
+        )
+    else:
+        raise CliError(f"unsupported quality command: {command}")
     _emit_control_result(result, as_json=bool(namespace.json))
     return 0
 
@@ -1922,6 +1995,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _ontology(namespace)
         if command == "graphs":
             return _graphs(namespace)
+        if command == "quality":
+            return _quality(namespace)
         if command == "migrate":
             if namespace.migrate_command == "inventory":
                 return _migration_inventory(namespace)
