@@ -7,33 +7,31 @@
 
 ## Current exact-SHA qualification — 15 November 2026
 
-The current exact-head candidate is `902ddc9acea2d8806ba7fab3538ec900a8effc37`.
-D31 binds the existing P11 streaming path to a real Redpanda/Kafka broker,
-Ronin API and Chromium journey: the selected live case is `1/1`, with `38/38`
-real API events correlated to structured logs, `34` `OK`, `4` expected `WARN`
-and zero server/network errors. The checkout Streaming Studio contract also
-passes `3/3`; the exact candidate streaming selection passes `44` tests with
-`50` deselected. D30 remains the preceding code change that fixed the
-semantic dashboard replacement path and passed its `29/29` local composition
-evidence.
+The current exact-head candidate is `d71dad4eef4746154d1bd56b2baf45feef9ea337`.
+D32 adds a real two-partition Redpanda/Kafka journey with Ronin API and
+Chromium: the selected live case is `1/1`, with `52/52` real API events
+correlated to structured logs, `48` `OK`, `4` expected `WARN` and zero
+server/network errors. Twelve records (6 per partition) drain in six bounded
+micro-batches of two; health observes lag `6/6` and the final total is zero.
+The production fix permits monotonic checkpoint partition expansion while
+retaining removal/offset regression rejection. D30 remains the preceding code
+change that fixed the semantic dashboard replacement path.
 
-Candidate static gates pass: Ruff format/check, mypy on `451` source files,
-architecture and negative gates, route consistency on `200` operations, exact
-dependency surfaces, OpenAPI digest
-`315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708`, Studio
-surface `129/242`, web audit, budget and asset checks. Gitleaks reports zero
-findings and pip-audit reports no known vulnerabilities. The exact candidate
-browser lane is `SKIP` because `@playwright/test` is not packaged; the checkout
-Semantic Studio contract passes `6/6`. Trivy is skipped because no local binary
-is available.
+The exact candidate focused streaming selection passes `34` tests with no
+failures/skips. Checkout Ruff, mypy, architecture and negative gates, route
+consistency, dependency surfaces, OpenAPI, Studio, ledger/status and diff
+checks pass. Gitleaks reports zero findings and pip-audit reports no known
+vulnerabilities. The exact candidate browser lane is `SKIP` because
+`@playwright/test` is not packaged; the real Chromium result is bound to the
+clean checkout at the exact source SHA. Trivy is skipped because no local
+binary is available.
 
 This is bounded technical evidence only. Public v1 remains **1/13 families
-qualified, 0/10 gates, NO-GO**: P10 is `in_progress` and the local slice does
-not establish PostgreSQL semantic persistence/import, external warehouse/
-provider compatibility, dashboard cancellation/fan-out evidence or complete
-Studio/provider qualification. P13 external evidence, manual visual/product
-review, legal/NOTICE/claims, security acceptance, rollback/support and release
-governance remain open.
+qualified, 0/10 gates, NO-GO**: P11 is still `in_progress` because continuous
+operation, full backpressure/failure recovery, provider breadth and complete
+operator evidence remain open. P10 is `in_progress`; P13 external evidence,
+manual visual/product review, legal/NOTICE/claims, security acceptance,
+rollback/support and release governance remain open.
 
 ### Historical exact-SHA qualification — `4157181`
 
@@ -103,7 +101,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `902ddc9acea2d8806ba7fab3538ec900a8effc37` (2026-11-15).
+**Observed source head:** `d71dad4eef4746154d1bd56b2baf45feef9ea337` (2026-11-15).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
@@ -657,7 +655,7 @@ workspaces and generated reports are not release evidence.
 | AI/ML/MLOps | partial | experiment/run/model/evaluation provenance, deterministic tabular training, canonical Lab/pipeline digest pinning for scheduled ML runs, digest-verified inference, champion serving resolution, deterministic trial comparison, bounded numeric drift summaries, explicit feature-level threshold assessments, versioned feature definitions with dataset snapshots, workspace-scoped HTTP routes and pyronin SDK parity exist; broader feature engineering, algorithms, MLflow and network serving remain |
 | GenAI/RAG/agent runtime | out of scope | No Ronin tier ships model/provider invocation, RAG, tools, or in-product agent runtime/API/Studio. Coding-agent skills are installed for external agent use only. |
 | Semantic models/dashboards | partial | safe semantic contracts, canonical persistence, parameterized metric compiler, calculated metrics, SQL metric runtime, bounded declared-column two-model JOIN execution, dashboard CRUD/execution, workspace+project-scoped storage keys, Studio semantic Bundle export/plan/import API with digest-bound preview, project read/write permissions, audit, 700 KiB limit, SQLite atomic model+dashboard import, exact replay and conflict handling exist; an explicit SQLite migration tool rehomes legacy unscoped definitions into an operator-selected workspace with conflict-safe atomicity; dashboard fan-out/cancellation budget, PostgreSQL import and exact-head public API/Studio qualification remain |
-| Streaming/real-time | partial | Kafka polling, durable CAS checkpoints, micro-batch processing, Parquet sinks, event-time windows, stream tables, scheduler integration, bounded health/lag and canonical stream-definition Bundles exist. Local execution caps records at 1 MiB and batches at 8 MiB. Focused real Redpanda browser/API proof consumes five records in 2/2/1 batches with lag 5→3→1→0, covers reset/resume and idle replay, and rejects a poison record twice with HTTP 422 without advancing lag or revealing content; all 20 HTTP events correlate with logs. Byte-boundary, poison checkpoint and Bundle reset/resume contract tests pass; real-broker record-overload/recovery now has focused evidence; broader operational, provider and complete Bundle qualification remain |
+| Streaming/real-time | partial | Kafka polling, durable CAS checkpoints, micro-batch processing, Parquet sinks, event-time windows, stream tables, scheduler integration, bounded health/lag and canonical stream-definition Bundles exist. Local execution caps records at 1 MiB and batches at 8 MiB. D32 adds a real two-partition Redpanda browser/API proof that drains 12 records in six 2-record batches with lag 6/6→0/0, and a checkpoint contract for monotonic partition expansion while retaining removal/regression rejection. Poison/oversized recovery remains covered; broader continuous operation, backpressure/failure recovery, provider and complete Bundle qualification remain |
 | Observability/alerts/FinOps | partial | durable metrics/events, threshold alerts, SMTP/webhook notification adapters, durable delivery intents with retry/backoff, Prometheus export, instrumentation, usage pricing, actual-versus-estimated costs, non-ledger forecasts, anomaly hooks and budget gates exist; authenticated alert-rule/evaluation APIs, SDK parity, fail-closed alert operation validation and the Monitoring & Alerts Studio route are covered by static and Playwright smoke evidence; broader service adoption and production qualification remain |
 | Security/authentication (single-operator) | partial | bearer auth, transport policy, fail-closed classification-aware policy actions, secret resolver ports, broad mutation audit and append-only audit foundation exist; external provider qualification and release evidence remain. OIDC, user/group administration and multi-user role management are Ronin Pro scope. |
 | Local/Compose operations | partial | local/Compose foundation, PostgreSQL metadata healthcheck, PostgreSQL JobStore adapter wired to the server, single-node real-PostgreSQL lifecycle qualification, SQLite backup/restore with path-bound artifact-tree manifests, PostgreSQL dump verification, S3 artifact retry/corruption checks, Kubernetes Job adapter and recovery runbooks exist; Kubernetes/server deployment and multi-user Helm are not Public v1 profiles. Scheduler conformance and backup/restore qualification remain incomplete. |

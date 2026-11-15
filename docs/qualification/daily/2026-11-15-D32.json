@@ -1,0 +1,83 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D32",
+  "date": "2026-11-15",
+  "status": "pass",
+  "cell": "P11 real two-partition streaming campaign, checkpoint expansion and exact-candidate evidence",
+  "candidate_sha": "d71dad4eef4746154d1bd56b2baf45feef9ea337",
+  "candidate_receipt": "docs/qualification/candidates/candidate-d71dad4e-d32.json",
+  "code_commit": "d71dad4eef4746154d1bd56b2baf45feef9ea337",
+  "origin_main_at_code_commit": "d71dad4eef4746154d1bd56b2baf45feef9ea337",
+  "implementation": {
+    "journey": "Added a real Redpanda topic with two partitions and 12 JSON records, ran six bounded micro-batches of two records, verified per-partition lag 6/6 to 0/0, and retained the existing poison/oversized/recovery path.",
+    "evidence_gap": "D31 proved one bounded streaming provider path but left multi-partition drain and checkpoint expansion untested against a real provider.",
+    "recovery": "Fixed checkpoint CAS to allow monotonic partition-set expansion while still rejecting removal of committed partitions; the live candidate then drained the partitioned topic to zero lag and cleaned its isolated services."
+  },
+  "tests": {
+    "candidate_streaming": "34 passed, 0 failed, 0 skipped",
+    "live_provider": "1 passed, 0 skipped, 0 failed; Redpanda/Kafka true, Ronin API true, PostgreSQL false, worker null; 52 real API events, 52 correlated logs, 48 OK and 4 expected WARN",
+    "checkout_streaming_web": "1 passed, 0 skipped, 0 failed in the real Chromium journey; node --check passed",
+    "candidate_web": "SKIP; @playwright/test is not present in the exact candidate archive",
+    "negative_paths": [
+      "live poison and oversized input paths remain expected WARNs and do not advance the checkpoint",
+      "partitioned polling asserts per-partition lag, bounded idle retry behavior and final total lag zero",
+      "checkpoint contract covers both partition expansion success and committed-partition removal/offset regression failures",
+      "the live runner removes the isolated Redpanda container and network"
+    ],
+    "static": {
+      "ruff_format": "PASS; changed Python files and final checkout full check",
+      "ruff": "PASS; changed Python files and final checkout full check",
+      "mypy": "PASS; checkpoint module and final checkout full check",
+      "architecture": "PASS",
+      "negative_gates": "PASS",
+      "route_consistency": "PASS",
+      "dependency_surfaces": "PASS",
+      "openapi": "PASS",
+      "studio_surface": "PASS",
+      "studio_web_audit": "PASS",
+      "studio_budget": "PASS",
+      "web_assets": "PASS",
+      "daily_progress": "PASS after D32 receipt/ledger update",
+      "public_status": "PASS after D32 status update",
+      "capability_status": "PASS",
+      "git_diff_check": "PASS"
+    }
+  },
+  "candidate": {
+    "archive_sha256": "102dd899900e7583c03bd0e5b4a4dbfcf9c34900589f6e02fae0d95af1c9cd76",
+    "archive_size": 17049600,
+    "manifest_sha256": "af107be66cfb66c76554dd3b3fb9b9a26e64f805ce9ea032801fae5a296e5d2d",
+    "manifest_size": 224612,
+    "digest_size": 252,
+    "file_count": 1459,
+    "total_bytes": 15850347,
+    "cleanup_regenerate_verify": "PASS; identical archive and manifest hashes after cleanup/regeneration; final sandbox has no caches or test artifacts"
+  },
+  "scans": {
+    "gitleaks": "PASS; 0 findings over 15,850,347 bytes of the final clean candidate",
+    "pip_audit": "PASS; no known vulnerabilities from requirements-test.lock",
+    "trivy": "SKIP; no local binary"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "31/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "32/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress"
+    }
+  },
+  "limitations": [
+    "P11 is in_progress, not qualified: one real provider campaign does not cover continuous operation, process/broker failure, full backpressure, provider breadth or all operators.",
+    "PostgreSQL and worker paths were not started in streaming-only mode; candidate browser packaging is a recorded SKIP, not a PASS.",
+    "Two pre-fix diagnostic failures are retained as evidence of the defects corrected, not counted as successful tests.",
+    "No release gate changed to closed and P13 remains blocked."
+  ]
+}
