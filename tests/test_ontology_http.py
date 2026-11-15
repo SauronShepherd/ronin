@@ -1,5 +1,5 @@
 import pytest
-from studio_core import ActionType, KnowledgeGraph, KnowledgeObject, KnowledgeObjectRef
+from studio_core import ActionType, KnowledgeGraph, KnowledgeObject, KnowledgeObjectRef, WorkspaceId
 from studio_execution import OntologyHTTPAdapter
 from studio_storage import SqliteKnowledgeGraphStore
 
@@ -8,7 +8,7 @@ class _Graphs:
     def __init__(self, graph: KnowledgeGraph) -> None:
         self.graph = graph
 
-    def get(self, graph_id: str) -> KnowledgeGraph | None:
+    def get(self, _workspace_id: WorkspaceId, graph_id: str) -> KnowledgeGraph | None:
         return self.graph if graph_id == "graph-1" else None
 
 
@@ -23,14 +23,14 @@ def test_ontology_http_adapter_executes_bounded_rql() -> None:
         (),
     )
     result = OntologyHTTPAdapter(None, _Graphs(graph)).query(
-        "graph-1", "SELECT Person WHERE name = 'Ada' LIMIT 1"
+        WorkspaceId("workspace-1"), "graph-1", "SELECT Person WHERE name = 'Ada' LIMIT 1"
     )
     assert len(result.objects) == 1
     assert dict(result.objects[0].properties)["name"] == "Ada"
     assert (
         len(
             adapter_objects := OntologyHTTPAdapter(None, _Graphs(graph)).list_objects(
-                "graph-1", "Person"
+                WorkspaceId("workspace-1"), "graph-1", "Person"
             )
         )
         == 1
@@ -47,6 +47,7 @@ def test_ontology_http_adapter_dispatches_authorized_replayable_action(tmp_path)
     target = KnowledgeObjectRef("Person", (("id", "1"),))
     calls = []
     result = adapter.execute_action(
+        WorkspaceId("workspace-1"),
         action,
         target,
         {"value": "gold"},
@@ -55,6 +56,7 @@ def test_ontology_http_adapter_dispatches_authorized_replayable_action(tmp_path)
         idempotency_key="action-1",
     )
     replay = adapter.execute_action(
+        WorkspaceId("workspace-1"),
         action,
         target,
         {"value": "gold"},
@@ -73,11 +75,13 @@ def test_ontology_http_rejects_ambiguous_action_target_and_key(tmp_path) -> None
     action = ActionType("promote", "Person", (), idempotent=False).to_payload()
     with pytest.raises(ValueError, match="target has invalid shape"):
         adapter.execute_action_payload(
+            WorkspaceId("workspace-1"),
             "graph-1",
             {"action": action, "target": {"object_type": "Person"}, "inputs": {}},
         )
     with pytest.raises(ValueError, match="key pair"):
         adapter.execute_action_payload(
+            WorkspaceId("workspace-1"),
             "graph-1",
             {
                 "action": action,
@@ -87,6 +91,7 @@ def test_ontology_http_rejects_ambiguous_action_target_and_key(tmp_path) -> None
         )
     with pytest.raises(ValueError, match="idempotency_key"):
         adapter.execute_action_payload(
+            WorkspaceId("workspace-1"),
             "graph-1",
             {
                 "action": action,

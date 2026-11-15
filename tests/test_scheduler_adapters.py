@@ -574,7 +574,9 @@ def test_scheduler_dispatch_routes_graph_query() -> None:
     object_ref = SimpleNamespace(object_type="Order", key=(("id", 1),))
     graph_object = SimpleNamespace(ref=object_ref, properties=(("total", 5),))
 
-    def query(_graph_id: str, _query: str, *, max_limit: int) -> SimpleNamespace:
+    def query(
+        _workspace_id: object, _graph_id: str, _query: str, *, max_limit: int
+    ) -> SimpleNamespace:
         del max_limit
         return SimpleNamespace(objects=(graph_object,))
 
@@ -585,9 +587,23 @@ def test_scheduler_dispatch_routes_graph_query() -> None:
             {"graph_id": "orders", "query": "SELECT o FROM Order o", "limit": 10},
         ),
         graph_adapter=adapter,
+        workspace_id="workspace-1",
     )
     assert result.family == "graph"
     assert result.evidence_payload()["objects"][0]["object_type"] == "Order"
+
+
+def test_scheduler_dispatch_rejects_unscoped_graph_query() -> None:
+    adapter = SimpleNamespace(query=lambda *_args, **_kwargs: SimpleNamespace(objects=()))
+
+    with pytest.raises(UnsupportedSchedulerWorkload, match="workspace id"):
+        execute_scheduler_job(
+            _job(
+                "graph.query",
+                {"graph_id": "orders", "query": "SELECT Order LIMIT 1", "limit": 1},
+            ),
+            graph_adapter=adapter,
+        )
 
 
 @pytest.mark.parametrize("limit", [0, -1, 10_001, True, "10"])
@@ -601,6 +617,7 @@ def test_scheduler_dispatch_rejects_invalid_graph_query_limits(limit: object) ->
                 {"graph_id": "orders", "query": "SELECT o FROM Order o", "limit": limit},
             ),
             graph_adapter=adapter,
+            workspace_id="workspace-1",
         )
 
 
@@ -618,6 +635,7 @@ def test_scheduler_dispatch_rejects_graph_adapter_result_over_limit() -> None:
                 {"graph_id": "orders", "query": "SELECT o FROM Order o", "limit": 1},
             ),
             graph_adapter=adapter,
+            workspace_id="workspace-1",
         )
 
 

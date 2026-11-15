@@ -7,6 +7,7 @@ import json
 import socket
 import time
 from types import SimpleNamespace
+from typing import Any, cast
 
 import pytest
 from studio_cli.local_composed import (
@@ -23,12 +24,19 @@ from studio_core import (
     ConnectionDefinition,
     ConnectionId,
     ExecutionProfile,
+    KnowledgeGraph,
+    KnowledgeObject,
+    KnowledgeObjectRef,
     LineageEdge,
+    ObjectType,
+    OntologyDefinition,
+    OntologyId,
     OwnershipMetadata,
     Pipeline,
     Project,
     ProjectId,
     ProjectManifest,
+    PropertyDefinition,
     RepositoryBinding,
     RuntimeProfileRef,
     Schedule,
@@ -62,6 +70,7 @@ from studio_storage import (
     PostgresSchedulerSnapshotStore,
     SqliteAuditStore,
     SqliteCatalogStore,
+    SqliteKnowledgeGraphStore,
 )
 from studio_storage.local_files import LocalFileConnector
 from studio_synthetic_data import ColumnSpec, GenerationPlan, TableSpec
@@ -427,6 +436,152 @@ def test_local_composed_catalog_journey_persists_and_isolates_workspace_data(
         assert denied["error"]["code"] == "forbidden"
     finally:
         readonly.stop()
+
+
+def test_local_composed_graph_and_ontology_journey_isolates_workspaces(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS",
+        "workspace.read,workspace.write,workspace.admin,project.read,project.write",
+    )
+    workspace = WorkspaceId("workspace-1")
+    other_workspace = WorkspaceId("workspace-2")
+    now = Instant("2026-10-17T00:00:00.000000Z")
+    customers = CatalogAsset(AssetId("customers"), "table", "Customers", project_id="project-a")
+    customer_revision = AssetRevision(
+        AssetRef(customers.id, AssetVersion("1")), schema_digest="customers-schema-v1"
+    )
+    person_type = ObjectType(
+        "Person",
+        AssetRef(customers.id, AssetVersion("1")),
+        ("id",),
+        (
+            PropertyDefinition("id", "string", "id", required=True),
+            PropertyDefinition("name", "string", "name", required=True),
+        ),
+    )
+    ontology = OntologyDefinition(OntologyId("sales"), "v1", "Sales", (person_type,))
+    ada = KnowledgeObject(KnowledgeObjectRef("Person", (("id", "1"),)), (("name", "Ada"),))
+    ada_order = KnowledgeObject(KnowledgeObjectRef("Order", (("id", "10"),)), (("total", 10),))
+    grace = KnowledgeObject(KnowledgeObjectRef("Person", (("id", "2"),)), (("name", "Grace"),))
+
+    def request(address, method: str, path: str, body: object | None = None):
+        connection = http.client.HTTPConnection(*address, timeout=5)
+        payload = None if body is None else json.dumps(body).encode("utf-8")
+        headers = {"Authorization": "Bearer control-token"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
+        try:
+            connection.request(method, path, body=payload, headers=headers)
+            response = connection.getresponse()
+            return response.status, json.loads(response.read().decode("utf-8"))
+        finally:
+            connection.close()
+
+    composition = build_local_composed_from_env()
+    catalog = composition.control_plane_server.catalog_reader
+    ontology_reader = composition.control_plane_server.ontology_reader
+    assert catalog is not None
+    assert ontology_reader is not None
+    composition.control_plane_server.workspace_service.create(
+        Workspace(other_workspace, "Other workspace"), now=now
+    )
+    composition.control_plane_server.authorizer.register_workspace(other_workspace)
+    catalog.create_asset(workspace, customers, now=now)
+    catalog.put_revision(workspace, customer_revision, now=now)
+    cast(Any, ontology_reader).put_schema(workspace, ontology, now=now)
+    graph_store = SqliteKnowledgeGraphStore(tmp_path / "ronin.sqlite3")
+    graph_store.put(
+        workspace, "sales", KnowledgeGraph((ada, ada_order), ((ada.ref, ada_order.ref),))
+    )
+    graph_store.put(other_workspace, "sales", KnowledgeGraph((grace,), ()))
+
+    try:
+        composition.start()
+        address = composition.control_plane_server.server_address
+
+        status, versions = request(address, "GET", "/v1/workspaces/workspace-1/ontologies/sales")
+        assert status == 200, versions
+        assert versions == {"items": [ontology.to_payload()]}
+        status, version = request(address, "GET", "/v1/workspaces/workspace-1/ontologies/sales/v1")
+        assert status == 200, version
+        assert version == ontology.to_payload()
+
+        status, query = request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-1/graphs/sales/query",
+            {"query": "SELECT Person WHERE name = 'Ada' LIMIT 10"},
+        )
+        assert status == 200, query
+        assert query["objects"] == [
+            {
+                "object_type": "Person",
+                "key": [["id", "1"]],
+                "properties": [["name", "Ada"]],
+            }
+        ]
+        status, objects = request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-1/graphs/sales/objects/Person?limit=10",
+        )
+        assert status == 200, objects
+        assert objects["items"][0]["key"] == [["id", "1"]]
+        status, neighbors = request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-1/graphs/sales/neighbors",
+            {"object_type": "Person", "key": [["id", "1"]], "limit": 10},
+        )
+        assert status == 200, neighbors
+        assert neighbors["items"] == [{"object_type": "Order", "key": [["id", "10"]]}]
+
+        status, isolated_query = request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-2/graphs/sales/query",
+            {"query": "SELECT Person WHERE name = 'Grace' LIMIT 10"},
+        )
+        assert status == 200, isolated_query
+        assert isolated_query["objects"][0]["properties"] == [["name", "Grace"]]
+        status, no_leak = request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-2/graphs/sales/query",
+            {"query": "SELECT Person WHERE name = 'Ada' LIMIT 10"},
+        )
+        assert status == 200, no_leak
+        assert no_leak == {"objects": []}
+        status, denied = request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-unknown/graphs/sales/query",
+            {"query": "SELECT Person LIMIT 10"},
+        )
+        assert status == 403, denied
+        assert denied["error"]["code"] == "forbidden"
+    finally:
+        composition.stop()
+
+    restarted = build_local_composed_from_env()
+    try:
+        restarted.start()
+        status, persisted = request(
+            restarted.control_plane_server.server_address,
+            "POST",
+            "/v1/workspaces/workspace-1/graphs/sales/query",
+            {"query": "SELECT Person WHERE name = 'Ada' LIMIT 10"},
+        )
+        assert status == 200, persisted
+        assert persisted["objects"][0]["properties"] == [["name", "Ada"]]
+    finally:
+        restarted.stop()
 
 
 def test_local_composed_persists_notebook_revisions_across_restart(

@@ -115,7 +115,7 @@ def main() -> int:
         ((person_ref, organization_ref),),
     )
     store = SqliteKnowledgeGraphStore(database)
-    store.put("graph-1", graph)
+    store.put(workspace_id, "graph-1", graph)
     catalog = SqliteCatalogStore(database, migration_now=now)
     source = CatalogAsset(AssetId("live-lineage-source"), "table", "Live source")
     target = CatalogAsset(AssetId("live-lineage-target"), "table", "Live target")

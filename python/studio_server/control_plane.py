@@ -406,19 +406,23 @@ class WorkflowCanceller(Protocol):
 
 @runtime_checkable
 class GraphQueryReader(Protocol):
-    def query(self, graph_id: str, query: str, *, max_limit: int = 1000) -> RqlResult: ...
+    def query(
+        self, workspace_id: WorkspaceId, graph_id: str, query: str, *, max_limit: int = 1000
+    ) -> RqlResult: ...
 
     def list_objects(
-        self, graph_id: str, object_type: str, *, limit: int = 100
+        self, workspace_id: WorkspaceId, graph_id: str, object_type: str, *, limit: int = 100
     ) -> tuple[KnowledgeObject, ...]: ...
 
     def neighbors(
-        self, graph_id: str, ref: KnowledgeObjectRef, *, limit: int = 100
+        self, workspace_id: WorkspaceId, graph_id: str, ref: KnowledgeObjectRef, *, limit: int = 100
     ) -> tuple[KnowledgeObjectRef, ...]: ...
 
 
 class GraphActionReader(Protocol):
-    def execute_action_payload(self, graph_id: str, payload: dict[str, object]) -> object: ...
+    def execute_action_payload(
+        self, workspace_id: WorkspaceId, graph_id: str, payload: dict[str, object]
+    ) -> object: ...
 
 
 class OntologyReader(Protocol):
@@ -2836,7 +2840,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
                 limit, _offset = _list_query(query)
-                objects = graph_reader.list_objects(segments[4], segments[6], limit=limit)
+                objects = graph_reader.list_objects(
+                    workspace_id, segments[4], segments[6], limit=limit
+                )
                 self._write_json(
                     HTTPStatus.OK,
                     {
@@ -4724,7 +4730,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     return
                 graph_action_result = graph_action_reader.execute_action_payload(
-                    segments[4], graph_action_payload
+                    workspace_id, segments[4], graph_action_payload
                 )
                 self._write_json(HTTPStatus.OK, graph_action_result)
                 return
@@ -4762,7 +4768,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     raise TypeError("neighbor fields have invalid types")
                 ref = KnowledgeObjectRef(object_type, tuple(tuple(item) for item in key))
-                neighbors = graph_query_reader.neighbors(segments[4], ref, limit=limit)
+                neighbors = graph_query_reader.neighbors(
+                    workspace_id, segments[4], ref, limit=limit
+                )
                 self._write_json(
                     HTTPStatus.OK,
                     {
@@ -4805,7 +4813,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     or isinstance(max_limit, bool)
                 ):
                     raise TypeError("graph query fields have invalid types")
-                graph_result = graph_query_reader.query(segments[4], query, max_limit=max_limit)
+                graph_result = graph_query_reader.query(
+                    workspace_id, segments[4], query, max_limit=max_limit
+                )
                 objects = [
                     {
                         "object_type": item.ref.object_type,

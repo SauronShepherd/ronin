@@ -38,11 +38,15 @@ class OntologyStore(Protocol):
 
 
 class GraphStore(Protocol):
-    def get(self, graph_id: str) -> KnowledgeGraph | None: ...
+    def get(self, workspace_id: WorkspaceId, graph_id: str) -> KnowledgeGraph | None: ...
 
-    def get_action_replay(self, idempotency_key: str) -> ActionExecution | None: ...
+    def get_action_replay(
+        self, workspace_id: WorkspaceId, idempotency_key: str
+    ) -> ActionExecution | None: ...
 
-    def record_action_replay(self, execution: ActionExecution) -> None: ...
+    def record_action_replay(
+        self, workspace_id: WorkspaceId, execution: ActionExecution
+    ) -> None: ...
 
 
 class OntologyHTTPAdapter:
@@ -79,8 +83,10 @@ class OntologyHTTPAdapter:
     ) -> tuple[OntologyDefinition, ...]:
         return self._ontology.list_versions(workspace_id, ontology_id)
 
-    def query(self, graph_id: str, query: str, *, max_limit: int = 1000) -> RqlResult:
-        graph = self._graphs.get(graph_id)
+    def query(
+        self, workspace_id: WorkspaceId, graph_id: str, query: str, *, max_limit: int = 1000
+    ) -> RqlResult:
+        graph = self._graphs.get(workspace_id, graph_id)
         if graph is None:
             raise KeyError(graph_id)
         parsed = parse_rql(query)
@@ -88,9 +94,9 @@ class OntologyHTTPAdapter:
         return executor.execute(parsed, max_limit=max_limit)
 
     def list_objects(
-        self, graph_id: str, object_type: str, *, limit: int = 100
+        self, workspace_id: WorkspaceId, graph_id: str, object_type: str, *, limit: int = 100
     ) -> tuple[KnowledgeObject, ...]:
-        graph = self._graphs.get(graph_id)
+        graph = self._graphs.get(workspace_id, graph_id)
         if graph is None:
             raise KeyError(graph_id)
         if not 1 <= limit <= 1000:
@@ -98,9 +104,9 @@ class OntologyHTTPAdapter:
         return graph.objects_of_type(object_type, limit=limit)
 
     def neighbors(
-        self, graph_id: str, ref: KnowledgeObjectRef, *, limit: int = 100
+        self, workspace_id: WorkspaceId, graph_id: str, ref: KnowledgeObjectRef, *, limit: int = 100
     ) -> tuple[KnowledgeObjectRef, ...]:
-        graph = self._graphs.get(graph_id)
+        graph = self._graphs.get(workspace_id, graph_id)
         if graph is None:
             raise KeyError(graph_id)
         if not 1 <= limit <= 1000:
@@ -109,6 +115,7 @@ class OntologyHTTPAdapter:
 
     def execute_action(
         self,
+        workspace_id: WorkspaceId,
         action: ActionType,
         target: KnowledgeObjectRef,
         inputs: dict[str, object],
@@ -127,13 +134,19 @@ class OntologyHTTPAdapter:
             write=write,
             idempotency_key=idempotency_key,
             load_idempotent=(
-                self._graphs.get_action_replay if idempotency_key is not None else None
+                lambda key: (
+                    self._graphs.get_action_replay(workspace_id, key)
+                    if idempotency_key is not None
+                    else None
+                )
             ),
-            record_idempotent=self._graphs.record_action_replay,
+            record_idempotent=lambda execution: self._graphs.record_action_replay(
+                workspace_id, execution
+            ),
         )
 
     def execute_action_payload(
-        self, graph_id: str, payload: dict[str, object]
+        self, workspace_id: WorkspaceId, graph_id: str, payload: dict[str, object]
     ) -> dict[str, object]:
         if self._authorize is None or self._write is None:
             raise RuntimeError("graph action callbacks are not configured")
@@ -168,6 +181,7 @@ class OntologyHTTPAdapter:
         if key is not None and (not isinstance(key, str) or not key.strip()):
             raise ValueError("graph action idempotency_key must be non-empty string or null")
         result = self.execute_action(
+            workspace_id,
             action,
             target,
             inputs,

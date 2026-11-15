@@ -536,6 +536,8 @@ def execute_scheduler_job(
     if job.target == "graph.query":
         if graph_adapter is None:
             raise UnsupportedSchedulerWorkload("graph.query requires an injected graph adapter")
+        if workspace_id is None:
+            raise UnsupportedSchedulerWorkload("graph.query requires a workspace id")
         try:
             payload = json.loads(job.parameters_json)
             graph_id = payload["graph_id"]
@@ -554,7 +556,9 @@ def execute_scheduler_job(
         ):
             raise UnsupportedSchedulerWorkload("graph.query parameters are invalid")
         try:
-            objects = tuple(graph_adapter.query(graph_id, query, max_limit=limit).objects)
+            objects = tuple(
+                graph_adapter.query(workspace_id, graph_id, query, max_limit=limit).objects
+            )
         except (AttributeError, TypeError, ValueError) as exc:
             raise UnsupportedSchedulerWorkload(
                 "graph.query adapter returned an invalid result"
