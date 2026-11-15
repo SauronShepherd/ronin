@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D11",
+  "date": "2026-11-15",
+  "planned_date": "2026-11-25",
+  "status": "PASS",
+  "candidate_sha": "46fade94f90672c421002326a029a60568a70ca7",
+  "implementation_commit_sha": "46fade94f90672c421002326a029a60568a70ca7",
+  "evidence": "docs/qualification/candidates/candidate-46fade94-d11.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D11.md",
+  "execution_scope": "complete-for-D11-bounded-retry-idempotency-and-public-contract-regression; P2-family-open",
+  "result": {
+    "candidate_focused_suite": "123 passed, 0 failed, 71 deselected from the exact candidate sandbox",
+    "candidate_public_route": "5 passed, 0 failed, 55 deselected for connector_sync",
+    "full_python_suite": "4634 passed, 81 skipped, 0 failed in 1183.93s",
+    "static_and_surface_checks": "format, Ruff, mypy, architecture, negative-gates, route-consistency, dependency-surfaces, OpenAPI, Studio, public imports, public status, daily-ledger and git diff checks pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "scans": "Gitleaks 0 findings; pip-audit 0 vulnerabilities across 99 dependencies; Trivy 0 vulnerabilities and 0 secrets",
+    "p2_boundary": "D11 bounded connector and client-contract cells pass; P2 remains in_progress until the complete family journey and provider evidence are closed"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "10/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "11/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The 81 full-suite skips are explicitly recorded in the candidate receipt and are not counted as PASS.",
+    "D11 did not rerun the D10 Docker provider/worker lane; no new provider claim is made.",
+    "This receipt does not qualify P2, close a release gate or change the P13 blocker."
+  ]
+}

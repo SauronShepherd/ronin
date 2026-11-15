@@ -1,0 +1,99 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D11",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-11-25",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "46fade94f90672c421002326a029a60568a70ca7",
+    "origin_main_sha_when_candidate_was_tested": "46fade94f90672c421002326a029a60568a70ca7",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-46fade94-d11",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-46fade94-d11\\candidate-46fade94f90672c421002326a029a60568a70ca7.tar",
+      "format": "tar",
+      "sha256": "84188eb8e48ddaeb64089f8215652e45894f5cbb4cdc1e2d224a731fb4f49508",
+      "size": 16465920
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-46fade94-d11\\candidate-46fade94f90672c421002326a029a60568a70ca7.manifest.json",
+      "sha256": "1f32ccb2d8b946fc95f1cce978bac0c1c6931ffa2b5298fa5c065c4e77284d84",
+      "size": 213621
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-46fade94-d11\\candidate-46fade94f90672c421002326a029a60568a70ca7.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-46fade94-d11\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1392,
+    "total_bytes": 15317329,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "46fade94f90672c421002326a029a60568a70ca7",
+    "candidate_docs_commit": "46fade94f90672c421002326a029a60568a70ca7",
+    "summary": "Rejected boolean read limits on HTTP JSON, S3 JSON and Azure Blob JSON connectors; added negative coverage for direct providers and the connector registry, then exercised retry, backoff, idempotency, cancellation, checkpoint recovery and public SDK/HTTP contracts.",
+    "production_files_changed": [
+      "python/studio_connectors/http_json.py",
+      "python/studio_connectors/s3_json.py",
+      "python/studio_connectors/azure_blob_json.py"
+    ],
+    "test_files_changed": [
+      "tests/test_connector_registry.py",
+      "tests/test_s3_json_connector.py",
+      "tests/test_azure_blob_json_connector.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 46fade94f90672c421002326a029a60568a70ca7 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-46fade94-d11",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-46fade94-d11",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed the sandbox after testing; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "candidate_focused": "python -m pytest -q -p no:cacheprovider tests/test_connector_registry.py tests/test_s3_json_connector.py tests/test_azure_blob_json_connector.py tests/test_ingestion_sync.py tests/test_connector_checkpoint.py tests/integration/test_http_json_connector_real.py packages/pyronin/tests/test_client.py -k \"retry or backoff or idempot or cancel or replay or connector or checkpoint or failure or submit or status or sync\"",
+    "candidate_public_route": "python -m pytest -q -p no:cacheprovider tests/integration/test_workspace_project_http_api.py -k connector_sync",
+    "full_regression": "$env:PYTHONDONTWRITEBYTECODE='1'; python -m pytest -q -p no:cacheprovider"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "123 passed, 0 failed, 71 deselected from the exact candidate sandbox; no generated cache artifacts remained",
+    "candidate_public_route": "5 passed, 0 failed, 55 deselected; connector_sync HTTP route contract exercised from the exact candidate sandbox",
+    "real_http_retry_profile": "The loopback HTTP service integration passed in the focused selection; pagination, retry/backoff, redirects, byte/time budgets, cross-origin rejection and snapshot replay remained covered without substituting a provider mock for the real HTTP server",
+    "checkpoint_and_recovery": "The focused suite passed cancellation/checkpoint fencing, idempotent replay, restart/recovery and worker failure assertions; Docker provider recovery evidence remains the separately recorded D10 lane",
+    "sdk_cli_contract": "The focused pyronin client selection passed submit/status/idempotency/connector-sync contract checks; no new public route was added in D11",
+    "full_python_suite": "4634 passed, 81 skipped, 0 failed in 1183.93s; skipped cases are recorded as limitations and are not PASS",
+    "static_and_surface_checks": "format (1112 files), Ruff, mypy (355 source files), architecture, negative-gates, route-consistency (200 operations), dependency-surfaces, OpenAPI, Studio surface, public imports, capability status, daily ledger, public status and git diff checks pass",
+    "result": "D11 pass for the bounded connector-read validation and retry/idempotency/recovery contract cells; P2 remains in_progress because complete family journey, provider provenance and all acceptance cells are not yet evidenced"
+  },
+  "security_and_recovery": {
+    "bounds": "Boolean read limits are rejected before provider execution on HTTP JSON, S3 JSON and Azure Blob JSON, matching the existing fail-closed registry contract",
+    "real_service_scope": "The HTTP retry integration uses a real loopback HTTP server; no production cloud endpoint, secret or unconfigured provider is claimed",
+    "persistence_and_recovery": "Checkpoint fencing, replay and recovery behavior passed in the focused suite; the D10 isolated Docker lane remains the evidence for provider/worker recovery and was not rerun for D11",
+    "scan_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d11-scans-46fade94",
+    "scans": {
+      "gitleaks": "8.30.1; clean regenerated candidate sandbox; 15,317,329 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1; filesystem scanners vuln,secret; 0 vulnerabilities and 0 secrets; image digest sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+    }
+  },
+  "open_cells": [
+    "P2 remains in_progress, not qualified: the complete connector -> ingest -> metadata/data family journey, JDBC bridge/driver provenance and complete provider acceptance matrix are not closed by D11.",
+    "The D10 Floci/Azurite provider lane remains valid only for its exact prior candidate; D11 did not claim AWS, production Azure, Ozone or another external provider.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates.",
+    "The 81 full-suite skips are real unavailable-provider, Docker opt-in, POSIX/symlink, Windows privilege and external CLI cases; they are not PASS."
+  ],
+  "limitations": [
+    "The candidate sandbox has no Git metadata; repository-level public-status and daily-ledger validation ran on main.",
+    "The focused D11 suite used a real loopback HTTP server and local application components, not a production provider; provider claims remain limited to the exact D10 emulator receipt.",
+    "The full suite was run without the optional PostgreSQL DSNs, external object-storage endpoints, Docker qualification opt-in and external CLI endpoints listed in its skip summary.",
+    "The Docker provider/worker lane was not rerun after D11 because the production change is bounded read-limit validation; its prior exact evidence remains explicitly linked to D10.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
