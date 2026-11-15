@@ -13,6 +13,7 @@ from studio_notebook import (
     ProjectNotebookHTTPAdapter,
     allocate_cell_ids,
 )
+from studio_storage import SqliteNotebookRevisionStore
 
 
 def _document(source: str) -> NotebookDocument:
@@ -94,3 +95,25 @@ def test_project_notebook_adapter_isolates_revision_namespaces() -> None:
     first.create({"id": "same-id", "document": _document("a").to_data()})
     assert second.list()["items"] == []
     assert first.list()["items"][0]["id"] == "same-id"
+
+
+def test_project_notebook_adapter_reopens_sqlite_revisions_without_losing_history(tmp_path) -> None:
+    database = tmp_path / "ronin.sqlite3"
+    projects = ProjectNotebookHTTPAdapter(
+        store_factory=lambda project_id: SqliteNotebookRevisionStore(database, project_id)
+    )
+    adapter = projects.for_project("project-a")
+    created = adapter.create({"id": "persistent", "document": _document("x = 1").to_data()})
+    updated = adapter.save(
+        "persistent",
+        {"expected_revision": 1, "document": _document("x = 2").to_data()},
+    )
+    assert updated["revision"] == 2
+
+    reopened = ProjectNotebookHTTPAdapter(
+        store_factory=lambda project_id: SqliteNotebookRevisionStore(database, project_id)
+    ).for_project("project-a")
+    assert reopened.get("persistent")["revision"] == 2
+    assert [item["revision"] for item in reopened.history("persistent")["items"]] == [1, 2]
+    assert reopened.list()["items"][0]["content_digest"] == updated["content_digest"]
+    assert created["content_digest"] != updated["content_digest"]

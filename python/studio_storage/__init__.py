@@ -58,6 +58,7 @@ from studio_storage.environments import (
 from studio_storage.fenced_sqlite import SqliteJobStore
 from studio_storage.glossary import GlossaryConflict, SqliteGlossaryStore
 from studio_storage.memory import IdempotencyConflict
+from studio_storage.notebook_revisions import SqliteNotebookRevisionStore
 from studio_storage.ontology import (
     OntologyConflict,
     SqliteOntologyStore,
@@ -223,6 +224,7 @@ __all__ = (
     "SqliteConnectionStore",
     "SqliteEnvironmentStore",
     "SqliteJobStore",
+    "SqliteNotebookRevisionStore",
     "SqliteOntologyStore",
     "SqliteQualityStore",
     "SqliteSchedulerStore",

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Protocol, cast
 
 from .revisions import NotebookRevision, NotebookRevisionStore
@@ -108,15 +108,16 @@ class NotebookHTTPAdapter:
 class ProjectNotebookHTTPAdapter:
     """Project-scoped notebook port backed by isolated revision stores."""
 
-    def __init__(self) -> None:
+    def __init__(self, store_factory: Callable[[str], NotebookRevisionStore] | None = None) -> None:
         self._projects: dict[str, NotebookHTTPAdapter] = {}
+        self._store_factory = store_factory or (lambda _project_id: NotebookRevisionStore())
 
     def for_project(self, project_id: str) -> NotebookHTTPAdapter:
         if not isinstance(project_id, str) or not project_id or project_id != project_id.strip():
             raise ValueError("project_id must be non-empty and trimmed")
         adapter = self._projects.get(project_id)
         if adapter is None:
-            adapter = NotebookHTTPAdapter(NotebookRevisionStore())
+            adapter = NotebookHTTPAdapter(self._store_factory(project_id))
             self._projects[project_id] = adapter
         return adapter
 

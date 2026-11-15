@@ -32,6 +32,13 @@ from studio_lakehouse import write_parquet_rows
 from studio_ml import FeatureSpec, Lab
 from studio_ml.domain import PipelineIR
 from studio_ml.orchestration import JobStoreExecutionStore
+from studio_notebook import (
+    CellIdentityAnchor,
+    Notebook,
+    NotebookCell,
+    NotebookDocument,
+    allocate_cell_ids,
+)
 from studio_orchestrator import Instant
 from studio_server import LocalServerComposition
 from studio_sql import SqlExplainUnsupportedError, SqlTimeoutError
@@ -204,6 +211,77 @@ def test_build_local_composed_from_env_creates_two_surface_composition(
     assert workspace.name == "Local workspace"
     assert composition.control_plane_server.plugin_routes_enabled
     composition.stop()
+
+
+def test_local_composed_persists_notebook_revisions_across_restart(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS",
+        "workspace.read,workspace.write,project.read,project.write",
+    )
+    project_id = "persistent-notebook-project"
+    notebook_id = "persistent-notebook"
+    anchor = CellIdentityAnchor("authoring", f"{project_id}/notebooks/{notebook_id}", "cell-1")
+    cell_id = allocate_cell_ids((anchor,))[0]
+    document = NotebookDocument(
+        Notebook((NotebookCell(cell_id, "code", "print('persistent')", language="python"),)),
+        (anchor,),
+    ).to_data()
+    manifest = ProjectManifest.from_project(
+        Project(
+            ProjectId(project_id),
+            "Persistent notebook project",
+            (RepositoryBinding("code", "https://example.test/notebooks.git", role="primary"),),
+            ExecutionProfile(runtime=RuntimeProfileRef("python", "3.11")),
+        )
+    )
+    path = f"/v1/workspaces/workspace-1/projects/{project_id}/notebooks/{notebook_id}"
+    collection_path = f"/v1/workspaces/workspace-1/projects/{project_id}/notebooks"
+
+    def request(address, method: str, request_path: str, body: object | None = None):
+        connection = http.client.HTTPConnection(*address, timeout=5)
+        encoded = None if body is None else json.dumps(body).encode("utf-8")
+        headers = {"Authorization": "Bearer control-token"}
+        if encoded is not None:
+            headers["Content-Type"] = "application/json"
+        try:
+            connection.request(method, request_path, body=encoded, headers=headers)
+            response = connection.getresponse()
+            return response.status, json.loads(response.read().decode("utf-8"))
+        finally:
+            connection.close()
+
+    composition = build_local_composed_from_env()
+    try:
+        composition.control_plane_server.project_service.register(
+            WorkspaceId("workspace-1"), manifest, now=Instant("2026-10-17T00:00:00.000000Z")
+        )
+        composition.start()
+        status, created = request(
+            composition.control_plane_server.server_address,
+            "POST",
+            collection_path,
+            {"id": notebook_id, "document": document},
+        )
+        assert status == 201, created
+        assert created["revision"] == 1
+    finally:
+        composition.stop()
+
+    restarted = build_local_composed_from_env()
+    try:
+        restarted.start()
+        status, loaded = request(restarted.control_plane_server.server_address, "GET", path)
+        assert status == 200, loaded
+        assert loaded["revision"] == 1
+        assert loaded["document"] == document
+    finally:
+        restarted.stop()
 
 
 def test_local_composed_persists_project_mutations_to_the_audit_store(

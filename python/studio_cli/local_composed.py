@@ -101,6 +101,7 @@ from studio_storage import (
     SqliteEnvironmentStore,
     SqliteJobStore,
     SqliteKnowledgeGraphStore,
+    SqliteNotebookRevisionStore,
     SqliteOntologyStore,
     SqliteQualityStore,
 )
@@ -655,7 +656,9 @@ def build_local_composed_from_env() -> LocalServerComposition:
             data_engineering_reader=data_engineering_reader,
             streaming_health_reader=streaming_health_reader,
             streaming_runner=cast(Any, streaming_runner),
-            notebook_reader=ProjectNotebookHTTPAdapter(),
+            notebook_reader=ProjectNotebookHTTPAdapter(
+                store_factory=lambda project_id: SqliteNotebookRevisionStore(database, project_id)
+            ),
             feature_definition_service=FeatureDefinitionService(cast(Any, ml_lab_store)),
             connector_registry=connector_registry,
             ingestion_adapter=ingestion_adapter,
