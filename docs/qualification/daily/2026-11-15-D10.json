@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D10",
+  "date": "2026-11-15",
+  "planned_date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "bc94e512cb3e485f3d25f5799562dfa3b2c72ab6",
+  "implementation_commit_sha": "bc94e512cb3e485f3d25f5799562dfa3b2c72ab6",
+  "evidence": "docs/qualification/candidates/candidate-bc94e512-d10.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D10.md",
+  "execution_scope": "complete-for-D10-available-object-storage-emulator-profiles; P2-family-open",
+  "result": {
+    "docker_provider_lane": "27 passed, 0 failed, 0 skipped; isolated PostgreSQL, Docker worker, Floci and Azurite; cleanup completed",
+    "strict_v01_acceptance": "15/15 passed; zero skipped/failed/errors/missing/unexpected",
+    "candidate_focused_suite": "63 passed, 0 failed, 2 skipped from the exact candidate sandbox",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "scans": "Gitleaks 0 findings; pip-audit 0 vulnerabilities across 99 dependencies; Trivy 0 vulnerabilities and 0 secrets",
+    "p2_boundary": "D10 available emulator profiles pass; P2 remains in_progress until D11 and complete family evidence are delivered"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "9/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "10/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The two focused sandbox skips require Floci/Azurite and are separately covered by the clean Docker lane; skips are not counted as PASS.",
+    "Only local Floci and Azurite profiles are claimed; Ozone and production cloud providers remain unqualified.",
+    "This receipt does not qualify P2, close a release gate or change the P13 blocker."
+  ]
+}

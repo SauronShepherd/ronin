@@ -1,0 +1,90 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D10",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-11-24",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "bc94e512cb3e485f3d25f5799562dfa3b2c72ab6",
+    "origin_main_sha_when_candidate_was_tested": "bc94e512cb3e485f3d25f5799562dfa3b2c72ab6",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc94e512-d10",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc94e512-d10\\candidate-bc94e512cb3e485f3d25f5799562dfa3b2c72ab6.tar",
+      "format": "tar",
+      "sha256": "e2f72b8b0fc24056a6cf31c14e1ee78649d36636eac40b6e6774df8b43db1fd2",
+      "size": 16445440
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc94e512-d10\\candidate-bc94e512cb3e485f3d25f5799562dfa3b2c72ab6.manifest.json",
+      "sha256": "b7333ab34fc6d63b18e0efeaf7df848e402ac47d0b45827d73d73faf3565fa22",
+      "size": 213127
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc94e512-d10\\candidate-bc94e512cb3e485f3d25f5799562dfa3b2c72ab6.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc94e512-d10\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1389,
+    "total_bytes": 15303165,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "bc94e512cb3e485f3d25f5799562dfa3b2c72ab6",
+    "candidate_docs_commit": "bc94e512cb3e485f3d25f5799562dfa3b2c72ab6",
+    "summary": "Certified the available object-storage profiles against isolated real emulators and the current Docker worker image; no new production code was changed in D10.",
+    "production_files_changed": [],
+    "test_files_changed": []
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha bc94e512cb3e485f3d25f5799562dfa3b2c72ab6 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc94e512-d10",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc94e512-d10",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed the sandbox after testing; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "docker_qualification": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d10-docker-bc94e512"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "63 passed, 0 failed, 2 skipped from the exact candidate sandbox; no generated cache artifacts remained",
+    "s3_floci_real_profile": "tests/integration/test_s3_json_connector_real.py and the ML S3 artifact journey passed in the full Docker lane against isolated Floci; digest round-trip, retry, retention and cleanup were exercised",
+    "azure_azurite_real_profile": "tests/integration/test_azure_blob_connector_real.py passed in the full Docker lane against isolated Azurite; discovery, JSONL read, snapshot replay and cleanup were exercised",
+    "docker_worker_and_recovery_regression": "27 passed, 0 skipped, 0 failed in 259.86s; PostgreSQL, Docker worker, SIGKILL/reclaim, cancel, idempotency, backup/restore and isolation/resource journeys passed",
+    "strict_v01_acceptance": "15 passed, 0 skipped, 0 xfailed, 0 failed, 0 errors, 0 missing, 0 unexpected; strict_success=true",
+    "docker_image": "sha256:46babc2a5c04bd94326df303c738d4e30e54355d14b4bc49c8003e8366f1a2b6; built from the clean candidate checkout",
+    "static_and_surface_checks": "D09 exact-code static gates remained green; candidate docs/sandbox tests, public-status, daily-ledger and git diff checks are recorded after D10 documentation",
+    "result": "D10 pass for the executed Floci/S3-compatible and Azurite/Azure Blob profiles; Ozone and external cloud providers remain unclaimed, and P2 remains in_progress until D11 and the complete family journey are evidenced"
+  },
+  "security_and_recovery": {
+    "provider_scope": "Only local emulators explicitly exercised by the runner are claimed: Floci as S3-compatible and Azurite as Azure Blob; no AWS/Azure/Ozone production credential or endpoint claim is made",
+    "digest_and_cleanup": "S3 and Azure journeys verified content/digest round-trips and the Docker runner removed isolated services, volumes, containers and networks",
+    "recovery": "The same candidate lane covered PostgreSQL-backed Docker worker restart, SIGKILL lease reclaim, cancellation, idempotency replay and appliance backup/restore",
+    "isolation_and_limits": "The image and worker journeys recorded non-root/no-new-privileges isolation, CPU/memory limits and cleanup; strict acceptance had zero skips/failures",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d10-docker-bc94e512",
+    "scan_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d10-scans-bc94e512",
+    "scans": {
+      "gitleaks": "8.30.1; clean regenerated candidate sandbox; 15,303,165 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1; filesystem scanners vuln,secret; 0 vulnerabilities and 0 secrets; image digest sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+    }
+  },
+  "open_cells": [
+    "P2 remains in_progress, not qualified: D11 retry/idempotency/backoff/failures and complete Studio/SDK/CLI journey remain open.",
+    "Ozone, AWS/Azure production and any unconfigured external object-storage provider remain unclaimed and uncertified.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates.",
+    "The two focused sandbox skips are real S3/Azure tests without their Docker emulator environment; they are not PASS."
+  ],
+  "limitations": [
+    "The candidate sandbox has no Git metadata; repository-level public-status and daily-ledger validation ran on main.",
+    "Floci and Azurite are local emulators; the receipt does not certify production AWS, Azure or Ozone behavior.",
+    "The Docker qualification summary records expected unavailable resource observations for cancellation/timeout probes; strict v0.1 and all 27 tests passed, and no residual fixture containers remained.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
