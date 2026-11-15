@@ -1,0 +1,90 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D17",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-12-01",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "79614b615ecf3e8ef21d155f4ee41349e4e46d5c",
+    "origin_main_sha_when_candidate_was_tested": "79614b615ecf3e8ef21d155f4ee41349e4e46d5c",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-79614b61-d17",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-79614b61-d17\\candidate-79614b615ecf3e8ef21d155f4ee41349e4e46d5c.tar",
+      "format": "tar",
+      "sha256": "28029b0dfaac820a04dfaeba0e6a4d95534563a0bac0ec0fc3d900829ca855b0",
+      "size": 16609280
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-79614b61-d17\\candidate-79614b615ecf3e8ef21d155f4ee41349e4e46d5c.manifest.json",
+      "sha256": "e7c6b1168fac53cf6ddf04dc61ed2c8ccbe372804a844e69ce64b38e614c5e05",
+      "size": 216890
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-79614b61-d17\\candidate-79614b615ecf3e8ef21d155f4ee41349e4e46d5c.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-79614b61-d17\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1412,
+    "total_bytes": 15450862,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "c6a8ace6a1010e63af669996425218e05619b7bb",
+    "candidate_docs_commit": "79614b615ecf3e8ef21d155f4ee41349e4e46d5c",
+    "summary": "D17 added no product code. It executed the real Spark Connect 4.2.0 profile against the digest-pinned Apache Spark image and exercised the candidate-bound Data Engineering UI/SDK/CLI and HTTP surface; SDP and PostgreSQL claims remain explicitly unavailable.",
+    "production_files_changed": [],
+    "test_files_changed": []
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 79614b615ecf3e8ef21d155f4ee41349e4e46d5c --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-79614b61-d17",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-79614b61-d17",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed the sandbox after testing; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "candidate_focused": "PYTHONDONTWRITEBYTECODE=1; exact candidate sandbox pytest -q -p no:cacheprovider over Data Engineering UI, HTTP, SDK/CLI, SQL/QueryFlux and local-composed selections",
+    "candidate_spark": "exact candidate sandbox pytest tests/e2e/test_data_engineering_external.py -k spark with SPARK_CONNECT_ENDPOINT=sc://127.0.0.1:62843, the hash-locked pyspark-client 4.2.0 cache and the real pinned Spark container",
+    "clean_checkout_spark": "pwsh tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d17-spark-79614b61-real",
+    "candidate_static": "exact candidate sandbox ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI and Studio surface"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "182 passed, 0 failed, 0 skipped from the exact candidate sandbox",
+    "candidate_spark_journey": "1 passed, 2 deselected, 0 skipped, 0 failed from the exact candidate sandbox against Spark 4.2.0; container cleanup succeeded",
+    "clean_checkout_real_provider": "Spark Connect runner receipt reports 1/1 passed, 0 skips/failures, Spark 4.2.0, pyspark-client 4.2.0, pinned image sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59 and cleanup succeeded",
+    "static_and_surface_checks": "candidate-bound ruff format --check 933 files, Ruff, mypy 450 source files, architecture, negative-gates, route-consistency 200 operations, dependency-surfaces, canonical OpenAPI 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708 and Studio 128/242 pass",
+    "full_checkout_regression": "The last code-bearing full checkout regression at c6a8ace6 was 4660 passed, 81 skipped, 0 failed; D17 changed no product code and did not rerun the broad suite",
+    "repository_status_checks": "main checkout daily-progress and public-v1 status checks were run separately; the candidate sandbox deliberately has no Git metadata",
+    "result": "D17 pass for the real Spark provider and candidate-bound UI/SDK/CLI surface; P4 remains in_progress and is not qualified"
+  },
+  "security_and_recovery": {
+    "provider": "The exact Spark Connect journey executed select 1 through Ronin's SparkConnectProvider, then the pipeline worker and local artifact persistence. It used the real pinned Apache Spark 4.2.0 service and pyspark-client 4.2.0, not a mock.",
+    "candidate_provider_evidence": "The candidate sandbox repeated the same external smoke against container 5df6172677c9e6e377a258f39ecc7b4c2f2cc5f8c4bce873fc65d56f28bdcfe5; it passed and the container was removed.",
+    "scans": {
+      "gitleaks": "8.30.1; --no-git exact candidate sandbox; 15,450,862 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1 pinned image; filesystem vuln,secret scanners; 0 vulnerabilities and 0 secrets; the tool reported no supported language files for vulnerability scanning and did scan for secrets"
+    }
+  },
+  "open_cells": [
+    "P4 remains in_progress, not qualified: complete notebook/SQL/pipeline public CRUD, PostgreSQL runtime, UI/SDK/CLI full journey, additional applicable providers and family-level recovery/lineage evidence remain open.",
+    "SDP Studio remains pending/blocked: SDP_STUDIO_COMMAND and SDP_PROJECT_ID were absent, so no official CLI or project validation was claimed.",
+    "PostgreSQL remains pending/blocked: RONIN_POSTGRES_TEST_DSN and RONIN_CONNECTOR_POSTGRES_DSN were absent; no mock was substituted.",
+    "The 81 full-suite skips remain explicit Docker/Compose, PostgreSQL, Spark/SDP, Trino, S3/Azurite, symlink/Windows privilege and other opt-in provider limitations; they are not PASS.",
+    "P3 and P2 remain in_progress; P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The Spark service was a local digest-pinned provider; this certifies the executed Spark profile only and not a remote deployment or SDP.",
+    "An exploratory checkout command named a nonexistent test module; it was not counted as evidence, the selection was corrected, and the corrected checkout/candidate selection passed.",
+    "The full checkout regression was not rerun for D17 because D17 changed no product code; the last code-bearing result is recorded explicitly rather than relabeled as a new run.",
+    "The exact candidate sandbox has no .git metadata by design, so Git-dependent tests and repository status checks are not claimed from it.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

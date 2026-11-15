@@ -27,6 +27,6 @@ def test_report_keeps_family_and_day_progress_separate() -> None:
     report = render_report(load_ledger())
 
     assert "Families: 1/13 (7.69%)" in report
-    assert "Days: 16/39 (41.03%)" in report
+    assert "Days: 17/39 (43.59%)" in report
     assert "Release gates: 0/10 (0.00%)" in report
     assert "Implementation tasks: not baselined" in report

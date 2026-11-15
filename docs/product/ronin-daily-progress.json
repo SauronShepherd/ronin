@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "c6a8ace6a1010e63af669996425218e05619b7bb",
+    "base_sha": "79614b615ecf3e8ef21d155f4ee41349e4e46d5c",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -44,9 +44,9 @@
     "families_qualified": 1,
     "families_total": 13,
     "families_percent": 7.69,
-    "days_passed": 16,
+    "days_passed": 17,
     "days_total": 39,
-    "days_percent": 41.03,
+    "days_percent": 43.59,
     "release_gates_passed": 0,
     "release_gates_total": 10,
     "release_gates_percent": 0.0,
@@ -85,8 +85,8 @@
       "name": "Data Engineering Studio",
       "observed_implementation": "partial",
       "qualification": "in_progress",
-      "receipt": "docs/qualification/candidates/candidate-c6a8ace6-d16.json",
-      "candidate_sha": "c6a8ace6a1010e63af669996425218e05619b7bb"
+      "receipt": "docs/qualification/candidates/candidate-79614b61-d17.json",
+      "candidate_sha": "79614b615ecf3e8ef21d155f4ee41349e4e46d5c"
     },
     {
       "id": "P5",
@@ -241,7 +241,7 @@
     {"id": "D14", "date": "2026-11-28", "phase": "p3-journey-close", "status": "pass", "families": ["P3"], "evidence": "docs/qualification/handoffs/2026-11-15-D14.md", "commit_sha": "3bb2f41e871bd81badb77b2e08bb97660cab3b84"},
     {"id": "D15", "date": "2026-11-29", "phase": "p4-authoring", "status": "pass", "families": ["P4"], "evidence": "docs/qualification/handoffs/2026-11-15-D15.md", "commit_sha": "eb515476dc581542e589a129a72674972d104a95"},
     {"id": "D16", "date": "2026-11-30", "phase": "p4-worker-evidence", "status": "pass", "families": ["P4"], "evidence": "docs/qualification/handoffs/2026-11-15-D16.md", "commit_sha": "c6a8ace6a1010e63af669996425218e05619b7bb"},
-    {"id": "D17", "date": "2026-12-01", "phase": "p4-provider-ui", "status": "pending", "families": ["P4"], "evidence": null, "commit_sha": null},
+    {"id": "D17", "date": "2026-12-01", "phase": "p4-provider-ui", "status": "pass", "families": ["P4"], "evidence": "docs/qualification/handoffs/2026-11-15-D17.md", "commit_sha": "79614b615ecf3e8ef21d155f4ee41349e4e46d5c"},
     {"id": "D18", "date": "2026-12-02", "phase": "p4-journey-close", "status": "pending", "families": ["P4"], "evidence": null, "commit_sha": null},
     {"id": "D19", "date": "2026-12-03", "phase": "p5-scheduler-durable", "status": "pending", "families": ["P5"], "evidence": null, "commit_sha": null},
     {"id": "D20", "date": "2026-12-04", "phase": "p5-restart-failure", "status": "pending", "families": ["P5"], "evidence": null, "commit_sha": null},

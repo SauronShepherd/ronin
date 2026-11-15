@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D17",
+  "date": "2026-11-15",
+  "planned_date": "2026-12-01",
+  "status": "PASS",
+  "candidate_sha": "79614b615ecf3e8ef21d155f4ee41349e4e46d5c",
+  "implementation_commit_sha": "79614b615ecf3e8ef21d155f4ee41349e4e46d5c",
+  "evidence": "docs/qualification/candidates/candidate-79614b61-d17.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D17.md",
+  "execution_scope": "complete-for-D17-real-spark-provider-and-candidate-ui-sdk-cli-surface; SDP-postgresql-pending; P4-family-open",
+  "result": {
+    "candidate_focused_suite": "182 passed, 0 failed, 0 skipped in the exact candidate sandbox",
+    "candidate_spark_journey": "1 passed, 2 deselected, 0 skipped, 0 failed against real Spark 4.2.0; cleanup succeeded",
+    "clean_checkout_real_provider": "Spark Connect 1 passed, 0 skipped, 0 failed; pinned image and hash-locked client recorded in the provider receipt",
+    "static_and_surface_checks": "candidate format 933 files, Ruff, mypy 450 files, architecture, negative-gates, route/dependency surfaces (200 operations), OpenAPI, Studio 128/242 and git diff checks pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "scans": "Gitleaks 0 findings over 15,450,862 candidate bytes; pip-audit 0 vulnerabilities across 99 dependencies; Trivy 0 vulnerabilities and 0 secrets with no supported vulnerability-language files reported",
+    "p4_boundary": "D17 real Spark and UI/SDK/CLI cells pass; SDP and PostgreSQL are pending/blocked; P4 remains in_progress until the complete family journey is evidenced"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "16/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "17/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "SDP Studio and PostgreSQL were not configured and were not replaced by mocks; their gaps remain pending/blocked.",
+    "D17 changed no product code, so the last code-bearing full regression remains the D16 result 4660 passed, 81 skipped, 0 failed.",
+    "The exact candidate sandbox has no Git metadata; repository-level status, public matrix and daily-ledger checks ran separately on main.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
