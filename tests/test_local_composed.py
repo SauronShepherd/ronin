@@ -2178,6 +2178,209 @@ def test_local_composed_ml_promote_serve_drift_rollback_and_recover(
         restarted.stop()
 
 
+def test_local_composed_semantic_dashboard_bundle_and_recover(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """Exercise the real local semantic query/dashboard/Bundle path over HTTP."""
+
+    import base64
+    import hashlib
+    from urllib.parse import quote
+
+    from studio_semantic import (
+        DashboardDefinition,
+        DashboardTile,
+        MetricQuery,
+        SemanticDimension,
+        SemanticMeasure,
+        SemanticModel,
+        semantic_project_scope,
+    )
+
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS",
+        "workspace.read,workspace.write,workspace.admin,project.read,project.write",
+    )
+    project_id = "semantic-project-d29"
+    target_project_id = "semantic-import-d29"
+    workspace_id = "workspace-1"
+    semantic_scope = semantic_project_scope(workspace_id, project_id)
+    parquet_root = tmp_path / "sql-parquet"
+    monkeypatch.setenv("RONIN_SQL_PARQUET_ROOT", str(parquet_root))
+    write_parquet_rows(
+        parquet_root / quote(semantic_scope, safe="") / "orders.parquet",
+        (
+            {"country": "ES", "amount": 5},
+            {"country": "US", "amount": 7},
+        ),
+    )
+    model = SemanticModel(
+        "sales",
+        "Sales",
+        "orders",
+        (SemanticDimension("country", "country"),),
+        (SemanticMeasure("revenue", "sum", "amount"),),
+    )
+    dashboard = DashboardDefinition(
+        "overview",
+        "Overview",
+        (
+            DashboardTile(
+                "revenue_by_country",
+                "Revenue by country",
+                "bar",
+                MetricQuery("sales", ("revenue",), ("country",), limit=10),
+            ),
+        ),
+    )
+    too_many = DashboardDefinition(
+        "too_many",
+        "Too many tiles",
+        tuple(
+            DashboardTile(
+                f"tile_{index}",
+                f"Tile {index}",
+                "number",
+                MetricQuery("sales", ("revenue",), limit=1),
+            )
+            for index in range(13)
+        ),
+    )
+
+    def request(
+        address: tuple[str, int], method: str, path: str, body: object | None = None
+    ) -> tuple[int, dict[str, object]]:
+        payload = None if body is None else json.dumps(body, separators=(",", ":")).encode("utf-8")
+        headers = {"Authorization": "Bearer control-token"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
+        connection = http.client.HTTPConnection(*address, timeout=20)
+        try:
+            connection.request(method, path, body=payload, headers=headers)
+            response = connection.getresponse()
+            return response.status, cast(
+                dict[str, object], json.loads(response.read().decode("utf-8"))
+            )
+        finally:
+            connection.close()
+
+    expected_tiles = [
+        {
+            "tile_id": "revenue_by_country",
+            "columns": [
+                {"name": "country", "type": "VARCHAR"},
+                {"name": "revenue", "type": "HUGEINT"},
+            ],
+            "rows": [["ES", 5], ["US", 7]],
+        }
+    ]
+    composition = build_local_composed_from_env()
+    semantic_reader = composition.control_plane_server.semantic_reader
+    assert semantic_reader is not None
+    semantic_reader.put_model(semantic_scope, model.to_payload())
+    semantic_reader.put_dashboard(semantic_scope, dashboard.to_payload())
+    semantic_reader.put_dashboard(semantic_scope, too_many.to_payload())
+    model_path = f"/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/models"
+    dashboard_path = f"/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/dashboards"
+    query_path = f"/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/query"
+    bundle_path = f"/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/bundle"
+    try:
+        composition.start()
+        address = composition.control_plane_server.server_address
+
+        status, models = request(address, "GET", model_path)
+        assert status == 200, models
+        assert [item["id"] for item in cast(list[dict[str, object]], models["items"])] == ["sales"]
+        status, dashboards = request(address, "GET", dashboard_path)
+        assert status == 200, dashboards
+        assert [item["id"] for item in cast(list[dict[str, object]], dashboards["items"])] == [
+            "overview",
+            "too_many",
+        ]
+        status, loaded_dashboard = request(address, "GET", f"{dashboard_path}/overview")
+        assert status == 200, loaded_dashboard
+        assert loaded_dashboard["id"] == "overview"
+
+        query = MetricQuery("sales", ("revenue",), ("country",), limit=10).to_payload()
+        status, queried = request(address, "POST", query_path, query)
+        assert status == 200, queried
+        assert queried["rows"] == [["ES", 5], ["US", 7]]
+        execute_path = f"{dashboard_path}/overview/execute"
+        status, executed = request(address, "POST", execute_path)
+        assert status == 200, executed
+        assert executed["dashboard_id"] == "overview"
+        assert executed["tiles"] == expected_tiles
+
+        status, over_budget = request(address, "POST", f"{dashboard_path}/too_many/execute")
+        assert status == 400, over_budget
+        assert cast(dict[str, object], over_budget["error"])["code"] == "invalid_request"
+
+        status, exported = request(address, "GET", bundle_path)
+        assert status == 200, exported
+        encoded_archive = exported["content_base64"]
+        assert isinstance(encoded_archive, str)
+        archive = base64.b64decode(encoded_archive, validate=True)
+        digest = hashlib.sha256(archive).hexdigest()
+        assert exported["digest"] == digest
+        assert exported["size_bytes"] == len(archive)
+
+        target_prefix = f"/v1/workspaces/{workspace_id}/projects/{target_project_id}/semantic"
+        import_body = {"content_base64": encoded_archive, "expected_digest": digest}
+        status, plan = request(
+            address, "POST", f"{target_prefix}/bundle/plan", {"content_base64": encoded_archive}
+        )
+        assert status == 200, plan
+        assert [item["id"] for item in cast(list[dict[str, object]], plan["models"])] == ["sales"]
+        status, mismatch = request(
+            address,
+            "POST",
+            f"{target_prefix}/bundle/import",
+            {**import_body, "expected_digest": "0" * 64},
+        )
+        assert status == 400, mismatch
+        status, imported = request(address, "POST", f"{target_prefix}/bundle/import", import_body)
+        assert status == 200, imported
+        assert imported["bundle_digest"] == digest
+        status, imported_models = request(address, "GET", f"{target_prefix}/models")
+        assert status == 200, imported_models
+        assert [item["id"] for item in cast(list[dict[str, object]], imported_models["items"])] == [
+            "sales"
+        ]
+
+        status, denied = request(
+            address,
+            "GET",
+            f"/v1/workspaces/workspace-unknown/projects/{project_id}/semantic/models",
+        )
+        assert status == 403, denied
+    finally:
+        composition.stop()
+
+    restarted = build_local_composed_from_env()
+    try:
+        restarted.start()
+        address = restarted.control_plane_server.server_address
+        status, recovered_models = request(address, "GET", model_path)
+        assert status == 200, recovered_models
+        assert [
+            item["id"] for item in cast(list[dict[str, object]], recovered_models["items"])
+        ] == ["sales"]
+        status, recovered_execution = request(address, "POST", execute_path)
+        assert status == 200, recovered_execution
+        assert recovered_execution["tiles"] == expected_tiles
+        status, recovered_import = request(address, "GET", f"{target_prefix}/models")
+        assert status == 200, recovered_import
+        assert [
+            item["id"] for item in cast(list[dict[str, object]], recovered_import["items"])
+        ] == ["sales"]
+    finally:
+        restarted.stop()
+
+
 def test_build_local_composed_rejects_unknown_permission(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
