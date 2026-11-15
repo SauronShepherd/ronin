@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D15",
+  "date": "2026-11-15",
+  "planned_date": "2026-11-29",
+  "status": "PASS",
+  "candidate_sha": "eb515476dc581542e589a129a72674972d104a95",
+  "implementation_commit_sha": "eb515476dc581542e589a129a72674972d104a95",
+  "evidence": "docs/qualification/candidates/candidate-eb515476-d15.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D15.md",
+  "execution_scope": "complete-for-D15-local-durable-notebook-authoring-and-revision-recovery; P4-family-open",
+  "result": {
+    "candidate_focused_suite": "183 passed, 0 failed, 1 skipped in the exact candidate sandbox",
+    "candidate_restart_journey": "1 passed, 0 failed, 0 skipped; local HTTP create, stop, rebuild and read recovered the notebook from RONIN_DB",
+    "checkout_focused_regression": "183 passed, 0 failed, 1 skipped; direct/local-composed focal selection 7 passed, 0 failed",
+    "architecture_and_contracts": "51 passed, 0 failed across architecture, route-consistency and open-data-plane selections",
+    "static_and_surface_checks": "format 1117 files, Ruff, mypy 449 files, architecture, negative-gates, route/dependency surfaces (200 operations), OpenAPI, Studio 128/242, public status, daily ledger and git diff checks pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "scans": "Gitleaks 0 findings over 15,404,206 candidate bytes; pip-audit 0 vulnerabilities across 99 dependencies; Trivy 0 vulnerabilities and 0 secrets",
+    "p4_boundary": "D15 local durable notebook authoring and restart cell passes; P4 remains in_progress until worker/evidence lineage, complete CRUD, PostgreSQL runtime and broader authoring/provider journey are evidenced"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "14/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "15/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The one PostgreSQL revision skip requires RONIN_POSTGRES_TEST_DSN and is not counted as PASS.",
+    "D15 does not qualify P4, close a release gate or change the P13 blocker.",
+    "No external provider, PostgreSQL runtime, hosted workflow or full-suite zero-skip claim was made."
+  ]
+}

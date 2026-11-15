@@ -1,0 +1,96 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D15",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-11-29",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "eb515476dc581542e589a129a72674972d104a95",
+    "origin_main_sha_when_candidate_was_tested": "eb515476dc581542e589a129a72674972d104a95",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-eb515476-d15",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-eb515476-d15\\candidate-eb515476dc581542e589a129a72674972d104a95.tar",
+      "format": "tar",
+      "sha256": "74ebf720d4682c134c7c8a4a4d2174153b3c54635897055d6f76cf8663955d72",
+      "size": 16558080
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-eb515476-d15\\candidate-eb515476dc581542e589a129a72674972d104a95.manifest.json",
+      "sha256": "9ab99e4a3eaa1d1285bae9f8412fdb51c7b946b9146d1921c0ec6c86c53f70c4",
+      "size": 215756
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-eb515476-d15\\candidate-eb515476dc581542e589a129a72674972d104a95.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-eb515476-d15\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1405,
+    "total_bytes": 15404206,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "eb515476dc581542e589a129a72674972d104a95",
+    "candidate_docs_commit": "eb515476dc581542e589a129a72674972d104a95",
+    "summary": "Made local-composed notebook authoring durable: project-scoped SQLite revision storage now preserves immutable history, optimistic revision fencing, archive/delete semantics and document metadata across HTTP server restart; the composition root injects that store while the in-memory adapter remains available for isolated tests.",
+    "production_files_changed": [
+      "python/studio_storage/notebook_revisions.py",
+      "python/studio_notebook/http.py",
+      "python/studio_storage/__init__.py",
+      "python/studio_cli/local_composed.py"
+    ],
+    "test_files_changed": [
+      "tests/test_notebook_revisions.py",
+      "tests/test_local_composed.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha eb515476dc581542e589a129a72674972d104a95 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-eb515476-d15",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-eb515476-d15",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed the sandbox after testing; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "candidate_focused": "PYTHONDONTWRITEBYTECODE=1; exact candidate sandbox pytest over 34 P4 authoring files",
+    "candidate_restart": "PYTHONDONTWRITEBYTECODE=1; exact candidate sandbox pytest tests/test_local_composed.py::test_local_composed_persists_notebook_revisions_across_restart"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "183 passed, 0 failed, 1 skipped from the exact candidate sandbox; the skip is the real PostgreSQL revision test requiring RONIN_POSTGRES_TEST_DSN",
+    "candidate_restart_journey": "1 passed, 0 failed, 0 skipped in the exact candidate sandbox; real local HTTP control plane created a project notebook, stopped, rebuilt from the same RONIN_DB and read the persisted document",
+    "checkout_focused_regression": "183 passed, 0 failed, 1 skipped for the same P4 authoring selection; the direct notebook/persistence and local-composed focal selection passed 7/7",
+    "architecture_and_contracts": "51 passed, 0 failed across architecture, route-consistency and open-data-plane selections",
+    "full_checkout_regression": "The latest broad checkout run after D13 code was 4641 passed, 81 skipped, 1 stale-documentation failure before the public-ledger refresh; D15 did not claim a new full-suite run",
+    "static_and_surface_checks": "ruff format --check 1117 files, Ruff, mypy 449 source files, architecture, negative-gates, route-consistency 200 operations, dependency-surfaces, canonical OpenAPI 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 128/242, public imports/capability/daily/public status and git diff checks pass",
+    "result": "D15 pass for the local durable notebook-authoring/revision cell; P4 remains in_progress because worker/evidence lineage, PostgreSQL runtime qualification, complete public CRUD and broader authoring/provider journeys remain open"
+  },
+  "security_and_recovery": {
+    "persistence": "Each project receives an isolated SQLite notebook revision namespace; the HTTP restart journey recovered the exact document and revision.",
+    "concurrency": "Create/save/archive/delete use BEGIN IMMEDIATE and expected-revision checks; stale writes remain fail-closed through NotebookRevisionConflict.",
+    "candidate_scan_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d15-scans-eb515476",
+    "scans": {
+      "gitleaks": "8.30.1; --no-git exact candidate sandbox; 15,404,206 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1 pinned image; filesystem vuln,secret scanners; 0 vulnerabilities and 0 secrets"
+    }
+  },
+  "open_cells": [
+    "P4 remains in_progress, not qualified: worker/evidence lineage, complete notebook/SQL/pipeline public CRUD, PostgreSQL runtime qualification, broader authoring/UI and provider journeys remain open.",
+    "The PostgreSQL revision integration skip requires RONIN_POSTGRES_TEST_DSN and is not converted into PASS.",
+    "The 81 full-suite skips from the latest broad checkout run remain explicit unavailable-provider, Docker opt-in, POSIX/symlink, Windows privilege and external CLI cases; they are not PASS.",
+    "P3 remains in_progress; P2 remains in_progress; P13 remains blocked by the external secret-provider and release evidence boundary.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "D15 certifies local SQLite persistence and local HTTP restart only; no PostgreSQL implementation or provider certification is claimed.",
+    "The candidate sandbox has no Git metadata; repository-level status, matrix and daily-ledger validation ran on main.",
+    "The full checkout regression was not rerun after D15; the exact P4 authoring selection and restart node were run in the candidate sandbox.",
+    "The first abbreviated-SHA candidate-boundary invocation was rejected by the tool's exact-40-character SHA validation; no evidence was taken from it, then the full SHA was generated, tested, regenerated and verified.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
