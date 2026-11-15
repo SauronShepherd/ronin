@@ -1,0 +1,102 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D30",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-12-14",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "0c31232eaec42d2f26f8fbc466bd52d2898d09a5",
+    "origin_main_sha_when_candidate_was_tested": "0c31232eaec42d2f26f8fbc466bd52d2898d09a5",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0c31232e-d30",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0c31232e-d30\\candidate-0c31232eaec42d2f26f8fbc466bd52d2898d09a5.tar",
+      "format": "tar",
+      "sha256": "767c55cf8f04c556ba59b7a6a0f87976d0be637b7f820deea98d6d9546ab2148",
+      "size": 16998400
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0c31232e-d30\\candidate-0c31232eaec42d2f26f8fbc466bd52d2898d09a5.manifest.json",
+      "sha256": "8e3fc1366f7d2e336c7e1138ddd7cd75d474bd05eb9356f1dc3933f9278ca0fd",
+      "size": 223624
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0c31232e-d30\\candidate-0c31232eaec42d2f26f8fbc466bd52d2898d09a5.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0c31232e-d30\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1453,
+    "total_bytes": 15803598,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "0c31232eaec42d2f26f8fbc466bd52d2898d09a5",
+    "candidate_docs_commit": null,
+    "summary": "D30 fixes the public semantic dashboard PUT replacement path and adds candidate-bound real local evidence for dashboard authoring, filtered metric queries, invalid-filter rejection and restart recovery. The strict create conflict semantics remain unchanged; the journey uses the real HTTP, SQLite, DuckDB and Parquet composition without provider mocks.",
+    "production_files_changed": [
+      "python/studio_semantic/store.py",
+      "python/studio_semantic/http.py",
+      "python/studio_server/control_plane.py"
+    ],
+    "test_files_changed": [
+      "tests/test_local_composed.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 0c31232eaec42d2f26f8fbc466bd52d2898d09a5 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0c31232e-d30",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0c31232e-d30",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after candidate tests and scans; the same SHA was regenerated with identical archive and manifest hashes; final verify passed",
+    "candidate_focused": "exact candidate sandbox pytest D30 semantic authoring/filter/recovery journey (1 passed), full local-composed suite (29 passed), semantic unit/HTTP selection (36 passed, 58 deselected), ML unit files (298 passed) and ML HTTP integration (3 passed)",
+    "candidate_web": "exact candidate sandbox npm exec --offline -- playwright test tests/semantic-studio.spec.mjs --workers=1",
+    "candidate_static": "exact candidate sandbox ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio surface, web audit, web budget, assets, daily progress and capability status",
+    "scans": "Gitleaks dir scan and pip-audit -r requirements-test.lock over the final clean exact candidate; Trivy skipped because no local binary was available"
+  },
+  "qualification_matrix": {
+    "candidate_d30_journey": "1 passed, 28 deselected, 0 failed, 0 skipped; real HTTP/SQLite/DuckDB/Parquet path replaces an existing dashboard, filters a metric to ES=5, rejects an empty filter value with HTTP 400 and recovers the replacement and filtered result after restart",
+    "candidate_local_composed": "29 passed, 0 failed, 0 skipped",
+    "candidate_semantic": "36 passed, 58 deselected, 0 failed, 0 skipped",
+    "candidate_ml_unit": "298 passed, 0 failed, 0 skipped",
+    "candidate_ml_http": "3 passed, 0 failed, 0 skipped",
+    "candidate_web": "SKIP; the exact candidate archive does not include node_modules or the @playwright/test package, so the offline browser command could not resolve its test runner; no browser PASS is claimed",
+    "checkout_web": "6 passed, 0 failed, 0 skipped in 11.2 seconds for Semantic Studio",
+    "candidate_static": "ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI digest 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 129/242, web audit 72 files/184 route invocations, web budget and 53 assets passed",
+    "ledger_checks": "ronin_daily_progress --check --report passed in the exact archive at the archived ledger state 29/39; capability status passed; generate_public_v1_status --check is SKIP in the archive because it requires Git metadata; checkout checks pass after the D30 evidence update",
+    "candidate_reproducibility_after_cleanup": "pass; cleanup/regeneration produced the same archive SHA 767c55cf8f04c556ba59b7a6a0f87976d0be637b7f820deea98d6d9546ab2148 and manifest SHA 8e3fc1366f7d2e336c7e1138ddd7cd75d474bd05eb9356f1dc3933f9278ca0fd; final verify passed",
+    "checkout_integrity_checks": "host checkout git diff --check and main/origin identity are checked separately; the candidate sandbox intentionally has no .git metadata",
+    "result": "D30 pass for the bounded real local semantic dashboard replacement/filter/recovery journey; P10 remains in_progress and is not qualified"
+  },
+  "security_and_recovery": {
+    "dashboard_replacement": "The public PUT route replaces the existing dashboard definition through the real SQLite semantic store; the earlier route returned HTTP 500 for a changed definition because it used create-only conflict semantics. The fix adds an explicit replacement operation while preserving create conflicts.",
+    "filtered_query_identity": "The dashboard filter is evaluated against an independent Parquet fixture through project-scoped DuckDB and returns the expected grouped value ES=5; the test does not fabricate the result.",
+    "negative_paths": "An empty semantic filter value returns HTTP 400 with invalid_request; the existing full local suite also retains tile-budget, workspace-scope and Bundle-digest negative coverage.",
+    "workspace_scope": "The real local composition uses the configured bearer token and workspace-scoped authorizer; prior D29 coverage denies unknown semantic workspaces with HTTP 403 and remains in the candidate full local suite.",
+    "recovery": "The replaced dashboard and filtered query result survive a full local composition restart; the independent Parquet fixture remains readable.",
+    "provider_scope": "Only the local SQLite semantic store, local DuckDB SQL engine and local Parquet fixture were exercised. PostgreSQL semantic persistence/import, external warehouse/provider serving, cancellation/fan-out operational rehearsal and complete P10 certification were not run and are not claimed.",
+    "scans": {
+      "gitleaks": "8.30.1; final clean exact-candidate directory scan of 15,803,598 bytes; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; no known vulnerabilities",
+      "trivy": "SKIP; no local Trivy binary; no substitute scan claimed"
+    }
+  },
+  "open_cells": [
+    "P10 remains in_progress, not qualified: this closes only the local dashboard replacement/filter/restart slice; PostgreSQL import/persistence, broader provider compatibility, cancellation/fan-out operational evidence, complete Studio live-provider evidence and full P10 qualification remain open.",
+    "The exact candidate browser lane is SKIP because the archive lacks @playwright/test; checkout Semantic Studio browser evidence passed 6/6 and is not substituted for candidate provider or family qualification.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary; P8 and all other non-P1 families retain their ledger states.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The exact candidate sandbox has no .git metadata by design; generate_public_v1_status --check therefore remains a candidate SKIP and was not converted into PASS.",
+    "The candidate archive intentionally does not package browser dependencies; the checkout browser run is separate UI-contract evidence.",
+    "Static checks and scans were rerun on the final clean regenerated candidate; final verify passed with no generated caches or test artifacts.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

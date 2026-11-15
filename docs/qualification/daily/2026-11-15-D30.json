@@ -1,0 +1,85 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D30",
+  "date": "2026-11-15",
+  "status": "pass",
+  "cell": "P10 bounded dashboard replacement, filtered metric query and restart recovery over the real local composition",
+  "candidate_sha": "0c31232eaec42d2f26f8fbc466bd52d2898d09a5",
+  "candidate_receipt": "docs/qualification/candidates/candidate-0c31232e-d30.json",
+  "code_commit": "0c31232eaec42d2f26f8fbc466bd52d2898d09a5",
+  "origin_main_at_code_commit": "0c31232eaec42d2f26f8fbc466bd52d2898d09a5",
+  "implementation": {
+    "journey": "Fixed the public semantic dashboard PUT route to use an explicit replacement operation, then added a real local composed HTTP regression that replaces an existing dashboard, filters a metric through project-scoped DuckDB over an independent Parquet fixture, rejects an invalid empty filter and recovers the definition and result after full composition restart.",
+    "evidence_gap": "The public PUT route was labelled as replacement but called the store's create/idempotent conflict operation, so a changed dashboard produced HTTP 500. Existing unit/runtime tests did not bind replacement, filtered query, invalid-filter and restart behavior together through the real local composition.",
+    "recovery": "The replaced SQLite dashboard and the filtered metric query remain available with the same expected value after restarting the local HTTP/SQLite/DuckDB composition."
+  },
+  "tests": {
+    "candidate_d30_journey": "1 passed, 28 deselected, 0 failed, 0 skipped",
+    "candidate_local_composed": "29 passed, 0 failed, 0 skipped",
+    "candidate_semantic": "36 passed, 58 deselected, 0 failed, 0 skipped",
+    "candidate_ml_unit": "298 passed, 0 failed, 0 skipped",
+    "candidate_ml_http": "3 passed, 0 failed, 0 skipped",
+    "candidate_web": "SKIP; @playwright/test is not present in the exact candidate archive and the offline browser command could not resolve it",
+    "checkout_web": "6 passed, 0 failed, 0 skipped in 11.2 seconds",
+    "negative_paths": [
+      "changed dashboard replacement returns HTTP 200 and persists the new definition",
+      "filtered metric query returns the independent Parquet-backed ES=5 result",
+      "empty filter value returns HTTP 400 with invalid_request",
+      "replaced dashboard and filtered result survive full composition restart",
+      "existing full local suite retains the 13-tile budget, Bundle digest and unknown-workspace negative paths"
+    ],
+    "static": {
+      "ruff_format": "PASS; 951 files",
+      "ruff": "PASS",
+      "mypy": "PASS; 451 source files",
+      "architecture": "PASS",
+      "negative_gates": "PASS",
+      "route_consistency": "PASS; 200 operations",
+      "dependency_surfaces": "PASS",
+      "openapi": "PASS; 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708",
+      "studio_surface": "PASS; 129/242",
+      "studio_web_audit": "PASS; 72 files, 184 route invocations",
+      "studio_budget": "PASS; 2170472 actual asset bytes against the 2170474-byte baseline",
+      "web_assets": "PASS; 53 assets",
+      "daily_progress": "PASS in candidate at archived ledger state 29/39; checkout after evidence update at 30/39",
+      "public_status": "SKIP in archive; command requires Git metadata; PASS on checkout",
+      "capability_status": "PASS",
+      "git_diff_check": "PASS on checkout"
+    }
+  },
+  "candidate": {
+    "archive_sha256": "767c55cf8f04c556ba59b7a6a0f87976d0be637b7f820deea98d6d9546ab2148",
+    "archive_size": 16998400,
+    "manifest_sha256": "8e3fc1366f7d2e336c7e1138ddd7cd75d474bd05eb9356f1dc3933f9278ca0fd",
+    "manifest_size": 223624,
+    "digest_size": 252,
+    "file_count": 1453,
+    "total_bytes": 15803598,
+    "cleanup_regenerate_verify": "PASS; same archive and manifest hashes after cleanup/regeneration; final sandbox has no caches or test artifacts"
+  },
+  "scans": {
+    "gitleaks": "PASS; 8.30.1; 0 findings over 15,803,598 bytes of the final clean candidate",
+    "pip_audit": "PASS; 2.10.1; no known vulnerabilities from requirements-test.lock",
+    "trivy": "SKIP; no local binary"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "29/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "30/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    }
+  },
+  "limitations": [
+    "P10 remains in_progress: this is a bounded local evidence slice, not complete family/provider/Studio qualification.",
+    "PostgreSQL semantic persistence/import, external warehouse/provider compatibility, dashboard cancellation/fan-out operational evidence and complete P10 provider matrix were not exercised.",
+    "Candidate browser evidence is a recorded SKIP, not a PASS; no skip counts as a gate or family PASS.",
+    "No release gate changed to closed and P13 remains blocked."
+  ]
+}
