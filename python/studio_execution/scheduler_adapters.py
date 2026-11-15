@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from studio_connectors import IngestionSyncCancelled, IngestionSyncDefinition
-from studio_core import AssetId, AssetRef
+from studio_core import AssetId, AssetRef, redact_sensitive_text
 from studio_observability import NotificationIntent
 from studio_orchestrator import Instant, Job
 from studio_quality import resolve_quality_rows
@@ -26,6 +26,32 @@ class SchedulerWorkloadCancelled(RuntimeError):
     """Raised when a scheduler workload observes a durable cancellation request."""
 
 
+SchedulerWorkloadState = Literal["succeeded", "failed", "cancelled"]
+
+
+def _failure_code(value: object, default: str) -> str:
+    if (
+        isinstance(value, str)
+        and value
+        and value == value.strip()
+        and "\n" not in value
+        and "\r" not in value
+        and len(value) <= 256
+    ):
+        return redact_sensitive_text(value)
+    return default
+
+
+def _redact_json(value: object) -> object:
+    if isinstance(value, str):
+        return redact_sensitive_text(value)
+    if isinstance(value, list):
+        return [_redact_json(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _redact_json(item) for key, item in value.items()}
+    return value
+
+
 @dataclass(frozen=True, slots=True)
 class SchedulerWorkloadResult:
     family: str
@@ -38,41 +64,69 @@ class SchedulerWorkloadResult:
     semantic: dict[str, object] | None = None
     pipeline: dict[str, object] | None = None
     queryflux: dict[str, object] | None = None
+    state: SchedulerWorkloadState = "succeeded"
+    failure_code: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.state not in {"succeeded", "failed", "cancelled"}:
+            raise ValueError("scheduler workload state is invalid")
+        if self.state == "failed":
+            if self.failure_code is None:
+                raise ValueError("failed scheduler workload requires a failure code")
+            object.__setattr__(
+                self,
+                "failure_code",
+                _failure_code(self.failure_code, "scheduler.workload.failed"),
+            )
+        elif self.failure_code is not None:
+            raise ValueError("only failed scheduler workloads may carry a failure code")
 
     def evidence_payload(self) -> dict[str, Any]:
         """Return the portable, deterministic payload stored as scheduler evidence."""
 
+        def with_state(payload: dict[str, Any]) -> dict[str, Any]:
+            payload["state"] = self.state
+            if self.failure_code is not None:
+                payload["failure_code"] = self.failure_code
+            return payload
+
         if self.family == "sql" and self.sql is not None:
-            return {
-                "family": self.family,
-                "evidence_digest": self.sql.evidence_digest,
-                "columns": [
-                    {"name": column.name, "type": column.type_name}
-                    for column in self.sql.result.columns
-                ],
-                "rows": [list(row) for row in self.sql.result.rows],
-                "version": 1,
-            }
+            return with_state(
+                {
+                    "family": self.family,
+                    "evidence_digest": self.sql.evidence_digest,
+                    "columns": [
+                        {"name": column.name, "type": column.type_name}
+                        for column in self.sql.result.columns
+                    ],
+                    "rows": [list(row) for row in self.sql.result.rows],
+                    "version": 1,
+                }
+            )
         if self.family == "graph" and self.graph is not None:
-            return {
-                "family": self.family,
-                "objects": list(self.graph),
-                "version": 1,
-            }
+            return with_state(
+                {
+                    "family": self.family,
+                    "objects": list(self.graph),
+                    "version": 1,
+                }
+            )
         if self.family == "quality" and self.quality is not None:
-            return {"family": self.family, "quality": self.quality, "version": 1}
+            return with_state({"family": self.family, "quality": self.quality, "version": 1})
         if self.family == "connector" and self.connector is not None:
-            return {"family": self.family, "connector": self.connector, "version": 1}
+            return with_state({"family": self.family, "connector": self.connector, "version": 1})
         if self.family == "notification" and self.notification is not None:
-            return {"family": self.family, "notification": self.notification, "version": 1}
+            return with_state(
+                {"family": self.family, "notification": self.notification, "version": 1}
+            )
         if self.family == "ml" and self.ml is not None:
-            return {"family": self.family, "ml": self.ml, "version": 1}
+            return with_state({"family": self.family, "ml": self.ml, "version": 1})
         if self.family == "semantic" and self.semantic is not None:
-            return {"family": self.family, "semantic": self.semantic, "version": 1}
+            return with_state({"family": self.family, "semantic": self.semantic, "version": 1})
         if self.family == "pipeline" and self.pipeline is not None:
-            return {"family": self.family, "pipeline": self.pipeline, "version": 1}
+            return with_state({"family": self.family, "pipeline": self.pipeline, "version": 1})
         if self.family == "queryflux" and self.queryflux is not None:
-            return {"family": self.family, "queryflux": self.queryflux, "version": 1}
+            return with_state({"family": self.family, "queryflux": self.queryflux, "version": 1})
         raise UnsupportedSchedulerWorkload("scheduler result has no portable evidence payload")
 
 
@@ -128,7 +182,20 @@ def execute_scheduler_job(
         )
         if not isinstance(result, dict):
             raise UnsupportedSchedulerWorkload("QueryFlux runner returned an invalid result")
-        return SchedulerWorkloadResult(family="queryflux", queryflux=result)
+        state = result.get("state")
+        if state not in {"succeeded", "failed", "cancelled"}:
+            raise UnsupportedSchedulerWorkload("QueryFlux runner returned an invalid state")
+        safe_result = cast(dict[str, object], _redact_json(result))
+        return SchedulerWorkloadResult(
+            family="queryflux",
+            queryflux=safe_result,
+            state=cast(SchedulerWorkloadState, state),
+            failure_code=(
+                _failure_code(result.get("failure_code"), "queryflux.failed")
+                if state == "failed"
+                else None
+            ),
+        )
 
     if job.target == "sql.query":
         if sql_engine is None:
@@ -433,15 +500,39 @@ def execute_scheduler_job(
             raise UnsupportedSchedulerWorkload(
                 "data-engineering.pipeline-run.v1 parameters are invalid"
             ) from exc
-        result = pipeline_runner.run(
-            revision_key=revision_key,
-            ir_digest=ir_digest,
-            runtime=runtime,
-            parameters=parameters,
-        )
+        runner_kwargs: dict[str, object] = {
+            "revision_key": revision_key,
+            "ir_digest": ir_digest,
+            "runtime": runtime,
+            "parameters": parameters,
+        }
+        if run_id is not None:
+            runner_kwargs["run_id"] = run_id
+        if cancellation_requested is not None:
+            runner_kwargs["cancellation_requested"] = cancellation_requested
+        result = pipeline_runner.run(**runner_kwargs)
         if not isinstance(result, dict):
             raise UnsupportedSchedulerWorkload("pipeline runner returned an invalid result")
-        return SchedulerWorkloadResult(family="pipeline", pipeline=result)
+        status = result.get("status")
+        if status not in {"succeeded", "failed", "cancelled"}:
+            raise UnsupportedSchedulerWorkload("pipeline runner returned an invalid status")
+        try:
+            json.dumps(result, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        except (TypeError, ValueError) as exc:
+            raise UnsupportedSchedulerWorkload(
+                "pipeline runner returned a non-portable result"
+            ) from exc
+        safe_result = cast(dict[str, object], _redact_json(result))
+        return SchedulerWorkloadResult(
+            family="pipeline",
+            pipeline=safe_result,
+            state=cast(SchedulerWorkloadState, status),
+            failure_code=(
+                _failure_code(result.get("error_code"), "data-engineering.pipeline.failed")
+                if status == "failed"
+                else None
+            ),
+        )
     if job.target == "graph.query":
         if graph_adapter is None:
             raise UnsupportedSchedulerWorkload("graph.query requires an injected graph adapter")

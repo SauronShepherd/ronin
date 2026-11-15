@@ -420,8 +420,13 @@ class DurableWorkerExecution:
             lease_token=claim.lease_token,
             now=now,
         )
-        await self._complete(claim, AttemptState.SUCCEEDED, None)
-        return WorkerExecutionOutcome(AttemptState.SUCCEEDED, (), ())
+        state = {
+            "succeeded": AttemptState.SUCCEEDED,
+            "failed": AttemptState.FAILED,
+            "cancelled": AttemptState.CANCELLED,
+        }[result.state]
+        await self._complete(claim, state, result.failure_code)
+        return WorkerExecutionOutcome(state, (), (), result.failure_code)
 
     async def run(
         self,

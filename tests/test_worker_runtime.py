@@ -467,7 +467,7 @@ def test_restart_reclaims_queryflux_job_and_executes_once(tmp_path: Path) -> Non
         def __call__(self, payload, *, cancellation_requested, run_id):
             self.calls += 1
             assert payload["workspace_id"] == "workspace-1"
-            assert cancellation_requested is None
+            assert cancellation_requested is not None
             assert run_id == "run-queryflux"
             return {"state": "succeeded", "row_count": 1, "evidence": {"digest": "d" * 64}}
 
@@ -534,6 +534,140 @@ def test_restart_reclaims_queryflux_job_and_executes_once(tmp_path: Path) -> Non
         final_job = store.get_job(JobId("job-queryflux"))
         assert final_job is not None
         assert final_job.state is JobState.SUCCEEDED
+
+    asyncio.run(scenario())
+
+
+def test_pipeline_scheduler_failure_persists_terminal_evidence(tmp_path: Path) -> None:
+    class PipelineRunner:
+        def run(self, **_kwargs) -> dict[str, object]:
+            return {
+                "status": "failed",
+                "error_code": "pipeline.invalid",
+                "message": "password=super-secret-value",
+            }
+
+    async def scenario() -> None:
+        config = replace(
+            _config(tmp_path),
+            pipeline_runner=PipelineRunner(),
+        )
+        job = replace(
+            _job(),
+            target="data-engineering.pipeline-run.v1",
+            parameters_json=json.dumps(
+                {
+                    "revision_key": "orders-v1",
+                    "ir_digest": "c" * 64,
+                    "runtime": "local",
+                    "parameters": {"limit": 10},
+                }
+            ),
+        )
+        store = SqliteJobStore(config.database_path, migration_now=START)
+        store.create_job(job, _run())
+
+        async with LocalWorkerRuntime(
+            config,
+            migration_now=START,
+            engine_path="docker",
+            now=_Clock(START),
+        ) as runtime:
+            outcome = await runtime.run_once(
+                attempt_id=AttemptId("attempt-pipeline-failed"),
+                lease_token=LeaseToken("lease-pipeline-failed"),
+            )
+
+        persisted = SqliteJobStore(config.database_path, migration_now=START)
+        current = persisted.get_job(job.id)
+        assert current is not None
+        assert current.state is JobState.FAILED
+        assert outcome.execution is not None
+        assert outcome.execution.state is AttemptState.FAILED
+        assert outcome.execution.failure_code == "pipeline.invalid"
+        evidence = persisted.read_evidence(RunId("run-runtime"))
+        assert len(evidence) == 1
+        assert evidence[0].role == "scheduler-result"
+        assert evidence[0].run_id == RunId("run-runtime")
+        payload = json.loads(
+            LocalArtifactStore(config.artifact_root).get_bytes_by_storage_ref(
+                evidence[0].storage_ref,
+                digest=evidence[0].digest,
+            )
+        )
+        assert payload["state"] == "failed"
+        assert payload["failure_code"] == "pipeline.invalid"
+        assert "super-secret-value" not in json.dumps(payload)
+
+    asyncio.run(scenario())
+
+
+def test_pipeline_scheduler_cancellation_persists_cancelled_evidence(tmp_path: Path) -> None:
+    started = threading.Event()
+
+    class PipelineRunner:
+        def run(self, *, cancellation_requested, **_kwargs) -> dict[str, object]:
+            started.set()
+            deadline = time.monotonic() + 5
+            while not cancellation_requested():
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("worker did not observe cancellation")
+                time.sleep(0.005)
+            return {"status": "cancelled", "reason": "safe point"}
+
+    async def scenario() -> None:
+        config = replace(
+            _config(tmp_path),
+            cancellation_poll_seconds=0.01,
+            pipeline_runner=PipelineRunner(),
+        )
+        job = replace(
+            _job(),
+            target="data-engineering.pipeline-run.v1",
+            parameters_json=json.dumps(
+                {
+                    "revision_key": "orders-v1",
+                    "ir_digest": "c" * 64,
+                    "runtime": "local",
+                    "parameters": {},
+                }
+            ),
+        )
+        store = SqliteJobStore(config.database_path, migration_now=START)
+        store.create_job(job, _run())
+
+        async with LocalWorkerRuntime(
+            config,
+            migration_now=START,
+            engine_path="docker",
+            now=_Clock(START),
+        ) as runtime:
+            task = asyncio.create_task(
+                runtime.run_once(
+                    attempt_id=AttemptId("attempt-pipeline-cancelled"),
+                    lease_token=LeaseToken("lease-pipeline-cancelled"),
+                )
+            )
+            assert await asyncio.to_thread(started.wait, 5)
+            requested = store.request_cancel(job.id, now=START)
+            assert requested.state is JobState.CANCELLING
+            outcome = await asyncio.wait_for(task, timeout=5)
+
+        persisted = SqliteJobStore(config.database_path, migration_now=START)
+        current = persisted.get_job(job.id)
+        assert current is not None
+        assert current.state is JobState.CANCELLED
+        assert outcome.execution is not None
+        assert outcome.execution.state is AttemptState.CANCELLED
+        evidence = persisted.read_evidence(RunId("run-runtime"))
+        assert len(evidence) == 1
+        payload = json.loads(
+            LocalArtifactStore(config.artifact_root).get_bytes_by_storage_ref(
+                evidence[0].storage_ref,
+                digest=evidence[0].digest,
+            )
+        )
+        assert payload["state"] == "cancelled"
 
     asyncio.run(scenario())
 

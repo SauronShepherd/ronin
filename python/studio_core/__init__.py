@@ -159,6 +159,7 @@ from .quality import (
     QualityStatus,
     SchemaCompatibility,
 )
+from .redaction import redact_sensitive_text
 from .reproducible_manifest import REPRODUCIBLE_MANIFEST_SCHEMA, ReproducibleManifest
 from .roles import RoleDefinition, RoleName, role_definition, role_names
 from .rql import RqlQuery, RqlResult, execute_rql, parse_rql
@@ -297,6 +298,7 @@ __all__ = (
     "ProjectManifest",
     "REPRODUCIBLE_MANIFEST_SCHEMA",
     "ReproducibleManifest",
+    "redact_sensitive_text",
     "PluginCompatibilityError",
     "PluginContext",
     "PluginDependency",

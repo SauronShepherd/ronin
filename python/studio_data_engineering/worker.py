@@ -5,15 +5,33 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import cast
+
+from studio_core import redact_sensitive_text
 
 from .previews import PreviewError, preview_pipeline
 from .spark_connect import SparkConnectProvider, SparkConnectUnavailable
 
+_MAX_ROW_LIMIT = 10_000
+_MAX_ERROR_MESSAGE_LENGTH = 512
+
 
 class PipelineExecutionError(RuntimeError):
     def __init__(self, code: str, message: str, *, retryable: bool = False) -> None:
-        super().__init__(message)
+        if (
+            not isinstance(code, str)
+            or not code
+            or code != code.strip()
+            or "\n" in code
+            or "\r" in code
+            or len(code) > 128
+        ):
+            raise ValueError("pipeline execution error code must be bounded single-line text")
+        safe_message = redact_sensitive_text(message).replace("\r", " ").replace("\n", " ").strip()
+        if not safe_message:
+            safe_message = "pipeline execution failed"
+        if len(safe_message) > _MAX_ERROR_MESSAGE_LENGTH:
+            safe_message = safe_message[: _MAX_ERROR_MESSAGE_LENGTH - 14] + "...[truncated]"
+        super().__init__(safe_message)
         self.code = code
         self.retryable = retryable
 
@@ -34,6 +52,7 @@ def execute_pipeline_job(payload: Mapping[str, object]) -> PipelineWorkerResult:
         raise PipelineExecutionError("DE-EXEC-001", "runtime is required")
     if not isinstance(pipeline, dict):
         raise PipelineExecutionError("DE-EXEC-002", "pipeline must be an object")
+    row_limit = _row_limit(payload.get("row_limit", 100))
     if runtime == "spark-connect":
         endpoint = payload.get("endpoint")
         sql = payload.get("sql")
@@ -44,11 +63,15 @@ def execute_pipeline_job(payload: Mapping[str, object]) -> PipelineWorkerResult:
                 "DE-EXEC-007", "compiled SQL is required for Spark Connect"
             )
         try:
-            spark_result = SparkConnectProvider(endpoint).execute_sql(
-                sql, limit=int(cast(int | str, payload.get("row_limit", 100)))
-            )
-        except (SparkConnectUnavailable, ValueError) as exc:
+            spark_result = SparkConnectProvider(endpoint).execute_sql(sql, limit=row_limit)
+        except SparkConnectUnavailable as exc:
             raise PipelineExecutionError("DE-EXEC-008", str(exc), retryable=True) from exc
+        except ValueError as exc:
+            raise PipelineExecutionError("DE-EXEC-008", str(exc)) from exc
+        except Exception as exc:
+            raise PipelineExecutionError(
+                "DE-EXEC-009", "Spark Connect execution failed", retryable=True
+            ) from exc
         return PipelineWorkerResult(
             "succeeded",
             runtime,
@@ -67,7 +90,7 @@ def execute_pipeline_job(payload: Mapping[str, object]) -> PipelineWorkerResult:
         result = preview_pipeline(
             pipeline,
             fixtures=fixtures,
-            row_limit=int(cast(int | str, payload.get("row_limit", 100))),
+            row_limit=row_limit,
         )
     except (PreviewError, ValueError, TypeError) as exc:
         raise PipelineExecutionError("DE-EXEC-005", str(exc)) from exc
@@ -90,6 +113,14 @@ def _digest(payload: Mapping[str, object]) -> str:
     return hashlib.sha256(
         json.dumps(dict(payload), sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
+
+
+def _row_limit(value: object) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= _MAX_ROW_LIMIT:
+        raise PipelineExecutionError(
+            "DE-EXEC-010", "row_limit must be an integer between 1 and 10000"
+        )
+    return value
 
 
 __all__ = ("PipelineExecutionError", "PipelineWorkerResult", "execute_pipeline_job")

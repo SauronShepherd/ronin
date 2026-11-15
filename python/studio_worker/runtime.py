@@ -484,6 +484,10 @@ class LocalWorkerRuntime:
             cancellation_watch: asyncio.Task[None] | None = None
             try:
                 is_connector_sync = claim.job.target in {"connector.sync", "connector.sync.v1"}
+                is_cancellable_scheduler = is_connector_sync or claim.job.target in {
+                    "data-engineering.pipeline-run.v1",
+                    "data-engineering.queryflux-execution.v1",
+                }
                 cancellation_requested = threading.Event()
                 cancellation_watch_failures: list[Exception] = []
                 cancellation_watch = (
@@ -492,7 +496,7 @@ class LocalWorkerRuntime:
                             claim, cancellation_requested, cancellation_watch_failures
                         )
                     )
-                    if is_connector_sync
+                    if is_cancellable_scheduler
                     else None
                 )
                 parameters = decode_canonical_json(claim.job.parameters_json)
@@ -517,7 +521,7 @@ class LocalWorkerRuntime:
                             connector_secrets=self._connector_secrets,
                             connector_destination=self._connector_destination,
                             cancellation_requested=(
-                                cancellation_requested.is_set if is_connector_sync else None
+                                cancellation_requested.is_set if is_cancellable_scheduler else None
                             ),
                             notification_sink=self.config.notification_sink,
                             notification_artifacts=self.config.notification_artifacts,
@@ -542,8 +546,12 @@ class LocalWorkerRuntime:
                         ) from cancellation_watch_failures[0]
                     if not cancellation_requested.is_set():
                         raise
-                    await self._complete_connector_sync_cancellation(claim)
+                    await self._complete_scheduler_cancellation(claim)
                     return WorkerExecutionOutcome(AttemptState.CANCELLED, (), ())
+                if cancellation_requested.is_set() and result.state == "succeeded":
+                    raise WorkerExecutionError(
+                        "scheduler workload completed after cancellation was requested"
+                    )
                 await self._stop_cancellation_watch(cancellation_watch)
                 if cancellation_watch_failures:
                     _LOGGER.warning(
@@ -675,7 +683,7 @@ class LocalWorkerRuntime:
         with suppress(asyncio.CancelledError):
             await task
 
-    async def _complete_connector_sync_cancellation(self, claim: ClaimedRun) -> None:
+    async def _complete_scheduler_cancellation(self, claim: ClaimedRun) -> None:
         now = self._now()
         await self._service.worker_append_events(
             claim.attempt_id,
@@ -684,7 +692,7 @@ class LocalWorkerRuntime:
                     attempt_id=claim.attempt_id,
                     sequence=0,
                     kind="worker.attempt.cancelled",
-                    message="connector sync cancelled before checkpoint advancement",
+                    message="scheduler workload cancelled before evidence completion",
                     occurred_at=now,
                 ),
             ),

@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlsplit
 
 from .runtimes import RuntimeHandshake
 
@@ -29,8 +30,28 @@ class SparkConnectProvider:
     def __init__(
         self, endpoint: str, *, session_factory: Callable[[str], Any] | None = None
     ) -> None:
-        if not endpoint.strip():
-            raise ValueError("Spark Connect endpoint must be non-empty")
+        if (
+            not isinstance(endpoint, str)
+            or not endpoint
+            or endpoint != endpoint.strip()
+            or len(endpoint) > 512
+            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in endpoint)
+        ):
+            raise ValueError("Spark Connect endpoint must be bounded, trimmed, and single-line")
+        try:
+            parsed = urlsplit(endpoint)
+            _ = parsed.port
+        except ValueError as exc:
+            raise ValueError("Spark Connect endpoint is invalid") from exc
+        if (
+            parsed.scheme != "sc"
+            or not parsed.hostname
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise ValueError("Spark Connect endpoint must be credential-free sc:// URL")
         self.endpoint = endpoint
         self._session_factory = session_factory
 

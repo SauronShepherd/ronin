@@ -481,6 +481,95 @@ def test_scheduler_dispatch_routes_pipeline_run_through_injected_runner() -> Non
     assert result.evidence_payload()["pipeline"]["status"] == "succeeded"
 
 
+@pytest.mark.parametrize("status", ["failed", "cancelled"])
+def test_scheduler_dispatch_preserves_pipeline_terminal_state_and_redacts_evidence(
+    status: str,
+) -> None:
+    class Runner:
+        def run(self, **_kwargs) -> dict[str, object]:
+            return {
+                "status": status,
+                "error_code": "pipeline.invalid" if status == "failed" else None,
+                "message": "password=super-secret-value",
+            }
+
+    result = execute_scheduler_job(
+        _job(
+            "data-engineering.pipeline-run.v1",
+            {
+                "revision_key": "orders-v1",
+                "ir_digest": "c" * 64,
+                "runtime": "local",
+                "parameters": {"limit": 10},
+            },
+        ),
+        pipeline_runner=Runner(),
+        run_id="run-pipeline",
+    )
+
+    assert result.state == status
+    assert result.evidence_payload()["state"] == status
+    assert result.pipeline is not None
+    assert "super-secret-value" not in json.dumps(result.pipeline)
+    if status == "failed":
+        assert result.failure_code == "pipeline.invalid"
+    else:
+        assert result.failure_code is None
+
+
+def test_scheduler_dispatch_forwards_pipeline_cancellation_callback() -> None:
+    seen: dict[str, object] = {}
+
+    class Runner:
+        def run(self, **kwargs) -> dict[str, object]:
+            seen.update(kwargs)
+            return {"status": "cancelled", "reason": "safe point"}
+
+    result = execute_scheduler_job(
+        _job(
+            "data-engineering.pipeline-run.v1",
+            {
+                "revision_key": "orders-v1",
+                "ir_digest": "c" * 64,
+                "runtime": "local",
+                "parameters": {},
+            },
+        ),
+        pipeline_runner=Runner(),
+        run_id="run-pipeline",
+        cancellation_requested=lambda: True,
+    )
+
+    assert result.state == "cancelled"
+    assert seen["run_id"] == "run-pipeline"
+    assert seen["cancellation_requested"]()
+
+
+@pytest.mark.parametrize(
+    "result", [{"status": "completed"}, {"status": "succeeded", "value": object()}]
+)
+def test_scheduler_dispatch_rejects_non_terminal_or_non_portable_pipeline_result(
+    result: dict[str, object],
+) -> None:
+    class Runner:
+        def run(self, **_kwargs) -> dict[str, object]:
+            return result
+
+    with pytest.raises(UnsupportedSchedulerWorkload, match="pipeline runner returned"):
+        execute_scheduler_job(
+            _job(
+                "data-engineering.pipeline-run.v1",
+                {
+                    "revision_key": "orders-v1",
+                    "ir_digest": "c" * 64,
+                    "runtime": "local",
+                    "parameters": {},
+                },
+            ),
+            pipeline_runner=Runner(),
+        )
+
+
 def test_scheduler_dispatch_routes_graph_query() -> None:
     object_ref = SimpleNamespace(object_type="Order", key=(("id", 1),))
     graph_object = SimpleNamespace(ref=object_ref, properties=(("total", 5),))

@@ -42,3 +42,18 @@ def test_spark_connect_provider_fails_with_actionable_missing_sdk(monkeypatch) -
     monkeypatch.setitem(__import__("sys").modules, "pyspark", None)
     with pytest.raises(SparkConnectUnavailable, match="pyspark is not installed"):
         provider._session()
+
+
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "sc://user:secret@localhost:15002",
+        "sc://localhost:15002?token=secret",
+        " sc://localhost:15002",
+    ],
+)
+def test_spark_connect_provider_rejects_credentials_and_ambiguous_endpoints(
+    endpoint: str,
+) -> None:
+    with pytest.raises(ValueError, match="credential-free|bounded"):
+        SparkConnectProvider(endpoint)

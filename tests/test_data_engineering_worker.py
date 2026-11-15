@@ -63,6 +63,40 @@ def test_worker_delegates_spark_connect_execution(monkeypatch) -> None:
     assert result.output["row_count"] == 1
 
 
+@pytest.mark.parametrize("row_limit", [0, -1, 10_001, True, "10"])
+def test_worker_rejects_invalid_row_limits(row_limit: object) -> None:
+    with pytest.raises(PipelineExecutionError, match="row_limit") as error:
+        execute_pipeline_job(
+            {
+                "runtime": "local-preview",
+                "pipeline": {"config": {"name": "main"}, "nodes": [], "edges": []},
+                "fixtures": {},
+                "row_limit": row_limit,
+            }
+        )
+    assert error.value.code == "DE-EXEC-010"
+
+
+def test_worker_spark_failure_is_bounded_and_redacted(monkeypatch) -> None:
+    def execute(_self, _sql, *, limit):
+        assert limit == 100
+        raise RuntimeError("password=super-secret-value")
+
+    monkeypatch.setattr("studio_data_engineering.worker.SparkConnectProvider.execute_sql", execute)
+    with pytest.raises(PipelineExecutionError, match="Spark Connect execution failed") as error:
+        execute_pipeline_job(
+            {
+                "runtime": "spark-connect",
+                "endpoint": "sc://local",
+                "sql": "select 1",
+                "pipeline": {},
+            }
+        )
+    assert error.value.code == "DE-EXEC-009"
+    assert error.value.retryable is True
+    assert "super-secret-value" not in str(error.value)
+
+
 def test_worker_result_can_be_persisted_as_evidence(tmp_path) -> None:
     result = execute_pipeline_job(
         {
