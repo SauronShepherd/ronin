@@ -111,7 +111,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `91a2d5efec61bd1776a302027eda2d6e00aeecd3` (2026-11-15).
+**Observed source head:** `94911d26dcf90051fdfa7049d7ef4dd67a654272` (2026-11-15).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
@@ -136,6 +136,19 @@ metadata only; no independent project-level public filter or authorization
 claim is demonstrated. P6 remains `in_progress`, the ledger remains 1/13
 families and 0/10 gates, and release remains **NO-GO**. See
 `docs/qualification/candidates/candidate-91a2d5ef-d22.json`.
+
+**D23 ontology/graph evidence update (2026-11-15):** exact candidate
+`94911d26dcf90051fdfa7049d7ef4dd67a654272` passes the bounded local
+workspace-scoped ontology/Knowledge Graph/RQL and scheduler graph selection
+(234 Python tests and 7 web catalog tests pass). It fixes graph-id lookup and
+action-replay scope by carrying `workspace_id` through persistence, adapters,
+HTTP dispatch and scheduler graph queries; the real local journey proves
+typed ontology persistence, same-id graph isolation, RQL, neighbors, unknown-
+workspace denial and restart recovery. Graph actions are not mounted in the
+local composition, `CatalogAsset.project_id` remains metadata only, and no
+project-level catalog claim is made. P6 remains `in_progress`, the ledger
+remains 1/13 families and 0/10 gates, and release remains **NO-GO**. See
+`docs/qualification/candidates/candidate-94911d26-d23.json`.
 
 **Current worktree update (2026-10-30; dirty diagnostic candidate):** P3 now includes a project-authorized local DuckDB `POST .../sql/explain` route and a SQL Studio action. The route reuses project-read authorization, validates the shared read-only SELECT contract and registered relation scope, forwards a bounded execution deadline, incrementally caps serialized plan rows, and redacts paths, URLs and inline secret assignments. Providers without the optional capability return an explicit 501. Targeted verification is recorded in `PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`; this does not qualify P3 or the release, and the historical notes below remain historical snapshots.
 

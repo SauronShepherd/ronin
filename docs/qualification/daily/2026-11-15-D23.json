@@ -1,0 +1,41 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D23",
+  "date": "2026-11-15",
+  "planned_date": "2026-12-07",
+  "status": "PASS",
+  "candidate_sha": "94911d26dcf90051fdfa7049d7ef4dd67a654272",
+  "implementation_commit_sha": "94911d26dcf90051fdfa7049d7ef4dd67a654272",
+  "evidence": "docs/qualification/candidates/candidate-94911d26-d23.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D23.md",
+  "execution_scope": "complete-for-D23-bounded-local-workspace-scoped-ontology-knowledge-graph-rql-and-scheduler-graph-cell; graph-actions-project-scope-provider-and-P6-family-close-pending",
+  "result": {
+    "implementation": "Knowledge Graph storage, adapter access, HTTP dispatch and scheduler graph queries now carry workspace scope. The local composed journey persists a typed ontology, seeds the same graph id with different workspace data, proves query/object/neighbor isolation, rejects an unknown workspace, and recovers after restart.",
+    "candidate_focused_suite": "234 passed, 0 failed, 0 skipped in 17.69s in the exact candidate sandbox",
+    "checkout_focused_suite": "234 passed, 0 failed, 0 skipped in 21.65s",
+    "web_regression": "7 passed, 0 failed, 0 skipped in 1.8 minutes on the clean-server rerun",
+    "static_and_surface_checks": "candidate format 951 files, Ruff, mypy 451 files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI and Studio 128/242 pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged after cleanup/regeneration; final verify pass",
+    "scans": "Gitleaks 0 findings over 15,585,072 manifest bytes; pip-audit 0 vulnerabilities across 99 dependencies; Trivy skipped because no local binary or responsive Docker daemon",
+    "p6_boundary": "D23 closes the bounded local workspace-scoped ontology/graph/RQL cell and scheduler scope check but does not qualify P6; project-level catalog scope, graph actions, providers, complete integration and family recovery remain open"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "22/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "23/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The public catalog contract remains workspace-scoped; project_id is persisted metadata and no independent project-level filtering/authorization claim is recorded.",
+    "Graph action execution is not mounted in the local composition; no action-provider qualification is inferred from the read/query journey.",
+    "RONIN_POSTGRES_TEST_DSN is absent and Docker daemon probes are unavailable; no PostgreSQL, worker or external provider was substituted with a mock or counted as PASS.",
+    "The candidate sandbox has no .git metadata; Git diff/status and public ledger checks run separately on main. Web node_modules is outside the candidate archive.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

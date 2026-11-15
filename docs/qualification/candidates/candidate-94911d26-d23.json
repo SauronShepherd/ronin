@@ -1,0 +1,103 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D23",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-12-07",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "94911d26dcf90051fdfa7049d7ef4dd67a654272",
+    "origin_main_sha_when_candidate_was_tested": "94911d26dcf90051fdfa7049d7ef4dd67a654272",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-94911d26-d23",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-94911d26-d23\\candidate-94911d26dcf90051fdfa7049d7ef4dd67a654272.tar",
+      "format": "tar",
+      "sha256": "404e1f9febc11898ab9a965dd6037a67f0251f5332678266a028442e66f5f9dd",
+      "size": 16762880
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-94911d26-d23\\candidate-94911d26dcf90051fdfa7049d7ef4dd67a654272.manifest.json",
+      "sha256": "601cdd9927414a76af8f2d4d8e00f6b14bfcd83ff64ebefa7240598c08863d46",
+      "size": 220011
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-94911d26-d23\\candidate-94911d26dcf90051fdfa7049d7ef4dd67a654272.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-94911d26-d23\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1431,
+    "total_bytes": 15585072,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "94911d26dcf90051fdfa7049d7ef4dd67a654272",
+    "candidate_docs_commit": null,
+    "summary": "D23 scopes Knowledge Graph persistence, adapter access, HTTP dispatch and scheduler graph queries by workspace. It adds a real local composed ontology/graph/RQL journey with two workspaces, typed ontology persistence, neighbors, restart recovery and authorization negatives. P6 remains in_progress.",
+    "production_files_changed": [
+      "python/studio_execution/ontology_http.py",
+      "python/studio_execution/scheduler_adapters.py",
+      "python/studio_server/control_plane.py",
+      "python/studio_storage/ontology_graph.py",
+      "tools/seed_live_studio.py"
+    ],
+    "test_files_changed": [
+      "tests/test_local_composed.py",
+      "tests/test_ontology_graph_store.py",
+      "tests/test_ontology_http.py",
+      "tests/test_scheduler_adapters.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 94911d26dcf90051fdfa7049d7ef4dd67a654272 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-94911d26-d23",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-94911d26-d23",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed generated caches and the same SHA was regenerated; final verify confirmed identical archive and manifest digests",
+    "candidate_focused": "PYTHONDONTWRITEBYTECODE=1; PYTHONPATH=python; exact candidate sandbox pytest -q -p no:cacheprovider over ontology, graph, RQL, Bundle, scheduler and local-composed tests",
+    "checkout_focused": "same D23 selection on the clean checkout at the candidate source SHA",
+    "web_regression": "web-tests: npx playwright test tests/catalog-pagination.spec.mjs --workers=1 --timeout=30000; clean-server rerun",
+    "candidate_static": "exact candidate sandbox ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI and Studio surface",
+    "scans": "Gitleaks directory scan and pip-audit -r requirements-test.lock over the final clean sandbox; Trivy not run because no local binary and Docker daemon unavailable"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "234 passed, 0 failed, 0 skipped in 17.69s in the exact candidate sandbox",
+    "checkout_focused_suite": "234 passed, 0 failed, 0 skipped in 21.65s",
+    "web_regression": "7 passed, 0 failed, 0 skipped in 1.8 minutes in a clean-server rerun against checkout source at the candidate SHA",
+    "full_checkout_regression": "not rerun for D23; prior full-regression evidence is not attributed to this candidate",
+    "static_and_surface_checks": "candidate format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, canonical OpenAPI 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708 and Studio 128/242 pass",
+    "candidate_reproducibility_after_cleanup": "pass; final cleanup/regeneration produced the same archive and manifest digests, final verify passed, and scans were rerun on the manifest-bound clean sandbox",
+    "checkout_integrity_checks": "git diff --check passed on main before the code commit; candidate sandbox has no .git metadata; daily/public ledger checks run separately after the evidence commit",
+    "result": "D23 pass for bounded local workspace-scoped ontology/Knowledge Graph/RQL evidence and scheduler scope enforcement; P6 remains in_progress and is not qualified"
+  },
+  "security_and_recovery": {
+    "graph_scope": "The real local composed test stores the same graph id with different objects in two workspaces and proves HTTP query/object/neighbor responses stay in the requested workspace. The graph store also scopes action replay identities by workspace.",
+    "ontology_scope": "The same journey persists a typed ontology definition against a governed catalog revision, reads its version collection and exact version through the HTTP surface, and verifies the materialized graph survives server restart.",
+    "project_scope": "CatalogAsset.project_id remains metadata only; the public catalog still has no independent project-level filter or authorization claim. This D22 limitation remains open and is not changed by D23.",
+    "provider_scope": "RONIN_POSTGRES_TEST_DSN is absent and Docker does not provide a responsive daemon. No PostgreSQL operator, Docker worker or external provider was certified, and no mock was substituted.",
+    "scans": {
+      "gitleaks": "8.30.1; final directory scan of the no-git exact candidate sandbox; 15,585,072 manifest bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 known vulnerabilities",
+      "trivy": "SKIP; no local Trivy binary and Docker daemon unavailable; no substitute scan claimed"
+    }
+  },
+  "open_cells": [
+    "P6 remains in_progress, not qualified: project-level catalog isolation is not a public route claim, complete catalog/graph/ontology/RQL integration and asset-family coverage remain open, applicable provider/consumer certification remains open, and complete recovery evidence remains open.",
+    "Graph action execution is still not mounted in the local composed control plane; D23 proves workspace authorization for read/query/object/neighbor routes and scopes replay storage, but does not claim an action-provider qualification.",
+    "PostgreSQL catalog/ontology/graph operator evidence is skipped because no DSN is configured; no real provider or Docker worker evidence is inferred from SQLite.",
+    "P4 and P5 remain in_progress and are not affected by D23; P2 and P3 remain in_progress; P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The exact candidate sandbox has no .git metadata by design, so Git-dependent tests and repository status checks are not claimed from it; main checkout checks run separately.",
+    "Web node_modules and the web regression runtime are outside the candidate archive; the 7/7 result is a clean-server checkout-source regression bound to the candidate SHA, not a claim that node_modules is archived.",
+    "Static checks generated .mypy_cache/.ruff_cache before cleanup/regeneration; cleanup removed them before final verify and the scans were repeated on the clean manifest-bound sandbox.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
