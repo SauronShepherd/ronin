@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D13",
+  "date": "2026-11-15",
+  "planned_date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "9a668721cd4c65320044554a655a5325a59fc8ae",
+  "implementation_commit_sha": "9a668721cd4c65320044554a655a5325a59fc8ae",
+  "evidence": "docs/qualification/candidates/candidate-9a668721-d13.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D13.md",
+  "execution_scope": "complete-for-D13-queryflux-route-scope-validation-and-unavailable-service-contract; P3-family-open",
+  "result": {
+    "candidate_focused_suite": "68 passed, 0 failed, 0 skipped from exact candidate sandbox",
+    "full_checkout_regression": "4641 passed, 81 skipped, 1 stale-documentation failure before refresh; targeted public/ledger suite passed 9/9 after refresh",
+    "static_and_surface_checks": "format 1114 files, Ruff, mypy 355 files, architecture, negative-gates, route-consistency 200 operations, dependency-surfaces, OpenAPI, Studio, capability, daily ledger, public status and git diff pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "scans": "Gitleaks 0 findings; pip-audit 0 vulnerabilities across 99 dependencies; Trivy 0 vulnerabilities and 0 secrets",
+    "p3_boundary": "D13 route authorization, bounded validation and fail-closed unavailable-service cells pass; P3 remains in_progress until provider-backed execution, durable cancellation and recovery journey are evidenced"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "12/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "13/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The 81 full-suite skips are explicitly recorded and are not counted as PASS.",
+    "D13 did not qualify P3, close a release gate or change the P13 blocker.",
+    "No external provider, production worker coordinator or hosted workflow claim was made."
+  ]
+}

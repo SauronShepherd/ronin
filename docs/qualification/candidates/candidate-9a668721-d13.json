@@ -1,0 +1,94 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D13",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-11-27",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "9a668721cd4c65320044554a655a5325a59fc8ae",
+    "origin_main_sha_when_candidate_was_tested": "9a668721cd4c65320044554a655a5325a59fc8ae",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9a668721-d13",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9a668721-d13\\candidate-9a668721cd4c65320044554a655a5325a59fc8ae.tar",
+      "format": "tar",
+      "sha256": "26420db39c24df73c2cdaa977cbbab644f0b6b4fe3dc66f44db8b2443ab73743",
+      "size": 16506880
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9a668721-d13\\candidate-9a668721cd4c65320044554a655a5325a59fc8ae.manifest.json",
+      "sha256": "323d05a1051ca3f027503c073a5de87143daf06fe463bcecba7390c65dc2f5d4",
+      "size": 214609
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9a668721-d13\\candidate-9a668721cd4c65320044554a655a5325a59fc8ae.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9a668721-d13\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1398,
+    "total_bytes": 15356804,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "9a668721cd4c65320044554a655a5325a59fc8ae",
+    "candidate_docs_commit": "9a668721cd4c65320044554a655a5325a59fc8ae",
+    "summary": "Bound all QueryFlux asynchronous execution, status, result and cancellation routes to an existing project in the authorized workspace; rejected coercive execution limits and unknown fields before durable dispatch; translated unavailable plugin services to HTTP 503.",
+    "production_files_changed": [
+      "python/studio_data_engineering/plugin.py",
+      "python/studio_server/control_plane.py"
+    ],
+    "test_files_changed": [
+      "tests/integration/test_data_engineering_http.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 9a668721cd4c65320044554a655a5325a59fc8ae --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9a668721-d13",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9a668721-d13",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed the sandbox after testing; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "candidate_focused": "PYTHONDONTWRITEBYTECODE=1; exact candidate sandbox pytest selection over data-engineering HTTP, plugin, query execution, QueryFlux lifecycle/planning, route consistency and architecture contracts",
+    "full_regression": "$env:PYTHONDONTWRITEBYTECODE='1'; python -m pytest -q -p no:cacheprovider"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "68 passed, 0 failed, 0 skipped from the exact candidate sandbox",
+    "http_execution_authorization": "The real local control-plane integration passed invalid boolean bounds with 400, cross-workspace async creation/status with 404 before dispatch, valid project-scoped creation with 200/queued, and cancellation without a coordinator with 503; the submitter was called only for the valid project",
+    "queryflux_lifecycle_and_recovery_contracts": "The focused suite passed durable SQLite lifecycle transitions, cancellation fencing, idempotent create/dispatch, evidence/result persistence, bounded result paging and worker terminal-state behavior; no external provider certification is claimed",
+    "full_checkout_regression": "4641 passed, 81 skipped, 1 failed in 630.29s before documentation refresh; the sole failure was test_matrix_observed_source_baseline_matches_status_ledger because the capability matrix retained ed1bf7be while the status ledger observed af3d8e30. After refreshing public status to 9a668721 and the matrix baseline, the three public-status/ledger tests passed 9/9. The full suite was not rerun solely for this documentation-only correction.",
+    "static_and_surface_checks": "ruff format --check (1114 files), Ruff, mypy (355 source files), architecture, negative-gates, route-consistency (200 operations), dependency-surfaces, canonical OpenAPI (315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708), Studio (128/242), public imports, capability status, daily ledger, public status and git diff checks pass",
+    "result": "D13 pass for the bounded QueryFlux route authorization, validation and unavailable-service error cells; P3 remains in_progress because complete provider execution, durable cancellation, Studio/SDK end-to-end recovery and the full family journey are not closed"
+  },
+  "security_and_recovery": {
+    "authorization": "Async QueryFlux create, status, result and cancellation routes now carry project resource scope and verify project membership in the authorized workspace before plugin dispatch",
+    "validation": "Boolean, float/string-coerced and out-of-range limits are rejected before durable job creation; unknown fields and unsupported translation policies are rejected",
+    "cancellation": "The control plane returns 503 when no durable worker coordinator can delegate and confirm provider cancellation; this is fail-closed behavior, not cancellation certification",
+    "scan_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d13-scans-9a668721",
+    "scans": {
+      "gitleaks": "8.30.1; clean regenerated candidate sandbox; 15,356,804 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1; filesystem scanners vuln,secret; 0 vulnerabilities and 0 secrets; image digest sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+    }
+  },
+  "open_cells": [
+    "P3 remains in_progress, not qualified: durable provider execution/cancellation, complete API/SDK/Studio journey, restart recovery and provider/engine evidence remain open.",
+    "The 81 full-suite skips are real unavailable-provider, Docker opt-in, POSIX/symlink, Windows privilege and external CLI cases; they are not PASS.",
+    "The full candidate sandbox was not used for a broad regression claim in D13; only the focused candidate-bound selection is counted.",
+    "P2 remains in_progress; D13 made no new connector/provider claim.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The candidate sandbox has no Git metadata; repository-level status, matrix and daily-ledger validation ran on main.",
+    "The local HTTP integration uses local control-plane/plugin components and a recording job submitter; it does not certify Trino, PostgreSQL, cloud providers or a production worker coordinator.",
+    "The full checkout regression was not rerun after the documentation-only status/matrix refresh; the targeted public/ledger suite passed 9/9.",
+    "Trivy was executed through the pinned local Docker image because no host trivy executable was available; the image digest is recorded above.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
