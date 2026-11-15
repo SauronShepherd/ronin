@@ -1,8 +1,11 @@
+import sqlite3
+
 import pytest
 from studio_observability import (
     NotificationDispatcher,
     NotificationIntent,
     NotificationIntentConflict,
+    SqliteNotificationIntentStore,
     SqliteTelemetryStore,
     scheduler_notification,
 )
@@ -121,3 +124,74 @@ def test_notification_intent_rejects_same_id_with_different_payload(tmp_path):
     )
     with pytest.raises(NotificationIntentConflict, match="different content"):
         store.put_notification_intent(conflicting)
+
+
+def test_scheduler_notification_store_rejects_same_id_with_different_payload(tmp_path):
+    store = SqliteNotificationIntentStore(tmp_path / "scheduler-notifications.sqlite")
+    first = scheduler_notification(
+        workflow_run_id="run", workflow_id="wf", state="failed", now="2026-09-21T00:00:00.000000Z"
+    )
+    assert first is not None
+    assert store.enqueue(first)
+    conflicting = NotificationIntent(
+        first.id,
+        first.kind,
+        first.title,
+        "different body",
+        first.created_at,
+        first.attributes,
+    )
+    with pytest.raises(NotificationIntentConflict, match="different content"):
+        store.enqueue(conflicting)
+
+
+def test_dispatcher_redacts_and_bounds_provider_errors(tmp_path):
+    store = SqliteNotificationIntentStore(tmp_path / "scheduler-notifications.sqlite")
+    intent = scheduler_notification(
+        workflow_run_id="run-secret",
+        workflow_id="wf",
+        state="failed",
+        now="2026-09-21T00:00:00.000000Z",
+    )
+    assert intent is not None
+    assert store.enqueue(intent)
+
+    class SecretFailingSink:
+        def send(self, _intent):
+            raise RuntimeError("password=super-secret\n" + ("x" * 2000))
+
+    result = NotificationDispatcher(
+        store,
+        SecretFailingSink(),
+        clock=lambda: "2026-09-21T00:01:00.000000Z",
+    ).dispatch_once()
+    assert result.failed == 1
+
+    with sqlite3.connect(tmp_path / "scheduler-notifications.sqlite") as connection:
+        error = connection.execute(
+            "SELECT last_error FROM notification_intents WHERE id=?", (intent.id,)
+        ).fetchone()[0]
+    assert "super-secret" not in error
+    assert "[REDACTED]" in error
+    assert "\n" not in error
+    assert len(error) == 1024
+
+
+def test_notification_dispatcher_rejects_non_integer_or_unbounded_limits(tmp_path):
+    store = SqliteNotificationIntentStore(tmp_path / "scheduler-notifications.sqlite")
+    sink = Sink()
+    for limit in (True, 1.5, "3", 0, 1001):
+        with pytest.raises(ValueError, match="dispatch limit"):
+            NotificationDispatcher(
+                store, sink, clock=lambda: "2026-09-21T00:00:00.000000Z"
+            ).dispatch_once(limit=limit)
+        with pytest.raises(ValueError, match="dispatch limit"):
+            store.list_pending_notification_intents(limit=limit)
+    for delay in (True, 1.5, "30", 0, 86_401):
+        with pytest.raises(ValueError, match="retry_delay_seconds"):
+            NotificationDispatcher(
+                store,
+                sink,
+                clock=lambda: "2026-09-21T00:00:00.000000Z",
+                retry_delay_seconds=delay,
+            )

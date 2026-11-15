@@ -21,13 +21,14 @@ from studio_core import (
 )
 from studio_execution import DurableExecutionService
 from studio_execution.scheduler_daemon import (
-    NotificationDispatcher as SchedulerNotificationDispatcher,
-)
-from studio_execution.scheduler_daemon import (
+    MAX_SCHEDULER_LEASE_SECONDS,
     SchedulerDaemon,
     SchedulerDaemonService,
     SchedulerDaemonWork,
     install_scheduler_stop_signals,
+)
+from studio_execution.scheduler_daemon import (
+    NotificationDispatcher as SchedulerNotificationDispatcher,
 )
 from studio_observability import NotificationDispatcher, NotificationIntent, scheduler_notification
 from studio_observability.dispatcher import SqliteNotificationIntentStore
@@ -44,6 +45,48 @@ _T0 = Instant("2026-09-13T08:50:00.000000Z")
 _T10 = Instant("2026-09-13T08:50:10.000000Z")
 _T31 = Instant("2026-09-13T08:50:31.000000Z")
 _WS = WorkspaceId("workspace-1")
+
+
+def test_scheduler_daemon_rejects_unbounded_lifecycle_limits(tmp_path: Path) -> None:
+    leadership, schedules, events, backfills = _stores(tmp_path)
+
+    async def scenario() -> None:
+        service = DurableExecutionService(InMemoryJobStore())
+        try:
+            for value in (True, 1.5, "30", 0, MAX_SCHEDULER_LEASE_SECONDS + 1):
+                with pytest.raises(ValueError, match="leader_lease_seconds"):
+                    _daemon(
+                        leadership_store=leadership,
+                        schedule_store=schedules,
+                        event_store=events,
+                        backfill_store=backfills,
+                        service=service,
+                        owner="scheduler-limits",
+                        clock=MutableClock(_T0),
+                        token="scheduler-limits-token",  # noqa: S106
+                        leader_lease_seconds=value,
+                    )
+            daemon = _daemon(
+                leadership_store=leadership,
+                schedule_store=schedules,
+                event_store=events,
+                backfill_store=backfills,
+                service=service,
+                owner="scheduler-limits",
+                clock=MutableClock(_T0),
+                token="scheduler-limits-token",  # noqa: S106
+            )
+            for interval in (True, float("nan"), float("inf"), 0, -1):
+                with pytest.raises(ValueError, match="interval_seconds"):
+                    await daemon.run_forever(
+                        work_provider=lambda: SchedulerDaemonWork(),
+                        stop_requested=lambda: True,
+                        interval_seconds=interval,
+                    )
+        finally:
+            await service.aclose()
+
+    asyncio.run(scenario())
 
 
 def test_scheduler_stop_signals_request_stop_and_restore() -> None:

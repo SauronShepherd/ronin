@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import smtplib
 from collections.abc import Callable, Sequence
 from email.message import EmailMessage
@@ -34,7 +35,7 @@ class SmtpNotificationSink:
     ) -> None:
         if not host or host != host.strip() or "\n" in host or "\r" in host:
             raise ValueError("SMTP host must be non-empty and single-line")
-        if not 1 <= port <= 65535:
+        if not isinstance(port, int) or isinstance(port, bool) or not 1 <= port <= 65535:
             raise ValueError("SMTP port must be between 1 and 65535")
         if not sender or "\n" in sender or "\r" in sender:
             raise ValueError("SMTP sender must be a valid single-line address")
@@ -43,7 +44,12 @@ class SmtpNotificationSink:
             not value or "\n" in value or "\r" in value for value in normalized
         ):
             raise ValueError("SMTP recipients must be non-empty single-line addresses")
-        if timeout_seconds <= 0 or timeout_seconds > 300:
+        if (
+            not isinstance(timeout_seconds, (int, float))
+            or isinstance(timeout_seconds, bool)
+            or not math.isfinite(timeout_seconds)
+            or not 0 < timeout_seconds <= 300
+        ):
             raise ValueError("SMTP timeout_seconds must be in (0, 300]")
         self._host = host
         self._port = port

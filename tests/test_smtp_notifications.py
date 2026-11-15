@@ -56,3 +56,22 @@ def test_smtp_sink_rejects_invalid_bounds_and_hides_transport_errors() -> None:
     with pytest.raises(SmtpNotificationError, match="delivery failed") as error:
         sink.send(intent)
     assert "secret" not in str(error.value)
+
+
+def test_smtp_sink_rejects_non_finite_or_non_integer_bounds() -> None:
+    for port in (True, 0, 65536):
+        with pytest.raises(ValueError, match="port"):
+            SmtpNotificationSink(
+                "smtp.example.test",
+                port=port,
+                sender="a@b",
+                recipients=("c@d",),
+            )
+    for timeout in (True, float("nan"), float("inf"), 301):
+        with pytest.raises(ValueError, match="timeout_seconds"):
+            SmtpNotificationSink(
+                "smtp.example.test",
+                sender="a@b",
+                recipients=("c@d",),
+                timeout_seconds=timeout,
+            )

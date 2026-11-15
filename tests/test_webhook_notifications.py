@@ -71,6 +71,15 @@ def test_webhook_sink_rejects_insecure_urls_and_non_success() -> None:
         sink.send(_intent())
 
 
+def test_webhook_sink_rejects_non_finite_or_non_integer_bounds() -> None:
+    for timeout in (True, float("nan"), float("inf"), 301):
+        with pytest.raises(ValueError, match="timeout_seconds"):
+            WebhookNotificationSink("https://alerts.example.test/hook", timeout_seconds=timeout)
+    for limit in (True, 1.5, 0, 10 * 1024 * 1024 + 1):
+        with pytest.raises(ValueError, match="max_response_bytes"):
+            WebhookNotificationSink("https://alerts.example.test/hook", max_response_bytes=limit)
+
+
 def test_webhook_sink_rejects_oversized_response() -> None:
     response = _Response(body=b"12345")
     sink = WebhookNotificationSink(

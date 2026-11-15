@@ -5,6 +5,7 @@ from __future__ import annotations
 import http.client
 import ipaddress
 import json
+import math
 import socket
 import ssl
 from collections.abc import Callable
@@ -107,9 +108,18 @@ class WebhookNotificationSink:
                 raise ValueError("port is outside the valid range")
         except ValueError as exc:
             raise ValueError("webhook URL must use a valid port") from exc
-        if timeout_seconds <= 0 or timeout_seconds > 300:
+        if (
+            not isinstance(timeout_seconds, (int, float))
+            or isinstance(timeout_seconds, bool)
+            or not math.isfinite(timeout_seconds)
+            or not 0 < timeout_seconds <= 300
+        ):
             raise ValueError("webhook timeout_seconds must be in (0, 300]")
-        if max_response_bytes < 1 or max_response_bytes > 10 * 1024 * 1024:
+        if (
+            not isinstance(max_response_bytes, int)
+            or isinstance(max_response_bytes, bool)
+            or not 1 <= max_response_bytes <= 10 * 1024 * 1024
+        ):
             raise ValueError("webhook max_response_bytes must be between 1 and 10485760")
         self._url = url
         self._timeout = timeout_seconds

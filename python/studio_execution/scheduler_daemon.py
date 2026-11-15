@@ -44,6 +44,26 @@ WorkProvider = Callable[[], "SchedulerDaemonWork"]
 StopRequested = Callable[[], bool]
 AsyncSleep = Callable[[float], Awaitable[None]]
 _LOGGER = logging.getLogger(__name__)
+MAX_SCHEDULER_LEASE_SECONDS = 86_400
+
+
+def _valid_positive_duration(value: object) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and value > 0
+        and (not isinstance(value, float) or math.isfinite(value))
+    )
+
+
+def _validate_lease_seconds(value: object, name: str) -> int:
+    if (
+        not isinstance(value, int)
+        or isinstance(value, bool)
+        or not 1 <= value <= MAX_SCHEDULER_LEASE_SECONDS
+    ):
+        raise ValueError(f"{name} must be an integer between 1 and {MAX_SCHEDULER_LEASE_SECONDS}")
+    return value
 
 
 def install_scheduler_stop_signals(stop: Callable[[], None]) -> Callable[[], None]:
@@ -123,10 +143,8 @@ class SchedulerDaemon:
     ) -> None:
         if not owner or owner != owner.strip():
             raise ValueError("scheduler daemon owner must be non-empty and trimmed")
-        if leader_lease_seconds < 1:
-            raise ValueError("leader_lease_seconds must be positive")
-        if task_lease_seconds < 1:
-            raise ValueError("task_lease_seconds must be positive")
+        leader_lease_seconds = _validate_lease_seconds(leader_lease_seconds, "leader_lease_seconds")
+        task_lease_seconds = _validate_lease_seconds(task_lease_seconds, "task_lease_seconds")
         self._leadership_store = leadership_store
         self._schedule_store = schedule_store
         self._event_store = event_store
@@ -311,7 +329,7 @@ class SchedulerDaemon:
     ) -> SchedulerDaemonLoopResult:
         """Run guarded cycles until stop is requested, then release leadership."""
 
-        if interval_seconds <= 0:
+        if not _valid_positive_duration(interval_seconds):
             raise ValueError("scheduler daemon interval_seconds must be positive")
         cycles = 0
         leader_cycles = 0
@@ -396,11 +414,11 @@ class SchedulerDaemonService:
         join_timeout_seconds: float = 30.0,
         thread_factory: Callable[..., Thread] = Thread,
     ) -> None:
-        if not math.isfinite(interval_seconds) or interval_seconds <= 0:
+        if not _valid_positive_duration(interval_seconds):
             raise ValueError("scheduler service interval_seconds must be positive")
-        if not math.isfinite(retry_seconds) or retry_seconds <= 0:
+        if not _valid_positive_duration(retry_seconds):
             raise ValueError("scheduler service retry_seconds must be positive")
-        if not math.isfinite(join_timeout_seconds) or join_timeout_seconds <= 0:
+        if not _valid_positive_duration(join_timeout_seconds):
             raise ValueError("scheduler service join_timeout_seconds must be positive")
         self._daemon = daemon
         self._work_provider = work_provider
@@ -480,6 +498,7 @@ __all__ = (
     "AsyncSleep",
     "BackfillTarget",
     "Clock",
+    "MAX_SCHEDULER_LEASE_SECONDS",
     "LeaderTokenFactory",
     "SchedulerDaemon",
     "SchedulerDaemonCycle",

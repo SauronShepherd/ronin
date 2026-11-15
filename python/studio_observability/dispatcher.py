@@ -11,7 +11,29 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Protocol
 
+from studio_core import redact_sensitive_text
+
 from .notifications import NotificationIntent, NotificationSink
+from .store import NotificationIntentConflict
+
+_MAX_NOTIFICATION_ERROR_LENGTH = 1024
+
+
+def _safe_delivery_error(error: Exception) -> str:
+    """Return bounded provider error text safe for durable operational state."""
+
+    detail = redact_sensitive_text(str(error)).replace("\r", " ").replace("\n", " ").strip()
+    if not detail:
+        return "notification delivery failed"
+    if len(detail) > _MAX_NOTIFICATION_ERROR_LENGTH:
+        return detail[: _MAX_NOTIFICATION_ERROR_LENGTH - 3] + "..."
+    return detail
+
+
+def _validate_dispatch_limit(value: object) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 1000:
+        raise ValueError("notification dispatch limit must be an integer between 1 and 1000")
+    return value
 
 
 @dataclass(frozen=True)
@@ -43,8 +65,12 @@ class NotificationDispatcher:
         clock: Callable[[], str],
         retry_delay_seconds: int = 30,
     ) -> None:
-        if retry_delay_seconds < 1 or retry_delay_seconds > 86_400:
-            raise ValueError("retry_delay_seconds must be between 1 and 86400")
+        if (
+            not isinstance(retry_delay_seconds, int)
+            or isinstance(retry_delay_seconds, bool)
+            or not 1 <= retry_delay_seconds <= 86_400
+        ):
+            raise ValueError("retry_delay_seconds must be an integer between 1 and 86400")
         self._store = store
         self._sink = sink
         self._clock = clock
@@ -56,8 +82,7 @@ class NotificationDispatcher:
         return retry_at.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
     def dispatch_once(self, *, limit: int = 100) -> NotificationDispatchResult:
-        if limit < 1 or limit > 1000:
-            raise ValueError("notification dispatch limit must be between 1 and 1000")
+        limit = _validate_dispatch_limit(limit)
         pending = self._store.list_pending_notification_intents(limit=limit, now=self._clock())
         delivered = 0
         failed = 0
@@ -74,7 +99,7 @@ class NotificationDispatcher:
                 if callable(record_failure):
                     record_failure(
                         intent.id,
-                        error=str(exc) or "notification delivery failed",
+                        error=_safe_delivery_error(exc),
                         retry_at=self._retry_at(),
                     )
                 continue
@@ -110,19 +135,37 @@ class SqliteNotificationIntentStore:
             sort_keys=True,
             separators=(",", ":"),
         )
-        with closing(sqlite3.connect(self._path)) as connection, connection:
-            cursor = connection.execute(
-                "INSERT OR IGNORE INTO notification_intents(id,payload,state,created_at) "
-                "VALUES (?,?,?,?)",
-                (intent.id, payload, "pending", str(intent.created_at)),
-            )
-        return cursor.rowcount == 1
+        with closing(sqlite3.connect(self._path)) as connection:
+            connection.row_factory = sqlite3.Row
+            connection.execute("BEGIN IMMEDIATE")
+            try:
+                existing = connection.execute(
+                    "SELECT payload FROM notification_intents WHERE id=?",
+                    (intent.id,),
+                ).fetchone()
+                if existing is not None:
+                    if existing["payload"] != payload:
+                        raise NotificationIntentConflict(
+                            f"notification intent ID already has different content: {intent.id}"
+                        )
+                    connection.execute("COMMIT")
+                    return False
+                cursor = connection.execute(
+                    "INSERT INTO notification_intents(id,payload,state,created_at) "
+                    "VALUES (?,?,?,?)",
+                    (intent.id, payload, "pending", str(intent.created_at)),
+                )
+                connection.execute("COMMIT")
+                return cursor.rowcount == 1
+            except Exception:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+                raise
 
     def list_pending_notification_intents(
         self, *, limit: int = 100, now: str | None = None
     ) -> tuple[NotificationIntent, ...]:
-        if limit < 1 or limit > 1000:
-            raise ValueError("notification dispatch limit must be between 1 and 1000")
+        limit = _validate_dispatch_limit(limit)
         with closing(sqlite3.connect(self._path)) as connection, connection:
             connection.row_factory = sqlite3.Row
             rows = connection.execute(
