@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D08",
+  "date": "2026-11-15",
+  "planned_date": "2026-11-22",
+  "status": "PASS",
+  "candidate_sha": "25a579b40586f55ef93e56ef23b1bc2694bb6ef4",
+  "implementation_commit_sha": "25a579b40586f55ef93e56ef23b1bc2694bb6ef4",
+  "evidence": "docs/qualification/candidates/candidate-25a579b4-d08.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D08.md",
+  "execution_scope": "complete-for-D08-http-connector-contract; P2-family-open",
+  "result": {
+    "real_control_plane_journey": "1 passed; public connection creation and authenticated preview against a real paginated HTTP service",
+    "http_connector_real_service": "9 passed, 0 failed, 0 skipped",
+    "candidate_focused_suite": "90 passed, 0 failed, 1 skipped from the exact candidate sandbox",
+    "full_python_postgres_suite": "4675 passed, 0 failed, 30 skipped, 12 warnings",
+    "static_and_surface_checks": "format, ruff, mypy, architecture, negative-gates, route-consistency, dependency-surfaces, OpenAPI, public-status, daily-ledger and git diff checks pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "p2_boundary": "HTTP/REST D08 cell passes; P2 remains in_progress until JDBC/PostgreSQL, applicable providers and the complete family journey are evidenced"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "7/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "8/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The one focused skip is Windows symlink creation without the required privilege; full-suite skips remain separately listed in the candidate receipt and are not PASS.",
+    "The synthetic HTTP server proves the local HTTP contract, not production-provider qualification.",
+    "This receipt does not qualify P2, close a release gate or change the P13 blocker."
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D08",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-11-22",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "25a579b40586f55ef93e56ef23b1bc2694bb6ef4",
+    "origin_main_sha_when_candidate_was_tested": "25a579b40586f55ef93e56ef23b1bc2694bb6ef4",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-25a579b4-d08-3a2c4d8f6f6f4a3fae1a78e96d8e0a31",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-25a579b4-d08-3a2c4d8f6f6f4a3fae1a78e96d8e0a31\\candidate-25a579b40586f55ef93e56ef23b1bc2694bb6ef4.tar",
+      "format": "tar",
+      "sha256": "dfc0fb5d38067b08bbbce89627deb2fc7d775edbb5b00530dd275529fa63c772",
+      "size": 16404480
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-25a579b4-d08-3a2c4d8f6f6f4a3fae1a78e96d8e0a31\\candidate-25a579b40586f55ef93e56ef23b1bc2694bb6ef4.manifest.json",
+      "sha256": "7c60bcad999ea735fca9311440ada86e180ef4a47bd1d81f6c849c47bc37f662",
+      "size": 211961
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-25a579b4-d08-3a2c4d8f6f6f4a3fae1a78e96d8e0a31\\candidate-25a579b40586f55ef93e56ef23b1bc2694bb6ef4.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-25a579b4-d08-3a2c4d8f6f6f4a3fae1a78e96d8e0a31\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1382,
+    "total_bytes": 15264685,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "25a579b40586f55ef93e56ef23b1bc2694bb6ef4",
+    "candidate_docs_commit": "25a579b40586f55ef93e56ef23b1bc2694bb6ef4",
+    "summary": "Added a real local control-plane journey that creates an http.json connection through the public API and previews paginated records from a real HTTP service; no production connector code was changed because the existing D08 contract was already bounded and fail-closed.",
+    "production_files_changed": [],
+    "test_files_changed": [
+      "tests/integration/test_http_json_control_plane_real.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 25a579b40586f55ef93e56ef23b1bc2694bb6ef4 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-25a579b4-d08-3a2c4d8f6f6f4a3fae1a78e96d8e0a31",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-25a579b4-d08-3a2c4d8f6f6f4a3fae1a78e96d8e0a31",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed the sandbox after testing; the same SHA was regenerated and verify confirmed identical archive and manifest digests"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "90 passed, 0 failed, 1 skipped from the exact candidate sandbox",
+    "http_connector_real_service": "9 passed, 0 failed, 0 skipped; real loopback HTTP service covered paginated snapshot replay, retry, redirects, byte limits, cross-origin rejection and time budgets",
+    "control_plane_real_journey": "1 passed, 0 failed, 0 skipped; public connection creation plus authenticated preview against a real paginated HTTP service",
+    "full_python_postgres_suite": "4675 passed, 0 failed, 30 skipped, 12 warnings; real PostgreSQL 16.4; evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d08-pg-25a579b4",
+    "static_and_surface_checks": "format, ruff, mypy, architecture, negative-gates, route-consistency, dependency-surfaces, OpenAPI, public-status, daily-ledger and git diff checks pass",
+    "result": "D08 pass for the HTTP connector cell; P2 remains in_progress because JDBC/PostgreSQL, external provider profiles and the complete family journey remain open"
+  },
+  "security_and_recovery": {
+    "allowlist": "HTTPS is required by default; local HTTP/private-network access is explicit; redirects and cross-origin pagination fail closed",
+    "bounds": "Timeout, response/operation bytes, row count, page count, retry count, backoff and rate-limit budgets are validated and exercised",
+    "pagination": "Page-parameter pagination and opaque next URLs are origin-bound, bounded and replay-digested",
+    "secrets": "The real control-plane journey used no secret material; the connector contract keeps bearer material in secret_refs and rejects bearer credentials over HTTP",
+    "scan_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d08-scans-25a579b4",
+    "scans": {
+      "gitleaks": "8.30.1; clean candidate sandbox; 15,264,685 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1; filesystem scanners vuln,secret; 0 vulnerabilities and 0 secrets; image digest sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+    }
+  },
+  "open_cells": [
+    "P2 remains in_progress, not qualified: D09 JDBC/PostgreSQL, D10 external provider profiles and D11 complete retry/idempotency/Studio/SDK/CLI journey remain open.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates.",
+    "Thirty full-suite skips are not PASS: they cover opt-in external providers/services, Docker cases outside the Python runner, Windows symlink privileges and POSIX-only mode/process semantics."
+  ],
+  "limitations": [
+    "The candidate sandbox has no Git metadata; repository-level public-status and daily-ledger validation ran on main.",
+    "The real HTTP service is a local synthetic data server; no production HTTP provider or external credential claim is made.",
+    "The full suite emitted 12 ResourceWarning warnings; no test failed and the warnings are recorded rather than treated as a clean warning-free claim.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
