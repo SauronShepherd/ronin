@@ -7,7 +7,7 @@ from typing import Any
 from studio_core import WorkspaceId
 from studio_core.audit import AuditEvent, AuditEventId
 
-from .audit import AuditConflict
+from .audit import AuditConflict, AuditIntegrityError, _verified_event
 from .postgres_core import _psycopg
 from .workspaces import WorkspaceNotFound
 
@@ -85,13 +85,16 @@ class PostgresAuditStore:
                 if cursor.fetchone() is None:
                     raise WorkspaceNotFound(workspace_id.value)
                 cursor.execute(
-                    "SELECT event_json FROM ronin_audit_events "
+                    "SELECT audit_event_id,occurred_at,actor_kind,actor_ref,action,"
+                    "resource_kind,resource_ref,outcome,request_id,digest,event_json "
+                    "FROM ronin_audit_events "
                     "WHERE workspace_id=%s AND audit_event_id=%s FOR UPDATE",
                     (workspace_id.value, event.id.value),
                 )
                 existing = cursor.fetchone()
                 if existing is not None:
-                    if existing["event_json"] == payload:
+                    stored = _verified_event(existing)
+                    if stored == event:
                         connection.commit()
                         return event
                     raise AuditConflict(f"audit event id already exists: {event.id}")
@@ -128,12 +131,36 @@ class PostgresAuditStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT event_json FROM ronin_audit_events "
+                    "SELECT audit_event_id,occurred_at,actor_kind,actor_ref,action,"
+                    "resource_kind,resource_ref,outcome,request_id,digest,event_json "
+                    "FROM ronin_audit_events "
                     "WHERE workspace_id=%s AND audit_event_id=%s",
                     (workspace_id.value, event_id.value),
                 )
                 row = cursor.fetchone()
-            return None if row is None else AuditEvent.from_json(str(row["event_json"]))
+            return None if row is None else _verified_event(row)
+        finally:
+            connection.close()
+
+    def list_for_workspace(
+        self, workspace_id: WorkspaceId, *, limit: int = 100, offset: int = 0
+    ) -> tuple[AuditEvent, ...]:
+        if not 1 <= limit <= 1000:
+            raise ValueError("audit list limit must be between 1 and 1000")
+        if offset < 0:
+            raise ValueError("audit list offset must be non-negative")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT audit_event_id,occurred_at,actor_kind,actor_ref,action,"
+                    "resource_kind,resource_ref,outcome,request_id,digest,event_json "
+                    "FROM ronin_audit_events WHERE workspace_id=%s "
+                    "ORDER BY occurred_at DESC,audit_event_id DESC LIMIT %s OFFSET %s",
+                    (workspace_id.value, limit, offset),
+                )
+                rows = cursor.fetchall()
+            return tuple(_verified_event(row) for row in rows)
         finally:
             connection.close()
 
@@ -151,15 +178,17 @@ class PostgresAuditStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT event_json FROM ronin_audit_events "
+                    "SELECT audit_event_id,occurred_at,actor_kind,actor_ref,action,"
+                    "resource_kind,resource_ref,outcome,request_id,digest,event_json "
+                    "FROM ronin_audit_events "
                     "WHERE workspace_id=%s AND resource_kind=%s AND resource_ref=%s "
                     "ORDER BY occurred_at DESC,audit_event_id DESC LIMIT %s",
                     (workspace_id.value, resource_kind, resource_ref, limit),
                 )
                 rows = cursor.fetchall()
-            return tuple(AuditEvent.from_json(str(row["event_json"])) for row in rows)
+            return tuple(_verified_event(row) for row in rows)
         finally:
             connection.close()
 
 
-__all__ = ("PostgresAuditStore",)
+__all__ = ("PostgresAuditStore", "AuditIntegrityError")

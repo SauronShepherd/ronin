@@ -55,6 +55,7 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
+from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource
 from studio_core.plugins import PluginManager, PluginRecord
 from studio_execution import DurableExecutionService, ProjectService, WorkspaceService
 from studio_notebook import (
@@ -139,6 +140,50 @@ def test_control_plane_access_logs_ok_warn_and_error_with_redacted_correlation(
     assert "Bearer good" not in caplog.text
     assert "workspace-a" not in caplog.text
     assert "fixture-secret" not in caplog.text
+
+
+def test_audit_log_route_is_authorized_bounded_and_paginates() -> None:
+    class AuditReader:
+        def __init__(self) -> None:
+            self.events = tuple(
+                AuditEvent(
+                    AuditEventId(f"audit-{index}"),
+                    f"2026-09-14T08:45:0{index}.000000Z",
+                    AuditActor("local", "local-operator"),
+                    "workspace.update",
+                    AuditResource("workspace", str(_WS_A)),
+                    "succeeded",
+                )
+                for index in (1, 2, 3)
+            )
+            self.calls = []
+
+        def list_for_workspace(self, workspace_id, *, limit=100, offset=0):
+            self.calls.append((workspace_id, limit, offset))
+            return self.events[offset : offset + limit]
+
+    reader = AuditReader()
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    with _server(store, _Authorizer(), audit_reader=reader) as address:
+        status, page = _request(address, "GET", f"/v1/workspaces/{_WS_A}/audit?limit=2")
+        assert status == 200, page
+        assert [item["id"] for item in page["items"]] == ["audit-1", "audit-2"]
+        assert page["next_cursor"]
+        status, second = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/audit?limit=2&cursor={page['next_cursor']}",
+        )
+        assert status == 200, second
+        assert [item["id"] for item in second["items"]] == ["audit-3"]
+        assert reader.calls == [(_WS_A, 3, 0), (_WS_A, 3, 2)]
+
+    denied = _Authorizer({(str(_WS_A), "workspace.read")})
+    with _server(store, denied, audit_reader=reader) as address:
+        status, payload = _request(address, "GET", f"/v1/workspaces/{_WS_A}/audit")
+    assert status == 403
+    assert payload["error"]["code"] == "forbidden"
 
 
 class _Store:
@@ -534,6 +579,7 @@ def _server(
     notebook_reader=None,
     quality_reader=None,
     semantic_reader=None,
+    audit_reader=None,
 ) -> Iterator[tuple[str, int]]:
     server = WorkspaceProjectHTTPServer(
         ("127.0.0.1", 0),
@@ -561,6 +607,7 @@ def _server(
         quality_reader=quality_reader,
         semantic_reader=semantic_reader,
         request_timeout_seconds=5.0,
+        audit_reader=audit_reader,
     )
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()

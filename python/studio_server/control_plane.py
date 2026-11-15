@@ -52,6 +52,7 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
+from studio_core.audit import AuditEvent
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.environments import (
     EnvironmentDefinition,
@@ -120,6 +121,7 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("GET", "/v1/workspaces"),
         ("POST", "/v1/workspaces"),
         ("GET", "/v1/workspaces/{workspace_id}"),
+        ("GET", "/v1/workspaces/{workspace_id}/audit"),
         ("PATCH", "/v1/workspaces/{workspace_id}"),
         ("POST", "/v1/workspaces/{workspace_id}/archive"),
         ("GET", "/v1/workspaces/{workspace_id}/projects"),
@@ -529,6 +531,13 @@ class CatalogReader(Protocol):
 
 
 @runtime_checkable
+class AuditReader(Protocol):
+    def list_for_workspace(
+        self, workspace_id: WorkspaceId, *, limit: int = 100, offset: int = 0
+    ) -> tuple[AuditEvent, ...]: ...
+
+
+@runtime_checkable
 class DataEngineeringRevisionReader(Protocol):
     def list_pipelines(self, *, project_id: str) -> tuple[str, ...]: ...
 
@@ -905,6 +914,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         default_workspace_id: WorkspaceId | None = None,
         studio_root: Path | None = None,
         request_timeout_seconds: float = 15.0,
+        audit_reader: AuditReader | None = None,
         audit_mutation: ControlPlaneAuditHook | None = None,
     ) -> None:
         if request_timeout_seconds <= 0:
@@ -942,6 +952,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.default_workspace_id = default_workspace_id
         self.studio_root = studio_root.resolve() if studio_root is not None else None
         self.request_timeout_seconds = request_timeout_seconds
+        self.audit_reader = audit_reader
         self.audit_mutation = audit_mutation
         super().__init__(server_address, _WorkspaceProjectHandler)
 
@@ -1884,6 +1895,36 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace = self._server().workspace_service.get(workspace_id)
                 payload = _workspace_payload(workspace)
                 self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
+                return
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "audit"
+            ):
+                audit_reader = self._server().audit_reader
+                if audit_reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "audit_unavailable",
+                        "audit service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "audit.read"):
+                    return
+                limit, offset = _list_query(query)
+                audit_events = audit_reader.list_for_workspace(
+                    workspace_id, limit=limit + 1, offset=offset
+                )
+                audit_selected = audit_events[:limit]
+                next_cursor = _encode_cursor(offset + limit) if len(audit_events) > limit else None
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "items": [event.to_payload() for event in audit_selected],
+                        "next_cursor": next_cursor,
+                    },
+                )
                 return
             if (
                 len(segments) == 6
@@ -5861,6 +5902,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
 
 
 __all__ = (
+    "AuditReader",
     "CONTROL_PLANE_ROUTES",
     "PluginDiagnostics",
     "PluginRouter",

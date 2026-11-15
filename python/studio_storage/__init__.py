@@ -10,7 +10,7 @@ from studio_storage.artifacts import (
 )
 from studio_storage.async_artifacts import BoundedAsyncArtifactStore
 from studio_storage.async_store import StorageBackpressureError
-from studio_storage.audit import SqliteAuditStore
+from studio_storage.audit import AuditIntegrityError, SqliteAuditStore
 from studio_storage.backup import (
     BackupManifest,
     backup_deployment,
@@ -201,6 +201,7 @@ __all__ = (
     "MountedFileSecretResolver",
     "OntologyConflict",
     "PostgresAuditStore",
+    "AuditIntegrityError",
     "SqliteAuditStore",
     "PostgresDependencyError",
     "PostgresMetadataStore",

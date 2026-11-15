@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Mapping
 from pathlib import Path
 
 from studio_core import WorkspaceId
@@ -18,6 +19,42 @@ _AUDIT_MIGRATIONS = {1: "audit_001.sql"}
 
 class AuditConflict(RuntimeError):
     """Raised when an audit event ID is reused with different content."""
+
+
+class AuditIntegrityError(RuntimeError):
+    """Raised when persisted audit denormalization or content is inconsistent."""
+
+
+def _verified_event(row: Mapping[str, object]) -> AuditEvent:
+    """Decode one row only after checking its content and denormalized columns."""
+    payload = row.get("event_json")
+    stored_digest = row.get("digest")
+    if not isinstance(payload, str) or not isinstance(stored_digest, str):
+        raise AuditIntegrityError("persisted audit event has invalid identity fields")
+    try:
+        event = AuditEvent.from_json(payload)
+    except (TypeError, ValueError) as exc:
+        raise AuditIntegrityError("persisted audit event is invalid") from exc
+    expected = {
+        "audit_event_id": event.id.value,
+        "occurred_at": event.occurred_at,
+        "actor_kind": event.actor.kind,
+        "actor_ref": event.actor.ref,
+        "action": event.action,
+        "resource_kind": event.resource.kind,
+        "resource_ref": event.resource.ref,
+        "outcome": event.outcome,
+        "request_id": event.request_id,
+    }
+    if any(row.get(key) != value for key, value in expected.items()):
+        raise AuditIntegrityError("persisted audit event columns do not match its payload")
+    if event.digest != stored_digest:
+        raise AuditIntegrityError("persisted audit event digest mismatch")
+    return event
+
+
+def _sqlite_row_mapping(row: sqlite3.Row) -> dict[str, object]:
+    return {key: row[index] for index, key in enumerate(row.keys())}
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
@@ -88,11 +125,14 @@ class SqliteAuditStore:
             if workspace is None:
                 raise WorkspaceNotFound(str(workspace_id))
             existing = connection.execute(
-                "SELECT event_json FROM audit_events WHERE workspace_id=? AND audit_event_id=?",
+                "SELECT audit_event_id,occurred_at,actor_kind,actor_ref,action,"
+                "resource_kind,resource_ref,outcome,request_id,digest,event_json "
+                "FROM audit_events WHERE workspace_id=? AND audit_event_id=?",
                 (str(workspace_id), str(event.id)),
             ).fetchone()
             if existing is not None:
-                if existing["event_json"] == payload:
+                stored = _verified_event(_sqlite_row_mapping(existing))
+                if stored == event:
                     connection.execute("COMMIT")
                     return event
                 raise AuditConflict(f"audit event id already exists: {event.id}")
@@ -129,10 +169,32 @@ class SqliteAuditStore:
         connection = self._connect()
         try:
             row = connection.execute(
-                "SELECT event_json FROM audit_events WHERE workspace_id=? AND audit_event_id=?",
+                "SELECT audit_event_id,occurred_at,actor_kind,actor_ref,action,"
+                "resource_kind,resource_ref,outcome,request_id,digest,event_json "
+                "FROM audit_events WHERE workspace_id=? AND audit_event_id=?",
                 (str(workspace_id), str(event_id)),
             ).fetchone()
-            return None if row is None else AuditEvent.from_json(row["event_json"])
+            return None if row is None else _verified_event(_sqlite_row_mapping(row))
+        finally:
+            connection.close()
+
+    def list_for_workspace(
+        self, workspace_id: WorkspaceId, *, limit: int = 100, offset: int = 0
+    ) -> tuple[AuditEvent, ...]:
+        if not 1 <= limit <= 1000:
+            raise ValueError("audit list limit must be between 1 and 1000")
+        if offset < 0:
+            raise ValueError("audit list offset must be non-negative")
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT audit_event_id,occurred_at,actor_kind,actor_ref,action,"
+                "resource_kind,resource_ref,outcome,request_id,digest,event_json "
+                "FROM audit_events WHERE workspace_id=? "
+                "ORDER BY occurred_at DESC,audit_event_id DESC LIMIT ? OFFSET ?",
+                (str(workspace_id), limit, offset),
+            ).fetchall()
+            return tuple(_verified_event(_sqlite_row_mapping(row)) for row in rows)
         finally:
             connection.close()
 
@@ -149,10 +211,21 @@ class SqliteAuditStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT event_json FROM audit_events WHERE workspace_id=? AND resource_kind=? "
+                "SELECT audit_event_id,occurred_at,actor_kind,actor_ref,action,"
+                "resource_kind,resource_ref,outcome,request_id,digest,event_json "
+                "FROM audit_events WHERE workspace_id=? AND resource_kind=? "
                 "AND resource_ref=? ORDER BY occurred_at DESC,audit_event_id DESC LIMIT ?",
                 (str(workspace_id), resource_kind, resource_ref, limit),
             ).fetchall()
-            return tuple(AuditEvent.from_json(row["event_json"]) for row in rows)
+            return tuple(_verified_event(_sqlite_row_mapping(row)) for row in rows)
         finally:
             connection.close()
+
+
+__all__ = (
+    "AuditConflict",
+    "AuditIntegrityError",
+    "SqliteAuditStore",
+    "audit_schema_version",
+    "migrate_audit",
+)

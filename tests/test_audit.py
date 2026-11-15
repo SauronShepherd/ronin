@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import sqlite3
 from pathlib import Path
 
 import pytest
 from studio_core import Workspace, WorkspaceId
 from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource, _metadata
 from studio_orchestrator import Instant
-from studio_storage.audit import AuditConflict, SqliteAuditStore
+from studio_storage.audit import AuditConflict, AuditIntegrityError, SqliteAuditStore
 from studio_storage.workspaces import SqliteWorkspaceStore
 
 _NOW = Instant("2026-09-12T00:00:00.000000Z")
@@ -46,6 +47,60 @@ def test_audit_event_id_conflict_fails_closed(tmp_path: Path) -> None:
 
     with pytest.raises(AuditConflict):
         store.append(WorkspaceId("ws-1"), _event(action="workspace.delete"))
+
+
+def test_audit_store_reopens_and_rejects_tampered_payload(tmp_path: Path) -> None:
+    path = tmp_path / "ronin.sqlite3"
+    event = _event()
+    _store(path).append(WorkspaceId("ws-1"), event)
+
+    tampered = _event(action="workspace.delete").to_json()
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            "UPDATE audit_events SET event_json=? WHERE workspace_id=? AND audit_event_id=?",
+            (tampered, "ws-1", event.id.value),
+        )
+
+    reopened = SqliteAuditStore(path, migration_now=_NOW)
+    with pytest.raises(AuditIntegrityError, match="columns do not match|digest mismatch"):
+        reopened.get(WorkspaceId("ws-1"), event.id)
+    with pytest.raises(AuditIntegrityError, match="columns do not match|digest mismatch"):
+        reopened.append(WorkspaceId("ws-1"), event)
+
+
+def test_audit_store_rejects_tampered_denormalized_columns(tmp_path: Path) -> None:
+    path = tmp_path / "ronin.sqlite3"
+    event = _event()
+    _store(path).append(WorkspaceId("ws-1"), event)
+
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            "UPDATE audit_events SET action=? WHERE workspace_id=? AND audit_event_id=?",
+            ("workspace.delete", "ws-1", event.id.value),
+        )
+
+    with pytest.raises(AuditIntegrityError, match="columns do not match"):
+        SqliteAuditStore(path, migration_now=_NOW).list_for_resource(
+            WorkspaceId("ws-1"), resource_kind="workspace", resource_ref="ws-1"
+        )
+
+
+def test_audit_store_lists_workspace_events_newest_first_and_bounded(tmp_path: Path) -> None:
+    store = _store(tmp_path / "ronin.sqlite3")
+    workspace_id = WorkspaceId("ws-1")
+    for identifier in ("audit-1", "audit-2", "audit-3"):
+        store.append(workspace_id, _event(identifier))
+
+    assert store.list_for_workspace(workspace_id, limit=2) == (
+        _event("audit-3"),
+        _event("audit-2"),
+    )
+    assert store.list_for_workspace(workspace_id, limit=2, offset=2) == (_event("audit-1"),)
+    for invalid in (0, 1001):
+        with pytest.raises(ValueError, match="between 1 and 1000"):
+            store.list_for_workspace(workspace_id, limit=invalid)
+    with pytest.raises(ValueError, match="non-negative"):
+        store.list_for_workspace(workspace_id, offset=-1)
 
 
 @pytest.mark.parametrize(

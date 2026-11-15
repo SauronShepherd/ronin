@@ -8,7 +8,7 @@ from studio_core import Workspace, WorkspaceId
 from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource
 from studio_orchestrator import Instant
 from studio_storage import PostgresAuditStore, PostgresMetadataStore
-from studio_storage.audit import AuditConflict
+from studio_storage.audit import AuditConflict, AuditIntegrityError
 from studio_storage.workspaces import WorkspaceNotFound
 
 _DSN = os.environ.get("RONIN_TEST_POSTGRES_DSN")
@@ -99,6 +99,31 @@ def test_postgres_audit_resource_listing_is_newest_first_and_bounded() -> None:
                     resource_ref="workspace/project:project-1",
                     limit=invalid,
                 )
+    finally:
+        _cleanup(workspace.id)
+
+
+def test_postgres_audit_workspace_listing_and_tamper_detection() -> None:
+    metadata = PostgresMetadataStore(_DSN, application_name="ronin-audit-test-metadata")
+    workspace = _workspace()
+    metadata.create_workspace(workspace, now=_NOW)
+    store = PostgresAuditStore(_DSN, application_name="ronin-audit-test")
+    older = _event(f"audit-{uuid4().hex}", "2026-09-14T04:00:01.000000Z")
+    newer = _event(f"audit-{uuid4().hex}", "2026-09-14T04:00:02.000000Z")
+
+    try:
+        store.append(workspace.id, older)
+        store.append(workspace.id, newer)
+        assert store.list_for_workspace(workspace.id, limit=1) == (newer,)
+        assert store.list_for_workspace(workspace.id, limit=1, offset=1) == (older,)
+        with psycopg.connect(_DSN, autocommit=True) as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE ronin_audit_events SET action=%s "
+                "WHERE workspace_id=%s AND audit_event_id=%s",
+                ("authorize:tampered", workspace.id.value, newer.id.value),
+            )
+        with pytest.raises(AuditIntegrityError, match="columns do not match"):
+            store.get(workspace.id, newer.id)
     finally:
         _cleanup(workspace.id)
 

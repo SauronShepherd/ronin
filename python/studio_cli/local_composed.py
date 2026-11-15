@@ -663,6 +663,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
             plugin_host=plugin_host,
             plugin_routes_enabled=plugin_routes_enabled,
             default_workspace_id=workspace_id,
+            audit_reader=audit_store,
             audit_mutation=audit_mutation,
         )
     except Exception:

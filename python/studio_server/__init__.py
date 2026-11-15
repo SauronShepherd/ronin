@@ -8,6 +8,7 @@ from studio_quality import QualityHTTPAdapter
 from studio_server.composition import LocalServerComposition
 from studio_server.control_plane import (
     CONTROL_PLANE_ROUTES,
+    AuditReader,
     CatalogReader,
     ControlPlaneAuthenticator,
     ControlPlaneAuthorizer,
@@ -28,6 +29,7 @@ from studio_server.static_control_plane import (
 
 __all__ = (
     "CONTROL_PLANE_ROUTES",
+    "AuditReader",
     "CatalogReader",
     "StreamingHealthReader",
     "SemanticReader",

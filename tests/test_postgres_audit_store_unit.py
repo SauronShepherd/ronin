@@ -63,6 +63,22 @@ def _event(event_id: str = "audit-1") -> AuditEvent:
     )
 
 
+def _stored_row(event: AuditEvent) -> dict[str, object]:
+    return {
+        "audit_event_id": event.id.value,
+        "occurred_at": event.occurred_at,
+        "actor_kind": event.actor.kind,
+        "actor_ref": event.actor.ref,
+        "action": event.action,
+        "resource_kind": event.resource.kind,
+        "resource_ref": event.resource.ref,
+        "outcome": event.outcome,
+        "request_id": event.request_id,
+        "digest": event.digest,
+        "event_json": event.to_json(),
+    }
+
+
 def test_constructor_and_migrate(monkeypatch: pytest.MonkeyPatch) -> None:
     connection = _Connection([{"table_name": "ronin_workspaces"}])
     monkeypatch.setattr(
@@ -91,12 +107,11 @@ def test_validation_and_missing_metadata(monkeypatch: pytest.MonkeyPatch) -> Non
 
 def test_append_get_list_and_idempotency(monkeypatch: pytest.MonkeyPatch) -> None:
     event = _event()
-    payload = event.to_json()
     connections = [
         _Connection([{"ok": 1}, None]),
-        _Connection([{"ok": 1}, {"event_json": payload}]),
-        _Connection([{"event_json": payload}]),
-        _Connection([{"event_json": payload}]),
+        _Connection([{"ok": 1}, _stored_row(event)]),
+        _Connection([_stored_row(event)]),
+        _Connection([_stored_row(event)]),
     ]
     store = PostgresAuditStore.__new__(PostgresAuditStore)
     monkeypatch.setattr(store, "_connect", lambda: connections.pop(0))
@@ -111,3 +126,18 @@ def test_append_get_list_and_idempotency(monkeypatch: pytest.MonkeyPatch) -> Non
     ) == (event,)
     with pytest.raises(ValueError, match="between 1 and 1000"):
         store.list_for_resource(workspace, resource_kind="x", resource_ref="y", limit=0)
+
+
+def test_list_for_workspace_is_bounded_and_verifies_rows(monkeypatch: pytest.MonkeyPatch) -> None:
+    event = _event()
+    connection = _Connection([_stored_row(event)])
+    store = PostgresAuditStore.__new__(PostgresAuditStore)
+    monkeypatch.setattr(store, "_connect", lambda: connection)
+
+    assert store.list_for_workspace(WorkspaceId("workspace-1"), limit=2) == (event,)
+    assert connection.closed
+    for invalid in (0, 1001):
+        with pytest.raises(ValueError, match="between 1 and 1000"):
+            store.list_for_workspace(WorkspaceId("workspace-1"), limit=invalid)
+    with pytest.raises(ValueError, match="non-negative"):
+        store.list_for_workspace(WorkspaceId("workspace-1"), offset=-1)
