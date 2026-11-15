@@ -1,0 +1,41 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D22",
+  "date": "2026-11-15",
+  "planned_date": "2026-12-06",
+  "status": "PASS",
+  "candidate_sha": "91a2d5efec61bd1776a302027eda2d6e00aeecd3",
+  "implementation_commit_sha": "91a2d5efec61bd1776a302027eda2d6e00aeecd3",
+  "evidence": "docs/qualification/candidates/candidate-91a2d5ef-d22.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D22.md",
+  "execution_scope": "complete-for-D22-bounded-local-workspace-scoped-catalog-assets-revisions-search-lineage-and-permission-cell; project-scope-claim-ontology-graph-provider-and-P6-family-close-pending",
+  "result": {
+    "implementation": "Catalog revision read branches now run in do_GET, matching OpenAPI/SDK and returning the advertised revision collection/item responses. A real local composed SQLite journey covers governed asset CRUD/replacement, revision reads, governance metadata, cursor/search, lineage, workspace isolation, restart persistence and read-only mutation denial.",
+    "candidate_focused_suite": "174 passed, 0 failed, 0 skipped in 87.45s in the exact candidate sandbox",
+    "checkout_focused_suite": "174 passed, 0 failed, 0 skipped in 187.27s",
+    "web_regression": "7 passed, 0 failed, 0 skipped in 1.6 minutes on the serial clean-server rerun",
+    "static_and_surface_checks": "candidate format 1126 files, Ruff, mypy 451 files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI and Studio 128/242 pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged after cleanup/regeneration; final verify pass",
+    "scans": "Gitleaks 0 findings over 15,556,145 manifest bytes; pip-audit 0 vulnerabilities across 99 dependencies; Trivy skipped because no local binary or responsive Docker daemon",
+    "p6_boundary": "D22 closes the bounded local workspace-scoped catalog/revision cell and fixes the GET route mismatch but does not qualify P6; project-level catalog authorization/filtering, D23 graph/ontology/RQL, provider and complete family evidence remain open"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "21/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "22/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The public catalog contract is workspace-scoped; project_id is persisted metadata and no independent project-level filtering/authorization claim is recorded.",
+    "RONIN_POSTGRES_TEST_DSN is absent and Docker daemon probes are unavailable; no PostgreSQL, worker or external provider was substituted with a mock or counted as PASS.",
+    "The candidate sandbox has no .git metadata; Git diff/status and public ledger checks run separately on main. Web node_modules is outside the candidate archive.",
+    "The initial concurrent web run timed out while starting the static server; the serial clean-server run passed 7/7 and is the counted result.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
