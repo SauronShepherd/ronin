@@ -1674,6 +1674,197 @@ def test_local_composition_queues_large_assetref_input_as_verified_artifact(
         composition.stop()
 
 
+def test_local_composed_ml_train_register_predict_and_recover(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """Exercise the real local ML HTTP/SQLite/artifact path end to end."""
+
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS",
+        "workspace.read,workspace.write,workspace.admin,project.read,project.write,scheduler.write",
+    )
+    now = Instant("2026-10-17T00:00:00.000000Z")
+    dataset = CatalogAsset(AssetId("customers"), "table", "Customers", project_id="project-1")
+    dataset_revision = AssetRevision(
+        AssetRef(dataset.id, AssetVersion("1")), schema_digest="customers-schema-v1"
+    )
+    rows = [{"x": value, "target": value % 2} for value in range(1, 21)]
+    lab_payload = {
+        "schema": "ronin.ml-lab/v1",
+        "id": "local-ml-lab",
+        "name": "Local ML lab",
+        "project_id": "project-1",
+        "dataset": {"asset_id": "customers", "version": "1"},
+        "target": "target",
+        "task": "classification",
+        "features": [{"column": "x", "role": "numeric"}],
+        "backend_id": "local.sklearn",
+        "seed": 7,
+        "test_fraction": 0.25,
+    }
+
+    def request(
+        address: tuple[str, int], method: str, path: str, body: object | None = None
+    ) -> tuple[int, dict[str, object]]:
+        payload = None if body is None else json.dumps(body, separators=(",", ":")).encode("utf-8")
+        headers = {"Authorization": "Bearer control-token"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
+        connection = http.client.HTTPConnection(*address, timeout=20)
+        try:
+            connection.request(method, path, body=payload, headers=headers)
+            response = connection.getresponse()
+            return response.status, cast(
+                dict[str, object], json.loads(response.read().decode("utf-8"))
+            )
+        finally:
+            connection.close()
+
+    def wait_for_execution(address: tuple[str, int]) -> dict[str, object]:
+        deadline = time.monotonic() + 45
+        last: dict[str, object] = {}
+        while time.monotonic() < deadline:
+            status, last = request(
+                address,
+                "GET",
+                "/v1/ml-studio/executions/local-ml-run?workspace_id=workspace-1",
+            )
+            assert status == 200, last
+            if last.get("state") in {"succeeded", "failed"}:
+                return last
+            time.sleep(0.05)
+        raise AssertionError(f"timed out waiting for ML execution: {last!r}")
+
+    composition = build_local_composed_from_env()
+    catalog = composition.control_plane_server.catalog_reader
+    assert catalog is not None
+    catalog.create_asset(WorkspaceId("workspace-1"), dataset, now=now)
+    catalog.put_revision(WorkspaceId("workspace-1"), dataset_revision, now=now)
+    try:
+        composition.start()
+        address = composition.control_plane_server.server_address
+
+        status, created = request(
+            address, "POST", "/v1/ml-studio/labs?workspace_id=workspace-1", lab_payload
+        )
+        assert status == 200, created
+        lab_digest = Lab.from_payload(created).digest
+
+        status, quality = request(
+            address,
+            "POST",
+            "/v1/ml-studio/labs/local-ml-lab/quality?workspace_id=workspace-1",
+            {"rows": rows},
+        )
+        assert status == 200, quality
+        assert quality["passed"] is True
+
+        status, submitted = request(
+            address,
+            "POST",
+            "/v1/ml-studio/labs/local-ml-lab/executions?workspace_id=workspace-1",
+            {
+                "run_id": "local-ml-run",
+                "rows": rows,
+                "algorithm": "decision_tree_classifier",
+                "preprocessor": "standard_scale",
+            },
+        )
+        assert status == 200, submitted
+        assert submitted["run_id"] == "local-ml-run"
+        execution = wait_for_execution(address)
+        assert execution["state"] == "succeeded", execution
+        result = cast(dict[str, object], execution["result"])
+        assert result["algorithm"] == "decision_tree_classifier"
+        assert result["task"] == "classification"
+        assert result["artifact_media_type"] == "application/vnd.ronin.sklearn-tabular+json"
+        raw_artifact_digest = result["artifact_digest"]
+        assert isinstance(raw_artifact_digest, str)
+        assert raw_artifact_digest.startswith("sha256:")
+        artifact_digest = raw_artifact_digest.removeprefix("sha256:")
+        assert len(artifact_digest) == 64
+
+        status, registered = request(
+            address,
+            "POST",
+            "/v1/ml-studio/executions/local-ml-run/register?workspace_id=workspace-1",
+            {"model_id": "local-customers", "version": "v1"},
+        )
+        assert status == 200, registered
+        assert registered["model_id"] == "local-customers"
+        assert registered["version"] == "v1"
+        assert registered["artifact_digest"] == artifact_digest
+
+        status, card = request(
+            address,
+            "GET",
+            "/v1/ml-studio/models/local-customers/v1/card?workspace_id=workspace-1",
+        )
+        assert status == 200, card
+        card_provenance = cast(dict[str, object], card["provenance"])
+        assert card_provenance["artifact_digest"] == artifact_digest
+        assert card["dataset"] == [dataset_revision.ref.to_payload()]
+        assert card_provenance["source_revision"] == lab_digest
+
+        status, artifact = request(
+            address,
+            "GET",
+            "/v1/ml-studio/models/local-customers/v1/artifact"
+            "?workspace_id=workspace-1&offset=0&length=64",
+        )
+        assert status == 200, artifact
+        assert artifact["digest"] == artifact_digest
+        assert artifact["offset"] == 0
+        artifact_data = artifact["data_base64"]
+        assert isinstance(artifact_data, str)
+        assert artifact_data
+
+        status, prediction = request(
+            address,
+            "POST",
+            "/v1/ml-studio/models/local-customers/v1/predict?workspace_id=workspace-1",
+            {"rows": [{"x": 2.0}, {"x": 19.0}]},
+        )
+        assert status == 200, prediction
+        assert prediction["predictions"] == [0, 1]
+
+        status, denied = request(
+            address,
+            "GET",
+            "/v1/ml-studio/models/local-customers/v1/card?workspace_id=workspace-unknown",
+        )
+        assert status == 403, denied
+    finally:
+        composition.stop()
+
+    restarted = build_local_composed_from_env()
+    try:
+        restarted.start()
+        address = restarted.control_plane_server.server_address
+        status, recovered_card = request(
+            address,
+            "GET",
+            "/v1/ml-studio/models/local-customers/v1/card?workspace_id=workspace-1",
+        )
+        assert status == 200, recovered_card
+        recovered_provenance = cast(dict[str, object], recovered_card["provenance"])
+        assert recovered_provenance["artifact_digest"] == artifact_digest
+        status, recovered_prediction = request(
+            address,
+            "POST",
+            "/v1/ml-studio/models/local-customers/v1/predict?workspace_id=workspace-1",
+            {"rows": [{"x": 2.0}, {"x": 19.0}]},
+        )
+        assert status == 200, recovered_prediction
+        assert recovered_prediction["predictions"] == [0, 1]
+    finally:
+        restarted.stop()
+
+
 def test_build_local_composed_rejects_unknown_permission(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
