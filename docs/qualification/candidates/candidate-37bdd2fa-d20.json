@@ -1,0 +1,96 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D20",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-12-04",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "37bdd2fa8c6292d7641f586616cb52e2bfe5409f",
+    "origin_main_sha_when_candidate_was_tested": "37bdd2fa8c6292d7641f586616cb52e2bfe5409f",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-37bdd2fa-d20",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-37bdd2fa-d20\\candidate-37bdd2fa8c6292d7641f586616cb52e2bfe5409f.tar",
+      "format": "tar",
+      "sha256": "342aa2d1400d8b828a0ab98557b840ec386b7e97f1766a0406b470e999a893f1",
+      "size": 16670720
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-37bdd2fa-d20\\candidate-37bdd2fa8c6292d7641f586616cb52e2bfe5409f.manifest.json",
+      "sha256": "c0aea2dfcac8bd5d5df69160c8a865db8944547011c113e47b1d80ad5b924474",
+      "size": 218529
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-37bdd2fa-d20\\candidate-37bdd2fa8c6292d7641f586616cb52e2bfe5409f.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-37bdd2fa-d20\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1422,
+    "total_bytes": 15507920,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "37bdd2fa8c6292d7641f586616cb52e2bfe5409f",
+    "candidate_docs_commit": "37bdd2fa8c6292d7641f586616cb52e2bfe5409f",
+    "summary": "D20 hardened durable scheduler restart/failure boundaries: lease and loop durations are strict and bounded, notification IDs reject conflicting payloads, provider errors are redacted and bounded before persistence, and SMTP/HTTPS/dispatcher limits reject booleans, non-integers and non-finite values.",
+    "production_files_changed": [
+      "python/studio_execution/scheduler_daemon.py",
+      "python/studio_observability/dispatcher.py",
+      "python/studio_observability/redaction.py",
+      "python/studio_observability/smtp.py",
+      "python/studio_observability/webhook.py"
+    ],
+    "test_files_changed": [
+      "tests/test_notification_dispatcher.py",
+      "tests/test_scheduler_daemon.py",
+      "tests/test_smtp_notifications.py",
+      "tests/test_webhook_notifications.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 37bdd2fa8c6292d7641f586616cb52e2bfe5409f --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-37bdd2fa-d20",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-37bdd2fa-d20",
+    "cleanup_and_regenerate": "candidate-boundary cleanup removed generated caches/artifacts; the same SHA was regenerated and verify confirmed identical archive and manifest digests",
+    "candidate_focused": "PYTHONDONTWRITEBYTECODE=1; exact candidate sandbox pytest -q over all scheduler tests plus notification dispatcher, webhook and SMTP selections",
+    "candidate_static": "exact candidate sandbox ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI and Studio surface",
+    "scans": "Gitleaks directory scan over the no-git sandbox; pip-audit -r requirements-test.lock; pinned Trivy filesystem vuln,secret scan"
+  },
+  "qualification_matrix": {
+    "candidate_focused_suite": "180 passed, 0 failed, 0 skipped from the exact candidate sandbox",
+    "checkout_scheduler_and_notification_suite": "180 passed, 0 failed, 0 skipped",
+    "full_checkout_regression": "4668 passed, 81 skipped, 0 failed in 650.80s",
+    "static_and_surface_checks": "candidate format 934 files, Ruff, mypy 451 source files, architecture, negative-gates, route consistency 200 operations, dependency-surfaces, canonical OpenAPI 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708 and Studio 128/242 pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests were unchanged after cleanup and regeneration",
+    "result": "D20 pass for bounded local scheduler and notification failure-boundary evidence; P5 remains in_progress and is not qualified"
+  },
+  "security_and_recovery": {
+    "scheduler_scope": "The candidate suite revalidates cron/misfire catch-up, durable cursor/fire idempotence, leadership takeover/fencing, restartable execution outbox, cancellation, timeout, daemon shutdown and notification retry/provider failure paths. New negative coverage proves conflicting notification IDs fail closed, provider error text is redacted/bounded, and scheduler/notification lifecycle limits reject unsafe numeric values. No provider certification is inferred from SQLite tests.",
+    "provider_scope": "RONIN_POSTGRES_TEST_DSN is absent, so PostgreSQL scheduler persistence and operator/provider qualification remain pending/blocked. No mock was counted as PostgreSQL evidence.",
+    "scans": {
+      "gitleaks": "8.30.1; directory scan of the intentionally no-git exact candidate sandbox; 15,507,920 bytes scanned; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; 99 dependencies; 0 known vulnerabilities",
+      "trivy": "aquasec/trivy:0.76.1 pinned image sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c; filesystem vuln,secret scan exited 0 with 0 vulnerabilities and 0 secrets; development-dependency/license analysis was not claimed"
+    }
+  },
+  "open_cells": [
+    "P5 remains in_progress, not qualified: PostgreSQL/operator-backed scheduler persistence, complete API/Studio/worker same-candidate journey and real notification-provider qualification remain open.",
+    "The 81 full-regression skips are recorded environment/provider/POSIX limits, not PASS; no PostgreSQL DSN, Docker opt-in, external SDP/Spark, Trino, S3/Azurite or OTLP endpoint was supplied.",
+    "P4 remains in_progress and is not affected by D20; P2 and P3 remain in_progress; P13 remains blocked by the external secret-provider and release evidence boundary recorded in candidate-45782dc.json.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The exact candidate sandbox has no .git metadata by design, so Git-dependent tests and repository status checks are not claimed from it; main checkout checks run separately.",
+    "The candidate focused selection is local SQLite/control-plane and provider-boundary evidence. It does not certify PostgreSQL or an external notification provider.",
+    "The first Gitleaks invocation used an unsupported --no-git flag in Gitleaks 8.30.1 and was rejected before scanning; the corrected directory scan over the no-git sandbox is the recorded clean result.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

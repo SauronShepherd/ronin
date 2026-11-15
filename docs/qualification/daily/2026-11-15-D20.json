@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D20",
+  "date": "2026-11-15",
+  "planned_date": "2026-12-04",
+  "status": "PASS",
+  "candidate_sha": "37bdd2fa8c6292d7641f586616cb52e2bfe5409f",
+  "implementation_commit_sha": "37bdd2fa8c6292d7641f586616cb52e2bfe5409f",
+  "evidence": "docs/qualification/candidates/candidate-37bdd2fa-d20.json",
+  "handoff": "docs/qualification/handoffs/2026-11-15-D20.md",
+  "execution_scope": "complete-for-D20-bounded-local-scheduler-notification-failure-boundaries-and-candidate-regression; PostgreSQL-operator-and-P5-family-close-pending",
+  "result": {
+    "implementation": "Scheduler daemon lease/lifecycle durations now reject booleans, non-integers, non-finite values and out-of-bound leases; notification stores reject conflicting same-ID payloads; dispatcher provider errors are redacted and bounded; dispatcher, SMTP and HTTPS limits are strict and finite.",
+    "candidate_focused_suite": "180 passed, 0 failed, 0 skipped in exact candidate sandbox",
+    "full_checkout_regression": "4668 passed, 81 skipped, 0 failed in 650.80s",
+    "static_and_surface_checks": "candidate format 934 files, Ruff, mypy 451 files, architecture, negative gates, route/dependency surfaces (200 operations), OpenAPI, Studio 128/242 pass",
+    "candidate_reproducibility_after_cleanup": "pass; archive and manifest digests unchanged",
+    "scans": "Gitleaks 0 findings over 15,507,920 candidate bytes; pip-audit 0 vulnerabilities across 99 dependencies; pinned Trivy scan exited 0 with 0 vulnerabilities and 0 secrets",
+    "p5_boundary": "D20 closes the bounded local restart/failure and notification-boundary cell but does not qualify P5; PostgreSQL/operator evidence, real notification-provider evidence and complete API/Studio/worker family recovery remain open"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "days": "19/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "days": "20/39",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "PostgreSQL scheduler DSN and operator/provider credentials are absent; no mock was substituted.",
+    "The 81 full-regression skips remain explicit environment/provider/POSIX limits and are not counted as PASS.",
+    "The candidate sandbox has no .git metadata; repository status, public ledger and diff checks run separately on main.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
