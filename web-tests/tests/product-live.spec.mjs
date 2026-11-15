@@ -826,8 +826,9 @@ for (const route of routes) {
       }
       partitionedHealthResponse = waitForStreamResponse('GET', partitionedHealthPath);
       await page.getByRole('button', { name: 'Check health', exact: true }).click();
-      expect((await partitionedHealthResponse).status()).toBe(200);
-      expect((await partitionedHealthResponse.json()).total_lag).toBe(0);
+      const finalPartitionedHealth = await partitionedHealthResponse;
+      expect(finalPartitionedHealth.status()).toBe(200);
+      expect((await finalPartitionedHealth.json()).total_lag).toBe(0);
     } else if (route.id === 'graphs') {
       const workspace = process.env.RONIN_LIVE_WORKSPACE;
       await page.locator('#graph-query-form [name="workspace"]').fill(workspace);
