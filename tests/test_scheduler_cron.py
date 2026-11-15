@@ -16,6 +16,7 @@ from studio_core import (
     WorkspaceId,
 )
 from studio_execution.scheduler_cron import (
+    MAX_SCHEDULE_SCAN_MINUTES,
     CronExpression,
     CronSyntaxError,
     evaluated_minutes,
@@ -123,6 +124,41 @@ def test_evaluated_minutes_catches_up_and_fails_closed_on_large_gap() -> None:
             through=Instant("2026-09-12T10:04:00.000000Z"),
             max_scan_minutes=3,
         )
+
+
+@pytest.mark.parametrize("limit", [True, 1.5, "3", 0, -1, MAX_SCHEDULE_SCAN_MINUTES + 1])
+def test_evaluated_minutes_rejects_non_integer_or_unbounded_scan(limit: object) -> None:
+    with pytest.raises(ValueError, match="max_scan_minutes"):
+        evaluated_minutes(
+            cursor=None,
+            through=Instant("2026-09-12T10:00:00.000000Z"),
+            max_scan_minutes=limit,  # type: ignore[arg-type]
+        )
+
+
+def test_schedule_tick_rejects_non_integer_or_unbounded_limits(tmp_path: Path) -> None:
+    store, workspace_id, _workflow = _store(tmp_path)
+    service = SchedulerScheduleService(store)
+
+    async def scenario() -> None:
+        for limit in (True, 1.5, "3", 0, -1, MAX_SCHEDULE_SCAN_MINUTES + 1):
+            with pytest.raises(ValueError, match="max_scan_minutes"):
+                await service.tick(
+                    workspace_id,
+                    through=Instant("2026-09-12T10:00:00.000000Z"),
+                    now=NOW,
+                    max_scan_minutes=limit,  # type: ignore[arg-type]
+                )
+        for limit in (True, 1.5, "3", 0, -1, 1_001):
+            with pytest.raises(ValueError, match="max_fires"):
+                await service.tick(
+                    workspace_id,
+                    through=Instant("2026-09-12T10:00:00.000000Z"),
+                    now=NOW,
+                    max_fires=limit,  # type: ignore[arg-type]
+                )
+
+    asyncio.run(scenario())
 
 
 def test_schedule_service_fires_once_and_catches_up_missed_minutes(tmp_path: Path) -> None:

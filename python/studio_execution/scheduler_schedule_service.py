@@ -16,6 +16,7 @@ from studio_storage.scheduler_schedule import (
 )
 
 from .scheduler_cron import (
+    MAX_SCHEDULE_SCAN_MINUTES,
     CronExpression,
     CronSyntaxError,
     _instant_datetime,
@@ -35,6 +36,9 @@ class ScheduleTickResult:
 
 class ScheduleFireLimitExceeded(RuntimeError):
     """Raised before mutation when one tick would create too many workflow runs."""
+
+
+MAX_SCHEDULE_FIRES = 1_000
 
 
 class SchedulerScheduleService:
@@ -99,8 +103,20 @@ class SchedulerScheduleService:
         max_scan_minutes: int = 1440,
         max_fires: int = 100,
     ) -> ScheduleTickResult:
-        if max_fires < 1:
-            raise ValueError("max_fires must be positive")
+        if (
+            not isinstance(max_scan_minutes, int)
+            or isinstance(max_scan_minutes, bool)
+            or not 1 <= max_scan_minutes <= MAX_SCHEDULE_SCAN_MINUTES
+        ):
+            raise ValueError(
+                f"max_scan_minutes must be an integer between 1 and {MAX_SCHEDULE_SCAN_MINUTES}"
+            )
+        if (
+            not isinstance(max_fires, int)
+            or isinstance(max_fires, bool)
+            or not 1 <= max_fires <= MAX_SCHEDULE_FIRES
+        ):
+            raise ValueError(f"max_fires must be an integer between 1 and {MAX_SCHEDULE_FIRES}")
         schedules = await asyncio.to_thread(self._store.list_schedules, workspace_id)
         evaluation: list[tuple[Schedule, tuple[Instant, ...], tuple[Instant, ...]]] = []
         total_fires = 0
@@ -164,6 +180,7 @@ class SchedulerScheduleService:
 
 __all__ = (
     "AuthorityCheck",
+    "MAX_SCHEDULE_FIRES",
     "ScheduleFireLimitExceeded",
     "ScheduleTickResult",
     "SchedulerScheduleService",

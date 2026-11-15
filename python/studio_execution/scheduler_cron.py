@@ -9,6 +9,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from studio_core import Schedule
 from studio_orchestrator import Instant
 
+MAX_SCHEDULE_SCAN_MINUTES = 1_000_000
+
 
 class CronSyntaxError(ValueError):
     """Raised when a schedule cron expression is outside the supported grammar."""
@@ -174,8 +176,14 @@ def evaluated_minutes(
     skipping schedule fires.
     """
 
-    if max_scan_minutes < 1:
-        raise ValueError("max_scan_minutes must be positive")
+    if (
+        not isinstance(max_scan_minutes, int)
+        or isinstance(max_scan_minutes, bool)
+        or not 1 <= max_scan_minutes <= MAX_SCHEDULE_SCAN_MINUTES
+    ):
+        raise ValueError(
+            f"max_scan_minutes must be an integer between 1 and {MAX_SCHEDULE_SCAN_MINUTES}"
+        )
     end = _minute_instant(_instant_datetime(through))
     end_dt = _instant_datetime(end)
     if cursor is None:
@@ -201,6 +209,7 @@ def evaluated_minutes(
 __all__ = (
     "CronExpression",
     "CronSyntaxError",
+    "MAX_SCHEDULE_SCAN_MINUTES",
     "evaluated_minutes",
     "schedule_matches",
     "validate_schedule",
