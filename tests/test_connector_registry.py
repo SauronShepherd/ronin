@@ -291,6 +291,18 @@ def test_connector_registry_rejects_boolean_bounds() -> None:
         registry.preview("http.json", None, None, None, limit=True)
     with pytest.raises(ValueError, match="read limit"):
         registry.read("http.json", None, None, None, limit=True)
+    with pytest.raises(ValueError, match="HTTP read limit"):
+        HttpJsonConnector().read(
+            ConnectionDefinition(
+                ConnectionId("http-source"),
+                "HTTP source",
+                "http.json",
+                options=(("base_url", "https://example.test"),),
+            ),
+            AssetHandle(ConnectionId("http-source"), (), "events"),
+            EnvironmentSecretResolver({}),
+            limit=True,
+        )
 
 
 def test_http_connector_requires_https_by_default() -> None:

@@ -73,6 +73,17 @@ def _connection() -> ConnectionDefinition:
     )
 
 
+def test_azure_blob_rejects_boolean_read_limit() -> None:
+    connection = _connection()
+    with pytest.raises(ValueError, match="Azure Blob read limit"):
+        AzureBlobJsonConnector(container_client=_Container()).read(
+            connection,
+            AssetHandle(connection.id, ("raw",), "events.json"),
+            EnvironmentSecretResolver({}),
+            limit=True,
+        )
+
+
 @pytest.fixture(autouse=True)
 def _stub_azure_match_condition(monkeypatch: pytest.MonkeyPatch) -> None:
     def condition() -> str:

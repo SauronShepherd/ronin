@@ -80,6 +80,17 @@ def test_s3_json_discovers_and_snapshot_reads() -> None:
     assert client.last_body.closed
 
 
+def test_s3_json_rejects_boolean_read_limit() -> None:
+    connection = _connection()
+    with pytest.raises(ValueError, match="S3 read limit"):
+        S3JsonConnector(client=_S3()).read(
+            connection,
+            AssetHandle(connection.id, ("raw",), "events.json"),
+            EnvironmentSecretResolver({}),
+            limit=True,
+        )
+
+
 def test_s3_json_read_closes_stream_when_object_exceeds_byte_limit() -> None:
     client = _S3()
     client.objects[("data", "raw/large.json")] = {

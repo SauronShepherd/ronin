@@ -204,7 +204,7 @@ class HttpJsonConnector:
     ) -> ConnectorReadResult:
         if checkpoint is not None and checkpoint.strategy != "snapshot":
             raise ValueError("HTTP JSON connector only supports snapshot checkpoints")
-        if limit < 1 or limit > 100_000:
+        if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 100_000:
             raise ValueError("HTTP read limit must be between 1 and 100000")
         if asset.connection_id != connection.id:
             raise ValueError("HTTP asset handle belongs to a different connection")

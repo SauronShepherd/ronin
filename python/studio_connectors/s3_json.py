@@ -179,7 +179,7 @@ class S3JsonConnector:
         del secrets
         if checkpoint is not None and checkpoint.strategy != "snapshot":
             raise ValueError("S3 JSON connector only supports snapshot checkpoints")
-        if limit < 1 or limit > 100_000:
+        if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 100_000:
             raise ValueError("S3 read limit must be between 1 and 100000")
         if asset.connection_id != connection.id or not asset.name:
             raise ValueError("S3 asset handle does not belong to the connection")

@@ -221,7 +221,7 @@ class AzureBlobJsonConnector:
     ) -> ConnectorReadResult:
         if checkpoint is not None and checkpoint.strategy != "snapshot":
             raise ValueError("Azure Blob JSON connector only supports snapshot checkpoints")
-        if limit < 1 or limit > 100_000:
+        if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 100_000:
             raise ValueError("Azure Blob read limit must be between 1 and 100000")
         if asset.connection_id != connection.id:
             raise ValueError("Azure Blob asset handle does not belong to the connection")
