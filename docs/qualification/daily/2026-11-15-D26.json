@@ -1,0 +1,73 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D26",
+  "date": "2026-11-15",
+  "status": "pass",
+  "cell": "P7 bounded local alerts + catalog/lineage quality state + Catalog Studio + persistence/recovery",
+  "candidate_sha": "9ca22d7b24e622203484d58707ec550b4c6cf9a4",
+  "candidate_receipt": "docs/qualification/candidates/candidate-9ca22d7b-d26.json",
+  "code_commit": "9ca22d7b24e622203484d58707ec550b4c6cf9a4",
+  "origin_main_at_code_commit": "9ca22d7b24e622203484d58707ec550b4c6cf9a4",
+  "implementation": {
+    "alerts": "Added authenticated alert rules, instances, evaluate and acknowledge operations to the public ControlPlaneClient and CLI; real SQLite telemetry drives an open alert for a failed quality run, idempotent evaluation and durable acknowledgement.",
+    "catalog_and_lineage": "Added opt-in include_quality projections to catalog assets and lineage edges with bounded latest-run summaries; default responses stay unchanged and invalid query values remain rejected.",
+    "studio": "Catalog Studio requests quality state for asset and lineage views and renders passed, failed, error and unknown status without widening the existing public route contract.",
+    "quality_journey": "The real HTTP/SQLite journey runs passed and failed quality checks, records the alert, evaluates and acknowledges it, reads catalog and lineage quality state, replays the failed request deterministically and recovers state after restart.",
+    "recovery": "The same SQLite database preserves quality history, alert status and acknowledgement across composition restart; no provider was replaced by a mock for certification."
+  },
+  "tests": {
+    "candidate_local_composed": "2 passed, 23 deselected, 0 failed, 0 skipped for the quality and prior graph/ontology journeys",
+    "candidate_quality_http_runtime_store": "51 passed, 0 failed, 0 skipped",
+    "candidate_pyronin_cli_catalog_quality_graph": "9 passed, 80 deselected, 0 failed, 0 skipped",
+    "candidate_web": "SKIP; @playwright/test is not present in the exact candidate archive and the offline browser command could not resolve it",
+    "checkout_web": "9 passed, 0 failed, 0 skipped in 17.8 seconds",
+    "negative_paths": [
+      "unknown workspace returns HTTP/SDK 403",
+      "quality rows containing a non-object return HTTP/SDK 400",
+      "empty rows fail the blocking row-count threshold with gate_passed false when enforcement is disabled",
+      "a failed quality run opens an alert, while a passed run leaves alert instances empty",
+      "catalog and lineage quality projections distinguish a failed source from an unknown target",
+      "replay returns an identical failed payload and alert acknowledgement survives restart"
+    ],
+    "static": {
+      "ruff_format": "PASS; 1130 files",
+      "ruff": "PASS",
+      "mypy": "PASS; 358 source files",
+      "architecture": "PASS",
+      "negative_gates": "PASS",
+      "route_consistency": "PASS; 200 operations",
+      "dependency_surfaces": "PASS",
+      "openapi": "PASS; 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708",
+      "studio_surface": "PASS; 129/242",
+      "studio_web_audit": "PASS; 72 files, 184 route invocations",
+      "studio_budget": "PASS; 2170472 actual asset bytes against the 2170474-byte baseline",
+      "daily_progress": "PASS in candidate at archived ledger state 25/39; PASS on checkout after evidence update at 26/39",
+      "public_status": "SKIP in archive; command requires Git metadata; PASS on checkout after evidence update",
+      "capability_status": "PASS"
+    }
+  },
+  "scans": {
+    "gitleaks": "PASS; 8.30.1; 0 findings over approximately 15.69 MB of the clean candidate",
+    "pip_audit": "PASS; 2.10.1; no known vulnerabilities from requirements-test.lock",
+    "trivy": "SKIP; no local binary"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "25/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "26/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    }
+  },
+  "limitations": [
+    "P7 is not qualified: only the local SQLite profile is exercised; PostgreSQL, optional SQL/Python custom providers, external alert delivery and provider/consumer certification remain open.",
+    "Candidate browser evidence is a recorded SKIP, not a PASS; the checkout browser contract is separate evidence.",
+    "No gate changed to closed and no skip counts as PASS."
+  ]
+}
