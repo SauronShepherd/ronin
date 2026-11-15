@@ -24,12 +24,17 @@ function catalogAssetId(item) {
   return String(item?.id || item?.asset_id || item?.name || '').trim();
 }
 
+function qualityStatus(item) {
+  return String(item?.quality?.state?.latest_status || 'unknown').toLowerCase();
+}
+
 function assetTable(items) {
-  return `<div class="table-wrap catalog-table-wrap"><table class="catalog-table"><caption class="sr-only">Governed catalog assets</caption><thead><tr><th>Asset</th><th>Kind</th><th>Tags</th><th>Classification</th><th>Action</th></tr></thead><tbody>${items.map(item => {
+  return `<div class="table-wrap catalog-table-wrap"><table class="catalog-table"><caption class="sr-only">Governed catalog assets</caption><thead><tr><th>Asset</th><th>Kind</th><th>Quality</th><th>Tags</th><th>Classification</th><th>Action</th></tr></thead><tbody>${items.map(item => {
     const id = catalogAssetId(item);
     const name = item.name || id || 'Unnamed asset';
     const identity = id || 'Identity not published';
-    return `<tr><td><button class="catalog-asset-link" type="button" title="${esc(identity)}" aria-label="Inspect ${esc(name)} (${esc(identity)})" data-action="catalog-select-asset" data-asset-id="${esc(id)}"><strong>${esc(name)}</strong></button><span class="catalog-subline" title="${esc(identity)}">${esc(identity)}</span></td><td><span class="catalog-kind">${esc(item.kind || 'asset')}</span></td><td>${pills(item.tags)}</td><td>${pills(item.classifications)}</td><td><button class="button" type="button" data-action="catalog-select-asset" data-asset-id="${esc(id)}">Inspect lineage</button></td></tr>`;
+    const status = qualityStatus(item);
+    return `<tr><td><button class="catalog-asset-link" type="button" title="${esc(identity)}" aria-label="Inspect ${esc(name)} (${esc(identity)})" data-action="catalog-select-asset" data-asset-id="${esc(id)}"><strong>${esc(name)}</strong></button><span class="catalog-subline" title="${esc(identity)}">${esc(identity)}</span></td><td><span class="catalog-kind">${esc(item.kind || 'asset')}</span></td><td><span class="status ${status === 'passed' ? 'green' : status === 'failed' || status === 'error' ? 'red' : 'amber'}">${esc(status)}</span></td><td>${pills(item.tags)}</td><td>${pills(item.classifications)}</td><td><button class="button" type="button" data-action="catalog-select-asset" data-asset-id="${esc(id)}">Inspect lineage</button></td></tr>`;
   }).join('')}</tbody></table></div>`;
 }
 
@@ -41,7 +46,9 @@ function lineageView(payload) {
     const target = edge.target || {};
     const sourceId = source.asset_id || source.id || 'source';
     const targetId = target.asset_id || target.id || 'target';
-    return `<article class="catalog-lineage-edge"><div class="catalog-lineage-node"><span class="eyebrow">SOURCE</span><strong>${esc(sourceId)}</strong><span class="catalog-subline">${esc(source.version || 'unversioned')}</span></div><span class="catalog-lineage-arrow" aria-hidden="true">→</span><div class="catalog-lineage-node"><span class="eyebrow">TARGET</span><strong>${esc(targetId)}</strong><span class="catalog-subline">${esc(target.version || 'unversioned')}</span></div><div class="catalog-lineage-meta"><span>${esc(edge.operation || 'derived')}</span><span>${esc(edge.mode || 'observed')}</span>${edge.execution_ref ? `<span>Run ${esc(edge.execution_ref)}</span>` : ''}</div></article>`;
+    const sourceQuality = edge.source_quality?.latest_status || 'unknown';
+    const targetQuality = edge.target_quality?.latest_status || 'unknown';
+    return `<article class="catalog-lineage-edge"><div class="catalog-lineage-node"><span class="eyebrow">SOURCE</span><strong>${esc(sourceId)}</strong><span class="catalog-subline">${esc(source.version || 'unversioned')}</span></div><span class="catalog-lineage-arrow" aria-hidden="true">→</span><div class="catalog-lineage-node"><span class="eyebrow">TARGET</span><strong>${esc(targetId)}</strong><span class="catalog-subline">${esc(target.version || 'unversioned')}</span></div><div class="catalog-lineage-meta"><span>${esc(edge.operation || 'derived')}</span><span>${esc(edge.mode || 'observed')}</span><span>Quality ${esc(sourceQuality)} → ${esc(targetQuality)}</span>${edge.execution_ref ? `<span>Run ${esc(edge.execution_ref)}</span>` : ''}</div></article>`;
   }).join('')}</div><details class="catalog-raw"><summary>View raw lineage response</summary><pre class="code">${esc(json(payload))}</pre></details>`;
 }
 
@@ -66,7 +73,7 @@ async function showCatalogPage(form, cursor = null) {
   if (!result) return false;
   const workspace = encodeURIComponent(form.elements.workspace.value.trim());
   const query = form.elements.query.value.trim();
-  const params = new URLSearchParams({ limit: '50' });
+  const params = new URLSearchParams({ limit: '50', include_quality: 'true' });
   if (query) params.set('q', query);
   if (cursor) params.set('cursor', cursor);
   result.className = 'loading catalog-result';
@@ -140,7 +147,7 @@ document.addEventListener('submit', async event => {
   const output = document.querySelector('#catalog-lineage-result');
   output.className = 'catalog-lineage-result loading';
   output.textContent = 'Loading lineage…';
-  try { output.className = 'catalog-lineage-result'; output.innerHTML = lineageView(await get(`/v1/workspaces/${workspace}/catalog/lineage/${asset}/${version}?direction=${direction}&limit=100`)); }
+  try { output.className = 'catalog-lineage-result'; output.innerHTML = lineageView(await get(`/v1/workspaces/${workspace}/catalog/lineage/${asset}/${version}?direction=${direction}&limit=100&include_quality=true`)); }
   catch (error) { output.className = 'catalog-lineage-result'; output.innerHTML = `<div class="error"><strong>Lineage lookup failed.</strong><span>${esc(error.message)}</span><button class="button" type="button" data-action="catalog-lineage-retry">Retry lineage</button></div>`; }
 });
 

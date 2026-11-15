@@ -223,6 +223,7 @@ def _parser() -> argparse.ArgumentParser:
     catalog_assets.add_argument("--query")
     catalog_assets.add_argument("--limit", type=int, default=100)
     catalog_assets.add_argument("--cursor")
+    catalog_assets.add_argument("--include-quality", action="store_true")
     catalog_assets.add_argument("--json", action="store_true")
     catalog_lineage = catalog_commands.add_parser("lineage", help="inspect catalog lineage")
     catalog_lineage.add_argument("workspace_id")
@@ -232,6 +233,7 @@ def _parser() -> argparse.ArgumentParser:
         "--direction", choices=("upstream", "downstream"), default="upstream"
     )
     catalog_lineage.add_argument("--limit", type=int, default=100)
+    catalog_lineage.add_argument("--include-quality", action="store_true")
     catalog_lineage.add_argument("--json", action="store_true")
     catalog_revisions = catalog_commands.add_parser(
         "revisions", help="list catalog asset revisions"
@@ -313,6 +315,26 @@ def _parser() -> argparse.ArgumentParser:
     quality_state.add_argument("asset_id")
     quality_state.add_argument("version")
     quality_state.add_argument("--json", action="store_true")
+    alerts = commands.add_parser("alerts", help="inspect and operate workspace alert state")
+    alert_commands = alerts.add_subparsers(dest="alerts_command", required=True)
+    alert_rules = alert_commands.add_parser("rules", help="list configured alert rules")
+    alert_rules.add_argument("workspace_id")
+    alert_rules.add_argument("--json", action="store_true")
+    alert_instances = alert_commands.add_parser("instances", help="list persisted alert instances")
+    alert_instances.add_argument("workspace_id")
+    alert_instances.add_argument("--limit", type=int, default=100)
+    alert_instances.add_argument("--json", action="store_true")
+    alert_evaluate = alert_commands.add_parser("evaluate", help="evaluate one alert rule")
+    alert_evaluate.add_argument("workspace_id")
+    alert_evaluate.add_argument("rule_id")
+    alert_evaluate.add_argument("--json", action="store_true")
+    alert_acknowledge = alert_commands.add_parser(
+        "acknowledge", help="acknowledge one persisted alert instance"
+    )
+    alert_acknowledge.add_argument("workspace_id")
+    alert_acknowledge.add_argument("rule_id")
+    alert_acknowledge.add_argument("fingerprint")
+    alert_acknowledge.add_argument("--json", action="store_true")
     plugins = commands.add_parser("plugins", help="inspect installed Ronin plugins")
     plugins.add_argument(
         "plugins_command", choices=("list", "surfaces", "validate", "lock", "rollback")
@@ -920,6 +942,7 @@ def _catalog(namespace: argparse.Namespace) -> int:
             query=cast(str | None, namespace.query),
             limit=cast(int, namespace.limit),
             cursor=cast(str | None, namespace.cursor),
+            include_quality=bool(namespace.include_quality),
         )
     elif command == "lineage":
         result = client.list_catalog_lineage(
@@ -928,6 +951,7 @@ def _catalog(namespace: argparse.Namespace) -> int:
             cast(str, namespace.version),
             direction=cast(str, namespace.direction),
             limit=cast(int, namespace.limit),
+            include_quality=bool(namespace.include_quality),
         )
     elif command == "revisions":
         result = client.list_catalog_revisions(workspace_id, cast(str, namespace.asset_id))
@@ -1038,6 +1062,28 @@ def _quality(namespace: argparse.Namespace) -> int:
         )
     else:
         raise CliError(f"unsupported quality command: {command}")
+    _emit_control_result(result, as_json=bool(namespace.json))
+    return 0
+
+
+def _alerts(namespace: argparse.Namespace) -> int:
+    client = _control_plane_client()
+    command = cast(str, namespace.alerts_command)
+    workspace_id = cast(str, namespace.workspace_id)
+    if command == "rules":
+        result = client.list_alert_rules(workspace_id)
+    elif command == "instances":
+        result = client.list_alert_instances(workspace_id, limit=cast(int, namespace.limit))
+    elif command == "evaluate":
+        result = client.evaluate_alert(workspace_id, cast(str, namespace.rule_id))
+    elif command == "acknowledge":
+        result = client.acknowledge_alert(
+            workspace_id,
+            cast(str, namespace.rule_id),
+            cast(str, namespace.fingerprint),
+        )
+    else:
+        raise CliError(f"unsupported alerts command: {command}")
     _emit_control_result(result, as_json=bool(namespace.json))
     return 0
 
@@ -1997,6 +2043,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _graphs(namespace)
         if command == "quality":
             return _quality(namespace)
+        if command == "alerts":
+            return _alerts(namespace)
         if command == "migrate":
             if namespace.migrate_command == "inventory":
                 return _migration_inventory(namespace)

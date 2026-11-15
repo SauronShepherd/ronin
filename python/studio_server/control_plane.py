@@ -855,6 +855,20 @@ def _semantic_project_scope(workspace_id: WorkspaceId, project_id: str) -> str:
     return semantic_project_scope(str(workspace_id), project_id)
 
 
+def _catalog_quality_state(
+    quality_reader: QualityHTTPAdapter, workspace_id: WorkspaceId, asset: AssetRef
+) -> dict[str, object]:
+    """Expose bounded quality status alongside a catalog or lineage reference."""
+
+    state = quality_reader.state(workspace_id, asset.to_payload())
+    return {
+        "asset": asset.to_payload(),
+        "latest_run_id": state.get("latest_run_id"),
+        "latest_status": state.get("latest_status", "unknown"),
+        "run_count": state.get("run_count", 0),
+    }
+
+
 class FeatureDefinitionServicePort(Protocol):
     def list(self, workspace_id: WorkspaceId) -> tuple[Any, ...]: ...
 
@@ -1594,15 +1608,21 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     )
                     return
                 params = parse_qs(query or "", keep_blank_values=True)
-                if any(key not in {"direction", "limit"} for key in params):
-                    raise ValueError("lineage query accepts only direction and limit")
+                if any(key not in {"direction", "limit", "include_quality"} for key in params):
+                    raise ValueError(
+                        "lineage query accepts only direction, limit, and include_quality"
+                    )
                 direction_values = params.get("direction", ["upstream"])
                 limit_values = params.get("limit", ["100"])
-                if len(direction_values) != 1 or len(limit_values) != 1:
+                quality_values = params.get("include_quality", ["false"])
+                if len(direction_values) != 1 or len(limit_values) != 1 or len(quality_values) != 1:
                     raise ValueError("lineage query parameters must not be repeated")
                 direction = direction_values[0]
                 if direction not in {"upstream", "downstream"}:
                     raise ValueError("lineage direction must be upstream or downstream")
+                quality_value = quality_values[0].casefold()
+                if quality_value not in {"true", "false"}:
+                    raise ValueError("include_quality must be true or false")
                 try:
                     limit = int(limit_values[0])
                 except ValueError as exc:
@@ -1611,6 +1631,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     raise ValueError("lineage limit must be between 1 and 100")
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                include_quality = quality_value == "true"
+                quality_reader = self._server().quality_reader
+                if include_quality and quality_reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "quality_unavailable",
+                        "quality state is not configured",
+                    )
                     return
                 ref = AssetRef(AssetId(unquote(segments[5])), AssetVersion(unquote(segments[6])))
                 method = getattr(catalog_reader, direction, None)
@@ -1630,7 +1659,18 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         str(exc),
                     )
                     return
-                self._write_json(HTTPStatus.OK, {"items": [edge.to_payload() for edge in edges]})
+                lineage_items: list[dict[str, object]] = []
+                for edge in edges:
+                    edge_payload = edge.to_payload()
+                    if include_quality:
+                        edge_payload["source_quality"] = _catalog_quality_state(
+                            cast(QualityHTTPAdapter, quality_reader), workspace_id, edge.source
+                        )
+                        edge_payload["target_quality"] = _catalog_quality_state(
+                            cast(QualityHTTPAdapter, quality_reader), workspace_id, edge.target
+                        )
+                    lineage_items.append(edge_payload)
+                self._write_json(HTTPStatus.OK, {"items": lineage_items})
                 return
             if segments == ("v1", "platform", "connectors"):
                 if query:
@@ -2360,7 +2400,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
                 params = parse_qs(query or "", keep_blank_values=True)
-                allowed_params = {"q", "limit", "cursor", "include_governance"}
+                allowed_params = {"q", "limit", "cursor", "include_governance", "include_quality"}
                 if set(params) - allowed_params or any(
                     len(values) != 1 for values in params.values()
                 ):
@@ -2381,6 +2421,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 governance_value = params.get("include_governance", ["false"])[0].casefold()
                 if governance_value not in {"true", "false"}:
                     raise ValueError("include_governance must be true or false")
+                quality_value = params.get("include_quality", ["false"])[0].casefold()
+                if quality_value not in {"true", "false"}:
+                    raise ValueError("include_quality must be true or false")
                 catalog_page = (
                     catalog_reader.search_assets_page(
                         workspace_id, search, limit=limit, cursor=cursor
@@ -2389,6 +2432,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     else catalog_reader.list_assets_page(workspace_id, limit=limit, cursor=cursor)
                 )
                 include_governance = governance_value == "true"
+                include_quality = quality_value == "true"
+                quality_reader = self._server().quality_reader
+                if include_quality and quality_reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "quality_unavailable",
+                        "quality state is not configured",
+                    )
+                    return
                 catalog_items: list[dict[str, object]] = []
                 for catalog_asset_entry in catalog_page.items:
                     catalog_asset = cast(CatalogAsset, catalog_asset_entry)
@@ -2412,6 +2464,23 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             catalog_asset_payload["ownership"] = (
                                 None if ownership_value is None else ownership_value.to_payload()
                             )
+                    if include_quality:
+                        quality_revisions = catalog_reader.list_revisions(
+                            workspace_id, AssetId(str(catalog_asset.id))
+                        )
+                        latest_revision = quality_revisions[-1] if quality_revisions else None
+                        catalog_asset_payload["quality"] = (
+                            None
+                            if latest_revision is None
+                            else {
+                                "revision": latest_revision.to_payload(),
+                                "state": _catalog_quality_state(
+                                    cast(QualityHTTPAdapter, quality_reader),
+                                    workspace_id,
+                                    latest_revision.ref,
+                                ),
+                            }
+                        )
                     catalog_items.append(catalog_asset_payload)
                 self._write_json(
                     HTTPStatus.OK,

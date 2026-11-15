@@ -361,12 +361,15 @@ class ControlPlaneClient:
         query: str | None = None,
         limit: int = 100,
         cursor: str | None = None,
+        include_quality: bool = False,
     ) -> dict[str, object]:
         params = {"limit": str(limit)}
         if query is not None:
             params["q"] = query
         if cursor is not None:
             params["cursor"] = cursor
+        if include_quality:
+            params["include_quality"] = "true"
         return _page_result(
             self.request(
                 "GET",
@@ -384,13 +387,17 @@ class ControlPlaneClient:
         *,
         direction: str = "upstream",
         limit: int = 100,
+        include_quality: bool = False,
     ) -> dict[str, object]:
+        params = {"direction": direction, "limit": str(limit)}
+        if include_quality:
+            params["include_quality"] = "true"
         return _page_result(
             self.request(
                 "GET",
                 f"/v1/workspaces/{quote(workspace_id, safe='')}/catalog/lineage/"
                 f"{quote(asset_id, safe='')}/{quote(version, safe='')}",
-                query={"direction": direction, "limit": str(limit)},
+                query=params,
             ),
             "catalog lineage",
         )
@@ -537,6 +544,44 @@ class ControlPlaneClient:
                 "GET",
                 f"/v1/workspaces/{quote(workspace_id, safe='')}/quality/state/"
                 f"{quote(asset_id, safe='')}/{quote(version, safe='')}",
+            )
+        )
+
+    def list_alert_rules(self, workspace_id: str) -> dict[str, object]:
+        return _page_result(
+            self.request("GET", f"/v1/workspaces/{quote(workspace_id, safe='')}/alerts/rules"),
+            "alert rules",
+        )
+
+    def list_alert_instances(self, workspace_id: str, *, limit: int = 100) -> dict[str, object]:
+        if not 1 <= limit <= 1000:
+            raise ValueError("alert instance limit must be between 1 and 1000")
+        return _page_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/alerts/instances",
+                query={"limit": str(limit)},
+            ),
+            "alert instances",
+        )
+
+    def evaluate_alert(self, workspace_id: str, rule_id: str) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "POST",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/alerts/evaluate",
+                payload={"rule_id": rule_id},
+            )
+        )
+
+    def acknowledge_alert(
+        self, workspace_id: str, rule_id: str, fingerprint: str
+    ) -> dict[str, object]:
+        return _object_result(
+            self.request(
+                "POST",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/alerts/acknowledge",
+                payload={"rule_id": rule_id, "fingerprint": fingerprint},
             )
         )
 

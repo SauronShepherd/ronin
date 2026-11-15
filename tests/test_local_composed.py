@@ -66,6 +66,7 @@ from studio_notebook import (
     NotebookDocument,
     allocate_cell_ids,
 )
+from studio_observability import AlertRule, SqliteTelemetryStore
 from studio_orchestrator import Instant
 from studio_server import LocalServerComposition
 from studio_sql import SqlExplainUnsupportedError, SqlTimeoutError
@@ -702,6 +703,48 @@ def test_local_composed_quality_contract_journey_is_durable_and_operator_visible
     assert catalog is not None
     catalog.create_asset(workspace, asset, now=now)
     catalog.put_revision(workspace, revision, now=now)
+    derived_asset = CatalogAsset(
+        AssetId("orders-derived"), "table", "Derived orders", project_id="project-a"
+    )
+    derived_revision = AssetRevision(
+        AssetRef(derived_asset.id, AssetVersion("1")), schema_digest="orders-derived-v1"
+    )
+    catalog.create_asset(workspace, derived_asset, now=now)
+    catalog.put_revision(workspace, derived_revision, now=now)
+    catalog.put_lineage(
+        workspace,
+        LineageEdge(revision.ref, derived_revision.ref, "transform", "declared"),
+        now=now,
+    )
+    assert composition.control_plane_server.alert_reader is not None
+    telemetry = SqliteTelemetryStore(tmp_path / "ronin.sqlite3")
+    alert_rule = AlertRule(
+        "quality-run-failed",
+        "Quality run failures",
+        "quality.run.failure",
+        "gte",
+        1.0,
+        (("asset", "orders@1"),),
+    )
+    telemetry.put_alert_rule(alert_rule)
+
+    def request(
+        address: tuple[str, int], method: str, path: str, body: object | None = None
+    ) -> tuple[int, dict[str, object]]:
+        payload = None if body is None else json.dumps(body, separators=(",", ":")).encode("utf-8")
+        headers = {"Authorization": "Bearer control-token"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
+        connection = http.client.HTTPConnection(*address, timeout=5)
+        try:
+            connection.request(method, path, body=payload, headers=headers)
+            response = connection.getresponse()
+            return response.status, cast(
+                dict[str, object], json.loads(response.read().decode("utf-8"))
+            )
+        finally:
+            connection.close()
+
     composition.start()
     address = composition.control_plane_server.server_address
     base_url = f"http://{address[0]}:{address[1]}"
@@ -724,6 +767,7 @@ def test_local_composed_quality_contract_journey_is_durable_and_operator_visible
                 "asset": {"asset_id": "orders", "version": "1"},
                 "rows": [{"id": 1}],
                 "run_id": "quality-local-passed",
+                "execution_ref": "quality-execution-passed",
                 "contract_digest": contract.digest,
                 "enforce_blocking": True,
             }
@@ -742,16 +786,24 @@ def test_local_composed_quality_contract_journey_is_durable_and_operator_visible
                 "asset": {"asset_id": "orders", "version": "1"},
                 "rows": [{"id": 1}],
                 "run_id": "quality-local-passed",
+                "execution_ref": "quality-execution-passed",
                 "contract_digest": contract.digest,
                 "enforce_blocking": True,
             },
         )
         assert passed["gate_passed"] is True
-        assert cast(dict[str, object], passed["run"])["status"] == "passed"
+        passed_run = cast(dict[str, object], passed["run"])
+        assert passed_run["status"] == "passed"
+        assert passed_run["execution_ref"] == "quality-execution-passed"
         assert sdk.list_quality_runs("workspace-1", "orders", "1")[0]["id"] == (
             "quality-local-passed"
         )
         assert sdk.get_quality_state("workspace-1", "orders", "1")["latest_status"] == ("passed")
+        status, alert_payload = request(
+            address, "GET", "/v1/workspaces/workspace-1/alerts/instances"
+        )
+        assert status == 200, alert_payload
+        assert cast(list[object], alert_payload["items"]) == []
 
         assert cli_main(["quality", "contract", "get", "workspace-1", "orders", "1", "--json"]) == 0
         assert json.loads(capsys.readouterr().out) == contract.to_payload()
@@ -774,19 +826,87 @@ def test_local_composed_quality_contract_journey_is_durable_and_operator_visible
         assert cli_main(["quality", "run", "workspace-1", str(passed_file), "--json"]) == 0
         assert json.loads(capsys.readouterr().out)["gate_passed"] is True
 
-        failed = sdk.run_quality(
-            "workspace-1",
-            {
-                "asset": {"asset_id": "orders", "version": "1"},
-                "rows": [],
-                "run_id": "quality-local-failed",
-                "contract_digest": contract.digest,
-                "enforce_blocking": False,
-            },
-        )
+        failed_request = {
+            "asset": {"asset_id": "orders", "version": "1"},
+            "rows": [],
+            "run_id": "quality-local-failed",
+            "execution_ref": "quality-execution-failed",
+            "contract_digest": contract.digest,
+            "enforce_blocking": False,
+        }
+        failed = sdk.run_quality("workspace-1", failed_request)
         assert failed["gate_passed"] is False
         assert cast(dict[str, object], failed["run"])["status"] == "failed"
         assert sdk.get_quality_state("workspace-1", "orders", "1")["latest_status"] == ("failed")
+        status, alert_payload = request(
+            address, "GET", "/v1/workspaces/workspace-1/alerts/instances"
+        )
+        assert status == 200, alert_payload
+        alert_items = cast(list[dict[str, object]], alert_payload["items"])
+        assert len(alert_items) == 1
+        assert alert_items[0]["rule_id"] == alert_rule.id
+        fingerprint = cast(str, alert_items[0]["fingerprint"])
+        assert cli_main(["alerts", "rules", "workspace-1", "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["items"] == [alert_rule.to_payload()]
+        assert cli_main(["alerts", "instances", "workspace-1", "--json"]) == 0
+        cli_instances = json.loads(capsys.readouterr().out)
+        assert cli_instances["items"][0]["fingerprint"] == fingerprint
+        status, evaluated = request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-1/alerts/evaluate",
+            {"rule_id": alert_rule.id},
+        )
+        assert status == 200, evaluated
+        assert evaluated["changed"] is False
+        assert cast(dict[str, object], evaluated["state"])["status"] == "open"
+        status, catalog_quality = request(
+            address, "GET", "/v1/workspaces/workspace-1/catalog/assets?include_quality=true"
+        )
+        assert status == 200, catalog_quality
+        catalog_items = cast(list[dict[str, object]], catalog_quality["items"])
+        orders_catalog = next(item for item in catalog_items if item["id"] == "orders")
+        orders_quality = cast(dict[str, object], orders_catalog["quality"])
+        orders_state = cast(dict[str, object], orders_quality["state"])
+        assert orders_state["latest_status"] == "failed"
+        assert orders_state["latest_run_id"] == "quality-local-failed"
+        assert cli_main(["catalog", "assets", "workspace-1", "--include-quality", "--json"]) == 0
+        cli_catalog_items = cast(dict[str, object], json.loads(capsys.readouterr().out))["items"]
+        cli_orders = next(
+            item
+            for item in cast(list[dict[str, object]], cli_catalog_items)
+            if item["id"] == "orders"
+        )
+        assert cast(dict[str, object], cast(dict[str, object], cli_orders)["quality"])["state"]
+        status, lineage_quality = request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-1/catalog/lineage/orders-derived/1"
+            "?direction=upstream&include_quality=true",
+        )
+        assert status == 200, lineage_quality
+        lineage_item = cast(list[dict[str, object]], lineage_quality["items"])[0]
+        assert cast(dict[str, object], lineage_item["source_quality"])["latest_status"] == "failed"
+        assert cast(dict[str, object], lineage_item["target_quality"])["latest_status"] == "unknown"
+        assert cli_main(["alerts", "evaluate", "workspace-1", alert_rule.id, "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["changed"] is False
+        assert (
+            cli_main(
+                [
+                    "alerts",
+                    "acknowledge",
+                    "workspace-1",
+                    alert_rule.id,
+                    fingerprint,
+                    "--json",
+                ]
+            )
+            == 0
+        )
+        acknowledged = json.loads(capsys.readouterr().out)
+        assert acknowledged["state"]["acknowledged_at"] is not None
+        assert sdk.run_quality("workspace-1", failed_request) == failed
+        assert len(telemetry.list_metrics()) == 4
         with pytest.raises(APIError) as malformed:
             sdk.run_quality(
                 "workspace-1",
@@ -824,6 +944,15 @@ def test_local_composed_quality_contract_journey_is_durable_and_operator_visible
             "passed",
             "failed",
         ]
+        status, recovered_alerts = request(
+            restarted.control_plane_server.server_address,
+            "GET",
+            "/v1/workspaces/workspace-1/alerts/instances",
+        )
+        assert status == 200, recovered_alerts
+        recovered_items = cast(list[dict[str, object]], recovered_alerts["items"])
+        assert recovered_items[0]["status"] == "open"
+        assert recovered_items[0]["acknowledged_at"] is not None
     finally:
         restarted.stop()
 

@@ -80,11 +80,11 @@ test('catalog search keeps the workspace and query recoverable after a lookup er
 
 test('catalog workbench turns governed assets into lineage and glossary review', async ({ page }) => {
   await page.route('**/v1/workspaces/ws-a/catalog/assets**', route => route.fulfill({ json: {
-    items: [{ id: 'curated-orders', name: 'Curated orders', kind: 'table', tags: ['gold'], classifications: ['internal'] }],
+    items: [{ id: 'curated-orders', name: 'Curated orders', kind: 'table', tags: ['gold'], classifications: ['internal'], quality: { state: { latest_status: 'passed' } } }],
     next_cursor: null,
   } }));
   await page.route('**/v1/workspaces/ws-a/catalog/lineage/curated-orders/1**', route => route.fulfill({ json: {
-    items: [{ source: { asset_id: 'raw-orders', version: 'v2' }, target: { asset_id: 'curated-orders', version: '1' }, operation: 'write', mode: 'observed', execution_ref: 'run-42' }],
+    items: [{ source: { asset_id: 'raw-orders', version: 'v2' }, target: { asset_id: 'curated-orders', version: '1' }, source_quality: { latest_status: 'warning' }, target_quality: { latest_status: 'passed' }, operation: 'write', mode: 'observed', execution_ref: 'run-42' }],
     truncated: false,
   } }));
   await page.route('**/v1/workspaces/ws-a/glossary/terms**', async route => {
@@ -99,12 +99,14 @@ test('catalog workbench turns governed assets into lineage and glossary review',
   await page.locator('#catalog-search-form [name="workspace"]').fill('ws-a');
   await page.getByRole('button', { name: 'Search catalog' }).click();
   await expect(page.locator('.catalog-table')).toContainText('Curated orders');
+  await expect(page.locator('.catalog-table')).toContainText('passed');
   await expect(page.locator('.catalog-pill').filter({ hasText: 'gold' })).toHaveCount(1);
   await page.locator('[data-action="catalog-select-asset"]').last().click();
   await expect(page.locator('#catalog-lineage-form [name="asset_id"]')).toHaveValue('curated-orders');
   await page.locator('#catalog-lineage-form').getByRole('button', { name: 'Inspect lineage' }).click();
   await expect(page.locator('.catalog-lineage-map')).toContainText('raw-orders');
   await expect(page.locator('.catalog-lineage-map')).toContainText('run-42');
+  await expect(page.locator('.catalog-lineage-map')).toContainText('warning → passed');
 
   await page.locator('#glossary-form [name="workspace"]').fill('ws-a');
   await page.locator('#glossary-search-form').getByRole('button', { name: 'Load terms' }).click();
