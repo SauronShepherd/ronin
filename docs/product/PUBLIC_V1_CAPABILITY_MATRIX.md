@@ -1,26 +1,21 @@
 # Ronin Public v1 capability matrix
 
-## Current exact-SHA snapshot — 10 November 2026
+## Current exact-SHA snapshot — 15 November 2026
 
-The current runtime/test candidate is `74fb53338dd62bc246c55b503b33ce2715795364`,
-which makes the visible default context the same context used by Runs, keeps
-Project deep links aligned with the workspace context, and adds a safe recent-
-context switcher. Its exact web receipt is static Chromium `140/140`, web audit
-`69` files with zero failures, and budget `2,106,569` asset bytes, `68` requests,
-`36` modules, `13` stylesheets and
-`5,639` HTML bytes. Candidate-bound Docker, Helm/kind, live, artifact,
-SBOM/provenance, VEX and Floci receipts are recorded in the release checklist;
-the exact technical lanes pass, while license-policy, legal, security-human,
-manual visual, provider-family, rollback/support and governance gates remain
-open.
-Release status remains separate from the green web lane and is still **NO-GO**
-at `0/13` families.
-The ledger remains **0/13 families qualified**: mandatory family journeys,
-provider matrix, manual visual review, legal/claims decisions, security triage,
-full provider/toolchain matrix and security acceptance are still open. The UI target remains a deliberate
-next phase: unify authoring, evidence, lineage, operations and progressive
-disclosure to approach the usability/depth bar of Databricks, Dataiku, Palantir
-and Fabric while keeping Ronin's charcoal/copper/gold identity.
+The current code candidate is `f685a54b7b5f39cef3a9998480e2bc4dedd235b3`.
+Its D27 evidence covers a real local HTTP/SQLite classical-ML journey through
+Lab creation, quality, durable `local.sklearn` training, digest-verified model
+registration, artifact retrieval, prediction, workspace denial and restart
+recovery. The selected journey is `1/1`; the local-composed suite is `26/26`,
+ML unit tests are `298/298` and ML HTTP integration is `3/3`.
+
+Ruff format/check, mypy (`389` source files), architecture/negative gates,
+route consistency (`200` operations), dependency surfaces, OpenAPI, Studio
+surface (`129/242`), web audit, budget and asset checks pass. Gitleaks reports
+zero findings and pip-audit reports no known vulnerabilities. Candidate browser
+evidence is **SKIP** because `@playwright/test` is not packaged; the checkout
+Catalog + Quality Studio browser contract passes `9/9`. P8 remains partial and
+the release ledger is **1/13 families qualified, 0/10 gates, NO-GO**.
 
 ## Historical snapshot — 3 November 2026
 
@@ -133,7 +128,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `2da767235dd633159e8e13dda73723bdef052cba` (current exact candidate; implementation evidence remains bound to the stated product candidate, this is not a release qualification claim, and the required human/provider gates remain open).
+**Observed source baseline:** `f685a54b7b5f39cef3a9998480e2bc4dedd235b3` (current exact candidate; implementation evidence remains bound to the stated product candidate, this is not a release qualification claim, and the required human/provider gates remain open).
 
 The D21 scheduler slice adds exact-candidate evidence for the bounded local
 API/SQLite/daemon journey and fail-closed identity input boundaries at
@@ -179,6 +174,18 @@ The candidate browser is `SKIP` because the exact archive does not contain
 PostgreSQL/custom-rule providers, external alert delivery, broader provider and
 consumer qualification and complete P7 qualification remain open; the ledger
 remains 1/13 families, 0/10 gates and **NO-GO**.
+
+The D27 ML slice at `f685a54b7b5f39cef3a9998480e2bc4dedd235b3` adds a real
+local HTTP/SQLite journey through Lab creation, quality, durable `local.sklearn`
+training, artifact registration after digest verification, model-card/artifact
+retrieval, prediction, workspace denial and restart recovery. The candidate
+journey is 1/1, the composed local suite is 26/26, ML unit tests are 298/298
+and ML HTTP integration is 3/3. Candidate browser evidence is `SKIP` because
+the exact archive lacks `@playwright/test`; checkout Catalog + Quality Studio
+passes 9/9. PostgreSQL/S3/MLflow/serving providers, broader algorithm/search
+performance and complete P8 qualification remain open; the ledger remains
+1/13 families, 0/10 gates and **NO-GO**. See
+`docs/qualification/candidates/candidate-f685a54b-d27.json`.
 
 **Historical qualification evidence (pre-current no-CI release policy; not a current gate):** `94d8ae2eb9d73f1e367cb7437873650381e90ad2` (`main`, after PR #546 on 2026-10-24; all six exact-head post-merge workflows passed; mutation skipped by policy). The historical workflow references below record repository history only; they do not mean CI is enabled, required, or part of this release. PR #436 executes the supported six-stage PipelineIR in stable topological order; PR #438/#439 add durable checkpoints and PostgreSQL resume pagination; PR #441 stores verified tabular and K-Means model outputs in `ArtifactStore`; PR #443 registers successful durable runs as candidate models after digest verification; PR #445 integrates registration into Studio; PR #446 adds authorized chunked artifact retrieval and a bounded UI download flow; PR #447 binds checkpoints/results to executable source, Python/dependency versions, backend identity, execution options and upstream outputs; PR #448 adds promotion after execution registration; PR #449 adds selective retry from an explicitly selected ML pipeline stage; PR #450 qualifies artifact lifecycle behavior against S3-compatible LocalStack; PR #451 passes the exact pinned PipelineIR to scheduled runners; PR #452 exposes algorithm selection; PR #453 adds standard scaling; PR #454 adds categorical one-hot encoding; PR #455 adds median imputation; PR #456 composes one-hot encoding and median imputation for mixed features; PR #457 adds a non-destructive retention preview, while global deletion remains disabled; PR #458 adds catalog and ML artifact reference discovery; PR #459 adds bounded durable job evidence and checkpoint discovery; PR #460 discovers all nine reference families and combines them into a fail-closed snapshot; PR #461 bounds workspace/catalog/ML enumeration and fails closed when any inventory exceeds its limit; PR #462 bounds local artifact pagination memory with stable digest cursors; PR #464 bounds manual stale-artifact collection and completes the inventory before deleting, while global cleanup remains disabled; PR #466 bounds durable job evidence and cell-result reads across SQLite, PostgreSQL and memory; PR #470 adds candidate DAGs for classification/regression; PR #471 adds K-Means candidate selection; PR #472 exposes candidate selection in Studio; PR #473 bounds search-space memory; PR #475 gives trials stable identities and derived seeds; PR #476 validates complete search domains before training; PR #477 applies Bayesian stopping by recent improvement; PR #478 adds ordered, directional ML trial tie-breakers; PR #480 caps tie-breaker count at eight and rejects unknown keys to match OpenAPI; PR #482 requires explicit opt-in before an empty live set may delete every artifact; PR #501 records the exact-head artifact-writer inventory audit and its six passing post-merge workflows; PR #502 exposes bounded custom PipelineIR v2 candidate submissions; PR #503 adds independently configured prepare branches and checkpoint recovery; PR #505 adds bounded algorithm×preprocessor candidate grids (maximum eight combinations); PR #509 adds durable selected-model registration after artifact identity revalidation; PR #515 closes the runbook, shell regression and candidate-hardening audit; PR #522 adds exact rollback evidence for a late PostgreSQL multi-object Bundle conflict; PRs #523/#524 reuse a single verified archive across project/connection and remaining multi-object importers; PR #525 adds atomic, exact-replay semantic model/dashboard Bundle import; PR #526 adds portable streaming-definition Bundles with explicit remaps and checkpoint reset/resume identity. PR #527 adds atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends atomic, exact-replay ML Registry Bundle import to PostgreSQL, including same-transaction feature definitions. PR #529 fixes POSIX subprocess return-code collection; CI 3.11/3.12, Docker/PostgreSQL and all six exact-head post-merge workflows passed. PR #531 reconciles ML release wording. PR #532 makes ontology Bundle imports atomic and exact-replay in SQLite; late missing assets and definition conflicts roll back the full batch. CI, Docker/PostgreSQL storage coverage and all six exact-head workflows passed. No Public v1 family is release-qualified.
 

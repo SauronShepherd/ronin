@@ -1,0 +1,72 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D27",
+  "date": "2026-11-15",
+  "status": "pass",
+  "cell": "P8 bounded classical ML Lab: real local HTTP/SQLite quality → durable training → registry/artifact → prediction → restart recovery",
+  "candidate_sha": "f685a54b7b5f39cef3a9998480e2bc4dedd235b3",
+  "candidate_receipt": "docs/qualification/candidates/candidate-f685a54b-d27.json",
+  "code_commit": "f685a54b7b5f39cef3a9998480e2bc4dedd235b3",
+  "origin_main_at_code_commit": "f685a54b7b5f39cef3a9998480e2bc4dedd235b3",
+  "implementation": {
+    "journey": "Added a real local composed HTTP regression that creates a catalog-bound ML Lab, runs quality, submits durable local.sklearn training, waits for terminal success, registers the model after artifact digest verification, reads the model card and artifact chunk, predicts, rejects an unknown workspace and recovers the card/prediction after restart.",
+    "evidence_gap": "The runtime already wired SQLiteMLLabStore, SQLite ML metadata, JobStoreExecutionStore and LocalArtifactStore, but the composed suite did not prove the full public ML path. The new test supplies that missing candidate-bound evidence without provider mocks.",
+    "recovery": "The same SQLite database and local artifact store preserve the registered model, source Lab digest, dataset identity, artifact digest and deterministic predictions across composition restart."
+  },
+  "tests": {
+    "candidate_ml_journey": "1 passed, 25 deselected, 0 failed, 0 skipped",
+    "candidate_local_composed": "26 passed, 0 failed, 0 skipped",
+    "candidate_ml_unit": "298 passed, 0 failed, 0 skipped",
+    "candidate_ml_http": "3 passed, 0 failed, 0 skipped",
+    "candidate_web": "SKIP; @playwright/test is not present in the exact candidate archive and the offline browser command could not resolve it",
+    "checkout_web": "9 passed, 0 failed, 0 skipped in 15.2 seconds",
+    "negative_paths": [
+      "unknown workspace model-card request returns HTTP 403",
+      "the durable execution must reach succeeded before registration is accepted",
+      "the artifact digest is normalized from the runtime's sha256:<64 hex> result and verified again through the registry/artifact route",
+      "model card and prediction are read again after a full composition restart"
+    ],
+    "static": {
+      "ruff_format": "PASS; 1131 files",
+      "ruff": "PASS",
+      "mypy": "PASS; 389 source files",
+      "architecture": "PASS",
+      "negative_gates": "PASS",
+      "route_consistency": "PASS; 200 operations",
+      "dependency_surfaces": "PASS",
+      "openapi": "PASS; 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708",
+      "studio_surface": "PASS; 129/242",
+      "studio_web_audit": "PASS; 72 files, 184 route invocations",
+      "studio_budget": "PASS; 2170472 actual asset bytes against the 2170474-byte baseline",
+      "daily_progress": "PASS in candidate at archived ledger state 26/39; checkout after evidence update at 27/39",
+      "public_status": "SKIP in archive; command requires Git metadata; PASS on checkout",
+      "capability_status": "PASS",
+      "git_diff_check": "PASS on checkout"
+    }
+  },
+  "scans": {
+    "gitleaks": "PASS; 8.30.1; 0 findings over 15.72 MB of the final clean candidate",
+    "pip_audit": "PASS; 2.10.1; no known vulnerabilities from requirements-test.lock",
+    "trivy": "SKIP; no local binary"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "26/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "27/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO"
+    }
+  },
+  "limitations": [
+    "P8 remains in_progress: this closes only a bounded local classical-ML evidence slice, not the complete family/provider/serving/Studio qualification matrix.",
+    "PostgreSQL ML stores, S3-compatible artifacts, MLflow/interoperability, network serving, broader algorithm/search performance and production providers were not exercised.",
+    "Candidate browser evidence is a recorded SKIP, not a PASS; no skip counts as a gate or family PASS.",
+    "No release gate changed to closed and P13 remains blocked."
+  ]
+}

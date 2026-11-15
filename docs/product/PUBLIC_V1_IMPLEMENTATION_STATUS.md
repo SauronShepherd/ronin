@@ -5,43 +5,32 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 
-## Current exact-SHA qualification — 11 November 2026
+## Current exact-SHA qualification — 15 November 2026
 
-The current runtime/test candidate is `76966e8b` (`Chromium 164 passed, 33 explicit skips, 0 failed; Python 4511 passed, 77 skipped, 0 failed`).
-Environments now uses an Observe/Author/Govern workbench with deterministic diff
-preview and pause/restore actions; Deployments uses Observe/Bind/Operate with an
-explicit project/environment scope and a validated bindings-array replacement.
-Both surfaces inherit the visible workspace context and retain their existing API
-contracts.
-Runs now uses the same default context shown by the shell (`default /
-examples/demo / local`), and direct Project deep links synchronize their
-workspace scope without clearing a project explicitly chosen by the operator,
-and the Runs surface refuses unauthenticated requests before contacting the API.
-The context selector also remembers up to five safe recent contexts without
-persisting credentials. The complete static Chromium suite passes `147/147`;
-web audit passes with `69` files, `38` modules, `180` route invocations and
-`0` failures; budget is `2,123,786` asset bytes, `70` requests, `36` modules,
-`15` stylesheets and
-`5,778` HTML bytes. Exact candidate security evidence is bound to the
-runtime/probe images: Docker Scout reports `0` vulnerabilities and the empty
-digest-bound OpenVEX verifier reports `0` raw and `0` post-VEX findings;
-Gitleaks reports zero findings. The tracked license inventory and policy are
-reconciled against the current lock, but 22 dependency review decisions remain
-missing; legal approval remains open.
+The current code candidate is `f685a54b7b5f39cef3a9998480e2bc4dedd235b3`.
+D27 adds candidate-bound evidence for a real local HTTP/SQLite classical-ML
+journey: Lab creation, quality, durable `local.sklearn` training, artifact
+registration after digest verification, model-card/artifact retrieval,
+prediction, workspace denial and restart recovery. The selected ML journey is
+`1/1`; the full local-composed suite is `26/26`, ML unit tests are `298/298`
+and ML HTTP integration is `3/3`.
 
-Candidate-bound qualification receipts are green for Docker (`27/27`, strict
-v0.1 `15/15`), Helm/kind, live UI/API (`33/33`, 254 correlated events), SDK
-artifacts (`90/90`), exact supply-chain evidence, and Floci with Terraform
-`1.13.5`/AWS provider `6.65.0`. The full Python/PostgreSQL run passed after the
-package/configuration contract was synchronized: `4563/4590` with `27` explicit
-skips and `0` failures at `%TEMP%\\ronin-python-full-817ae3c-rerun-20261110`.
+Candidate static gates pass: Ruff format/check, mypy on `389` source files,
+architecture and negative gates, route consistency on `200` operations, exact
+dependency surfaces, OpenAPI digest
+`315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708`, Studio
+surface `129/242`, web audit, budget and asset checks. Gitleaks reports zero
+findings and pip-audit reports no known vulnerabilities. The exact candidate
+browser lane is `SKIP` because `@playwright/test` is not packaged; the checkout
+Catalog + Quality Studio contract passes `9/9`. Trivy is skipped because no
+local binary is available.
 
-This is technical qualification only. Public v1 remains **0/13 (0%, NO-GO)**:
-manual visual/product signoff, legal/NOTICE/claims, security/VEX triage and
-acceptance, provider/credential qualification, rollback/support, the complete
-provider/toolchain matrix and CI/branch governance remain open. The intended product bar remains a simpler,
-more powerful, original control plane with the operational clarity of
-Databricks, Dataiku, Palantir and Fabric.
+This is bounded technical evidence only. Public v1 remains **1/13 families
+qualified, 0/10 gates, NO-GO**: P8 is `in_progress` and the local slice does
+not establish PostgreSQL/S3/MLflow/serving providers, broader algorithm/search
+performance or complete Studio/provider qualification. P13 external evidence,
+manual visual/product review, legal/NOTICE/claims, security acceptance,
+rollback/support and release governance remain open.
 
 ### Historical exact-SHA qualification — `4157181`
 
@@ -111,7 +100,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `9ca22d7b24e622203484d58707ec550b4c6cf9a4` (2026-11-15).
+**Observed source head:** `f685a54b7b5f39cef3a9998480e2bc4dedd235b3` (2026-11-15).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
@@ -195,6 +184,21 @@ providers, external alert delivery, broader provider/consumer qualification and
 complete P7 qualification remain open. P7 remains `in_progress`, the ledger is
 1/13 families and 0/10 gates, and release remains **NO-GO**. See
 `docs/qualification/candidates/candidate-9ca22d7b-d26.json`.
+
+**D27 ML evidence update (2026-11-15):** exact candidate
+`f685a54b7b5f39cef3a9998480e2bc4dedd235b3` adds a real local HTTP/SQLite
+journey through ML Lab creation, quality, durable `local.sklearn` training,
+artifact-digest-verified registration, model-card/artifact retrieval,
+prediction, unknown-workspace denial and restart recovery. The candidate
+journey passes 1/1, the composed local suite passes 26/26, ML unit tests pass
+298/298 and ML HTTP integration passes 3/3. Candidate static gates and clean
+candidate Gitleaks/pip-audit pass; candidate browser evidence is explicitly
+`SKIP` because `@playwright/test` is not packaged, while the checkout Catalog +
+Quality Studio contract passes 9/9. PostgreSQL/S3/MLflow/serving providers,
+broader algorithm/search performance and the complete P8 qualification remain
+open. P8 remains `in_progress`, the ledger is 1/13 families and 0/10 gates,
+and release remains **NO-GO**. See
+`docs/qualification/candidates/candidate-f685a54b-d27.json`.
 
 **Current worktree update (2026-10-30; dirty diagnostic candidate):** P3 now includes a project-authorized local DuckDB `POST .../sql/explain` route and a SQL Studio action. The route reuses project-read authorization, validates the shared read-only SELECT contract and registered relation scope, forwards a bounded execution deadline, incrementally caps serialized plan rows, and redacts paths, URLs and inline secret assignments. Providers without the optional capability return an explicit 501. Targeted verification is recorded in `PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`; this does not qualify P3 or the release, and the historical notes below remain historical snapshots.
 
