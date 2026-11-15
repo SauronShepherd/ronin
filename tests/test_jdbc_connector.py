@@ -84,6 +84,27 @@ def test_jdbc_discovery_validates_and_applies_row_limit() -> None:
     connector.discover(_connection(), EnvironmentSecretResolver({}), limit=7)
 
 
+@pytest.mark.parametrize("operation", ["discover", "discover_page", "read"])
+def test_jdbc_rejects_boolean_bounds(operation: str) -> None:
+    connector = JdbcConnector(connect=lambda *_args: _Db())
+    connection = _connection()
+    secrets = EnvironmentSecretResolver({})
+    if operation == "discover":
+        with pytest.raises(ValueError, match="discovery limit"):
+            connector.discover(connection, secrets, limit=True)
+    elif operation == "discover_page":
+        with pytest.raises(ValueError, match="page_size"):
+            connector.discover_page(connection, secrets, page_size=True)
+    else:
+        with pytest.raises(ValueError, match="read limit"):
+            connector.read(
+                connection,
+                AssetHandle(connection.id, ("public",), "events"),
+                secrets,
+                limit=True,
+            )
+
+
 def test_jdbc_discovery_page_is_bounded_and_returns_opaque_cursor() -> None:
     connector = JdbcConnector(connect=lambda *_args: _Db())
     page = connector.discover_page(_connection(), EnvironmentSecretResolver({}), page_size=1)

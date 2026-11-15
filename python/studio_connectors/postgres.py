@@ -422,7 +422,12 @@ class PostgresConnector:
         page_size: int = 1000,
     ) -> DiscoveryPage[DiscoveredAsset]:
         """Read bounded table metadata using a stable schema/table keyset cursor."""
-        if page_size < 1 or page_size > 10_000:
+        if (
+            not isinstance(page_size, int)
+            or isinstance(page_size, bool)
+            or page_size < 1
+            or page_size > 10_000
+        ):
             raise ValueError("PostgreSQL discovery page_size must be between 1 and 10000")
         options = self._validate(connection)
         schema_filter = options.get("schema")
@@ -487,7 +492,7 @@ class PostgresConnector:
     ) -> ConnectorReadResult:
         if checkpoint is not None and checkpoint.strategy not in {"snapshot", "watermark"}:
             raise ValueError("PostgreSQL connector only supports snapshot or watermark checkpoints")
-        if limit < 1 or limit > 100_000:
+        if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 100_000:
             raise ValueError("PostgreSQL read limit must be between 1 and 100000")
         if asset.connection_id != connection.id:
             raise ValueError("PostgreSQL asset handle belongs to a different connection")

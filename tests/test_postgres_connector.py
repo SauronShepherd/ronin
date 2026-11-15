@@ -181,6 +181,24 @@ def test_postgres_descriptor_advertises_schema_discovery() -> None:
     assert capabilities.max_page_size == 10_000
 
 
+@pytest.mark.parametrize("operation", ["discover_page", "read"])
+def test_postgres_rejects_boolean_bounds(operation: str) -> None:
+    connector = PostgresConnector()
+    connection = _connection()
+    secrets = EnvironmentSecretResolver({"PGUSER": "ronin", "PGPASSWORD": "secret"})
+    if operation == "discover_page":
+        with pytest.raises(ValueError, match="page_size"):
+            connector.discover_page(connection, secrets, page_size=True)
+    else:
+        with pytest.raises(ValueError, match="read limit"):
+            connector.read(
+                connection,
+                AssetHandle(connection.id, ("public",), "events"),
+                secrets,
+                limit=True,
+            )
+
+
 def test_postgres_watermark_checkpoint_round_trips_typed_values() -> None:
     from datetime import UTC, date, datetime
     from decimal import Decimal

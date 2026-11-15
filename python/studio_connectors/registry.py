@@ -240,7 +240,7 @@ class ConnectorRegistry:
     ) -> ConnectorReadResult:
         """Read a bounded preview only from connectors advertising read support."""
 
-        if limit < 1 or limit > 10_000:
+        if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 10_000:
             raise ValueError("connector preview limit must be between 1 and 10000")
         connector = self.require(connector_id)
         if not connector.descriptor.capabilities.read:
@@ -267,7 +267,7 @@ class ConnectorRegistry:
     ) -> ConnectorReadResult:
         """Read a bounded sync batch and pass its checkpoint to the connector."""
 
-        if limit < 1 or limit > 100_000:
+        if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 100_000:
             raise ValueError("connector read limit must be between 1 and 100000")
         connector = self.require(connector_id)
         if not connector.descriptor.capabilities.read:
