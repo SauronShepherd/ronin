@@ -16,9 +16,15 @@ from studio_cli.local_composed import (
 )
 from studio_core import (
     AssetId,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
+    CatalogAsset,
     ConnectionDefinition,
     ConnectionId,
     ExecutionProfile,
+    LineageEdge,
+    OwnershipMetadata,
     Pipeline,
     Project,
     ProjectId,
@@ -27,8 +33,10 @@ from studio_core import (
     RuntimeProfileRef,
     Schedule,
     ScheduleId,
+    SensitivityMetadata,
     WorkflowDefinition,
     WorkflowId,
+    Workspace,
     WorkspaceId,
 )
 from studio_core.canonical_json import decode as decode_canonical_json
@@ -217,6 +225,208 @@ def test_build_local_composed_from_env_creates_two_surface_composition(
     assert workspace.name == "Local workspace"
     assert composition.control_plane_server.plugin_routes_enabled
     composition.stop()
+
+
+def test_local_composed_catalog_journey_persists_and_isolates_workspace_data(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS",
+        "workspace.read,workspace.write,workspace.admin,project.read,project.write",
+    )
+    workspace = WorkspaceId("workspace-1")
+    other_workspace = WorkspaceId("workspace-2")
+    now = Instant("2026-10-17T00:00:00.000000Z")
+    orders = CatalogAsset(
+        AssetId("orders"),
+        "table",
+        "Orders",
+        project_id="project-a",
+        tags=("sales",),
+        classifications=("internal",),
+    )
+    archive = CatalogAsset(
+        AssetId("orders-archive"),
+        "table",
+        "Orders archive",
+        project_id="project-a",
+    )
+    hidden = CatalogAsset(
+        AssetId("orders"),
+        "table",
+        "Other workspace orders",
+        project_id="project-b",
+    )
+    orders_revision = AssetRevision(
+        AssetRef(orders.id, AssetVersion("1")),
+        schema_digest="orders-schema-v1",
+        metadata=(("owner", "sales"),),
+    )
+    archive_revision = AssetRevision(
+        AssetRef(archive.id, AssetVersion("1")), schema_digest="archive-schema-v1"
+    )
+    sensitivity = SensitivityMetadata(1, explicit=("internal",))
+    ownership = OwnershipMetadata(1, "group/data", ("user/steward",), "sales")
+
+    def request(address, method: str, path: str, body: object | None = None):
+        connection = http.client.HTTPConnection(*address, timeout=5)
+        payload = None if body is None else json.dumps(body).encode("utf-8")
+        headers = {"Authorization": "Bearer control-token"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
+        try:
+            connection.request(method, path, body=payload, headers=headers)
+            response = connection.getresponse()
+            return response.status, json.loads(response.read().decode("utf-8"))
+        finally:
+            connection.close()
+
+    composition = build_local_composed_from_env()
+    catalog = composition.control_plane_server.catalog_reader
+    assert catalog is not None
+    composition.control_plane_server.workspace_service.create(
+        Workspace(other_workspace, "Other workspace"), now=now
+    )
+    composition.control_plane_server.authorizer.register_workspace(other_workspace)
+    catalog.create_asset(other_workspace, hidden, now=now)
+    catalog.create_asset(workspace, orders, now=now)
+    catalog.create_asset(workspace, archive, now=now)
+    catalog.put_revision(workspace, orders_revision, now=now)
+    catalog.put_revision(workspace, archive_revision, now=now)
+    catalog.put_lineage(
+        workspace,
+        LineageEdge(orders_revision.ref, archive_revision.ref, "transform", "declared"),
+        now=now,
+    )
+    try:
+        composition.start()
+        address = composition.control_plane_server.server_address
+
+        status, replaced = request(
+            address,
+            "PUT",
+            "/v1/workspaces/workspace-1/catalog/assets/orders",
+            {**orders.to_payload(), "name": "Orders governed"},
+        )
+        assert status == 200, replaced
+        assert replaced["name"] == "Orders governed"
+        status, sensitivity_payload = request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-1/catalog/assets/orders/sensitivity",
+            sensitivity.to_payload(),
+        )
+        assert status == 201, sensitivity_payload
+        status, ownership_payload = request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-1/catalog/assets/orders/ownership",
+            ownership.to_payload(),
+        )
+        assert status == 201, ownership_payload
+
+        status, first_page = request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-1/catalog/assets?limit=1&include_governance=true",
+        )
+        assert status == 200, first_page
+        assert first_page["items"] == [
+            {
+                **replaced,
+                "sensitivity": sensitivity.to_payload(),
+                "ownership": ownership.to_payload(),
+            }
+        ]
+        cursor = first_page["next_cursor"]
+        assert isinstance(cursor, str)
+        assert cursor
+        status, second_page = request(
+            address,
+            "GET",
+            f"/v1/workspaces/workspace-1/catalog/assets?limit=1&cursor={cursor}",
+        )
+        assert status == 200, second_page
+        assert second_page == {"items": [archive.to_payload()], "next_cursor": None}
+
+        status, search_page = request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-1/catalog/assets?q=sales",
+        )
+        assert status == 200, search_page
+        assert [item["id"] for item in search_page["items"]] == ["orders"]
+
+        status, revisions = request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-1/catalog/assets/orders/revisions",
+        )
+        assert status == 200, revisions
+        assert revisions == {"items": [orders_revision.to_payload()]}
+        status, revision_payload = request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-1/catalog/assets/orders/revisions/1",
+        )
+        assert status == 200, revision_payload
+        assert revision_payload == orders_revision.to_payload()
+
+        status, lineage = request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-1/catalog/lineage/orders-archive/1?direction=upstream",
+        )
+        assert status == 200, lineage
+        assert lineage["items"] == [
+            LineageEdge(
+                orders_revision.ref, archive_revision.ref, "transform", "declared"
+            ).to_payload()
+        ]
+
+        status, isolated_page = request(address, "GET", "/v1/workspaces/workspace-2/catalog/assets")
+        assert status == 200, isolated_page
+        assert isolated_page["items"] == [hidden.to_payload()]
+    finally:
+        composition.stop()
+
+    restarted = build_local_composed_from_env()
+    try:
+        restarted.start()
+        address = restarted.control_plane_server.server_address
+        status, persisted = request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-1/catalog/assets?include_governance=true",
+        )
+        assert status == 200, persisted
+        assert persisted["items"][0]["name"] == "Orders governed"
+        assert persisted["items"][0]["sensitivity"] == sensitivity.to_payload()
+        assert persisted["items"][0]["ownership"] == ownership.to_payload()
+    finally:
+        restarted.stop()
+
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PERMISSIONS", "workspace.read")
+    readonly = build_local_composed_from_env()
+    try:
+        readonly.start()
+        address = readonly.control_plane_server.server_address
+        status, _ = request(address, "GET", "/v1/workspaces/workspace-1/catalog/assets")
+        assert status == 200
+        status, denied = request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-1/catalog/assets",
+            CatalogAsset(AssetId("denied"), "table", "Denied").to_payload(),
+        )
+        assert status == 403
+        assert denied["error"]["code"] == "forbidden"
+    finally:
+        readonly.stop()
 
 
 def test_local_composed_persists_notebook_revisions_across_restart(

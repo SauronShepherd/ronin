@@ -2415,6 +2415,67 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 )
                 return
             if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:5] == ("catalog", "assets")
+                and segments[6] == "revisions"
+            ):
+                catalog_reader = self._server().catalog_reader
+                if catalog_reader is None or not callable(
+                    getattr(catalog_reader, "list_revisions", None)
+                ):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "catalog_unavailable",
+                        "catalog revision reader is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("catalog revision listing does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                catalog_revisions = catalog_reader.list_revisions(
+                    workspace_id, AssetId(unquote(segments[5]))
+                )
+                self._write_json(
+                    HTTPStatus.OK,
+                    {"items": [revision.to_payload() for revision in catalog_revisions]},
+                )
+                return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:5] == ("catalog", "assets")
+                and segments[6] == "revisions"
+            ):
+                catalog_reader = self._server().catalog_reader
+                if catalog_reader is None or not callable(
+                    getattr(catalog_reader, "get_revision", None)
+                ):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "catalog_unavailable",
+                        "catalog revision reader is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("catalog revision read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                revision = catalog_reader.get_revision(
+                    workspace_id,
+                    AssetRef(AssetId(unquote(segments[5])), AssetVersion(unquote(segments[7]))),
+                )
+                if revision is None:
+                    self._error(
+                        HTTPStatus.NOT_FOUND, "not_found", "catalog revision does not exist"
+                    )
+                    return
+                self._write_json(HTTPStatus.OK, revision.to_payload())
+                return
+            if (
                 len(segments) == 5
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:] == ("glossary", "terms")
@@ -4354,66 +4415,6 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 self._write_json(
                     HTTPStatus.CREATED, cast(GlossaryTerm, glossary_created).to_payload()
                 )
-                return
-            if (
-                len(segments) == 7
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3:5] == ("catalog", "assets")
-                and segments[6] == "revisions"
-            ):
-                catalog_reader = self._server().catalog_reader
-                if catalog_reader is None or not callable(
-                    getattr(catalog_reader, "list_revisions", None)
-                ):
-                    self._error(
-                        HTTPStatus.SERVICE_UNAVAILABLE,
-                        "catalog_unavailable",
-                        "catalog revision reader is not configured",
-                    )
-                    return
-                if query:
-                    raise ValueError("catalog revision listing does not accept query parameters")
-                workspace_id = WorkspaceId(segments[2])
-                if not self._authorize(actor, workspace_id, "workspace.read"):
-                    return
-                revisions = catalog_reader.list_revisions(
-                    workspace_id, AssetId(unquote(segments[5]))
-                )
-                self._write_json(
-                    HTTPStatus.OK, {"items": [revision.to_payload() for revision in revisions]}
-                )
-                return
-            if (
-                len(segments) == 8
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3:5] == ("catalog", "assets")
-                and segments[6] == "revisions"
-            ):
-                catalog_reader = self._server().catalog_reader
-                if catalog_reader is None or not callable(
-                    getattr(catalog_reader, "get_revision", None)
-                ):
-                    self._error(
-                        HTTPStatus.SERVICE_UNAVAILABLE,
-                        "catalog_unavailable",
-                        "catalog revision reader is not configured",
-                    )
-                    return
-                if query:
-                    raise ValueError("catalog revision read does not accept query parameters")
-                workspace_id = WorkspaceId(segments[2])
-                if not self._authorize(actor, workspace_id, "workspace.read"):
-                    return
-                revision = catalog_reader.get_revision(
-                    workspace_id,
-                    AssetRef(AssetId(unquote(segments[5])), AssetVersion(unquote(segments[7]))),
-                )
-                if revision is None:
-                    self._error(
-                        HTTPStatus.NOT_FOUND, "not_found", "catalog revision does not exist"
-                    )
-                    return
-                self._write_json(HTTPStatus.OK, revision.to_payload())
                 return
             if (
                 len(segments) == 5
