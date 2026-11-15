@@ -131,7 +131,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `902ddc9acea2d8806ba7fab3538ec900a8effc37` (current exact candidate; implementation evidence remains bound to the stated product candidate, this is not a release qualification claim, and the required human/provider gates remain open).
+**Observed source baseline:** `d71dad4eef4746154d1bd56b2baf45feef9ea337` (current exact candidate; implementation evidence remains bound to the stated product candidate, this is not a release qualification claim, and the required human/provider gates remain open).
 
 The D21 scheduler slice adds exact-candidate evidence for the bounded local
 API/SQLite/daemon journey and fail-closed identity input boundaries at

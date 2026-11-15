@@ -42,7 +42,10 @@ def test_matrix_does_not_claim_release_qualification_while_ledger_is_incomplete(
     ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
     assert ledger["release_status"] != "complete"
     assert ledger["progress"]["total"] == 13
-    assert ledger["progress"]["percent"] == 0
+    assert ledger["progress"]["percent"] == round(
+        100 * ledger["progress"]["complete"] / ledger["progress"]["total"], 2
+    )
+    assert ledger["progress"]["release_ready"] is False
     assert all(row[3] in {"No", "N/A"} for row in _rows())
     p9 = next(item for item in ledger["capabilities"] if item["id"] == "p9-genai-rag-agents")
     assert p9["status"] == "out_of_scope"
