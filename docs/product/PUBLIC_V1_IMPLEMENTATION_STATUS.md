@@ -11,10 +11,11 @@ The current exact-head candidate is `902ddc9acea2d8806ba7fab3538ec900a8effc37`.
 D31 binds the existing P11 streaming path to a real Redpanda/Kafka broker,
 Ronin API and Chromium journey: the selected live case is `1/1`, with `38/38`
 real API events correlated to structured logs, `34` `OK`, `4` expected `WARN`
-and zero server/network errors. The exact candidate streaming selection passes
-`44` tests with `50` deselected. D30 remains the preceding code change that
-fixed the semantic dashboard replacement path and passed its `29/29` local
-composition evidence.
+and zero server/network errors. The checkout Streaming Studio contract also
+passes `3/3`; the exact candidate streaming selection passes `44` tests with
+`50` deselected. D30 remains the preceding code change that fixed the
+semantic dashboard replacement path and passed its `29/29` local composition
+evidence.
 
 Candidate static gates pass: Ruff format/check, mypy on `451` source files,
 architecture and negative gates, route consistency on `200` operations, exact
@@ -257,7 +258,8 @@ runtime, health, Bundle, HTTP and Studio path to a clean candidate. A
 streaming-only live runner started a real Redpanda broker, a real Ronin API and
 Chromium; the case passed `1/1`, with `38/38` correlated API events, `34` `OK`,
 `4` expected `WARN`, zero server/network errors and cleanup of the isolated
-broker/network. The candidate Python streaming selection passes `44` tests,
+broker/network. The candidate Python streaming selection passes `44` tests and
+the checkout Streaming Studio contract passes `3/3`,
 while the browser inside the exact archive is explicitly `SKIP` because
 `@playwright/test` is not packaged. PostgreSQL and the worker were not started
 in this bounded profile. Continuous operation, broader partition/backpressure/

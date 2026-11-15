@@ -6,8 +6,9 @@ The current code/evidence candidate is `902ddc9acea2d8806ba7fab3538ec900a8effc37
 Its D31 evidence binds the existing streaming path to a real local
 Redpanda/Kafka broker, Ronin API and Chromium: the selected live journey is
 `1/1`, with `38/38` correlated API events (`34` `OK`, `4` expected `WARN`) and
-zero server/network errors. The exact candidate streaming selection is `44`
-passed with `50` deselected. D30's semantic dashboard replacement/filter
+zero server/network errors; the checkout Streaming Studio contract separately
+passes `3/3`. The exact candidate streaming selection is `44` passed with `50`
+deselected. D30's semantic dashboard replacement/filter
 evidence remains bound to its preceding code SHA.
 
 Ruff format/check, mypy (`451` source files), architecture/negative gates,
@@ -235,8 +236,9 @@ The D31 streaming slice at
 evidence without changing product code. Redpanda/Kafka, the Ronin API and
 Chromium ran in an isolated streaming-only profile and passed `1/1`, with
 `38/38` API events correlated to structured logs, `34` `OK`, `4` expected
-`WARN`, zero server/network errors and cleanup. The exact candidate streaming
-selection passes `44` tests; its archive browser remains `SKIP` because
+`WARN`, zero server/network errors and cleanup. The checkout Streaming Studio
+contract separately passes `3/3`; the exact candidate streaming selection
+passes `44` tests; its archive browser remains `SKIP` because
 `@playwright/test` is absent. PostgreSQL, worker, continuous operation,
 broader partition/backpressure/failure recovery and full P11 qualification
 remain open; P11 is `in_progress` and the ledger remains 1/13 families, 0/10

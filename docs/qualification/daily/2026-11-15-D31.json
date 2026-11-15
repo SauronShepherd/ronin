@@ -16,6 +16,7 @@
   "tests": {
     "candidate_streaming": "44 passed, 50 deselected, 0 failed, 0 skipped",
     "live_provider": "1 passed, 0 skipped, 0 failed; Redpanda/Kafka true, Ronin API true, PostgreSQL false; 38 real API events, 38 correlated logs, 34 OK and 4 expected WARN",
+    "checkout_streaming_web": "3 passed, 0 failed, 0 skipped in 8.2 seconds; auxiliary checkout Streaming Studio contract",
     "candidate_web": "SKIP; @playwright/test is not present in the exact candidate archive and the offline browser command could not resolve it",
     "negative_paths": [
       "live streaming API/UI journey records expected invalid/poison/oversized input WARNs without server/network failures",
