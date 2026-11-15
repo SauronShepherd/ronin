@@ -163,7 +163,9 @@ def main() -> int:
         source=StreamSourceDefinition("live-kafka", partitioned_topic, (0, 1)),
         sink=StreamSinkDefinition("table", "live-partitioned-events"),
         schema=schema,
-        runtime=StreamRuntimeBinding("local", batch_limit=2, timeout_seconds=1.0),
+        # A fresh consumer needs enough time to discover the second partition
+        # after the first partition has been drained by the prior micro-batch.
+        runtime=StreamRuntimeBinding("local", batch_limit=2, timeout_seconds=2.0),
     )
     store = SqliteStreamCheckpointStore(database)
     store.commit_stream_bundle_import(
