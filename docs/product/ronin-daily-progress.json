@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "0c31232eaec42d2f26f8fbc466bd52d2898d09a5",
+    "base_sha": "902ddc9acea2d8806ba7fab3538ec900a8effc37",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -44,9 +44,9 @@
     "families_qualified": 1,
     "families_total": 13,
     "families_percent": 7.69,
-    "days_passed": 30,
+    "days_passed": 31,
     "days_total": 39,
-    "days_percent": 76.92,
+    "days_percent": 79.49,
     "release_gates_passed": 0,
     "release_gates_total": 10,
     "release_gates_percent": 0.0,
@@ -132,9 +132,9 @@
       "id": "P11",
       "name": "Real-time and streaming",
       "observed_implementation": "partial",
-      "qualification": "not_started",
-      "receipt": null,
-      "candidate_sha": null
+      "qualification": "in_progress",
+      "receipt": "docs/qualification/candidates/candidate-902ddc9a-d31.json",
+      "candidate_sha": "902ddc9acea2d8806ba7fab3538ec900a8effc37"
     },
     {
       "id": "P12",
@@ -255,7 +255,7 @@
     {"id": "D28", "date": "2026-12-12", "phase": "p8-ml-close", "status": "pass", "families": ["P8"], "evidence": "docs/qualification/handoffs/2026-11-15-D28.md", "commit_sha": "360ce3092afcf485c113ccfb781069914abc3ee0"},
     {"id": "D29", "date": "2026-12-13", "phase": "p10-semantic", "status": "pass", "families": ["P10"], "evidence": "docs/qualification/handoffs/2026-11-15-D29.md", "commit_sha": "567ee82eafd30661c5e6c10ea5fe26f3eaad6dce"},
     {"id": "D30", "date": "2026-12-14", "phase": "p10-dashboard-close", "status": "pass", "families": ["P10"], "evidence": "docs/qualification/handoffs/2026-11-15-D30.md", "commit_sha": "0c31232eaec42d2f26f8fbc466bd52d2898d09a5"},
-    {"id": "D31", "date": "2026-12-15", "phase": "p11-stream-core", "status": "pending", "families": ["P11"], "evidence": null, "commit_sha": null},
+    {"id": "D31", "date": "2026-12-15", "phase": "p11-stream-core", "status": "pass", "families": ["P11"], "evidence": "docs/qualification/handoffs/2026-11-15-D31.md", "commit_sha": "902ddc9acea2d8806ba7fab3538ec900a8effc37"},
     {"id": "D32", "date": "2026-12-16", "phase": "p11-stream-close", "status": "pending", "families": ["P11"], "evidence": null, "commit_sha": null},
     {"id": "D33", "date": "2026-12-17", "phase": "p12-observability", "status": "pending", "families": ["P12"], "evidence": null, "commit_sha": null},
     {"id": "D34", "date": "2026-12-18", "phase": "p12-finops", "status": "pending", "families": ["P12"], "evidence": null, "commit_sha": null},

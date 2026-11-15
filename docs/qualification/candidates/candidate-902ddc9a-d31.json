@@ -1,0 +1,91 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D31",
+  "status": "pass",
+  "execution_date": "2026-11-15",
+  "planned_date": "2026-12-15",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "902ddc9acea2d8806ba7fab3538ec900a8effc37",
+    "origin_main_sha_when_candidate_was_tested": "902ddc9acea2d8806ba7fab3538ec900a8effc37",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-902ddc9a-d31",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-902ddc9a-d31\\candidate-902ddc9acea2d8806ba7fab3538ec900a8effc37.tar",
+      "format": "tar",
+      "sha256": "e16fccf7dd866f436068de36d7835edb1fddfaaa8aa490a4f91a7a3e91ff62da",
+      "size": 17018880
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-902ddc9a-d31\\candidate-902ddc9acea2d8806ba7fab3538ec900a8effc37.manifest.json",
+      "sha256": "14ac1fdf6ad16577599f87d780d0f7335c79cafa94120de85059f3b469e08e7c",
+      "size": 224118
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-902ddc9a-d31\\candidate-902ddc9acea2d8806ba7fab3538ec900a8effc37.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-902ddc9a-d31\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1456,
+    "total_bytes": 15825280,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "0c31232eaec42d2f26f8fbc466bd52d2898d09a5",
+    "candidate_docs_commit": "902ddc9acea2d8806ba7fab3538ec900a8effc37",
+    "summary": "D31 adds exact-candidate evidence for the existing P11 streaming path. No product code was changed: the clean main candidate is exercised with candidate-bound streaming tests and a real Redpanda broker/real Ronin API/Chromium diagnostic, while the family remains in_progress.",
+    "production_files_changed": [],
+    "test_files_changed": []
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 902ddc9acea2d8806ba7fab3538ec900a8effc37 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-902ddc9a-d31",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-902ddc9a-d31",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after candidate tests and scans; the same SHA was regenerated with identical archive and manifest hashes; final verify passed",
+    "candidate_streaming": "exact candidate sandbox pytest streaming selection: 44 passed, 50 deselected",
+    "candidate_web": "exact candidate sandbox npm exec --offline -- playwright test tests/streaming-studio.spec.mjs --workers=1",
+    "live_provider": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -TestGrep streaming -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d31-streaming-20261115",
+    "candidate_static": "exact candidate sandbox ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio surface, web audit, web budget, assets, daily progress and capability status",
+    "scans": "Gitleaks dir scan and pip-audit -r requirements-test.lock over the final clean exact candidate; Trivy skipped because no local binary was available"
+  },
+  "qualification_matrix": {
+    "candidate_streaming": "44 passed, 50 deselected, 0 failed, 0 skipped across Kafka source/runtime/health/Bundle/contracts/table/scheduler bridge and streaming HTTP selection",
+    "live_provider": "1 passed, 0 skipped, 0 failed; clean checkout source 902ddc9acea2d8806ba7fab3538ec900a8effc37 with Redpanda/Kafka true, Ronin API true, PostgreSQL false and no worker image; 38 real API events, all 38 correlated with structured HTTP logs, 34 OK, 4 expected WARN, 0 server/network errors",
+    "candidate_web": "SKIP; the exact candidate archive does not include node_modules or the @playwright/test package, so the offline browser command could not resolve its test runner; no browser PASS is claimed",
+    "candidate_static": "ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI digest 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 129/242, web audit 72 files/184 route invocations, web budget and 53 assets passed",
+    "ledger_checks": "ronin_daily_progress --check --report passed in the exact archive at the archived ledger state 30/39; capability status passed; generate_public_v1_status --check is SKIP in the archive because it requires Git metadata; checkout checks pass after the D31 evidence update",
+    "candidate_reproducibility_after_cleanup": "pass; cleanup/regeneration produced the same archive SHA e16fccf7dd866f436068de36d7835edb1fddfaaa8aa490a4f91a7a3e91ff62da and manifest SHA 14ac1fdf6ad16577599f87d780d0f7335c79cafa94120de85059f3b469e08e7c; final verify passed",
+    "checkout_integrity_checks": "host checkout git diff --check and main/origin identity are checked separately; the candidate sandbox intentionally has no .git metadata",
+    "result": "D31 pass for bounded real Redpanda streaming evidence; P11 moves to in_progress but remains unqualified"
+  },
+  "security_and_recovery": {
+    "live_provider": "The streaming-only live runner started an isolated Redpanda container and a real Ronin API, seeded valid/poison/oversized streaming definitions, ran the Streaming Studio case, correlated every API event to structured logs and removed the container/network. The summary reports 1/1 browser case, 38/38 correlated API events, 34 OK, 4 expected WARN and 0 ERROR/CRITICAL application logs.",
+    "negative_paths": "The real streaming journey includes bounded invalid/poison/oversized input and recovery assertions in the route test; expected WARN responses are recorded as WARN, not as failures. The exact candidate Python selection also covers source/runtime/health/Bundle and HTTP negative contracts.",
+    "provider_scope": "Redpanda/Kafka was exercised as a real local provider. PostgreSQL and the worker image were intentionally not started in streaming-only mode; no external broker, multi-partition fault campaign or full provider matrix is claimed.",
+    "recovery_scope": "The live result proves the bounded Streaming Studio/API scenario and cleanup, but does not establish continuous operation, all partition/backpressure failures, operator rollback or complete P11 qualification.",
+    "scans": {
+      "gitleaks": "8.30.1; final clean exact-candidate directory scan of 15,825,280 bytes; 0 findings",
+      "pip_audit": "2.10.1; requirements-test.lock; no known vulnerabilities",
+      "trivy": "SKIP; no local Trivy binary; no substitute scan claimed"
+    }
+  },
+  "open_cells": [
+    "P11 is now in_progress, not qualified: the real Redpanda bounded journey is one provider slice; continuous operation, broader partitions/backpressure/failure recovery, complete Studio/operator evidence and the full family matrix remain open.",
+    "The exact candidate browser lane is SKIP because the archive lacks @playwright/test; the live checkout browser run is bound to the clean source SHA 902ddc9acea2d8806ba7fab3538ec900a8effc37 and is not substituted for archive browser packaging evidence.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary; P8, P10 and all other families retain their ledger states.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The exact candidate sandbox has no .git metadata by design; generate_public_v1_status --check therefore remains a candidate SKIP and was not converted into PASS.",
+    "The candidate archive intentionally does not package browser dependencies; live provider/browser evidence ran from the clean checkout at the exact candidate source SHA with hash-locked dependency caches.",
+    "D31 changed no product code; it strengthens integration and reproducibility evidence for an existing P11 path.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

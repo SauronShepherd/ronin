@@ -7,14 +7,14 @@
 
 ## Current exact-SHA qualification — 15 November 2026
 
-The current code candidate is `0c31232eaec42d2f26f8fbc466bd52d2898d09a5`.
-D30 fixes the public semantic dashboard replacement path and adds
-candidate-bound evidence for a real local HTTP/SQLite/DuckDB/Parquet journey:
-replace an existing dashboard, filter a metric to the independent `ES=5`
-result, reject an empty filter and recover after restart. The selected D30
-journey is `1/1`; the full local-composed suite is `29/29`, selected semantic
-unit/HTTP tests are `36/36`, ML unit tests are `298/298` and ML HTTP integration
-is `3/3`.
+The current exact-head candidate is `902ddc9acea2d8806ba7fab3538ec900a8effc37`.
+D31 binds the existing P11 streaming path to a real Redpanda/Kafka broker,
+Ronin API and Chromium journey: the selected live case is `1/1`, with `38/38`
+real API events correlated to structured logs, `34` `OK`, `4` expected `WARN`
+and zero server/network errors. The exact candidate streaming selection passes
+`44` tests with `50` deselected. D30 remains the preceding code change that
+fixed the semantic dashboard replacement path and passed its `29/29` local
+composition evidence.
 
 Candidate static gates pass: Ruff format/check, mypy on `451` source files,
 architecture and negative gates, route consistency on `200` operations, exact
@@ -102,7 +102,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `0c31232eaec42d2f26f8fbc466bd52d2898d09a5` (2026-11-15).
+**Observed source head:** `902ddc9acea2d8806ba7fab3538ec900a8effc37` (2026-11-15).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
@@ -250,6 +250,21 @@ provider compatibility, dashboard cancellation/fan-out and complete P10
 qualification remain open. P10 remains `in_progress`, the ledger is 1/13
 families and 0/10 gates, and release remains **NO-GO**. See
 `docs/qualification/candidates/candidate-0c31232e-d30.json`.
+
+**D31 streaming evidence update (2026-11-15):** exact candidate
+`902ddc9acea2d8806ba7fab3538ec900a8effc37` binds the P11 streaming source,
+runtime, health, Bundle, HTTP and Studio path to a clean candidate. A
+streaming-only live runner started a real Redpanda broker, a real Ronin API and
+Chromium; the case passed `1/1`, with `38/38` correlated API events, `34` `OK`,
+`4` expected `WARN`, zero server/network errors and cleanup of the isolated
+broker/network. The candidate Python streaming selection passes `44` tests,
+while the browser inside the exact archive is explicitly `SKIP` because
+`@playwright/test` is not packaged. PostgreSQL and the worker were not started
+in this bounded profile. Continuous operation, broader partition/backpressure/
+failure recovery, provider/operator breadth and complete P11 qualification
+remain open. P11 is `in_progress`, the ledger is 1/13 families and 0/10 gates,
+and release remains **NO-GO**. See
+`docs/qualification/candidates/candidate-902ddc9a-d31.json`.
 
 **Current worktree update (2026-10-30; dirty diagnostic candidate):** P3 now includes a project-authorized local DuckDB `POST .../sql/explain` route and a SQL Studio action. The route reuses project-read authorization, validates the shared read-only SELECT contract and registered relation scope, forwards a bounded execution deadline, incrementally caps serialized plan rows, and redacts paths, URLs and inline secret assignments. Providers without the optional capability return an explicit 501. Targeted verification is recorded in `PLAN_FINAL_RONIN_RELEASE_2026-11-03.md`; this does not qualify P3 or the release, and the historical notes below remain historical snapshots.
 
