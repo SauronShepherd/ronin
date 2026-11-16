@@ -1316,7 +1316,8 @@ test('live streaming supervised drain stops at idle with durable checkpoint prog
     limit: 4,
     timeout_seconds: 1,
     max_batches: 20,
-    max_records: 64,
+    max_records: 80,
+    idle_polls: 3,
   });
   expect(drain.status(), await drain.text()).toBe(200);
   expect(await drain.json()).toMatchObject({

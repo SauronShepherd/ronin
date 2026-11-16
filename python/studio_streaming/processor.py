@@ -138,6 +138,7 @@ class MicroBatchProcessor:
         timeout_seconds: float = 1.0,
         max_batches: int = 100,
         max_records: int | None = None,
+        idle_polls: int = 3,
         stop_requested: Callable[[], bool] | None = None,
     ) -> StreamSupervisorResult:
         """Drain repeated micro-batches without allowing an unbounded run.
@@ -161,6 +162,12 @@ class MicroBatchProcessor:
             or not 1 <= max_records <= 10_000_000
         ):
             raise ValueError("stream max_records must be an integer between 1 and 10000000")
+        if (
+            not isinstance(idle_polls, int)
+            or isinstance(idle_polls, bool)
+            or not 1 <= idle_polls <= 10
+        ):
+            raise ValueError("stream idle_polls must be an integer between 1 and 10")
 
         initial = self._checkpoints.get(stream_id)
         batches = 0
@@ -168,6 +175,7 @@ class MicroBatchProcessor:
         rows = 0
         next_checkpoint = initial
         stop_reason = "idle"
+        empty_polls = 0
         while True:
             if stop_requested is not None and stop_requested():
                 stop_reason = "stop_requested"
@@ -189,9 +197,13 @@ class MicroBatchProcessor:
                 timeout_seconds=timeout_seconds,
             )
             if result.records == 0:
-                stop_reason = "idle"
-                status = "succeeded" if records else "idle"
-                break
+                empty_polls += 1
+                if empty_polls >= idle_polls:
+                    stop_reason = "idle"
+                    status = "succeeded" if records else "idle"
+                    break
+                continue
+            empty_polls = 0
             batches += 1
             records += result.records
             rows += result.rows

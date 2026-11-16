@@ -192,6 +192,7 @@ class KafkaStreamingRuntime:
         timeout_seconds: float | None = None,
         max_batches: int = 100,
         max_records: int | None = None,
+        idle_polls: int = 3,
     ) -> dict[str, object]:
         """Drain a stream through repeated bounded batches and stop at a cap or idle poll."""
 
@@ -207,6 +208,12 @@ class KafkaStreamingRuntime:
             or not 1 <= max_records <= 10_000_000
         ):
             raise ValueError("stream max_records must be an integer between 1 and 10000000")
+        if (
+            not isinstance(idle_polls, int)
+            or isinstance(idle_polls, bool)
+            or not 1 <= idle_polls <= 10
+        ):
+            raise ValueError("stream idle_polls must be an integer between 1 and 10")
         runtime_id, processor, batch_limit, timeout = self._build_processor(
             workspace_id,
             stream_id,
@@ -220,6 +227,7 @@ class KafkaStreamingRuntime:
                 timeout_seconds=timeout,
                 max_batches=max_batches,
                 max_records=max_records,
+                idle_polls=idle_polls,
             )
         except KafkaInputRejected as exc:
             raise StreamingInputRejected(

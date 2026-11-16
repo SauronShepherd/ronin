@@ -649,6 +649,7 @@ class StreamingRunner(Protocol):
         timeout_seconds: float | None = None,
         max_batches: int = 100,
         max_records: int | None = None,
+        idle_polls: int = 3,
     ) -> dict[str, object]: ...
 
 
@@ -3662,10 +3663,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     "timeout_seconds",
                     "max_batches",
                     "max_records",
+                    "idle_polls",
                 }:
                     raise ValueError(
                         "stream run body accepts only limit, timeout_seconds, max_batches "
-                        "and max_records"
+                        "max_records and idle_polls"
                     )
                 if not self._audit_mutation(
                     actor,
@@ -3683,6 +3685,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             timeout_seconds=payload.get("timeout_seconds"),
                             max_batches=payload.get("max_batches", 100),
                             max_records=payload.get("max_records"),
+                            idle_polls=payload.get("idle_polls", 3),
                         )
                     else:
                         result = streaming_runner.run_once(

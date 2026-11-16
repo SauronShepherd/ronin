@@ -144,6 +144,7 @@ function render() {
         <label>Stream ID<input class="field" name="stream" required placeholder="events/main"></label>
         <label>Batch limit<input class="field" name="limit" type="number" min="1" max="100000" value="1000" required></label>
         <label>Maximum batches<input class="field" name="max_batches" type="number" min="1" max="100000" value="100" required></label>
+        <label>Consecutive idle polls<input class="field" name="idle_polls" type="number" min="1" max="10" value="3" required></label>
         <button class="button" name="action" value="health" type="submit">Check health</button>
         <button class="button primary" name="action" value="run" type="submit">Run one batch</button>
         <button class="button" name="action" value="drain" type="submit">Drain until idle</button>
@@ -376,7 +377,11 @@ document.addEventListener('submit', async event => {
     const result = action === 'run'
       ? await post(`${base}/run`, { limit: Number(data.get('limit')) })
       : action === 'drain'
-        ? await post(`${base}/run`, { limit: Number(data.get('limit')), max_batches: Number(data.get('max_batches')) })
+        ? await post(`${base}/run`, {
+          limit: Number(data.get('limit')),
+          max_batches: Number(data.get('max_batches')),
+          idle_polls: Number(data.get('idle_polls')),
+        })
       : await get(`${base}/health`);
     if (action === 'health') renderStreamHealth(output, result);
     else output.textContent = json(result);

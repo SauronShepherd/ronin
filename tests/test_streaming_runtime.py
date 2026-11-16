@@ -185,6 +185,8 @@ def test_runtime_supervisor_rejects_unbounded_or_empty_caps(tmp_path: Path) -> N
         runtime.run_until_idle("workspace-a", "events/main", max_batches=0)
     with pytest.raises(ValueError, match="max_records"):
         runtime.run_until_idle("workspace-a", "events/main", max_records=0)
+    with pytest.raises(ValueError, match="idle_polls"):
+        runtime.run_until_idle("workspace-a", "events/main", idle_polls=0)
 
 
 def test_runtime_rejects_secret_bootstrap_endpoint(tmp_path: Path) -> None:

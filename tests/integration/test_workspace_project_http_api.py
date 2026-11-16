@@ -1224,6 +1224,7 @@ def test_stream_run_accepts_a_bounded_supervised_drain() -> None:
             timeout_seconds=None,
             max_batches=100,
             max_records=None,
+            idle_polls=3,
         ):
             self.calls.append(
                 (
@@ -1233,6 +1234,7 @@ def test_stream_run_accepts_a_bounded_supervised_drain() -> None:
                     timeout_seconds,
                     max_batches,
                     max_records,
+                    idle_polls,
                 )
             )
             return {
@@ -1258,7 +1260,7 @@ def test_stream_run_accepts_a_bounded_supervised_drain() -> None:
 
     assert status == 200
     assert body["stop_reason"] == "idle"
-    assert runner.calls == [(_WS_A, "events/main", 2, None, 3, 6)]
+    assert runner.calls == [(_WS_A, "events/main", 2, None, 3, 6, 3)]
     assert [item.permission for item in authorizer.requirements] == ["workspace.write"]
 
 
