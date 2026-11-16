@@ -761,15 +761,13 @@ def _manifest_payload(manifest: ProjectManifest) -> dict[str, object]:
 
 
 def _finops_payload(item: object) -> dict[str, object]:
-    """Serialize slotted FinOps records without losing exact decimal values."""
-    if not is_dataclass(item):
-        raise TypeError("FinOps reader returned a non-dataclass record")
+    """Serialize slotted FinOps records while retaining legacy object support."""
 
     def encode(value: object) -> object:
         if isinstance(value, Decimal):
             return str(value)
         if hasattr(value, "value"):
-            return value.value
+            return encode(value.value)
         if isinstance(value, tuple):
             if all(
                 isinstance(pair, tuple)
@@ -784,16 +782,24 @@ def _finops_payload(item: object) -> dict[str, object]:
             return [encode(child) for child in value]
         if isinstance(value, dict):
             return {str(key): encode(child) for key, child in value.items()}
-        if isinstance(value, (str, int, float, bool)) or value is None:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return str(value)
+        if isinstance(value, str) or value is None:
             return value
         if hasattr(value, "isoformat"):
             return value.isoformat()
         return str(value)
 
-    payload: dict[str, object] = {}
-    for field in fields(item):
-        payload[field.name] = encode(getattr(item, field.name))
-    return payload
+    if is_dataclass(item):
+        values = ((field.name, getattr(item, field.name)) for field in fields(item))
+    else:
+        legacy_values = getattr(item, "__dict__", None)
+        if not isinstance(legacy_values, dict):
+            raise TypeError("FinOps reader returned an unsupported record")
+        values = ((key, value) for key, value in legacy_values.items() if not key.startswith("_"))
+    return {key: encode(value) for key, value in values}
 
 
 _PageItem = TypeVar("_PageItem")
