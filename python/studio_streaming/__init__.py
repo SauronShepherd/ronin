@@ -25,6 +25,7 @@ from .processor import (
     MicroBatchProcessor,
     MicroBatchResult,
     StreamCheckpointConflict,
+    StreamSupervisorResult,
     StreamTransform,
 )
 from .runtime import KafkaStreamingRuntime, StreamingInputRejected, StreamingRunUnavailable
@@ -40,6 +41,7 @@ __all__ = (
     "KafkaStreamingHealthReader",
     "MicroBatchProcessor",
     "MicroBatchResult",
+    "StreamSupervisorResult",
     "ParquetMicroBatchSink",
     "SqliteStreamCheckpointStore",
     "StreamBatch",

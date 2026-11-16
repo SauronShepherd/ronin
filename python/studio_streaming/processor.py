@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
@@ -38,6 +38,20 @@ class MicroBatchResult:
     records: int
     rows: int
     sink_commit: StreamSinkCommit | None
+
+
+@dataclass(frozen=True, slots=True)
+class StreamSupervisorResult:
+    """Bounded aggregate receipt for repeated checkpoint-safe micro-batches."""
+
+    stream_id: str
+    status: str
+    stop_reason: str
+    batches: int
+    records: int
+    rows: int
+    previous_checkpoint: StreamCheckpoint
+    next_checkpoint: StreamCheckpoint
 
 
 class MicroBatchProcessor:
@@ -116,11 +130,90 @@ class MicroBatchProcessor:
             commit,
         )
 
+    def run_until_idle(
+        self,
+        stream_id: str,
+        *,
+        limit: int = 1000,
+        timeout_seconds: float = 1.0,
+        max_batches: int = 100,
+        max_records: int | None = None,
+        stop_requested: Callable[[], bool] | None = None,
+    ) -> StreamSupervisorResult:
+        """Drain repeated micro-batches without allowing an unbounded run.
+
+        Every non-empty batch is committed through :meth:`run_once`, so a
+        provider failure leaves the last durable checkpoint as the recovery
+        boundary. The supervisor stops at the first empty poll, an explicit
+        cap, or a cooperative stop request; it never waits indefinitely for a
+        source or accumulates records in memory across batches.
+        """
+
+        if (
+            not isinstance(max_batches, int)
+            or isinstance(max_batches, bool)
+            or not 1 <= max_batches <= 100_000
+        ):
+            raise ValueError("stream max_batches must be an integer between 1 and 100000")
+        if max_records is not None and (
+            not isinstance(max_records, int)
+            or isinstance(max_records, bool)
+            or not 1 <= max_records <= 10_000_000
+        ):
+            raise ValueError("stream max_records must be an integer between 1 and 10000000")
+
+        initial = self._checkpoints.get(stream_id)
+        batches = 0
+        records = 0
+        rows = 0
+        next_checkpoint = initial
+        stop_reason = "idle"
+        while True:
+            if stop_requested is not None and stop_requested():
+                stop_reason = "stop_requested"
+                status = "stopped"
+                break
+            if batches >= max_batches:
+                stop_reason = "max_batches"
+                status = "limit_reached"
+                break
+            remaining = None if max_records is None else max_records - records
+            if remaining == 0:
+                stop_reason = "max_records"
+                status = "limit_reached"
+                break
+            batch_limit = limit if remaining is None else min(limit, remaining)
+            result = self.run_once(
+                stream_id,
+                limit=batch_limit,
+                timeout_seconds=timeout_seconds,
+            )
+            if result.records == 0:
+                stop_reason = "idle"
+                status = "succeeded" if records else "idle"
+                break
+            batches += 1
+            records += result.records
+            rows += result.rows
+            next_checkpoint = result.next_checkpoint
+
+        return StreamSupervisorResult(
+            stream_id,
+            status,
+            stop_reason,
+            batches,
+            records,
+            rows,
+            initial,
+            next_checkpoint,
+        )
+
 
 __all__ = (
     "IdentityTransform",
     "MicroBatchProcessor",
     "MicroBatchResult",
+    "StreamSupervisorResult",
     "StreamCheckpointConflict",
     "StreamTransform",
 )

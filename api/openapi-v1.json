@@ -1049,8 +1049,8 @@
       "post": {
         "operationId": "runStreamingMicroBatch",
         "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "stream_id", "in": "path", "required": true, "schema": {"type": "string"}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 100000}, "timeout_seconds": {"type": "number", "minimum": 0, "maximum": 300}}}}}},
-        "responses": {"200": {"description": "Bounded micro-batch execution receipt", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "422": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 100000}, "timeout_seconds": {"type": "number", "minimum": 0, "maximum": 300}, "max_batches": {"type": "integer", "minimum": 1, "maximum": 100000}, "max_records": {"type": "integer", "minimum": 1, "maximum": 10000000}}}}}},
+        "responses": {"200": {"description": "Bounded micro-batch or supervised drain receipt", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "422": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
       }
     },
     "/v1/workspaces/{workspace_id}/graphs/{graph_id}/query": {

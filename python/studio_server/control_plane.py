@@ -640,6 +640,17 @@ class StreamingRunner(Protocol):
         timeout_seconds: float | None = None,
     ) -> dict[str, object]: ...
 
+    def run_until_idle(
+        self,
+        workspace_id: WorkspaceId,
+        stream_id: str,
+        *,
+        limit: int | None = None,
+        timeout_seconds: float | None = None,
+        max_batches: int = 100,
+        max_records: int | None = None,
+    ) -> dict[str, object]: ...
+
 
 @runtime_checkable
 class FinOpsReader(Protocol):
@@ -3646,8 +3657,16 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "workspace.write"):
                     return
                 payload = self._read_json()
-                if not isinstance(payload, dict) or set(payload) - {"limit", "timeout_seconds"}:
-                    raise ValueError("stream run body accepts only limit and timeout_seconds")
+                if not isinstance(payload, dict) or set(payload) - {
+                    "limit",
+                    "timeout_seconds",
+                    "max_batches",
+                    "max_records",
+                }:
+                    raise ValueError(
+                        "stream run body accepts only limit, timeout_seconds, max_batches "
+                        "and max_records"
+                    )
                 if not self._audit_mutation(
                     actor,
                     "stream.run",
@@ -3656,12 +3675,22 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     return
                 try:
-                    result = streaming_runner.run_once(
-                        workspace_id,
-                        segments[4],
-                        limit=payload.get("limit"),
-                        timeout_seconds=payload.get("timeout_seconds"),
-                    )
+                    if "max_batches" in payload or "max_records" in payload:
+                        result = streaming_runner.run_until_idle(
+                            workspace_id,
+                            segments[4],
+                            limit=payload.get("limit"),
+                            timeout_seconds=payload.get("timeout_seconds"),
+                            max_batches=payload.get("max_batches", 100),
+                            max_records=payload.get("max_records"),
+                        )
+                    else:
+                        result = streaming_runner.run_once(
+                            workspace_id,
+                            segments[4],
+                            limit=payload.get("limit"),
+                            timeout_seconds=payload.get("timeout_seconds"),
+                        )
                 except Exception as exc:
                     if exc.__class__.__name__ == "StreamingInputRejected":
                         self._error(

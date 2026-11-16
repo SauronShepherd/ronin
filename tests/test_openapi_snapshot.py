@@ -312,6 +312,8 @@ def test_stream_micro_batch_openapi_is_bounded_and_write_scoped() -> None:
     assert request["additionalProperties"] is False
     assert request["properties"]["limit"]["maximum"] == 100000
     assert request["properties"]["timeout_seconds"]["maximum"] == 300
+    assert request["properties"]["max_batches"]["maximum"] == 100000
+    assert request["properties"]["max_records"]["maximum"] == 10000000
     assert {"200", "400", "401", "403", "404", "422", "503"} <= set(operation["responses"])
 
 

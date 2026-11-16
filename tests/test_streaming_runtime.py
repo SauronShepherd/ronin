@@ -87,6 +87,106 @@ def test_runtime_processes_once_and_persists_sink_before_checkpoint(tmp_path: Pa
     assert factory_calls[0]["bootstrap_servers"] == "broker:9092"
 
 
+def test_runtime_supervisor_drains_until_idle_with_one_source_and_durable_receipt(
+    tmp_path: Path,
+) -> None:
+    workspace = "workspace-a"
+    stream_id = "events/main"
+    checkpoints = SqliteStreamCheckpointStore(tmp_path / "state.sqlite3")
+    checkpoints.commit_stream_bundle_import(workspace, (_definition(),), {stream_id: "reset"})
+    connection = SimpleNamespace(
+        connector_id="kafka",
+        options=(("bootstrap.servers", "broker:9092"),),
+        secret_refs=(),
+    )
+    source_instances = []
+
+    def source_factory(**_kwargs):
+        source = _Source()
+        source_instances.append(source)
+        return source
+
+    runtime = KafkaStreamingRuntime(
+        checkpoints,
+        lambda _workspace, _connection_id: connection,
+        lambda _reference: "unused",
+        tmp_path / "data",
+        source_factory=source_factory,
+    )
+
+    result = runtime.run_until_idle(workspace, stream_id, max_batches=3)
+
+    assert result["status"] == "succeeded"
+    assert result["stop_reason"] == "idle"
+    assert result["batches"] == 1
+    assert result["records"] == 1
+    assert result["rows"] == 1
+    assert len(source_instances) == 1
+
+
+def test_runtime_supervisor_stops_at_max_batches_without_losing_checkpoint(tmp_path: Path) -> None:
+    workspace = "workspace-a"
+    stream_id = "events/main"
+    checkpoints = SqliteStreamCheckpointStore(tmp_path / "state.sqlite3")
+    checkpoints.commit_stream_bundle_import(workspace, (_definition(),), {stream_id: "reset"})
+    connection = SimpleNamespace(
+        connector_id="kafka",
+        options=(("bootstrap.servers", "broker:9092"),),
+        secret_refs=(),
+    )
+
+    class _ContinuousSource:
+        def poll(self, checkpoint, *, limit, timeout_seconds):
+            del limit, timeout_seconds
+            previous = checkpoint.offset_for(0)
+            offset = 0 if previous is None else previous + 1
+            record = StreamRecord(0, offset, 1, f"event-{offset}", {"event": "created"})
+            return StreamBatch((record,), StreamCheckpoint((StreamPosition(0, offset),)))
+
+    runtime = KafkaStreamingRuntime(
+        checkpoints,
+        lambda _workspace, _connection_id: connection,
+        lambda _reference: "unused",
+        tmp_path / "data",
+        source_factory=lambda **_kwargs: _ContinuousSource(),
+    )
+
+    result = runtime.run_until_idle(workspace, stream_id, max_batches=2)
+
+    runtime_id = checkpoints.runtime_stream_id(workspace, stream_id)
+    assert result["status"] == "limit_reached"
+    assert result["stop_reason"] == "max_batches"
+    assert result["batches"] == 2
+    assert result["records"] == 2
+    assert checkpoints.get(runtime_id).offset_for(0) == 1
+
+
+def test_runtime_supervisor_rejects_unbounded_or_empty_caps(tmp_path: Path) -> None:
+    checkpoints = SqliteStreamCheckpointStore(tmp_path / "state.sqlite3")
+    checkpoints.commit_stream_bundle_import(
+        "workspace-a", (_definition(),), {"events/main": "reset"}
+    )
+    connection = SimpleNamespace(
+        connector_id="kafka",
+        options=(("bootstrap.servers", "broker:9092"),),
+        secret_refs=(),
+    )
+    runtime = KafkaStreamingRuntime(
+        checkpoints,
+        lambda _workspace, _connection_id: connection,
+        lambda _reference: "unused",
+        tmp_path / "data",
+        source_factory=lambda **_kwargs: pytest.fail(
+            "invalid caps must fail before source creation"
+        ),
+    )
+
+    with pytest.raises(ValueError, match="max_batches"):
+        runtime.run_until_idle("workspace-a", "events/main", max_batches=0)
+    with pytest.raises(ValueError, match="max_records"):
+        runtime.run_until_idle("workspace-a", "events/main", max_records=0)
+
+
 def test_runtime_rejects_secret_bootstrap_endpoint(tmp_path: Path) -> None:
     checkpoints = SqliteStreamCheckpointStore(tmp_path / "state.sqlite3")
     checkpoints.commit_stream_bundle_import(

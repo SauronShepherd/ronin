@@ -1208,6 +1208,57 @@ def test_stream_run_requires_write_permission_and_returns_batch_receipt() -> Non
     assert status == 200
     assert body["status"] == "succeeded"
     assert runner.calls == [(_WS_A, "events/main", 2, 0)]
+
+
+def test_stream_run_accepts_a_bounded_supervised_drain() -> None:
+    class _Runner:
+        def __init__(self):
+            self.calls = []
+
+        def run_until_idle(
+            self,
+            workspace_id,
+            stream_id,
+            *,
+            limit=None,
+            timeout_seconds=None,
+            max_batches=100,
+            max_records=None,
+        ):
+            self.calls.append(
+                (
+                    workspace_id,
+                    stream_id,
+                    limit,
+                    timeout_seconds,
+                    max_batches,
+                    max_records,
+                )
+            )
+            return {
+                "stream_id": stream_id,
+                "status": "succeeded",
+                "stop_reason": "idle",
+                "batches": 2,
+                "records": 4,
+                "rows": 4,
+            }
+
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    runner = _Runner()
+    authorizer = _Authorizer({(str(_WS_A), "workspace.write")})
+    with _server(store, authorizer, streaming_runner=runner) as address:
+        status, body = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/streams/events%2Fmain/run",
+            body=_json_body({"limit": 2, "max_batches": 3, "max_records": 6}),
+        )
+
+    assert status == 200
+    assert body["stop_reason"] == "idle"
+    assert runner.calls == [(_WS_A, "events/main", 2, None, 3, 6)]
     assert [item.permission for item in authorizer.requirements] == ["workspace.write"]
 
 

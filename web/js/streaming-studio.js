@@ -143,10 +143,12 @@ function render() {
         <label>Workspace<input class="field" name="workspace" value="default" required></label>
         <label>Stream ID<input class="field" name="stream" required placeholder="events/main"></label>
         <label>Batch limit<input class="field" name="limit" type="number" min="1" max="100000" value="1000" required></label>
+        <label>Maximum batches<input class="field" name="max_batches" type="number" min="1" max="100000" value="100" required></label>
         <button class="button" name="action" value="health" type="submit">Check health</button>
         <button class="button primary" name="action" value="run" type="submit">Run one batch</button>
+        <button class="button" name="action" value="drain" type="submit">Drain until idle</button>
       </form>
-      <pre id="stream-health-result" class="code" aria-live="polite">Choose a saved stream, check health, or run one bounded batch.</pre>
+      <pre id="stream-health-result" class="code" aria-live="polite">Choose a saved stream, check health, run one bounded batch, or drain with a finite batch cap.</pre>
     </section>`;
 }
 
@@ -373,6 +375,8 @@ document.addEventListener('submit', async event => {
   try {
     const result = action === 'run'
       ? await post(`${base}/run`, { limit: Number(data.get('limit')) })
+      : action === 'drain'
+        ? await post(`${base}/run`, { limit: Number(data.get('limit')), max_batches: Number(data.get('max_batches')) })
       : await get(`${base}/health`);
     if (action === 'health') renderStreamHealth(output, result);
     else output.textContent = json(result);

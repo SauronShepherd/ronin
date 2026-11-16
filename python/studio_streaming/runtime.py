@@ -47,7 +47,7 @@ class _TableSink:
 
 
 class KafkaStreamingRuntime:
-    """Execute one bounded micro-batch using Ronin's durable checkpoint store."""
+    """Execute bounded Kafka micro-batches using Ronin's durable checkpoints."""
 
     def __init__(
         self,
@@ -64,14 +64,14 @@ class KafkaStreamingRuntime:
         self._data_root = data_root.expanduser().resolve()
         self._source_factory = source_factory
 
-    def run_once(
+    def _build_processor(
         self,
         workspace_id: WorkspaceId | str,
         stream_id: str,
         *,
-        limit: int | None = None,
-        timeout_seconds: float | None = None,
-    ) -> dict[str, object]:
+        limit: int | None,
+        timeout_seconds: float | None,
+    ) -> tuple[str, MicroBatchProcessor, int, float]:
         workspace = str(workspace_id)
         runtime_id = self._checkpoints.runtime_stream_id(workspace, stream_id)
         definition = self._checkpoints.get_definition(workspace, stream_id)
@@ -136,12 +136,32 @@ class KafkaStreamingRuntime:
                 f"{workspace}\0{definition.sink.target_ref}".encode()
             ).hexdigest()[:24]
             sink = ParquetMicroBatchSink(self._data_root / "streaming" / target)
+        return (
+            runtime_id,
+            MicroBatchProcessor(source, sink, self._checkpoints),
+            batch_limit,
+            float(timeout),
+        )
 
+    def run_once(
+        self,
+        workspace_id: WorkspaceId | str,
+        stream_id: str,
+        *,
+        limit: int | None = None,
+        timeout_seconds: float | None = None,
+    ) -> dict[str, object]:
+        runtime_id, processor, batch_limit, timeout = self._build_processor(
+            workspace_id,
+            stream_id,
+            limit=limit,
+            timeout_seconds=timeout_seconds,
+        )
         try:
-            result = MicroBatchProcessor(source, sink, self._checkpoints).run_once(
+            result = processor.run_once(
                 runtime_id,
                 limit=batch_limit,
-                timeout_seconds=float(timeout),
+                timeout_seconds=timeout,
             )
         except KafkaInputRejected as exc:
             raise StreamingInputRejected(
@@ -161,6 +181,64 @@ class KafkaStreamingRuntime:
             "previous_checkpoint": result.previous_checkpoint.digest,
             "checkpoint": result.next_checkpoint.digest,
             "sink_commit_id": None if result.sink_commit is None else result.sink_commit.commit_id,
+        }
+
+    def run_until_idle(
+        self,
+        workspace_id: WorkspaceId | str,
+        stream_id: str,
+        *,
+        limit: int | None = None,
+        timeout_seconds: float | None = None,
+        max_batches: int = 100,
+        max_records: int | None = None,
+    ) -> dict[str, object]:
+        """Drain a stream through repeated bounded batches and stop at a cap or idle poll."""
+
+        if (
+            not isinstance(max_batches, int)
+            or isinstance(max_batches, bool)
+            or not 1 <= max_batches <= 100_000
+        ):
+            raise ValueError("stream max_batches must be an integer between 1 and 100000")
+        if max_records is not None and (
+            not isinstance(max_records, int)
+            or isinstance(max_records, bool)
+            or not 1 <= max_records <= 10_000_000
+        ):
+            raise ValueError("stream max_records must be an integer between 1 and 10000000")
+        runtime_id, processor, batch_limit, timeout = self._build_processor(
+            workspace_id,
+            stream_id,
+            limit=limit,
+            timeout_seconds=timeout_seconds,
+        )
+        try:
+            result = processor.run_until_idle(
+                runtime_id,
+                limit=batch_limit,
+                timeout_seconds=timeout,
+                max_batches=max_batches,
+                max_records=max_records,
+            )
+        except KafkaInputRejected as exc:
+            raise StreamingInputRejected(
+                "stream input is invalid or exceeds local processing limits"
+            ) from exc
+        except KafkaDependencyError as exc:
+            raise StreamingRunUnavailable("Kafka streaming dependencies are unavailable") from exc
+        except Exception as exc:
+            raise StreamingRunUnavailable("stream supervisor execution failed") from exc
+
+        return {
+            "stream_id": stream_id,
+            "status": result.status,
+            "stop_reason": result.stop_reason,
+            "batches": result.batches,
+            "records": result.records,
+            "rows": result.rows,
+            "previous_checkpoint": result.previous_checkpoint.digest,
+            "checkpoint": result.next_checkpoint.digest,
         }
 
     def list_definitions(self, workspace_id: WorkspaceId | str) -> dict[str, object]:
