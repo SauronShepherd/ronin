@@ -1,0 +1,119 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D47",
+  "status": "in_progress",
+  "outcome": "mixed; first clean-candidate supervised run failed at 32/64, immediate repeat passed 64/64; no qualification PASS is claimed",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-11-16",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "a224b7983b31a97abbeb0d482fd50d8c2fa653dc",
+    "origin_main_sha_when_candidate_was_tested": "a224b7983b31a97abbeb0d482fd50d8c2fa653dc",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a224b798-d47",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a224b798-d47\\candidate-a224b7983b31a97abbeb0d482fd50d8c2fa653dc.tar",
+      "format": "tar",
+      "sha256": "ee0b0e68bf9a1ac492336a371e4836cc0f042d28d1288ba31ffc5c63e355332a",
+      "size": 17448960
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a224b798-d47\\candidate-a224b7983b31a97abbeb0d482fd50d8c2fa653dc.manifest.json",
+      "sha256": "30a9d4916ffb48e67f3cbbde179ab2bbcc11cf3543200556b255c74d06eff76e",
+      "size": 232203
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a224b798-d47\\candidate-a224b7983b31a97abbeb0d482fd50d8c2fa653dc.sha256",
+      "sha256": "66fa53abbe71c2b33a9a6ebea15c68733ff776bf61c6685bdec105e3a096600c",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a224b798-d47\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1505,
+    "total_bytes": 16218609,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "a224b7983b31a97abbeb0d482fd50d8c2fa653dc",
+    "candidate_docs_commit": null,
+    "summary": "D47 adds no production code. It runs a clean-candidate regression of the bounded supervised two-partition drain after D46. The first run exposes a reproducible-looking continuity failure at 32/64; an immediate repeat on the same candidate passes 64/64, so the result is mixed and the open behavior is not certified.",
+    "production_files_changed": [],
+    "test_files_changed": [],
+    "carried_product_code_commit": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
+    "carried_qualification_docs_commit": "a224b7983b31a97abbeb0d482fd50d8c2fa653dc"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha a224b7983b31a97abbeb0d482fd50d8c2fa653dc --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a224b798-d47",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-a224b798-d47",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after sandbox tests; the same source SHA regenerated the recorded archive and manifest hashes and final verify passed",
+    "candidate_contracts": "exact candidate sandbox: 84 passed, 0 failed, 0 skipped across streaming runtime, Kafka, HTTP integration and streaming contracts; final regenerated sandbox was verified clean",
+    "candidate_quality": "exact candidate sandbox: Node syntax, Ruff format/check and mypy passed on the streaming/control-plane selection",
+    "live_first_attempt": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d47-supervised-regression-a224b798-20261116 -TestGrep 'live streaming supervised drain'",
+    "live_repeat": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d47-supervised-repeat-a224b798-20261116 -TestGrep 'live streaming supervised drain'"
+  },
+  "qualification_matrix": {
+    "first_supervised_attempt": "FAIL: real services were ready and the HTTP run returned 200/succeeded/idle, but the aggregate was records=32 and rows=32 instead of 64; Playwright 0/1 and the runner correctly rejected the campaign",
+    "repeat_supervised_attempt": "PASS only as a retry observation: the same exact candidate and filtered real services returned records=64, rows=64, stop_reason=idle, final lag zero; Playwright 1/1, 5/5 events correlated, 4 OK and 1 expected WARN",
+    "deterministic_qualification": "MIXED/OPEN: the first clean-candidate run failed and the repeat passed; the retry does not erase the failure or establish deterministic supervised continuity",
+    "first_traffic_audit": "PASS for audit integrity only: 3/3 events correlated, all 200 OK, zero uncorrelated events and zero server/network errors; it is still a failed product journey because the returned record count was wrong",
+    "repeat_traffic_audit": "PASS for the repeat observation: 5/5 events correlated, 4 OK and 1 expected WARN for max_batches=0, zero uncorrelated events and zero server/network errors",
+    "candidate_reproducibility_after_cleanup": "PASS; archive SHA ee0b0e68bf9a1ac492336a371e4836cc0f042d28d1288ba31ffc5c63e355332a and manifest SHA 30a9d4916ffb48e67f3cbbde179ab2bbcc11cf3543200556b255c74d06eff76e were unchanged after cleanup/regeneration and final verify passed",
+    "security_scans": "NOT_RERUN in D47; prior Gitleaks and pip-audit evidence remains separate and is not copied as a D47 PASS",
+    "trivy": "NOT_RUN",
+    "license_qualification": "INHERITED FAIL/CLOSED; 21 human review decisions remain missing",
+    "result": "D47 remains in_progress/mixed; it does not qualify P11, close a release gate or change NO-GO"
+  },
+  "security_and_recovery": {
+    "first_failure": "The first live supervisor request used real PostgreSQL, Redpanda/Kafka and Ronin API, returned HTTP 200 with status succeeded and stop_reason idle, but stopped after 32 records while 32 records remained. No 5xx, network error, authorization gap or application ERROR was observed.",
+    "repeat_observation": "The immediate retry used the same candidate and real services, drained 64/64 records and rows, reached lag zero, then exercised the invalid max_batches=0 path with the expected HTTP 400 WARN.",
+    "interpretation": "The evidence is consistent with a timing-sensitive empty-poll/partition-discovery or supervisor-idle boundary, but the root cause is not proven. D47 must not be summarized as a stable supervised PASS until the first-run failure is reproduced, fixed or explicitly bounded by a deterministic contract."
+  },
+  "evidence": {
+    "first_failed_campaign": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d47-supervised-regression-a224b798-20261116",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d47-supervised-regression-a224b798-20261116\\qualification-summary.json",
+      "qualification_summary_sha256": "f14a235994334bdb4835cd45f5e3e2a1f3530777477dfd0cfc1e1453965aaa61",
+      "qualification_summary_size": 2852,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d47-supervised-regression-a224b798-20261116\\live-api-traffic.json",
+      "live_api_traffic_sha256": "06aca3ccbe71325b5ca12a3ea1482716b4b13b8a7126323afc6230a5d2f30657",
+      "live_api_traffic_size": 966,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d47-supervised-regression-a224b798-20261116\\browser-live.xml",
+      "browser_junit_sha256": "8629e1ac0e79aac6204370076ea94e5f5081f0606a842a4895bc1a0e63fd05ff",
+      "browser_junit_size": 3487,
+      "status": "FAIL; Playwright 0/1, API events 3/3 correlated, all 200 OK, application logs INFO 5 and ERROR/CRITICAL 0"
+    },
+    "repeat_pass_observation": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d47-supervised-repeat-a224b798-20261116",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d47-supervised-repeat-a224b798-20261116\\qualification-summary.json",
+      "qualification_summary_sha256": "b0ce15f10d345309ece2d6e025f082b26030df8e2c12d302c499cf8f17e598bc",
+      "qualification_summary_size": 2794,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d47-supervised-repeat-a224b798-20261116\\live-api-traffic.json",
+      "live_api_traffic_sha256": "ea688670ab28ab2e8a9b33675054d045c49086a9f0bb3465c2f7682aff26cf2f",
+      "live_api_traffic_size": 1647,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d47-supervised-repeat-a224b798-20261116\\browser-live.xml",
+      "browser_junit_sha256": "e1ef77169b539d6cb130de6d6d13ae47dc6664a87a19fc548e06645d3a0d4caa",
+      "browser_junit_size": 440,
+      "status": "PASS observation only; Playwright 1/1, API events 5/5 correlated, outcomes 4 OK and 1 expected WARN, application logs INFO 6 and WARNING 1"
+    }
+  },
+  "open_cells": [
+    "P11 remains in_progress: supervised continuity is not deterministic at the current live evidence boundary; sustained backpressure, worker supervision, multi-broker recovery, broader provider breadth and the complete family journey remain open.",
+    "D47 requires a product/fixture investigation before another qualification claim: inspect bounded Kafka polling, consumer lifecycle/partition discovery and the supervisor idle policy; add a regression that fails on 32/64 and proves the chosen fix.",
+    "P2 and P14 remain in_progress; D47 does not add connector/provider or external recovery qualification.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external secret provider or credential was available.",
+    "D47 does not rerun the full Python suite, Gitleaks, pip-audit or Trivy; skipped and inherited lanes are not counted as PASS.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The first and repeat runs used the same exact candidate but produced different supervised drain outcomes; this is evidence of an unresolved stability boundary, not permission to choose the passing run.",
+    "The campaign uses one local Redpanda broker with two partitions, not a multi-broker quorum or external provider.",
+    "No hosted workflow, branch or worktree was used; license review remains FAIL/CLOSED with 21 human decisions pending."
+  ]
+}

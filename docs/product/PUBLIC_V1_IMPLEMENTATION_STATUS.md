@@ -7,7 +7,7 @@
 
 ## Current exact-SHA qualification — 16 November 2026
 
-The current exact-head candidate is `8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9`.
+The current exact-head candidate is `a224b7983b31a97abbeb0d482fd50d8c2fa653dc`.
 D38 adds candidate-bound P11 broker-restart recovery and refreshes the probe
 Alpine lock after the preceding image showed 11 MEDIUM findings with available
 fixed versions. The exact candidate sandbox passes `95` streaming/API tests
@@ -146,6 +146,26 @@ on 21 human decisions. It does not prove sustained indefinite backpressure,
 multi-broker recovery, worker supervision, external providers or complete P11
 qualification.
 
+D47 reruns the bounded supervised two-partition drain from exact candidate
+`a224b7983b31a97abbeb0d482fd50d8c2fa653dc` after D46. The first clean
+candidate run is a real failure: the supervised endpoint returns HTTP 200 with
+`status=succeeded`, `stop_reason=idle`, but only `32/64` records and rows. An
+immediate repeat on the same candidate and real PostgreSQL, Redpanda/Kafka and
+Ronin API drains `64/64` and reaches lag zero. The two results are mixed, so
+the retry is retained as an observation and not promoted to a deterministic
+qualification PASS. D47 leaves P11 `in_progress` and identifies the open
+boundary as consumer/partition discovery or supervisor idle timing; the root
+cause remains to be reproduced and fixed or explicitly bounded.
+
+D47 exact sandbox contracts pass `84/84` with zero skips; the candidate was
+cleaned, regenerated and verified after tests. The first live receipt records
+3/3 correlated HTTP events and no server/network errors despite the failed
+32/64 assertion; the repeat records 5/5 correlated events, 4 OK and 1
+expected WARN for the invalid cap. Full suite, route-wide audit, Gitleaks,
+pip-audit and Trivy remain not rerun, and the license review remains closed on
+21 human decisions. This evidence must not be summarized as a stable
+supervised PASS until repeated clean-candidate runs are deterministic.
+
 This is bounded technical evidence only. Public v1 remains **1/13 families
 qualified, 0/10 gates, NO-GO**: P14 is `in_progress` but external object-store
 backup/recovery, supported-platform coverage and complete production
@@ -221,7 +241,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9` (2026-11-16).
+**Observed source head:** `a224b7983b31a97abbeb0d482fd50d8c2fa653dc` (2026-11-16).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
