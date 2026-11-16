@@ -1,0 +1,105 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D45",
+  "status": "in_progress",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-11-16",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
+    "origin_main_sha_when_candidate_was_tested": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bfa94cf0-d45",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bfa94cf0-d45\\candidate-bfa94cf0cb19c7058e0b54c1826f746a9f5594eb.tar",
+      "format": "tar",
+      "sha256": "eb2b1e174a5f0ae654c1e4d4356a4d5c6e84ad946ac3d460d2ac3206440f55e3",
+      "size": 17397760
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bfa94cf0-d45\\candidate-bfa94cf0cb19c7058e0b54c1826f746a9f5594eb.manifest.json",
+      "sha256": "5fa4ed9cb45abff5bb00293b1762c0a7a7f9107e63220cac2be1d93c84781aa4",
+      "size": 231215
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bfa94cf0-d45\\candidate-bfa94cf0cb19c7058e0b54c1826f746a9f5594eb.sha256",
+      "sha256": "b8c950639239ee54fe4fbcfbb1486c2591ebb6c8a5be1735844fcb8b89d47583",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bfa94cf0-d45\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1499,
+    "total_bytes": 16176216,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
+    "candidate_docs_commit": null,
+    "summary": "D45 fixes KafkaJsonSource so a bounded poll retries transient empty/partition-EOF results within the configured timeout and can discover records from a later assigned partition without exceeding record or batch byte limits. A real backlog test also captures its API traffic for candidate-bound audit.",
+    "production_files_changed": [
+      "python/studio_streaming/kafka.py"
+    ],
+    "test_files_changed": [
+      "tests/test_streaming_kafka.py",
+      "web-tests/tests/product-live.spec.mjs"
+    ],
+    "carried_product_code_commit": "d6890832a6743cde1bd949bd3529359285559c0d",
+    "carried_qualification_docs_commit": "f411e7a78d81b04d2c4531603332e02658ad8ef6"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha bfa94cf0cb19c7058e0b54c1826f746a9f5594eb --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bfa94cf0-d45",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bfa94cf0-d45",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after the candidate qualification; the same source SHA regenerated identical archive and manifest hashes and final verify passed",
+    "candidate_contracts": "exact candidate sandbox: 135 passed, 0 failed, 0 skipped, including streaming runtime, Kafka, control-plane integration, OpenAPI, health, bundle, contracts, scheduler bridge and live qualification runner selections",
+    "candidate_quality": "exact candidate sandbox: Node syntax checks for product-live.spec.mjs and streaming-studio.js passed; Ruff format/check and mypy passed on the changed Python modules in the checkout",
+    "live_qualification": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d45-bounded-backlog-bfa94cf0-20261116 -TestGrep 'live streaming drains a two-partition backlog'",
+    "live_result": "real PostgreSQL, Redpanda/Kafka and Ronin API; 1/1 Playwright case passed; initial lag was 32/32 across two partitions; 31 bounded run calls consumed 64 records with each run limited to four records; lag never increased and final lag was zero; 64 API events all correlated, 64 OK, zero errors; services cleaned"
+  },
+  "qualification_matrix": {
+    "bounded_backlog": "PASS for the exact local two-partition scenario: initial total lag 64 with 32/32 per partition, bounded limit=4 runs, 64 records and 64 rows consumed, non-increasing lag and final lag zero",
+    "transient_partition_poll": "PASS candidate-bound: a unit regression reproduces an empty poll followed by records from partition 1 and verifies the checkpoint advances without duplicate records",
+    "traffic_audit": "PASS for the filtered diagnostic: 64/64 API events correlated to structured HTTP logs, all 200 OK, zero uncorrelated events, zero unexpected authorization gaps and zero server/network errors",
+    "candidate_reproducibility_after_cleanup": "PASS; archive and manifest hashes were unchanged after cleanup/regeneration and final verify passed",
+    "security_scans": "NOT_RERUN in D45; D42 Gitleaks and pip-audit evidence is not copied as a new D45 PASS",
+    "trivy": "NOT_RUN",
+    "license_qualification": "INHERITED FAIL/CLOSED; 21 human review decisions remain missing",
+    "result": "D45 passes the bounded multi-partition backlog campaign cell and fixes the observed transient partition-poll defect, but does not qualify P11, close a release gate or change NO-GO"
+  },
+  "security_and_recovery": {
+    "journey": "The exact live journey created the sustained two-partition stream, confirmed 32/32 initial lag, repeatedly executed real bounded Kafka micro-batches, checked health after each run, consumed all 64 rows and cleaned the isolated PostgreSQL/Redpanda services.",
+    "negative_paths": "The unit regression preserves the bounded timeout and later-partition behavior; no invalid or poison record path was claimed by D45. The prior live attempt that stalled at the 40-attempt cap is retained as failure evidence.",
+    "recovery_scope": "This campaign proves bounded multi-partition backlog drain and transient poll recovery. It does not prove broker restart recovery beyond D44, sustained indefinite backpressure, worker supervision, external provider breadth or the complete P11 journey."
+  },
+  "evidence": {
+    "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d45-bounded-backlog-bfa94cf0-20261116",
+    "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d45-bounded-backlog-bfa94cf0-20261116\\qualification-summary.json",
+    "qualification_summary_sha256": "b9e8ddc8f32d0913c1ff760946de03173dea3fe15cb992f0134a4f6425585c05",
+    "qualification_summary_size": 2765,
+    "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d45-bounded-backlog-bfa94cf0-20261116\\live-api-traffic.json",
+    "live_api_traffic_sha256": "92190b6fa483e970d9b9e1e876124129948500b58f7a7d87a7477bf0fb522b8c",
+    "live_api_traffic_size": 20603,
+    "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d45-bounded-backlog-bfa94cf0-20261116\\browser-live.xml",
+    "browser_junit_sha256": "723301d2a51348f07feef315ecd12a659bf25265c0f2a6c203fbe4d10cc5215d",
+    "browser_junit_size": 432,
+    "previous_failed_campaign": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d45-bounded-backlog-a12616ee-20261116"
+  },
+  "open_cells": [
+    "P11 remains in_progress: D45 proves bounded two-partition backlog drain and transient partition polling, while sustained backpressure, worker supervision, broader provider breadth and the complete family journey remain open.",
+    "P2 and P14 remain in_progress; D45 does not add connector/provider or external recovery qualification.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external secret provider or credential was available.",
+    "D45 does not rerun the full Python suite, Gitleaks, pip-audit or Trivy; skipped and inherited lanes are not counted as PASS.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The first candidate-bound live attempt on a12616ee captured 82 successful API events but reached the 40-attempt cap without lag zero; it is recorded as FAIL and led to the transient empty-poll correction.",
+    "D45 proves one bounded local two-partition backlog scenario and does not prove indefinite load, multi-broker quorum recovery, worker supervision, external providers or the full P11 family journey.",
+    "No hosted workflow, branch or worktree was used; license review remains FAIL/CLOSED with 21 human decisions pending."
+  ]
+}

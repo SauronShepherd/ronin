@@ -7,7 +7,7 @@
 
 ## Current exact-SHA qualification — 16 November 2026
 
-The current exact-head candidate is `bd1b7f4c08fc1f9c36976014dc630317b86a8cf1`.
+The current exact-head candidate is `bfa94cf0cb19c7058e0b54c1826f746a9f5594eb`.
 D38 adds candidate-bound P11 broker-restart recovery and refreshes the probe
 Alpine lock after the preceding image showed 11 MEDIUM findings with available
 fixed versions. The exact candidate sandbox passes `95` streaming/API tests
@@ -109,6 +109,27 @@ provider matrix or complete P11 qualification. D44 does not rerun the full
 Python suite, Gitleaks, pip-audit or Trivy, and license review remains closed
 on 21 human decisions.
 
+D45 records a candidate-bound fix and live qualification for bounded Kafka
+backlog polling from exact candidate
+`bfa94cf0cb19c7058e0b54c1826f746a9f5594eb`. `KafkaJsonSource` now retries
+transient empty/partition-EOF results within the bounded poll timeout, so an
+assigned later partition can be discovered without relaxing record or byte
+limits. The exact candidate selection passes `135/135` with zero
+failures/skips; the unit regression covers an empty poll followed by
+partition-1 records, and Node syntax checks pass.
+
+The real filtered campaign starts PostgreSQL, Redpanda/Kafka and Ronin API.
+Chromium observes `32/32` initial lag across two partitions, executes bounded
+`limit=4` runs, confirms non-increasing lag, drains `64` records and `64` rows,
+and reaches lag zero. The runner records `1/1` Playwright pass, `64/64`
+API/log correlations, all `64` responses as `OK`, zero server/network errors,
+and successful cleanup. The first attempt is retained as a failed 40-attempt
+diagnostic that stalled after the first partition and is not counted as PASS.
+This is one bounded local backlog diagnostic, not indefinite backpressure,
+multi-broker recovery, a route-wide audit, provider matrix or complete P11
+qualification. D45 does not rerun the full Python suite, Gitleaks, pip-audit
+or Trivy, and license review remains closed on 21 human decisions.
+
 This is bounded technical evidence only. Public v1 remains **1/13 families
 qualified, 0/10 gates, NO-GO**: P14 is `in_progress` but external object-store
 backup/recovery, supported-platform coverage and complete production
@@ -184,7 +205,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `bd1b7f4c08fc1f9c36976014dc630317b86a8cf1` (2026-11-16).
+**Observed source head:** `bfa94cf0cb19c7058e0b54c1826f746a9f5594eb` (2026-11-16).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

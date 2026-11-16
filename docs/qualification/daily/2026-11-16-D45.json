@@ -1,0 +1,61 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D45",
+  "date": "2026-11-16",
+  "status": "PASS",
+  "cell": "P11 bounded two-partition backlog and transient Kafka poll recovery",
+  "candidate_sha": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
+  "candidate_receipt": "docs/qualification/candidates/candidate-bfa94cf0-d45.json",
+  "code_commit": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
+  "origin_main_at_code_commit": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
+  "implementation": {
+    "production_change": true,
+    "summary": "D45 makes KafkaJsonSource retry transient empty/partition-EOF results within the bounded poll timeout so later assigned partitions can be discovered; it adds a unit regression and traffic capture to the real backlog journey.",
+    "real_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d45-bounded-backlog-bfa94cf0-20261116\\qualification-summary.json"
+  },
+  "tests": {
+    "candidate_contracts": "135 passed, 0 failed, 0 skipped in the exact candidate sandbox",
+    "candidate_quality": "Node syntax checks, Ruff format/check and mypy passed; architecture, negative gates, route consistency, dependency surfaces and OpenAPI checks are rerun after documentation",
+    "transient_poll_regression": "PASS; empty poll followed by partition-1 records advances only the later partition checkpoint without duplicate records",
+    "live_real_services": "PASS for the filtered campaign: PostgreSQL=true, Kafka=true, Ronin API=true; 1/1 Playwright case passed; two real partitions started at 32/32 lag and 64 records/rows drained with final lag zero",
+    "live_traffic": "64 events, 64 correlated, 64 OK, 0 uncorrelated and 0 server/network errors; 31 bounded run calls and 32 health calls plus the definition PUT",
+    "candidate_reproducibility": "PASS; archive eb2b1e174a5f0ae654c1e4d4356a4d5c6e84ad946ac3d460d2ac3206440f55e3 and manifest 5fa4ed9cb45abff5bb00293b1762c0a7a7f9107e63220cac2be1d93c84781aa4 unchanged after cleanup/regeneration",
+    "route_audit": "NOT_RUN for the route-wide surface because this was a filtered diagnostic",
+    "security_scans": "NOT_RERUN in D45; D42 Gitleaks/pip-audit evidence remains separate and inherited",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license": "INHERITED FAIL/CLOSED; 21 human review decisions missing and not counted as D45 PASS"
+  },
+  "candidate": {
+    "archive_sha256": "eb2b1e174a5f0ae654c1e4d4356a4d5c6e84ad946ac3d460d2ac3206440f55e3",
+    "archive_size": 17397760,
+    "manifest_sha256": "5fa4ed9cb45abff5bb00293b1762c0a7a7f9107e63220cac2be1d93c84781aa4",
+    "manifest_size": 231215,
+    "digest_sha256": "b8c950639239ee54fe4fbcfbb1486c2591ebb6c8a5be1735844fcb8b89d47583",
+    "digest_size": 252,
+    "file_count": 1499,
+    "total_bytes": 16176216,
+    "cleanup_regenerate_verify": "PASS; candidate sandbox had no generated caches or test artifacts after the final verify"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "limitations": [
+    "The first a12616ee live attempt reached the 40-attempt cap after draining only the first partition path; it is retained as FAIL and is not converted into PASS.",
+    "D45 proves bounded local two-partition backlog drain and transient poll recovery, not sustained indefinite backpressure, multi-broker recovery, worker supervision, external providers or the complete P11 journey.",
+    "No gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}

@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "bd1b7f4c08fc1f9c36976014dc630317b86a8cf1",
+    "base_sha": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -324,13 +324,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-16-D44.md",
       "candidate_sha": "bd1b7f4c08fc1f9c36976014dc630317b86a8cf1",
       "commit_sha": "bd1b7f4c08fc1f9c36976014dc630317b86a8cf1"
+    },
+    {
+      "id": "D45",
+      "date": "2026-11-16",
+      "phase": "p11-bounded-backlog-partition-recovery",
+      "status": "in_progress",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-16-D45.md",
+      "candidate_sha": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
+      "commit_sha": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D44 is the current exact broker-restart qualification candidate bd1b7f4c08fc1f9c36976014dc630317b86a8cf1; D43 bounded supervisor, D42 Floci/Terraform, D41 Docker and D38 product-code evidence remain linked, while the final release dossier, human decisions and aggregate approval are still open."
+      "summary": "D45 is the current exact bounded-backlog candidate bfa94cf0cb19c7058e0b54c1826f746a9f5594eb; D44 broker recovery, D43 bounded supervisor, D42 Floci/Terraform, D41 Docker and D38 product-code evidence remain linked, while the final release dossier, human decisions and aggregate approval are still open."
     },
     {
       "id": "provider-certification",
