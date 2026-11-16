@@ -1,0 +1,66 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D40",
+  "date": "2026-11-16",
+  "status": "in_progress",
+  "cell": "P11 bounded real-provider backlog and micro-batch campaign",
+  "candidate_sha": "ebe798021d2d593515ee1766f7bdc22119b72e80",
+  "candidate_receipt": "docs/qualification/candidates/candidate-ebe79802-d40.json",
+  "code_commit": "ebe798021d2d593515ee1766f7bdc22119b72e80",
+  "origin_main_at_code_commit": "ebe798021d2d593515ee1766f7bdc22119b72e80",
+  "implementation": {
+    "production_change": false,
+    "summary": "D40 adds a real two-partition, 64-record streaming fixture and a bounded micro-batch drain assertion; no production runtime code changes.",
+    "real_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d40-streaming-backlog-20261116"
+  },
+  "tests": {
+    "candidate_streaming": "95 passed, 0 failed, 0 skipped",
+    "candidate_docker_contracts": "24 passed, 0 failed, 0 skipped",
+    "candidate_static_and_surface": "Ruff format/check, mypy (358 source files), architecture, negative gates, route consistency (200 operations), dependency surfaces, OpenAPI, Studio, web audit, budget, assets and Node syntax passed",
+    "live_streaming": "3 passed, 0 failed, 0 skipped; 52 API events, 52 correlated, 48 OK and 4 expected WARN outcomes; real Redpanda/API; cleanup passed",
+    "backlog_case": "Initial lag 64 with partitions 32/32; every run response records 0..4, lag is non-increasing, exactly 64 records/rows are consumed and final lag is 0",
+    "artifact_qualification": "92 passed, 0 failed, 0 skipped; wheel 4901e0547aa4d39080f7c30c9e832ce4b1a8f4f56488db1092960f0b53b03c26 and sdist 6349fd3ab8007e8ea07f83a44bf3488e8d78e152745f5e7e0b0c4120c1f18dbf",
+    "candidate_reproducibility": "PASS; cleanup/regeneration produced archive 9faa26b8cad682a6c8ea48a089d92caaccd884a53a9fc0236b3955f353c1b2ce and manifest ac4534254d7099142e38b9b2e4621fa9edcd443dba92481a2c34ea84cfca69af again; verify passed",
+    "full_suite": "NOT_RERUN for this focused test/fixture campaign; D38 parent product-code candidate recorded 4685 passed, 81 skipped and 8 Git-metadata-bound failures",
+    "security_scans": "NOT_RERUN for D40; D38 product-code scan evidence remains applicable",
+    "license": "INHERITED FAIL/CLOSED from D38, 21 missing human review decisions; not counted as D40 PASS"
+  },
+  "provider": {
+    "services": "Real Redpanda/Kafka and Ronin API were active; PostgreSQL and the worker were intentionally disabled for streaming-only scope",
+    "worker_image": null,
+    "scope_limit": "Bounded 64-record backlog drain and broker-restart case only; no continuous supervisor soak, external provider matrix or full P11 qualification claim"
+  },
+  "candidate": {
+    "archive_sha256": "9faa26b8cad682a6c8ea48a089d92caaccd884a53a9fc0236b3955f353c1b2ce",
+    "archive_size": 17254400,
+    "manifest_sha256": "ac4534254d7099142e38b9b2e4621fa9edcd443dba92481a2c34ea84cfca69af",
+    "manifest_size": 228739,
+    "digest_sha256": "3d3e7db52f66e1f102456952851682eab4d0e4f45774dc7adab2d1ee3ce61e80",
+    "digest_size": 252,
+    "file_count": 1484,
+    "total_bytes": 16042817,
+    "cleanup_regenerate_verify": "PASS; exact archive and manifest hashes were identical after cleanup/regeneration and final verify passed"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress"
+    }
+  },
+  "limitations": [
+    "D40 is bounded evidence: 64 seeded records and one-shot API runs do not certify continuous supervision, indefinite pressure handling, a throughput/SLO target or a long-duration soak.",
+    "Only local Redpanda/Kafka is exercised; external providers, PostgreSQL-backed worker integration and the complete operator matrix remain open.",
+    "The archive browser lane is SKIP because @playwright/test is not packaged; the external-dependency live runner is recorded separately and is not counted as archive browser coverage.",
+    "D40 does not rerun the full Python suite, image scans or license decisions; D38's exact product-code results remain linked and are not restated as new PASS.",
+    "P13 remains blocked; P12 and P14 remain in_progress; no family other than the existing P1 is qualified.",
+    "No release gate closes; release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}

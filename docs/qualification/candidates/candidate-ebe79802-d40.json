@@ -1,0 +1,123 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D40",
+  "status": "in_progress",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-11-16",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "ebe798021d2d593515ee1766f7bdc22119b72e80",
+    "origin_main_sha_when_candidate_was_tested": "ebe798021d2d593515ee1766f7bdc22119b72e80",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ebe79802-d40",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ebe79802-d40\\candidate-ebe798021d2d593515ee1766f7bdc22119b72e80.tar",
+      "format": "tar",
+      "sha256": "9faa26b8cad682a6c8ea48a089d92caaccd884a53a9fc0236b3955f353c1b2ce",
+      "size": 17254400
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ebe79802-d40\\candidate-ebe798021d2d593515ee1766f7bdc22119b72e80.manifest.json",
+      "sha256": "ac4534254d7099142e38b9b2e4621fa9edcd443dba92481a2c34ea84cfca69af",
+      "size": 228739
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ebe79802-d40\\candidate-ebe798021d2d593515ee1766f7bdc22119b72e80.sha256",
+      "sha256": "3d3e7db52f66e1f102456952851682eab4d0e4f45774dc7adab2d1ee3ce61e80",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ebe79802-d40\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1484,
+    "total_bytes": 16042817,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "ebe798021d2d593515ee1766f7bdc22119b72e80",
+    "candidate_docs_commit": null,
+    "summary": "D40 adds only candidate-bound streaming qualification coverage: a real two-partition 64-record backlog fixture and a browser/API assertion for bounded micro-batch draining. Runtime product code remains the da2ea631 candidate; this is bounded backpressure evidence, not a continuous-supervisor implementation.",
+    "production_files_changed": [],
+    "test_files_changed": [
+      "tools/seed_live_streaming.py",
+      "web-tests/tests/product-live.spec.mjs"
+    ],
+    "carried_product_code_commit": "da2ea631b93431d4463aa1a71dcb0c2a3add9426"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha ebe798021d2d593515ee1766f7bdc22119b72e80 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ebe79802-d40",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-ebe79802-d40",
+    "cleanup_and_regenerate": "candidate cleanup, regeneration and verify were rerun after candidate-bound tests and artifact qualification; archive and manifest hashes were identical before and after cleanup",
+    "candidate_streaming_tests": "exact candidate sandbox pytest -q -p no:cacheprovider tests/test_streaming_contracts.py tests/test_streaming_runtime.py tests/test_streaming_kafka.py tests/test_streaming_health.py tests/test_streaming_bundle.py tests/test_stream_table.py tests/test_stream_scheduler_bridge.py tests/integration/test_workspace_project_http_api.py: 95 passed, 0 failed, 0 skipped",
+    "candidate_docker_contracts": "exact candidate sandbox pytest -q -p no:cacheprovider tests/test_docker_qualification_contract.py: 24 passed, 0 failed, 0 skipped",
+    "candidate_static": "exact candidate sandbox Ruff format (1144 files), Ruff, mypy (358 source files), architecture gate, negative gates, route consistency (200 operations), dependency surfaces, OpenAPI digest 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 129/242, web audit, web budget, assets and Node syntax all passed",
+    "live_streaming": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -TestGrep streaming -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d40-streaming-backlog-20261116: 3/3 Playwright cases passed, 0 skipped/failed; 52/52 API events correlated, 48 OK and 4 expected WARN outcomes; cleanup passed",
+    "artifact_qualification": "92 passed, 0 failed, 0 skipped; artifact JSON SHA256 550effe9005f2d642223c35afedd63e2787d1a54ae61d76321f2f3bc4215244f; wheel 4901e0547aa4d39080f7c30c9e832ce4b1a8f4f56488db1092960f0b53b03c26; sdist 6349fd3ab8007e8ea07f83a44bf3488e8d78e152745f5e7e0b0c4120c1f18dbf",
+    "full_suite": {
+      "result": "NOT_RERUN",
+      "summary": "D40 changes only test/qualification fixtures and does not claim a new full Python suite result. D38 remains the applicable exact product-code suite record: 4685 passed, 81 skipped and 8 candidate-sandbox Git-metadata-bound failures.",
+      "limitation": "The full suite was not rerun for this focused campaign; the D38 failures remain recorded as FAIL, not PASS or SKIP."
+    },
+    "security_scans": "NOT_RERUN for D40; D38 exact product-code candidate remains the applicable Gitleaks, pip-audit, Trivy, SBOM and provenance evidence",
+    "license_qualification": "INHERITED FAIL/CLOSED from D38; 21 human review decisions remain missing and are not counted as D40 PASS"
+  },
+  "qualification_matrix": {
+    "candidate_streaming_tests": "95 passed, 0 failed, 0 skipped across streaming contracts, runtime, Kafka, health, bundles, stream tables, scheduler bridge and workspace HTTP API",
+    "candidate_docker_contracts": "24 passed, 0 failed, 0 skipped",
+    "candidate_static": "PASS for the exact ebe79802 archive in the stated static scopes",
+    "real_streaming_acceptance": "PASS for the bounded filtered diagnostic only: real Redpanda/Kafka and Ronin APIs, 3/3 Chromium cases, 52/52 API events correlated, expected outage negatives retained, and cleanup passed",
+    "real_services": "PostgreSQL=false, Kafka/Redpanda=true, Ronin API=true, worker image=null; this was intentionally streaming-only",
+    "live_route_scope": "Filtered streaming diagnostic only; route-wide audit=false; 25 active routes exist in the application, but this campaign does not claim all-route coverage",
+    "live_expected_negatives": "Four expected WARN API outcomes cover the streaming validation/outage paths; three ERROR-level 503 records are expected unavailable-service checks, while the summary reports zero server/network errors",
+    "bounded_backpressure": "The seeded real two-partition topic starts at total lag 64 with lag 32/32. The new case uses run limit 4, asserts every response records value is 0..4, asserts non-increasing lag, consumes exactly 64 rows and finishes at total lag 0. This is bounded backlog-drain evidence, not a sustained supervisor soak or continuous operation qualification.",
+    "candidate_reproducibility_after_cleanup": "PASS; archive SHA 9faa26b8cad682a6c8ea48a089d92caaccd884a53a9fc0236b3955f353c1b2ce and manifest SHA ac4534254d7099142e38b9b2e4621fa9edcd443dba92481a2c34ea84cfca69af were identical before and after cleanup/regeneration; final verify passed",
+    "artifact_qualification": "PASS; 92/92 isolated package contract tests; wheel 4901e0547aa4d39080f7c30c9e832ce4b1a8f4f56488db1092960f0b53b03c26 and sdist 6349fd3ab8007e8ea07f83a44bf3488e8d78e152745f5e7e0b0c4120c1f18dbf",
+    "container_images": "INHERITED from D38 product-code candidate only; D40 changes no runtime/image inputs",
+    "security_scans": "INHERITED from D38 product-code candidate only; no new D40 scan is claimed",
+    "candidate_web": "SKIP for archive-contained browser execution because @playwright/test is not packaged; the external-dependency live runner is recorded separately and is not counted as archive browser coverage",
+    "result": "D40 strengthens P11 with reproducible real-provider bounded backlog and micro-batch evidence, but does not qualify P11, close a release gate or change NO-GO"
+  },
+  "security_and_recovery": {
+    "journey": "The real filtered runner seeded a two-partition Redpanda topic with 64 JSON records, defined a durable table stream with batch_limit 4, observed initial lag 32/32, repeatedly ran the real API, checked monotonic lag and exact row counts, and reached lag zero with exactly 64 records consumed. The same campaign also reran the existing broker-restart checkpoint case. Cleanup removed the isolated broker and network.",
+    "negative_paths": "The candidate retains the Kafka metadata-failure regression that prevents an unavailable broker from being reported as a successful idle result. The live journey retains expected 503 outage responses and WARN/error evidence; no provider outage was hidden or reclassified as a clean success.",
+    "provider_scope": "Only the local Redpanda Kafka-compatible provider was exercised. No external Kafka provider, PostgreSQL-backed worker, continuous supervisor, long-duration soak or operator matrix is certified by this filtered diagnostic.",
+    "scans": {
+      "gitleaks": "INHERITED D38 exact product-code candidate; 0 findings",
+      "pip_audit": "INHERITED D38 exact product-code candidate; no known vulnerabilities",
+      "trivy": "INHERITED D38 exact runtime/probe TAR scans; 0 vulnerabilities and 0 secrets",
+      "license": "FAIL/CLOSED; 21 human review decisions missing"
+    }
+  },
+  "evidence": {
+    "live_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d40-streaming-backlog-20261116",
+    "live_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d40-streaming-backlog-20261116\\qualification-summary.json",
+    "live_summary_sha256": "2f8809a691b26fbad9bea0211093a64ffc5da518a9c751335ee6c99af1cb1b6c",
+    "live_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d40-streaming-backlog-20261116\\live-api-traffic.json",
+    "live_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d40-streaming-backlog-20261116\\browser-live.xml",
+    "live_browser_log": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d40-streaming-backlog-20261116\\browser-live.log",
+    "live_server_stderr": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d40-streaming-backlog-20261116\\live-server.stderr.log",
+    "artifact_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-ebe79802-d40",
+    "artifact_qualification": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-ebe79802-d40\\artifact-qualification.json",
+    "artifact_qualification_sha256": "550effe9005f2d642223c35afedd63e2787d1a54ae61d76321f2f3bc4215244f"
+  },
+  "open_cells": [
+    "P11 remains in_progress: D40 proves a bounded 64-record two-partition backlog drain with micro-batches capped at four, but not a sustained supervisor soak, continuous operation or long-duration recovery under pressure.",
+    "Only local Redpanda/Kafka is exercised; external Kafka/provider breadth, PostgreSQL-backed worker integration and the complete operator matrix remain open.",
+    "The archive browser lane remains SKIP when @playwright/test is not packaged; the live runner's external dependency cache is recorded separately and does not alter that archive scope.",
+    "D40 does not rerun the 43-minute full Python suite, image scans or license qualification; D38's exact product-code result remains explicitly linked rather than copied as new PASS.",
+    "P13 remains blocked by the external secret-provider and release-evidence boundary; P12 and P14 remain in_progress; no family other than the existing P1 is qualified.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The backlog campaign is bounded by 64 seeded records and one-shot API runs; it does not certify a continuous supervisor, indefinite pressure handling or a throughput/SLO target.",
+    "The four WARN outcomes and three ERROR-level 503 records are expected negative-path evidence from the filtered live diagnostic; they were retained and correlated, not suppressed.",
+    "Artifact qualification temporarily wrote setuptools egg-info and bytecode caches into the candidate sandbox; targeted candidate cleanup removed them, regeneration restored the exact boundary and final verify passed with unchanged archive/manifest hashes.",
+    "No hosted workflow, GitHub Actions job, branch or worktree was used."
+  ]
+}
