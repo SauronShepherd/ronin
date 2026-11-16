@@ -1,0 +1,66 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D42",
+  "date": "2026-11-16",
+  "status": "PASS",
+  "cell": "P2/P14 local Floci Terraform provider qualification",
+  "candidate_sha": "bc1884c5dfab00c8cab6c0095154bb4b3748ca1c",
+  "candidate_receipt": "docs/qualification/candidates/candidate-bc1884c5-d42.json",
+  "code_commit": "bc1884c5dfab00c8cab6c0095154bb4b3748ca1c",
+  "origin_main_at_code_commit": "bc1884c5dfab00c8cab6c0095154bb4b3748ca1c",
+  "implementation": {
+    "production_change": false,
+    "summary": "D42 adds no production or test code; it qualifies the local Floci/Terraform cell from the exact D41 published candidate.",
+    "real_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d42-floci-f331-20261116\\qualification-candidate-bc1884c5.json"
+  },
+  "tests": {
+    "candidate_contracts": "13 passed, 0 failed, 0 skipped in the exact candidate sandbox",
+    "floci_real": "PASS; real pinned Floci health, plan, validate, apply, S3/SQS observation, refresh, destroy and empty-state verification",
+    "terraform": "Terraform 1.13.5, AWS provider 6.65.0; executable SHA 37095373bcf2775655502ac42bcfbcbac2927a351952a2c9c478072782a96e1c",
+    "gitleaks": "0 findings over 16,086,533 exact-candidate bytes; report SHA 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "pip_audit": "No known vulnerabilities in 54 dev and 99 test locked dependencies; reports SHA 81592ecf4c42b61989de048700eb39696df0b046eebbd0396448345afeeaa4a2 and d36f41ff615e1c68fac2608ff5c11aa75cca52fa675c48ddbaa52d57a42e41c2",
+    "candidate_reproducibility": "PASS; archive a3806f5e128af27a1249abf24e6e486e5933392c1d28f74f1cee50a6af222c4b and manifest 6640fa8a0667f8de5105b65f25d7a8337c6c861296628cde4612fe2a4be7e927 unchanged after cleanup/regeneration",
+    "trivy": "NOT_RUN; local Trivy binary unavailable",
+    "full_suite": "NOT_RERUN; no full Python suite PASS claimed",
+    "license": "INHERITED FAIL/CLOSED; 21 human review decisions missing and not counted as D42 PASS"
+  },
+  "provider": {
+    "services": "Pinned local Floci 2.1.0 was active; Terraform applied qualification-bucket and qualification-queue and later removed both",
+    "scope_limit": "Local emulator only; no AWS cloud, Azure cloud, Ozone, external object-store recovery or external secret-provider certification"
+  },
+  "candidate": {
+    "archive_sha256": "a3806f5e128af27a1249abf24e6e486e5933392c1d28f74f1cee50a6af222c4b",
+    "archive_size": 17305600,
+    "manifest_sha256": "6640fa8a0667f8de5105b65f25d7a8337c6c861296628cde4612fe2a4be7e927",
+    "manifest_size": 229729,
+    "digest_sha256": "9077dd3d7f9a18976756b7cd2f3ef82e5d36b3e80388e6c1a490743e8586f30f",
+    "digest_size": 252,
+    "file_count": 1490,
+    "total_bytes": 16086533,
+    "cleanup_regenerate_verify": "PASS; candidate sandbox had no generated caches or test artifacts after the final verify"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P2": "in_progress",
+      "P13": "blocked",
+      "P14": "in_progress"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P2": "in_progress",
+      "P13": "blocked",
+      "P14": "in_progress"
+    }
+  },
+  "limitations": [
+    "The initial host run with global Terraform 1.16.2 was rejected before plan because the qualification requires 1.13.5; it is recorded as a failed environment preflight, not PASS.",
+    "The successful candidate-bound run proves only local Floci Terraform resource lifecycle and does not prove Ronin backup/restore or any cloud/external provider.",
+    "D42 does not rerun the full Python suite or Trivy; inherited evidence is not duplicated as a new PASS.",
+    "P2/P14 remain in_progress, P13 remains blocked, no gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}

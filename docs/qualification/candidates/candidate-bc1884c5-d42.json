@@ -1,0 +1,120 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D42",
+  "status": "in_progress",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-11-16",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "bc1884c5dfab00c8cab6c0095154bb4b3748ca1c",
+    "origin_main_sha_when_candidate_was_tested": "bc1884c5dfab00c8cab6c0095154bb4b3748ca1c",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc1884c5-d42",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc1884c5-d42\\candidate-bc1884c5dfab00c8cab6c0095154bb4b3748ca1c.tar",
+      "format": "tar",
+      "sha256": "a3806f5e128af27a1249abf24e6e486e5933392c1d28f74f1cee50a6af222c4b",
+      "size": 17305600
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc1884c5-d42\\candidate-bc1884c5dfab00c8cab6c0095154bb4b3748ca1c.manifest.json",
+      "sha256": "6640fa8a0667f8de5105b65f25d7a8337c6c861296628cde4612fe2a4be7e927",
+      "size": 229729
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc1884c5-d42\\candidate-bc1884c5dfab00c8cab6c0095154bb4b3748ca1c.sha256",
+      "sha256": "9077dd3d7f9a18976756b7cd2f3ef82e5d36b3e80388e6c1a490743e8586f30f",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc1884c5-d42\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1490,
+    "total_bytes": 16086533,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "bc1884c5dfab00c8cab6c0095154bb4b3748ca1c",
+    "candidate_docs_commit": null,
+    "summary": "D42 adds no production or test code. It binds the real Floci/Terraform provider cell to the exact published D41 candidate and records the toolchain correction needed to execute the required Terraform version.",
+    "production_files_changed": [],
+    "test_files_changed": [],
+    "carried_product_code_commit": "da2ea631b93431d4463aa1a71dcb0c2a3add9426",
+    "carried_qualification_docs_commit": "bc1884c5dfab00c8cab6c0095154bb4b3748ca1c"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha bc1884c5dfab00c8cab6c0095154bb4b3748ca1c --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc1884c5-d42",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc1884c5-d42",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after the candidate qualification; the same source SHA regenerated identical archive and manifest hashes and final verify passed",
+    "candidate_floci_contracts": "exact candidate sandbox tests/test_cloud_studio_floci_qualification.py: 13 passed, 0 failed, 0 skipped",
+    "candidate_floci_qualification": "sandbox exact candidate: real Floci 2.1.0, Terraform 1.13.5, plan/validate/apply/refresh/destroy/state-list all passed; S3 bucket and SQS queue were observed after apply and no resources remained after destroy",
+    "terraform_executable": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-toolchain-terraform-1.13.5-20261116\\terraform.exe; observed SHA256 37095373bcf2775655502ac42bcfbcbac2927a351952a2c9c478072782a96e1c",
+    "invalid_toolchain_attempt": "initial host attempt rejected Terraform 1.16.2 before plan because the qualification contract requires 1.13.5; receipt C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d42-floci-f331-20261116\\qualification.json; not qualification evidence",
+    "security_scans": "Gitleaks 8.30.1 exact candidate directory scan: 0 findings over 16,086,533 bytes; pip-audit 2.10.1: no known vulnerabilities in 54 dev and 99 test locked dependencies",
+    "trivy": "NOT_RUN because no local Trivy binary was available",
+    "full_suite": {
+      "result": "NOT_RERUN",
+      "summary": "D42 changes only qualification documentation; D41/D38 remain the applicable exact candidate suite records",
+      "limitation": "No full Python suite PASS is claimed for D42"
+    },
+    "license_qualification": "INHERITED FAIL/CLOSED; 21 human review decisions remain missing and are not counted as D42 PASS"
+  },
+  "qualification_matrix": {
+    "floci_terraform_emulator": "PASS for the stated local Floci scope only: health, Terraform plan, validate, apply, resource observation, refresh, destroy and empty state all passed from the exact candidate sandbox",
+    "floci_resources": "S3 bucket qualification-bucket and SQS queue qualification-queue were observed after apply; both were destroyed and Terraform state plus Floci resource inventory were empty",
+    "terraform_toolchain": "Terraform v1.13.5 on windows_amd64; executable SHA256 37095373bcf2775655502ac42bcfbcbac2927a351952a2c9c478072782a96e1c; AWS provider 6.65.0",
+    "candidate_contracts": "13 passed, 0 failed, 0 skipped, including positive qualification, cleanup, loopback restriction, version enforcement, nonzero-command and residual-resource negatives",
+    "provider_scope": "Only the pinned local Floci 2.1.0 emulator was exercised. This does not certify AWS cloud, Azure cloud, Ozone, LocalStack, external object-store recovery or an external secret provider",
+    "candidate_reproducibility_after_cleanup": "PASS; archive SHA a3806f5e128af27a1249abf24e6e486e5933392c1d28f74f1cee50a6af222c4b and manifest SHA 6640fa8a0667f8de5105b65f25d7a8337c6c861296628cde4612fe2a4be7e927 were unchanged after cleanup/regeneration; final verify passed",
+    "security_scans": "Gitleaks PASS with 0 findings; pip-audit PASS with no known vulnerabilities; Trivy NOT_RUN; license remains FAIL/CLOSED with 21 decisions missing",
+    "candidate_browser": "INHERITED SKIP; @playwright/test is not packaged in the archive and D42 is a provider qualification campaign",
+    "result": "D42 passes the candidate-bound local Floci/Terraform provider cell, but does not qualify P2 or P14, close a gate, or change NO-GO"
+  },
+  "security_and_recovery": {
+    "journey": "The exact candidate generated Terraform for one S3 bucket and one SQS queue, applied it to the real pinned local Floci service, verified both data-plane resources, refreshed state, destroyed both resources and verified empty Terraform and Floci inventories.",
+    "negative_paths": "The candidate contracts reject non-loopback endpoints, reject an incorrect Terraform version, reject nonzero Terraform stages, detect residual Terraform resources and detect residual Floci fixture resources; these are test evidence, not provider-wide claims.",
+    "provider_scope": "Real local Floci only. This campaign does not exercise Ronin backup/restore or production cloud credentials and does not replace the missing external provider matrix.",
+    "scans": {
+      "gitleaks": "8.30.1; 0 findings over 16,086,533 candidate bytes",
+      "pip_audit": "2.10.1; requirements-dev.lock 54 dependencies and requirements-test.lock 99 dependencies; no known vulnerabilities",
+      "trivy": "NOT_RUN; no local Trivy binary",
+      "license": "FAIL/CLOSED; 21 human review decisions missing"
+    }
+  },
+  "evidence": {
+    "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d42-floci-f331-20261116",
+    "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d42-floci-f331-20261116\\qualification-candidate-bc1884c5.json",
+    "qualification_summary_sha256": "ffcd974326bcb99307d99a094479c5354376ba0d7f6160f9240c963c5dca4133",
+    "qualification_summary_size": 15282,
+    "initial_invalid_toolchain_receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d42-floci-f331-20261116\\qualification.json",
+    "initial_invalid_toolchain_receipt_sha256": "9e9b3e0d78263192c3f5e63758c2ba13b9c89e4d58a4937dd209404a8e09b3b4",
+    "host_correct_toolchain_receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d42-floci-f331-20261116\\qualification-terraform1135.json",
+    "host_correct_toolchain_receipt_sha256": "73ddbe48a688cf53272c0f4ce4dbf6635fec0b33bf4dd5bfc7bdef141ec99806",
+    "candidate_contracts": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bc1884c5-d42\\sandbox\\tests\\test_cloud_studio_floci_qualification.py",
+    "gitleaks": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d42-floci-f331-20261116\\gitleaks-candidate-bc1884c5.json",
+    "gitleaks_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "pip_audit_dev": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d42-floci-f331-20261116\\pip-audit-dev-bc1884c5.json",
+    "pip_audit_dev_sha256": "81592ecf4c42b61989de048700eb39696df0b046eebbd0396448345afeeaa4a2",
+    "pip_audit_test": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d42-floci-f331-20261116\\pip-audit-test-bc1884c5.json",
+    "pip_audit_test_sha256": "d36f41ff615e1c68fac2608ff5c11aa75cca52fa675c48ddbaa52d57a42e41c2"
+  },
+  "open_cells": [
+    "P2 remains in_progress: D42 proves only the local Floci Terraform cell; JDBC provenance, the full connector-to-ingest journey and the applicable cloud/Ozone/provider matrix remain open.",
+    "P14 remains in_progress: D42 verifies local Floci resource lifecycle, not Ronin external object-store backup/restore, supported platforms or production operations.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external secret provider or credential was available.",
+    "D42 does not rerun the full Python suite or Trivy; inherited results remain linked and are not copied as new PASS fields.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The first host attempt used Terraform 1.16.2 and was rejected before plan; it is recorded as an environment failure, not as provider evidence.",
+    "The successful campaign used the observed local Terraform 1.13.5 executable and the pinned Floci 2.1.0 emulator; it makes no cloud or external-provider claim.",
+    "Trivy was not run because the local binary is unavailable; the candidate archive browser lane remains SKIP because @playwright/test is not packaged.",
+    "License review remains FAIL/CLOSED with 21 human decisions pending; no hosted workflow, branch or worktree was used."
+  ]
+}

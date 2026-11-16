@@ -7,7 +7,7 @@
 
 ## Current exact-SHA qualification — 16 November 2026
 
-The current exact-head candidate is `f331bb6adae6b7428c43ba53647b39b2f3dc0955`.
+The current exact-head candidate is `bc1884c5dfab00c8cab6c0095154bb4b3748ca1c`.
 D38 adds candidate-bound P11 broker-restart recovery and refreshes the probe
 Alpine lock after the preceding image showed 11 MEDIUM findings with available
 fixed versions. The exact candidate sandbox passes `95` streaming/API tests
@@ -52,6 +52,19 @@ were unavailable after harness termination, and Trivy was not installed, so
 neither limitation is represented as a PASS. D41 changes documentation and
 evidence only; it does not close a family or gate. P13 remains blocked by the
 absent authorized external secret provider and release evidence.
+
+D42 records a candidate-bound local Floci/Terraform provider cell from exact
+candidate `bc1884c5dfab00c8cab6c0095154bb4b3748ca1c`. The exact sandbox passes
+`13/13` positive and negative Floci qualification contracts. Against pinned
+local Floci 2.1.0, Terraform 1.13.5 and AWS provider 6.65.0 pass health,
+plan, validate, apply, real S3-bucket/SQS-queue observation, refresh, destroy
+and empty Terraform/Floci inventories. Gitleaks reports zero findings and
+pip-audit reports no known vulnerabilities in 54 dev and 99 test locked
+dependencies. An initial host attempt with global Terraform 1.16.2 was
+rejected before plan and is recorded as an environment failure, not a PASS.
+Trivy and the full Python suite are not rerun; D42 makes no AWS/Azure cloud,
+Ozone, external object-store recovery or external-secret claim. P2/P14 remain
+in progress, P13 remains blocked, and no family or gate closes.
 
 This is bounded technical evidence only. Public v1 remains **1/13 families
 qualified, 0/10 gates, NO-GO**: P14 is `in_progress` but external object-store
@@ -128,7 +141,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `f331bb6adae6b7428c43ba53647b39b2f3dc0955` (2026-11-16).
+**Observed source head:** `bc1884c5dfab00c8cab6c0095154bb4b3748ca1c` (2026-11-16).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
