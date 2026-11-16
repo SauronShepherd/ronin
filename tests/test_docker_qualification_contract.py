@@ -210,6 +210,8 @@ def test_live_browser_suite_requires_real_services_and_emits_api_evidence() -> N
     assert "authorization: authorization ? 'present' : 'missing'" in helper
     assert "await fetch(upstreamUrl" in helper
     assert "x-ronin-request-id" in helper
+    assert "const calls = installLiveApiProxy(page);" in live_suite
+    assert "call.status === 503 && call.outcome === 'ERROR'" in live_suite
 
 
 def test_live_postgres_seed_is_repeatable_and_keeps_existing_database_data() -> None:
@@ -288,6 +290,9 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert "failurePhase" in script
     assert "realServices" in script
     assert "apiTraffic" in script
+    assert '$TestGrep -eq "live streaming broker restart"' in script
+    assert "expectedBrokerRestartOutages" in script
+    assert "unexpectedServerErrors" in script
 
 
 def test_semantic_live_diagnostic_skips_unrelated_postgres_and_kafka_containers() -> None:

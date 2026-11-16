@@ -1197,7 +1197,7 @@ test('live streaming broker restart resumes from the durable checkpoint', async 
   const finalHealth = await request('GET', healthPath);
   expect(finalHealth.status(), await finalHealth.text()).toBe(200);
   expect((await finalHealth.json()).total_lag).toBe(0);
-  expect(calls.some(call => call.path === runPath && call.status === 503 && call.outcome === 'WARN')).toBe(true);
+  expect(calls.some(call => call.path === runPath && call.status === 503 && call.outcome === 'ERROR')).toBe(true);
   expect(calls.some(call => call.path === runPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
   await flushLiveTraffic();
 });

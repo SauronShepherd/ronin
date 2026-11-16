@@ -548,11 +548,26 @@ try {
             $serverErrors.Add($trafficEvent)
         }
     }
-    if ($unexpectedMissingAuth.Count -gt 0 -or $serverErrors.Count -gt 0) {
+    $expectedBrokerRestartOutages = @($serverErrors | Where-Object {
+        $TestGrep -eq "live streaming broker restart" -and
+        [int]$_.status -eq 503 -and
+        [string]$_.path -match '^/v1/workspaces/[^/]+/streams/events%2Ffault-recovery/(health|run)$'
+    })
+    if ($TestGrep -eq "live streaming broker restart" -and $expectedBrokerRestartOutages.Count -ne 2) {
+        throw "Broker restart diagnostic must capture exactly two expected HTTP 503 outages (health and run); captured $($expectedBrokerRestartOutages.Count)."
+    }
+    $unexpectedServerErrors = @($serverErrors | Where-Object {
+        -not (
+            $TestGrep -eq "live streaming broker restart" -and
+            [int]$_.status -eq 503 -and
+            [string]$_.path -match '^/v1/workspaces/[^/]+/streams/events%2Ffault-recovery/(health|run)$'
+        )
+    })
+    if ($unexpectedMissingAuth.Count -gt 0 -or $unexpectedServerErrors.Count -gt 0) {
         throw "Live API traffic contains unexpected unauthenticated requests or server/network errors."
     }
     if ($traffic.Count -gt 0) {
-        Write-Output "Live API traffic audit: $($traffic.Count) events, all correlated with structured HTTP logs, 0 unexpected authorization gaps, 0 server/network errors."
+        Write-Output "Live API traffic audit: $($traffic.Count) events, all correlated with structured HTTP logs, $($unexpectedMissingAuth.Count) unexpected authorization gaps, $($unexpectedServerErrors.Count) unexpected server/network errors."
     } else {
         Write-Output "UI-only diagnostic passed: 0 API calls (this does not qualify API behavior)."
     }
