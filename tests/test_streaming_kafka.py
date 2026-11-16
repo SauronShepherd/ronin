@@ -110,6 +110,37 @@ def test_kafka_source_applies_ronin_owned_fetch_and_queue_budgets(
     assert consumer.closed
 
 
+def test_kafka_source_surfaces_broker_metadata_failure_before_idle_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _UnavailableConsumer(_Consumer):
+        def list_topics(self, *, timeout: float):
+            assert timeout == 0.1
+            raise RuntimeError("broker unavailable")
+
+    consumer = _UnavailableConsumer([])
+
+    def consumer_type(settings):
+        return _capture_config(consumer, settings)
+
+    fake_kafka = SimpleNamespace(
+        Consumer=consumer_type,
+        TopicPartition=_TopicPartition,
+        KafkaError=SimpleNamespace(_PARTITION_EOF=-191),
+        OFFSET_BEGINNING=-2,
+    )
+    monkeypatch.setattr(kafka_adapter, "import_module", lambda _name: fake_kafka)
+    source = KafkaJsonSource(
+        bootstrap_servers="localhost:9092",
+        topic="events",
+        partitions=(0,),
+    )
+
+    with pytest.raises(RuntimeError, match="broker unavailable"):
+        source.poll(StreamCheckpoint(), limit=1, timeout_seconds=0.0)
+    assert consumer.closed
+
+
 @pytest.mark.parametrize(
     "setting",
     [

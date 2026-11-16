@@ -123,6 +123,13 @@ class KafkaJsonSource:
                 offset = offset_beginning if previous is None else previous + 1
                 assignments.append(TopicPartition(self._topic, partition, offset))
             consumer.assign(assignments)
+            # A disconnected broker can make librdkafka's bounded consume call
+            # return an empty batch after its timeout instead of surfacing the
+            # transport failure.  Probe metadata first so the runtime reports
+            # provider unavailability rather than a false successful idle run.
+            list_topics = getattr(consumer, "list_topics", None)
+            if callable(list_topics):
+                list_topics(timeout=max(float(timeout_seconds), 0.1))
             messages = consumer.consume(num_messages=limit, timeout=timeout_seconds)
             records: list[StreamRecord] = []
             batch_bytes = 0
