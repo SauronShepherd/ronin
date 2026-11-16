@@ -1,0 +1,60 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D43",
+  "date": "2026-11-16",
+  "status": "PASS",
+  "cell": "P11 bounded supervised streaming drain against real Redpanda/Kafka and PostgreSQL",
+  "candidate_sha": "d6890832a6743cde1bd949bd3529359285559c0d",
+  "candidate_receipt": "docs/qualification/candidates/candidate-d6890832-d43.json",
+  "code_commit": "d6890832a6743cde1bd949bd3529359285559c0d",
+  "origin_main_at_code_commit": "d6890832a6743cde1bd949bd3529359285559c0d",
+  "implementation": {
+    "production_change": true,
+    "summary": "D43 adds a bounded supervised drain to the existing streaming run route with max_batches, max_records and idle_polls caps, repeated checkpoint-safe micro-batches, per-cycle bounded provider polling and explicit stop status/reason.",
+    "real_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d43-supervised-success-d6890832-20261116\\qualification-summary.json"
+  },
+  "tests": {
+    "candidate_contracts": "110 passed, 0 failed, 0 skipped in the exact candidate sandbox",
+    "candidate_quality": "ruff format --check, ruff check, mypy for changed Python modules, Node syntax, architecture, negative gates, route consistency, dependency surfaces and OpenAPI snapshot all passed on the candidate",
+    "live_real_services": "PASS for the filtered campaign: PostgreSQL=true, Kafka=true, Ronin API=true; 1/1 Playwright case passed; 64 records/rows drained; initial lag 64 and final lag 0",
+    "live_traffic": "5 events, 5 correlated, 4 OK and 1 expected WARN for invalid max_batches=0; 0 uncorrelated events and 0 server/network errors",
+    "candidate_reproducibility": "PASS; archive 9a1135884bccb6b4d4cdb62144924929a4d8f0ca184cc6ad36be6a562952c688 and manifest 538e414ea30beb3241469ee4df2d35e0d91860de92c27d3b693820ef72be5ba5 unchanged after cleanup/regeneration",
+    "route_audit": "NOT_RUN for the route-wide surface because this was a filtered diagnostic",
+    "security_scans": "NOT_RERUN in D43; D42 Gitleaks/pip-audit evidence remains separate and inherited",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license": "INHERITED FAIL/CLOSED; 21 human review decisions missing and not counted as D43 PASS"
+  },
+  "candidate": {
+    "archive_sha256": "9a1135884bccb6b4d4cdb62144924929a4d8f0ca184cc6ad36be6a562952c688",
+    "archive_size": 17346560,
+    "manifest_sha256": "538e414ea30beb3241469ee4df2d35e0d91860de92c27d3b693820ef72be5ba5",
+    "manifest_size": 230225,
+    "digest_sha256": "39bfe79d1ac5eff28a6426d18a3b9ebd4d87f96e11b0244e8f8c41d07f286dae",
+    "digest_size": 252,
+    "file_count": 1493,
+    "total_bytes": 16126946,
+    "cleanup_regenerate_verify": "PASS; candidate sandbox had no generated caches or test artifacts after the final verify"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "limitations": [
+    "Earlier D43 attempts are retained as failures: one drained 32/64 because a one-shot provider poll object was reused; one lacked runner traffic evidence; one still drained 32/64 after the idle-poll change. The final implementation reinitializes the bounded provider poll per cycle and passed the real campaign.",
+    "The final campaign covers one bounded two-partition local Redpanda scenario and does not prove broker restart recovery, sustained indefinite backpressure, worker supervision, external providers or the full P11 family journey.",
+    "No gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}

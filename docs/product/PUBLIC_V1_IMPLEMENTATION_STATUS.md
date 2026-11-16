@@ -7,7 +7,7 @@
 
 ## Current exact-SHA qualification — 16 November 2026
 
-The current exact-head candidate is `bc1884c5dfab00c8cab6c0095154bb4b3748ca1c`.
+The current exact-head candidate is `d6890832a6743cde1bd949bd3529359285559c0d`.
 D38 adds candidate-bound P11 broker-restart recovery and refreshes the probe
 Alpine lock after the preceding image showed 11 MEDIUM findings with available
 fixed versions. The exact candidate sandbox passes `95` streaming/API tests
@@ -65,6 +65,27 @@ rejected before plan and is recorded as an environment failure, not a PASS.
 Trivy and the full Python suite are not rerun; D42 makes no AWS/Azure cloud,
 Ozone, external object-store recovery or external-secret claim. P2/P14 remain
 in progress, P13 remains blocked, and no family or gate closes.
+
+D43 records a candidate-bound supervised streaming drain from exact candidate
+`d6890832a6743cde1bd949bd3529359285559c0d`. The implementation adds bounded
+`max_batches`, `max_records` and `idle_polls` controls to the existing run
+route, repeats checkpoint-safe micro-batches, and reinitializes the bounded
+provider poll on each cycle. The exact candidate selection passes `110/110`
+with zero failures or skips; Ruff, mypy, architecture/negative gates, route
+consistency, dependency surfaces and OpenAPI snapshot checks pass.
+
+The real filtered campaign starts PostgreSQL, Redpanda/Kafka and Ronin API.
+Chromium seeds two partitions with 64 messages, observes lag 64, drains all
+`64` records and `64` rows, and confirms lag zero after the supervised stop by
+idle. The invalid `max_batches=0` request returns HTTP 400. The live runner
+records `1/1` Playwright pass, `5/5` API/log correlations, `4` OK and `1`
+expected WARN, and zero server/network errors; cleanup succeeds. The three
+earlier D43 attempts remain recorded as failures (32/64 drain or missing
+traffic evidence) and are not counted as PASS. This is one bounded diagnostic,
+not a route-wide audit, indefinite backpressure soak, broker-restart recovery,
+provider matrix or complete P11 qualification. D43 does not rerun the full
+Python suite, Gitleaks, pip-audit or Trivy, and license review remains closed
+on 21 human decisions.
 
 This is bounded technical evidence only. Public v1 remains **1/13 families
 qualified, 0/10 gates, NO-GO**: P14 is `in_progress` but external object-store
@@ -141,7 +162,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `bc1884c5dfab00c8cab6c0095154bb4b3748ca1c` (2026-11-16).
+**Observed source head:** `d6890832a6743cde1bd949bd3529359285559c0d` (2026-11-16).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

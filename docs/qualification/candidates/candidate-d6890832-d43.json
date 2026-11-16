@@ -1,0 +1,121 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D43",
+  "status": "in_progress",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-11-16",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "d6890832a6743cde1bd949bd3529359285559c0d",
+    "origin_main_sha_when_candidate_was_tested": "d6890832a6743cde1bd949bd3529359285559c0d",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-d6890832-d43",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-d6890832-d43\\candidate-d6890832a6743cde1bd949bd3529359285559c0d.tar",
+      "format": "tar",
+      "sha256": "9a1135884bccb6b4d4cdb62144924929a4d8f0ca184cc6ad36be6a562952c688",
+      "size": 17346560
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-d6890832-d43\\candidate-d6890832a6743cde1bd949bd3529359285559c0d.manifest.json",
+      "sha256": "538e414ea30beb3241469ee4df2d35e0d91860de92c27d3b693820ef72be5ba5",
+      "size": 230225
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-d6890832-d43\\candidate-d6890832a6743cde1bd949bd3529359285559c0d.sha256",
+      "sha256": "39bfe79d1ac5eff28a6426d18a3b9ebd4d87f96e11b0244e8f8c41d07f286dae",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-d6890832-d43\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1493,
+    "total_bytes": 16126946,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "d6890832a6743cde1bd949bd3529359285559c0d",
+    "candidate_docs_commit": null,
+    "summary": "D43 adds a bounded supervised streaming drain to the existing run endpoint. It repeats checkpoint-safe micro-batches, reinitializes bounded provider polls for each cycle, stops after consecutive empty polls or explicit caps, and exposes durable progress and stop reason without claiming an unbounded worker.",
+    "production_files_changed": [
+      "python/studio_streaming/__init__.py",
+      "python/studio_streaming/processor.py",
+      "python/studio_streaming/runtime.py",
+      "python/studio_server/control_plane.py",
+      "api/openapi-v1.json",
+      "api/openapi-v1.sha256",
+      "web/js/streaming-studio.js"
+    ],
+    "test_files_changed": [
+      "tests/test_streaming_runtime.py",
+      "tests/integration/test_workspace_project_http_api.py",
+      "tests/test_openapi_snapshot.py",
+      "web-tests/tests/product-live.spec.mjs"
+    ],
+    "carried_qualification_docs_commit": "8a93696b4a19c89b8982caa7ec2607c68d073add"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha d6890832a6743cde1bd949bd3529359285559c0d --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-d6890832-d43",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-d6890832-d43",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after the candidate qualification; the same source SHA regenerated identical archive and manifest hashes and final verify passed",
+    "candidate_contracts": "exact candidate sandbox: 110 passed, 0 failed, 0 skipped across streaming runtime, control-plane integration, OpenAPI, Kafka, health, bundle, contracts and scheduler bridge selections",
+    "candidate_quality": "exact candidate sandbox: ruff format --check PASS; ruff check PASS; mypy python/studio_streaming python/studio_server/control_plane.py PASS with no issues; Node syntax checks for the changed browser files PASS",
+    "candidate_static_gates": "architecture gate PASS; negative gates PASS; route consistency PASS; dependency surfaces PASS; OpenAPI snapshot PASS",
+    "live_qualification": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d43-supervised-success-d6890832-20261116 -TestGrep 'live streaming supervised drain'",
+    "live_result": "real PostgreSQL, Redpanda/Kafka and Ronin API; 1/1 Playwright case passed; 64 records and 64 rows drained from two partitions; final health lag zero; invalid max_batches=0 returned HTTP 400; 5 API events all correlated to structured logs, 4 OK and 1 expected WARN; zero server or network errors; services cleaned"
+  },
+  "qualification_matrix": {
+    "supervised_drain": "PASS for the bounded two-partition local Redpanda scenario only: max_batches=20, max_records=80 and idle_polls=3; the API returned 64 records and 64 rows and stopped with stop_reason=idle",
+    "checkpoint_progress": "PASS for this journey: initial lag was 64, final lag was 0, and the result exposed the advanced durable checkpoint",
+    "negative_path": "PASS for request validation only: max_batches=0 returned HTTP 400 with invalid_request and was recorded as an expected WARN",
+    "real_services": "PostgreSQL=true, Kafka=true and Ronin API=true in the live runner; no worker image or external provider was used",
+    "traffic_audit": "PASS for the filtered diagnostic: 5/5 API events correlated to structured HTTP logs, 4 OK, 1 expected WARN, 0 uncorrelated and 0 error/critical log entries; route-wide audit was not run",
+    "candidate_reproducibility_after_cleanup": "PASS; archive and manifest hashes were unchanged after cleanup/regeneration and final verify passed",
+    "security_scans": "NOT_RERUN in D43; D42 Gitleaks and pip-audit evidence is not copied as a new D43 PASS",
+    "trivy": "NOT_RUN",
+    "license_qualification": "INHERITED FAIL/CLOSED; 21 human review decisions remain missing",
+    "result": "D43 passes the bounded supervised-drain campaign cell, but does not qualify P11, close a release gate or change NO-GO"
+  },
+  "security_and_recovery": {
+    "journey": "The real browser/API journey created the stream definition, observed two-partition backlog, drained all 64 messages through the supervised API, confirmed durable lag zero, then exercised an invalid cap request and cleaned PostgreSQL/Redpanda services.",
+    "negative_paths": "The API rejected max_batches=0 with HTTP 400; this is request-boundary evidence, not provider-wide or release-gate evidence.",
+    "recovery_scope": "This campaign does not prove broker restart recovery, sustained indefinite backpressure, external provider breadth, worker supervision or the complete P11 journey. Those cells remain open."
+  },
+  "evidence": {
+    "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d43-supervised-success-d6890832-20261116",
+    "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d43-supervised-success-d6890832-20261116\\qualification-summary.json",
+    "qualification_summary_sha256": "efaccb990383b94b59b452ad2e93c5e9ee63e33e6dd7c94b11b71d7b3f831448",
+    "qualification_summary_size": 2806,
+    "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d43-supervised-success-d6890832-20261116\\live-api-traffic.json",
+    "live_api_traffic_sha256": "0628e04c49290d3a95b489973f50dcbf1d30de7b019ddde513f0470722af0dc4",
+    "live_api_traffic_size": 1649,
+    "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d43-supervised-success-d6890832-20261116\\browser-live.xml",
+    "browser_junit_sha256": "8a548bf79421dee032280cf2bbcd0c01cc88ae9c0f0a136d87ab67f08c33c620",
+    "browser_junit_size": 440,
+    "previous_failed_campaigns": [
+      "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d43-supervised-db2-20261116",
+      "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d43-supervised-recovery-ac4d1654-20261116",
+      "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d43-supervised-final-9b6bbba4-20261116"
+    ]
+  },
+  "open_cells": [
+    "P11 remains in_progress: D43 proves one bounded supervised drain against real local Redpanda/Kafka and PostgreSQL, but broker restart recovery, sustained backpressure, worker supervision, broader provider breadth and the complete family journey remain open.",
+    "P2 and P14 remain in_progress; D43 does not add connector/provider or external recovery qualification.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external secret provider or credential was available.",
+    "D43 does not rerun the full Python suite, Gitleaks, pip-audit or Trivy; skipped and inherited lanes are not counted as PASS.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The first supervised campaign drained only 32 of 64 records because the one-shot provider poll object was reused; D43 corrects that implementation issue and the failed receipt is retained as diagnostic evidence, not PASS.",
+    "A second campaign reached 1/1 browser PASS but was rejected by the runner audit because page.request did not produce the required traffic evidence; it is not qualification evidence.",
+    "The third campaign captured traffic but still drained only 32 of 64 records; it is not qualification evidence.",
+    "The final success is one filtered live diagnostic, not a route-wide audit, indefinite soak, broker restart rehearsal, provider matrix or family qualification.",
+    "No hosted workflow, branch or worktree was used; license review remains FAIL/CLOSED with 21 human decisions pending."
+  ]
+}
