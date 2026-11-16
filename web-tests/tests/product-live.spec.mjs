@@ -1104,6 +1104,7 @@ test('live streaming broker restart resumes from the durable checkpoint', async 
   test.setTimeout(90_000);
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
 
+  const calls = installLiveApiProxy(page);
   const workspace = process.env.RONIN_LIVE_WORKSPACE;
   const api = process.env.RONIN_LIVE_API_URL;
   const token = process.env.RONIN_LIVE_API_TOKEN;
@@ -1131,11 +1132,21 @@ test('live streaming broker restart resumes from the durable checkpoint', async 
     runtime: { profile_id: 'local', batch_limit: 1, timeout_seconds: 1 },
   };
 
-  const request = async (method, path, data) => page.request.fetch(`${api}${path}`, {
-    method,
-    headers,
-    data: data === undefined ? undefined : JSON.stringify(data),
-  });
+  const request = async (method, path, data) => {
+    const response = await page.evaluate(async ({ apiBase, requestPath, requestMethod, requestHeaders, body }) => {
+      const upstream = await fetch(`${apiBase}${requestPath}`, {
+        method: requestMethod,
+        headers: requestHeaders,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      return { status: upstream.status, text: await upstream.text() };
+    }, { apiBase: api, requestPath: path, requestMethod: method, requestHeaders: headers, body: data });
+    return {
+      status: () => response.status,
+      text: async () => response.text,
+      json: async () => JSON.parse(response.text),
+    };
+  };
   const saved = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
   expect(saved.status(), await saved.text()).toBe(200);
 
@@ -1186,6 +1197,9 @@ test('live streaming broker restart resumes from the durable checkpoint', async 
   const finalHealth = await request('GET', healthPath);
   expect(finalHealth.status(), await finalHealth.text()).toBe(200);
   expect((await finalHealth.json()).total_lag).toBe(0);
+  expect(calls.some(call => call.path === runPath && call.status === 503 && call.outcome === 'WARN')).toBe(true);
+  expect(calls.some(call => call.path === runPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
+  await flushLiveTraffic();
 });
 
 test('live streaming drains a two-partition backlog in bounded micro-batches', async ({ page }) => {
