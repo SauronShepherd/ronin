@@ -1,0 +1,70 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D37",
+  "date": "2026-11-16",
+  "status": "pass",
+  "cell": "P14 backup/restore, upgrade/rollback, restart and single-node Helm",
+  "candidate_sha": "2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89",
+  "candidate_receipt": "docs/qualification/candidates/candidate-2ab7fc51-d37.json",
+  "code_commit": "2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89",
+  "origin_main_at_code_commit": "2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89",
+  "implementation": {
+    "gap": "D37 found no production defect that justified changing the runtime. The local appliance and Helm recovery implementations already existed and required exact-candidate execution; the external Floci/Terraform lane exposed an environmental/provider apply timeout rather than a proven product fix.",
+    "fix": "No production code or test change was added. The campaign binds existing recovery paths to an exact clean candidate, runs Docker and Helm with real services, and records the Floci failure without converting it to PASS.",
+    "journey": "The clean source SHA was built into an immutable Ronin image, exercised through real Docker/appliance recovery and an isolated kind/Helm install-upgrade-rollback-restart journey. Floci/Terraform 1.13.5 was attempted with digest-pinned Floci 2.1.0 and cleaned after two apply timeouts.",
+    "real_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d37-full-2ab-20261116; C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d37-helm-2ab-20261116; C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d37-floci-2ab-20261116"
+  },
+  "tests": {
+    "candidate_p14_contracts": "69 passed, 0 failed, 0 skipped",
+    "candidate_helm_contracts": "2 passed, 0 failed, 0 skipped",
+    "real_docker_acceptance": "27 passed, 0 failed, 0 skipped in 167.30s",
+    "strict_v01_gate": "live=15 passed, 0 skipped, 0 failed, 0 errors, strict_success=true",
+    "real_helm_acceptance": "passed; Helm v4.3.1/kind lint, Secret boundary, install/readiness, upgrade revision 2, rollback revision 1, health/API, restart persistence and cleanup",
+    "real_floci_provider": "BLOCKED/FAIL; Terraform 1.13.5 apply timed out at 120s and 300s; destroy/state/resource cleanup were empty/successful",
+    "candidate_browser": "SKIP; @playwright/test is not packaged in the exact candidate archive; Node syntax checks passed",
+    "static_and_surface_checks": "Ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio 129/242, web audit 72 files/184 route invocations, web budget, 53 assets, daily progress and Node syntax pass",
+    "checkout_only_checks": "Public status and git diff are validated on the Git checkout because the candidate sandbox has no .git metadata",
+    "scans": "Gitleaks 0 findings over 15,962,390 bytes; pip-audit no known vulnerabilities; Trivy SKIP because no local binary"
+  },
+  "provider": {
+    "docker_receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d37-full-2ab-20261116\\qualification-summary.json",
+    "docker_image": "sha256:6f8a2320236dddf327c5fc4e1056ec122cfe493ecc66f2cd69bd3ec5616e1724",
+    "helm_receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d37-helm-2ab-20261116\\helm-qualification.json",
+    "helm_image": "sha256:6f8a2320236dddf327c5fc4e1056ec122cfe493ecc66f2cd69bd3ec5616e1724",
+    "floci_first_attempt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d37-floci-2ab-20261116\\qualification.json",
+    "floci_retry": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d37-floci-2ab-20261116\\qualification-retry.json",
+    "floci_toolchain": "Terraform 1.13.5 SHA-256 73F97943C93F268AE2C645B2A737D552175AA64D00A5C8B8F5CCC5831C033C8A; Floci 2.1.0 digest sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db; both apply attempts timed out and were not accepted"
+  },
+  "candidate": {
+    "archive_sha256": "0a94a8ca14e4813e5a7a01a25076070d467d3609b6a779f6491f8889abafab18",
+    "archive_size": 17172480,
+    "manifest_sha256": "f5ecc6ec3356f1b53ea49f9f601e423b03341796a600632b72c44f45e57ff9b3",
+    "manifest_size": 227255,
+    "digest_size": 252,
+    "file_count": 1475,
+    "total_bytes": 15962390,
+    "cleanup_regenerate_verify": "PASS; archive and manifest hashes were identical after cleanup/regeneration and final verify passed"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "36/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P14": "in_progress"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "37/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P14": "in_progress"
+    }
+  },
+  "limitations": [
+    "D37 does not qualify P14: external object-store backup/recovery is blocked by the Floci/Terraform apply timeout, and supported-platform coverage, production operation and complete family aggregation remain open.",
+    "The candidate browser lane is SKIP because @playwright/test is not packaged; no browser PASS is claimed.",
+    "P13 remains blocked by the external secret-provider/release evidence boundary, P12 remains in_progress, no release gate closes, and release remains NO-GO.",
+    "A skipped provider, browser or unavailable Trivy binary is not counted as PASS."
+  ]
+}

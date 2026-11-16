@@ -1,0 +1,97 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D37",
+  "status": "pass",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-12-21",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89",
+    "origin_main_sha_when_candidate_was_tested": "2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2ab7fc51-d37",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2ab7fc51-d37\\candidate-2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89.tar",
+      "format": "tar",
+      "sha256": "0a94a8ca14e4813e5a7a01a25076070d467d3609b6a779f6491f8889abafab18",
+      "size": 17172480
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2ab7fc51-d37\\candidate-2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89.manifest.json",
+      "sha256": "f5ecc6ec3356f1b53ea49f9f601e423b03341796a600632b72c44f45e57ff9b3",
+      "size": 227255
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2ab7fc51-d37\\candidate-2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2ab7fc51-d37\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1475,
+    "total_bytes": 15962390,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89",
+    "candidate_docs_commit": null,
+    "summary": "D37 audited and exercised the existing P14 recovery and Helm paths on an exact clean candidate. No production code change was justified: local appliance backup/restore, Docker acceptance and Helm upgrade/rollback/restart already provide the bounded implementation under test. The Floci provider lane was attempted with its required toolchain and is recorded as blocked after reproducible apply timeouts.",
+    "production_files_changed": [],
+    "test_files_changed": []
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2ab7fc51-d37",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-2ab7fc51-d37",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after sandbox tests; the same source SHA regenerated identical archive and manifest hashes; final verify from the checkout passed",
+    "candidate_p14_contracts": "exact candidate sandbox P14/Compose/migration/appliance/installation selection: 69 passed, 0 failed, 0 skipped",
+    "candidate_helm_contracts": "exact candidate sandbox Helm chart structure selection: 2 passed, 0 failed, 0 skipped",
+    "real_docker_acceptance": "clean checkout at the same source SHA, tools/run_docker_qualification.ps1 without -TestFilter: 27 passed, 0 skipped, 0 failed in 167.30s; PostgreSQL, Floci and Azurite fixtures cleaned successfully",
+    "strict_v01_gate": "v0.1 acceptance: live=15 passed, 15 expected, 0 skipped, 0 failed, 0 errors, strict_success=true",
+    "real_helm_acceptance": "clean checkout at the same source SHA, tools/run_helm_qualification.ps1: Helm/kind result passed with lint, Secret boundary, isolated cluster, install/readiness, upgrade revision 2, rollback revision 1, health/API, restart persistence and cleanup",
+    "real_floci_provider": "Terraform 1.13.5 with SHA-256 73F97943C93F268AE2C645B2A737D552175AA64D00A5C8B8F5CCC5831C033C8A against Floci 2.1.0: health/plan/validate passed, apply timed out at 120s and again at 300s; destroy/state cleanup returned zero resources; qualification status failed/blocked",
+    "candidate_static": "exact candidate sandbox Ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio, web audit, web budget, assets, daily progress and Node syntax all passed; public status and git diff require checkout Git metadata",
+    "scans": "final clean candidate Gitleaks directory scan found 0 leaks over 15,962,390 bytes and pip-audit reported no known vulnerabilities in requirements-test.lock; Trivy skipped because no local binary was available"
+  },
+  "qualification_matrix": {
+    "candidate_p14_contracts": "69 passed, 0 failed, 0 skipped across Compose, appliance backup, backup manifests, SQLite/PostgreSQL backup, migration registry/qualification/fixtures/CLI validation, installed-artifact smoke and Docker qualification contracts",
+    "candidate_helm_contracts": "2 passed, 0 failed, 0 skipped for Helm chart structure and public single-node schema boundaries",
+    "real_docker_acceptance": "27 passed, 0 skipped, 0 failed from the clean source SHA; real Docker worker/runtime, PostgreSQL-backed worker paths, appliance backup/restore, S3/Floci, Azure Blob/Azurite and the v0.1 journey all executed",
+    "strict_v01_gate": "live=15 passed, skipped=0, failed=0, missing=0, unexpected=0, strict_success=true; evidence is v01-acceptance-strict.json",
+    "real_image": "sha256:6f8a2320236dddf327c5fc4e1056ec122cfe493ecc66f2cd69bd3ec5616e1724, built from the clean checkout",
+    "real_helm_acceptance": "result=passed; Helm v4.3.1; 4 rendered resources; token confined to Secret; health=200; Studio=200; jobs API=200; upgrade revision=2; rollback=passed; queued job ID survived pod restart; cleanup=passed",
+    "real_floci_provider": "BLOCKED/FAIL, not PASS: Floci endpoint health=200 and Terraform plan/validate passed, but Terraform apply timed out at 120s and 300s. Both runner receipts report destroy returncode=0, empty state_list and no Floci residual resources.",
+    "candidate_web": "SKIP for browser execution; the exact candidate archive does not package @playwright/test. Node syntax checks passed; no browser PASS is claimed",
+    "candidate_static": "Ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI digest 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 129/242, web audit 72 files/184 route invocations, web budget, 53 assets, daily progress and Node syntax passed",
+    "ledger_checks": "Daily progress passed in the exact archive; public status and git diff are checkout-only because the candidate sandbox intentionally has no .git metadata",
+    "candidate_reproducibility_after_cleanup": "pass; cleanup/regeneration produced the same archive SHA 0a94a8ca14e4813e5a7a01a25076070d467d3609b6a779f6491f8889abafab18 and manifest SHA f5ecc6ec3356f1b53ea49f9f601e423b03341796a600632b72c44f45e57ff9b3; final verify passed",
+    "checkout_integrity_checks": "main/origin identity, git diff --check, Docker cleanup, Helm cluster cleanup and Floci compose/volume cleanup were checked separately on the checkout",
+    "result": "D37 pass for local Compose/appliance recovery and real Helm upgrade/rollback/restart cells; Floci/Terraform external provider qualification is blocked by reproducible apply timeouts; P14 remains in_progress and unqualified"
+  },
+  "security_and_recovery": {
+    "journey": "The real Docker journey reaches health, executes worker/restart/replay/cancel flows and restores PostgreSQL rows plus /var/lib/ronin artifacts/evidence after destructive mutation. The real Helm journey installs an isolated single-replica release, confines a synthetic token to a Secret, upgrades to revision 2, rolls back to revision 1, verifies health/API, restarts the deployment and confirms the same queued job ID survives.",
+    "negative_paths": "Candidate contracts cover rejected Compose exposure, malformed/unsafe backup manifests, invalid migration states, backup checksum/inventory barriers and Docker qualification fail-closed rules. Helm verifies the Secret boundary and public single-node values. The provider lane is retained as a negative result because apply did not complete.",
+    "provider_scope": "Docker used PostgreSQL 16.4, Floci/S3 and Azurite/Azure real local services. Helm used kind and the pinned local Ronin image. Floci/Terraform 1.13.5 was attempted against digest-pinned Floci 2.1.0 but apply timed out twice; this does not certify external object-store backup/recovery.",
+    "scans": {
+      "gitleaks": "8.30.1; final clean exact-candidate directory scan of 15,962,390 bytes; 0 findings",
+      "pip_audit": "pip-audit 2.10.1; requirements-test.lock; no known vulnerabilities",
+      "trivy": "SKIP; no local Trivy binary; no substitute scan claimed"
+    }
+  },
+  "open_cells": [
+    "P14 remains in_progress, not qualified: external object-store backup/recovery is blocked by the Floci/Terraform apply timeout, and supported-platform coverage, production operation and complete family aggregation remain open.",
+    "The exact candidate browser lane is SKIP because the archive lacks @playwright/test; Node syntax is not browser qualification.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary; P12 remains in_progress and all other families retain their recorded states.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The strict Docker and Helm acceptances were run from the clean Git checkout at the exact candidate SHA because the runners require Git metadata; their source identity, image digest and evidence paths are recorded explicitly. The archive sandbox separately passed its P14 and Helm contract selections.",
+    "Floci/Terraform qualification is a real attempted provider lane, not a skip: plan and validation passed, apply timed out at both configured limits, and the runner verified destroy/state/resource cleanup. No provider PASS is claimed.",
+    "The exact candidate archive has no @playwright/test, so browser execution is SKIP and is not counted as PASS. No hosted workflow or GitHub Actions evidence was used."
+  ]
+}
