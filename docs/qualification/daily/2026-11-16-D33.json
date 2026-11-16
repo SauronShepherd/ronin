@@ -1,0 +1,57 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D33",
+  "date": "2026-11-16",
+  "status": "pass",
+  "cell": "P12 local observability/FinOps HTTP serialization, alert scope and restart journey",
+  "candidate_sha": "1127fe0d33c2a012118880467f3578b80571b588",
+  "candidate_receipt": "docs/qualification/candidates/candidate-1127fe0d-d33.json",
+  "code_commit": "1127fe0d33c2a012118880467f3578b80571b588",
+  "origin_main_at_code_commit": "1127fe0d33c2a012118880467f3578b80571b588",
+  "implementation": {
+    "bug": "The control-plane FinOps serializer inspected __dict__, but the public UsageRecord, CostRecord and BudgetPolicy records are slotted dataclasses; HTTP responses were therefore empty objects.",
+    "fix": "Serialize declared dataclass fields, preserve Decimal as exact strings, recursively encode labels/collections/enums/time values and fail closed on a non-dataclass reader result.",
+    "journey": "Real local composition, HTTPTransport/PyRonin and CLI exercise usage, costs, budgets, scoped alert evaluation/acknowledgement and durable restart recovery from the same SQLite database."
+  },
+  "tests": {
+    "candidate_p12": "65 passed, 0 failed, 0 skipped",
+    "candidate_journey": "2 passed, 0 failed, 0 skipped",
+    "candidate_sdk": "3 passed, 0 failed, 0 skipped",
+    "candidate_http_integration": "1 passed, 0 failed, 0 skipped",
+    "candidate_browser": "SKIP; @playwright/test is not packaged in the exact candidate archive; Node syntax checks passed",
+    "static_and_surface_checks": "Ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI, Studio 129/242, web audit 72 files/184 route invocations, web budget, daily progress and Node syntax pass",
+    "checkout_only_checks": "Public status and git diff are validated on the Git checkout because the candidate sandbox has no .git metadata",
+    "scans": "Gitleaks 0 findings over 15,884,177 bytes; pip-audit no known vulnerabilities; Trivy SKIP because no local binary"
+  },
+  "candidate": {
+    "archive_sha256": "9476205dd7c75ee94ab8ec6211caba7a8a1167342a8d2ef5e04a70e746f323a1",
+    "archive_size": 17080320,
+    "manifest_sha256": "eaaf39d2a87a8443c2f2b2662a532b105c8a81f1c9ba608f40542c572459eda7",
+    "manifest_size": 225279,
+    "digest_size": 252,
+    "file_count": 1463,
+    "total_bytes": 15884177,
+    "cleanup_regenerate_verify": "PASS; archive and manifest hashes were identical after cleanup/regeneration and final verify passed"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "32/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P12": "not_started"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "33/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P12": "in_progress"
+    }
+  },
+  "limitations": [
+    "P12 is in_progress, not qualified: external SMTP/HTTPS notification, Prometheus deployment, PostgreSQL-backed telemetry/FinOps, broader service adoption and full candidate browser packaging remain open.",
+    "P13 remains blocked by external secret-provider and release evidence; no gate status changed.",
+    "A skipped provider or browser test is not counted as PASS."
+  ]
+}

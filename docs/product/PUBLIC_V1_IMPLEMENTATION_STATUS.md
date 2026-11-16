@@ -5,33 +5,28 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 
-## Current exact-SHA qualification — 15 November 2026
+## Current exact-SHA qualification — 16 November 2026
 
-The current exact-head candidate is `a707b8c5a77e165f03458050c98e27a4545d3bb3`.
-D32 adds a real two-partition Redpanda/Kafka journey with Ronin API and
-Chromium: the selected live case is `1/1`, with `52/52` real API events
-correlated to structured logs, `48` `OK`, `4` expected `WARN` and zero
-server/network errors. Twelve records (6 per partition) drain in six bounded
-micro-batches of two; health observes lag `6/6` and the final total is zero.
-The production fix permits monotonic checkpoint partition expansion while
-retaining removal/offset regression rejection. D30 remains the preceding code
-change that fixed the semantic dashboard replacement path.
-
-The exact candidate focused streaming selection passes `34` tests with no
-failures/skips. Checkout Ruff, mypy, architecture and negative gates, route
-consistency, dependency surfaces, OpenAPI, Studio, ledger/status and diff
-checks pass. Gitleaks reports zero findings and pip-audit reports no known
-vulnerabilities. The exact candidate browser lane is `SKIP` because
-`@playwright/test` is not packaged; the real Chromium result is bound to the
-clean checkout at the exact source SHA. Trivy is skipped because no local
-binary is available.
+The current exact-head candidate is `1127fe0d33c2a012118880467f3578b80571b588`.
+D33 fixes the control-plane FinOps serializer for slotted dataclasses. The
+exact local-composed journey returns usage, exact Decimal costs and budgets,
+evaluates and acknowledges a workspace-scoped alert through the real HTTP,
+PyRonin and CLI surfaces, and recovers the values after restart. The candidate
+passes `65` focused P12 tests, the new journey `2/2`, SDK `3/3` and selected
+HTTP integration `1/1`. Ruff, mypy, architecture/negative gates, route and
+dependency surfaces, OpenAPI, Studio, web audit/budget and daily progress pass.
+Gitleaks reports zero findings and pip-audit reports no known vulnerabilities.
+The exact candidate browser lane is `SKIP` because `@playwright/test` is not
+packaged; Node syntax checks pass. Trivy is skipped because no local binary is
+available.
 
 This is bounded technical evidence only. Public v1 remains **1/13 families
-qualified, 0/10 gates, NO-GO**: P11 is still `in_progress` because continuous
-operation, full backpressure/failure recovery, provider breadth and complete
-operator evidence remain open. P10 is `in_progress`; P13 external evidence,
-manual visual/product review, legal/NOTICE/claims, security acceptance,
-rollback/support and release governance remain open.
+qualified, 0/10 gates, NO-GO**: P12 is still `in_progress` because external
+notification providers, deployed Prometheus, PostgreSQL telemetry/FinOps,
+broader service adoption and production qualification remain open. P11 and
+P10 remain `in_progress`; P13 external evidence, manual visual/product review,
+legal/NOTICE/claims, security acceptance, rollback/support and release
+governance remain open.
 
 ### Historical exact-SHA qualification — `4157181`
 
@@ -101,7 +96,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `a707b8c5a77e165f03458050c98e27a4545d3bb3` (2026-11-15).
+**Observed source head:** `1127fe0d33c2a012118880467f3578b80571b588` (2026-11-16).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

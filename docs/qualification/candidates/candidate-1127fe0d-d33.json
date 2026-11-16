@@ -1,0 +1,96 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D33",
+  "status": "pass",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-12-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "1127fe0d33c2a012118880467f3578b80571b588",
+    "origin_main_sha_when_candidate_was_tested": "1127fe0d33c2a012118880467f3578b80571b588",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-1127fe0d-d33",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-1127fe0d-d33\\candidate-1127fe0d33c2a012118880467f3578b80571b588.tar",
+      "format": "tar",
+      "sha256": "9476205dd7c75ee94ab8ec6211caba7a8a1167342a8d2ef5e04a70e746f323a1",
+      "size": 17080320
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-1127fe0d-d33\\candidate-1127fe0d33c2a012118880467f3578b80571b588.manifest.json",
+      "sha256": "eaaf39d2a87a8443c2f2b2662a532b105c8a81f1c9ba608f40542c572459eda7",
+      "size": 225279
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-1127fe0d-d33\\candidate-1127fe0d33c2a012118880467f3578b80571b588.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-1127fe0d-d33\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1463,
+    "total_bytes": 15884177,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "1127fe0d33c2a012118880467f3578b80571b588",
+    "candidate_docs_commit": null,
+    "summary": "D33 fixes the authenticated control-plane FinOps serializer: slotted dataclass records were previously emitted as empty objects because the route only inspected __dict__. The serializer now walks dataclass fields, preserves Decimal values as exact strings, and recursively encodes labels, enums and time values. A real local-composed HTTP journey covers usage, costs, budgets, alert evaluation, acknowledgement, CLI visibility and restart persistence.",
+    "production_files_changed": [
+      "python/studio_server/control_plane.py"
+    ],
+    "test_files_changed": [
+      "tests/test_local_composed.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 1127fe0d33c2a012118880467f3578b80571b588 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-1127fe0d-d33",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-1127fe0d-d33",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after candidate tests and scans; the same source SHA regenerated identical archive and manifest hashes; final verify passed",
+    "candidate_p12": "exact candidate sandbox pytest selection: 65 passed, 0 failed, 0 skipped",
+    "candidate_journey": "exact candidate sandbox local-composed HTTP journey and existing durable quality journey: 2 passed, 0 failed, 0 skipped",
+    "candidate_sdk": "exact candidate sandbox PyRonin alert/FinOps selection: 3 passed, 0 failed, 0 skipped",
+    "candidate_http_integration": "exact candidate sandbox workspace/project HTTP observability/FinOps selection: 1 passed, 0 failed, 0 skipped",
+    "candidate_static": "exact candidate sandbox Ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio surface, web audit, budget, daily progress and JavaScript syntax all passed; public status and git diff require checkout Git metadata",
+    "scans": "final clean candidate Gitleaks dir scan and pip-audit -r requirements-test.lock; Trivy skipped because no local binary was available"
+  },
+  "qualification_matrix": {
+    "candidate_p12": "65 passed, 0 failed, 0 skipped across FinOps allocation/forecast, durable observability, anomaly, instrumentation, alert state, Prometheus, OTLP, notification, local plugin and quality-observability selections",
+    "candidate_journey": "2 passed, 0 failed, 0 skipped; real local composition HTTP reads slotted usage/cost/budget records with exact Decimal strings, evaluates and acknowledges a scoped alert, exposes it through CLI JSON, then recovers costs and acknowledgement after restart",
+    "candidate_sdk": "3 passed, 0 failed, 0 skipped for alert and FinOps SDK parity",
+    "candidate_http_integration": "1 passed, 0 failed, 0 skipped for the selected workspace/project HTTP observability integration",
+    "candidate_web": "SKIP for browser execution; the exact candidate archive does not package @playwright/test. Node syntax checks for the alert and FinOps workbench specs passed; no browser PASS is claimed",
+    "candidate_static": "Ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI digest 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 129/242, web audit 72 files/184 route invocations, web budget, daily progress and Node syntax passed",
+    "ledger_checks": "Daily progress passed in the exact archive; public status and git diff are checkout-only because the candidate sandbox intentionally has no .git metadata",
+    "candidate_reproducibility_after_cleanup": "pass; cleanup/regeneration produced the same archive SHA 9476205dd7c75ee94ab8ec6211caba7a8a1167342a8d2ef5e04a70e746f323a1 and manifest SHA eaaf39d2a87a8443c2f2b2662a532b105c8a81f1c9ba608f40542c572459eda7; final verify passed",
+    "checkout_integrity_checks": "main/origin identity and git diff --check are checked separately on the checkout",
+    "result": "D33 pass for the bounded local HTTP observability/FinOps cell and serializer fix; P12 remains in_progress and unqualified"
+  },
+  "security_and_recovery": {
+    "journey": "The local composition used real SQLite persistence, the real control-plane HTTP server, the real PyRonin HTTP transport and the real CLI entrypoint; costs and alert acknowledgement survived composition restart",
+    "negative_paths": "The route now rejects non-dataclass FinOps reader results instead of silently returning empty objects; Decimal values are encoded exactly, and the alert rule is workspace-scoped before evaluation and acknowledgement",
+    "provider_scope": "SQLite local reference storage and loopback HTTP OTLP collector tests were exercised. No external Prometheus scrape target, SMTP endpoint, HTTPS webhook, PostgreSQL FinOps/telemetry backend or production notification provider was available in this campaign",
+    "scans": {
+      "gitleaks": "8.30.1; final clean exact-candidate directory scan of 15,884,177 bytes; 0 findings",
+      "pip_audit": "pip-audit 2.10.1; requirements-test.lock; no known vulnerabilities",
+      "trivy": "SKIP; no local Trivy binary; no substitute scan claimed"
+    }
+  },
+  "open_cells": [
+    "P12 remains in_progress, not qualified: the cell proves local durable HTTP serialization and local observability/FinOps behavior, but not external notification providers, PostgreSQL-backed telemetry/FinOps, broad service adoption, continuous production operation or full browser candidate packaging.",
+    "The exact candidate browser lane is SKIP because the archive lacks @playwright/test; Node syntax is not browser qualification.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary; P10, P11 and all other families retain their ledger states.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The fix addresses a concrete serialization defect found by a real local HTTP journey; it does not claim external provider or production qualification.",
+    "The exact candidate sandbox has no .git metadata by design; public status and git diff verification are checkout-only and are not converted into candidate PASS results.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

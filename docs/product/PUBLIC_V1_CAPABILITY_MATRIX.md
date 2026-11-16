@@ -1,15 +1,19 @@
 # Ronin Public v1 capability matrix
 
-## Current exact-SHA snapshot — 15 November 2026
+## Current exact-SHA snapshot — 16 November 2026
 
-The current code/evidence candidate is `a707b8c5a77e165f03458050c98e27a4545d3bb3`.
-Its D32 evidence adds a real two-partition Redpanda/Kafka campaign with the
-Ronin API and Chromium: the selected live journey is `1/1`, with `52/52`
-correlated API events (`48` `OK`, `4` expected `WARN`) and zero server/network
-errors. Twelve real records (6 per partition) drain in six bounded batches of
-two, with lag `6/6 → 0/0`; the checkpoint contract also proves monotonic
-partition expansion and rejects removal/regression. D30's semantic
-dashboard replacement/filter evidence remains bound to its preceding code SHA.
+The current code/evidence candidate is `1127fe0d33c2a012118880467f3578b80571b588`.
+D33 fixes the FinOps control-plane serializer for slotted dataclasses and adds
+a real local-composed HTTP journey: exact usage/cost/budget values are returned,
+workspace-scoped alert evaluation and acknowledgement are visible through
+PyRonin and CLI, and the records survive restart. The exact candidate passes
+65 focused P12 tests plus the new journey; static checks and scans are recorded
+in `docs/qualification/candidates/candidate-1127fe0d-d33.json`. Candidate
+browser execution is **SKIP** because `@playwright/test` is not packaged.
+P12 remains partial/in progress because external notification providers,
+PostgreSQL-backed telemetry/FinOps, broader service adoption and production
+qualification remain open. D32's two-partition streaming evidence remains
+bound to its preceding code SHA.
 
 The focused exact-candidate streaming selection passes `34` tests. Checkout
 Ruff, mypy, architecture/negative gates, route consistency, dependency
@@ -131,7 +135,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `a707b8c5a77e165f03458050c98e27a4545d3bb3` (current exact candidate; implementation evidence remains bound to the stated product candidate, this is not a release qualification claim, and the required human/provider gates remain open).
+**Observed source baseline:** `1127fe0d33c2a012118880467f3578b80571b588` (current exact candidate; implementation evidence remains bound to the stated product candidate, this is not a release qualification claim, and the required human/provider gates remain open).
 
 The D21 scheduler slice adds exact-candidate evidence for the bounded local
 API/SQLite/daemon journey and fail-closed identity input boundaries at
@@ -279,7 +283,7 @@ isolated green tests do not close a family.
 | P9 GenAI, RAG and in-product agents | Out of scope | N/A | N/A | No Ronin tier ships model/provider invocation, RAG, or agent execution. Coding-agent skills are consumed by external agents and remain separate from Ronin's runtime, API, and Studio. | None. | Not applicable. |
 | P10 Semantic models and dashboards | Partial | Partial | No | Export/import and production qualification remain incomplete; broader planning is bounded. | DuckDB/SQL engine for execution; browser runtime for Studio. | Local SQLite/DuckDB; Compose reference profile. |
 | P11 Streaming and real time | Partial | Partial | No | Definition, health, bounded run-once, Bundle export/plan/import, oversized-record rejection/recovery, and the D32 two-partition drain have current local contract evidence (**34 focused tests**) plus a real Redpanda lane (**1/1**); 12 records drain with lag **6/6 → 0/0**, and checkpoint partition expansion is covered. Broader continuous operation, backpressure/failure recovery, provider breadth and exact-candidate full-family qualification remain open. | Kafka broker/client runtime. | Local bounded polling tests; digest-pinned Redpanda profile and Compose. |
-| P12 Observability, alerts and FinOps | Partial | Partial | No | Broader service adoption and production qualification remain incomplete. | Prometheus scrape target; SMTP/HTTPS notification endpoint. | Local/Compose reference profile. |
+| P12 Observability, alerts and FinOps | Partial | Partial | No | D33 fixes slotted FinOps HTTP serialization and proves a real local SQLite/HTTP/PyRonin/CLI journey for usage, exact Decimal cost/budget payloads, workspace-scoped alert evaluation/acknowledgement and restart persistence. The exact candidate records 65 focused P12 tests and static/scanning evidence. External Prometheus deployment, SMTP/HTTPS notification providers, PostgreSQL telemetry/FinOps, broader service adoption, candidate browser packaging and production qualification remain incomplete. | Prometheus scrape target; SMTP/HTTPS notification endpoint; PostgreSQL for provider-backed durability. | Local SQLite; Compose reference profile. |
 | P13 Security and audit (single-operator) | Partial | Partial | No | Exact candidate C2 adds digest/denormalized-column verification for SQLite and PostgreSQL, a bounded authorized audit route, real PostgreSQL/Docker recovery evidence, and clean-candidate Gitleaks, pip-audit and Trivy scans. External secret-provider qualification and release evidence remain incomplete. OIDC, user/group administration and multi-user authorization belong to Ronin Pro. | Local bearer/auth profile; external secret backend for Ronin Pro. | Local single-operator; single-host Compose/PostgreSQL reference. |
 | P14 Deployment and operations | Partial | Partial | No | A combined local PostgreSQL + `/var/lib/ronin` appliance bundle has a current isolated Compose round-trip diagnostic (database rows, artifacts and execution evidence restored) and pre-destructive checksum/inventory validation. Current Docker/Helm qualification receipts also cover readiness, upgrade/rollback and recovery paths. Clean-candidate evidence, supported-platform coverage, external object-store recovery and full release aggregation remain incomplete. Multi-user HA and Kubernetes server profiles belong to Ronin Pro. | Docker; PostgreSQL; local artifacts; external S3 backup is separate. | Local and single-host Docker Compose. |
 
