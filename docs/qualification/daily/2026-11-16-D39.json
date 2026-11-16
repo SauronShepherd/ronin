@@ -56,6 +56,7 @@
   "limitations": [
     "D39 strengthens real-service evidence but does not qualify P11: the finite browser/API/worker route journey does not prove sustained operation, backpressure exhaustion, external provider breadth or complete operator evidence.",
     "D39 did not rerun the full Python suite, image scans or license decisions because it changes only committed qualification documentation; those results remain linked to D38 and are not restated as new PASS.",
+    "The artifact builder temporarily wrote four egg-info files into the candidate sandbox; final targeted cleanup/regeneration removed them and verify passed with unchanged archive and manifest hashes.",
     "P13 remains blocked; P12 and P14 remain in_progress; no family other than the existing P1 is qualified.",
     "No release gate closes; release remains NO-GO at 1/13 families and 0/10 gates."
   ]

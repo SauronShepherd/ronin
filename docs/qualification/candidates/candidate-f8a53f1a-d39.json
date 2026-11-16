@@ -91,6 +91,7 @@
   "limitations": [
     "The live worker used the D38 runtime image digest sha256:bc1f21540e83a732e03cec439fc0a7a87f16803104a144b7fe288362ee0f15ec; D39 did not rebuild or rescan images because product code was unchanged.",
     "The 3 ERROR-level HTTP 503 entries are expected unavailable-service negative checks; the summary reports 0 server/network errors and all 296 events correlate to structured logs.",
+    "Artifact qualification temporarily wrote four setuptools egg-info files into the candidate sandbox; the targeted final cleanup/regeneration removed them, restored the manifest boundary and made verify pass without changing the archive or manifest hashes.",
     "No hosted workflow, GitHub Actions job, branch or worktree was used."
   ]
 }
