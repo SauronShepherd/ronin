@@ -6,6 +6,7 @@ import http.client
 import json
 import socket
 import time
+from decimal import Decimal
 from types import SimpleNamespace
 from typing import Any, cast
 
@@ -55,6 +56,7 @@ from studio_core import (
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.scheduler_events import EventTriggerDefinition, EventTriggerId
 from studio_execution import PostgresWorkflowHTTPAdapter, SqliteWorkflowHTTPAdapter
+from studio_finops import BudgetPolicy, RateCard, SqliteFinOpsStore, UsageRecord, price_usage
 from studio_lakehouse import write_parquet_rows
 from studio_ml import FeatureSpec, Lab
 from studio_ml.domain import PipelineIR
@@ -66,7 +68,7 @@ from studio_notebook import (
     NotebookDocument,
     allocate_cell_ids,
 )
-from studio_observability import AlertRule, SqliteTelemetryStore
+from studio_observability import AlertRule, MetricPoint, SqliteTelemetryStore
 from studio_orchestrator import Instant
 from studio_server import LocalServerComposition
 from studio_sql import SqlExplainUnsupportedError, SqlTimeoutError
@@ -2600,3 +2602,166 @@ def test_build_local_composed_rejects_invalid_configured_plugin_lock(
 
     with pytest.raises(ValueError, match="RONIN_PLUGIN_LOCK validation failed"):
         build_local_composed_from_env()
+
+
+def test_local_composed_finops_http_preserves_slotted_records_and_alert_scope(
+    monkeypatch: pytest.MonkeyPatch, tmp_path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Exercise real HTTP serialization for the slotted FinOps reference records."""
+
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv("RONIN_HOST", "127.0.0.1")
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(_unused_port()))
+    monkeypatch.setenv("RONIN_PORT", str(_unused_port()))
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS",
+        "workspace.read,workspace.write,project.read,project.write",
+    )
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_URL", "http://127.0.0.1:0")
+    monkeypatch.setenv("RONIN_TOKEN", _CONTROL_VALUE)
+
+    database = tmp_path / "ronin.sqlite3"
+    workspace = WorkspaceId("workspace-1")
+    period_start = Instant("2026-10-24T00:00:00.000000Z")
+    period_end = Instant("2026-10-25T00:00:00.000000Z")
+    finops = SqliteFinOpsStore(database)
+    finops.put_rate_card(
+        RateCard(
+            "cpu-rate",
+            "cpu_second",
+            "seconds",
+            "USD",
+            Decimal("0.01"),
+            period_start,
+        )
+    )
+    usage = UsageRecord(
+        "usage-http",
+        workspace,
+        "cpu_second",
+        Decimal("100.25"),
+        "seconds",
+        period_start,
+        period_end,
+        "run:http",
+        "actual",
+        (("service", "api"),),
+    )
+    price_usage(finops, usage)
+    budget = BudgetPolicy(
+        "daily-http",
+        workspace,
+        "USD",
+        Decimal("2.00"),
+        period_start,
+        period_end,
+        "deny_new_work",
+        (("service", "api"),),
+    )
+    finops.put_budget(budget)
+
+    telemetry = SqliteTelemetryStore(database)
+    rule = telemetry.put_alert_rule(
+        AlertRule(
+            "queue-http",
+            "Queue lag",
+            "queue.lag",
+            "gt",
+            10.0,
+            (("workspace", "workspace-1"),),
+        )
+    )
+    telemetry.record_metric(
+        MetricPoint(
+            "queue.lag",
+            25.0,
+            "items",
+            "gauge",
+            period_start,
+            (("workspace", "workspace-1"),),
+        )
+    )
+
+    composition = build_local_composed_from_env()
+    address = composition.control_plane_server.server_address
+    base_url = f"http://{address[0]}:{address[1]}"
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_URL", base_url)
+    sdk = Ronin(
+        transport=HTTPTransport(
+            base_url,
+            token=_CONTROL_VALUE,
+            allow_insecure_localhost=True,
+            max_retries=0,
+        )
+    )
+    try:
+        composition.start()
+        usage_payload = sdk.list_finops_usage(
+            "workspace-1", period_start=str(period_start), period_end=str(period_end)
+        )
+        assert usage_payload == (
+            {
+                "id": "usage-http",
+                "workspace_id": "workspace-1",
+                "resource_type": "cpu_second",
+                "quantity": "100.25",
+                "unit": "seconds",
+                "period_start": str(period_start),
+                "period_end": str(period_end),
+                "source_ref": "run:http",
+                "provenance": "actual",
+                "labels": {"service": "api"},
+            },
+        )
+        costs_payload = sdk.list_finops_costs(
+            "workspace-1", period_start=str(period_start), period_end=str(period_end)
+        )
+        assert costs_payload[0] == {
+            "usage_id": "usage-http",
+            "workspace_id": "workspace-1",
+            "amount": "1.0025",
+            "currency": "USD",
+            "provenance": "actual",
+            "rate_card_id": "cpu-rate",
+        }
+        assert sdk.list_finops_budgets("workspace-1") == (
+            {
+                "id": "daily-http",
+                "workspace_id": "workspace-1",
+                "currency": "USD",
+                "limit": "2.00",
+                "period_start": str(period_start),
+                "period_end": str(period_end),
+                "action": "deny_new_work",
+                "labels": {"service": "api"},
+            },
+        )
+
+        assert sdk.list_alert_rules("workspace-1")[0]["id"] == rule.id
+        evaluated = sdk.evaluate_alert("workspace-1", rule.id)
+        assert evaluated["state"]["status"] == "open"
+        instances = sdk.list_alert_instances("workspace-1")
+        assert len(instances) == 1
+        fingerprint = cast(str, instances[0]["fingerprint"])
+        assert sdk.acknowledge_alert("workspace-1", rule.id, fingerprint)["state"][
+            "acknowledged_at"
+        ]
+
+        assert cli_main(["alerts", "instances", "workspace-1", "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["items"][0]["rule_id"] == rule.id
+    finally:
+        composition.stop()
+
+    restarted = build_local_composed_from_env()
+    try:
+        restarted.start()
+        assert (
+            sdk.list_finops_costs(
+                "workspace-1", period_start=str(period_start), period_end=str(period_end)
+            )[0]["amount"]
+            == "1.0025"
+        )
+        recovered = sdk.list_alert_instances("workspace-1")
+        assert recovered[0]["acknowledged_at"] is not None
+    finally:
+        restarted.stop()

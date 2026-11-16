@@ -11,7 +11,9 @@ import re
 import sys
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import fields, is_dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -759,21 +761,38 @@ def _manifest_payload(manifest: ProjectManifest) -> dict[str, object]:
 
 
 def _finops_payload(item: object) -> dict[str, object]:
-    """Serialize FinOps records without coercing missing values into estimates."""
-    values = getattr(item, "__dict__", {})
-    payload: dict[str, object] = {}
-    for key, value in values.items():
-        if key.startswith("_"):
-            continue
+    """Serialize slotted FinOps records without losing exact decimal values."""
+    if not is_dataclass(item):
+        raise TypeError("FinOps reader returned a non-dataclass record")
+
+    def encode(value: object) -> object:
+        if isinstance(value, Decimal):
+            return str(value)
         if hasattr(value, "value"):
-            value = value.value
-        elif hasattr(value, "isoformat"):
-            value = value.isoformat()
-        elif isinstance(value, (int, float)):
-            value = str(value)
-        elif isinstance(value, dict):
-            value = dict(value)
-        payload[key] = value
+            return value.value
+        if isinstance(value, tuple):
+            if all(
+                isinstance(pair, tuple)
+                and len(pair) == 2
+                and isinstance(pair[0], str)
+                and isinstance(pair[1], str)
+                for pair in value
+            ):
+                return dict(value)
+            return [encode(child) for child in value]
+        if isinstance(value, list):
+            return [encode(child) for child in value]
+        if isinstance(value, dict):
+            return {str(key): encode(child) for key, child in value.items()}
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return value
+        if hasattr(value, "isoformat"):
+            return value.isoformat()
+        return str(value)
+
+    payload: dict[str, object] = {}
+    for field in fields(item):
+        payload[field.name] = encode(getattr(item, field.name))
     return payload
 
 
