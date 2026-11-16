@@ -1,0 +1,64 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D36",
+  "date": "2026-11-16",
+  "status": "pass",
+  "cell": "P14 Compose, health, migrations, installation, clean install and appliance recovery",
+  "candidate_sha": "baa18fdbb9c4f149599349e7a47a6df686757912",
+  "candidate_receipt": "docs/qualification/candidates/candidate-baa18fdb-d36.json",
+  "code_commit": "baa18fdbb9c4f149599349e7a47a6df686757912",
+  "origin_main_at_code_commit": "baa18fdbb9c4f149599349e7a47a6df686757912",
+  "implementation": {
+    "gap": "D36 audit found no production defect that could be corrected honestly before the campaign: the repository already contained the Compose, health, migration, installed-artifact, worker, appliance backup and recovery paths required by the cell.",
+    "fix": "No production code or test change was added. The work binds the existing P14 implementation to an exact clean candidate, runs the full local Docker acceptance and records the strict v0.1 result and real appliance recovery evidence.",
+    "journey": "The clean source SHA was built into an immutable Ronin image, exercised with PostgreSQL, Floci and Azurite, ran the real worker/runtime and v0.1 journey, and restored PostgreSQL plus /var/lib/ronin data after destructive mutation. Cleanup succeeded.",
+    "real_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d36-full-baa-20261116"
+  },
+  "tests": {
+    "candidate_p14_contracts": "69 passed, 0 failed, 0 skipped",
+    "real_docker_acceptance": "27 passed, 0 failed, 0 skipped in 183.66s",
+    "strict_v01_gate": "live=15 passed, 0 skipped, 0 failed, 0 errors, strict_success=true",
+    "candidate_browser": "SKIP; @playwright/test is not packaged in the exact candidate archive; Node syntax checks passed",
+    "static_and_surface_checks": "Ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio 129/242, web audit 72 files/184 route invocations, web budget, 53 assets, daily progress and Node syntax pass",
+    "checkout_only_checks": "Public status and git diff are validated on the Git checkout because the candidate sandbox has no .git metadata",
+    "scans": "Gitleaks 0 findings over 15,944,849 bytes; pip-audit no known vulnerabilities; Trivy SKIP because no local binary"
+  },
+  "provider": {
+    "receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d36-full-baa-20261116\\qualification-summary.json",
+    "image": "sha256:fe882aba04b291668db9e234ffcc5cc221cd7af1ec4532ea31f141bba5ba407a",
+    "tests": "27 passed, 0 failed, 0 skipped; PostgreSQL 16.4, Floci/S3 and Azurite/Azure real local services; cleanup succeeded",
+    "strict_acceptance": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p14-d36-full-baa-20261116\\v01-acceptance-strict.json"
+  },
+  "candidate": {
+    "archive_sha256": "8b05218e159dc040afa33d3b91ba1fedc64917f5fdf1feda7aa5a25e5469e796",
+    "archive_size": 17152000,
+    "manifest_sha256": "36efe7150b15115093658da94d6deabbc99662923ce325f5c293d8a123c309c2",
+    "manifest_size": 226761,
+    "digest_size": 252,
+    "file_count": 1472,
+    "total_bytes": 15944849,
+    "cleanup_regenerate_verify": "PASS; archive and manifest hashes were identical after cleanup/regeneration and final verify passed"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "35/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P14": "not_started"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "36/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P14": "in_progress"
+    }
+  },
+  "limitations": [
+    "D36 does not qualify P14: upgrade/rollback, restart/Helm, external object-store recovery, supported-platform coverage and production operation remain open for D37 or later.",
+    "The candidate browser lane is SKIP because @playwright/test is not packaged; no browser PASS is claimed.",
+    "P13 remains blocked by the external secret-provider/release evidence boundary, P12 remains in_progress, no release gate closes, and release remains NO-GO.",
+    "A skipped provider, browser or unavailable Trivy binary is not counted as PASS."
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D36",
+  "status": "pass",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-12-20",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "baa18fdbb9c4f149599349e7a47a6df686757912",
+    "origin_main_sha_when_candidate_was_tested": "baa18fdbb9c4f149599349e7a47a6df686757912",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-baa18fdb-d36",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-baa18fdb-d36\\candidate-baa18fdbb9c4f149599349e7a47a6df686757912.tar",
+      "format": "tar",
+      "sha256": "8b05218e159dc040afa33d3b91ba1fedc64917f5fdf1feda7aa5a25e5469e796",
+      "size": 17152000
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-baa18fdb-d36\\candidate-baa18fdbb9c4f149599349e7a47a6df686757912.manifest.json",
+      "sha256": "36efe7150b15115093658da94d6deabbc99662923ce325f5c293d8a123c309c2",
+      "size": 226761
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-baa18fdb-d36\\candidate-baa18fdbb9c4f149599349e7a47a6df686757912.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-baa18fdb-d36\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1472,
+    "total_bytes": 15944849,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "baa18fdbb9c4f149599349e7a47a6df686757912",
+    "candidate_docs_commit": null,
+    "summary": "D36 audited the existing P14 deployment path and bound it to an exact clean candidate. No production code change was justified: the Compose, migration, worker, health, appliance backup and recovery implementation already exercised the planned cell. The campaign added no claim beyond the real evidence recorded here.",
+    "production_files_changed": [],
+    "test_files_changed": []
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha baa18fdbb9c4f149599349e7a47a6df686757912 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-baa18fdb-d36",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-baa18fdb-d36",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after sandbox tests; the same source SHA regenerated identical archive and manifest hashes; final verify from the checkout passed",
+    "candidate_p14_contracts": "exact candidate sandbox P14/Compose/migration/appliance/installation selection: 69 passed, 0 failed, 0 skipped",
+    "real_docker_acceptance": "clean checkout at the same source SHA, tools/run_docker_qualification.ps1 without -TestFilter: 27 passed, 0 skipped, 0 failed in 183.66s; PostgreSQL, Floci and Azurite fixtures cleaned successfully",
+    "strict_v01_gate": "v0.1 acceptance: live=15 passed, 15 expected, 0 skipped, 0 failed, 0 errors, strict_success=true",
+    "candidate_static": "exact candidate sandbox Ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio, web audit, web budget, assets, daily progress and Node syntax all passed; public status and git diff require checkout Git metadata",
+    "scans": "final clean candidate Gitleaks directory scan found 0 leaks over 15,944,849 bytes and pip-audit reported no known vulnerabilities in requirements-test.lock; Trivy skipped because no local binary was available"
+  },
+  "qualification_matrix": {
+    "candidate_p14_contracts": "69 passed, 0 failed, 0 skipped across Compose, appliance backup, backup manifests, SQLite/PostgreSQL backup, migration registry/qualification/fixtures/CLI validation, installed-artifact smoke and Docker qualification contracts",
+    "real_docker_acceptance": "27 passed, 0 skipped, 0 failed from the clean source SHA; real Docker worker/runtime, PostgreSQL-backed worker paths, appliance backup/restore, S3/Floci, Azure Blob/Azurite and the v0.1 journey all executed",
+    "strict_v01_gate": "live=15 passed, skipped=0, failed=0, missing=0, unexpected=0, strict_success=true; evidence is v01-acceptance-strict.json",
+    "real_image": "sha256:fe882aba04b291668db9e234ffcc5cc221cd7af1ec4532ea31f141bba5ba407a, built from the clean checkout",
+    "candidate_web": "SKIP for browser execution; the exact candidate archive does not package @playwright/test. Node syntax checks passed; no browser PASS is claimed",
+    "candidate_static": "Ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI digest 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 129/242, web audit 72 files/184 route invocations, web budget, 53 assets, daily progress and Node syntax passed",
+    "ledger_checks": "Daily progress passed in the exact archive; public status and git diff are checkout-only because the candidate sandbox intentionally has no .git metadata",
+    "candidate_reproducibility_after_cleanup": "pass; cleanup/regeneration produced the same archive SHA 8b05218e159dc040afa33d3b91ba1fedc64917f5fdf1feda7aa5a25e5469e796 and manifest SHA 36efe7150b15115093658da94d6deabbc99662923ce325f5c293d8a123c309c2; final verify passed",
+    "checkout_integrity_checks": "main/origin identity, git diff --check and Docker cleanup were checked separately on the checkout",
+    "result": "D36 pass for Compose/health/migration/install, strict local Docker acceptance and real appliance backup/restore evidence; P14 remains in_progress and unqualified"
+  },
+  "security_and_recovery": {
+    "journey": "The real journey starts Compose services, reaches health, validates and plans the frozen v0.1 path, executes worker cells, exercises lease expiry/restart/reclaim, replay/idempotency and cancellation, then restores PostgreSQL rows and /var/lib/ronin artifacts/evidence from an appliance bundle after destructive mutation.",
+    "negative_paths": "Candidate contracts cover rejected Compose exposure, malformed/unsafe backup manifests, invalid migration states, backup checksum/inventory barriers and Docker qualification fail-closed rules; the real journey covers killed workers, orphaned leases, replay and cancellation.",
+    "provider_scope": "The real Docker run used PostgreSQL 16.4, the repository Floci S3 profile and Azurite Blob profile. It does not certify external object storage, Kubernetes/Helm, multi-node HA or a supported-platform matrix.",
+    "scans": {
+      "gitleaks": "8.30.1; final clean exact-candidate directory scan of 15,944,849 bytes; 0 findings",
+      "pip_audit": "pip-audit 2.10.1; requirements-test.lock; no known vulnerabilities",
+      "trivy": "SKIP; no local Trivy binary; no substitute scan claimed"
+    }
+  },
+  "open_cells": [
+    "P14 remains in_progress, not qualified: D36 proves the local Compose/worker/appliance path but not upgrade/rollback, restart/Helm, external object-store recovery, supported platforms or production operation.",
+    "The exact candidate browser lane is SKIP because the archive lacks @playwright/test; Node syntax is not browser qualification.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary; P12 remains in_progress and all other families retain their recorded states.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The strict Docker acceptance was run from the clean Git checkout at the exact candidate SHA because the runner requires Git metadata; its source identity, image digest and evidence path are recorded explicitly. The archive sandbox separately passed its static and P14 contract selections.",
+    "The exact candidate archive has no @playwright/test, so browser execution is SKIP and is not counted as PASS.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

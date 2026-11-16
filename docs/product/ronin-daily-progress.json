@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "74fc6cabc1718703f89ba57d83058372542e8b77",
+    "base_sha": "baa18fdbb9c4f149599349e7a47a6df686757912",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -44,9 +44,9 @@
     "families_qualified": 1,
     "families_total": 13,
     "families_percent": 7.69,
-    "days_passed": 35,
+    "days_passed": 36,
     "days_total": 39,
-    "days_percent": 89.74,
+    "days_percent": 92.31,
     "release_gates_passed": 0,
     "release_gates_total": 10,
     "release_gates_percent": 0.0,
@@ -156,9 +156,9 @@
       "id": "P14",
       "name": "Deployment and operations",
       "observed_implementation": "partial",
-      "qualification": "not_started",
-      "receipt": null,
-      "candidate_sha": null
+      "qualification": "in_progress",
+      "receipt": "docs/qualification/candidates/candidate-baa18fdb-d36.json",
+      "candidate_sha": "baa18fdbb9c4f149599349e7a47a6df686757912"
     }
   ],
   "release_gates": [
@@ -260,7 +260,7 @@
     {"id": "D33", "date": "2026-12-17", "phase": "p12-observability", "status": "pass", "families": ["P12"], "evidence": "docs/qualification/handoffs/2026-11-16-D33.md", "commit_sha": "1127fe0d33c2a012118880467f3578b80571b588"},
     {"id": "D34", "date": "2026-12-18", "phase": "p12-finops", "status": "pass", "families": ["P12"], "evidence": "docs/qualification/handoffs/2026-11-16-D34.md", "commit_sha": "4bc15b20732c15e99e8b27d1bc3235cd1ce96da5"},
     {"id": "D35", "date": "2026-12-19", "phase": "p12-journey-close", "status": "pass", "families": ["P12"], "evidence": "docs/qualification/handoffs/2026-11-16-D35.md", "commit_sha": "74fc6cabc1718703f89ba57d83058372542e8b77"},
-    {"id": "D36", "date": "2026-12-20", "phase": "p14-install-migrate", "status": "pending", "families": ["P14"], "evidence": null, "commit_sha": null},
+    {"id": "D36", "date": "2026-12-20", "phase": "p14-install-migrate", "status": "pass", "families": ["P14"], "evidence": "docs/qualification/handoffs/2026-11-16-D36.md", "commit_sha": "baa18fdbb9c4f149599349e7a47a6df686757912"},
     {"id": "D37", "date": "2026-12-21", "phase": "p14-recovery-close", "status": "pending", "families": ["P14"], "evidence": null, "commit_sha": null},
     {"id": "D38", "date": "2026-12-22", "phase": "final-candidate", "status": "pending", "families": ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P10", "P11", "P12", "P13", "P14"], "evidence": null, "commit_sha": null}
   ],
@@ -268,7 +268,7 @@
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "Current receipts and official ledger do not all bind to the current HEAD."
+      "summary": "Current receipts and official ledger do not all bind to the current HEAD; D36 is bound to the exact source SHA baa18fdbb9c4f149599349e7a47a6df686757912, while the final release dossier is still open."
     },
     {
       "id": "provider-certification",
