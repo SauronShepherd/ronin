@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from collections.abc import Mapping
 from importlib import import_module
 from typing import Any
@@ -130,54 +131,72 @@ class KafkaJsonSource:
             list_topics = getattr(consumer, "list_topics", None)
             if callable(list_topics):
                 list_topics(timeout=max(float(timeout_seconds), 0.1))
-            messages = consumer.consume(num_messages=limit, timeout=timeout_seconds)
             records: list[StreamRecord] = []
             batch_bytes = 0
             latest = {item.partition: item.offset for item in checkpoint.positions}
-            for message in messages:
-                error = message.error()
-                if error is not None:
-                    if error.code() == partition_eof:
-                        continue
-                    raise RuntimeError(f"Kafka consume error: {error}")
-                raw = message.value()
-                if raw is None:
-                    raise KafkaInputRejected(
-                        "Kafka JSON source does not accept null message values"
-                    )
-                raw_bytes = raw if isinstance(raw, bytes) else str(raw).encode("utf-8")
-                if len(raw_bytes) > MAX_KAFKA_RECORD_BYTES:
-                    raise KafkaInputRejected("Kafka JSON message exceeds the 1 MiB record limit")
-                batch_bytes += len(raw_bytes)
-                if batch_bytes > MAX_KAFKA_BATCH_BYTES:
-                    raise KafkaInputRejected("Kafka JSON micro-batch exceeds the 8 MiB byte limit")
-                try:
-                    value = json.loads(raw_bytes.decode("utf-8"))
-                except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-                    raise KafkaInputRejected("Kafka message value is not valid UTF-8 JSON") from exc
-                if not isinstance(value, dict):
-                    raise KafkaInputRejected("Kafka JSON source requires object message values")
-                key_raw = message.key()
-                if key_raw is None:
-                    key = None
-                elif isinstance(key_raw, bytes):
-                    try:
-                        key = key_raw.decode("utf-8")
-                    except UnicodeDecodeError as exc:
-                        raise KafkaInputRejected(
-                            "Kafka message key must be UTF-8 when present"
-                        ) from exc
-                else:
-                    key = str(key_raw)
-                timestamp_type, timestamp_value = message.timestamp()
-                del timestamp_type
-                timestamp_ms = (
-                    None if timestamp_value is None or timestamp_value < 0 else int(timestamp_value)
+            deadline = time.monotonic() + timeout_seconds
+            first_poll = True
+            while len(records) < limit:
+                remaining = timeout_seconds if first_poll else max(0.0, deadline - time.monotonic())
+                first_poll = False
+                messages = consumer.consume(
+                    num_messages=limit - len(records),
+                    timeout=remaining,
                 )
-                partition = int(message.partition())
-                offset = int(message.offset())
-                records.append(StreamRecord(partition, offset, timestamp_ms, key, value))
-                latest[partition] = max(latest.get(partition, -1), offset)
+                for message in messages:
+                    error = message.error()
+                    if error is not None:
+                        if error.code() == partition_eof:
+                            continue
+                        raise RuntimeError(f"Kafka consume error: {error}")
+                    raw = message.value()
+                    if raw is None:
+                        raise KafkaInputRejected(
+                            "Kafka JSON source does not accept null message values"
+                        )
+                    raw_bytes = raw if isinstance(raw, bytes) else str(raw).encode("utf-8")
+                    if len(raw_bytes) > MAX_KAFKA_RECORD_BYTES:
+                        raise KafkaInputRejected(
+                            "Kafka JSON message exceeds the 1 MiB record limit"
+                        )
+                    batch_bytes += len(raw_bytes)
+                    if batch_bytes > MAX_KAFKA_BATCH_BYTES:
+                        raise KafkaInputRejected(
+                            "Kafka JSON micro-batch exceeds the 8 MiB byte limit"
+                        )
+                    try:
+                        value = json.loads(raw_bytes.decode("utf-8"))
+                    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                        raise KafkaInputRejected(
+                            "Kafka message value is not valid UTF-8 JSON"
+                        ) from exc
+                    if not isinstance(value, dict):
+                        raise KafkaInputRejected("Kafka JSON source requires object message values")
+                    key_raw = message.key()
+                    if key_raw is None:
+                        key = None
+                    elif isinstance(key_raw, bytes):
+                        try:
+                            key = key_raw.decode("utf-8")
+                        except UnicodeDecodeError as exc:
+                            raise KafkaInputRejected(
+                                "Kafka message key must be UTF-8 when present"
+                            ) from exc
+                    else:
+                        key = str(key_raw)
+                    timestamp_type, timestamp_value = message.timestamp()
+                    del timestamp_type
+                    timestamp_ms = (
+                        None
+                        if timestamp_value is None or timestamp_value < 0
+                        else int(timestamp_value)
+                    )
+                    partition = int(message.partition())
+                    offset = int(message.offset())
+                    records.append(StreamRecord(partition, offset, timestamp_ms, key, value))
+                    latest[partition] = max(latest.get(partition, -1), offset)
+                if time.monotonic() >= deadline:
+                    break
             if not records:
                 return StreamBatch((), checkpoint)
             next_checkpoint = StreamCheckpoint(

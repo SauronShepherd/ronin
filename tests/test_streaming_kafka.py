@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 
 import pytest
-from studio_streaming import StreamCheckpoint
+from studio_streaming import StreamCheckpoint, StreamPosition
 from studio_streaming import kafka as kafka_adapter
 from studio_streaming.kafka import (
     MAX_KAFKA_BATCH_BYTES,
@@ -22,9 +22,10 @@ class _TopicPartition:
 
 
 class _Message:
-    def __init__(self, value: bytes, offset: int) -> None:
+    def __init__(self, value: bytes, offset: int, partition: int = 0) -> None:
         self._value = value
         self._offset = offset
+        self._partition = partition
 
     def error(self):
         return None
@@ -39,7 +40,7 @@ class _Message:
         return (0, 1_700_000_000_000)
 
     def partition(self):
-        return 0
+        return self._partition
 
     def offset(self):
         return self._offset
@@ -51,14 +52,19 @@ class _Consumer:
         self.config = None
         self.assignments = None
         self.consume_args = None
+        self.consume_calls = []
         self.closed = False
 
     def assign(self, assignments) -> None:
         self.assignments = assignments
 
     def consume(self, *, num_messages: int, timeout: float):
-        self.consume_args = (num_messages, timeout)
-        return self.messages
+        call = (num_messages, timeout)
+        self.consume_calls.append(call)
+        if self.consume_args is None:
+            self.consume_args = call
+        messages, self.messages = self.messages[:num_messages], self.messages[num_messages:]
+        return messages
 
     def close(self) -> None:
         self.closed = True
@@ -138,6 +144,59 @@ def test_kafka_source_surfaces_broker_metadata_failure_before_idle_result(
 
     with pytest.raises(RuntimeError, match="broker unavailable"):
         source.poll(StreamCheckpoint(), limit=1, timeout_seconds=0.0)
+    assert consumer.closed
+
+
+def test_kafka_source_retries_a_transient_empty_poll_for_a_later_partition(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _TransientEmptyConsumer(_Consumer):
+        def __init__(self) -> None:
+            super().__init__([])
+            self.responses = [
+                [],
+                [
+                    _Message(b'{"event":"partition-1-a"}', 0, partition=1),
+                    _Message(b'{"event":"partition-1-b"}', 1, partition=1),
+                ],
+            ]
+
+        def consume(self, *, num_messages: int, timeout: float):
+            call = (num_messages, timeout)
+            self.consume_calls.append(call)
+            if self.consume_args is None:
+                self.consume_args = call
+            response, self.responses = self.responses[0], self.responses[1:]
+            return response[:num_messages]
+
+    consumer = _TransientEmptyConsumer()
+
+    def consumer_type(settings):
+        return _capture_config(consumer, settings)
+
+    fake_kafka = SimpleNamespace(
+        Consumer=consumer_type,
+        TopicPartition=_TopicPartition,
+        KafkaError=SimpleNamespace(_PARTITION_EOF=-191),
+        OFFSET_BEGINNING=-2,
+    )
+    monkeypatch.setattr(kafka_adapter, "import_module", lambda _name: fake_kafka)
+    source = KafkaJsonSource(
+        bootstrap_servers="localhost:9092",
+        topic="events",
+        partitions=(0, 1),
+    )
+
+    batch = source.poll(
+        StreamCheckpoint((StreamPosition(0, 31),)),
+        limit=2,
+        timeout_seconds=0.1,
+    )
+
+    assert [record.partition for record in batch.records] == [1, 1]
+    assert batch.checkpoint.offset_for(0) == 31
+    assert batch.checkpoint.offset_for(1) == 1
+    assert len(consumer.consume_calls) == 2
     assert consumer.closed
 
 
