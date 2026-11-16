@@ -2,13 +2,13 @@
 
 ## Current exact-SHA snapshot — 16 November 2026
 
-The current code/evidence candidate is `4bc15b20732c15e99e8b27d1bc3235cd1ce96da5`.
-D34 preserves D33's slotted-dataclass FinOps serializer while restoring the
-legacy `__dict__` normalization contract. The exact candidate passes 86 focused
-compatibility/P12 tests and a real OTLP Collector lane passes 1/1 for traces,
-metrics and logs with cleanup. D33's local HTTP/PyRonin/CLI usage, exact
-Decimal cost/budget, scoped alert and restart evidence remains bound to its
-prior code SHA. Candidate browser execution is **SKIP** because
+The current code/evidence candidate is `74fc6cabc1718703f89ba57d83058372542e8b77`.
+D35 adds authenticated CLI parity for usage, costs and budgets while retaining
+D34's slotted-dataclass and legacy `__dict__` FinOps payload compatibility. The
+exact candidate passes 222 focused compatibility/P12 tests, the local
+FinOps/quality and HTTP journeys pass 3/3, the isolated PyRonin alert/FinOps
+selection passes 3/3, and a real OTLP Collector lane passes 1/1 for traces,
+metrics and logs with cleanup. Candidate browser execution is **SKIP** because
 `@playwright/test` is not packaged. P12 remains partial/in progress because
 external notification providers, PostgreSQL-backed telemetry/FinOps, broader
 service adoption and production qualification remain open.
@@ -133,7 +133,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `4bc15b20732c15e99e8b27d1bc3235cd1ce96da5` (current exact candidate; implementation evidence remains bound to the stated product candidate, this is not a release qualification claim, and the required human/provider gates remain open).
+**Observed source baseline:** `74fc6cabc1718703f89ba57d83058372542e8b77` (current exact candidate; implementation evidence remains bound to the stated product candidate, this is not a release qualification claim, and the required human/provider gates remain open).
 
 The D21 scheduler slice adds exact-candidate evidence for the bounded local
 API/SQLite/daemon journey and fail-closed identity input boundaries at
@@ -281,7 +281,7 @@ isolated green tests do not close a family.
 | P9 GenAI, RAG and in-product agents | Out of scope | N/A | N/A | No Ronin tier ships model/provider invocation, RAG, or agent execution. Coding-agent skills are consumed by external agents and remain separate from Ronin's runtime, API, and Studio. | None. | Not applicable. |
 | P10 Semantic models and dashboards | Partial | Partial | No | Export/import and production qualification remain incomplete; broader planning is bounded. | DuckDB/SQL engine for execution; browser runtime for Studio. | Local SQLite/DuckDB; Compose reference profile. |
 | P11 Streaming and real time | Partial | Partial | No | Definition, health, bounded run-once, Bundle export/plan/import, oversized-record rejection/recovery, and the D32 two-partition drain have current local contract evidence (**34 focused tests**) plus a real Redpanda lane (**1/1**); 12 records drain with lag **6/6 → 0/0**, and checkpoint partition expansion is covered. Broader continuous operation, backpressure/failure recovery, provider breadth and exact-candidate full-family qualification remain open. | Kafka broker/client runtime. | Local bounded polling tests; digest-pinned Redpanda profile and Compose. |
-| P12 Observability, alerts and FinOps | Partial | Partial | No | D34 preserves the D33 slotted FinOps HTTP fix and restores the legacy payload contract; the exact candidate records 86 compatibility/P12 tests and a real digest-pinned OTLP Collector lane (1/1, no skips/failures, cleanup). D33 separately proves local SQLite/HTTP/PyRonin/CLI usage, exact Decimal cost/budget payloads, workspace-scoped alert evaluation/acknowledgement and restart persistence. External Prometheus deployment, SMTP/HTTPS notification providers, PostgreSQL telemetry/FinOps, public allocation/forecast/policy routes, broader service adoption, candidate browser packaging and production qualification remain incomplete. | Prometheus scrape target; SMTP/HTTPS notification endpoint; PostgreSQL for provider-backed durability. | Local SQLite; Compose reference profile. |
+| P12 Observability, alerts and FinOps | Partial | Partial | No | D35 adds authenticated CLI parity for usage, costs and budgets; the exact candidate records 222 compatibility/P12 tests, 3/3 local-composed/HTTP journeys, 3/3 isolated PyRonin alert/FinOps SDK tests and a real digest-pinned OTLP Collector lane (1/1, no skips/failures, cleanup). D34's slotted-record and legacy payload compatibility remains covered. External Prometheus deployment, SMTP/HTTPS notification providers, PostgreSQL telemetry/FinOps, public allocation/forecast/policy routes, broader service adoption, candidate browser packaging and production qualification remain incomplete. | Prometheus scrape target; SMTP/HTTPS notification endpoint; PostgreSQL for provider-backed durability. | Local SQLite; Compose reference profile. |
 | P13 Security and audit (single-operator) | Partial | Partial | No | Exact candidate C2 adds digest/denormalized-column verification for SQLite and PostgreSQL, a bounded authorized audit route, real PostgreSQL/Docker recovery evidence, and clean-candidate Gitleaks, pip-audit and Trivy scans. External secret-provider qualification and release evidence remain incomplete. OIDC, user/group administration and multi-user authorization belong to Ronin Pro. | Local bearer/auth profile; external secret backend for Ronin Pro. | Local single-operator; single-host Compose/PostgreSQL reference. |
 | P14 Deployment and operations | Partial | Partial | No | A combined local PostgreSQL + `/var/lib/ronin` appliance bundle has a current isolated Compose round-trip diagnostic (database rows, artifacts and execution evidence restored) and pre-destructive checksum/inventory validation. Current Docker/Helm qualification receipts also cover readiness, upgrade/rollback and recovery paths. Clean-candidate evidence, supported-platform coverage, external object-store recovery and full release aggregation remain incomplete. Multi-user HA and Kubernetes server profiles belong to Ronin Pro. | Docker; PostgreSQL; local artifacts; external S3 backup is separate. | Local and single-host Docker Compose. |
 

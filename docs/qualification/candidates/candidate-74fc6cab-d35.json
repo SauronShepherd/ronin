@@ -1,0 +1,102 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D35",
+  "status": "pass",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-12-19",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "74fc6cabc1718703f89ba57d83058372542e8b77",
+    "origin_main_sha_when_candidate_was_tested": "74fc6cabc1718703f89ba57d83058372542e8b77",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-74fc6cab-d35",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-74fc6cab-d35\\candidate-74fc6cabc1718703f89ba57d83058372542e8b77.tar",
+      "format": "tar",
+      "sha256": "89caedf7e7ea6e375172f23122a79e9fd29667cc336613e1d4a60457742dbe41",
+      "size": 17131520
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-74fc6cab-d35\\candidate-74fc6cabc1718703f89ba57d83058372542e8b77.manifest.json",
+      "sha256": "ad966fb1f09f4d4fb396ef120b282b2162a68d618ed8642af10d1b19fe9bc60f",
+      "size": 226267
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-74fc6cab-d35\\candidate-74fc6cabc1718703f89ba57d83058372542e8b77.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-74fc6cab-d35\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1469,
+    "total_bytes": 15926297,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "74fc6cabc1718703f89ba57d83058372542e8b77",
+    "candidate_docs_commit": null,
+    "summary": "D35 adds the missing authenticated CLI parity for the existing FinOps usage, costs and budgets routes. ControlPlaneClient validates workspace and period scope, the CLI emits JSON or bounded tabular output, and real local HTTP tests cover CLI, SDK, alert scope and restart recovery without provider mocks.",
+    "production_files_changed": [
+      "python/studio_cli/__init__.py",
+      "python/studio_cli/network.py"
+    ],
+    "test_files_changed": [
+      "tests/test_cli.py",
+      "tests/test_local_composed.py",
+      "tests/test_transport_policy.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 74fc6cabc1718703f89ba57d83058372542e8b77 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-74fc6cab-d35",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-74fc6cab-d35",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after tests; the same source SHA regenerated identical archive and manifest hashes; final verify from the checkout passed",
+    "candidate_p12_and_compatibility": "exact candidate sandbox pytest selection: 222 passed, 0 failed, 0 skipped across CLI/transport, control-plane serialization, FinOps allocation/forecast, durable observability, anomaly, instrumentation, alert state, Prometheus, OTLP, notification, local plugin, quality-observability, data-engineering plugin and PyRonin client selections",
+    "candidate_journey": "exact candidate sandbox local-composed FinOps/alert/CLI/restart journey, durable quality journey and real HTTP integration: 3 passed, 0 failed, 0 skipped",
+    "candidate_sdk": "exact candidate sandbox isolated PyRonin alert/FinOps selection: 3 passed, 0 failed, 0 skipped",
+    "candidate_http_integration": "exact candidate sandbox real local HTTP JSON control-plane pagination selection: 1 passed, 0 failed, 0 skipped",
+    "real_provider": "clean checkout at the same source SHA, tools/run_otlp_qualification.ps1 with digest-pinned Collector: 1 passed, 0 skipped, 0 failed; cleanup succeeded",
+    "candidate_static": "exact candidate sandbox Ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio surface, web audit, budget, assets, daily progress and JavaScript syntax all passed; public status and git diff require checkout Git metadata",
+    "scans": "final clean candidate Gitleaks dir scan found 0 leaks over 15,926,297 bytes and pip-audit reported no known vulnerabilities in requirements-test.lock; Trivy skipped because no local binary was available"
+  },
+  "qualification_matrix": {
+    "candidate_p12_and_compatibility": "222 passed, 0 failed, 0 skipped; includes the new FinOps CLI forwarding/validation tests and existing P12/compatibility contracts",
+    "candidate_journey": "3 passed, 0 failed, 0 skipped; exact slotted usage/cost/budget records are visible through SDK and CLI, alert state remains workspace-scoped and durable after restart, and the quality journey remains durable",
+    "candidate_sdk": "3 passed, 0 failed, 0 skipped for PyRonin alert and FinOps SDK parity",
+    "candidate_http_integration": "1 passed, 0 failed, 0 skipped for the selected authenticated local HTTP JSON service",
+    "real_provider": "1 passed, 0 skipped, 0 failed against real OpenTelemetry Collector Contrib image otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621; traces, metrics and logs accepted over OTLP/HTTP; cleanup succeeded",
+    "candidate_web": "SKIP for browser execution; the exact candidate archive does not package @playwright/test. Node syntax checks passed for web and web-tests; no browser PASS is claimed",
+    "candidate_static": "Ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI digest 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 129/242, web audit 72 files/184 route invocations, web budget, 53 assets, daily progress and Node syntax passed",
+    "ledger_checks": "Daily progress passed in the exact archive; public status and git diff are checkout-only because the candidate sandbox intentionally has no .git metadata",
+    "candidate_reproducibility_after_cleanup": "pass; cleanup/regeneration produced the same archive SHA 89caedf7e7ea6e375172f23122a79e9fd29667cc336613e1d4a60457742dbe41 and manifest SHA ad966fb1f09f4d4fb396ef120b282b2162a68d618ed8642af10d1b19fe9bc60f; final verify passed",
+    "checkout_integrity_checks": "main/origin identity and git diff --check are checked separately on the checkout",
+    "result": "D35 pass for the FinOps CLI parity and exact-source OTLP provider cell; P12 remains in_progress and unqualified"
+  },
+  "security_and_recovery": {
+    "journey": "The candidate uses the authenticated control-plane client, rejects blank/untrimmed workspace and period values, preserves exact Decimal payloads, scopes alerts by workspace and recovers FinOps/alert/quality state after SQLite restart.",
+    "negative_paths": "Blank/untrimmed FinOps scope and periods are rejected before transport; existing malformed cursor/serializer values, mixed-currency allocation, invalid forecast/budget inputs, legacy private-field exclusion and provider zero-skip assertions remain covered.",
+    "provider_scope": "The real OTLP/HTTP Collector Contrib service was started from the pinned digest at the same clean source SHA and removed successfully. External Prometheus deployment, SMTP endpoint, HTTPS webhook, PostgreSQL FinOps/telemetry backend and production notification delivery remain untested.",
+    "scans": {
+      "gitleaks": "8.30.1; final clean exact-candidate directory scan of 15,926,297 bytes; 0 findings",
+      "pip_audit": "pip-audit 2.10.1; requirements-test.lock; no known vulnerabilities",
+      "trivy": "SKIP; no local Trivy binary; no substitute scan claimed"
+    }
+  },
+  "open_cells": [
+    "P12 remains in_progress, not qualified: real OTLP Collector acceptance and CLI parity do not certify external notification delivery, deployed Prometheus, PostgreSQL-backed telemetry/FinOps, broad service adoption, full browser candidate packaging or production operation.",
+    "The exact candidate browser lane is SKIP because the archive lacks @playwright/test; Node syntax is not browser qualification.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary; P10 and P11 retain their in_progress ledger states and all other families retain their recorded states.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The CLI adds listing parity only; allocation, forecast and budget evaluation remain service-level contracts rather than new public routes.",
+    "The exact candidate sandbox has no .git metadata by design; public status and git diff verification are checkout-only and are not converted into candidate PASS results.",
+    "An intermediate verify invocation from inside the sandbox correctly detected two Python cache files created by that invocation; the sandbox was cleaned and regenerated, and the final checkout-side verify passed with the manifest restored.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

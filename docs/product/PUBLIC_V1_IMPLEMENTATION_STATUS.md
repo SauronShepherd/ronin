@@ -7,13 +7,14 @@
 
 ## Current exact-SHA qualification — 16 November 2026
 
-The current exact-head candidate is `4bc15b20732c15e99e8b27d1bc3235cd1ce96da5`.
-D34 preserves the control-plane FinOps serializer for slotted dataclasses and
-restores the legacy `__dict__` normalization contract. The exact candidate
-passes `86` compatibility/P12 tests; the same clean source SHA starts a real
-digest-pinned OTLP Collector and passes `1/1` traces/metrics/logs with cleanup.
-D33's local-composed HTTP/PyRonin/CLI usage, exact Decimal cost/budget,
-workspace-scoped alert and restart journey remains bound to its prior SHA.
+The current exact-head candidate is `74fc6cabc1718703f89ba57d83058372542e8b77`.
+D35 adds authenticated CLI parity for FinOps usage, costs and budgets over the
+existing control-plane routes. The exact candidate passes `222` focused
+compatibility/P12 tests; its local-composed FinOps/quality and real HTTP
+journeys pass `3/3`, the isolated PyRonin alert/FinOps selection passes `3/3`,
+and the same clean source SHA starts a real digest-pinned OTLP Collector and
+passes `1/1` traces/metrics/logs with cleanup. D34's slotted-record and legacy
+payload compatibility fix remains covered by the regression.
 Ruff, mypy, architecture/negative gates, route/dependency surfaces, OpenAPI,
 Studio, web audit/budget, assets and daily progress pass. Gitleaks reports zero
 findings and pip-audit reports no known vulnerabilities. The exact candidate
@@ -96,7 +97,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `4bc15b20732c15e99e8b27d1bc3235cd1ce96da5` (2026-11-16).
+**Observed source head:** `74fc6cabc1718703f89ba57d83058372542e8b77` (2026-11-16).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

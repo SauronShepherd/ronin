@@ -1,0 +1,62 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D35",
+  "date": "2026-11-16",
+  "status": "pass",
+  "cell": "P12 FinOps CLI parity, local operator journey and real OTLP provider",
+  "candidate_sha": "74fc6cabc1718703f89ba57d83058372542e8b77",
+  "candidate_receipt": "docs/qualification/candidates/candidate-74fc6cab-d35.json",
+  "code_commit": "74fc6cabc1718703f89ba57d83058372542e8b77",
+  "origin_main_at_code_commit": "74fc6cabc1718703f89ba57d83058372542e8b77",
+  "implementation": {
+    "gap": "The public FinOps routes and PyRonin SDK already listed usage, costs and budgets, but the authenticated CLI client had no matching network methods or operator commands.",
+    "fix": "Add ControlPlaneClient FinOps list methods with trimmed scope/period validation, add finops usage/costs/budgets CLI commands with JSON output, and bind the commands to real local HTTP composition tests.",
+    "journey": "Candidate exercises exact usage/cost/budget serialization through SDK and CLI, alert scope and acknowledgement, durable quality state and SQLite restart recovery; the same source SHA is also exercised against a real digest-pinned OTLP Collector."
+  },
+  "tests": {
+    "candidate_p12_and_compatibility": "222 passed, 0 failed, 0 skipped",
+    "candidate_journey": "3 passed, 0 failed, 0 skipped",
+    "candidate_sdk": "3 passed, 0 failed, 0 skipped",
+    "real_provider": "1 passed, 0 failed, 0 skipped against pinned OpenTelemetry Collector Contrib; cleanup succeeded",
+    "candidate_browser": "SKIP; @playwright/test is not packaged in the exact candidate archive; Node syntax checks passed",
+    "static_and_surface_checks": "Ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio 129/242, web audit 72 files/184 route invocations, web budget, 53 assets, daily progress and Node syntax pass",
+    "checkout_only_checks": "Public status and git diff are validated on the Git checkout because the candidate sandbox has no .git metadata",
+    "scans": "Gitleaks 0 findings over 15,926,297 bytes; pip-audit no known vulnerabilities; Trivy SKIP because no local binary"
+  },
+  "provider": {
+    "receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p12-d35-otlp-74fc-20261116\\qualification.json",
+    "image": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621",
+    "tests": "1 passed, 0 failed, 0 skipped; traces, metrics and logs accepted over OTLP/HTTP; cleanup_status=succeeded"
+  },
+  "candidate": {
+    "archive_sha256": "89caedf7e7ea6e375172f23122a79e9fd29667cc336613e1d4a60457742dbe41",
+    "archive_size": 17131520,
+    "manifest_sha256": "ad966fb1f09f4d4fb396ef120b282b2162a68d618ed8642af10d1b19fe9bc60f",
+    "manifest_size": 226267,
+    "digest_size": 252,
+    "file_count": 1469,
+    "total_bytes": 15926297,
+    "cleanup_regenerate_verify": "PASS; archive and manifest hashes were identical after cleanup/regeneration and final verify passed"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "34/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P12": "in_progress"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "35/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P12": "in_progress"
+    }
+  },
+  "limitations": [
+    "CLI parity does not close P12: external SMTP/HTTPS notification delivery, deployed Prometheus, PostgreSQL-backed telemetry/FinOps, broad service adoption, browser packaging and production operation remain open.",
+    "P13 remains blocked by external secret-provider and release evidence; no family or release gate status changed.",
+    "A skipped provider, browser or unavailable Trivy binary is not counted as PASS."
+  ]
+}
