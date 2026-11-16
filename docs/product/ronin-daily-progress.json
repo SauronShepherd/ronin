@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "da2ea631b93431d4463aa1a71dcb0c2a3add9426",
+    "base_sha": "f8a53f1a730ead06c12e7fa854e86e4f28dee323",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -133,8 +133,8 @@
       "name": "Real-time and streaming",
       "observed_implementation": "partial",
       "qualification": "in_progress",
-      "receipt": "docs/qualification/candidates/candidate-da2ea631-d38.json",
-      "candidate_sha": "da2ea631b93431d4463aa1a71dcb0c2a3add9426"
+      "receipt": "docs/qualification/candidates/candidate-f8a53f1a-d39.json",
+      "candidate_sha": "f8a53f1a730ead06c12e7fa854e86f4e28dee323"
     },
     {
       "id": "P12",
@@ -264,11 +264,23 @@
     {"id": "D37", "date": "2026-12-21", "phase": "p14-recovery-close", "status": "pass", "families": ["P14"], "evidence": "docs/qualification/handoffs/2026-11-16-D37.md", "commit_sha": "2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89"},
     {"id": "D38", "date": "2026-12-22", "phase": "final-candidate", "status": "in_progress", "families": ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P10", "P11", "P12", "P13", "P14"], "evidence": "docs/qualification/handoffs/2026-11-16-D38.md", "commit_sha": "da2ea631b93431d4463aa1a71dcb0c2a3add9426"}
   ],
+  "follow_up_campaigns": [
+    {
+      "id": "D39",
+      "date": "2026-11-16",
+      "phase": "p11-full-live-diagnostic",
+      "status": "in_progress",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-16-D39.md",
+      "candidate_sha": "f8a53f1a730ead06c12e7fa854e86e4f28dee323",
+      "commit_sha": "f8a53f1a730ead06c12e7fa854e86e4f28dee323"
+    }
+  ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D38 technical receipts are bound to da2ea631b93431d4463aa1a71dcb0c2a3add9426; the final release dossier, human decisions, the eight candidate-suite Git-metadata failures and aggregate approval are still open."
+      "summary": "D39 is the current exact documentation candidate f8a53f1a730ead06c12e7fa854e86e4f28dee323; D38 product-code scans and the eight candidate-suite Git-metadata failures remain recorded, while the final release dossier, human decisions and aggregate approval are still open."
     },
     {
       "id": "provider-certification",

@@ -1,0 +1,62 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D39",
+  "date": "2026-11-16",
+  "status": "in_progress",
+  "cell": "P11 unfiltered real-service route, API, PostgreSQL, Redpanda and worker campaign",
+  "candidate_sha": "f8a53f1a730ead06c12e7fa854e86e4f28dee323",
+  "candidate_receipt": "docs/qualification/candidates/candidate-f8a53f1a-d39.json",
+  "code_commit": "f8a53f1a730ead06c12e7fa854e86e4f28dee323",
+  "origin_main_at_code_commit": "f8a53f1a730ead06c12e7fa854e86e4f28dee323",
+  "implementation": {
+    "production_change": false,
+    "summary": "D39 adds no production code. It binds the complete finite live campaign to the clean f8a53f1a documentation commit; product code remains the da2ea631 candidate.",
+    "real_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d39-full-20261116"
+  },
+  "tests": {
+    "candidate_streaming": "95 passed, 0 failed, 0 skipped",
+    "candidate_static_and_surface": "Ruff format/check, mypy, architecture, negative gates, route consistency (200 operations), dependency surfaces, OpenAPI, Studio, web audit, budget, assets and Node syntax passed",
+    "full_live": "34 passed, 0 failed, 0 skipped; 25 active routes audited, 24 API-backed and 1 UI-only; 296 API events, 296 correlated, 279 OK and 17 expected WARN outcomes; 0 server/network errors",
+    "artifact_qualification": "92 passed, 0 failed, 0 skipped; wheel c3ed4e9f0c283682c10c4edd69166d244fd5690dbd2a06666846e54c68590b46 and sdist 55abb7d6ab69c76ffafcaffd5a596813abfa30dcf2886481752c3a553ca5b925",
+    "candidate_reproducibility": "PASS; cleanup/regeneration produced archive 8ddf2486203777a7aea9fa42426589356ce9ad1f701d7dc47049d2a6b375c05d and manifest 906bbf2be2594eab5cba9d6fe48da441418dfc5c78005d1d5d90eca34ebedff7 again; verify passed",
+    "full_suite": "NOT_RERUN for this documentation-only candidate; D38 parent product-code candidate recorded 4685 passed, 81 skipped and 8 Git-metadata-bound failures",
+    "security_scans": "NOT_RERUN for D39; D38 product-code scan evidence remains applicable",
+    "license": "INHERITED FAIL/CLOSED from D38, 21 missing human review decisions; not counted as D39 PASS"
+  },
+  "provider": {
+    "services": "Real PostgreSQL, Redpanda/Kafka, Ronin API and Docker worker image were active",
+    "worker_image": "sha256:bc1f21540e83a732e03cec439fc0a7a87f16803104a144b7fe288362ee0f15ec",
+    "scope_limit": "Finite route/API/worker journey only; no sustained supervisor soak, external provider matrix or full P11 qualification claim"
+  },
+  "candidate": {
+    "archive_sha256": "8ddf2486203777a7aea9fa42426589356ce9ad1f701d7dc47049d2a6b375c05d",
+    "archive_size": 17203200,
+    "manifest_sha256": "906bbf2be2594eab5cba9d6fe48da441418dfc5c78005d1d5d90eca34ebedff7",
+    "manifest_size": 227750,
+    "digest_sha256": "ea95d963827fa28c2c9f4ad468f75dcdf119a933f1f0da8c25e76fb07ad19fad",
+    "digest_size": 252,
+    "file_count": 1481,
+    "total_bytes": 16021316,
+    "cleanup_regenerate_verify": "PASS; exact archive and manifest hashes were identical after cleanup/regeneration and final verify passed"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress"
+    }
+  },
+  "limitations": [
+    "D39 strengthens real-service evidence but does not qualify P11: the finite browser/API/worker route journey does not prove sustained operation, backpressure exhaustion, external provider breadth or complete operator evidence.",
+    "D39 did not rerun the full Python suite, image scans or license decisions because it changes only committed qualification documentation; those results remain linked to D38 and are not restated as new PASS.",
+    "P13 remains blocked; P12 and P14 remain in_progress; no family other than the existing P1 is qualified.",
+    "No release gate closes; release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}

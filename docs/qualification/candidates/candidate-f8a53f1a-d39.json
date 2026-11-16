@@ -1,0 +1,96 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D39",
+  "status": "in_progress",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-11-16",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "f8a53f1a730ead06c12e7fa854e86e4f28dee323",
+    "origin_main_sha_when_candidate_was_tested": "f8a53f1a730ead06c12e7fa854e86e4f28dee323",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f8a53f1a-d39",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f8a53f1a-d39\\candidate-f8a53f1a730ead06c12e7fa854e86e4f28dee323.tar",
+      "format": "tar",
+      "sha256": "8ddf2486203777a7aea9fa42426589356ce9ad1f701d7dc47049d2a6b375c05d",
+      "size": 17203200
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f8a53f1a-d39\\candidate-f8a53f1a730ead06c12e7fa854e86e4f28dee323.manifest.json",
+      "sha256": "906bbf2be2594eab5cba9d6fe48da441418dfc5c78005d1d5d90eca34ebedff7",
+      "size": 227750
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f8a53f1a-d39\\candidate-f8a53f1a730ead06c12e7fa854e86e4f28dee323.sha256",
+      "sha256": "ea95d963827fa28c2c9f4ad468f75dcdf119a933f1f0da8c25e76fb07ad19fad",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f8a53f1a-d39\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1481,
+    "total_bytes": 16021316,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "f8a53f1a730ead06c12e7fa854e86e4f28dee323",
+    "candidate_docs_commit": null,
+    "summary": "D39 adds no production code. It binds the unfiltered real PostgreSQL, Redpanda, Ronin API and Docker worker journey to the clean documentation commit after D38; the product code is unchanged from da2ea631.",
+    "production_files_changed": [],
+    "test_files_changed": [],
+    "carried_product_code_commit": "da2ea631b93431d4463aa1a71dcb0c2a3add9426"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha f8a53f1a730ead06c12e7fa854e86e4f28dee323 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f8a53f1a-d39",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f8a53f1a-d39",
+    "cleanup_and_regenerate": "cleanup, regeneration and verify were rerun after candidate-bound tests; archive and manifest hashes remained identical",
+    "candidate_streaming_tests": "95 passed, 0 failed, 0 skipped",
+    "candidate_static": "exact candidate sandbox Ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio, web audit, web budget, assets and Node syntax all passed",
+    "full_live": "clean exact-source runner from f8a53f1a: 34/34 Playwright cases passed, 0 skipped/failed; 25 active routes audited (24 API-backed, 1 UI-only); 296/296 API events correlated, 279 OK and 17 expected WARN outcomes; PostgreSQL, Redpanda, Ronin API and worker image were real; cleanup passed",
+    "artifact_qualification": "92 passed, 0 failed, 0 skipped; isolated wheel/sdist package tests passed",
+    "full_suite": "NOT_RERUN for D39: the only delta from da2ea631 is committed qualification documentation. D38 recorded 4685 passed, 81 skipped and 8 Git-metadata-bound failures on the parent product-code candidate; this is not converted into a D39 PASS",
+    "security_scans": "NOT_RERUN for D39; D38 exact product-code candidate remains the applicable Gitleaks/pip-audit/Trivy evidence"
+  },
+  "qualification_matrix": {
+    "candidate_streaming_tests": "95 passed, 0 failed, 0 skipped",
+    "candidate_static": "PASS for the exact f8a53f1a archive in the stated static scopes",
+    "real_full_live": "PASS for the unfiltered live diagnostic: 34/34 cases, all 25 active routes audited, 296/296 correlated API events, 0 server/network errors and cleanup",
+    "real_services": "PostgreSQL=true, Kafka/Redpanda=true, Ronin API=true, worker image sha256:bc1f21540e83a732e03cec439fc0a7a87f16803104a144b7fe288362ee0f15ec",
+    "live_route_scope": "25 active routes, 24 API-backed and 1 UI-only; route-wide audit=true",
+    "live_expected_negatives": "17 WARN API outcomes cover authorization, validation, conflict and scope-negative paths; 3 ERROR-level 503 workspace responses are the intended unavailable-service checks and were correlated, not hidden",
+    "candidate_reproducibility_after_cleanup": "PASS; archive SHA 8ddf2486203777a7aea9fa42426589356ce9ad1f701d7dc47049d2a6b375c05d and manifest SHA 906bbf2be2594eab5cba9d6fe48da441418dfc5c78005d1d5d90eca34ebedff7 were identical after cleanup/regeneration; final verify passed",
+    "artifact_qualification": "PASS; wheel c3ed4e9f0c283682c10c4edd69166d244fd5690dbd2a06666846e54c68590b46 and sdist 55abb7d6ab69c76ffafcaffd5a596813abfa30dcf2886481752c3a553ca5b925",
+    "security_scans": "INHERITED from D38 product-code candidate only; no new D39 scan is claimed",
+    "license_gate": "INHERITED FAIL/CLOSED from D38; 21 human review decisions remain missing",
+    "result": "D39 strengthens P11 real-service evidence with a complete finite route/API/worker journey, but does not qualify P11, close a release gate or change NO-GO"
+  },
+  "evidence": {
+    "live_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d39-full-20261116",
+    "live_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d39-full-20261116\\qualification-summary.json",
+    "live_summary_sha256": "74de1d31a4aa99a65ecedde8beb351d4abda093b84048dfd54ed00c53bf38619",
+    "live_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d39-full-20261116\\live-api-traffic.json",
+    "live_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d39-full-20261116\\browser-live.xml",
+    "live_server_stderr": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d39-full-20261116\\live-server.stderr.log",
+    "artifact_qualification": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-f8a53f1a-d39",
+    "artifact_qualification_sha256": "d91f75ad23f1c3b78a9c55555f65c8eaa2974020fb4ef7955cc6584e74f6c46a"
+  },
+  "open_cells": [
+    "P11 remains in_progress: the full live run is a finite 34-case route/API/worker journey, not a sustained supervisor/backpressure soak, external-provider matrix or complete operator qualification.",
+    "The archive browser lane remains SKIP when @playwright/test is not packaged; the live runner's external dependency cache is recorded separately and does not alter that archive scope.",
+    "D39 did not rerun the 43-minute full Python suite, image scans or license qualification because it changes only committed documentation; D38's exact product-code results remain explicitly linked rather than copied as new PASS.",
+    "P13 remains blocked by the external secret-provider and release-evidence boundary; P12 and P14 remain in_progress; no family other than the existing P1 is qualified.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The live worker used the D38 runtime image digest sha256:bc1f21540e83a732e03cec439fc0a7a87f16803104a144b7fe288362ee0f15ec; D39 did not rebuild or rescan images because product code was unchanged.",
+    "The 3 ERROR-level HTTP 503 entries are expected unavailable-service negative checks; the summary reports 0 server/network errors and all 296 events correlate to structured logs.",
+    "No hosted workflow, GitHub Actions job, branch or worktree was used."
+  ]
+}
