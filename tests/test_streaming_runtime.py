@@ -87,7 +87,7 @@ def test_runtime_processes_once_and_persists_sink_before_checkpoint(tmp_path: Pa
     assert factory_calls[0]["bootstrap_servers"] == "broker:9092"
 
 
-def test_runtime_supervisor_drains_until_idle_with_one_source_and_durable_receipt(
+def test_runtime_supervisor_drains_until_idle_with_bounded_provider_polls(
     tmp_path: Path,
 ) -> None:
     workspace = "workspace-a"
@@ -100,9 +100,9 @@ def test_runtime_supervisor_drains_until_idle_with_one_source_and_durable_receip
         secret_refs=(),
     )
     source_instances = []
+    source = _Source()
 
     def source_factory(**_kwargs):
-        source = _Source()
         source_instances.append(source)
         return source
 
@@ -121,7 +121,7 @@ def test_runtime_supervisor_drains_until_idle_with_one_source_and_durable_receip
     assert result["batches"] == 1
     assert result["records"] == 1
     assert result["rows"] == 1
-    assert len(source_instances) == 1
+    assert len(source_instances) == 4
 
 
 def test_runtime_supervisor_stops_at_max_batches_without_losing_checkpoint(tmp_path: Path) -> None:
