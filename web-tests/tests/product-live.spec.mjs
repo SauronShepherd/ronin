@@ -1269,6 +1269,72 @@ test('live streaming drains a two-partition backlog in bounded micro-batches', a
   expect(consumedRecords).toBe(64);
 });
 
+test('live streaming supervised drain stops at idle with durable checkpoint progress', async ({ page }) => {
+  test.setTimeout(180_000);
+  test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
+
+  const workspace = process.env.RONIN_LIVE_WORKSPACE;
+  const api = process.env.RONIN_LIVE_API_URL;
+  const token = process.env.RONIN_LIVE_API_TOKEN;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+  const streamId = 'events/supervised';
+  const encodedWorkspace = encodeURIComponent(workspace);
+  const encodedStream = encodeURIComponent(streamId);
+  const streamPath = `/v1/workspaces/${encodedWorkspace}/streams/${encodedStream}`;
+  const runPath = `${streamPath}/run`;
+  const healthPath = `${streamPath}/health`;
+  const definition = {
+    id: streamId,
+    name: 'Live supervised drain qualification',
+    source: {
+      connection_id: 'live-kafka',
+      resource: 'ronin-live-sustained-events',
+      partitions: [0, 1],
+      format: 'json',
+    },
+    sink: { kind: 'table', target_ref: 'live-supervised-events', mode: 'append' },
+    schema: [{ name: 'event', data_type: 'string', nullable: false }],
+    runtime: { profile_id: 'local', batch_limit: 4, timeout_seconds: 1 },
+  };
+
+  const request = async (method, path, data) => page.request.fetch(`${api}${path}`, {
+    method,
+    headers,
+    data: data === undefined ? undefined : JSON.stringify(data),
+  });
+  const saved = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
+  expect(saved.status(), await saved.text()).toBe(200);
+
+  const initialHealth = await request('GET', healthPath);
+  expect(initialHealth.status(), await initialHealth.text()).toBe(200);
+  expect((await initialHealth.json()).total_lag).toBe(64);
+
+  const drain = await request('POST', runPath, {
+    limit: 4,
+    timeout_seconds: 1,
+    max_batches: 20,
+    max_records: 64,
+  });
+  expect(drain.status(), await drain.text()).toBe(200);
+  expect(await drain.json()).toMatchObject({
+    stream_id: streamId,
+    status: 'succeeded',
+    stop_reason: 'idle',
+    records: 64,
+    rows: 64,
+  });
+
+  const finalHealth = await request('GET', healthPath);
+  expect(finalHealth.status(), await finalHealth.text()).toBe(200);
+  expect((await finalHealth.json()).total_lag).toBe(0);
+
+  const invalidCap = await request('POST', runPath, { limit: 4, max_batches: 0 });
+  expect(invalidCap.status(), await invalidCap.text()).toBe(400);
+});
+
 test('live Projects create, export, and reimport a secret-safe Bundle through the UI', async ({ page }) => {
   test.setTimeout(60_000);
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and PostgreSQL fixture.');
