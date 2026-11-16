@@ -1100,6 +1100,94 @@ for (const route of routes) {
   });
 }
 
+test('live streaming broker restart resumes from the durable checkpoint', async ({ page }) => {
+  test.setTimeout(90_000);
+  test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
+
+  const workspace = process.env.RONIN_LIVE_WORKSPACE;
+  const api = process.env.RONIN_LIVE_API_URL;
+  const token = process.env.RONIN_LIVE_API_TOKEN;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+  const streamId = 'events/fault-recovery';
+  const encodedWorkspace = encodeURIComponent(workspace);
+  const encodedStream = encodeURIComponent(streamId);
+  const streamPath = `/v1/workspaces/${encodedWorkspace}/streams/${encodedStream}`;
+  const runPath = `${streamPath}/run`;
+  const healthPath = `${streamPath}/health`;
+  const definition = {
+    id: streamId,
+    name: 'Live broker fault recovery',
+    source: {
+      connection_id: 'live-kafka',
+      resource: 'ronin-live-fault-events',
+      partitions: [0],
+      format: 'json',
+    },
+    sink: { kind: 'table', target_ref: 'live-fault-recovery-events', mode: 'append' },
+    schema: [{ name: 'event', data_type: 'string', nullable: false }],
+    runtime: { profile_id: 'local', batch_limit: 1, timeout_seconds: 1 },
+  };
+
+  const request = async (method, path, data) => page.request.fetch(`${api}${path}`, {
+    method,
+    headers,
+    data: data === undefined ? undefined : JSON.stringify(data),
+  });
+  const saved = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
+  expect(saved.status(), await saved.text()).toBe(200);
+
+  const firstRun = await request('POST', runPath, { limit: 1, timeout_seconds: 1 });
+  expect(firstRun.status(), await firstRun.text()).toBe(200);
+  expect(await firstRun.json()).toMatchObject({ status: 'succeeded', records: 1, rows: 1 });
+
+  const { execFileSync } = await import('node:child_process');
+  const brokerNames = execFileSync(
+    'docker',
+    ['ps', '--filter', 'name=streaming-broker', '--format', '{{.Names}}'],
+    { encoding: 'utf8' },
+  ).trim().split(/\r?\n/).filter(Boolean);
+  expect(brokerNames).toHaveLength(1);
+  const broker = brokerNames[0];
+  const publish = value => execFileSync(
+    'docker',
+    ['exec', '-i', broker, 'rpk', 'topic', 'produce', 'ronin-live-fault-events', '--key', value.key],
+    { input: `${JSON.stringify(value)}\n`, encoding: 'utf8' },
+  );
+  for (let index = 1; index <= 4; index += 1) publish({ key: `fault-${index}`, event: `fault-${index}` });
+
+  execFileSync('docker', ['stop', broker], { encoding: 'utf8', timeout: 20_000 });
+  const failedHealth = await request('GET', healthPath);
+  expect(failedHealth.status(), await failedHealth.text()).toBe(503);
+  const failedRun = await request('POST', runPath, { limit: 1, timeout_seconds: 1 });
+  expect(failedRun.status(), await failedRun.text()).toBe(503);
+
+  execFileSync('docker', ['start', broker], { encoding: 'utf8', timeout: 20_000 });
+  let recoveredHealth;
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    recoveredHealth = await request('GET', healthPath);
+    if (recoveredHealth.status() === 200) break;
+    await page.waitForTimeout(1_000);
+  }
+  expect(recoveredHealth.status(), await recoveredHealth.text()).toBe(200);
+  expect((await recoveredHealth.json()).total_lag).toBe(4);
+
+  let drained = 0;
+  for (let batch = 0; batch < 4; batch += 1) {
+    const resumed = await request('POST', runPath, { limit: 1, timeout_seconds: 1 });
+    expect(resumed.status(), await resumed.text()).toBe(200);
+    const payload = await resumed.json();
+    expect(payload).toMatchObject({ status: 'succeeded', records: 1, rows: 1 });
+    drained += payload.records;
+  }
+  expect(drained).toBe(4);
+  const finalHealth = await request('GET', healthPath);
+  expect(finalHealth.status(), await finalHealth.text()).toBe(200);
+  expect((await finalHealth.json()).total_lag).toBe(0);
+});
+
 test('live Projects create, export, and reimport a secret-safe Bundle through the UI', async ({ page }) => {
   test.setTimeout(60_000);
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and PostgreSQL fixture.');

@@ -41,6 +41,7 @@ def main() -> int:
     oversized_topic = "ronin-live-oversized-events"
     recovery_topic = "ronin-live-recovery-events"
     partitioned_topic = "ronin-live-partitioned-events"
+    fault_topic = "ronin-live-fault-events"
     stream_id = "events/main"
     poison_stream_id = "events/poison"
     oversized_stream_id = "events/oversized"
@@ -54,6 +55,7 @@ def main() -> int:
         (oversized_topic, 1, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
         (recovery_topic, 1, {}),
         (partitioned_topic, 2, {}),
+        (fault_topic, 1, {}),
     ):
         results = admin.create_topics(
             [
@@ -102,6 +104,7 @@ def main() -> int:
             key=f"ronin-live-partitioned-{index}",
             value=json.dumps({"event": f"partitioned-{index}"}),
         )
+    producer.produce(fault_topic, key="ronin-live-fault-0", value=json.dumps({"event": "fault-0"}))
     if producer.flush(15) != 0:
         raise SystemExit("Kafka did not acknowledge the live qualification record")
 
