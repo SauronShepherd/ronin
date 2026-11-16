@@ -1,0 +1,119 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D41",
+  "status": "in_progress",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-11-16",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "f331bb6adae6b7428c43ba53647b39b2f3dc0955",
+    "origin_main_sha_when_candidate_was_tested": "f331bb6adae6b7428c43ba53647b39b2f3dc0955",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f331bb6b-d41",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f331bb6b-d41\\candidate-f331bb6adae6b7428c43ba53647b39b2f3dc0955.tar",
+      "format": "tar",
+      "sha256": "360a39548275585e2c2ffafe79a8014106b2fc842811c332ac35612557bec6b6",
+      "size": 17285120
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f331bb6b-d41\\candidate-f331bb6adae6b7428c43ba53647b39b2f3dc0955.manifest.json",
+      "sha256": "a99f0cfeaaae97da8848e617a44918f6d7bc103f93cf6c162781f5f0a9c6dd56",
+      "size": 229234
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f331bb6b-d41\\candidate-f331bb6adae6b7428c43ba53647b39b2f3dc0955.sha256",
+      "sha256": "559450dcf17e35e0958af5a088c31b9eadd835158cbf9ddd167fd773db6eb24e",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f331bb6b-d41\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1487,
+    "total_bytes": 16066545,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "f331bb6adae6b7428c43ba53647b39b2f3dc0955",
+    "candidate_docs_commit": null,
+    "summary": "D41 adds no production or test code. It binds a full local Docker qualification to the clean documentation candidate after D40; runtime code remains the da2ea631 product candidate and the D40 test commit remains unchanged.",
+    "production_files_changed": [],
+    "test_files_changed": [],
+    "carried_product_code_commit": "da2ea631b93431d4463aa1a71dcb0c2a3add9426",
+    "carried_test_commit": "ebe798021d2d593515ee1766f7bdc22119b72e80"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha f331bb6adae6b7428c43ba53647b39b2f3dc0955 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f331bb6b-d41",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-f331bb6b-d41",
+    "docker_qualification": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:d41-f331bb6-candidate -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d41-docker-f331bb6: 27 passed, 0 skipped, 0 failed; strict v0.1 15/15; cleanup left no ronin-docker containers or networks",
+    "docker_image": "executed image sha256:b726de75bc8a1867e6ad788a570bb61dd1210ae2e7bc1e5ef899c576958360bd",
+    "candidate_relevant_static": "NOT_RERUN for D41 because the delta from the D40 exact source is qualification documentation only; D40 exact candidate static checks remain linked without being copied as a new D41 PASS",
+    "security_scans": "Gitleaks 8.30.1 exact candidate directory scan: 0 findings over 16,066,545 bytes; pip-audit 2.10.1: no known vulnerabilities in 54 dev and 99 test locked dependencies",
+    "trivy": "NOT_RUN for D41 because no local Trivy binary was available; D38 exact product-code candidate remains the applicable Trivy evidence",
+    "artifact_qualification": "NOT_RERUN for D41 because D41 changes only documentation; D40 exact artifact qualification remains linked",
+    "full_suite": {
+      "result": "NOT_RERUN",
+      "summary": "D41 changes only qualification documentation. D38 remains the applicable exact product-code suite record: 4685 passed, 81 skipped and 8 candidate-sandbox Git-metadata-bound failures.",
+      "limitation": "No full Python suite PASS is claimed for D41."
+    },
+    "license_qualification": "INHERITED FAIL/CLOSED from D38; 21 human review decisions remain missing and are not counted as D41 PASS"
+  },
+  "qualification_matrix": {
+    "docker_real_qualification": "PASS for the stated local scope: 27 passed, 0 skipped, 0 failed across the real PostgreSQL/worker, Docker isolation, Floci/S3-compatible, Azurite/Azure Blob, appliance backup/restore and v0.1 journey cases",
+    "strict_v01_acceptance": "PASS; 15 passed, 0 skipped, 0 xfailed, 0 failed, 0 errors, 0 missing, strict_success=true",
+    "real_services": "PostgreSQL=true, Docker worker/runtime=true, Floci/S3-compatible=true, Azurite/Azure Blob=true; no AWS cloud, Azure cloud, Ozone or external secret provider claim",
+    "docker_image": "Ronin image executed as sha256:b726de75bc8a1867e6ad788a570bb61dd1210ae2e7bc1e5ef899c576958360bd",
+    "recovery_and_isolation": "Real cases passed SIGKILL lease reclaim, restart/cancel/idempotency, container isolation and resource caps, PostgreSQL plus local-volume backup/restore, cleanup, and worker execution against PostgreSQL",
+    "resource_observations": "The qualification summary records normal observed usage as available, but cancellation and timeout probes intentionally have unavailable CPU/memory measurements because execution ended before final measurement; timeout_state=failed and cancellation_state=cancelled are recorded. This does not invalidate the strict 15/15 acceptance result, but it limits resource-observation claims.",
+    "security_scans": "Gitleaks PASS with 0 findings; pip-audit PASS with no known vulnerabilities; Trivy NOT_RUN for D41 due unavailable local binary; license remains FAIL/CLOSED with 21 human decisions missing",
+    "candidate_reproducibility_after_cleanup": "PASS; archive SHA 360a39548275585e2c2ffafe79a8014106b2fc842811c332ac35612557bec6b6 and manifest SHA a99f0cfeaaae97da8848e617a44918f6d7bc103f93cf6c162781f5f0a9c6dd56 were verified from the exact f331bb6a source; sandbox had no generated cache artifacts",
+    "candidate_browser": "INHERITED SKIP from D40: @playwright/test is not packaged in the archive; D41 is a Docker campaign and does not convert that lane into PASS",
+    "result": "D41 strengthens candidate-bound local Docker evidence for P2/P13/P14 operational cells, but does not qualify a family, close a release gate or change NO-GO"
+  },
+  "security_and_recovery": {
+    "journey": "The clean candidate built a real Ronin image, started isolated PostgreSQL, Floci and Azurite services, ran the v0.1 e2e journey, exercised a real Docker worker and container limits, reclaimed SIGKILLed attempts, restarted/cancelled/idempotently replayed work, restored PostgreSQL and local data volume state, round-tripped S3-compatible records and ML artifacts, replayed Azure Blob JSONL, and removed all fixtures.",
+    "negative_paths": "The Docker acceptance retained cancellation, timeout, isolation, resource-cap, lease-reclaim and unavailable-measurement outcomes as explicit evidence. No skipped provider or unavailable measurement was converted to PASS.",
+    "provider_scope": "Real local PostgreSQL, Docker worker, Floci S3-compatible and Azurite Azure Blob only. AWS cloud, Azure cloud, Ozone, external secret provider, production credential and full provider matrix remain outside the claim.",
+    "scans": {
+      "gitleaks": "8.30.1; 0 findings over 16,066,545 candidate bytes",
+      "pip_audit": "2.10.1; 54 dev and 99 test locked dependencies; no known vulnerabilities",
+      "trivy": "NOT_RUN for D41; no local Trivy binary",
+      "license": "FAIL/CLOSED; 21 human review decisions missing"
+    }
+  },
+  "evidence": {
+    "docker_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d41-docker-f331bb6",
+    "docker_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d41-docker-f331bb6\\qualification-summary.json",
+    "docker_summary_sha256": "ac3547de58b8c1ce17db80c42d58fdc59ff52317b8e6aecd57418d8a5aa54859",
+    "docker_strict_acceptance": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d41-docker-f331bb6\\v01-acceptance-strict.json",
+    "docker_strict_acceptance_sha256": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c",
+    "docker_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d41-docker-f331bb6\\v01-acceptance.xml",
+    "docker_log": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d41-docker-f331bb6\\docker-qualification.log",
+    "gitleaks": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d41-docker-f331bb6\\gitleaks-candidate-f331bb6b.json",
+    "gitleaks_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "pip_audit_dev": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d41-docker-f331bb6\\pip-audit-dev-f331bb6b.json",
+    "pip_audit_dev_sha256": "81592ecf4c42b61989de048700eb39696df0b046eebbd0396448345afeeaa4a2",
+    "pip_audit_test": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d41-docker-f331bb6\\pip-audit-test-f331bb6b.json",
+    "pip_audit_test_sha256": "d36f41ff615e1c68fac2608ff5c11aa75cca52fa675c48ddbaa52d57a42e41c2"
+  },
+  "open_cells": [
+    "P13 remains blocked by the external secret-provider qualification and release-evidence boundary; no external secret backend or credential was available.",
+    "P2 remains in_progress: D41 covers local PostgreSQL, Floci and Azurite operational paths but does not certify JDBC provenance, cloud/Ozone providers or the complete family journey.",
+    "P14 remains in_progress: local Compose/worker/volume recovery evidence is strengthened, but external object-store recovery, supported-platform coverage and complete operations qualification remain open.",
+    "D41 does not rerun the full Python suite, artifact qualification or Trivy; inherited D38/D40 results remain explicitly linked rather than restated as new PASS.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The Docker qualification summary records unavailable CPU/memory measurements for cancellation and timeout probes because those executions ended before final measurement; no resource value was invented.",
+    "The exact candidate archive browser lane remains SKIP because @playwright/test is not packaged; D41 contains no browser qualification claim.",
+    "Trivy was not run for D41 because the local binary is unavailable; D38's exact product-code Trivy result remains the applicable evidence and is not copied as a D41 PASS.",
+    "License review remains FAIL/CLOSED with 21 human decisions pending; cost evidence is not emitted because local currency cost is unknown.",
+    "No hosted workflow, GitHub Actions job, branch or worktree was used."
+  ]
+}

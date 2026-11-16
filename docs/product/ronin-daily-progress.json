@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "ebe798021d2d593515ee1766f7bdc22119b72e80",
+    "base_sha": "f331bb6adae6b7428c43ba53647b39b2f3dc0955",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -284,13 +284,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-16-D40.md",
       "candidate_sha": "ebe798021d2d593515ee1766f7bdc22119b72e80",
       "commit_sha": "ebe798021d2d593515ee1766f7bdc22119b72e80"
+    },
+    {
+      "id": "D41",
+      "date": "2026-11-16",
+      "phase": "p2-p13-p14-docker-recovery",
+      "status": "in_progress",
+      "families": ["P2", "P13", "P14"],
+      "evidence": "docs/qualification/handoffs/2026-11-16-D41.md",
+      "candidate_sha": "f331bb6adae6b7428c43ba53647b39b2f3dc0955",
+      "commit_sha": "f331bb6adae6b7428c43ba53647b39b2f3dc0955"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D40 is the current exact test/qualification candidate ebe798021d2d593515ee1766f7bdc22119b72e80; D38 product-code scans and the eight candidate-suite Git-metadata failures remain recorded, while the final release dossier, human decisions and aggregate approval are still open."
+      "summary": "D41 is the current exact Docker qualification candidate f331bb6adae6b7428c43ba53647b39b2f3dc0955; D38 product-code scans and the eight candidate-suite Git-metadata failures remain recorded, while the final release dossier, human decisions and aggregate approval are still open."
     },
     {
       "id": "provider-certification",

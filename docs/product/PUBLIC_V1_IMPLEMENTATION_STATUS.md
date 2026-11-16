@@ -7,7 +7,7 @@
 
 ## Current exact-SHA qualification — 16 November 2026
 
-The current exact-head candidate is `ebe798021d2d593515ee1766f7bdc22119b72e80`.
+The current exact-head candidate is `f331bb6adae6b7428c43ba53647b39b2f3dc0955`.
 D38 adds candidate-bound P11 broker-restart recovery and refreshes the probe
 Alpine lock after the preceding image showed 11 MEDIUM findings with available
 fixed versions. The exact candidate sandbox passes `95` streaming/API tests
@@ -40,6 +40,18 @@ broker-restart recovery case. PostgreSQL and the worker are intentionally out
 of this streaming-only campaign; the candidate browser archive remains `SKIP`
 without packaged `@playwright/test`, and D40 does not rerun the full Python
 suite, image scans or license decisions.
+
+D41 records a fresh Docker qualification from exact candidate
+`f331bb6adae6b7428c43ba53647b39b2f3dc0955`: `27/27` tests pass and strict v0.1
+acceptance is `15/15` against real PostgreSQL, Docker worker/runtime,
+Floci/S3-compatible and Azurite/Azure Blob services. The executed image is
+`sha256:b726de75bc8a1867e6ad788a570bb61dd1210ae2e7bc1e5ef899c576958360bd`;
+Gitleaks reports zero findings and pip-audit reports no known vulnerabilities
+for the exact candidate locks. Resource cancellation/timeout final measurements
+were unavailable after harness termination, and Trivy was not installed, so
+neither limitation is represented as a PASS. D41 changes documentation and
+evidence only; it does not close a family or gate. P13 remains blocked by the
+absent authorized external secret provider and release evidence.
 
 This is bounded technical evidence only. Public v1 remains **1/13 families
 qualified, 0/10 gates, NO-GO**: P14 is `in_progress` but external object-store
@@ -116,7 +128,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `ebe798021d2d593515ee1766f7bdc22119b72e80` (2026-11-16).
+**Observed source head:** `f331bb6adae6b7428c43ba53647b39b2f3dc0955` (2026-11-16).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

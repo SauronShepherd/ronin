@@ -1,0 +1,66 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D41",
+  "date": "2026-11-16",
+  "status": "in_progress",
+  "cell": "P2/P13/P14 local Docker qualification and recovery campaign",
+  "candidate_sha": "f331bb6adae6b7428c43ba53647b39b2f3dc0955",
+  "candidate_receipt": "docs/qualification/candidates/candidate-f331bb6b-d41.json",
+  "code_commit": "f331bb6adae6b7428c43ba53647b39b2f3dc0955",
+  "origin_main_at_code_commit": "f331bb6adae6b7428c43ba53647b39b2f3dc0955",
+  "implementation": {
+    "production_change": false,
+    "summary": "D41 adds no production or test code; it binds real local Docker/PostgreSQL/worker/object-emulator qualification to the clean candidate after D40.",
+    "real_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d41-docker-f331bb6"
+  },
+  "tests": {
+    "docker_real_qualification": "27 passed, 0 failed, 0 skipped; PostgreSQL, Docker worker, Floci/S3-compatible, Azurite/Azure Blob, isolation, recovery and cleanup",
+    "strict_v01": "15 passed, 0 skipped, 0 xfailed, 0 failed, 0 errors, 0 missing; strict_success=true",
+    "docker_image": "sha256:b726de75bc8a1867e6ad788a570bb61dd1210ae2e7bc1e5ef899c576958360bd",
+    "gitleaks": "0 findings over 16,066,545 exact-candidate bytes; report SHA 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "pip_audit": "No known vulnerabilities in 54 dev and 99 test locked dependencies; reports SHA 81592ecf4c42b61989de048700eb39696df0b046eebbd0396448345afeeaa4a2 and d36f41ff615e1c68fac2608ff5c11aa75cca52fa675c48ddbaa52d57a42e41c2",
+    "candidate_reproducibility": "PASS; archive 360a39548275585e2c2ffafe79a8014106b2fc842811c332ac35612557bec6b6 and manifest a99f0cfeaaae97da8848e617a44918f6d7bc103f93cf6c162781f5f0a9c6dd56 verify from f331bb6a",
+    "trivy": "NOT_RUN; local Trivy binary unavailable",
+    "full_suite": "NOT_RERUN; D38 parent product-code candidate recorded 4685 passed, 81 skipped and 8 Git-metadata-bound failures",
+    "license": "INHERITED FAIL/CLOSED from D38, 21 missing human review decisions; not counted as D41 PASS"
+  },
+  "provider": {
+    "services": "Real PostgreSQL, Docker worker/runtime, Floci S3-compatible and Azurite Azure Blob were active",
+    "scope_limit": "Local services/emulators only; no AWS cloud, Azure cloud, Ozone or external secret-provider certification"
+  },
+  "candidate": {
+    "archive_sha256": "360a39548275585e2c2ffafe79a8014106b2fc842811c332ac35612557bec6b6",
+    "archive_size": 17285120,
+    "manifest_sha256": "a99f0cfeaaae97da8848e617a44918f6d7bc103f93cf6c162781f5f0a9c6dd56",
+    "manifest_size": 229234,
+    "digest_sha256": "559450dcf17e35e0958af5a088c31b9eadd835158cbf9ddd167fd773db6eb24e",
+    "digest_size": 252,
+    "file_count": 1487,
+    "total_bytes": 16066545,
+    "cleanup_regenerate_verify": "PASS; exact candidate verify passed and sandbox contained no generated cache artifacts"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P2": "in_progress",
+      "P13": "blocked",
+      "P14": "in_progress"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P2": "in_progress",
+      "P13": "blocked",
+      "P14": "in_progress"
+    }
+  },
+  "limitations": [
+    "Cancellation and timeout resource measurements are unavailable in the Docker summary because execution ended before final measurement; they are recorded as unavailable, not treated as PASS measurements.",
+    "D41 does not rerun the full Python suite, artifact qualification or Trivy; prior exact results remain linked and are not copied into new PASS fields.",
+    "P13 remains blocked by external secret-provider and release evidence; P2/P14 remain in_progress and no family or gate closes.",
+    "Release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}
