@@ -1,0 +1,106 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D44",
+  "status": "in_progress",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-11-16",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "bd1b7f4c08fc1f9c36976014dc630317b86a8cf1",
+    "origin_main_sha_when_candidate_was_tested": "bd1b7f4c08fc1f9c36976014dc630317b86a8cf1",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bd1b7f4c-d44",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bd1b7f4c-d44\\candidate-bd1b7f4c08fc1f9c36976014dc630317b86a8cf1.tar",
+      "format": "tar",
+      "sha256": "870e6827f0aeb0fb5220d544c3a4eaba8207318294c10c7b742022509c2f000f",
+      "size": 17377280
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bd1b7f4c-d44\\candidate-bd1b7f4c08fc1f9c36976014dc630317b86a8cf1.manifest.json",
+      "sha256": "c2ef4d83ce289a87fcc5b49aae0348d1b603bcdcc0c70ded276682eeae215212",
+      "size": 230720
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bd1b7f4c-d44\\candidate-bd1b7f4c08fc1f9c36976014dc630317b86a8cf1.sha256",
+      "sha256": "90177b286438b5f1e0f858826fe7d75d28f5e4a6bcfd91393d6a69d15c5229b9",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bd1b7f4c-d44\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1496,
+    "total_bytes": 16150910,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "bd1b7f4c08fc1f9c36976014dc630317b86a8cf1",
+    "candidate_docs_commit": null,
+    "summary": "D44 makes the broker-restart live qualification evidence-bearing. The existing real stop/start journey now captures browser-routed API traffic, and the live runner accepts only the two explicitly expected 503 responses for that exact test and exact stream health/run paths; any other server or network error remains a failure.",
+    "production_files_changed": [],
+    "qualification_files_changed": [
+      "web-tests/tests/product-live.spec.mjs",
+      "tools/run_live_product_qualification.ps1",
+      "tests/test_docker_qualification_contract.py"
+    ],
+    "carried_product_code_commit": "d6890832a6743cde1bd949bd3529359285559c0d",
+    "carried_qualification_docs_commit": "eb7ae38d08270231267b6969ba22fb1a1e25bcd1"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha bd1b7f4c08fc1f9c36976014dc630317b86a8cf1 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bd1b7f4c-d44",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-bd1b7f4c-d44",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after the candidate qualification; the same source SHA regenerated identical archive and manifest hashes and final verify passed",
+    "candidate_contracts": "exact candidate sandbox: 134 passed, 0 failed, 0 skipped, including 110 streaming/control-plane/OpenAPI selections and 24 live qualification runner contracts",
+    "candidate_quality": "exact candidate sandbox: Node syntax checks for the changed browser test and Studio JavaScript passed; the Python runtime selection and qualification contract selection passed without skips",
+    "live_qualification": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d44-broker-recovery-bd1b7f4c-20261116 -TestGrep 'live streaming broker restart'",
+    "live_result": "real PostgreSQL, Redpanda/Kafka and Ronin API; 1/1 Playwright case passed; the broker container was stopped and started; health/run returned exactly two expected 503 streaming_unavailable responses; four messages resumed from the durable checkpoint to lag zero; 10 API events all correlated, 8 OK and 2 expected ERROR; no unexpected server/network error; services cleaned"
+  },
+  "qualification_matrix": {
+    "broker_restart": "PASS for the exact local Redpanda recovery journey: one record was consumed before the broker stop, four records were produced, health and run returned expected 503 while stopped, the broker restarted, health recovered with lag four, four records were resumed and final lag was zero",
+    "durable_checkpoint": "PASS for this journey: the first one-record run completed before the outage and the four post-restart runs consumed exactly the remaining four records",
+    "negative_service_path": "PASS as an expected outage contract: exactly two HTTP 503 streaming_unavailable responses were captured for the fault-recovery health and run paths while the real broker was stopped",
+    "traffic_audit": "PASS for the filtered diagnostic: 10/10 API events correlated to structured HTTP logs, 8 OK and 2 expected ERROR; 0 unexpected authorization gaps and 0 unexpected server/network errors",
+    "candidate_reproducibility_after_cleanup": "PASS; archive and manifest hashes were unchanged after cleanup/regeneration and final verify passed",
+    "security_scans": "NOT_RERUN in D44; D42 Gitleaks and pip-audit evidence is not copied as a new D44 PASS",
+    "trivy": "NOT_RUN",
+    "license_qualification": "INHERITED FAIL/CLOSED; 21 human review decisions remain missing",
+    "result": "D44 passes the bounded broker-restart recovery campaign cell, but does not qualify P11, close a release gate or change NO-GO"
+  },
+  "security_and_recovery": {
+    "journey": "The exact live journey created the stream, consumed one record, published four records to a real Redpanda topic, stopped the broker container, observed 503 health/run responses, started the same broker, waited for health recovery, consumed the four remaining records and confirmed zero lag before cleanup.",
+    "negative_paths": "The runner only permits the two 503 responses when the exact broker-restart test is selected and the path is the fault-recovery health/run route; all other 5xx and network errors remain disqualifying.",
+    "recovery_scope": "This campaign proves one local single-broker restart and checkpoint-resume path. It does not prove multi-broker quorum loss, sustained backpressure, worker supervision, external provider breadth or the complete P11 journey."
+  },
+  "evidence": {
+    "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d44-broker-recovery-bd1b7f4c-20261116",
+    "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d44-broker-recovery-bd1b7f4c-20261116\\qualification-summary.json",
+    "qualification_summary_sha256": "2efdfb683c59588e7d03b15cce694dc63e5ddc90b7455d8df734202cc162e683",
+    "qualification_summary_size": 2781,
+    "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d44-broker-recovery-bd1b7f4c-20261116\\live-api-traffic.json",
+    "live_api_traffic_sha256": "dd5f8a485c83e804ad3d5dbe243fd09202b23990de3a0ccf010c835f7b9ffc66",
+    "live_api_traffic_size": 3355,
+    "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d44-broker-recovery-bd1b7f4c-20261116\\browser-live.xml",
+    "browser_junit_sha256": "3bdecd53fb95add1a01b7c33e82107e2192d1f1c76e9bcb295c1b000fceea6b2",
+    "browser_junit_size": 427,
+    "previous_failed_attempt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d44-broker-recovery-b6c363a3-20261116"
+  },
+  "open_cells": [
+    "P11 remains in_progress: D44 proves one single-broker local restart/resume journey, but sustained backpressure, worker supervision, broader provider breadth and the complete family journey remain open.",
+    "P2 and P14 remain in_progress; D44 does not add connector/provider or external recovery qualification.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external secret provider or credential was available.",
+    "D44 does not rerun the full Python suite, Gitleaks, pip-audit or Trivy; skipped and inherited lanes are not counted as PASS.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The first b6c363a3 attempt captured the 503 traffic but the runner correctly rejected it before the explicit expected-outage rule; that receipt is retained as a failed harness iteration, not PASS.",
+    "The expected-outage allowance is narrow and test-name/path/status bound; it does not relax the general live audit for other diagnostics.",
+    "The final campaign is one filtered local-broker diagnostic, not a route-wide audit, multi-broker quorum test, indefinite soak, external provider matrix or family qualification.",
+    "No hosted workflow, branch or worktree was used; license review remains FAIL/CLOSED with 21 human decisions pending."
+  ]
+}

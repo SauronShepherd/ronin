@@ -1,0 +1,61 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D44",
+  "date": "2026-11-16",
+  "status": "PASS",
+  "cell": "P11 single-broker restart and durable checkpoint recovery against real Redpanda/Kafka",
+  "candidate_sha": "bd1b7f4c08fc1f9c36976014dc630317b86a8cf1",
+  "candidate_receipt": "docs/qualification/candidates/candidate-bd1b7f4c-d44.json",
+  "code_commit": "bd1b7f4c08fc1f9c36976014dc630317b86a8cf1",
+  "origin_main_at_code_commit": "bd1b7f4c08fc1f9c36976014dc630317b86a8cf1",
+  "implementation": {
+    "production_change": false,
+    "summary": "D44 makes the existing broker-restart recovery journey candidate-bound and traffic-auditable, and adds a narrow runner rule that accepts exactly its two expected 503 outage responses while retaining a fail-closed rule for every other 5xx or network error.",
+    "real_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d44-broker-recovery-bd1b7f4c-20261116\\qualification-summary.json"
+  },
+  "tests": {
+    "candidate_contracts": "134 passed, 0 failed, 0 skipped in the exact candidate sandbox",
+    "candidate_node": "Node syntax checks for product-live.spec.mjs and streaming-studio.js passed",
+    "live_real_services": "PASS for the filtered campaign: PostgreSQL=true, Kafka=true, Ronin API=true; 1/1 Playwright case passed; real Redpanda container stopped and started; four records resumed after the checkpoint",
+    "live_traffic": "10 events, 10 correlated, 8 OK and 2 expected ERROR for streaming_unavailable during the broker outage; 0 unexpected authorization gaps and 0 unexpected server/network errors",
+    "live_logs": "INFO=10, WARN=0, WARNING=0, ERROR=2, CRITICAL=0; the two ERROR entries are the two expected 503 outage responses",
+    "candidate_reproducibility": "PASS; archive 870e6827f0aeb0fb5220d544c3a4eaba8207318294c10c7b742022509c2f000f and manifest c2ef4d83ce289a87fcc5b49aae0348d1b603bcdcc0c70ded276682eeae215212 unchanged after cleanup/regeneration",
+    "route_audit": "NOT_RUN for the route-wide surface because this was a filtered diagnostic",
+    "security_scans": "NOT_RERUN in D44; D42 Gitleaks/pip-audit evidence remains separate and inherited",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license": "INHERITED FAIL/CLOSED; 21 human review decisions missing and not counted as D44 PASS"
+  },
+  "candidate": {
+    "archive_sha256": "870e6827f0aeb0fb5220d544c3a4eaba8207318294c10c7b742022509c2f000f",
+    "archive_size": 17377280,
+    "manifest_sha256": "c2ef4d83ce289a87fcc5b49aae0348d1b603bcdcc0c70ded276682eeae215212",
+    "manifest_size": 230720,
+    "digest_sha256": "90177b286438b5f1e0f858826fe7d75d28f5e4a6bcfd91393d6a69d15c5229b9",
+    "digest_size": 252,
+    "file_count": 1496,
+    "total_bytes": 16150910,
+    "cleanup_regenerate_verify": "PASS; candidate sandbox had no generated caches or test artifacts after the final verify"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "limitations": [
+    "The first b6c363a3 attempt proved the real journey but was rejected because the unclassified 503 traffic was treated as an unexpected server error; it remains a failed harness iteration, not PASS.",
+    "D44 proves one local single-broker restart and checkpoint-resume path. It does not prove multi-broker quorum recovery, sustained backpressure, worker supervision, external providers or the full P11 family journey.",
+    "No gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}
