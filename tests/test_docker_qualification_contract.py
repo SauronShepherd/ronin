@@ -513,6 +513,9 @@ def test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies() ->
     assert "https://dl-cdn.alpinelinux.org/alpine/edge/main" in dockerfile
     assert "musl=1.2.6-r6" in apk_runtime_lock
     assert "sqlite-libs=3.54.1-r0" in apk_runtime_lock
+    assert "libcrypto3=3.5.9-r1" in apk_probe_lock
+    assert "libssl3=3.5.9-r1" in apk_probe_lock
+    assert "zlib=1.4-r0" in apk_probe_lock
     assert f"FROM {docker_cli} AS docker-cli" in dockerfile
     assert "apk upgrade" not in dockerfile + probe
     assert "COPY docker/apk-runtime.lock /tmp/apk-runtime.lock" in dockerfile
@@ -540,7 +543,7 @@ def test_runtime_images_pin_current_bases_and_hash_lock_python_dependencies() ->
     assert "psycopg-binary==3.3.6" in runtime_lock
     assert "tzdata==2026.4" in runtime_lock
     assert "--hash=sha256:" in runtime_lock
-    for lock, expected_count in ((apk_runtime_lock, 27), (apk_probe_lock, 22)):
+    for lock, expected_count in ((apk_runtime_lock, 27), (apk_probe_lock, 25)):
         packages = [line for line in lock.splitlines() if line]
         assert len(packages) == expected_count
         assert len(packages) == len(set(packages))
