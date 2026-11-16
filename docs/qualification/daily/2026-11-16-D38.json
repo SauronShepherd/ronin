@@ -1,0 +1,78 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D38",
+  "date": "2026-11-16",
+  "status": "in_progress",
+  "cell": "Final candidate boundary, P11 streaming recovery, security scans and supply-chain evidence",
+  "candidate_sha": "da2ea631b93431d4463aa1a71dcb0c2a3add9426",
+  "candidate_receipt": "docs/qualification/candidates/candidate-da2ea631-d38.json",
+  "code_commit": "da2ea631b93431d4463aa1a71dcb0c2a3add9426",
+  "origin_main_at_code_commit": "da2ea631b93431d4463aa1a71dcb0c2a3add9426",
+  "implementation": {
+    "gap": "The preceding exact probe image produced 11 MEDIUM Trivy findings in libcrypto3/libssl3 3.5.9-r0 and zlib 1.3.2-r1 even though fixed Alpine edge versions were available. The preceding streaming implementation also needed fail-closed metadata probing after a real broker outage exposed false idle success.",
+    "fix": "The probe lock now pins libcrypto3/libssl3 3.5.9-r1 and zlib 1.4-r0, with a Docker contract asserting those versions. The Kafka source metadata-failure fix and broker-restart recovery test are included in the exact candidate; no human license decisions were inferred.",
+    "journey": "The da2ea631 candidate ran a real filtered Redpanda/Kafka diagnostic: it consumed a checkpointed batch, stopped the broker, observed expected health/run 503 responses, restarted the broker, resumed four records and reached zero lag; the isolated network/container cleanup passed.",
+    "real_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d38-streaming-fault-da2e-20261116"
+  },
+  "tests": {
+    "candidate_streaming": "95 passed, 0 failed, 0 skipped",
+    "candidate_docker_contracts": "24 passed, 0 failed, 0 skipped",
+    "candidate_static_and_surface": "Ruff format/check, mypy, architecture, negative gates, route consistency (200 operations), dependency surfaces, OpenAPI, Studio, web audit, budget, assets and Node syntax passed",
+    "candidate_full_suite": "FAIL; 4685 passed, 81 skipped, 8 failed in 2602.64s (0:43:22). The eight failures require Git metadata absent from the archive sandbox: six worker runtime/source-binding cases plus public-status and changed-surface Git checks; recorded as FAIL, not PASS or SKIP",
+    "live_streaming": "2 passed, 0 failed, 0 skipped; 52 API events, 52 correlated, 0 uncorrelated, 48 OK and 4 WARN outcomes; route-wide audit=false",
+    "artifact_qualification": "92 passed, 0 failed, 0 skipped",
+    "gitleaks": "8.30.1, 0 findings over 21,178,366 scanned bytes",
+    "pip_audit": "2.10.1, no known vulnerabilities in 54 dev and 99 test locked dependencies",
+    "trivy": "0.76.1, runtime 0 vulnerabilities/0 secrets and probe 0 vulnerabilities/0 secrets",
+    "license": "FAIL/CLOSED, 21 missing review decisions; not counted as PASS",
+    "candidate_browser": "SKIP; @playwright/test is not packaged in the exact archive; Node syntax and the separately prepared live runner are recorded independently",
+    "candidate_reproducibility": "PASS; cleanup/regeneration produced archive 55da66be2de963d2700ce1a9db472ffda6f584ec8e7d7c3a2cbc51c22f7f4cd4 and manifest a7c8ac16287005409f957297b9834f3202e88808b8dc14e91e8fa8cc9ec944a3 again; verify passed"
+  },
+  "provider": {
+    "streaming_provider": "Redpanda Kafka-compatible local provider, real container and real Ronin APIs",
+    "scope_limit": "PostgreSQL and worker were disabled in streaming-only mode; no external provider or operator matrix is certified",
+    "supply_chain": "Fail-closed supply-chain validation passed for wheel/sdist, runtime/probe TARs, raw/bound CycloneDX inventories, application SBOM and provenance"
+  },
+  "candidate": {
+    "archive_sha256": "55da66be2de963d2700ce1a9db472ffda6f584ec8e7d7c3a2cbc51c22f7f4cd4",
+    "archive_size": 17203200,
+    "manifest_sha256": "a7c8ac16287005409f957297b9834f3202e88808b8dc14e91e8fa8cc9ec944a3",
+    "manifest_size": 227750,
+    "digest_sha256": "754d8cab388823ed596382a9a0f5c4a3cfac6d0ae72f448db92416867c7d2a9c",
+    "digest_size": 252,
+    "file_count": 1478,
+    "total_bytes": 15990993,
+    "cleanup_regenerate_verify": "PASS; exact archive and manifest hashes were identical after cleanup/regeneration and final verify passed"
+  },
+  "artifact_evidence": {
+    "wheel": "28947d7e44b0cbbb372ca355b8b15f730a4163c3de9a29c2681f5dd3c82cd61d",
+    "sdist": "8590c2f1344ab2666d02bb12a4736302e8e058eb93a430d246f31ab86efc0460",
+    "runtime_tar": "7753a35912cba73e230c193790acb3a6c3d205fdb9b0ae665f1dab6a77e9c0ac",
+    "probe_tar": "4436c077e262d5f9c98c376a50beb2a12d2de2dd465d7bb89ca3778eeffe87b4",
+    "supply_chain": "1982ffcfc7565fdea2c6d6958b577a68e0916b8b65e35cbe29bcba303b5f1ef7",
+    "provenance": "302484bc0a9d92d8828f2103cda168a30389ccb55393b4d27aaad3d46684ef5b"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "37/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "37/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress"
+    }
+  },
+  "limitations": [
+    "D38 does not qualify P11: the live result is filtered to streaming, lacks continuous supervisor operation, full partition/backpressure matrix, external provider qualification and complete operator evidence.",
+    "The candidate full suite is FAIL with eight Git-metadata-bound cases; the archive result is recorded honestly and is not converted to PASS or SKIP.",
+    "P13 remains blocked by the external secret-provider/release evidence boundary; P12 and P14 remain in_progress; no family other than the existing P1 is qualified.",
+    "The candidate browser archive lane is SKIP and the license gate remains fail-closed with 21 missing human review decisions.",
+    "No release gate closes; release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}

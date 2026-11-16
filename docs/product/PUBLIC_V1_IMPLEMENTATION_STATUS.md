@@ -7,24 +7,26 @@
 
 ## Current exact-SHA qualification — 16 November 2026
 
-The current exact-head candidate is `2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89`.
-D37 adds candidate-bound P14 recovery evidence. The exact candidate sandbox
-passes `69` P14 contracts plus `2` Helm chart contracts with zero
-failures/skips. A clean checkout at the same source SHA builds Ronin image
-`sha256:6f8a2320236dddf327c5fc4e1056ec122cfe493ecc66f2cd69bd3ec5616e1724`
-and passes `27/27` real Docker tests with PostgreSQL, Floci and Azurite; strict
-v0.1 acceptance is `15/15` with zero skips/failures. Real Helm `v4.3.1`/kind
-passes lint, Secret boundary, install/readiness, revision-2 upgrade, rollback
-to revision 1, health/API, queued-job persistence after restart and cleanup.
-The authorized Terraform `1.13.5` + Floci lane reaches health/plan/validate
-but apply times out at both 120s and 300s; destroy/state cleanup leave zero
-resources, so provider qualification remains blocked and is not a PASS.
-Ruff, mypy, architecture/negative gates, route/dependency surfaces, OpenAPI,
-Studio, web audit/budget, assets and daily progress pass. Gitleaks reports zero
-findings over `15,962,390` bytes and pip-audit reports no known vulnerabilities.
-The exact candidate browser lane is `SKIP` because `@playwright/test` is not
-packaged; Node syntax checks pass. Trivy is skipped because no local binary is
-available.
+The current exact-head candidate is `da2ea631b93431d4463aa1a71dcb0c2a3add9426`.
+D38 adds candidate-bound P11 broker-restart recovery and refreshes the probe
+Alpine lock after the preceding image showed 11 MEDIUM findings with available
+fixed versions. The exact candidate sandbox passes `95` streaming/API tests
+and `24` Docker contract tests with zero failures/skips. A clean candidate
+runner starts real Redpanda and Ronin APIs, executes `2/2` streaming cases,
+correlates `52/52` API events, observes expected `503` outage responses and
+resumes four records from the durable checkpoint to zero lag; cleanup passes.
+Artifact qualification passes `92/92`; Gitleaks reports zero findings and
+pip-audit reports no known vulnerabilities in the `54` dev and `99` test
+locked dependencies. Trivy `0.76.1` reports `0` vulnerabilities and `0`
+secrets in both exact runtime/probe TARs; application/container SBOM,
+provenance and fail-closed supply-chain validation pass.
+The exact candidate browser archive lane is `SKIP` because `@playwright/test`
+is not packaged; Node syntax checks pass. License qualification remains closed
+on `21` missing human review decisions.
+The complete candidate suite is `FAIL`: `4685 passed, 81 skipped, 8 failed`.
+The eight failures are Git-metadata-bound cases in the archive sandbox (six
+worker source-binding cases plus public-status and changed-surface Git checks);
+they remain FAIL and are not converted to PASS or SKIP.
 
 This is bounded technical evidence only. Public v1 remains **1/13 families
 qualified, 0/10 gates, NO-GO**: P14 is `in_progress` but external object-store
@@ -101,7 +103,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89` (2026-11-16).
+**Observed source head:** `da2ea631b93431d4463aa1a71dcb0c2a3add9426` (2026-11-16).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89",
+    "base_sha": "da2ea631b93431d4463aa1a71dcb0c2a3add9426",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -133,8 +133,8 @@
       "name": "Real-time and streaming",
       "observed_implementation": "partial",
       "qualification": "in_progress",
-      "receipt": "docs/qualification/candidates/candidate-a707b8c5-d32.json",
-      "candidate_sha": "a707b8c5a77e165f03458050c98e27a4545d3bb3"
+      "receipt": "docs/qualification/candidates/candidate-da2ea631-d38.json",
+      "candidate_sha": "da2ea631b93431d4463aa1a71dcb0c2a3add9426"
     },
     {
       "id": "P12",
@@ -262,13 +262,13 @@
     {"id": "D35", "date": "2026-12-19", "phase": "p12-journey-close", "status": "pass", "families": ["P12"], "evidence": "docs/qualification/handoffs/2026-11-16-D35.md", "commit_sha": "74fc6cabc1718703f89ba57d83058372542e8b77"},
     {"id": "D36", "date": "2026-12-20", "phase": "p14-install-migrate", "status": "pass", "families": ["P14"], "evidence": "docs/qualification/handoffs/2026-11-16-D36.md", "commit_sha": "baa18fdbb9c4f149599349e7a47a6df686757912"},
     {"id": "D37", "date": "2026-12-21", "phase": "p14-recovery-close", "status": "pass", "families": ["P14"], "evidence": "docs/qualification/handoffs/2026-11-16-D37.md", "commit_sha": "2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89"},
-    {"id": "D38", "date": "2026-12-22", "phase": "final-candidate", "status": "pending", "families": ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P10", "P11", "P12", "P13", "P14"], "evidence": null, "commit_sha": null}
+    {"id": "D38", "date": "2026-12-22", "phase": "final-candidate", "status": "in_progress", "families": ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P10", "P11", "P12", "P13", "P14"], "evidence": "docs/qualification/handoffs/2026-11-16-D38.md", "commit_sha": "da2ea631b93431d4463aa1a71dcb0c2a3add9426"}
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "Current receipts and official ledger do not all bind to the current HEAD; D37 is bound to the exact source SHA 2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89, while the final release dossier is still open."
+      "summary": "D38 technical receipts are bound to da2ea631b93431d4463aa1a71dcb0c2a3add9426; the final release dossier, human decisions, the eight candidate-suite Git-metadata failures and aggregate approval are still open."
     },
     {
       "id": "provider-certification",

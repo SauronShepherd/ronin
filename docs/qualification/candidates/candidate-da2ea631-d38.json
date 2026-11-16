@@ -1,0 +1,151 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D38",
+  "status": "in_progress",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-12-22",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "da2ea631b93431d4463aa1a71dcb0c2a3add9426",
+    "origin_main_sha_when_candidate_was_tested": "da2ea631b93431d4463aa1a71dcb0c2a3add9426",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-da2ea631-d38",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-da2ea631-d38\\candidate-da2ea631b93431d4463aa1a71dcb0c2a3add9426.tar",
+      "format": "tar",
+      "sha256": "55da66be2de963d2700ce1a9db472ffda6f584ec8e7d7c3a2cbc51c22f7f4cd4",
+      "size": 17203200
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-da2ea631-d38\\candidate-da2ea631b93431d4463aa1a71dcb0c2a3add9426.manifest.json",
+      "sha256": "a7c8ac16287005409f957297b9834f3202e88808b8dc14e91e8fa8cc9ec944a3",
+      "size": 227750
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-da2ea631-d38\\candidate-da2ea631b93431d4463aa1a71dcb0c2a3add9426.sha256",
+      "sha256": "754d8cab388823ed596382a9a0f5c4a3cfac6d0ae72f448db92416867c7d2a9c",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-da2ea631-d38\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1478,
+    "total_bytes": 15990993,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "da2ea631b93431d4463aa1a71dcb0c2a3add9426",
+    "candidate_docs_commit": null,
+    "summary": "D38 records the justified probe Alpine lock refresh after the preceding exact image showed 11 MEDIUM findings with available fixed versions, preserves the P11 broker-outage fail-closed fix and recovery journey, and records the current ledger-day test correction. The final candidate binds all three changes to one exact source SHA.",
+    "production_files_changed": [
+      "docker/apk-probe.lock"
+    ],
+    "test_files_changed": [
+      "tests/test_docker_qualification_contract.py",
+      "tests/test_ronin_daily_progress.py"
+    ],
+    "candidate_relevant_streaming_files": [
+      "python/studio_streaming/kafka.py",
+      "tests/test_streaming_kafka.py",
+      "tools/seed_live_streaming.py",
+      "web-tests/tests/product-live.spec.mjs"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha da2ea631b93431d4463aa1a71dcb0c2a3add9426 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-da2ea631-d38",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-da2ea631-d38",
+    "cleanup_and_regenerate": "cleanup, regeneration and verify were rerun after the full candidate suite; archive and manifest hashes remained identical",
+    "candidate_streaming_tests": "95 passed, 0 failed, 0 skipped",
+    "candidate_docker_contracts": "24 passed, 0 failed, 0 skipped",
+    "candidate_static": "exact candidate sandbox Ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio, web audit, web budget, assets and Node syntax all passed",
+    "candidate_full_suite": {
+      "result": "FAIL",
+      "summary": "4685 passed, 81 skipped, 8 failed in 2602.64s (0:43:22)",
+      "failed_tests": [
+        "tests/integration/test_worker_runtime_contention.py::test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contention",
+        "tests/integration/test_worker_runtime_contention.py::test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verify_contention",
+        "tests/test_public_v1_status.py::test_status_check_is_fail_closed_for_divergence",
+        "tests/test_changed_surface.py::test_changed_surface_classifies_current_candidate_without_unassigned_paths",
+        "tests/test_worker_runtime.py::test_execution_failure_is_logged_as_error_and_persisted",
+        "tests/test_worker_runtime.py::test_restart_reclaims_same_run_and_reuses_persisted_cells",
+        "tests/test_worker_runtime.py::test_run_forever_shutdown_abandons_active_claim_immediately",
+        "tests/test_worker_runtime.py::test_run_once_executes_claim_through_sqlite_and_container_boundary"
+      ],
+      "limitation": "The archive sandbox intentionally has no .git metadata. The worker cases therefore fail declared Git-source verification, while the status and changed-surface cases cannot execute their Git commands. These are recorded as FAIL, not PASS or SKIP; checkout-focused reruns cover the source-backed behavior."
+    },
+    "live_streaming": "clean candidate runner from da2ea631: 2/2 Playwright cases passed, 0 skipped/failed; 52/52 API events correlated, 48 OK and 4 WARN outcomes; broker outage returned expected 503 responses and durable checkpoint recovery completed; cleanup passed",
+    "artifact_qualification": "92 passed, 0 failed, 0 skipped; wheel/sdist installed and imported from isolated site-packages",
+    "scans": "Gitleaks 8.30.1 found 0 leaks over 21,178,366 scanned bytes; pip-audit 2.10.1 found no known vulnerabilities in 54 dev and 99 test locked dependencies; Trivy 0.76.1 found 0 vulnerabilities and 0 secrets in both image TARs",
+    "license_qualification": "FAIL/CLOSED: 21 package review decisions are missing; no automatic approvals were added"
+  },
+  "qualification_matrix": {
+    "candidate_streaming_tests": "95 passed, 0 failed, 0 skipped across streaming contracts, runtime, Kafka, health, bundles, stream tables, scheduler bridge and workspace HTTP API",
+    "candidate_docker_contracts": "24 passed, 0 failed, 0 skipped; probe package pins and Docker qualification boundaries are covered",
+    "real_streaming_acceptance": "PASS for the filtered diagnostic only: real Redpanda/Kafka and Ronin APIs, 2/2 cases, broker stop/start, expected 503 outage responses, checkpoint resume and final lag zero",
+    "real_services": "PostgreSQL=false, Kafka/Redpanda=true, Ronin API=true, worker image=null; this was intentionally streaming-only",
+    "live_route_scope": "25 active routes, 24 with API contracts and 1 UI-only route; route-wide audit=false because the runner was filtered to streaming",
+    "candidate_reproducibility_after_cleanup": "PASS; archive SHA 55da66be2de963d2700ce1a9db472ffda6f584ec8e7d7c3a2cbc51c22f7f4cd4 and manifest SHA a7c8ac16287005409f957297b9834f3202e88808b8dc14e91e8fa8cc9ec944a3 were identical after cleanup/regeneration; final verify passed",
+    "artifact_qualification": "PASS; pyronin 0.0.1a0 wheel 28947d7e44b0cbbb372ca355b8b15f730a4163c3de9a29c2681f5dd3c82cd61d and sdist 8590c2f1344ab2666d02bb12a4736302e8e058eb93a430d246f31ab86efc0460; prerelease identity is not a release approval",
+    "container_images": "runtime ronin:d38-da2ea631-candidate index sha256:bc1f21540e83a732e03cec439fc0a7a87f16803104a144b7fe288362ee0f15ec, config sha256:d43580a24c0c057436a1cda6f55ba85b35511b0ed61694fa066f00688a374227; probe ronin:d38-da2ea631-probe index sha256:45650042e3b051f931b9b891728a34743cf78831e8f87f65f933a6355d9030d3, config sha256:6deec76c67cf284304326ab9e27b1bb4619c4cea8d15ed8b706dae7f2ccac2c8",
+    "container_scans": "Trivy 0.76.1 exact TAR scans: runtime 59 OS packages, 0 vulnerabilities, 0 secrets; probe 56 OS packages, 0 vulnerabilities, 0 secrets; the refreshed probe lock removes the preceding 11 MEDIUM findings",
+    "supply_chain": "PASS; artifact identity, raw and bound runtime/probe CycloneDX SBOMs, application CycloneDX, provenance and fail-closed container inventory validation are linked to da2ea631",
+    "candidate_web": "SKIP for archive-contained browser execution because @playwright/test is not packaged; the external-dependency live runner is recorded separately and is not counted as archive browser coverage",
+    "license_gate": "FAIL/BLOCKED; missing decisions: boolean-py==5.0, cachecontrol==0.14.4, certifi==2026.10.23, charset-normalizer==3.5.2, cyclonedx-python-lib==11.12.0, defusedxml==0.7.1, filelock==4.2.4, idna==3.20, license-expression==30.4.4, msgpack==1.2.4, packageurl-python==0.17.6, pip-api==0.0.35, pip-audit==2.10.1, pip-requirements-parser==32.0.1, pip==26.2.2, py-serializable==2.1.0, pyparsing==3.3.3, pyyaml-ft==8.0.0, requests==2.34.2, tomli-w==1.2.0, urllib3==2.8.0",
+    "result": "D38 technical campaign is in progress: exact candidate, P11 filtered live recovery, artifacts, scans and supply-chain evidence pass in their stated scopes; the full candidate suite has eight environment-bound FAILs, no family is newly qualified, no release gate is closed, and release remains NO-GO"
+  },
+  "security_and_recovery": {
+    "journey": "The real filtered Redpanda journey creates stream definitions, consumes a durable checkpointed batch, stops the broker, observes expected health/run 503 responses, restarts the broker, drains four records and verifies final lag zero. Cleanup removed the isolated container and network.",
+    "negative_paths": "The candidate includes the Kafka metadata-failure regression that prevents an unavailable broker from being reported as a successful idle result. The live journey retains the injected outage as expected WARN/503 evidence; it is not suppressed or counted as a clean no-error run.",
+    "provider_scope": "Only the local Redpanda Kafka-compatible provider was exercised. No external Kafka provider, PostgreSQL-backed worker, continuous supervisor or operator matrix is certified by this filtered diagnostic.",
+    "scans": {
+      "gitleaks": "8.30.1; 0 findings over 21,178,366 scanned bytes",
+      "pip_audit": "2.10.1; requirements-dev.lock 54 dependencies and requirements-test.lock 99 dependencies; no known vulnerabilities",
+      "trivy": "0.76.1 pinned image digest sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c; runtime/probe 0 vulnerabilities and 0 secrets",
+      "license": "FAIL/CLOSED; 21 human review decisions missing"
+    }
+  },
+  "evidence": {
+    "live_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d38-streaming-fault-da2e-20261116",
+    "live_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d38-streaming-fault-da2e-20261116\\qualification-summary.json",
+    "live_summary_sha256": "74dd8e7fb086599fb3e22d1d99145465749ae21b9a4b623b5dc25e9e0b0663d8",
+    "live_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d38-streaming-fault-da2e-20261116\\live-api-traffic.json",
+    "artifact_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38",
+    "artifact_qualification": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\artifact-qualification.json",
+    "artifact_identity": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\container-artifact-identity.json",
+    "application_sbom": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\ronin.cdx.json",
+    "runtime_bound_sbom": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\runtime-container-bound.cdx.json",
+    "probe_bound_sbom": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\probe-container-bound.cdx.json",
+    "provenance": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\provenance.json",
+    "supply_chain": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\supply-chain.json",
+    "trivy_runtime_findings": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\runtime-trivy-findings.json",
+    "trivy_probe_findings": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\probe-trivy-findings.json",
+    "gitleaks": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\gitleaks-working-tree.json",
+    "pip_audit_dev": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\pip-audit-dev.json",
+    "pip_audit_test": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-artifact-qualification-da2ea631-d38\\pip-audit-test.json",
+    "artifact_identity_sha256": "b7d527bf4e48fe66eedc59f7400c85e7a687345619c7fa878eb892cb65caca71",
+    "runtime_bound_sbom_sha256": "99f9e1f69aeb909f31096dde16b36f7116822e823b7ddda4f99de62bf534126f",
+    "probe_bound_sbom_sha256": "52958ace642e0be3288180b2d50a1e9e3d6c8040db6fae2f76b481712079045b",
+    "application_sbom_sha256": "5b1649663316ad7671c128d9c75222b55c1914ec5952968c2ab3aa1d14e70c84",
+    "provenance_sha256": "302484bc0a9d92d8828f2103cda168a30389ccb55393b4d27aaad3d46684ef5b",
+    "supply_chain_sha256": "1982ffcfc7565fdea2c6d6958b577a68e0916b8b65e35cbe29bcba303b5f1ef7"
+  },
+  "open_cells": [
+    "P11 remains in_progress: the live result is a filtered Redpanda recovery diagnostic, not continuous operation, full backpressure/partition matrix, external provider qualification or a complete operator journey.",
+    "The candidate archive browser lane is SKIP because @playwright/test is not packaged; the external-dependency live runner is not substituted for archive-contained browser coverage.",
+    "The full candidate suite is FAIL with eight Git-metadata-bound cases; checkout-focused reruns pass the source-backed tests, but the archive result remains recorded as FAIL.",
+    "P13 remains blocked by the external secret-provider and release-evidence boundary; P12 and P14 remain in_progress; other families retain their recorded states.",
+    "License qualification remains fail-closed with 21 missing human review decisions; no gate is closed and release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "Candidate static and artifact checks are exact-SHA-scoped; public status and Git identity checks are checkout-only because the candidate sandbox intentionally has no .git metadata.",
+    "The live runner used real Redpanda/Kafka and Ronin APIs, but PostgreSQL and worker were disabled by the streaming-only diagnostic. Its three expected HTTP 503 error log entries are part of the injected outage evidence, not omitted failures.",
+    "The image security result is technical scanner evidence only. Alpine Edge policy review, license/NOTICE decisions, supported-platform claims, manual visual review, provider matrix, governance and release approval remain human/open work.",
+    "No hosted workflow, GitHub Actions job, branch or worktree was used."
+  ]
+}
