@@ -1,0 +1,96 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D34",
+  "status": "pass",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-12-18",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "4bc15b20732c15e99e8b27d1bc3235cd1ce96da5",
+    "origin_main_sha_when_candidate_was_tested": "4bc15b20732c15e99e8b27d1bc3235cd1ce96da5",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4bc15b20-d34",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4bc15b20-d34\\candidate-4bc15b20732c15e99e8b27d1bc3235cd1ce96da5.tar",
+      "format": "tar",
+      "sha256": "2f9d9e8e8dfaa9932af138ee51bdb9612d62ccc928e8dbef8a51a1d25eb0ba4f",
+      "size": 17100800
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4bc15b20-d34\\candidate-4bc15b20732c15e99e8b27d1bc3235cd1ce96da5.manifest.json",
+      "sha256": "2ebb55fb2a4fbbc0229e6a47a61cb111101ba97282a7049bb5f77fe360512cd8",
+      "size": 225773
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4bc15b20-d34\\candidate-4bc15b20732c15e99e8b27d1bc3235cd1ce96da5.sha256",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4bc15b20-d34\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1466,
+    "total_bytes": 15901029,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "4bc15b20732c15e99e8b27d1bc3235cd1ce96da5",
+    "candidate_docs_commit": null,
+    "summary": "D34 preserves the D33 slotted-dataclass FinOps fix while restoring the legacy __dict__ payload contract used by existing control-plane helpers. Dataclass fields remain authoritative for UsageRecord, CostRecord and BudgetPolicy; legacy records still omit private fields and normalize enum/time/numeric values as before. The campaign reruns FinOps budgets, actual/estimated costs, labels, allocation, forecast, budget gate and observability policy contracts, plus a real OTLP Collector provider lane.",
+    "production_files_changed": [
+      "python/studio_server/control_plane.py"
+    ],
+    "test_files_changed": []
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 4bc15b20732c15e99e8b27d1bc3235cd1ce96da5 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4bc15b20-d34",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-4bc15b20-d34",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after candidate tests and scans; the same source SHA regenerated identical archive and manifest hashes; final verify passed",
+    "candidate_p12_and_compatibility": "exact candidate sandbox pytest selection: 86 passed, 0 failed, 0 skipped",
+    "candidate_journey": "exact candidate sandbox local-composed HTTP journey and existing durable quality journey: 2 passed, 0 failed, 0 skipped",
+    "candidate_sdk": "exact candidate sandbox PyRonin alert/FinOps selection: 3 passed, 0 failed, 0 skipped",
+    "candidate_http_integration": "exact candidate sandbox workspace/project HTTP observability/FinOps selection: 1 passed, 0 failed, 0 skipped",
+    "real_provider": "clean checkout at the same source SHA, tools/run_otlp_qualification.ps1 with digest-pinned Collector: 1 passed, 0 skipped, 0 failed; cleanup succeeded",
+    "candidate_static": "exact candidate sandbox Ruff format/check, mypy, architecture, negative gates, route consistency, dependency surfaces, OpenAPI, Studio surface, web audit, budget, assets, daily progress and JavaScript syntax all passed; public status and git diff require checkout Git metadata",
+    "scans": "final clean candidate Gitleaks dir scan and pip-audit -r requirements-test.lock; Trivy skipped because no local binary was available"
+  },
+  "qualification_matrix": {
+    "candidate_p12_and_compatibility": "86 passed, 0 failed, 0 skipped across control-plane pagination/serialization, FinOps allocation/forecast, durable observability, anomaly, instrumentation, alert state, Prometheus, OTLP, notification, local plugin and quality-observability selections",
+    "candidate_journey": "2 passed, 0 failed, 0 skipped; the D33 local-composed HTTP journey still returns exact slotted usage/cost/budget records, evaluates and acknowledges scoped alerts, exposes CLI JSON and survives restart",
+    "candidate_sdk": "3 passed, 0 failed, 0 skipped for alert and FinOps SDK parity",
+    "candidate_http_integration": "1 passed, 0 failed, 0 skipped for the selected workspace/project HTTP observability integration",
+    "real_provider": "1 passed, 0 skipped, 0 failed against real OpenTelemetry Collector Contrib image otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621; traces, metrics and logs accepted over OTLP/HTTP; cleanup succeeded",
+    "candidate_web": "SKIP for browser execution; the exact candidate archive does not package @playwright/test. Node syntax checks for the alert and FinOps workbench specs passed; no browser PASS is claimed",
+    "candidate_static": "Ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI digest 315cdee5a324a972975b682809797142b5c1639286f072cb8972c2db09663708, Studio 129/242, web audit 72 files/184 route invocations, web budget, 53 assets, daily progress and Node syntax passed",
+    "ledger_checks": "Daily progress passed in the exact archive; public status and git diff are checkout-only because the candidate sandbox intentionally has no .git metadata",
+    "candidate_reproducibility_after_cleanup": "pass; cleanup/regeneration produced the same archive SHA 2f9d9e8e8dfaa9932af138ee51bdb9612d62ccc928e8dbef8a51a1d25eb0ba4f and manifest SHA 2ebb55fb2a4fbbc0229e6a47a61cb111101ba97282a7049bb5f77fe360512cd8; final verify passed",
+    "checkout_integrity_checks": "main/origin identity and git diff --check are checked separately on the checkout",
+    "result": "D34 pass for the FinOps/observability compatibility and real OTLP provider cell; P12 remains in_progress and unqualified"
+  },
+  "security_and_recovery": {
+    "journey": "The candidate reruns exact Decimal preservation, labels, actual/estimated separation, workspace budget identity, deny_new_work policy and restart persistence in the local reference profile",
+    "negative_paths": "Legacy private fields remain excluded, malformed cursor/serializer values are covered, mixed-currency allocation and invalid forecast/budget inputs remain rejected, and the real Collector lane records zero skipped/failed cases",
+    "provider_scope": "The real OTLP/HTTP Collector Contrib service was started from the pinned digest at the same clean source SHA and removed successfully. External Prometheus deployment, SMTP endpoint, HTTPS webhook, PostgreSQL FinOps/telemetry backend and production notification delivery remain untested",
+    "scans": {
+      "gitleaks": "8.30.1; final clean exact-candidate directory scan of 15,901,029 bytes; 0 findings",
+      "pip_audit": "pip-audit 2.10.1; requirements-test.lock; no known vulnerabilities",
+      "trivy": "SKIP; no local Trivy binary; no substitute scan claimed"
+    }
+  },
+  "open_cells": [
+    "P12 remains in_progress, not qualified: real OTLP Collector acceptance improves provider evidence but external notification delivery, deployed Prometheus, PostgreSQL-backed telemetry/FinOps, broad service adoption, full browser candidate packaging and production operation remain open.",
+    "The exact candidate browser lane is SKIP because the archive lacks @playwright/test; Node syntax is not browser qualification.",
+    "P13 remains blocked by the external secret-provider and release evidence boundary; P10, P11 and all other families retain their ledger states.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The compatibility fix is a regression correction around the D33 serializer; it does not add a public budget-evaluation or allocation route.",
+    "The exact candidate sandbox has no .git metadata by design; public status and git diff verification are checkout-only and are not converted into candidate PASS results.",
+    "No hosted workflow or GitHub Actions evidence was used."
+  ]
+}

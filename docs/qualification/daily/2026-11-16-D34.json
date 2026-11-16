@@ -1,0 +1,64 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D34",
+  "date": "2026-11-16",
+  "status": "pass",
+  "cell": "P12 FinOps policy/compatibility regression and real OTLP Collector provider",
+  "candidate_sha": "4bc15b20732c15e99e8b27d1bc3235cd1ce96da5",
+  "candidate_receipt": "docs/qualification/candidates/candidate-4bc15b20-d34.json",
+  "code_commit": "4bc15b20732c15e99e8b27d1bc3235cd1ce96da5",
+  "origin_main_at_code_commit": "4bc15b20732c15e99e8b27d1bc3235cd1ce96da5",
+  "implementation": {
+    "bug": "The D33 serializer fix restricted _finops_payload to dataclasses and regressed the existing legacy __dict__ normalization contract.",
+    "fix": "Use dataclass fields for slotted FinOps records and retain the legacy __dict__ path with private-field exclusion and historical numeric normalization.",
+    "journey": "Candidate reruns actual/estimated costs, labels, allocation, forecast, deny_new_work budget policy, workspace isolation contracts, real local HTTP/CLI/SDK recovery and an exact-source OTLP Collector lane."
+  },
+  "tests": {
+    "candidate_p12_and_compatibility": "86 passed, 0 failed, 0 skipped",
+    "candidate_journey": "2 passed, 0 failed, 0 skipped",
+    "candidate_sdk": "3 passed, 0 failed, 0 skipped",
+    "candidate_http_integration": "1 passed, 0 failed, 0 skipped",
+    "real_provider": "1 passed, 0 failed, 0 skipped against pinned OpenTelemetry Collector Contrib; cleanup succeeded",
+    "candidate_browser": "SKIP; @playwright/test is not packaged in the exact candidate archive; Node syntax checks passed",
+    "static_and_surface_checks": "Ruff format 951 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, dependency surfaces, OpenAPI, Studio 129/242, web audit 72 files/184 route invocations, web budget, 53 assets, daily progress and Node syntax pass",
+    "checkout_only_checks": "Public status and git diff are validated on the Git checkout because the candidate sandbox has no .git metadata",
+    "scans": "Gitleaks 0 findings over 15,901,029 bytes; pip-audit no known vulnerabilities; Trivy SKIP because no local binary"
+  },
+  "provider": {
+    "receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-p12-d34-otlp-4bc-20261116\\qualification.json",
+    "image": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621",
+    "tests": "1 passed, 0 failed, 0 skipped; traces, metrics and logs accepted over OTLP/HTTP; cleanup_status=succeeded"
+  },
+  "candidate": {
+    "archive_sha256": "2f9d9e8e8dfaa9932af138ee51bdb9612d62ccc928e8dbef8a51a1d25eb0ba4f",
+    "archive_size": 17100800,
+    "manifest_sha256": "2ebb55fb2a4fbbc0229e6a47a61cb111101ba97282a7049bb5f77fe360512cd8",
+    "manifest_size": 225773,
+    "digest_size": 252,
+    "file_count": 1466,
+    "total_bytes": 15901029,
+    "cleanup_regenerate_verify": "PASS; archive and manifest hashes were identical after cleanup/regeneration and final verify passed"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "days_passed": "33/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P12": "in_progress"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "days_passed": "34/39",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P12": "in_progress"
+    }
+  },
+  "limitations": [
+    "P12 is in_progress, not qualified: the real Collector provider does not certify SMTP/HTTPS notification delivery, deployed Prometheus, PostgreSQL-backed telemetry/FinOps, broad service adoption or browser packaging.",
+    "The current public API still lists FinOps records; allocation/forecast/budget evaluation remain service-level contracts and are not claimed as public routes in this cell.",
+    "P13 remains blocked by external secret-provider and release evidence; no gate status changed.",
+    "A skipped provider or browser test is not counted as PASS."
+  ]
+}
