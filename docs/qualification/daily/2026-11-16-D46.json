@@ -1,0 +1,62 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D46",
+  "date": "2026-11-16",
+  "status": "PASS",
+  "cell": "P11 Streaming Studio route negative-input isolation, bounded partition drain and recovery",
+  "candidate_sha": "8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9",
+  "candidate_receipt": "docs/qualification/candidates/candidate-8fc871f0-d46.json",
+  "code_commit": "8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9",
+  "origin_main_at_code_commit": "8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9",
+  "implementation": {
+    "production_change": false,
+    "summary": "D46 adds no production code; it binds the existing Streaming Studio route journey to an exact candidate and executes real negative, checkpoint and recovery assertions.",
+    "real_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d46-route-streaming-8fc871f0-20261116\\qualification-summary.json"
+  },
+  "tests": {
+    "candidate_contracts": "135 passed, 0 failed, 0 skipped in the exact candidate sandbox; the final regenerated candidate sandbox verified clean",
+    "candidate_quality": "Node syntax, Ruff format/check and mypy passed on the exact candidate selection",
+    "live_real_services": "PASS: PostgreSQL=true, Kafka=true, Ronin API=true; 1/1 filtered Playwright route case passed",
+    "live_negative_paths": "PASS: invalid limit 400; poison 422 twice with lag unchanged; oversized 422 with payload redaction and lag unchanged; valid-source recovery consumed one record and reached zero lag",
+    "live_partitioned_drain": "PASS: real two-partition fixture drained twelve records in six bounded batches with per-partition lag reaching zero",
+    "live_traffic": "52 events, 52 correlated, 48 OK, 4 expected WARN, 0 uncorrelated, 0 unexpected authorization gaps and 0 server/network errors",
+    "candidate_reproducibility": "PASS: archive 206bd165354ea9005062bb9ad3e9e17fb1e1b45edccaf9234078b25c47273145 and manifest 5039a200881a46c6352bcf530a63bbbbee833e050028512b785dd7b84222730 unchanged after cleanup/regeneration",
+    "route_audit": "NOT_RUN for the route-wide surface because this was a filtered diagnostic",
+    "security_scans": "NOT_RERUN in D46; prior Gitleaks/pip-audit evidence remains separate",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license": "INHERITED FAIL/CLOSED; 21 human review decisions missing and not counted as D46 PASS"
+  },
+  "candidate": {
+    "archive_sha256": "206bd165354ea9005062bb9ad3e9e17fb1e1b45edccaf9234078b25c47273145",
+    "archive_size": 17428480,
+    "manifest_sha256": "5039a200881a46c6352bcf530a63bbbbee833e050028512b785dd7b84222730",
+    "manifest_size": 231709,
+    "digest_sha256": "dfa226ca4b05bc36f512dca4fe09f5118c38f18b709c7af7b7273283991e1602",
+    "digest_size": 252,
+    "file_count": 1502,
+    "total_bytes": 16196975,
+    "cleanup_regenerate_verify": "PASS; the regenerated candidate archive and manifest matched the initial generation and final verify passed"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "limitations": [
+    "The filtered route diagnostic does not audit all 25 active routes or the 24 API-backed route contracts.",
+    "D46 adds no production code and does not prove sustained indefinite backpressure, multi-broker recovery, worker supervision, external provider breadth or the complete P11 journey.",
+    "No release gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}

@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
+    "base_sha": "8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -334,13 +334,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-16-D45.md",
       "candidate_sha": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
       "commit_sha": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb"
+    },
+    {
+      "id": "D46",
+      "date": "2026-11-16",
+      "phase": "p11-streaming-negative-recovery-route",
+      "status": "in_progress",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-16-D46.md",
+      "candidate_sha": "8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9",
+      "commit_sha": "8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D45 is the current exact bounded-backlog candidate bfa94cf0cb19c7058e0b54c1826f746a9f5594eb; D44 broker recovery, D43 bounded supervisor, D42 Floci/Terraform, D41 Docker and D38 product-code evidence remain linked, while the final release dossier, human decisions and aggregate approval are still open."
+      "summary": "D46 is the current exact Streaming route negative/recovery candidate 8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9; D45 bounded backlog, D44 broker recovery, D43 bounded supervisor, D42 Floci/Terraform, D41 Docker and D38 product-code evidence remain linked, while the final release dossier, human decisions and aggregate approval are still open."
     },
     {
       "id": "provider-certification",

@@ -1,0 +1,109 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D46",
+  "status": "in_progress",
+  "execution_date": "2026-11-16",
+  "planned_date": "2026-11-16",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9",
+    "origin_main_sha_when_candidate_was_tested": "8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-8fc871f0-d46",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-8fc871f0-d46\\candidate-8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9.tar",
+      "format": "tar",
+      "sha256": "206bd165354ea9005062bb9ad3e9e17fb1e1b45edccaf9234078b25c47273145",
+      "size": 17428480
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-8fc871f0-d46\\candidate-8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9.manifest.json",
+      "sha256": "5039a200881a46c6352bcf530a63bbbbee833e050028512b785dd7b84222730",
+      "size": 231709
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-8fc871f0-d46\\candidate-8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9.sha256",
+      "sha256": "dfa226ca4b05bc36f512dca4fe09f5118c38f18b709c7af7b7273283991e1602",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-8fc871f0-d46\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1502,
+    "total_bytes": 16196975,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9",
+    "candidate_docs_commit": null,
+    "summary": "D46 adds no production code. It binds the existing Streaming Studio route journey to an exact clean candidate and exercises invalid limits, poison input, oversized input, checkpoint non-advancement, partitioned bounded drain and explicit recovery against real services.",
+    "production_files_changed": [],
+    "test_files_changed": [],
+    "carried_product_code_commit": "bfa94cf0cb19c7058e0b54c1826f746a9f5594eb",
+    "carried_qualification_docs_commit": "8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 8fc871f0ab2be3e6576ff1936446cfd9ae11f3f9 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-8fc871f0-d46",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-8fc871f0-d46",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after the first candidate generation; the same source SHA regenerated identical archive and manifest hashes and final verify passed",
+    "candidate_contracts": "exact candidate sandbox: 135 passed, 0 failed, 0 skipped; the final regenerated sandbox was then verified clean",
+    "candidate_quality": "exact candidate sandbox: Node syntax checks passed; Ruff format/check and mypy passed on the streaming/control-plane selection",
+    "local_gates": "architecture gate, negative gates, route consistency for 200 operations, dependency surfaces, OpenAPI, capability status, daily ledger, public status and git diff check passed on main before the D46 receipt commit",
+    "live_qualification": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d46-route-streaming-8fc871f0-20261116 -TestGrep 'route streaming'",
+    "live_result": "real PostgreSQL, Redpanda/Kafka and Ronin API; 1/1 Playwright case passed; the route exercised invalid, poison, oversized, recovery and two-partition paths; 52/52 API events correlated, 48 OK and 4 expected WARN, with zero unexpected server/network errors; services cleaned"
+  },
+  "qualification_matrix": {
+    "route_streaming_journey": "PASS for the filtered route: the real Studio route created and read stream definitions, replayed a valid stream, drained both explicit Kafka partitions in bounded batches and reached zero lag",
+    "invalid_limit": "PASS candidate-bound live assertion: limit=0 returns HTTP 400 and does not claim a successful batch",
+    "poison_input": "PASS candidate-bound live assertion: the corrupt JSON returns HTTP 422 stream_input_rejected twice, does not expose the invalid payload and leaves lag at 1",
+    "oversized_input": "PASS candidate-bound live assertion: the oversized record returns HTTP 422 stream_input_rejected without leaking the payload, leaves lag at 1, then a reset to a valid source consumes one record and reaches lag zero",
+    "partitioned_drain": "PASS candidate-bound live assertion: the real two-partition fixture drains twelve records in six bounded batches and verifies per-partition lag reaches zero",
+    "traffic_audit": "PASS for the filtered diagnostic: 52/52 API events correlated to structured HTTP logs, 48 OK and 4 expected WARN, zero uncorrelated events, zero unexpected authorization gaps and zero server/network errors",
+    "candidate_reproducibility_after_cleanup": "PASS; archive SHA 206bd165354ea9005062bb9ad3e9e17fb1e1b45edccaf9234078b25c47273145 and manifest SHA 5039a200881a46c6352bcf530a63bbbbee833e050028512b785dd7b84222730 were unchanged after cleanup/regeneration and final verify passed",
+    "security_scans": "NOT_RERUN in D46; prior Gitleaks and pip-audit evidence remains separate and is not copied as a new D46 PASS",
+    "trivy": "NOT_RUN",
+    "license_qualification": "INHERITED FAIL/CLOSED; 21 human review decisions remain missing",
+    "result": "D46 passes the filtered streaming negative/recovery campaign cell, but does not qualify P11, close a release gate or change NO-GO"
+  },
+  "security_and_recovery": {
+    "journey": "The exact live journey used real PostgreSQL, Redpanda/Kafka and Ronin API services, exercised valid replay, invalid bounds, poison retry, oversized rejection, valid-source recovery and a two-partition bounded drain, then cleaned all services.",
+    "negative_paths": "Traffic records one expected invalid_request 400, two expected stream_input_rejected 422 poison responses and one expected stream_input_rejected 422 oversized response; browser assertions verify authorization remains present, checkpoint lag is unchanged on rejection and the recovery path commits only the valid record.",
+    "recovery_scope": "This campaign proves the route-level poison/oversized recovery and bounded two-partition path. It does not prove sustained indefinite backpressure, multi-broker quorum recovery, worker supervision, external provider breadth or the complete P11 journey."
+  },
+  "evidence": {
+    "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d46-route-streaming-8fc871f0-20261116",
+    "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d46-route-streaming-8fc871f0-20261116\\qualification-summary.json",
+    "qualification_summary_sha256": "b980df88dcdecc99b18738bea152e2120c973919ddf17fe037cb31e5900e625c",
+    "qualification_summary_size": 2785,
+    "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d46-route-streaming-8fc871f0-20261116\\live-api-traffic.json",
+    "live_api_traffic_sha256": "c7936fcf81414359c2bd3ec6a0b5df775b92dbf412f21cb95810c4845c4c55b3",
+    "live_api_traffic_size": 16468,
+    "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d46-route-streaming-8fc871f0-20261116\\browser-live.xml",
+    "browser_junit_sha256": "23dbfbc3d6dcc6eb391b0775fbb83e995366fd98851052bd59d95d2126632a23",
+    "browser_junit_size": 407,
+    "browser_log": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d46-route-streaming-8fc871f0-20261116\\browser-live.log",
+    "browser_log_sha256": "607a65a2a7177d6b92a53572a77b6b8c3ec7d5d99295e8818b6978ac541dc0a8",
+    "browser_log_size": 161,
+    "server_stderr": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d46-route-streaming-8fc871f0-20261116\\live-server.stderr.log",
+    "server_stderr_sha256": "b46b4862a971b03215429961ed91c4b5b1944c4dd57b19c37a062e61dddeb03f",
+    "server_stderr_size": 25570
+  },
+  "open_cells": [
+    "P11 remains in_progress: D46 strengthens the route-level negative and recovery slice, while sustained backpressure, worker supervision, broader provider breadth and the complete family journey remain open.",
+    "P2 and P14 remain in_progress; D46 does not add connector/provider or external recovery qualification.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external secret provider or credential was available.",
+    "D46 does not rerun the full Python suite, Gitleaks, pip-audit or Trivy; skipped and inherited lanes are not counted as PASS.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The live runner was a filtered route diagnostic: route-wide coverage was not audited even though the application has 25 active routes and 24 API-backed routes.",
+    "D46 adds no production code and proves one local route journey only; it does not prove indefinite load, multi-broker quorum recovery, worker supervision, external providers or the full P11 family journey.",
+    "No hosted workflow, branch or worktree was used; license review remains FAIL/CLOSED with 21 human decisions pending."
+  ]
+}
