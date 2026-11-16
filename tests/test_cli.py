@@ -61,6 +61,63 @@ def test_connectors_capabilities_uses_control_plane_client(monkeypatch, capsys) 
     }
 
 
+def test_finops_cli_forwards_periods_and_resource_commands(monkeypatch, capsys) -> None:
+    class _Client:
+        def list_finops_usage(self, workspace_id, *, period_start, period_end):
+            assert (workspace_id, period_start, period_end) == (
+                "workspace-a",
+                "2026-10-24T00:00:00Z",
+                "2026-10-25T00:00:00Z",
+            )
+            return {"items": [{"id": "usage-1"}], "next_cursor": None}
+
+        def list_finops_costs(self, workspace_id, *, period_start, period_end):
+            assert (workspace_id, period_start, period_end) == (
+                "workspace-a",
+                "2026-10-24T00:00:00Z",
+                "2026-10-25T00:00:00Z",
+            )
+            return {"items": [{"usage_id": "usage-1"}], "next_cursor": None}
+
+        def list_finops_budgets(self, workspace_id):
+            assert workspace_id == "workspace-a"
+            return {"items": [{"id": "budget-1"}], "next_cursor": None}
+
+    monkeypatch.setattr("studio_cli._control_plane_client", lambda: _Client())
+    for args, expected in (
+        (
+            [
+                "finops",
+                "usage",
+                "workspace-a",
+                "--period-start",
+                "2026-10-24T00:00:00Z",
+                "--period-end",
+                "2026-10-25T00:00:00Z",
+                "--json",
+            ],
+            "usage-1",
+        ),
+        (
+            [
+                "finops",
+                "costs",
+                "workspace-a",
+                "--period-start",
+                "2026-10-24T00:00:00Z",
+                "--period-end",
+                "2026-10-25T00:00:00Z",
+                "--json",
+            ],
+            "usage-1",
+        ),
+        (["finops", "budgets", "workspace-a", "--json"], "budget-1"),
+    ):
+        assert main(args) == 0
+        output = json.loads(capsys.readouterr().out)
+        assert output["items"][0].get("id", output["items"][0].get("usage_id")) == expected
+
+
 def test_connectors_discover_emits_assets(monkeypatch, capsys) -> None:
     class _Client:
         def connector_discover(

@@ -69,3 +69,13 @@ def test_client_rejects_invalid_environment_policy(monkeypatch) -> None:
     monkeypatch.setenv("RONIN_BIND_POLICY", "remote")
     with pytest.raises(ValueError, match="RONIN_BIND_POLICY must be one of"):
         ControlPlaneClient("https://example.test", "token")
+
+
+def test_finops_client_rejects_blank_or_untrimmed_scope_and_periods() -> None:
+    client = ControlPlaneClient("http://127.0.0.1:8080", "token")
+    with pytest.raises(ValueError, match="workspace_id must be non-empty and trimmed"):
+        client.list_finops_budgets(" workspace-a")
+    with pytest.raises(ValueError, match="period_start must be non-empty and trimmed"):
+        client.list_finops_usage("workspace-a", period_start=" ", period_end="2026-01-02")
+    with pytest.raises(ValueError, match="period_end must be non-empty and trimmed"):
+        client.list_finops_costs("workspace-a", period_start="2026-01-01", period_end=" ")

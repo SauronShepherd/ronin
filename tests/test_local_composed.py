@@ -2736,6 +2736,40 @@ def test_local_composed_finops_http_preserves_slotted_records_and_alert_scope(
                 "labels": {"service": "api"},
             },
         )
+        assert (
+            cli_main(
+                [
+                    "finops",
+                    "usage",
+                    "workspace-1",
+                    "--period-start",
+                    str(period_start),
+                    "--period-end",
+                    str(period_end),
+                    "--json",
+                ]
+            )
+            == 0
+        )
+        assert json.loads(capsys.readouterr().out)["items"][0]["id"] == "usage-http"
+        assert (
+            cli_main(
+                [
+                    "finops",
+                    "costs",
+                    "workspace-1",
+                    "--period-start",
+                    str(period_start),
+                    "--period-end",
+                    str(period_end),
+                    "--json",
+                ]
+            )
+            == 0
+        )
+        assert json.loads(capsys.readouterr().out)["items"][0]["amount"] == "1.0025"
+        assert cli_main(["finops", "budgets", "workspace-1", "--json"]) == 0
+        assert json.loads(capsys.readouterr().out)["items"][0]["id"] == "daily-http"
 
         assert sdk.list_alert_rules("workspace-1")[0]["id"] == rule.id
         evaluated = sdk.evaluate_alert("workspace-1", rule.id)

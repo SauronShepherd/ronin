@@ -315,6 +315,21 @@ def _parser() -> argparse.ArgumentParser:
     quality_state.add_argument("asset_id")
     quality_state.add_argument("version")
     quality_state.add_argument("--json", action="store_true")
+    finops = commands.add_parser("finops", help="inspect workspace FinOps ledger")
+    finops_commands = finops.add_subparsers(dest="finops_command", required=True)
+    finops_usage = finops_commands.add_parser("usage", help="list usage records")
+    finops_usage.add_argument("workspace_id")
+    finops_usage.add_argument("--period-start", required=True)
+    finops_usage.add_argument("--period-end", required=True)
+    finops_usage.add_argument("--json", action="store_true")
+    finops_costs = finops_commands.add_parser("costs", help="list priced usage costs")
+    finops_costs.add_argument("workspace_id")
+    finops_costs.add_argument("--period-start", required=True)
+    finops_costs.add_argument("--period-end", required=True)
+    finops_costs.add_argument("--json", action="store_true")
+    finops_budgets = finops_commands.add_parser("budgets", help="list budget policies")
+    finops_budgets.add_argument("workspace_id")
+    finops_budgets.add_argument("--json", action="store_true")
     alerts = commands.add_parser("alerts", help="inspect and operate workspace alert state")
     alert_commands = alerts.add_subparsers(dest="alerts_command", required=True)
     alert_rules = alert_commands.add_parser("rules", help="list configured alert rules")
@@ -1062,6 +1077,30 @@ def _quality(namespace: argparse.Namespace) -> int:
         )
     else:
         raise CliError(f"unsupported quality command: {command}")
+    _emit_control_result(result, as_json=bool(namespace.json))
+    return 0
+
+
+def _finops(namespace: argparse.Namespace) -> int:
+    client = _control_plane_client()
+    command = cast(str, namespace.finops_command)
+    workspace_id = cast(str, namespace.workspace_id)
+    if command == "usage":
+        result = client.list_finops_usage(
+            workspace_id,
+            period_start=cast(str, namespace.period_start),
+            period_end=cast(str, namespace.period_end),
+        )
+    elif command == "costs":
+        result = client.list_finops_costs(
+            workspace_id,
+            period_start=cast(str, namespace.period_start),
+            period_end=cast(str, namespace.period_end),
+        )
+    elif command == "budgets":
+        result = client.list_finops_budgets(workspace_id)
+    else:
+        raise CliError(f"unsupported finops command: {command}")
     _emit_control_result(result, as_json=bool(namespace.json))
     return 0
 
@@ -2043,6 +2082,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _graphs(namespace)
         if command == "quality":
             return _quality(namespace)
+        if command == "finops":
+            return _finops(namespace)
         if command == "alerts":
             return _alerts(namespace)
         if command == "migrate":

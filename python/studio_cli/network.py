@@ -547,6 +547,51 @@ class ControlPlaneClient:
             )
         )
 
+    def list_finops_usage(
+        self, workspace_id: str, *, period_start: str, period_end: str
+    ) -> dict[str, object]:
+        return self._list_finops(
+            workspace_id, "usage", period_start=period_start, period_end=period_end
+        )
+
+    def list_finops_costs(
+        self, workspace_id: str, *, period_start: str, period_end: str
+    ) -> dict[str, object]:
+        return self._list_finops(
+            workspace_id, "costs", period_start=period_start, period_end=period_end
+        )
+
+    def list_finops_budgets(self, workspace_id: str) -> dict[str, object]:
+        if not workspace_id or workspace_id != workspace_id.strip():
+            raise ValueError("workspace_id must be non-empty and trimmed")
+        return _page_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/finops/budgets",
+            ),
+            "FinOps budgets",
+        )
+
+    def _list_finops(
+        self, workspace_id: str, kind: str, *, period_start: str, period_end: str
+    ) -> dict[str, object]:
+        if not workspace_id or workspace_id != workspace_id.strip():
+            raise ValueError("workspace_id must be non-empty and trimmed")
+        if not period_start or period_start != period_start.strip():
+            raise ValueError("period_start must be non-empty and trimmed")
+        if not period_end or period_end != period_end.strip():
+            raise ValueError("period_end must be non-empty and trimmed")
+        if kind not in {"usage", "costs"}:
+            raise ValueError("unsupported FinOps resource")
+        return _page_result(
+            self.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/finops/{kind}",
+                query={"period_start": period_start, "period_end": period_end},
+            ),
+            f"FinOps {kind}",
+        )
+
     def list_alert_rules(self, workspace_id: str) -> dict[str, object]:
         return _page_result(
             self.request("GET", f"/v1/workspaces/{quote(workspace_id, safe='')}/alerts/rules"),
