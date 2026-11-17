@@ -295,6 +295,9 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert "[System.Collections.Generic.Queue[object]]::new()" in script
     assert "$routeQueue.Enqueue($nestedRouteEntry)" in script
     assert "$publishedRoutes.ToArray()" in script
+    assert script.index('if ($junit.SelectNodes("//testcase/skipped").Count -gt 0)') > script.index(
+        "$publishedRoutes.ToArray()"
+    )
     assert "[System.Collections.Generic.HashSet[string]]::new" in script
     assert "$caseNameSet.Contains($expectedRouteCase)" in script
     assert "$trafficQueue.Enqueue($trafficDocument)" in script

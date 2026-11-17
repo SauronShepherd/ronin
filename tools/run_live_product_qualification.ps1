@@ -494,7 +494,6 @@ try {
     } elseif ($cases.Count -lt 30) {
         throw "Live qualification requires 30 cases; only $($cases.Count) were reported."
     }
-    if ($junit.SelectNodes("//testcase/skipped").Count -gt 0) { throw "Live qualification contains skipped tests." }
     if ($junit.SelectNodes("//testcase/failure").Count -gt 0 -or $junit.SelectNodes("//testcase/error").Count -gt 0) {
         throw "Live qualification contains failed or errored tests."
     }
@@ -634,6 +633,7 @@ try {
     } else {
         Write-Output "UI-only diagnostic passed: 0 API calls (this does not qualify API behavior)."
     }
+    if ($junit.SelectNodes("//testcase/skipped").Count -gt 0) { throw "Live qualification contains skipped tests." }
     $resultCode = 0
     if ($TestGrep) {
         Write-Output "Live diagnostic passed: $($cases.Count) filtered Playwright cases, $($traffic.Count) real API calls."
