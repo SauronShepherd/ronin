@@ -1,0 +1,144 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D48",
+  "status": "pass",
+  "outcome": "pass for the bounded supervised two-partition continuity cell: the exact clean candidate passed two independent real-service runs with 64/64 records and rows; this does not qualify P11 or close a release gate",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "564cc53a3792a37a068168b73ce69001dbf271ed",
+    "origin_main_sha_when_candidate_was_tested": "564cc53a3792a37a068168b73ce69001dbf271ed",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-564cc53a-d48",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-564cc53a-d48\\candidate-564cc53a3792a37a068168b73ce69001dbf271ed.tar",
+      "format": "tar",
+      "sha256": "4f24e0eff2331187e5fb9356fb81caaa26c02d9c0d1d4b414dfa7c1165c0e9e2",
+      "size": 17500160
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-564cc53a-d48\\candidate-564cc53a3792a37a068168b73ce69001dbf271ed.manifest.json",
+      "sha256": "4bbd7f437acb54fb5d955f1d737f82a89a24ffe73a5c9a4fbd19853441073a0c",
+      "size": 232701
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-564cc53a-d48\\candidate-564cc53a3792a37a068168b73ce69001dbf271ed.sha256",
+      "sha256": "11385cf22f264628f54cb81196fb2f7940b4354a1041b217e3ebf123fdde9a2b",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-564cc53a-d48\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1508,
+    "total_bytes": 16263529,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "564cc53a3792a37a068168b73ce69001dbf271ed",
+    "candidate_docs_commit": null,
+    "summary": "D48 fixes the supervised Kafka drain lifecycle. A supervisor now reuses one MicroBatchProcessor and Kafka consumer across its bounded microbatches, closes the source explicitly, and preserves prefetched records from the other partition. The qualification runner also disables browser media by default and removes any bounded-run media in finally, with cleanup failure invalidating the run.",
+    "production_files_changed": [
+      "python/studio_streaming/kafka.py",
+      "python/studio_streaming/processor.py",
+      "python/studio_streaming/runtime.py",
+      "tools/run_live_product_qualification.ps1",
+      "web-tests/playwright.config.mjs",
+      "web-tests/tests/platform-studio-journeys.spec.mjs"
+    ],
+    "test_files_changed": [
+      "tests/test_docker_qualification_contract.py",
+      "tests/test_streaming_kafka.py",
+      "tests/test_streaming_runtime.py"
+    ],
+    "documentation_changed_in_code_commit": [
+      "docs/DEVELOPMENT_QUALIFICATION.md"
+    ],
+    "parent_product_commit": "b479ff953b4542b938e6721e0a3041e88c79036c"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 564cc53a3792a37a068168b73ce69001dbf271ed --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-564cc53a-d48",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-564cc53a-d48",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after sandbox tests; the same source SHA regenerated the recorded archive, manifest and digest identity and final verify passed",
+    "candidate_contracts": "exact candidate sandbox: python -m pytest -q tests/test_docker_qualification_contract.py tests/test_streaming_kafka.py tests/test_streaming_runtime.py -> 46 passed, 0 failed, 0 skipped",
+    "candidate_quality": "exact candidate selection: Ruff format/check passed; mypy python/studio_streaming python/studio_server/control_plane.py passed; node --check passed for web-tests/playwright.config.mjs, web-tests/tests/platform-studio-journeys.spec.mjs and web-tests/tests/product-live.spec.mjs",
+    "checkout_quality_before_candidate": "ruff format --check python tests tools web-tests; ruff check python tests tools web-tests; mypy python tools packages/pyronin/src docker; architecture gate; negative gates; route consistency; dependency surfaces; OpenAPI snapshot; daily/public status checks and git diff --check all passed on the source checkout",
+    "live_candidate_1": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-1-564cc53a-20261117 -TestGrep \"live streaming supervised drain\"",
+    "live_candidate_2": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-2-564cc53a-20261117 -TestGrep \"live streaming supervised drain\""
+  },
+  "qualification_matrix": {
+    "supervised_continuity": "PASS for this bounded cell: two independent clean-candidate runs both passed 1/1 Playwright and returned records=64, rows=64, stop_reason=idle and final lag zero against real PostgreSQL, Kafka/Redpanda and Ronin API",
+    "regression_contract": "PASS: the focused Kafka/runtime/qualification contract selection passed 46/46 with no skips; tests prove consumer reuse across polls, explicit source close and supervisor reuse of one source session",
+    "traffic_audit": "PASS for both filtered diagnostics: each run recorded 5/5 correlated API events, 4 OK and 1 expected WARN for invalid max_batches=0, with zero uncorrelated events and zero unexpected server/network errors",
+    "browser_media_cleanup": "PASS: both live summaries report browserMediaCleanup.succeeded with removed=0; the default Playwright path produces no PNG/JPG/WebM artifacts",
+    "docker_cleanup_at_close": "PASS for current resources: docker ps -a returned no containers and docker images contained no repository beginning with ronin after the campaigns; the owned-image cleanup contract is inherited from b479ff953b4542b938e6721e0a3041e88c79036c",
+    "route_audit": "NOT_RUN: the live command was a filtered diagnostic; its summary reports 25 active routes, 24 API-backed routes and 1 UI-only route with routeCoverage.audited=false",
+    "security_scans": "NOT_RERUN in D48; previous Gitleaks and pip-audit evidence remains separate and is not copied as a D48 PASS",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license_qualification": "INHERITED FAIL/CLOSED; 21 human review decisions remain missing",
+    "result": "D48 passes the bounded supervised continuity cell, but does not qualify P11, close a gate or change release NO-GO"
+  },
+  "security_and_recovery": {
+    "fixed_behavior": "The previous implementation rebuilt and closed the source/consumer on each supervised microbatch. A consumer could prefetch records from the other partition and discard them on close, allowing a 32/64 result without an application error. The new supervisor keeps one processor/source session for the entire run, and the source closes in finally.",
+    "negative_behavior": "Both live runs exercised the invalid max_batches=0 path after the positive drain; the expected HTTP 400 is recorded as WARN, without turning the invalid request into a false product PASS.",
+    "pre_fix_failure_retained": "The valid pre-fix dirty diagnostic remains evidence of the original defect: C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-diagnostic-1-b479ff95-20261117\\qualification-summary.json reported records=32/rows=32 instead of 64 and Playwright 0/1. It is not replaced by the new passing runs.",
+    "pre_fix_artifact_hashes": {
+      "qualification_summary_sha256": "68cdd06f833a5a19156894bf489889201799180d245569c2210ce4c1589efede",
+      "qualification_summary_size": 2775,
+      "live_api_traffic_sha256": "b1517d2daedd48542be2f21b9d84dacb1e3869ed15b70cff96db3120aaeb6103",
+      "live_api_traffic_size": 967,
+      "browser_junit_sha256": "5868639c7c3a7a7fe52c3e0d00865966252456a53ac2b4eea257970cefae300f",
+      "browser_junit_size": 3463
+    },
+    "scope": "The live evidence uses one local Kafka/Redpanda broker with two partitions and no worker image. It does not prove sustained backpressure, multi-broker quorum recovery, worker supervision, external provider breadth or the complete P11 journey."
+  },
+  "evidence": {
+    "candidate_live_1": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-1-564cc53a-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-1-564cc53a-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "299c8ce16cb2a122c1cf9fe545d66c05e546b17fd2c320f2bf33f81c17e39bbf",
+      "qualification_summary_size": 2820,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-1-564cc53a-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "447b1045751c248eff0794254baa1e14043ca7c47f0c903c25dfa784d205c00e",
+      "live_api_traffic_size": 1648,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-1-564cc53a-20261117\\browser-live.xml",
+      "browser_junit_sha256": "5b62b950112331cc017b403660d87df6c66f236ace51c6f5ca81ec8ae3804b1d",
+      "browser_junit_size": 429,
+      "status": "PASS: Playwright 1/1; real PostgreSQL/Kafka/Ronin API; 5/5 traffic events correlated; 4 OK and 1 expected WARN; application logs INFO 6, WARNING 1, ERROR 0, CRITICAL 0; media cleanup succeeded removing 0 files; duration 78.17 seconds"
+    },
+    "candidate_live_2": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-2-564cc53a-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-2-564cc53a-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "73c7ce6fb83a8fef40ea794f088d4b96ff43f803926bbde3798ca0fd08c04448",
+      "qualification_summary_size": 2821,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-2-564cc53a-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "ac4bf2084e9b4ccf2d6adca761392685df871194ccc78d15b55073358165d806",
+      "live_api_traffic_size": 1649,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-2-564cc53a-20261117\\browser-live.xml",
+      "browser_junit_sha256": "f64b28b63f1a3e3f1af3cfb6fdb31e6b0627e63e2f57a5d2d1fe8336e03d2dec",
+      "browser_junit_size": 429,
+      "status": "PASS: Playwright 1/1; real PostgreSQL/Kafka/Ronin API; 5/5 traffic events correlated; 4 OK and 1 expected WARN; application logs INFO 6, WARNING 1, ERROR 0, CRITICAL 0; media cleanup succeeded removing 0 files; duration 51.38 seconds"
+    }
+  },
+  "open_cells": [
+    "P11 remains in_progress: the bounded supervised two-partition continuity cell is now green twice, but sustained backpressure, worker supervision, multi-broker recovery, broader provider breadth and the complete family journey remain open.",
+    "P2 and P14 remain in_progress; D48 adds no connector/provider or backup/restore qualification.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external secret provider or credential was available.",
+    "D48 does not rerun the full Python suite, Gitleaks, pip-audit or Trivy; skipped and inherited lanes are not counted as PASS.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The two successful live runs are a bounded filtered diagnostic, not a complete P11 family qualification or route-wide browser qualification.",
+    "workerImage is null in both live summaries; no worker/provider matrix was exercised in this cell.",
+    "Historical media from older diagnostic runs remains in bounded temp evidence directories because the environment safety policy rejected deleting files outside the checkout. New runner executions now keep media disabled and verify zero media artifacts; no historical deletion is claimed.",
+    "External/base Docker images are not indiscriminately deleted: the owned Ronin image cleanup removes the qualification-owned image and descendants, while preserving caller-owned/base images needed by the invoking environment.",
+    "No hosted workflow, branch or worktree was used; license review remains FAIL/CLOSED with 21 human decisions pending."
+  ]
+}

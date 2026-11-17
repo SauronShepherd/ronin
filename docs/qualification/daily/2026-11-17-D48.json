@@ -1,0 +1,68 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D48",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "P11 bounded supervised two-partition continuity after consumer/session lifecycle fix",
+  "candidate_sha": "564cc53a3792a37a068168b73ce69001dbf271ed",
+  "candidate_receipt": "docs/qualification/candidates/candidate-564cc53a-d48.json",
+  "code_commit": "564cc53a3792a37a068168b73ce69001dbf271ed",
+  "origin_main_at_code_commit": "564cc53a3792a37a068168b73ce69001dbf271ed",
+  "implementation": {
+    "production_change": true,
+    "summary": "Kafka source/consumer lifetime now spans the supervised drain, MicroBatchProcessor exposes explicit close, the runtime closes resources in finally, and qualification browser media is disabled/cleaned by default.",
+    "real_evidence": [
+      "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-1-564cc53a-20261117\\qualification-summary.json",
+      "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d48-candidate-2-564cc53a-20261117\\qualification-summary.json"
+    ]
+  },
+  "tests": {
+    "candidate_contracts": "46 passed, 0 failed, 0 skipped in the exact candidate sandbox; final regenerated sandbox was clean and verify passed",
+    "candidate_quality": "Ruff format/check, mypy on streaming/control-plane selection and three Node syntax checks passed",
+    "source_quality": "Full requested static source checks passed before candidate generation: Ruff format/check, mypy 451 source files, architecture gate, negative gates, route consistency for 200 operations, dependency surfaces, OpenAPI snapshot, daily/public status checks and git diff --check",
+    "live_candidate_1": "PASS: real PostgreSQL=true, Kafka=true, Ronin API=true; 1/1 filtered Playwright; 64/64 records and rows; 5/5 API events correlated; 4 OK and 1 expected WARN; no ERROR/CRITICAL; media cleanup succeeded",
+    "live_candidate_2": "PASS: same exact candidate and real services; 1/1 filtered Playwright; 64/64 records and rows; 5/5 API events correlated; 4 OK and 1 expected WARN; no ERROR/CRITICAL; media cleanup succeeded",
+    "pre_fix_failure": "Retained FAIL evidence at 32/64 from the pre-fix diagnostic; it is causal evidence and is not overwritten or counted as a current PASS",
+    "candidate_reproducibility": "PASS: archive 4f24e0eff2331187e5fb9356fb81caaa26c02d9c0d1d4b414dfa7c1165c0e9e2 and manifest 4bbd7f437acb54fb5d955f1d737f82a89a24ffe73a5c9a4fbd19853441073a0c were unchanged after cleanup/regeneration; final verify passed",
+    "docker_cleanup": "PASS for current resources: no containers and no Ronin repository images remained after the live campaigns",
+    "browser_media": "PASS: both new evidence directories contain zero PNG/JPG/JPEG/WebM files; cleanup status succeeded with removed=0",
+    "route_audit": "NOT_RUN for route-wide coverage; filtered live summary reports 25 active routes, 24 API contracts and 1 UI-only route",
+    "security_scans": "NOT_RERUN in D48; prior evidence remains separate",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license": "INHERITED FAIL/CLOSED; 21 human review decisions missing and not counted as D48 PASS"
+  },
+  "candidate": {
+    "archive_sha256": "4f24e0eff2331187e5fb9356fb81caaa26c02d9c0d1d4b414dfa7c1165c0e9e2",
+    "archive_size": 17500160,
+    "manifest_sha256": "4bbd7f437acb54fb5d955f1d737f82a89a24ffe73a5c9a4fbd19853441073a0c",
+    "manifest_size": 232701,
+    "digest_sha256": "11385cf22f264628f54cb81196fb2f7940b4354a1041b217e3ebf123fdde9a2b",
+    "digest_size": 252,
+    "file_count": 1508,
+    "total_bytes": 16263529,
+    "cleanup_regenerate_verify": "PASS; the final regenerated candidate contains no generated test caches or artifacts and verify passed"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "limitations": [
+    "D48 closes only the bounded supervised continuity cell; it does not prove sustained backpressure, multi-broker recovery, worker supervision, provider breadth or the complete P11 journey.",
+    "The live diagnostic is filtered and route-wide audit was not run; no worker image was present.",
+    "Historical temp media was not deleted because the environment safety policy rejected deletion outside the checkout; the new runner prevents and detects future media residue.",
+    "No release gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}
