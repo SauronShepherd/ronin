@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D92",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate bounded live sustained backpressure at 32768 records",
+  "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D92.md",
+  "execution_scope": "exact-candidate-focused-single-broker-sustained-backpressure-32768-with-reset-safe-replay",
+  "result": {
+    "journey": "PASS: 1/1 Playwright case passed, 0 skips and 0 failures",
+    "backpressure": "PASS: 32768-record bounded fixture completes sustained drain/reset/replay journey with two partitions",
+    "api": "PASS: 12/12 real API events correlated with structured logs, all OK, 0 uncorrelated and 0 unexpected errors",
+    "services": "PASS: real single-broker Redpanda and Ronin API; PostgreSQL and worker are intentionally not applicable to this filtered cell",
+    "cleanup": "PASS: isolated broker/network cleanup and exact checkout removal",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "This is a filtered streaming-only diagnostic with routeCoverage.audited=false, PostgreSQL=false and workerImage=null.",
+    "A 447.49-second bounded run does not qualify indefinite operation, supervisor continuity at production duration, provider breadth, the complete P11 family or human release approval."
+  ]
+}

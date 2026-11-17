@@ -23,6 +23,13 @@ Together D90 and D91 provide current-SHA route coverage and the separate
 multi-broker recovery cell without claiming indefinite operation or a complete
 P11 family journey.
 
+D92 extends the exact-candidate bounded single-broker backpressure journey to
+`32,768` records. The filtered Playwright case passes `1/1`, produces `12/12`
+correlated `OK` API events, reports zero unexpected errors and cleans up the
+isolated broker/network. The run uses `RequestTimeoutSeconds=600`, PostgreSQL
+and worker are intentionally out of scope, and the result remains bounded
+evidence rather than an indefinite-operation claim.
+
 D89 renueva el dossier de artefactos y supply-chain para la misma frontera
 exacta: wheel/sdist, TARs runtime/probe, identidad de artefactos, SBOM de
 aplicación de `110` componentes, dos inventarios de contenedor distintos
