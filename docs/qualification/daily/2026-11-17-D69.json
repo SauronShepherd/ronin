@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D69",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Exact-candidate full Python/PostgreSQL regression revalidation",
+  "candidate_sha": "b39a10b4ff743abaac457b43f8c2bfa516a5efbe",
+  "implementation_commit_sha": "b39a10b4ff743abaac457b43f8c2bfa516a5efbe",
+  "documentation_commit_sha": "b39a10b4ff743abaac457b43f8c2bfa516a5efbe",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D69.md",
+  "execution_scope": "exact-candidate-full-python-postgresql-regression",
+  "result": {
+    "candidate_boundary": "PASS: 1,571 files, 16,648,417 sandbox bytes, archive and manifest verification passed",
+    "full_python_regression": "PASS: 4,753 passed, 31 skipped, 0 failed out of 4,784 collected cases against isolated PostgreSQL 16.4; JUnit 667.921s; runner total 684.5s; cleanup succeeded",
+    "warnings": "13 ResourceWarning entries retained as a follow-up; no test failures",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The 31 skips are explicit platform, opt-in service and external-provider limitations; they are not counted as PASS.",
+    "D69 revalidates the full Python/PostgreSQL baseline but does not rerun the Docker/Helm lanes or security scans already recorded in D68 and D66.",
+    "Indefinite operation, production topology, provider breadth, complete P11 family evidence, human review and final release approval remain open."
+  ]
+}

@@ -2,8 +2,11 @@
 
 ## Current exact-SHA snapshot — 17 November 2026
 
-The current code/evidence candidate is `1ae749a074c023b665e3373ec68fa7c82cbf3131`.
-D68 adds a corrected exact-candidate Docker→Helm chain: `27/27` Docker tests,
+The current code/evidence candidate is `b39a10b4ff743abaac457b43f8c2bfa516a5efbe`.
+D69 adds a full exact-candidate Python/PostgreSQL revalidation: `4,753/4,784`
+with `31` explicit skips and `0` failures, isolated PostgreSQL cleanup and
+`13` ResourceWarnings retained for follow-up. D68 remains linked for the
+corrected exact-candidate Docker→Helm chain: `27/27` Docker tests,
 strict v0.1 acceptance `15/15`, and all Helm/kind install, API, queued-job
 restart-persistence, upgrade, rollback and cleanup phases pass. The harness
 contract selection is `25/25`.
@@ -164,7 +167,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `1ae749a074c023b665e3373ec68fa7c82cbf3131` (current exact candidate; the implementation code baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`, this is not a release qualification claim, and the required human/provider gates remain open).
+**Observed source baseline:** `b39a10b4ff743abaac457b43f8c2bfa516a5efbe` (current exact candidate; the implementation code baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`, this is not a release qualification claim, and the required human/provider gates remain open).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
