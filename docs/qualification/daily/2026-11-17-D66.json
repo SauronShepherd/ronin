@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D66",
+  "date": "2026-11-17",
+  "status": "IN_PROGRESS",
+  "cell": "Exact-candidate local worker image, worker-backed Notebook Studio and multi-broker P11 evidence",
+  "candidate_sha": "658071c8eeee07141c17841b7f5bd6d53185a7f5",
+  "implementation_commit_sha": "9b3f3670ac19baac95f4dfd35b73805ba0785ae1",
+  "documentation_commit_sha": "658071c8eeee07141c17841b7f5bd6d53185a7f5",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D66.md",
+  "execution_scope": "exact-candidate-worker-image-live-and-security-slices",
+  "result": {
+    "image": "PASS: ronin:qualification-658071c8 resolves to sha256:ad9be1b8d31c592ae143229c423c92ae65aeea5bac6852645c7253858b2a27c9 and the supported CLI probe responds",
+    "worker_notebook": "PASS: 1/1 case, 16/16 correlated events all OK, real worker image active and cleanup succeeded",
+    "multi_broker": "PASS: 1/1 case, three real brokers, 5/5 correlated events all OK and cleanup succeeded",
+    "full_worker_attempt": "NOT_COUNTED: 39/40 cases passed, 0 failed and 1 deliberate multi-broker skip; 382/382 API events correlated, with 358 OK, 21 expected WARN and 3 expected outage ERROR outcomes",
+    "security": "PASS: Gitleaks 0, pip-audit no known vulnerabilities, Trivy filesystem 0 vulnerabilities/0 secrets and Trivy exported-image 0 vulnerabilities/0 secrets",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "The full single-broker runner rejects skipped tests by design; the multi-broker case is intentionally run as a separate three-broker diagnostic and is not silently counted inside the full result.",
+    "The worker lane is finite and local and does not establish indefinite operation, production topology, external provider certification or complete P11 qualification.",
+    "Security scans are technical evidence only; human license/NOTICE, visual/accessibility, support and final release decisions remain open."
+  ]
+}

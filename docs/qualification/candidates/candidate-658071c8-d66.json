@@ -1,0 +1,121 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D66",
+  "status": "in_progress",
+  "outcome": "worker-backed finite live evidence and a separate three-broker failover PASS are bound to the exact candidate; the unfiltered single-broker campaign is not counted because it contains the deliberate multi-broker skip",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "658071c8eeee07141c17841b7f5bd6d53185a7f5",
+    "origin_main_sha_when_candidate_was_tested": "658071c8eeee07141c17841b7f5bd6d53185a7f5",
+    "worktree_source_mode": "clean exact candidate; live and scan evidence was written outside the repository"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-658071c8-d66",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-658071c8-d66\\candidate-658071c8eeee07141c17841b7f5bd6d53185a7f5.tar",
+      "format": "tar",
+      "sha256": "25ded883ac146013614602d725a23964d60b5600e73b4378bc9f22bf502d1c67",
+      "size": 17879040
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-658071c8-d66\\candidate-658071c8eeee07141c17841b7f5bd6d53185a7f5.manifest.json",
+      "sha256": "5f41800d28aa9001f0698aa310f016c5ed147f68a4476ed56ec029c478adac03",
+      "size": 241737
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-658071c8-d66\\candidate-658071c8eeee07141c17841b7f5bd6d53185a7f5.sha256",
+      "sha256": "e54600c433dbbf74ad32c1b5ca530f116ab191b56b02b94b79e906eb34e57ca7",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-658071c8-d66\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1563,
+    "total_bytes": 16602808,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "9b3f3670ac19baac95f4dfd35b73805ba0785ae1",
+    "candidate_docs_commit": "658071c8eeee07141c17841b7f5bd6d53185a7f5",
+    "production_files_changed": [],
+    "fixture_files_changed": [],
+    "qualification_tooling_changed": [],
+    "summary": "D66 binds the current documentation-inclusive candidate to the first local digest-pinned Ronin worker image and real worker/multi-broker receipts; no additional product runtime, fixture or harness source changed in this cell."
+  },
+  "image": {
+    "build_command": "docker build --pull=false --tag ronin:qualification-658071c8 --file docker/Dockerfile .",
+    "reference": "ronin:qualification-658071c8",
+    "image_id": "sha256:ad9be1b8d31c592ae143229c423c92ae65aeea5bac6852645c7253858b2a27c9",
+    "repo_digest": "ronin@sha256:ad9be1b8d31c592ae143229c423c92ae65aeea5bac6852645c7253858b2a27c9",
+    "size": 236281083,
+    "created": "2026-11-17T11:51:07.803921072Z",
+    "build_result": "PASS: pinned Dockerfile build completed in about 17 seconds; ronin --help responded from the image",
+    "worker_usage": "The qualification runner verified the image ID and passed that immutable ID through RONIN_IMAGE to the live worker."
+  },
+  "commands": {
+    "candidate_generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 658071c8eeee07141c17841b7f5bd6d53185a7f5 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-658071c8-d66",
+    "candidate_verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-658071c8-d66",
+    "image_build": "docker build --pull=false --tag ronin:qualification-658071c8 --file docker/Dockerfile .",
+    "full_worker_attempt": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-full-candidate-658071c8-20261117 -WorkerImage sha256:ad9be1b8d31c592ae143229c423c92ae65aeea5bac6852645c7253858b2a27c9",
+    "multi_broker": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-multi-broker-candidate-658071c8-20261117 -TestGrep 'live streaming multi-broker failover' -MultiBroker",
+    "worker_notebook": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-worker-notebook-candidate-658071c8-20261117 -TestGrep 'live Notebook Studio' -WorkerImage sha256:ad9be1b8d31c592ae143229c423c92ae65aeea5bac6852645c7253858b2a27c9",
+    "gitleaks": "gitleaks dir --no-banner --redact --report-format sarif --report-path C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d66-658071c8-20261117\\gitleaks.sarif C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-658071c8-d66\\sandbox",
+    "pip_audit": "pip-audit -r C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-658071c8-d66\\sandbox\\requirements-test.lock --require-hashes --progress-spinner off --format json --output C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d66-658071c8-20261117\\pip-audit.json",
+    "trivy_filesystem": "docker run --rm -v C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-658071c8-d66\\sandbox:/src:ro -v C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d66-658071c8-20261117:/out aquasec/trivy@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c fs --scanners vuln,secret --format json --output /out/trivy-fs.json /src",
+    "trivy_image": "docker save ronin:qualification-658071c8 -o C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d66-658071c8-20261117\\ronin-qualification-658071c8.tar; docker run --rm -v C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d66-658071c8-20261117:/out aquasec/trivy@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c image --input /out/ronin-qualification-658071c8.tar --scanners vuln,secret --format json --output /out/trivy-image.json"
+  },
+  "qualification_matrix": {
+    "candidate_boundary": "PASS: exact source archive and manifest verified; 1,563 files and 16,602,808 sandbox bytes",
+    "worker_notebook": "PASS: 1/1 Playwright case; real Docker worker image active; 16/16 API events correlated, all OK; zero unexpected authorization/server/network errors; cleanup succeeded; 61.01 seconds",
+    "multi_broker": "PASS: 1/1 Playwright case against three real Redpanda brokers; 5/5 API events correlated, all OK; zero unexpected authorization/server/network errors; cleanup succeeded; 47.97 seconds",
+    "full_worker_campaign": "NOT_COUNTED: clean unfiltered run used PostgreSQL, Redpanda/Kafka, Ronin API and the worker; 39/40 cases passed, 0 failed and 1 deliberate multi-broker skip. It produced 382/382 correlated events (358 OK, 21 expected WARN and 3 expected 503 outage ERROR outcomes), with cleanup succeeded. The runner correctly rejected the aggregate because skipped tests are not a PASS.",
+    "security_scans": "PASS: Gitleaks 8.30.1 0 leaks; pip-audit 2.10.1 no known vulnerabilities; Trivy 0.76.1 filesystem and exported-image vuln/secret scans both report 0 vulnerabilities and 0 secrets",
+    "release": "NO-GO: no family or release gate closes; P11 remains in_progress, P13 remains blocked and the ledger remains 1/13 families and 0/10 gates"
+  },
+  "evidence": {
+    "full_worker_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-full-candidate-658071c8-20261117",
+    "full_worker_summary": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-full-candidate-658071c8-20261117\\qualification-summary.json", "sha256": "d11399c0a05fa0c07ae0c90aa15830921d3adf0f88b9cca0adbf8a734b2d75c4", "size": 3166 },
+    "full_worker_traffic": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-full-candidate-658071c8-20261117\\live-api-traffic.json", "sha256": "d03414d4570de58711c4446cd0d9032188a615728c9ec17df1ef161803b6b526", "size": 117512 },
+    "full_worker_junit": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-full-candidate-658071c8-20261117\\browser-live.xml", "sha256": "5685fbe0e6f4c0b7f306099d8654e996944a39eb1e5714611073ea1ba5b3d887", "size": 6150 },
+    "full_worker_log": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-full-candidate-658071c8-20261117\\browser-live.log", "sha256": "fef1b0e1933e580545eccf2c76d583283acbb0c9f03ab70a5527a895acb19a28", "size": 5170 },
+    "multi_broker_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-multi-broker-candidate-658071c8-20261117",
+    "multi_broker_summary": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-multi-broker-candidate-658071c8-20261117\\qualification-summary.json", "sha256": "4a1d6ae95f646e8a17a3efc720dd5d107a6af8ea91f10a73e45a020daa5a9a90", "size": 3033 },
+    "multi_broker_traffic": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-multi-broker-candidate-658071c8-20261117\\live-api-traffic.json", "sha256": "79fece1cca541c8a624e37ff8bd0977affe250c8ff6b0cb3298c363b04d4be13", "size": 1641 },
+    "multi_broker_junit": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-multi-broker-candidate-658071c8-20261117\\browser-live.xml", "sha256": "8879ce2247e82ab4f81d270567f29417300c93aeefddf65d423e6b27ff622808", "size": 434 },
+    "multi_broker_log": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-multi-broker-candidate-658071c8-20261117\\browser-live.log", "sha256": "2d1e32e784cf04cd2d300590808ee76f123e63d56662d1130235694ccfb55c65", "size": 286 },
+    "worker_notebook_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-worker-notebook-candidate-658071c8-20261117",
+    "worker_notebook_summary": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-worker-notebook-candidate-658071c8-20261117\\qualification-summary.json", "sha256": "b521d6c8d95e86c61164db574a990b4f10a4c2f2d9cadffa5282e54743a12cc9", "size": 3123 },
+    "worker_notebook_traffic": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-worker-notebook-candidate-658071c8-20261117\\live-api-traffic.json", "sha256": "a3283ed03395b3429f0774f1d69e8485844d53454249b3465897cae5af6f69b8", "size": 4925 },
+    "worker_notebook_junit": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-worker-notebook-candidate-658071c8-20261117\\browser-live.xml", "sha256": "b9cf27efb03dc78f23cde29dbb5f5946b5ae516fd5d5c7fc1b16b134475462fc", "size": 438 },
+    "worker_notebook_log": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d66-worker-notebook-candidate-658071c8-20261117\\browser-live.log", "sha256": "9f666b6f5d60418d80628bfdb485c5d6a44f0e64406ae7bf63b616c820a31280", "size": 294 }
+  },
+  "security_scans": {
+    "directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d66-658071c8-20261117",
+    "gitleaks_sarif": { "sha256": "25b6c42cc4a9a22104b065248d10ae1e0b0cbab3f255a453c6efdd9f160dd4f0", "size": 305, "findings": 0 },
+    "pip_audit_json": { "sha256": "d36f41ff615e1c68fac2608ff5c11aa75cca52fa675c48ddbaa52d57a42e41c2", "size": 5667, "known_vulnerabilities": 0 },
+    "trivy_filesystem_json": { "sha256": "e8ed8423e1949f49140390189c7059e66b927f3c81a255678af348b5b615affab", "size": 228, "vulnerabilities": 0, "secrets": 0 },
+    "trivy_image_json": { "sha256": "172d06e36d7384aae8cc7539d2f702f6fa5fd2814fd5df99a38cfd44a36447a5", "size": 148900, "vulnerabilities": 0, "secrets": 0 },
+    "image_tar": { "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d66-658071c8-20261117\\ronin-qualification-658071c8.tar", "sha256": "b308ad269e7d3ddd43b4ed5cdddaed1f05f475af6b604a8d8ff35331376f3f31", "size": 60802048 },
+    "trivy_image_ref": "aquasec/trivy@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+  },
+  "progress": {
+    "before": { "families_qualified": "1/13", "release_gates_closed": "0/10", "release": "NO-GO", "P11": "in_progress" },
+    "after": { "families_qualified": "1/13", "release_gates_closed": "0/10", "release": "NO-GO", "P11": "in_progress" }
+  },
+  "open_cells": [
+    "The clean unfiltered run is not a PASS because the default single-broker fixture deliberately skips the multi-broker case; the exact three-broker case passes separately, but a single aggregate route-wide receipt is not claimed.",
+    "Worker evidence is finite and local: Notebook Studio passes on a real Docker worker, but indefinite supervisor operation, production topology and external provider breadth remain open.",
+    "P11 remains in_progress and P13 remains blocked; the complete family journey, human license/NOTICE/product review and final release aggregation remain open."
+  ],
+  "limitations": [
+    "The first image CLI probe used --version, which Ronin does not expose; the supported --help probe passed and the worker qualification subsequently passed.",
+    "The exported image tar is retained outside the repository as the input to the reproducible Trivy image scan; no hosted workflow, branch or worktree was used.",
+    "The full unfiltered summary contains 3 expected 503 outage ERROR outcomes and 21 expected WARN outcomes; these are preserved as intentional negative-path evidence and are not relabeled as unexpected failures."
+  ]
+}

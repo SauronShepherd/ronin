@@ -7,6 +7,20 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D66 binds the documentation-inclusive exact candidate
+`658071c8eeee07141c17841b7f5bd6d53185a7f5` to a locally built, digest-pinned
+worker image `sha256:ad9be1b8d31c592ae143229c423c92ae65aeea5bac6852645c7253858b2a27c9`.
+The exact worker-backed Notebook Studio slice passes `1/1` with `16/16`
+correlated API events, all `OK`; the separate three-broker multi-broker slice
+passes `1/1` with `5/5` `OK` events. Gitleaks, pip-audit and Trivy filesystem
+and exported-image scans are clean. The unfiltered single-broker campaign is
+retained as `NOT_COUNTED`: `39/40` cases pass with one deliberate multi-broker
+skip, `382/382` events correlate (`358 OK`, `21` expected `WARN`, `3` expected
+503 outage `ERROR`), and the runner correctly rejects skipped tests as an
+aggregate PASS. D66 adds finite worker and multi-broker evidence, not
+indefinite operation or complete P11 qualification; the ledger remains
+**NO-GO** at `1/13` families and `0/10` gates.
+
 D65 extends the live qualification harness with an explicit bounded request
 timeout shared by the Ronin server and the browser proxy. The default remains
 `15 s`; the counted high-volume diagnostic uses `-RequestTimeoutSeconds 60` so
@@ -456,11 +470,12 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `9b3f3670ac19baac95f4dfd35b73805ba0785ae1` (2026-11-17).
+**Observed source head:** `658071c8eeee07141c17841b7f5bd6d53185a7f5` (2026-11-17).
 The runtime/test candidate is recorded separately in the exact qualification
-receipt; the ledger does not close the release. D64 is a filtered route-surface
-run with `workerImage=null`; earlier worker-backed receipts remain historical
-and are not inherited as current D64 evidence.
+receipt; the ledger does not close the release. D66 binds a local worker image
+and exact multi-broker evidence, while its unfiltered aggregate remains
+`NOT_COUNTED` because the single-broker fixture deliberately skips the
+three-broker case.
 
 **D21 scheduler evidence update (2026-11-15):** exact candidate
 `f667460650525a5d8a155cad1be5dcff2fc3fd14` passes the bounded local
