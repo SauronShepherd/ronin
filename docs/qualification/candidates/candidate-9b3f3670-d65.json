@@ -1,0 +1,91 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D65",
+  "status": "pass",
+  "outcome": "pass for a 4096-record bounded live backpressure diagnostic with an explicit request timeout; this does not close indefinite-operation, worker/provider or Public v1 release gates",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "9b3f3670ac19baac95f4dfd35b73805ba0785ae1",
+    "origin_main_sha_when_candidate_was_tested": "9b3f3670ac19baac95f4dfd35b73805ba0785ae1",
+    "worktree_source_mode": "clean exact candidate; live backpressure evidence was written outside the repository"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9b3f3670-d65",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9b3f3670-d65\\candidate-9b3f3670ac19baac95f4dfd35b73805ba0785ae1.tar",
+      "format": "tar",
+      "sha256": "755c90b21cffe8c0b960770276a5ccbb2d811d156395d71d187554bd401687e1",
+      "size": 17858560
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9b3f3670-d65\\candidate-9b3f3670ac19baac95f4dfd35b73805ba0785ae1.manifest.json",
+      "sha256": "11dd66d822d6cd6c98e0eab7f2184d17b30ef50ba756bbf0440ecee6564011c5",
+      "size": 241243
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9b3f3670-d65\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1560,
+    "total_bytes": 16586900,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "9b3f3670ac19baac95f4dfd35b73805ba0785ae1",
+    "candidate_docs_commit": "9b3f3670ac19baac95f4dfd35b73805ba0785ae1",
+    "production_files_changed": [],
+    "fixture_files_changed": [],
+    "test_files_changed": [
+      "tests/test_docker_qualification_contract.py"
+    ],
+    "qualification_tooling_changed": [
+      "tools/run_live_product_qualification.ps1",
+      "web-tests/tests/live-support.mjs"
+    ],
+    "summary": "D65 makes the live request deadline explicit and propagates it to the server and browser proxy. The default remains 15 seconds; no Ronin production runtime or fixture source changed."
+  },
+  "commands": {
+    "candidate_generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 9b3f3670ac19baac95f4dfd35b73805ba0785ae1 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9b3f3670-d65",
+    "candidate_verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-9b3f3670-d65",
+    "static_contracts": "python -m pytest -q -p no:cacheprovider tests/test_docker_qualification_contract.py; PowerShell parser check for tools/run_live_product_qualification.ps1; node --check web-tests/tests/live-support.mjs; node --check web-tests/tests/product-live.spec.mjs; git diff --check",
+    "live_backpressure_4096": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d65-backpressure-4096-candidate-9b3f3670-20261117 -TestGrep \"sustained backpressure\" -BackpressureRecords 4096 -RequestTimeoutSeconds 60"
+  },
+  "qualification_matrix": {
+    "runner_timeout_configuration": "PASS: 25 qualification-runner contracts, PowerShell parse, Node syntax and diff checks pass; RequestTimeoutSeconds=60 reaches both RONIN_HTTP_REQUEST_TIMEOUT_SECONDS and the browser proxy while the default remains 15",
+    "live_backpressure_4096": "PASS: 1/1 Playwright case; initial lag 4096 across two partitions; max_records cap 73 leaves 4023; resume drains 4023 in 503 microbatches and reaches lag zero; idle replay, reset and two 7-record replays pass; 12/12 correlated API events all OK; zero unexpected server/network errors; cleanup succeeded; 69.45 seconds",
+    "real_services": "PASS: Kafka/Redpanda and Ronin API were real and active; PostgreSQL was intentionally not started for this streaming-only diagnostic; workerImage is null",
+    "route_audit": "NOT_RUN: filtered diagnostic; routeCoverage.audited=false",
+    "security_and_release": "INHERITED: D63 source/dependency/filesystem scans remain clean; this D65 cell does not add runtime/probe image, SBOM/provenance, provider, license or human acceptance evidence",
+    "release": "NO-GO: no family or release gate closes; the ledger remains 1/13 families and 0/10 gates"
+  },
+  "evidence": {
+    "live_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d65-backpressure-4096-candidate-9b3f3670-20261117",
+    "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d65-backpressure-4096-candidate-9b3f3670-20261117\\qualification-summary.json",
+    "qualification_summary_sha256": "483167dc3346c4a98031c60e9bfe0cbd74251d06cc6ad14b24d025f7ff77daeb",
+    "qualification_summary_size": 3070,
+    "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d65-backpressure-4096-candidate-9b3f3670-20261117\\live-api-traffic.json",
+    "live_api_traffic_sha256": "04a5df9d93844cd1ae0973f872e02f788beb376032b17236053ac0f4c1d19ed0",
+    "live_api_traffic_size": 3884,
+    "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d65-backpressure-4096-candidate-9b3f3670-20261117\\browser-live.xml",
+    "browser_junit_sha256": "0e4f17f0563cacfc6c4a0397e987d87b28e4811ef70286291efab8b490795821",
+    "browser_junit_size": 447,
+    "browser_log": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d65-backpressure-4096-candidate-9b3f3670-20261117\\browser-live.log",
+    "browser_log_sha256": "d55071bd9379b2a1708c3bc84f324803dbffd93b59a1d001b511d54696c58fce",
+    "browser_log_size": 203
+  },
+  "open_cells": [
+    "D65 is bounded backpressure evidence with RequestTimeoutSeconds=60, not indefinite operation or evidence that the default 15-second request deadline can carry all larger loads.",
+    "workerImage is null, so worker/provider breadth, notebook execution, production topology and the complete family journey remain unqualified.",
+    "D65 does not change the ledger: P11 remains in_progress, P13 remains blocked, no family or release gate closes and release remains NO-GO."
+  ],
+  "limitations": [
+    "A 4096-record attempt with the default 15-second browser/server deadline failed after the cap because the 4023-record resume request exceeded that bounded timeout; it is diagnostic evidence only and is not counted as PASS.",
+    "The counted run uses an explicit 60-second deadline and records one 34.302-second resume request; this is a qualification parameter, not a production default change.",
+    "Live evidence outputs are local under %TEMP%; the repository receipt records paths and SHA-256 digests but does not commit binary reports."
+  ]
+}

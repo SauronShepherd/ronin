@@ -7,6 +7,21 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D65 extends the live qualification harness with an explicit bounded request
+timeout shared by the Ronin server and the browser proxy. The default remains
+`15 s`; the counted high-volume diagnostic uses `-RequestTimeoutSeconds 60` so
+the `4,096`-record P11 fixture can drain its `4,023` remaining records in
+`503` microbatches without the proxy aborting the request at the default
+deadline. Exact candidate
+`9b3f3670ac19baac95f4dfd35b73805ba0785ae1` passes `1/1`, verifies the cap at
+`73`, resume to lag zero, idle replay, reset and two `7`-record replays, with
+`12/12` real API events correlated, all `OK`, no unexpected server/network
+errors and cleanup in `69.45 s`. PostgreSQL is intentionally not started for
+this streaming-only slice, `workerImage=null`, and the non-default timeout is
+recorded as a diagnostic parameter. D65 is scaled bounded evidence, not
+indefinite operation or a complete P11 family journey; the ledger remains
+**NO-GO** at `1/13` families and `0/10` gates.
+
 D64 fixes the live qualification harness so a filtered diagnostic that selects
 `performance` or the complete route surface stages the repository's
 `ronin-plugin-performance` package. The first broad route attempt exposed the
@@ -441,7 +456,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `728e1b7861790e7b44bd3081dbdaae60159e2ab4` (2026-11-17).
+**Observed source head:** `9b3f3670ac19baac95f4dfd35b73805ba0785ae1` (2026-11-17).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. D64 is a filtered route-surface
 run with `workerImage=null`; earlier worker-backed receipts remain historical

@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D65",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Exact-candidate 4096-record P11 backpressure with explicit request timeout",
+  "candidate_sha": "9b3f3670ac19baac95f4dfd35b73805ba0785ae1",
+  "implementation_commit_sha": "9b3f3670ac19baac95f4dfd35b73805ba0785ae1",
+  "documentation_commit_sha": "9b3f3670ac19baac95f4dfd35b73805ba0785ae1",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D65.md",
+  "execution_scope": "exact-candidate-filtered-live-streaming-backpressure",
+  "result": {
+    "runner_timeout_configuration": "PASS: explicit RequestTimeoutSeconds is shared by the Ronin server and browser proxy; default remains 15 seconds",
+    "live_backpressure_4096": "PASS: 1/1 case, cap 73, remaining 4023, 503 resume microbatches, lag zero, idle replay, reset and two 7-record replays, 12/12 correlated events all OK",
+    "real_services": "Kafka/Redpanda and Ronin API true; PostgreSQL intentionally false; workerImage null",
+    "release_effect": "No family or release gate changes; bounded P11 evidence grows, but indefinite operation and the full family journey remain open and release stays NO-GO"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The default 15-second deadline cannot carry the 4023-record resume request; the counted run uses RequestTimeoutSeconds=60 and records that parameter explicitly.",
+    "This is filtered bounded streaming evidence, not indefinite operation, worker/provider qualification or the complete P11 family journey.",
+    "P13, provider lanes, family journeys and all mandatory release decisions remain open."
+  ]
+}
