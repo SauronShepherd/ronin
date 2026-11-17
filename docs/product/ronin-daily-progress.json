@@ -604,13 +604,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D72.md",
       "candidate_sha": "94d594cbd103db1045b4b1498f9d1433b7e9f821",
       "commit_sha": "94d594cbd103db1045b4b1498f9d1433b7e9f821"
+    },
+    {
+      "id": "D73",
+      "date": "2026-11-17",
+      "phase": "exact-candidate-security-and-supply-chain-revalidation",
+      "status": "pass",
+      "families": [],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D73.md",
+      "candidate_sha": "6f73583384b531867a78cb0b6f9f22344182e178",
+      "commit_sha": "6f73583384b531867a78cb0b6f9f22344182e178"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D67 is the latest exact candidate source 018176e0a3693d668bac0d049a6ce4db3c7f2723: the local streaming/worker regression passes 87/87, the full Python/PostgreSQL regression passes 4,753/4,784 with 31 explicit skips and 0 failures, and the live single-broker 16,384-record backpressure/cap/resume/reset/replay case passes 1/1 with 12/12 correlated OK events. D66 remains linked for the real worker Notebook, three-broker failover and clean Gitleaks, pip-audit and Trivy filesystem/image scans. P11 remains open for indefinite backpressure, supervisor continuity, production topology, provider breadth, the complete family journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D73 is the latest exact candidate source 6f73583384b531867a78cb0b6f9f22344182e178: its boundary is verified at 1,579 files and 16,672,540 sandbox bytes; Gitleaks and pip-audit are clean; Trivy filesystem and exact worker-image scans report 0 vulnerabilities and 0 secrets; and 193 supply-chain/release/security contracts pass. D72 remains linked for the real worker Notebook, D71 for three-broker failover, D70 for single-broker backpressure and D69 for the full Python/PostgreSQL regression. P11 remains open for indefinite backpressure, supervisor continuity, production topology, provider breadth, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",
@@ -625,7 +635,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D69 is the latest full regression receipt on the published candidate: 4,753 passed, 31 expected external/platform skips and 0 failed out of 4,784, plus cleanup success and 13 ResourceWarnings retained for follow-up. D70 revalidates the current 16,384-record bounded live P11 backpressure cap/resume/reset/replay pass with 1/1 and 12/12 correlated OK events. D71 revalidates the current three-broker failover journey with 1/1 and 5/5 correlated OK events. D72 revalidates current Docker 27/27 with strict 15/15 and a live worker/Notebook journey with 1/1 and 18/18 correlated OK events. D68 remains the Helm/kind install/restart-persistence/upgrade/rollback/cleanup pass after correcting the acceptance receipt contract. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
+      "summary": "D73 adds current exact-candidate security evidence: Gitleaks 0 findings, pip-audit 0 known vulnerability records, Trivy filesystem 0/0 and Trivy worker-image 0/0, plus 193 supply-chain/release/security contracts. D69 is the latest full regression receipt on the published candidate: 4,753 passed, 31 expected external/platform skips and 0 failed out of 4,784, plus cleanup success and 13 ResourceWarnings retained for follow-up. D70 revalidates the current 16,384-record bounded live P11 backpressure cap/resume/reset/replay pass with 1/1 and 12/12 correlated OK events. D71 revalidates the current three-broker failover journey with 1/1 and 5/5 correlated OK events. D72 revalidates current Docker 27/27 with strict 15/15 and a live worker/Notebook journey with 1/1 and 18/18 correlated OK events. D68 remains the Helm/kind install/restart-persistence/upgrade/rollback/cleanup pass after correcting the acceptance receipt contract. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
     },
     {
       "id": "catalog-project-scope",

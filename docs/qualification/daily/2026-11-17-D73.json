@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D73",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Exact-candidate security scans and supply-chain contract revalidation",
+  "candidate_sha": "6f73583384b531867a78cb0b6f9f22344182e178",
+  "implementation_commit_sha": "6f73583384b531867a78cb0b6f9f22344182e178",
+  "documentation_commit_sha": "6f73583384b531867a78cb0b6f9f22344182e178",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D73.md",
+  "execution_scope": "exact-candidate-security-scans-and-supply-chain-contracts",
+  "result": {
+    "candidate_boundary": "PASS: 1,579 files, 16,672,540 sandbox bytes, archive and manifest verification passed",
+    "gitleaks": "PASS: Gitleaks 8.30.1, 0 findings",
+    "pip_audit": "PASS: pip-audit 2.10.1, 0 known vulnerability records from requirements-test.lock",
+    "trivy_filesystem": "PASS: Trivy 0.76.1, 0 vulnerabilities and 0 secrets",
+    "trivy_image": "PASS: Trivy 0.76.1, 0 vulnerabilities and 0 secrets on the exact worker image TAR",
+    "supply_chain_contracts": "PASS: 193 passed, 0 failed across SBOM/provenance, identity, release-evidence and security-policy tests",
+    "cleanup": "PASS: temporary image removed by immutable digest; no containers, Ronin images or kind clusters remained",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "Clean scans are necessary but do not close the aggregate two-container SBOM/provenance release requirement.",
+    "Human license, NOTICE, product-claims, visual and release-approval decisions remain open.",
+    "Provider breadth, indefinite operation and the complete P11 candidate-bound journey remain open."
+  ]
+}
