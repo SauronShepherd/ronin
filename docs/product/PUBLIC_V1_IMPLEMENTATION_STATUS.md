@@ -7,6 +7,21 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D62 validates the active `streaming` Studio route on exact candidate
+`e27cb00fe680c6ff30ee7e26da2d8556970f8ca5`. The live browser case passes
+`1/1`, reaches PostgreSQL, Kafka/Redpanda and the Ronin API, and produces
+`52/52` structured-log-correlated events (`48` OK and `4` expected WARN), with
+zero unexpected authorization/server/network errors and successful cleanup in
+`49.21 s`. This is route-surface evidence complementary to the bounded
+checkpoint, recovery and backpressure receipts below; it is not a 25-route
+audit or a complete P11 family journey.
+
+D62 does not change the ledger. The filtered route summary reports `25` active
+routes (`24` API-contract and `1` UI-only), but `routeCoverage.audited=false`;
+worker/provider qualification, indefinite operation, security scans and human
+visual/accessibility review remain open. Release remains **NO-GO** at `1/13`
+families and `0/10` gates.
+
 D61 scales the live P11 backpressure fixture without changing production
 runtime behavior. The runner and fixture preserve `256` as the default and
 accept an explicit bounded record count; the exact candidate

@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D62",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Streaming Studio active route live surface",
+  "candidate_sha": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5",
+  "implementation_commit_sha": "aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d",
+  "documentation_commit_sha": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D62.md",
+  "execution_scope": "live-api-browser-streaming-route",
+  "result": {
+    "live_route": "PASS: 1/1 active Streaming Studio route case, 52/52 correlated real API events, 48 OK and 4 expected WARN, 0 unexpected authorization gaps/server/network errors, PostgreSQL+Kafka+Ronin API and cleanup",
+    "duration": "49.21 seconds",
+    "release_effect": "No family or release gate changes; P11 remains in_progress and release remains NO-GO"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "D62 isolates the streaming route and does not claim a 25-route audit, worker-backed qualification, manual visual review or complete P11 journey.",
+    "The runner reports 25 active routes, 24 API-contract routes and 1 UI-only route, but routeCoverage.audited=false for this filtered case.",
+    "Expected WARN responses remain diagnostic outcomes and do not close release gates."
+  ]
+}

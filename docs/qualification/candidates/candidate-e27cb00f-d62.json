@@ -1,0 +1,95 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D62",
+  "status": "pass",
+  "outcome": "pass for the live Streaming Studio route surface on the exact candidate; this does not qualify P11, close a release gate or change release NO-GO",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5",
+    "origin_main_sha_when_candidate_was_tested": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5",
+    "worktree_source_mode": "exact-commit checkout; clean candidate boundary verified after live route qualification"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00f-d62",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00fe680c6ff30ee7e26da2d8556970f8ca5.tar",
+      "format": "tar",
+      "sha256": "7f5890047e27d401cbd04683240e4b1890df9ab5d23e168aea95e36c368a91b8",
+      "size": 17807360
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00f-d62\\candidate-e27cb00fe680c6ff30ee7e26da2d8556970f8ca5.manifest.json",
+      "sha256": "69342e9e2163324b5233428767eb4fa67e4064b42ff338965edf49ffbb7a693c",
+      "size": 239761
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00f-d62\\candidate-e27cb00fe680c6ff30ee7e26da2d8556970f8ca5.sha256",
+      "sha256": "c9e9b7835b77239ea01789f86a7f1de74cdb517e375238a5604da0c57b0f1650",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00f-d62\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1551,
+    "total_bytes": 16544004,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d",
+    "candidate_docs_commit": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5",
+    "production_files_changed": [],
+    "fixture_files_changed": [],
+    "test_files_changed": [],
+    "documentation_changed_in_candidate_docs_commit": [
+      "docs/qualification/candidates/candidate-aaab84e8-d61.json",
+      "docs/qualification/daily/2026-11-17-D61.json",
+      "docs/qualification/handoffs/2026-11-17-D61.md",
+      "docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md",
+      "docs/product/public-v1-status.json",
+      "docs/product/ronin-daily-progress.json"
+    ],
+    "summary": "D62 isolates the active Streaming Studio route against real PostgreSQL, Kafka and Ronin APIs on the exact documentation-inclusive source. No production or test source changed in D62."
+  },
+  "commands": {
+    "candidate_generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha e27cb00fe680c6ff30ee7e26da2d8556970f8ca5 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00f-d62",
+    "candidate_verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00f-d62",
+    "live_streaming_route": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d62-route-streaming-candidate-e27cb00f-20261117 -TestGrep \"route streaming loads and reaches the live API\""
+  },
+  "qualification_matrix": {
+    "live_streaming_route": "PASS: 1/1 Playwright route case; 52/52 real API events correlated with structured HTTP logs, 48 OK and 4 expected WARN, zero unexpected authorization gaps or server/network errors; PostgreSQL, Kafka and Ronin API real services; cleanup succeeded; 49.21 seconds",
+    "surface_scope": "PASS: the active Streaming Studio route loaded and reached its declared live APIs through the browser, including the seeded streaming definitions and negative-path responses",
+    "route_audit": "NOT_RUN: this was a filtered route diagnostic; activeRoutes=25, routesWithApiContracts=24 and uiOnlyRoutes=1 are reported but routeCoverage.audited=false",
+    "worker_provider_matrix": "NOT_RUN: workerImage is null and no external provider profile was authorized",
+    "release": "NO-GO: no family or release gate closes; the ledger remains 1/13 families and 0/10 gates"
+  },
+  "evidence": {
+    "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d62-route-streaming-candidate-e27cb00f-20261117",
+    "summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d62-route-streaming-candidate-e27cb00f-20261117\\qualification-summary.json",
+    "summary_sha256": "7e45fe6818a91b371db1d390b91ebc400b23478796924514bd3fbd35a1d1e8c9",
+    "summary_size": 3041,
+    "traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d62-route-streaming-candidate-e27cb00f-20261117\\live-api-traffic.json",
+    "traffic_sha256": "c21f55835a510f9bf4e102ec83e750893b2c461ff9d9e69c91c32941710dc1b6",
+    "traffic_size": 16455,
+    "junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d62-route-streaming-candidate-e27cb00f-20261117\\browser-live.xml",
+    "junit_sha256": "c5979a96007dc3300cbfc66c7619adafbed964b75ab56dc06eb828c8f41be793",
+    "junit_size": 399,
+    "browser_log_sha256": "7e3ee45fc14b8393240b86cbde3c71faa1babcd307bd951b0932c0e1fb2bb7c3",
+    "browser_log_size": 161
+  },
+  "open_cells": [
+    "D62 validates one active Streaming Studio route, not the full 25-route live surface and not the complete P11 family journey.",
+    "The route-wide audit was not enabled; worker/provider, security scans, indefinite operation and human visual/accessibility review remain open.",
+    "P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The route test is candidate-bound live evidence with PostgreSQL and Kafka, but it does not substitute for the full worker-backed live qualification or manual visual review.",
+    "The candidate archive and live evidence are local reproducibility artifacts under %TEMP%; the repository receipt records their paths and SHA-256 digests but does not commit binary evidence.",
+    "Expected WARN responses are explicitly classified and are not release-gate approvals."
+  ]
+}
