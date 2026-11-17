@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D71",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Exact-candidate live three-broker API failover revalidation",
+  "candidate_sha": "02e49ae3497c2701922d571b1150023b0ca73da2",
+  "implementation_commit_sha": "02e49ae3497c2701922d571b1150023b0ca73da2",
+  "documentation_commit_sha": "02e49ae3497c2701922d571b1150023b0ca73da2",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D71.md",
+  "execution_scope": "exact-candidate-live-three-broker-failover",
+  "result": {
+    "candidate_boundary": "PASS: 1,575 files, 16,659,456 sandbox bytes, archive and manifest verification passed",
+    "multi_broker_failover": "PASS: 1/1 Playwright case against three Redpanda brokers with replication factor 3; 5/5 API events correlated and all OK",
+    "services": "PASS: isolated three-broker Redpanda and Ronin API; PostgreSQL and worker intentionally absent from this streaming-only slice",
+    "cleanup": "PASS: browser media, Docker services/network and external runtime state cleaned successfully",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The run is bounded and single-journey, with an explicit 15-second request timeout; it is not indefinite operation evidence.",
+    "PostgreSQL, a worker image, provider breadth and route-wide audit were not part of this filtered slice.",
+    "The result does not qualify the complete P11 family or close a release gate."
+  ]
+}
