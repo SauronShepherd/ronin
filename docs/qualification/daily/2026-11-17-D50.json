@@ -1,0 +1,58 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D50",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "P11 sustained bounded backpressure over 256 records, non-aligned checkpoint cap/resume, reset-safe replay and sink idempotency",
+  "candidate_sha": "cb78bc4adccd82c1afbba4608c61b6b22ef5e0b5",
+  "candidate_receipt": "docs/qualification/candidates/candidate-cb78bc4a-d50.json",
+  "code_commit": "cb78bc4adccd82c1afbba4608c61b6b22ef5e0b5",
+  "origin_main_at_code_commit": "cb78bc4adccd82c1afbba4608c61b6b22ef5e0b5",
+  "implementation": {
+    "production_change": false,
+    "summary": "D50 adds a larger live Kafka fixture, candidate-bound sustained supervisor coverage, and a direct Parquet replay/conflict regression; streaming runtime production code is unchanged.",
+    "changed_paths": [
+      "tools/seed_live_streaming.py",
+      "tests/test_streaming_runtime.py",
+      "web-tests/tests/product-live.spec.mjs"
+    ],
+    "dirty_live_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d50-backpressure-diagnostic-20261117\\qualification-summary.json",
+    "clean_live_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d50-candidate-cb78bc4a-20261117\\qualification-summary.json"
+  },
+  "tests": {
+    "candidate_boundary": "PASS: archive regenerated and verify passed; 1514 files, 16330362 sandbox bytes, no Git metadata or generated test artifacts",
+    "candidate_contracts": "PASS: 60 passed, 0 failed, 0 skipped in the exact candidate sandbox",
+    "candidate_quality": "PASS: Ruff format/check, mypy on 12 streaming/control-plane source files and Node syntax for the Playwright config plus two live specs",
+    "dirty_live": "PASS diagnostic only: 1/1 Playwright, 12/12 real API events correlated, PostgreSQL/Kafka/Ronin API real, zero server/network errors, cleanup succeeded",
+    "clean_candidate_live": "PASS: 1/1 Playwright, 12/12 real API events correlated, 12 OK, zero uncorrelated events, zero ERROR/CRITICAL logs, cleanup succeeded",
+    "candidate_reproducibility": "PASS: archive 1edcba3a0171fda60d0790c3b21f671e4cf584ef0d800093fe4c76e8544d0254, manifest f4b0153c35a6992da0638fad11c7e585b13de2ec929f19fcc8a9d8d77fb9e4e2 and digest file d4ecd7f60903c36e72ea8118181b7cab44991ccaca59ef22555874f28b8cae3e recorded after verify",
+    "browser_media": "PASS: clean evidence directory contains zero PNG/JPG/JPEG/WebM and runner cleanup reports removed=0",
+    "docker_cleanup": "PASS: no containers and no Ronin repository images remained after the clean live campaign",
+    "route_audit": "NOT_RUN: filtered campaign only; 25 active routes, 24 API-backed and 1 UI-only reported",
+    "security_scans": "NOT_RERUN in D50; prior evidence remains separate",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license": "INHERITED FAIL/CLOSED; 21 human review decisions missing and not counted as D50 PASS"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "limitations": [
+    "D50 closes only the larger bounded backpressure/reset-safe replay cell; it does not prove indefinite backpressure, byte-limit saturation, multi-broker recovery, worker/provider breadth or the complete P11 journey.",
+    "No release gate closes and release remains NO-GO at 1/13 families and 0/10 gates.",
+    "The candidate live run is filtered; route-wide audit, full suite, security scans, Trivy and license decisions were not rerun."
+  ]
+}

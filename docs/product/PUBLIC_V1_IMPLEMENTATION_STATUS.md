@@ -5,7 +5,21 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 
-## Current exact-SHA qualification — 16 November 2026
+## Current exact-SHA qualification — 17 November 2026
+
+D50 advances the exact candidate to `cb78bc4adccd82c1afbba4608c61b6b22ef5e0b5`.
+The exact sandbox verifies `60/60` focused contracts with no skips, and the
+clean candidate live journey uses real PostgreSQL, Redpanda/Kafka and Ronin
+API services. Its two-partition fixture starts at `128/128` lag over `256`
+records, stops at `73` records under a bounded cap, resumes the remaining
+`183` records to zero lag, returns an empty replay, and succeeds on repeated
+seven-record reads after checkpoint reset. This is larger bounded P11 evidence,
+not a complete family qualification: byte-limit saturation, indefinite
+backpressure, worker/provider breadth, multi-broker recovery, route-wide audit
+and the remaining release gates remain open. Release remains **NO-GO** at
+`1/13` families and `0/10` gates.
+
+### Historical exact-SHA qualification — 16 November 2026
 
 The current exact-head candidate is `a224b7983b31a97abbeb0d482fd50d8c2fa653dc`.
 D38 adds candidate-bound P11 broker-restart recovery and refreshes the probe
@@ -241,7 +255,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `727a785499de5f0a7d14fcda1cfd96ec62818928` (2026-11-17).
+**Observed source head:** `cb78bc4adccd82c1afbba4608c61b6b22ef5e0b5` (2026-11-17).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;
