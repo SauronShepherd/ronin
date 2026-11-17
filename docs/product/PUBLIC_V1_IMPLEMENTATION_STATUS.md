@@ -7,6 +7,17 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D78 reruns the full non-performance Python/PostgreSQL suite on the same exact
+candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`: `4,753/4,784` pass,
+`31` explicit cases skip and `0` fail. The JUnit time is `696.082 s`; the
+runner records `699.218 s` pytest wall time, `702.589 s` total, isolated
+PostgreSQL `16.4-alpine`, successful cleanup and `13` SQLite `ResourceWarning`
+entries retained for follow-up. The skips cover opt-in Docker/worker,
+multi-broker, external providers/collectors/CLIs, symlink privileges and
+Windows-specific capabilities. This broad regression is current-SHA evidence
+but does not replace the separate live or provider cells and does not qualify
+the complete P11 family.
+
 D77 refreshes the current exact candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`
 with wheel/sdist identity, runtime/probe TARs, a `110`-component application
 SBOM, two bound Trivy container inventories and local in-toto/SLSA provenance.

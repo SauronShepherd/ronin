@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D78",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate full Python/PostgreSQL regression",
+  "candidate_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "implementation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "documentation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D78.md",
+  "execution_scope": "exact-candidate-full-python-postgresql-regression",
+  "result": {
+    "full_suite": "PASS: 4,753 passed, 31 skipped and 0 failed out of 4,784; JUnit pytest time 696.082 seconds",
+    "runner": "PASS: clean-candidate qualification on source 5c17dd7a, isolated PostgreSQL 16.4, pytest wall 699.218 seconds, total 702.589 seconds and cleanup succeeded",
+    "warnings": "OBSERVED: 13 SQLite ResourceWarning entries, without test failures; retained as follow-up",
+    "skips": "EXPLICIT: 31 Docker/worker/Compose, multi-broker, external provider/collector/CLI, symlink and Windows-privilege cases remain outside this Windows PostgreSQL cell",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The first temporary invocation was discarded because it used the outer checkout/local origin; the final run used an exact clean checkout with the declared GitHub origin.",
+    "The full Python/PostgreSQL cell does not cover real Docker worker execution, multi-broker recovery, external providers, OTLP/Trino/Spark/SDP, symlink privileges or indefinite operation.",
+    "Thirteen SQLite ResourceWarning entries remain for follow-up; warnings do not change the zero-failure result.",
+    "Complete P11 qualification, provider breadth, human decisions and release approval remain open."
+  ]
+}

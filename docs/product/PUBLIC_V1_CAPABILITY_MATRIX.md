@@ -3,6 +3,12 @@
 ## Current exact-SHA snapshot — 17 November 2026
 
 The current code/evidence candidate is `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`.
+D78 revalidates the full non-performance Python/PostgreSQL suite on this
+candidate: `4,753/4,784` pass, `31` explicit cases skip and `0` fail, with
+successful isolated PostgreSQL cleanup and `13` ResourceWarning entries
+retained for follow-up. The cell does not cover the opt-in Docker worker,
+multi-broker, external provider/collector/CLI, symlink or indefinite-operation
+lanes.
 D77 refreshes current-SHA wheel/sdist identity, runtime/probe TARs, a `110`-
 component CycloneDX application SBOM, two bound Trivy container inventories
 and local in-toto/SLSA provenance. Strict supply-chain validation passes, and
