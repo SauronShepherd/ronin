@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D79",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate Docker worker and strict v0.1 qualification",
+  "candidate_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "implementation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "documentation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D79.md",
+  "execution_scope": "exact-candidate-docker-worker-strict-acceptance",
+  "result": {
+    "docker_qualification": "PASS: 27 passed, 0 skipped and 0 failed; JUnit time 201.208 seconds",
+    "strict_v01": "PASS: 15/15 live steps, 0 missing, 0 unexpected, 0 skipped, 0 xfailed, 0 failed and 0 errors",
+    "image": "PASS: digest sha256:89231072a6f4f5bbe0569a0b790ff2f92ab43c9cc047838df5bc959adfae2c10 built from the exact candidate checkout",
+    "fixtures": "PASS: PostgreSQL 16.4, Docker worker/runtime, Floci/S3, Azurite/Azure Blob, appliance backup/restore and six-cell v0.1 journey",
+    "cleanup": "PASS: runner cleanup and owned-image removal succeeded; no Ronin images, containers or Compose projects remain",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The Docker cell is finite and does not establish indefinite supervisor operation, production topology or complete P11 family qualification.",
+    "The current run does not qualify cloud providers, external secret backends, POSIX-only or Windows-privilege lanes outside its stated fixtures.",
+    "The qualification-summary negative timeout/cancellation observations are expected acceptance-path evidence; they are not test failures and the strict receipt is 15/15.",
+    "Provider breadth, complete family journeys, human decisions and release approval remain open."
+  ]
+}

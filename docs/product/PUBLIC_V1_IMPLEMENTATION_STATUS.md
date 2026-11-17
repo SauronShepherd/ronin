@@ -7,6 +7,17 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D79 reruns the complete Docker/worker qualification on the exact candidate
+`5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`: `27/27` tests pass with `0`
+skips and `0` failures in `201.208 s`, and strict v0.1 acceptance is `15/15`
+with no missing, unexpected, skipped, xfailed or failed steps. The run builds
+and exercises image `sha256:89231072a6f4f5bbe0569a0b790ff2f92ab43c9cc047838df5bc959adfae2c10`
+from the exact checkout, covers the real Docker worker/runtime, PostgreSQL,
+Floci/S3, Azurite/Azure Blob, recovery and appliance backup/restore, and
+removes the image and fixtures successfully. This is current finite worker
+and journey evidence; it does not establish indefinite supervisor operation,
+production topology or complete P11 qualification.
+
 D78 reruns the full non-performance Python/PostgreSQL suite on the same exact
 candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`: `4,753/4,784` pass,
 `31` explicit cases skip and `0` fail. The JUnit time is `696.082 s`; the

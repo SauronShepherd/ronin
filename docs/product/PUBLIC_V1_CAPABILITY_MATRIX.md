@@ -3,6 +3,12 @@
 ## Current exact-SHA snapshot — 17 November 2026
 
 The current code/evidence candidate is `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`.
+D79 revalidates the exact-candidate Docker/worker and strict v0.1 cell:
+`27/27` tests pass with `0` skips and `0` failures, strict acceptance is
+`15/15`, the digest-bound image is cleaned up, and PostgreSQL, Floci/S3,
+Azurite/Azure Blob, recovery and appliance backup/restore all pass in the
+stated finite scope. This supports P11 worker/journey evidence but does not
+qualify the complete family or indefinite operation.
 D78 revalidates the full non-performance Python/PostgreSQL suite on this
 candidate: `4,753/4,784` pass, `31` explicit cases skip and `0` fail, with
 successful isolated PostgreSQL cleanup and `13` ResourceWarning entries
