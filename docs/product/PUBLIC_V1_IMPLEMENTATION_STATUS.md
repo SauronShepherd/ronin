@@ -7,6 +7,15 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D81 reruns the bounded live P11 backpressure diagnostic on the exact
+candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0` with `16,384` records and
+an explicit `300 s` request timeout. The single-broker Playwright journey
+passes `1/1`, correlates `12/12` API events, records `12` `OK` outcomes, zero
+unexpected authorization/server/network errors and cleanup success in
+`480.55 s`. PostgreSQL and worker execution are intentionally absent and the
+filtered run does not perform the route-wide audit; this is bounded P11
+evidence, not indefinite operation or complete family qualification.
+
 D80 reruns the current exact-candidate Docker-to-Helm/kind chain on
 `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`: Docker passes `27/27` with `0`
 skips and `0` failures, strict v0.1 acceptance is `15/15`, and Helm 4.3.1

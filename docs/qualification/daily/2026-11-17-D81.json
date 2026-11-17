@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D81",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate bounded live single-broker sustained backpressure",
+  "candidate_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "implementation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "documentation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D81.md",
+  "execution_scope": "exact-candidate-bounded-live-single-broker-backpressure-16384",
+  "result": {
+    "journey": "PASS: 1/1 Playwright case with 16,384 records; cap/backpressure, durable resume to lag zero, idle replay, reset and two 7-record replays",
+    "api_traffic": "PASS: 12/12 API events correlated with structured logs, all OK, 0 uncorrelated and 0 unexpected authorization/server/network errors",
+    "services": "PASS: real single-broker Kafka/Redpanda and Ronin API; PostgreSQL false, worker image null, replication factor 1, multi-broker false",
+    "runner": "PASS: clean-candidate live-api-diagnostic, request timeout 300 seconds, total 480.55 seconds, application ERROR/CRITICAL 0 and cleanup succeeded",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "This is bounded single-broker evidence; it does not establish indefinite supervisor operation, multi-broker failover, worker-backed execution, PostgreSQL or production topology.",
+    "The filtered diagnostic does not run the route-wide audit; the runner reports the available 25-route inventory without claiming route qualification.",
+    "Provider breadth, complete sink/replay coverage, complete P11 family qualification, human decisions and release approval remain open."
+  ]
+}
