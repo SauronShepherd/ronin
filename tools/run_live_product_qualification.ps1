@@ -284,9 +284,13 @@ try {
     } elseif ($streamingOnlyDiagnostic) {
         $brokerTopology = if ($multiBrokerDiagnostic) { "three-broker" } else { "single-broker" }
         Write-Output "Streaming-only diagnostic: starting $brokerTopology Redpanda without unrelated PostgreSQL fixtures."
-        docker compose @composeFiles -p $composeProject --profile $composeProfile up -d --wait --wait-timeout 120 @composeServices
+        if ($multiBrokerDiagnostic) {
+            docker compose @composeFiles -p $composeProject --profile $composeProfile up -d --wait --wait-timeout 120 @composeServices
+        } else {
+            docker compose -p $composeProject --profile qualification-streaming up -d --wait --wait-timeout 120 streaming-broker
+        }
     } else {
-        docker compose @composeFiles -p $composeProject --profile $composeProfile up -d --wait --wait-timeout 120 postgres @composeServices
+        docker compose -p $composeProject --profile qualification-streaming up -d --wait --wait-timeout 120 postgres streaming-broker
     }
     if (-not $sqliteOnlyDiagnostic -and $LASTEXITCODE -ne 0) { throw "Could not start the required isolated live-test services for '$composeProject'." }
     $servicesReady = $true
@@ -628,7 +632,11 @@ try {
         if (-not $server.HasExited) { Stop-Process -Id $server.Id -Force }
     }
     if ($composeStarted) {
-        docker compose @composeFiles -p $composeProject --profile $composeProfile down -v --remove-orphans
+        if ($multiBrokerDiagnostic) {
+            docker compose @composeFiles -p $composeProject --profile $composeProfile down -v --remove-orphans
+        } else {
+            docker compose -p $composeProject down -v --remove-orphans
+        }
         if ($LASTEXITCODE -ne 0) {
             Write-Warning "Cleanup failed for isolated Compose project '$composeProject'."
             $resultCode = 1
