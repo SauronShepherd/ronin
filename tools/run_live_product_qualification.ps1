@@ -588,8 +588,21 @@ try {
         [int]$_.status -eq 503 -and
         [string]$_.path -match '^/v1/workspaces/[^/]+/streams/events%2Ffault-recovery/(health|run)$'
     })
-    if ($TestGrep -eq "live streaming broker restart" -and $expectedBrokerRestartOutages.Count -ne 2) {
-        throw "Broker restart diagnostic must capture exactly two expected HTTP 503 outages (health and run); captured $($expectedBrokerRestartOutages.Count)."
+    $expectedBrokerRestartRunOutages = @($expectedBrokerRestartOutages | Where-Object {
+        [string]$_.path -match '/run$'
+    })
+    $expectedBrokerRestartHealthOutages = @($expectedBrokerRestartOutages | Where-Object {
+        [string]$_.path -match '/health$'
+    })
+    if (
+        $TestGrep -eq "live streaming broker restart" -and
+        (
+            $expectedBrokerRestartOutages.Count -lt 2 -or
+            $expectedBrokerRestartRunOutages.Count -lt 1 -or
+            $expectedBrokerRestartHealthOutages.Count -lt 1
+        )
+    ) {
+        throw "Broker restart diagnostic must capture at least two expected HTTP 503 outages with health and run coverage; captured $($expectedBrokerRestartOutages.Count) (health=$($expectedBrokerRestartHealthOutages.Count), run=$($expectedBrokerRestartRunOutages.Count))."
     }
     $unexpectedServerErrors = @($serverErrors | Where-Object {
         -not (

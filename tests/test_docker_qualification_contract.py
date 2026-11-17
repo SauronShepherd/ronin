@@ -313,6 +313,9 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert "apiTraffic" in script
     assert '$TestGrep -eq "live streaming broker restart"' in script
     assert "expectedBrokerRestartOutages" in script
+    assert "expectedBrokerRestartRunOutages" in script
+    assert "expectedBrokerRestartHealthOutages" in script
+    assert "$expectedBrokerRestartOutages.Count -lt 2" in script
     assert "unexpectedServerErrors" in script
 
 
