@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D74",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate release artifacts, application SBOM/provenance and strict supply-chain blocker",
+  "candidate_sha": "e48aa5f43836d0fd7906834abe6396712a8e30ac",
+  "implementation_commit_sha": "e48aa5f43836d0fd7906834abe6396712a8e30ac",
+  "documentation_commit_sha": "e48aa5f43836d0fd7906834abe6396712a8e30ac",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D74.md",
+  "execution_scope": "exact-candidate-release-artifacts-and-supply-chain-evidence",
+  "result": {
+    "candidate_boundary": "PASS: 1,581 files, 16,681,515 sandbox bytes, archive and manifest verification passed",
+    "artifacts": "PASS: wheel 30ca2d80 and sdist 7827b081 built from clean candidate",
+    "application_sbom": "PASS: CycloneDX 1.6 generated and verified with 106 components",
+    "local_provenance": "PASS: in-toto/SLSA local statement bound to candidate commit and artifact identity",
+    "supply_chain_basic": "PASS: identity, application SBOM and provenance revalidated together",
+    "supply_chain_strict": "FAIL/CLOSED as designed: no two distinct bound Trivy container inventories; validator exited 2 with the exact release blocker",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The local provenance is self-reported and unsigned; it is not a trusted builder attestation.",
+    "Strict release supply-chain validation still requires two distinct bound Trivy CycloneDX 1.7 container inventories.",
+    "Human release decisions, provider breadth, sustained operation and complete P11 qualification remain open."
+  ]
+}

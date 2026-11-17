@@ -2,8 +2,12 @@
 
 ## Current exact-SHA snapshot — 17 November 2026
 
-The current code/evidence candidate is `6f73583384b531867a78cb0b6f9f22344182e178`.
-D73 adds exact-candidate security evidence: Gitleaks and pip-audit are clean,
+The current code/evidence candidate is `e48aa5f43836d0fd7906834abe6396712a8e30ac`.
+D74 adds exact-candidate release artifact evidence: the candidate boundary,
+wheel/sdist identity, a `106`-component CycloneDX application SBOM and local
+in-toto/SLSA provenance pass basic supply-chain validation. Strict validation
+fails closed with exit `2` until two distinct bound Trivy container inventories
+exist. D73 adds exact-candidate security evidence: Gitleaks and pip-audit are clean,
 Trivy filesystem and worker-image scans report `0` vulnerabilities and `0`
 secrets, and `193` supply-chain/release/security contracts pass. D72 adds an
 exact-candidate Docker worker/Notebook cell: Docker `27/27`, strict
@@ -180,7 +184,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `6f73583384b531867a78cb0b6f9f22344182e178` (current exact candidate; the implementation code baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`, this is not a release qualification claim, and the required human/provider gates remain open).
+**Observed source baseline:** `e48aa5f43836d0fd7906834abe6396712a8e30ac` (current exact candidate; the implementation code baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`, this is not a release qualification claim, and the required human/provider gates remain open).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
