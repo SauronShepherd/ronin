@@ -2,13 +2,16 @@
 
 ## Current exact-SHA snapshot — 17 November 2026
 
-The current code/evidence candidate is `e48aa5f43836d0fd7906834abe6396712a8e30ac`.
-D75 completes exact-candidate release artifact evidence: runtime and probe TARs
-have distinct bound Trivy CycloneDX `1.7` inventories, both image scans report
-`0` vulnerabilities and `0` secrets, and basic plus strict supply-chain
-validation pass. D74 adds the candidate boundary, wheel/sdist identity, a
-`106`-component CycloneDX application SBOM and local in-toto/SLSA provenance.
-D73 adds exact-candidate security evidence: Gitleaks and pip-audit are clean,
+The current code/evidence candidate is `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`.
+D76 fixes the live qualification route audit and records a bounded exact-
+candidate route-wide cell: `25` active routes (`24` API-backed, `1` UI-only),
+`376/376` correlated events and `0` unexpected server errors; its default
+fixture remains closed by one explicit multi-broker skip. The separate
+three-broker diagnostic passes `1/1` with `5/5` correlated `OK` events. D75's
+strict runtime/probe artifact evidence remains bound to the preceding
+`e48aa5f4` candidate and is not a current-SHA release claim. D74 adds the
+candidate boundary, wheel/sdist identity, a `106`-component CycloneDX
+application SBOM and local in-toto/SLSA provenance. D73 adds exact-candidate security evidence: Gitleaks and pip-audit are clean,
 Trivy filesystem and worker-image scans report `0` vulnerabilities and `0`
 secrets, and `193` supply-chain/release/security contracts pass. D72 adds an
 exact-candidate Docker worker/Notebook cell: Docker `27/27`, strict
@@ -185,7 +188,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `e48aa5f43836d0fd7906834abe6396712a8e30ac` (current exact candidate; the implementation code baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`, this is not a release qualification claim, and the required human/provider gates remain open).
+**Observed source baseline:** `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0` (current exact candidate; the implementation code baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`, this is not a release qualification claim, and the required human/provider gates remain open).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

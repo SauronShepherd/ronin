@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D76",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate live route audit, broker-restart classification and multi-broker diagnostic",
+  "candidate_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "implementation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "documentation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D76.md",
+  "execution_scope": "exact-candidate-live-route-audit-and-multi-broker-recovery",
+  "result": {
+    "harness_fix": "PASS: route List[object] is enumerated before filtering, expected broker-restart 503s are allowed in full mode, and skip failure is deferred until evidence audit",
+    "harness_contracts": "PASS: 26 focused live/Docker qualification contracts",
+    "full_live": "FAIL/CLOSED as designed: 39/40 passed, 0 failed and 1 explicit multi-broker skip; route audit 25 active (24 API, 1 UI-only), 376/376 correlated events and 0 unexpected server errors",
+    "broker_restart_outages": "EXPECTED: 3 HTTP 503 streaming_unavailable events on the fault-recovery stream, covered by the broker-restart case",
+    "multi_broker": "PASS: 1/1 case, 5/5 correlated OK events, three brokers, replication factor 3 and cleanup",
+    "cleanup": "PASS: live Postgres/Redpanda fixtures, worker and browser resources cleaned up",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The default full live suite intentionally skips the multi-broker case and therefore remains FAIL/CLOSED; the separate three-broker diagnostic passes.",
+    "D75 strict artifact/SBOM/provenance evidence is bound to the preceding e48aa5f4 candidate and is not claimed for this new SHA.",
+    "Indefinite operation, production topology, provider breadth, complete P11 qualification and human release decisions remain open."
+  ]
+}

@@ -634,13 +634,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D75.md",
       "candidate_sha": "e48aa5f43836d0fd7906834abe6396712a8e30ac",
       "commit_sha": "e48aa5f43836d0fd7906834abe6396712a8e30ac"
+    },
+    {
+      "id": "D76",
+      "date": "2026-11-17",
+      "phase": "exact-candidate-live-route-audit-and-multi-broker-recovery",
+      "status": "pass",
+      "families": [],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D76.md",
+      "candidate_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+      "commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D75 is the latest exact candidate source e48aa5f43836d0fd7906834abe6396712a8e30ac: runtime and probe TARs plus raw Trivy SBOMs are bound to the candidate, two distinct bound CycloneDX 1.7 inventories validate with Trivy 0.76.1, and strict supply-chain validation passes. D74 remains linked for the candidate boundary and wheel/sdist/application SBOM/provenance bundle; D73 for current clean security scans; D72 for the real worker Notebook; D71 for three-broker failover; D70 for single-broker backpressure; and D69 for the full Python/PostgreSQL regression. P11 remains open for indefinite backpressure, supervisor continuity, production topology, provider breadth, the complete family journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D76 is the latest exact candidate source 5c17dd7a642ef1e6a16d00967f9aec38ccce91d0: the live runner fix is covered by 26 contracts; the complete default live cell audits 25 active routes with 376/376 correlated events but closes FAIL/CLOSED on its explicit multi-broker skip; the separate three-broker diagnostic passes 1/1 with 5/5 OK events. D75 remains linked for strict runtime/probe supply-chain evidence on the preceding e48aa5f4 candidate and must be regenerated for this SHA before release claims. P11 remains open for indefinite backpressure, supervisor continuity, production topology, provider breadth, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",
@@ -655,7 +665,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D75 completes the exact-candidate runtime/probe Trivy CycloneDX 1.7 binding with two distinct images and strict supply-chain PASS. D74 adds exact-candidate wheel/sdist identity, a verified 106-component application SBOM and local provenance; D73 adds current exact-candidate security evidence: Gitleaks 0 findings, pip-audit 0 known vulnerability records, Trivy filesystem 0/0 and Trivy worker-image 0/0, plus 193 supply-chain/release/security contracts. D69 is the latest full regression receipt on the published candidate: 4,753 passed, 31 expected external/platform skips and 0 failed out of 4,784, plus cleanup success and 13 ResourceWarnings retained for follow-up. D70 revalidates the current 16,384-record bounded live P11 backpressure cap/resume/reset/replay pass with 1/1 and 12/12 correlated OK events. D71 revalidates the current three-broker failover journey with 1/1 and 5/5 correlated OK events. D72 revalidates current Docker 27/27 with strict 15/15 and a live worker/Notebook journey with 1/1 and 18/18 correlated OK events. D68 remains the Helm/kind install/restart-persistence/upgrade/rollback/cleanup pass after correcting the acceptance receipt contract. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
+      "summary": "D76 fixes the live qualification route audit and expected broker-restart classification, then records the current candidate's 25-route/376-event default cell plus a passing three-broker diagnostic; the default cell remains FAIL/CLOSED because one multi-broker case is intentionally skipped. D75 completes the runtime/probe Trivy CycloneDX 1.7 binding with two distinct images and strict supply-chain PASS on the preceding e48aa5f4 candidate. D74 adds exact-candidate wheel/sdist identity, application SBOM and local provenance; D73 adds current exact-candidate security evidence: Gitleaks 0 findings, pip-audit 0 known vulnerability records, Trivy filesystem 0/0 and Trivy worker-image 0/0, plus 193 supply-chain/release/security contracts. D69 is the latest full regression receipt on the published candidate: 4,753 passed, 31 expected external/platform skips and 0 failed out of 4,784, plus cleanup success and 13 ResourceWarnings retained for follow-up. D70 revalidates the current 16,384-record bounded live P11 backpressure cap/resume/reset/replay pass with 1/1 and 12/12 correlated OK events. D71 revalidates the current three-broker failover journey with 1/1 and 5/5 correlated OK events. D72 revalidates current Docker 27/27 with strict 15/15 and a live worker/Notebook journey with 1/1 and 18/18 correlated OK events. D68 remains the Helm/kind install/restart-persistence/upgrade/rollback/cleanup pass after correcting the acceptance receipt contract. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
     },
     {
       "id": "catalog-project-scope",

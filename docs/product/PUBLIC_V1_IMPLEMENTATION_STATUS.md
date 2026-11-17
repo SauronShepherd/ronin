@@ -7,23 +7,20 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
-D75 binds the current exact candidate `e48aa5f43836d0fd7906834abe6396712a8e30ac`
-to a complete runtime/probe release artifact bundle: the D74 candidate
-boundary, wheel/sdist identity, two distinct Trivy CycloneDX `1.7` inventories,
-a `110`-component application SBOM and local in-toto/SLSA provenance. Trivy
-`0.76.1` reports `0` vulnerabilities and `0` secrets for both images; basic
-and strict supply-chain validation pass, with runtime `59` and probe `56` OS
-packages recorded. D74 remains linked for the candidate boundary and
-application artifact bundle; D73 for the clean exact-candidate security scans:
-Gitleaks `0`, pip-audit `0` known vulnerability records, Trivy filesystem
-`0/0`, Trivy worker-image `0/0`, and `193` supply-chain/release/security
-contracts passed. D72 remains linked for the Docker worker and live Notebook
-journey (`27/27`, strict `15/15`, then `1/1` with `18/18` correlated `OK`
-events); D71 for three-broker failover, D70 for the current `16,384`-record
-single-broker journey, D69 for the full Python/PostgreSQL regression, and D68
-for the Helm chain. This finite local artifact/security cell does not qualify
-indefinite operation or the complete P11 family; the release remains
-**NO-GO**.
+D76 binds the current exact candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`
+to a live qualification-harness correction and two bounded live cells. The
+default run audits `25` active routes (`24` API-backed and `1` UI-only),
+correlates `376/376` API events and records `0` unexpected server errors; it
+closes **FAIL/CLOSED** only because the default fixture explicitly skips the
+multi-broker case. The separate three-broker diagnostic passes `1/1` with
+`5/5` correlated `OK` events and replication factor `3`. D75 remains linked
+for the strict runtime/probe artifact bundle on the preceding exact candidate
+`e48aa5f4`; that supply-chain evidence is not claimed for D76's SHA. D73
+remains linked for clean security scans, D72 for the Docker worker and live
+Notebook journey, D70 for the current `16,384`-record single-broker journey,
+D69 for the full Python/PostgreSQL regression, and D68 for the Helm chain.
+These finite local cells do not qualify indefinite operation or the complete
+P11 family; the release remains **NO-GO**.
 
 D67 remains linked as an earlier scaled live regression on the preceding exact
 candidate and binds `018176e0a3693d668bac0d049a6ce4db3c7f2723` to a
@@ -489,7 +486,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `e48aa5f43836d0fd7906834abe6396712a8e30ac` (2026-11-17).
+**Observed source head:** `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0` (2026-11-17).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. D66 binds a local worker image
 and exact multi-broker evidence, while its unfiltered aggregate remains
