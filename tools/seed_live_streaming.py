@@ -28,6 +28,17 @@ def _required(name: str) -> str:
     return value
 
 
+def _positive_int(name: str, default: int) -> int:
+    raw_value = os.environ.get(name, str(default))
+    try:
+        value = int(raw_value)
+    except ValueError as exc:
+        raise SystemExit(f"{name} must be an integer") from exc
+    if value < 1:
+        raise SystemExit(f"{name} must be at least 1")
+    return value
+
+
 def main() -> int:
     workspace_id = _required("RONIN_WORKSPACE_ID")
     database = Path(_required("RONIN_DB")).expanduser().resolve()
@@ -36,12 +47,8 @@ def main() -> int:
     if not api.hostname or api.port is None:
         raise SystemExit("RONIN_LIVE_API_URL must include a host and port")
     token = _required("RONIN_LIVE_API_TOKEN")
-    try:
-        replication_factor = int(os.environ.get("RONIN_LIVE_STREAMING_REPLICATION_FACTOR", "1"))
-    except ValueError as exc:
-        raise SystemExit("RONIN_LIVE_STREAMING_REPLICATION_FACTOR must be an integer") from exc
-    if replication_factor < 1:
-        raise SystemExit("RONIN_LIVE_STREAMING_REPLICATION_FACTOR must be at least 1")
+    replication_factor = _positive_int("RONIN_LIVE_STREAMING_REPLICATION_FACTOR", 1)
+    backpressure_records = _positive_int("RONIN_LIVE_BACKPRESSURE_RECORDS", 256)
     topic = "ronin-live-events"
     poison_topic = "ronin-live-poison-events"
     oversized_topic = "ronin-live-oversized-events"
@@ -165,7 +172,7 @@ def main() -> int:
             key=f"ronin-live-sustained-{index}",
             value=json.dumps({"event": f"sustained-{index}"}),
         )
-    for index in range(256):
+    for index in range(backpressure_records):
         producer.produce(
             backpressure_topic,
             partition=index % 2,

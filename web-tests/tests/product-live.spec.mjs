@@ -1598,7 +1598,7 @@ test('live streaming max-record cap resumes the durable checkpoint without repla
   await flushLiveTraffic();
 });
 
-test('live streaming sustained backpressure drains 256 records with reset-safe replay', async ({ page }) => {
+test('live streaming sustained backpressure drains configured records with reset-safe replay', async ({ page }) => {
   test.setTimeout(240_000);
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
 
@@ -1611,6 +1611,14 @@ test('live streaming sustained backpressure drains 256 records with reset-safe r
     'Content-Type': 'application/json',
   };
   const streamId = 'events/backpressure';
+  const backpressureRecords = Number.parseInt(process.env.RONIN_LIVE_BACKPRESSURE_RECORDS || '256', 10);
+  expect(Number.isInteger(backpressureRecords)).toBe(true);
+  expect(backpressureRecords).toBeGreaterThanOrEqual(256);
+  expect(backpressureRecords % 2).toBe(0);
+  const recordsPerPartition = backpressureRecords / 2;
+  const cappedRecords = 73;
+  const remainingRecords = backpressureRecords - cappedRecords;
+  const expectedResumeBatches = Math.ceil(remainingRecords / 8);
   const encodedWorkspace = encodeURIComponent(workspace);
   const encodedStream = encodeURIComponent(streamId);
   const streamPath = `/v1/workspaces/${encodedWorkspace}/streams/${encodedStream}`;
@@ -1654,15 +1662,15 @@ test('live streaming sustained backpressure drains 256 records with reset-safe r
   expect(await initialHealth.json()).toMatchObject({
     source_status: 'available',
     partitions: 2,
-    lag: { '0': 128, '1': 128 },
-    total_lag: 256,
+    lag: { '0': recordsPerPartition, '1': recordsPerPartition },
+    total_lag: backpressureRecords,
   });
 
   const capped = await request('POST', runPath, {
     limit: 8,
     timeout_seconds: 1,
     max_batches: 20,
-    max_records: 73,
+    max_records: cappedRecords,
     idle_polls: 3,
   });
   expect(capped.status(), await capped.text()).toBe(200);
@@ -1678,25 +1686,26 @@ test('live streaming sustained backpressure drains 256 records with reset-safe r
   const afterCapHealth = await request('GET', healthPath);
   expect(afterCapHealth.status(), await afterCapHealth.text()).toBe(200);
   const afterCapPayload = await afterCapHealth.json();
-  expect(afterCapPayload.total_lag).toBe(183);
-  expect(afterCapPayload.total_lag).toBeLessThan(256);
+  expect(afterCapPayload.total_lag).toBe(remainingRecords);
+  expect(afterCapPayload.total_lag).toBeLessThan(backpressureRecords);
 
   const resumed = await request('POST', runPath, {
     limit: 8,
     timeout_seconds: 1,
-    max_batches: 40,
-    max_records: 256,
+    max_batches: expectedResumeBatches + 3,
+    max_records: backpressureRecords,
     idle_polls: 3,
   });
   expect(resumed.status(), await resumed.text()).toBe(200);
-  expect(await resumed.json()).toMatchObject({
+  const resumedPayload = await resumed.json();
+  expect(resumedPayload).toMatchObject({
     stream_id: streamId,
     status: 'succeeded',
     stop_reason: 'idle',
-    batches: 23,
-    records: 183,
-    rows: 183,
+    records: remainingRecords,
+    rows: remainingRecords,
   });
+  expect(resumedPayload.batches).toBe(expectedResumeBatches);
 
   const finalHealth = await request('GET', healthPath);
   expect(finalHealth.status(), await finalHealth.text()).toBe(200);
@@ -1715,7 +1724,7 @@ test('live streaming sustained backpressure drains 256 records with reset-safe r
   expect(reset.status(), await reset.text()).toBe(200);
   const resetHealth = await request('GET', healthPath);
   expect(resetHealth.status(), await resetHealth.text()).toBe(200);
-  expect((await resetHealth.json()).total_lag).toBe(256);
+  expect((await resetHealth.json()).total_lag).toBe(backpressureRecords);
 
   const firstReplay = await request('POST', runPath, { limit: 7, timeout_seconds: 1 });
   expect(firstReplay.status(), await firstReplay.text()).toBe(200);

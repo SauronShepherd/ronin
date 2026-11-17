@@ -311,6 +311,9 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert "failurePhase" in script
     assert "realServices" in script
     assert "apiTraffic" in script
+    assert "BackpressureRecords" in script
+    assert "RONIN_LIVE_BACKPRESSURE_RECORDS" in script
+    assert "streamingFixture" in script
     assert '$TestGrep -eq "live streaming broker restart"' in script
     assert "expectedBrokerRestartOutages" in script
     assert "expectedBrokerRestartRunOutages" in script
