@@ -2,17 +2,14 @@
 
 ## Current exact-SHA snapshot — 17 November 2026
 
-The current code/evidence candidate is `658071c8eeee07141c17841b7f5bd6d53185a7f5`.
-D66 binds a locally built worker image
-`sha256:ad9be1b8d31c592ae143229c423c92ae65aeea5bac6852645c7253858b2a27c9` to
-the exact candidate. Notebook Studio passes `1/1` with `16/16` correlated `OK`
-events, and the separate three-broker multi-broker failover slice passes `1/1`
-with `5/5` correlated `OK` events. Gitleaks, pip-audit and Trivy filesystem
-and exported-image scans are clean. The unfiltered single-broker campaign is
-not counted as an aggregate PASS because `39/40` cases passed and the
-multi-broker case is deliberately skipped outside its three-broker fixture;
-its `382/382` events remain preserved as evidence. This does not qualify P11
-or close any release gate.
+The current code/evidence candidate is `018176e0a3693d668bac0d049a6ce4db3c7f2723`.
+D67 adds a `87/87` local streaming/worker regression and a live single-broker
+backpressure journey over `16,384` records. The case passes `1/1`, preserves
+the durable cap/resume/reset/replay assertions and correlates `12/12` API
+events, all `OK`, with cleanup succeeded. The run is bounded and uses an
+explicit `RequestTimeoutSeconds=300`; it does not qualify P11 or close any
+release gate. D66 remains the source of the separate real worker Notebook,
+three-broker failover and clean security scans.
 D38 adds candidate-bound P11 broker-restart recovery and a probe Alpine lock
 refresh after the preceding image showed 11 MEDIUM findings with available
 fixed versions. The exact candidate sandbox passes 95 streaming/API tests and
@@ -161,9 +158,11 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `658071c8eeee07141c17841b7f5bd6d53185a7f5` (current exact candidate; the implementation code baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`, this is not a release qualification claim, and the required human/provider gates remain open).
+**Observed source baseline:** `018176e0a3693d668bac0d049a6ce4db3c7f2723` (current exact candidate; the implementation code baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`, this is not a release qualification claim, and the required human/provider gates remain open).
 
-The D66 worker-backed Notebook Studio slice passes `1/1` with a real local
+The D67 scaled backpressure slice passes `1/1` with a real local
+single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
+worker-backed Notebook Studio slice passes `1/1` with a real local
 Docker worker and `16/16` correlated events. Its exact three-broker failover
 slice passes `1/1` with `5/5` events. The full unfiltered run is intentionally
 `NOT_COUNTED` because the default single-broker fixture skips the multi-broker
@@ -318,7 +317,7 @@ isolated green tests do not close a family.
 | P8 Machine learning and MLOps | Partial | Partial | No | Scheduled runs and async JobStore requests pin canonical pipeline and Lab digests, and scheduled execution now passes that exact PipelineIR to its runner. Main resolves Lab AssetRefs to workspace-scoped, digest-verified CSV/JSONL snapshots; durable inputs above 1 MiB use ArtifactStore. The v2 local runner supports bounded prepare branches and algorithm×preprocessor candidate grids, with deterministic topological execution and checkpoint recovery. Final tabular and K-Means models are materialized as verified content-addressed ArtifactStore objects. Main registers successful durable executions as candidate models through Studio after artifact identity revalidation, provides workspace-scoped artifact retrieval and bounded UI download, and allows direct promotion with the existing reason gate. PR #450 qualifies S3-compatible artifact writes, reads, digest checks and safe stale-object deletion against LocalStack in CI; vendor production qualification is still open. Atomic, exact-replay ML Registry Bundle imports are available in SQLite and PostgreSQL on main; PR #528 required exact-head qualification passed. P8 remains partial because broader ML and provider qualification gaps remain. Arbitrary built-in DAG shapes and plugin-defined stages, broader feature/algorithm coverage, MLflow/network serving and production qualification remain incomplete. PR #509 added the terminal registration stage and passed all six exact-head workflows on `156d607`. | Numerical Python stack; MLflow or serving provider for interoperability paths. | Local deterministic training/inference; Compose reference profile. |
 | P9 GenAI, RAG and in-product agents | Out of scope | N/A | N/A | No Ronin tier ships model/provider invocation, RAG, or agent execution. Coding-agent skills are consumed by external agents and remain separate from Ronin's runtime, API, and Studio. | None. | Not applicable. |
 | P10 Semantic models and dashboards | Partial | Partial | No | Export/import and production qualification remain incomplete; broader planning is bounded. | DuckDB/SQL engine for execution; browser runtime for Studio. | Local SQLite/DuckDB; Compose reference profile. |
-| P11 Streaming and real time | Partial | Partial | No | Definition, health, bounded run-once, Bundle export/plan/import, oversized-record rejection/recovery, checkpoint partition expansion and current bounded backpressure evidence have focused local/candidate coverage (**95 focused tests** plus D60/D61/D65). D66 adds a real local digest-pinned worker Notebook journey (**1/1**, **16/16** correlated events) and a separate three-broker failover slice (**1/1**, **5/5**). The unfiltered single-broker campaign is explicitly not counted because the multi-broker test is deliberately skipped outside its three-broker fixture. Continuous supervisor operation, production topology, provider breadth, complete operator evidence and exact-candidate full-family qualification remain open. | Kafka broker/client runtime. | Local bounded polling tests; digest-pinned Redpanda profile and Compose. |
+| P11 Streaming and real time | Partial | Partial | No | Definition, health, bounded run-once, Bundle export/plan/import, oversized-record rejection/recovery, checkpoint partition expansion and bounded backpressure evidence have focused local/candidate coverage (**95 focused tests** plus D60/D61/D65/D67). D67 adds the exact-candidate 16,384-record cap/resume/reset/replay slice (**1/1**, **12/12** correlated `OK`) and a green local streaming/worker regression (**87/87**). D66 adds a real local digest-pinned worker Notebook journey (**1/1**, **16/16**) and a separate three-broker failover slice (**1/1**, **5/5**). Continuous indefinite operation, production topology, provider breadth, complete operator evidence and exact-candidate full-family qualification remain open. | Kafka broker/client runtime. | Local bounded polling tests; digest-pinned Redpanda profile and Compose. |
 | P12 Observability, alerts and FinOps | Partial | Partial | No | D35 adds authenticated CLI parity for usage, costs and budgets; the exact candidate records 222 compatibility/P12 tests, 3/3 local-composed/HTTP journeys, 3/3 isolated PyRonin alert/FinOps SDK tests and a real digest-pinned OTLP Collector lane (1/1, no skips/failures, cleanup). D34's slotted-record and legacy payload compatibility remains covered. External Prometheus deployment, SMTP/HTTPS notification providers, PostgreSQL telemetry/FinOps, public allocation/forecast/policy routes, broader service adoption, candidate browser packaging and production qualification remain incomplete. | Prometheus scrape target; SMTP/HTTPS notification endpoint; PostgreSQL for provider-backed durability. | Local SQLite; Compose reference profile. |
 | P13 Security and audit (single-operator) | Partial | Partial | No | Exact candidate C2 adds digest/denormalized-column verification for SQLite and PostgreSQL, a bounded authorized audit route, real PostgreSQL/Docker recovery evidence, and clean-candidate Gitleaks, pip-audit and Trivy scans. External secret-provider qualification and release evidence remain incomplete. OIDC, user/group administration and multi-user authorization belong to Ronin Pro. | Local bearer/auth profile; external secret backend for Ronin Pro. | Local single-operator; single-host Compose/PostgreSQL reference. |
 | P14 Deployment and operations | Partial | Partial | No | D37 binds the exact candidate to 69 P14 contracts, 27/27 real Docker tests, strict v0.1 acceptance 15/15, a real PostgreSQL + `/var/lib/ronin` appliance restore, and Helm/kind install/readiness, revision-2 upgrade, rollback to revision 1, health/API, queued-job persistence after restart and cleanup. The authorized Floci/Terraform 1.13.5 provider lane reaches plan/validate but apply times out at 120s and 300s; destroy/state cleanup leave zero resources, so external object-store recovery remains blocked. Supported-platform coverage and full release aggregation remain incomplete. Multi-user HA and Kubernetes server profiles belong to Ronin Pro. | Docker; PostgreSQL; local artifacts; external S3 backup is separate. | Local and single-host Docker Compose. |

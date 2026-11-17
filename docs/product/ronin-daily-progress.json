@@ -544,13 +544,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D66.md",
       "candidate_sha": "658071c8eeee07141c17841b7f5bd6d53185a7f5",
       "commit_sha": "658071c8eeee07141c17841b7f5bd6d53185a7f5"
+    },
+    {
+      "id": "D67",
+      "date": "2026-11-17",
+      "phase": "p11-scaled-16384-record-backpressure-supervisor-regression",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D67.md",
+      "candidate_sha": "018176e0a3693d668bac0d049a6ce4db3c7f2723",
+      "commit_sha": "018176e0a3693d668bac0d049a6ce4db3c7f2723"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D66 is the latest exact candidate source 658071c8eeee07141c17841b7f5bd6d53185a7f5: a locally built worker image runs the Notebook Studio slice at 1/1 with 16/16 correlated OK events, and a separate three-broker multi-broker slice passes 1/1 with 5/5 OK events. The unfiltered single-broker campaign is not counted because it contains the deliberate multi-broker skip; it still records 39/40 passed and 382/382 correlated events. D66 Gitleaks, pip-audit and Trivy filesystem/image scans are clean. P11 remains open for indefinite backpressure, supervisor continuity, production topology, provider breadth, the complete family journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D67 is the latest exact candidate source 018176e0a3693d668bac0d049a6ce4db3c7f2723: the local streaming/worker regression passes 87/87 and the live single-broker 16,384-record backpressure/cap/resume/reset/replay case passes 1/1 with 12/12 correlated OK events. D66 remains linked for the real worker Notebook, three-broker failover and clean Gitleaks, pip-audit and Trivy filesystem/image scans. P11 remains open for indefinite backpressure, supervisor continuity, production topology, provider breadth, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",
@@ -565,7 +575,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D58 full Python/PostgreSQL regression is green on the exact clean candidate: 4753 passed, 31 expected external/platform skips and 0 failed. D66 adds a real local worker image with a 1/1 Notebook Studio pass and separate three-broker 1/1 failover pass, plus clean Gitleaks, pip-audit and Trivy filesystem/image scans. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. D65 adds a 4096-record bounded P11 backpressure pass with explicit request timeout; D64 adds corrected route-surface evidence. Full route/family audit, indefinite supervisor, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open, and the 13 SQLite ResourceWarnings remain a follow-up quality item. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
+      "summary": "D58 full Python/PostgreSQL regression is green on the exact clean candidate: 4753 passed, 31 expected external/platform skips and 0 failed. D67 adds a 87/87 local streaming/worker regression and a 16,384-record bounded live P11 backpressure cap/resume/reset/replay pass with explicit request timeout. D66 remains linked for the real local worker Notebook, separate three-broker failover and clean Gitleaks, pip-audit and Trivy filesystem/image scans. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open, and the 13 SQLite ResourceWarnings remain a follow-up quality item. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
     },
     {
       "id": "catalog-project-scope",

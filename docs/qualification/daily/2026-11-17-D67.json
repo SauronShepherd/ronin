@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D67",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Exact-candidate 16,384-record streaming supervisor/backpressure requalification",
+  "candidate_sha": "018176e0a3693d668bac0d049a6ce4db3c7f2723",
+  "implementation_commit_sha": "9b3f3670ac19baac95f4dfd35b73805ba0785ae1",
+  "documentation_commit_sha": "018176e0a3693d668bac0d049a6ce4db3c7f2723",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D67.md",
+  "execution_scope": "exact-candidate-local-supervisor-regression-and-scaled-live-backpressure",
+  "result": {
+    "candidate_boundary": "PASS: 1,566 files, 16,624,451 sandbox bytes, archive and manifest verification passed",
+    "local_regression": "PASS: 87 passed, 0 failed, 0 skipped",
+    "live_backpressure": "PASS: 1/1 case, 16,384 records, cap/resume/reset/replay assertions, 12/12 correlated API events all OK and cleanup succeeded",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The run is bounded and uses a single-broker fixture with an explicit 300-second request timeout; it is not indefinite supervisor or production-topology evidence.",
+    "D66 worker/multi-broker/security evidence is linked separately; D67 changed no product source and does not rerun those lanes.",
+    "Provider breadth, complete P11 journey, human review and release aggregation remain open."
+  ]
+}
