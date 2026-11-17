@@ -1633,6 +1633,123 @@ test('live streaming sustained backpressure drains 256 records with reset-safe r
   await flushLiveTraffic();
 });
 
+test('live streaming enforces near-record and near-batch byte boundaries', async ({ page }) => {
+  test.setTimeout(300_000);
+  test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
+
+  const calls = installLiveApiProxy(page);
+  const workspace = process.env.RONIN_LIVE_WORKSPACE;
+  const api = process.env.RONIN_LIVE_API_URL;
+  const token = process.env.RONIN_LIVE_API_TOKEN;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+  const encodedWorkspace = encodeURIComponent(workspace);
+
+  const request = async (method, path, data) => {
+    const response = await page.evaluate(async ({ apiBase, requestPath, requestMethod, requestHeaders, body }) => {
+      const upstream = await fetch(`${apiBase}${requestPath}`, {
+        method: requestMethod,
+        headers: requestHeaders,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      return { status: upstream.status, text: await upstream.text() };
+    }, { apiBase: api, requestPath: path, requestMethod: method, requestHeaders: headers, body: data });
+    return {
+      status: () => response.status,
+      text: async () => response.text,
+      json: async () => JSON.parse(response.text),
+    };
+  };
+
+  const makeDefinition = (streamId, resource, targetRef) => ({
+    id: streamId,
+    name: `Live ${streamId} byte-boundary qualification`,
+    source: {
+      connection_id: 'live-kafka',
+      resource,
+      partitions: [0],
+      format: 'json',
+    },
+    sink: { kind: 'table', target_ref: targetRef, mode: 'append' },
+    schema: [{ name: 'event', data_type: 'string', nullable: false }],
+    runtime: { profile_id: 'local', batch_limit: 9, timeout_seconds: 5 },
+  });
+
+  const runPositiveBoundary = async ({ streamId, resource, targetRef, records, limit }) => {
+    const encodedStream = encodeURIComponent(streamId);
+    const streamPath = `/v1/workspaces/${encodedWorkspace}/streams/${encodedStream}`;
+    const runPath = `${streamPath}/run`;
+    const healthPath = `${streamPath}/health`;
+    const definition = makeDefinition(streamId, resource, targetRef);
+    const saved = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
+    expect(saved.status(), await saved.text()).toBe(200);
+
+    const initialHealth = await request('GET', healthPath);
+    expect(initialHealth.status(), await initialHealth.text()).toBe(200);
+    expect((await initialHealth.json()).total_lag).toBe(records);
+
+    const run = await request('POST', runPath, { limit, timeout_seconds: 5 });
+    expect(run.status(), await run.text()).toBe(200);
+    expect(await run.json()).toMatchObject({
+      stream_id: streamId,
+      status: 'succeeded',
+      records,
+      rows: records,
+    });
+
+    const finalHealth = await request('GET', healthPath);
+    expect(finalHealth.status(), await finalHealth.text()).toBe(200);
+    expect((await finalHealth.json()).total_lag).toBe(0);
+  };
+
+  await runPositiveBoundary({
+    streamId: 'events/near-record-limit',
+    resource: 'ronin-live-near-record-limit-events',
+    targetRef: 'live-near-record-limit-events',
+    records: 1,
+    limit: 1,
+  });
+  await runPositiveBoundary({
+    streamId: 'events/near-batch-limit',
+    resource: 'ronin-live-near-batch-limit-events',
+    targetRef: 'live-near-batch-limit-events',
+    records: 8,
+    limit: 8,
+  });
+
+  const streamId = 'events/over-batch-limit';
+  const encodedStream = encodeURIComponent(streamId);
+  const streamPath = `/v1/workspaces/${encodedWorkspace}/streams/${encodedStream}`;
+  const runPath = `${streamPath}/run`;
+  const healthPath = `${streamPath}/health`;
+  const definition = makeDefinition(
+    streamId,
+    'ronin-live-over-batch-limit-events',
+    'live-over-batch-limit-events',
+  );
+  const saved = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
+  expect(saved.status(), await saved.text()).toBe(200);
+  const initialHealth = await request('GET', healthPath);
+  expect(initialHealth.status(), await initialHealth.text()).toBe(200);
+  expect((await initialHealth.json()).total_lag).toBe(9);
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const rejected = await request('POST', runPath, { limit: 9, timeout_seconds: 5 });
+    expect(rejected.status(), await rejected.text()).toBe(422);
+    const error = await rejected.json();
+    expect(error.error.code).toBe('stream_input_rejected');
+    expect(error.error.message).toContain('exceeds local processing limits');
+  }
+  const afterRejectHealth = await request('GET', healthPath);
+  expect(afterRejectHealth.status(), await afterRejectHealth.text()).toBe(200);
+  expect((await afterRejectHealth.json()).total_lag).toBe(9);
+  expect(calls.some(call => call.path === runPath && call.status === 422 && call.outcome === 'WARN')).toBe(true);
+  expect(calls.some(call => call.status === 200 && call.outcome === 'OK')).toBe(true);
+  await flushLiveTraffic();
+});
+
 test('live Projects create, export, and reimport a secret-safe Bundle through the UI', async ({ page }) => {
   test.setTimeout(60_000);
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and PostgreSQL fixture.');

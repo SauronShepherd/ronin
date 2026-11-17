@@ -44,6 +44,9 @@ def main() -> int:
     fault_topic = "ronin-live-fault-events"
     sustained_topic = "ronin-live-sustained-events"
     backpressure_topic = "ronin-live-backpressure-events"
+    near_record_limit_topic = "ronin-live-near-record-limit-events"
+    near_batch_limit_topic = "ronin-live-near-batch-limit-events"
+    over_batch_limit_topic = "ronin-live-over-batch-limit-events"
     stream_id = "events/main"
     poison_stream_id = "events/poison"
     oversized_stream_id = "events/oversized"
@@ -60,6 +63,9 @@ def main() -> int:
         (fault_topic, 1, {}),
         (sustained_topic, 2, {}),
         (backpressure_topic, 2, {}),
+        (near_record_limit_topic, 1, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
+        (near_batch_limit_topic, 1, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
+        (over_batch_limit_topic, 1, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
     ):
         results = admin.create_topics(
             [
@@ -96,6 +102,36 @@ def main() -> int:
     if len(oversized) <= MAX_KAFKA_RECORD_BYTES:
         raise SystemExit("The live oversized Kafka fixture must exceed Ronin's record cap")
     producer.produce(oversized_topic, key="ronin-live-oversized-1", value=oversized)
+
+    def event_payload(target_bytes: int, fill: str) -> bytes:
+        empty = json.dumps({"event": ""}, separators=(",", ":")).encode("utf-8")
+        payload = json.dumps(
+            {"event": fill * (target_bytes - len(empty))},
+            separators=(",", ":"),
+        ).encode("utf-8")
+        if len(payload) != target_bytes:
+            raise SystemExit("The live Kafka byte-boundary fixture was sized incorrectly")
+        return payload
+
+    near_record = event_payload(MAX_KAFKA_RECORD_BYTES - 1024, "r")
+    producer.produce(
+        near_record_limit_topic,
+        key="ronin-live-near-record-1",
+        value=near_record,
+    )
+    near_batch = event_payload(1_000_000, "b")
+    for index in range(8):
+        producer.produce(
+            near_batch_limit_topic,
+            key=f"ronin-live-near-batch-{index}",
+            value=near_batch,
+        )
+    for index in range(9):
+        producer.produce(
+            over_batch_limit_topic,
+            key=f"ronin-live-over-batch-{index}",
+            value=near_batch,
+        )
     producer.produce(
         recovery_topic,
         key="ronin-live-recovery-1",
