@@ -7,6 +7,19 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D63 adds clean source, locked-dependency and filesystem vulnerability/secret
+scan evidence over the already verified exact candidate
+`e27cb00fe680c6ff30ee7e26da2d8556970f8ca5`. Gitleaks `8.30.1` scans
+approximately `16,544,004` bytes with `0` findings, pip-audit `2.10.1` reports
+no known vulnerabilities for the hash-locked `requirements-test.lock`, and
+Trivy `0.76.1` pinned to
+`aquasec/trivy@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c`
+reports exit `0` and no filesystem vulnerability or secret findings. D63 does
+not bind a Ronin runtime/probe image, produce the aggregate SBOM/provenance
+dossier, resolve license or provider decisions, or replace human security
+acceptance. It does not change the ledger: release remains **NO-GO** at
+`1/13` families and `0/10` gates.
+
 D62 validates the active `streaming` Studio route on exact candidate
 `e27cb00fe680c6ff30ee7e26da2d8556970f8ca5`. The live browser case passes
 `1/1`, reaches PostgreSQL, Kafka/Redpanda and the Ronin API, and produces

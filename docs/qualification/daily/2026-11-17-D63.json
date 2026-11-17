@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D63",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Exact-candidate source, dependency and filesystem security scans",
+  "candidate_sha": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5",
+  "implementation_commit_sha": "aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d",
+  "documentation_commit_sha": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D63.md",
+  "execution_scope": "candidate-source-dependency-filesystem-scans",
+  "result": {
+    "gitleaks": "PASS: 8.30.1, 0 findings over approximately 16.54 MB",
+    "pip_audit": "PASS: 2.10.1, requirements-test.lock with hashes, no known vulnerabilities",
+    "trivy": "PASS: 0.76.1 pinned by image digest, filesystem vuln/secret scan exit 0 with no findings",
+    "release_effect": "No family or release gate changes; scan evidence is clean but the aggregate security/supply-chain gate remains incomplete and release remains NO-GO"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "These are clean source/dependency/filesystem scans, not runtime/probe image, SBOM/provenance aggregate or human acceptance evidence.",
+    "The scan outputs are local under %TEMP% and are referenced by SHA-256 in the candidate receipt.",
+    "P13, worker/provider lanes, family journeys and all mandatory release decisions remain open."
+  ]
+}

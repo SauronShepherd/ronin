@@ -1,0 +1,79 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D63",
+  "status": "pass",
+  "outcome": "pass for source, locked-dependency and filesystem vulnerability/secret scans over the verified D62 candidate sandbox; this does not close the Public v1 security or release gate",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5",
+    "origin_main_sha_when_candidate_was_tested": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5",
+    "worktree_source_mode": "reused verified D62 exact candidate sandbox; scan outputs written outside the repository"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00f-d62",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00fe680c6ff30ee7e26da2d8556970f8ca5.tar",
+      "format": "tar",
+      "sha256": "7f5890047e27d401cbd04683240e4b1890df9ab5d23e168aea95e36c368a91b8",
+      "size": 17807360
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00f-d62\\candidate-e27cb00fe680c6ff30ee7e26da2d8556970f8ca5.manifest.json",
+      "sha256": "69342e9e2163324b5233428767eb4fa67e4064b42ff338965edf49ffbb7a693c",
+      "size": 239761
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00f-d62\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1551,
+    "total_bytes": 16544004,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d",
+    "candidate_docs_commit": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5",
+    "production_files_changed": [],
+    "fixture_files_changed": [],
+    "test_files_changed": [],
+    "summary": "D63 scans the already verified D62 exact candidate; no production, fixture or test source changed. The implementation baseline remains 0a0cd36d47e403808db519f62eefd726f95637a4."
+  },
+  "commands": {
+    "gitleaks": "gitleaks dir --no-banner --redact --report-format sarif --report-path C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d63-e27cb00f-20261117\\gitleaks.sarif C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00f-d62\\sandbox",
+    "pip_audit": "pip-audit -r requirements-test.lock --require-hashes --progress-spinner off --format json --output C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d63-e27cb00f-20261117\\pip-audit.json",
+    "trivy": "docker run --rm -v C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-e27cb00f-d62\\sandbox:/src:ro -v C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d63-e27cb00f-20261117:/out aquasec/trivy@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c fs --scanners vuln,secret --format json --output /out/trivy-fs.json /src"
+  },
+  "qualification_matrix": {
+    "gitleaks": "PASS: Gitleaks 8.30.1 scanned approximately 16,544,004 bytes of the no-git candidate sandbox and reported 0 leaks; SARIF output is 305 bytes",
+    "pip_audit": "PASS: pip-audit 2.10.1 audited requirements-test.lock with hashes and reported no known vulnerabilities; JSON output is 5,667 bytes",
+    "trivy_filesystem": "PASS: Trivy 0.76.1 pinned to aquasec/trivy@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c scanned filesystem vuln and secret scanners with exit 0 and no findings; JSON output is 228 bytes",
+    "security_gate": "INCOMPLETE: source/dependency/filesystem scans are clean, but container runtime/probe image binding, SBOM/provenance aggregation, license decisions, provider evidence and human security acceptance remain open",
+    "release": "NO-GO: no family or release gate closes; the ledger remains 1/13 families and 0/10 gates"
+  },
+  "evidence": {
+    "scan_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d63-e27cb00f-20261117",
+    "gitleaks_sarif": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d63-e27cb00f-20261117\\gitleaks.sarif",
+    "gitleaks_sarif_sha256": "25b6c42cc4a9a22104b065248d10ae1e0b0cbab3f255a453c6efdd9f160dd4f0",
+    "gitleaks_sarif_size": 305,
+    "pip_audit_json": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d63-e27cb00f-20261117\\pip-audit.json",
+    "pip_audit_json_sha256": "d36f41ff615e1c68fac2608ff5c11aa75cca52fa675c48ddbaa52d57a42e41c2",
+    "pip_audit_json_size": 5667,
+    "trivy_json": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-security-d63-e27cb00f-20261117\\trivy-fs.json",
+    "trivy_json_sha256": "19637955651656ecd52447d311d143f16bfe285205bfaca8de054dc945f6aaf4",
+    "trivy_json_size": 228
+  },
+  "open_cells": [
+    "D63 is clean source/dependency/filesystem scan evidence only. It does not bind or scan a Ronin runtime/probe image, emit an aggregate SBOM/provenance dossier or qualify the full supply-chain gate.",
+    "Human security, license/NOTICE, product and release decisions remain open; P13 remains blocked by the external secret-provider boundary.",
+    "P11 remains in_progress and no family or release gate closes from these scans."
+  ],
+  "limitations": [
+    "The scan outputs are local evidence under %TEMP%; the repository receipt records paths and SHA-256 digests but does not commit binary reports.",
+    "Trivy's filesystem result contains no Results object because no vulnerabilities or secrets were reported; this is not a container-image scan.",
+    "The D62 candidate sandbox was reused after its archive, manifest and cleanup verification; no generated test artifacts were present."
+  ]
+}
