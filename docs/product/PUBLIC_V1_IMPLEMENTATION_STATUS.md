@@ -7,16 +7,29 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
-D50 advances the exact candidate to `cb78bc4adccd82c1afbba4608c61b6b22ef5e0b5`.
+D51 advances the exact candidate to `5a4557aa158f4046ca19e0dd28e83ee747d31399`.
 The exact sandbox verifies `60/60` focused contracts with no skips, and the
 clean candidate live journey uses real PostgreSQL, Redpanda/Kafka and Ronin
-API services. Its two-partition fixture starts at `128/128` lag over `256`
-records, stops at `73` records under a bounded cap, resumes the remaining
-`183` records to zero lag, returns an empty replay, and succeeds on repeated
-seven-record reads after checkpoint reset. This is larger bounded P11 evidence,
+API services. Its byte-boundary fixture accepts one `1,047,552`-byte record
+and eight `1,000,000`-byte records totaling `8,000,000` bytes, then rejects
+nine such records totaling `9,000,000` bytes twice without advancing lag or
+checkpoint. This is bounded P11 byte-limit evidence, not a complete family
+qualification: indefinite backpressure, worker/provider breadth, multi-broker
+recovery, route-wide audit and the remaining release gates remain open.
+Release remains **NO-GO** at `1/13` families and `0/10` gates.
+
+### Historical exact-SHA qualification — D50 — 17 November 2026
+
+D50 advanced the exact candidate to `cb78bc4adccd82c1afbba4608c61b6b22ef5e0b5`.
+The exact sandbox verified `60/60` focused contracts with no skips, and the
+clean candidate live journey used real PostgreSQL, Redpanda/Kafka and Ronin
+API services. Its two-partition fixture started at `128/128` lag over `256`
+records, stopped at `73` records under a bounded cap, resumed the remaining
+`183` records to zero lag, returned an empty replay, and succeeded on repeated
+seven-record reads after checkpoint reset. This was larger bounded P11 evidence,
 not a complete family qualification: byte-limit saturation, indefinite
 backpressure, worker/provider breadth, multi-broker recovery, route-wide audit
-and the remaining release gates remain open. Release remains **NO-GO** at
+and the remaining release gates remained open. Release remained **NO-GO** at
 `1/13` families and `0/10` gates.
 
 ### Historical exact-SHA qualification — 16 November 2026
@@ -255,7 +268,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `cb78bc4adccd82c1afbba4608c61b6b22ef5e0b5` (2026-11-17).
+**Observed source head:** `5a4557aa158f4046ca19e0dd28e83ee747d31399` (2026-11-17).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

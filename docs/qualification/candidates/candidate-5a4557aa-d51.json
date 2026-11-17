@@ -1,0 +1,121 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D51",
+  "status": "pass",
+  "outcome": "pass for real Kafka byte-boundary coverage near the 1 MiB record cap and 8 MiB micro-batch cap, including checkpoint preservation after rejection; this does not qualify P11 or close a release gate",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "5a4557aa158f4046ca19e0dd28e83ee747d31399",
+    "origin_main_sha_when_candidate_was_tested": "5a4557aa158f4046ca19e0dd28e83ee747d31399",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-5a4557aa-d51",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-5a4557aa-d51\\candidate-5a4557aa158f4046ca19e0dd28e83ee747d31399.tar",
+      "format": "tar",
+      "sha256": "46be54f03c8e07773244fcff40eeabe3cd0ffe9fed869d279cac2aced9119361",
+      "size": 17592320
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-5a4557aa-d51\\candidate-5a4557aa158f4046ca19e0dd28e83ee747d31399.manifest.json",
+      "sha256": "c59d6bfff29431f22cbfcf215ce617dd0c8760160d5dc906476e272ed72916ed",
+      "size": 234187
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-5a4557aa-d51\\candidate-5a4557aa158f4046ca19e0dd28e83ee747d31399.sha256",
+      "sha256": "02e2764c86ff4b0cf3d797be126bd7ec78df50b390a5b56133680ef5130cf573",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-5a4557aa-d51\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1517,
+    "total_bytes": 16358019,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "5a4557aa158f4046ca19e0dd28e83ee747d31399",
+    "candidate_docs_commit": null,
+    "summary": "D51 adds three isolated live Kafka fixtures: a record payload at 1 MiB minus 1 KiB, eight 1,000,000-byte JSON records totaling 8,000,000 bytes, and nine such records totaling 9,000,000 bytes. The live journey proves positive near-boundary reads and repeated rejection without checkpoint advancement. No streaming production runtime code changed.",
+    "production_files_changed": [],
+    "fixture_files_changed": [
+      "tools/seed_live_streaming.py"
+    ],
+    "test_files_changed": [
+      "web-tests/tests/product-live.spec.mjs"
+    ],
+    "parent_commit": "b724db64125c37eb82137c921c6b5f9dc3ecfeae"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 5a4557aa158f4046ca19e0dd28e83ee747d31399 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-5a4557aa-d51",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-5a4557aa-d51",
+    "candidate_contracts": "exact candidate sandbox: python -m pytest -q -p no:cacheprovider tests/test_docker_qualification_contract.py tests/test_streaming_runtime.py tests/test_streaming_kafka.py tests/test_streaming_bundle.py tests/test_streaming_contracts.py tests/test_stream_table.py -> 60 passed, 0 failed, 0 skipped",
+    "candidate_quality": "exact candidate selection: Ruff format/check passed for tools/seed_live_streaming.py and tests/test_streaming_runtime.py; mypy python/studio_streaming python/studio_server/control_plane.py passed on 12 source files; node --check passed for web-tests/playwright.config.mjs, platform-studio-journeys.spec.mjs and product-live.spec.mjs",
+    "dirty_live_diagnostic": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d51-byte-boundary-diagnostic-20261117 -TestGrep \"near-record and near-batch byte boundaries\" -AllowDirtyWorktree",
+    "clean_candidate_live": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d51-byte-boundary-candidate-20261117 -TestGrep \"near-record and near-batch byte boundaries\""
+  },
+  "qualification_matrix": {
+    "near_record_limit": "PASS: one 1,047,552-byte JSON value, 1 KiB below the 1 MiB record cap, is consumed and committed with lag reaching zero",
+    "near_batch_limit": "PASS: eight 1,000,000-byte JSON values total 8,000,000 bytes, remain below the 8 MiB micro-batch cap, and commit eight rows",
+    "over_batch_limit": "PASS: nine 1,000,000-byte JSON values total 9,000,000 bytes, return stream_input_rejected twice, and leave total lag at nine after both attempts",
+    "checkpoint_preservation": "PASS: the over-limit batch is rejected before sink/checkpoint advancement; repeated retry observes the same lag and rejection",
+    "focused_contracts": "PASS: 60/60 candidate-bound tests with no skips",
+    "traffic_audit": "PASS: clean filtered journey has 13/13 API events correlated, 11 OK, 2 expected WARN, zero uncorrelated events and zero unexpected server/network errors",
+    "browser_media_cleanup": "PASS: clean evidence directory contains zero PNG/JPG/JPEG/WebM and the runner reports removed=0",
+    "docker_cleanup_at_close": "PASS: after the clean run docker ps -a was empty and no repository beginning with ronin remained",
+    "route_audit": "NOT_RUN: filtered diagnostic; summary reports 25 active routes, 24 API-backed routes and 1 UI-only route with routeCoverage.audited=false",
+    "security_scans": "NOT_RERUN in D51; previous Gitleaks and pip-audit evidence remains separate",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license_qualification": "INHERITED FAIL/CLOSED; 21 human review decisions remain missing",
+    "result": "D51 expands P11 byte-boundary evidence on real Kafka/Redpanda but does not qualify P11, close a gate or change release NO-GO"
+  },
+  "evidence": {
+    "dirty_diagnostic": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d51-byte-boundary-diagnostic-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d51-byte-boundary-diagnostic-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "92a4212c4fd102a37c8bb06b74bc943d2a188578a80854ff246e7c1354b71a03",
+      "qualification_summary_size": 2855,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d51-byte-boundary-diagnostic-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "5c79bffa7c2d2e0f83dc752a294da108de05d3348b167bc926d26d2530a01ec7",
+      "live_api_traffic_size": 4347,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d51-byte-boundary-diagnostic-20261117\\browser-live.xml",
+      "browser_junit_sha256": "c48192c480e8aebc11d26f73e5f83d8bd51e006c7f3c8619bd3fc7feebc6dc0f",
+      "browser_junit_size": 416,
+      "status": "PASS diagnostic only: dirty worktree, real PostgreSQL/Kafka/Ronin API, Playwright 1/1, 13/13 correlated events, duration 58.13 seconds"
+    },
+    "clean_candidate": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d51-byte-boundary-candidate-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d51-byte-boundary-candidate-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "ff75c84f2c8725b53a507259cfc2d4569bee893f3d5f78a1c05c0475f51e6849",
+      "qualification_summary_size": 2849,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d51-byte-boundary-candidate-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "e3eb5d115197fe7131a800f05a112cc6c400e798a880878d8ad9c6251f6dcf4d",
+      "live_api_traffic_size": 4347,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d51-byte-boundary-candidate-20261117\\browser-live.xml",
+      "browser_junit_sha256": "9e453554b4ee606f087af6df90dace6c3827f50137c6814fc3316ac2f1535461",
+      "browser_junit_size": 416,
+      "status": "PASS candidate-bound: CLEAN-CANDIDATE QUALIFICATION, real PostgreSQL/Kafka/Ronin API, Playwright 1/1, 13/13 correlated events, 11 OK and 2 expected WARN, application logs INFO 13/WARNING 2/ERROR 0/CRITICAL 0, media cleanup succeeded, duration 29.33 seconds"
+    }
+  },
+  "open_cells": [
+    "P11 remains in_progress: D51 proves real byte-boundary acceptance/rejection and checkpoint preservation, but sustained indefinite operation, multi-broker recovery, worker/provider breadth and the complete family journey remain open.",
+    "P2 and P14 remain in_progress; D51 adds no connector/provider or backup/restore qualification.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external secret provider or credential was available.",
+    "D51 does not rerun the full Python suite, Gitleaks, pip-audit or Trivy; skipped and inherited lanes are not counted as PASS.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The clean live run is a filtered diagnostic, not a route-wide browser qualification or complete P11 family journey.",
+    "workerImage is null; no real worker or external provider matrix was exercised in this cell.",
+    "The campaign exercises near-limit values and a bounded repeated rejection, but does not establish indefinite backpressure exhaustion, multi-broker quorum recovery or production provider breadth.",
+    "No hosted workflow, branch or worktree was used; license review remains FAIL/CLOSED with 21 human decisions pending."
+  ]
+}
