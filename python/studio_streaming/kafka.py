@@ -90,18 +90,22 @@ class KafkaJsonSource:
         if forbidden & set(extra):
             raise ValueError("Kafka config must not override Ronin-owned identity/offset settings")
         self._config = extra
+        self._consumer: Any | None = None
+        self._consumer_checkpoint: StreamCheckpoint | None = None
+        self._partition_eof: int | None = None
 
-    def poll(
+    def _ensure_consumer(
         self,
         checkpoint: StreamCheckpoint,
         *,
-        limit: int,
         timeout_seconds: float,
-    ) -> StreamBatch:
-        if limit < 1 or limit > 100_000:
-            raise ValueError("Kafka poll limit must be between 1 and 100000")
-        if timeout_seconds < 0 or timeout_seconds > 300:
-            raise ValueError("Kafka poll timeout_seconds must be in [0, 300]")
+    ) -> tuple[Any, int]:
+        if self._consumer is not None and self._consumer_checkpoint == checkpoint:
+            if self._partition_eof is None:
+                raise RuntimeError("Kafka consumer session lost its partition EOF marker")
+            return self._consumer, self._partition_eof
+
+        self.close()
         Consumer, TopicPartition, partition_eof, offset_beginning = _kafka()
         config: dict[str, object] = {
             "bootstrap.servers": self._bootstrap_servers,
@@ -126,11 +130,45 @@ class KafkaJsonSource:
             consumer.assign(assignments)
             # A disconnected broker can make librdkafka's bounded consume call
             # return an empty batch after its timeout instead of surfacing the
-            # transport failure.  Probe metadata first so the runtime reports
-            # provider unavailability rather than a false successful idle run.
+            # transport failure. Probe metadata once per consumer session so the
+            # runtime reports provider unavailability rather than false idle.
             list_topics = getattr(consumer, "list_topics", None)
             if callable(list_topics):
                 list_topics(timeout=max(float(timeout_seconds), 0.1))
+        except Exception:
+            consumer.close()
+            raise
+
+        self._consumer = consumer
+        self._consumer_checkpoint = checkpoint
+        self._partition_eof = partition_eof
+        return consumer, partition_eof
+
+    def close(self) -> None:
+        """Close the broker consumer owned by this source, if it is open."""
+
+        consumer, self._consumer = self._consumer, None
+        self._consumer_checkpoint = None
+        self._partition_eof = None
+        if consumer is not None:
+            consumer.close()
+
+    def poll(
+        self,
+        checkpoint: StreamCheckpoint,
+        *,
+        limit: int,
+        timeout_seconds: float,
+    ) -> StreamBatch:
+        if limit < 1 or limit > 100_000:
+            raise ValueError("Kafka poll limit must be between 1 and 100000")
+        if timeout_seconds < 0 or timeout_seconds > 300:
+            raise ValueError("Kafka poll timeout_seconds must be in [0, 300]")
+        consumer, partition_eof = self._ensure_consumer(
+            checkpoint,
+            timeout_seconds=timeout_seconds,
+        )
+        try:
             records: list[StreamRecord] = []
             batch_bytes = 0
             latest = {item.partition: item.offset for item in checkpoint.positions}
@@ -202,9 +240,11 @@ class KafkaJsonSource:
             next_checkpoint = StreamCheckpoint(
                 tuple(StreamPosition(partition, offset) for partition, offset in latest.items())
             )
+            self._consumer_checkpoint = next_checkpoint
             return StreamBatch(tuple(records), next_checkpoint)
-        finally:
-            consumer.close()
+        except Exception:
+            self.close()
+            raise
 
 
 __all__ = ("KafkaDependencyError", "KafkaInputRejected", "KafkaJsonSource")

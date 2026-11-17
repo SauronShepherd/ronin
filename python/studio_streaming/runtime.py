@@ -21,7 +21,7 @@ from .checkpoint import SqliteStreamCheckpointStore
 from .contracts import StreamBatch, StreamDefinition, StreamSink, StreamSinkCommit
 from .kafka import KafkaDependencyError, KafkaInputRejected, KafkaJsonSource
 from .parquet_sink import ParquetMicroBatchSink
-from .processor import MicroBatchProcessor
+from .processor import MicroBatchProcessor, MicroBatchResult
 from .table import SqliteStreamTable
 
 
@@ -174,10 +174,39 @@ class KafkaStreamingRuntime:
             timeout_seconds=timeout_seconds,
         )
         try:
-            result = processor.run_once(
+            result = self._run_processor_once(
+                processor,
                 runtime_id,
                 limit=batch_limit,
                 timeout_seconds=timeout,
+            )
+            return {
+                "stream_id": stream_id,
+                "status": "succeeded" if result.records else "idle",
+                "records": result.records,
+                "rows": result.rows,
+                "previous_checkpoint": result.previous_checkpoint.digest,
+                "checkpoint": result.next_checkpoint.digest,
+                "sink_commit_id": None
+                if result.sink_commit is None
+                else result.sink_commit.commit_id,
+            }
+        finally:
+            processor.close()
+
+    def _run_processor_once(
+        self,
+        processor: MicroBatchProcessor,
+        runtime_id: str,
+        *,
+        limit: int,
+        timeout_seconds: float,
+    ) -> MicroBatchResult:
+        try:
+            return processor.run_once(
+                runtime_id,
+                limit=limit,
+                timeout_seconds=timeout_seconds,
             )
         except KafkaInputRejected as exc:
             raise StreamingInputRejected(
@@ -188,16 +217,6 @@ class KafkaStreamingRuntime:
         except Exception as exc:
             # Provider exception text can contain endpoints and credentials.
             raise StreamingRunUnavailable("stream micro-batch execution failed") from exc
-
-        return {
-            "stream_id": stream_id,
-            "status": "succeeded" if result.records else "idle",
-            "records": result.records,
-            "rows": result.rows,
-            "previous_checkpoint": result.previous_checkpoint.digest,
-            "checkpoint": result.next_checkpoint.digest,
-            "sink_commit_id": None if result.sink_commit is None else result.sink_commit.commit_id,
-        }
 
     def run_until_idle(
         self,
@@ -230,7 +249,7 @@ class KafkaStreamingRuntime:
             or not 1 <= idle_polls <= 10
         ):
             raise ValueError("stream idle_polls must be an integer between 1 and 10")
-        workspace, runtime_id, _definition, batch_limit, timeout = self._resolve_run_options(
+        runtime_id, processor, batch_limit, timeout = self._build_processor(
             workspace_id,
             stream_id,
             limit=limit,
@@ -242,46 +261,41 @@ class KafkaStreamingRuntime:
         records = 0
         rows = 0
         empty_polls = 0
-        while True:
-            if batches >= max_batches:
-                status = "limit_reached"
-                stop_reason = "max_batches"
-                break
-            remaining = None if max_records is None else max_records - records
-            if remaining == 0:
-                status = "limit_reached"
-                stop_reason = "max_records"
-                break
-            current_limit = batch_limit if remaining is None else min(batch_limit, remaining)
-            result = self.run_once(
-                workspace,
-                stream_id,
-                limit=current_limit,
-                timeout_seconds=timeout,
-            )
-            batch_records = result["records"]
-            batch_rows = result["rows"]
-            checkpoint = result["checkpoint"]
-            if (
-                not isinstance(batch_records, int)
-                or isinstance(batch_records, bool)
-                or not isinstance(batch_rows, int)
-                or isinstance(batch_rows, bool)
-                or not isinstance(checkpoint, str)
-            ):
-                raise StreamingRunUnavailable("stream supervisor received an invalid batch receipt")
-            next_checkpoint = checkpoint
-            if batch_records == 0:
-                empty_polls += 1
-                if empty_polls >= idle_polls:
-                    status = "succeeded" if records else "idle"
-                    stop_reason = "idle"
+        try:
+            while True:
+                if batches >= max_batches:
+                    status = "limit_reached"
+                    stop_reason = "max_batches"
                     break
-                continue
-            empty_polls = 0
-            batches += 1
-            records += batch_records
-            rows += batch_rows
+                remaining = None if max_records is None else max_records - records
+                if remaining == 0:
+                    status = "limit_reached"
+                    stop_reason = "max_records"
+                    break
+                current_limit = batch_limit if remaining is None else min(batch_limit, remaining)
+                result = self._run_processor_once(
+                    processor,
+                    runtime_id,
+                    limit=current_limit,
+                    timeout_seconds=timeout,
+                )
+                batch_records = result.records
+                batch_rows = result.rows
+                checkpoint = result.next_checkpoint.digest
+                next_checkpoint = checkpoint
+                if batch_records == 0:
+                    empty_polls += 1
+                    if empty_polls >= idle_polls:
+                        status = "succeeded" if records else "idle"
+                        stop_reason = "idle"
+                        break
+                    continue
+                empty_polls = 0
+                batches += 1
+                records += batch_records
+                rows += batch_rows
+        finally:
+            processor.close()
 
         return {
             "stream_id": stream_id,

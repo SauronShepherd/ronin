@@ -188,6 +188,16 @@ diagnostics deliberately leave the caller-owned image intact. Use `-KeepImage`
 only for an explicit hand-off to a subsequent lane, as in the Docker-to-Helm
 example above; the hand-off cleanup must be in the caller's `finally` block.
 
+Streaming supervisors keep one Kafka source/consumer for the lifetime of a
+bounded drain and close it in the runtime `finally` path. This preserves
+prefetched records from other assigned partitions without weakening
+`max_batches`, `max_records`, byte limits or durable checkpoints. The live
+qualification runner also forces Playwright screenshots and videos off and
+removes any PNG/JPG/WebM left in its bounded browser evidence directories;
+cleanup failure invalidates that run. Browser media can only be enabled
+explicitly for a local diagnosis with `RONIN_KEEP_BROWSER_MEDIA=1`, and it is
+not release evidence by itself.
+
 For the shortest reliable feedback loop, start with one changed test file or a
 pytest `-k` expression, then run the Docker integration gate when the change
 touches runtime, persistence, workers, or connectors. Run the strict v0.1 gate

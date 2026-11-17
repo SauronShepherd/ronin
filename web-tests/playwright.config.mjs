@@ -3,6 +3,7 @@ import path from 'node:path';
 
 const baseURL = process.env.RONIN_STUDIO_E2E_URL || 'http://127.0.0.1:8099/web/';
 const slowMo = Number(process.env.RONIN_UI_SLOW_MO_MS || 0);
+const keepBrowserMedia = process.env.RONIN_KEEP_BROWSER_MEDIA === '1';
 const outputDir = path.resolve(process.env.PLAYWRIGHT_OUTPUT_DIR || 'test-results');
 const htmlOutputDir = path.resolve(process.env.PLAYWRIGHT_HTML_OUTPUT_DIR || `${outputDir}-html`);
 const isWithin = (parent, candidate) => {
@@ -46,9 +47,9 @@ export default defineConfig({
   use: {
     baseURL,
     headless: !process.env.PWDEBUG,
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    trace: keepBrowserMedia ? 'on-first-retry' : 'off',
+    screenshot: keepBrowserMedia ? 'only-on-failure' : 'off',
+    video: keepBrowserMedia ? 'retain-on-failure' : 'off',
     launchOptions: { slowMo },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

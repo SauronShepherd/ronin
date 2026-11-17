@@ -195,7 +195,18 @@ def test_playwright_outputs_are_candidate_scoped_and_ci_is_not_required() -> Non
     assert "PLAYWRIGHT_OUTPUT_DIR" in config
     assert "PLAYWRIGHT_HTML_OUTPUT_DIR" in config
     assert "PLAYWRIGHT_JUNIT_OUTPUT_FILE" in config
+    assert "RONIN_KEEP_BROWSER_MEDIA" in config
+    assert "screenshot: keepBrowserMedia ? 'only-on-failure' : 'off'" in config
+    assert "video: keepBrowserMedia ? 'retain-on-failure' : 'off'" in config
     assert "process.env.CI" not in config
+
+
+def test_live_qualification_removes_browser_media_after_the_run() -> None:
+    runner = (ROOT / "tools" / "run_live_product_qualification.ps1").read_text(encoding="utf-8")
+
+    assert '$env:RONIN_KEEP_BROWSER_MEDIA = "0"' in runner
+    assert "browserMediaCleanup" in runner
+    assert "Remove-Item -LiteralPath $mediaFile.FullName" in runner
 
 
 def test_live_browser_suite_requires_real_services_and_emits_api_evidence() -> None:

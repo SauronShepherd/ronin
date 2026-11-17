@@ -102,17 +102,21 @@ def test_kafka_source_applies_ronin_owned_fetch_and_queue_budgets(
 ) -> None:
     source, consumer = _source(monkeypatch, [_Message(b'{"event":"ok"}', 0)])
 
-    batch = source.poll(StreamCheckpoint(), limit=10, timeout_seconds=0.1)
+    try:
+        batch = source.poll(StreamCheckpoint(), limit=10, timeout_seconds=0.1)
 
-    assert batch.records[0].value == {"event": "ok"}
-    assert consumer.config["enable.auto.commit"] is False
-    assert consumer.config["enable.auto.offset.store"] is False
-    assert consumer.config["max.partition.fetch.bytes"] == MAX_KAFKA_RECORD_BYTES + 512
-    assert consumer.config["fetch.max.bytes"] == MAX_KAFKA_BATCH_BYTES
-    assert consumer.config["receive.message.max.bytes"] == MAX_KAFKA_BATCH_BYTES + 512
-    assert consumer.config["queued.max.messages.kbytes"] * 1024 >= MAX_KAFKA_BATCH_BYTES
-    assert consumer.assignments == [_TopicPartition("events", 0, -2)]
-    assert consumer.consume_args == (10, 0.1)
+        assert batch.records[0].value == {"event": "ok"}
+        assert consumer.config["enable.auto.commit"] is False
+        assert consumer.config["enable.auto.offset.store"] is False
+        assert consumer.config["max.partition.fetch.bytes"] == MAX_KAFKA_RECORD_BYTES + 512
+        assert consumer.config["fetch.max.bytes"] == MAX_KAFKA_BATCH_BYTES
+        assert consumer.config["receive.message.max.bytes"] == MAX_KAFKA_BATCH_BYTES + 512
+        assert consumer.config["queued.max.messages.kbytes"] * 1024 >= MAX_KAFKA_BATCH_BYTES
+        assert consumer.assignments == [_TopicPartition("events", 0, -2)]
+        assert consumer.consume_args == (10, 0.1)
+    finally:
+        source.close()
+
     assert consumer.closed
 
 
@@ -142,8 +146,12 @@ def test_kafka_source_surfaces_broker_metadata_failure_before_idle_result(
         partitions=(0,),
     )
 
-    with pytest.raises(RuntimeError, match="broker unavailable"):
-        source.poll(StreamCheckpoint(), limit=1, timeout_seconds=0.0)
+    try:
+        with pytest.raises(RuntimeError, match="broker unavailable"):
+            source.poll(StreamCheckpoint(), limit=1, timeout_seconds=0.0)
+    finally:
+        source.close()
+
     assert consumer.closed
 
 
@@ -187,17 +195,63 @@ def test_kafka_source_retries_a_transient_empty_poll_for_a_later_partition(
         partitions=(0, 1),
     )
 
-    batch = source.poll(
-        StreamCheckpoint((StreamPosition(0, 31),)),
-        limit=2,
-        timeout_seconds=0.1,
+    try:
+        batch = source.poll(
+            StreamCheckpoint((StreamPosition(0, 31),)),
+            limit=2,
+            timeout_seconds=0.1,
+        )
+
+        assert [record.partition for record in batch.records] == [1, 1]
+        assert batch.checkpoint.offset_for(0) == 31
+        assert batch.checkpoint.offset_for(1) == 1
+        assert len(consumer.consume_calls) == 2
+    finally:
+        source.close()
+
+    assert consumer.closed
+
+
+def test_kafka_source_reuses_consumer_until_source_is_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    consumers: list[_Consumer] = []
+
+    def consumer_type(settings):
+        consumer = _Consumer(
+            [
+                _Message(b'{"event":"partition-0"}', 0, partition=0),
+                _Message(b'{"event":"partition-1"}', 0, partition=1),
+            ]
+        )
+        consumers.append(_capture_config(consumer, settings))
+        return consumer
+
+    fake_kafka = SimpleNamespace(
+        Consumer=consumer_type,
+        TopicPartition=_TopicPartition,
+        KafkaError=SimpleNamespace(_PARTITION_EOF=-191),
+        OFFSET_BEGINNING=-2,
+    )
+    monkeypatch.setattr(kafka_adapter, "import_module", lambda _name: fake_kafka)
+    source = KafkaJsonSource(
+        bootstrap_servers="localhost:9092",
+        topic="events",
+        partitions=(0, 1),
     )
 
-    assert [record.partition for record in batch.records] == [1, 1]
-    assert batch.checkpoint.offset_for(0) == 31
-    assert batch.checkpoint.offset_for(1) == 1
-    assert len(consumer.consume_calls) == 2
-    assert consumer.closed
+    try:
+        first = source.poll(StreamCheckpoint(), limit=1, timeout_seconds=0.1)
+        second = source.poll(first.checkpoint, limit=1, timeout_seconds=0.1)
+
+        assert [record.partition for record in first.records] == [0]
+        assert [record.partition for record in second.records] == [1]
+        assert len(consumers) == 1
+        assert not consumers[0].closed
+    finally:
+        source.close()
+
+    assert consumers[0].closed
 
 
 @pytest.mark.parametrize(
@@ -227,8 +281,11 @@ def test_kafka_source_rejects_record_over_one_mib_before_decoding(
         [_Message(b" " * (MAX_KAFKA_RECORD_BYTES + 1), 0)],
     )
 
-    with pytest.raises(ValueError, match="1 MiB record limit"):
-        source.poll(StreamCheckpoint(), limit=10, timeout_seconds=0.0)
+    try:
+        with pytest.raises(ValueError, match="1 MiB record limit"):
+            source.poll(StreamCheckpoint(), limit=10, timeout_seconds=0.0)
+    finally:
+        source.close()
 
     assert consumer.closed
 
@@ -237,8 +294,11 @@ def test_kafka_source_rejects_record_over_one_mib_before_decoding(
 def test_kafka_source_rejects_poison_values(raw: bytes, monkeypatch: pytest.MonkeyPatch) -> None:
     source, consumer = _source(monkeypatch, [_Message(raw, 0)])
 
-    with pytest.raises(KafkaInputRejected):
-        source.poll(StreamCheckpoint(), limit=10, timeout_seconds=0.0)
+    try:
+        with pytest.raises(KafkaInputRejected):
+            source.poll(StreamCheckpoint(), limit=10, timeout_seconds=0.0)
+    finally:
+        source.close()
 
     assert consumer.closed
 
@@ -253,7 +313,10 @@ def test_kafka_source_rejects_micro_batch_over_eight_mib(
     messages.append(_Message(b" ", 8))
     source, consumer = _source(monkeypatch, messages)
 
-    with pytest.raises(ValueError, match="8 MiB byte limit"):
-        source.poll(StreamCheckpoint(), limit=10, timeout_seconds=0.0)
+    try:
+        with pytest.raises(ValueError, match="8 MiB byte limit"):
+            source.poll(StreamCheckpoint(), limit=10, timeout_seconds=0.0)
+    finally:
+        source.close()
 
     assert consumer.closed

@@ -187,7 +187,7 @@ $envNames = @(
     "RONIN_PG_TEST_USER", "RONIN_PG_TEST_PASSWORD", "RONIN_LIVE_API_URL", "RONIN_LIVE_JOBS_API_URL",
     "RONIN_LIVE_API_TOKEN", "RONIN_LIVE_WORKSPACE", "RONIN_LIVE_PG_PORT",
     "RONIN_LIVE_PG_DATABASE", "RONIN_LIVE_REQUIRE_POSTGRES", "RONIN_LIVE_STREAMING_BOOTSTRAP", "RONIN_LIVE_API_TRAFFIC_OUTPUT", "RONIN_STUDIO_E2E_URL", "RONIN_STUDIO_E2E_TOKEN",
-    "PLAYWRIGHT_OUTPUT_DIR", "PLAYWRIGHT_HTML_OUTPUT_DIR", "PLAYWRIGHT_JUNIT_OUTPUT_FILE",
+    "PLAYWRIGHT_OUTPUT_DIR", "PLAYWRIGHT_HTML_OUTPUT_DIR", "PLAYWRIGHT_JUNIT_OUTPUT_FILE", "RONIN_KEEP_BROWSER_MEDIA",
     "RONIN_IMAGE", "RONIN_WORKSPACE", "RONIN_WORKER_OWNER", "RONIN_LIVE_WORKER_ENABLED",
     "PYTHONPATH", "RONIN_LIVE_PYTHON", "FORCE_COLOR", "npm_config_color", "NO_COLOR", "DEBUG_COLORS",
     "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "BLIS_NUM_THREADS", "NUMEXPR_NUM_THREADS"
@@ -218,6 +218,8 @@ $postgresStarted = $false
 $kafkaStarted = $false
 $apiReady = $false
 $liveDataCreated = $false
+$browserMediaRemoved = 0
+$browserMediaCleanupFailed = $false
 $resultCode = 1
 
 try {
@@ -310,6 +312,7 @@ try {
     $env:PLAYWRIGHT_OUTPUT_DIR = $evidenceFiles.Artifacts
     $env:PLAYWRIGHT_HTML_OUTPUT_DIR = $evidenceFiles.Html
     $env:PLAYWRIGHT_JUNIT_OUTPUT_FILE = $evidenceFiles.Junit
+    $env:RONIN_KEEP_BROWSER_MEDIA = "0"
     Set-QualificationPhase "prepare hash-locked Python and browser dependencies"
     $hostPython = (Get-Command python -ErrorAction Stop).Source
     $testRequirements = Join-Path $repoRoot "requirements-test.lock"
@@ -606,6 +609,23 @@ try {
     if ($liveDataCreated -and (Test-Path -LiteralPath $liveDataDir)) {
         Remove-Item -LiteralPath $liveDataDir -Recurse -Force
     }
+    foreach ($mediaRoot in @($evidenceFiles.Artifacts, $evidenceFiles.Html)) {
+        if (-not (Test-Path -LiteralPath $mediaRoot -PathType Container)) { continue }
+        $mediaFiles = @(Get-ChildItem -LiteralPath $mediaRoot -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension.ToLowerInvariant() -in @(".png", ".jpg", ".jpeg", ".webm") })
+        foreach ($mediaFile in $mediaFiles) {
+            try {
+                Remove-Item -LiteralPath $mediaFile.FullName -Force -ErrorAction Stop
+                $browserMediaRemoved++
+            } catch {
+                $browserMediaCleanupFailed = $true
+                Write-Warning "Could not remove browser test media '$($mediaFile.FullName)'."
+            }
+        }
+    }
+    if ($browserMediaCleanupFailed) {
+        $resultCode = 1
+    }
     foreach ($name in $envNames) {
         [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name], "Process")
     }
@@ -688,6 +708,7 @@ try {
         realServices = [ordered]@{ postgres = $postgresStarted; kafka = $kafkaStarted; roninApi = $apiReady; workerImage = $workerImageId }
         apiTraffic = [ordered]@{ events = $trafficCount; correlatedHttpLogs = ($trafficCount - $uncorrelatedTraffic.Count); uncorrelated = $uncorrelatedTraffic.Count; outcomes = $apiOutcomes; evidence = $evidenceFiles.Traffic }
         applicationLogLevels = $logLevels
+        browserMediaCleanup = [ordered]@{ status = if ($browserMediaCleanupFailed) { "failed" } else { "succeeded" }; removed = $browserMediaRemoved }
         caches = [ordered]@{ pythonDependencies = if ($pythonCacheHit) { "hit" } else { "miss" }; webDependencies = if ($npmCacheHit) { "hit" } else { "miss" } }
         evidenceDirectory = $evidenceRoot
         evidenceFiles = [ordered]@{ junit = $evidenceFiles.Junit; browserLog = $evidenceFiles.BrowserLog; serverOut = $evidenceFiles.ServerOut; serverErr = $evidenceFiles.ServerErr; workerOut = $evidenceFiles.WorkerOut; workerErr = $evidenceFiles.WorkerErr; pythonFreeze = (Join-Path $evidenceRoot "live-python-freeze.txt") }

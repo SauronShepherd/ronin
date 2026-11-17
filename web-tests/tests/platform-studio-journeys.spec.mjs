@@ -450,7 +450,6 @@ test('Ingestion Studio submits and monitors a scoped durable connector sync', as
   await expect(page.locator('#ingestion-sync-evidence')).toContainText('evidence-digest');
   await expect(page.locator('#ingestion-sync-lineage')).toContainText('run-sync-42', { timeout: 5000 });
   expect(submitted.postDataJSON()).toEqual({ project_id: 'examples/demo', definition });
-  await page.screenshot({ path: 'test-results/ingestion-sync-desktop.png', fullPage: true });
 });
 
 test('Ingestion Studio requires governed refs before submitting a durable sync', async ({ page }) => {

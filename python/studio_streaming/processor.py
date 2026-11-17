@@ -130,6 +130,13 @@ class MicroBatchProcessor:
             commit,
         )
 
+    def close(self) -> None:
+        """Release resources owned by the source after a run session."""
+
+        close = getattr(self._source, "close", None)
+        if callable(close):
+            close()
+
     def run_until_idle(
         self,
         stream_id: str,

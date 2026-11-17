@@ -33,11 +33,11 @@ class _Source:
         return StreamBatch((record,), StreamCheckpoint((StreamPosition(0, 0),)))
 
 
-def _definition() -> StreamDefinition:
+def _definition(*, partitions: tuple[int, ...] = (0,)) -> StreamDefinition:
     return StreamDefinition(
         id="events/main",
         name="Events",
-        source=StreamSourceDefinition("kafka-local", "events", (0,)),
+        source=StreamSourceDefinition("kafka-local", "events", partitions),
         sink=StreamSinkDefinition("table", "events-table"),
         schema=(StreamSchemaField("event", "string", nullable=False),),
         runtime=StreamRuntimeBinding("local", batch_limit=4, timeout_seconds=0.0),
@@ -121,7 +121,67 @@ def test_runtime_supervisor_drains_until_idle_with_bounded_provider_polls(
     assert result["batches"] == 1
     assert result["records"] == 1
     assert result["rows"] == 1
-    assert len(source_instances) == 4
+    assert len(source_instances) == 1
+
+
+def test_runtime_supervisor_reuses_source_session_for_all_partitions(
+    tmp_path: Path,
+) -> None:
+    workspace = "workspace-a"
+    stream_id = "events/main"
+    definition = _definition(partitions=(0, 1))
+    checkpoints = SqliteStreamCheckpointStore(tmp_path / "state.sqlite3")
+    checkpoints.commit_stream_bundle_import(workspace, (definition,), {stream_id: "reset"})
+    connection = SimpleNamespace(
+        connector_id="kafka",
+        options=(("bootstrap.servers", "broker:9092"),),
+        secret_refs=(),
+    )
+    source_instances = []
+
+    class _PartitionedSource:
+        def __init__(self) -> None:
+            self.responses = [
+                StreamBatch(
+                    (StreamRecord(0, 0, 1, "event-0", {"event": "partition-0"}),),
+                    StreamCheckpoint((StreamPosition(0, 0),)),
+                ),
+                StreamBatch(
+                    (StreamRecord(1, 0, 1, "event-1", {"event": "partition-1"}),),
+                    StreamCheckpoint((StreamPosition(0, 0), StreamPosition(1, 0))),
+                ),
+            ]
+
+        def poll(self, checkpoint, *, limit, timeout_seconds):
+            assert limit == 4
+            assert timeout_seconds == 0.0
+            if self.responses:
+                return self.responses.pop(0)
+            return StreamBatch((), checkpoint)
+
+    def source_factory(**_kwargs):
+        source = _PartitionedSource()
+        source_instances.append(source)
+        return source
+
+    runtime = KafkaStreamingRuntime(
+        checkpoints,
+        lambda _workspace, _connection_id: connection,
+        lambda _reference: "unused",
+        tmp_path / "data",
+        source_factory=source_factory,
+    )
+
+    result = runtime.run_until_idle(workspace, stream_id, max_batches=3, idle_polls=1)
+
+    runtime_id = checkpoints.runtime_stream_id(workspace, stream_id)
+    table = SqliteStreamTable(tmp_path / "data" / "streaming.sqlite3")
+    assert result["status"] == "succeeded"
+    assert result["stop_reason"] == "idle"
+    assert result["records"] == 2
+    assert result["rows"] == 2
+    assert len(source_instances) == 1
+    assert [item.partition for item in table.read(runtime_id)] == [0, 1]
 
 
 def test_runtime_supervisor_stops_at_max_batches_without_losing_checkpoint(tmp_path: Path) -> None:
