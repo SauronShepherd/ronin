@@ -1,0 +1,120 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D49",
+  "status": "pass",
+  "outcome": "pass for the bounded max_records checkpoint-cap/resume cell: the exact clean candidate passed one real-service journey after an independent dirty diagnostic; this does not qualify P11 or close a release gate",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "727a785499de5f0a7d14fcda1cfd96ec62818928",
+    "origin_main_sha_when_candidate_was_tested": "727a785499de5f0a7d14fcda1cfd96ec62818928",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-727a7854-d49",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-727a7854-d49\\candidate-727a785499de5f0a7d14fcda1cfd96ec62818928.tar",
+      "format": "tar",
+      "sha256": "32ea7abe8413349031243cee7e0d177a3e0cf324c5ef978d24c5c5b7c0a70350",
+      "size": 17530880
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-727a7854-d49\\candidate-727a785499de5f0a7d14fcda1cfd96ec62818928.manifest.json",
+      "sha256": "040368fb845c8b1e7f22b6a03e7496355a1a9bdf3c84c3595a3e8552a3815922",
+      "size": 233197
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-727a7854-d49\\candidate-727a785499de5f0a7d14fcda1cfd96ec62818928.sha256",
+      "sha256": "b749cf5a3a6aca6699186c508670d866f90749b28911e86e932df68437194247",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-727a7854-d49\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1511,
+    "total_bytes": 16301806,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "727a785499de5f0a7d14fcda1cfd96ec62818928",
+    "candidate_docs_commit": null,
+    "summary": "D49 adds deterministic and real-service coverage for a supervised max_records cap: it stops after an exact record budget, preserves the durable checkpoint, resumes the remainder on a new call, proves an empty replay, and rejects max_records=0. No production code changed in D49.",
+    "production_files_changed": [],
+    "test_files_changed": [
+      "tests/test_streaming_runtime.py",
+      "web-tests/tests/product-live.spec.mjs"
+    ],
+    "parent_commit": "960751f74e724edbf6ea52eaa1f9935efc6ed627"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 727a785499de5f0a7d14fcda1cfd96ec62818928 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-727a7854-d49",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-727a7854-d49",
+    "cleanup_and_regenerate": "candidate-boundary cleanup was run after sandbox tests; the same source SHA regenerated the recorded archive, manifest and digest identity and final verify passed",
+    "candidate_contracts": "exact candidate sandbox: python -m pytest -q -p no:cacheprovider tests/test_docker_qualification_contract.py tests/test_streaming_kafka.py tests/test_streaming_runtime.py -> 47 passed, 0 failed, 0 skipped",
+    "candidate_quality": "exact candidate selection: Ruff format/check passed on 13 files; mypy python/studio_streaming python/studio_server/control_plane.py passed on 12 source files; node --check passed for playwright.config.mjs, platform-studio-journeys.spec.mjs and product-live.spec.mjs",
+    "dirty_live_diagnostic": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d49-max-record-diagnostic-960751f7-20261117 -TestGrep \"live streaming max-record cap\" -AllowDirtyWorktree",
+    "clean_candidate_live": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d49-candidate-727a7854-20261117 -TestGrep \"live streaming max-record cap\""
+  },
+  "qualification_matrix": {
+    "max_records_cap": "PASS: the real API run started at lag 64, stopped with status=limit_reached and stop_reason=max_records after records=10/rows=10, and health reported lag 54",
+    "checkpoint_resume": "PASS: a second real API run consumed the remaining 54 records/rows, stopped at idle and reached total lag zero",
+    "replay_is_empty": "PASS: a subsequent one-shot run returned idle with records=0 and rows=0 after the checkpoint reached zero",
+    "invalid_cap": "PASS: max_records=0 returned the expected HTTP 400 WARN",
+    "focused_contracts": "PASS: 47/47 candidate-bound tests with no skips; the new unit regression also verifies two source sessions close and offsets 0,1,2,3 are persisted once across two cap/resume calls",
+    "traffic_audit": "PASS for both filtered diagnostics: 8/8 API events correlated, 7 OK and 1 expected WARN, zero uncorrelated events and zero unexpected server/network errors",
+    "browser_media_cleanup": "PASS: dirty and clean summaries report browserMediaCleanup.succeeded with removed=0; both evidence directories contain zero PNG/JPG/JPEG/WebM",
+    "docker_cleanup_at_close": "PASS: after the clean run docker ps -a was empty and no repository beginning with ronin remained",
+    "route_audit": "NOT_RUN: filtered diagnostic; summary reports 25 active routes, 24 API-backed routes and 1 UI-only route with routeCoverage.audited=false",
+    "security_scans": "NOT_RERUN in D49; previous Gitleaks and pip-audit evidence remains separate",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license_qualification": "INHERITED FAIL/CLOSED; 21 human review decisions remain missing",
+    "result": "D49 passes this bounded cap/resume/replay cell, but does not qualify P11, close a gate or change release NO-GO"
+  },
+  "evidence": {
+    "dirty_diagnostic": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d49-max-record-diagnostic-960751f7-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d49-max-record-diagnostic-960751f7-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "aca66e3233ce2bfb55b9d828c2f3310ea1b745b0ffda1527fc45713ef665074b",
+      "qualification_summary_size": 2905,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d49-max-record-diagnostic-960751f7-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "e5eb0f9a88f6f36e33427a4a83eb7fe9f70b79e79cbca2777a1ea55cdeeb6d98",
+      "live_api_traffic_size": 2647,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d49-max-record-diagnostic-960751f7-20261117\\browser-live.xml",
+      "browser_junit_sha256": "fac5e9595648214645efd0ca2ed5cd9557357236d6d9aadebd88b0e4ca09509d",
+      "browser_junit_size": 428,
+      "status": "PASS diagnostic only: CLEAN status was not available because the two test files were uncommitted; real PostgreSQL/Kafka/Ronin API, Playwright 1/1, 8/8 correlated events, 7 OK and 1 expected WARN, duration 46.89 seconds"
+    },
+    "clean_candidate": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d49-candidate-727a7854-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d49-candidate-727a7854-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "ff6ab93e556756873798e2f1e7f376caac15425211cfade30522a080d722c4ce",
+      "qualification_summary_size": 2804,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d49-candidate-727a7854-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "46f236301c32a7c84df378d66ef42031570f9f92f28eb8f6f68041f3fe3c4e98",
+      "live_api_traffic_size": 2647,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d49-candidate-727a7854-20261117\\browser-live.xml",
+      "browser_junit_sha256": "1e97eda794783fa3d9341cf116f708a5ad28146aff38b9770fc8568e43a06aa6",
+      "browser_junit_size": 428,
+      "status": "PASS candidate-bound: CLEAN-CANDIDATE QUALIFICATION, real PostgreSQL/Kafka/Ronin API, Playwright 1/1, 8/8 correlated events, 7 OK and 1 expected WARN, application logs INFO 9/WARNING 1/ERROR 0/CRITICAL 0, media cleanup succeeded, duration 97.10 seconds"
+    }
+  },
+  "open_cells": [
+    "P11 remains in_progress: D49 proves a bounded max_records cap, durable resume and empty replay, but sustained backpressure beyond the 64-record fixture, worker/provider breadth, multi-broker recovery and the complete family journey remain open.",
+    "P2 and P14 remain in_progress; D49 adds no connector/provider or backup/restore qualification.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external secret provider or credential was available.",
+    "D49 does not rerun the full Python suite, Gitleaks, pip-audit or Trivy; skipped and inherited lanes are not counted as PASS.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The clean live run is a filtered diagnostic, not a route-wide browser qualification or complete P11 family journey.",
+    "workerImage is null; no real worker or external provider matrix was exercised in this cell.",
+    "The fixture contains 64 records; the cap/resume proof is bounded and does not establish sustained indefinite backpressure or multi-broker quorum recovery.",
+    "No hosted workflow, branch or worktree was used; license review remains FAIL/CLOSED with 21 human decisions pending."
+  ]
+}
