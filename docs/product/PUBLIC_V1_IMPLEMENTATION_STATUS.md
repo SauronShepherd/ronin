@@ -7,6 +7,15 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D89 renueva el dossier de artefactos y supply-chain para la misma frontera
+exacta: wheel/sdist, TARs runtime/probe, identidad de artefactos, SBOM de
+aplicación de `110` componentes, dos inventarios de contenedor distintos
+(`59`/`56` paquetes OS), provenance local y validación estricta pasan. Los
+scans Trivy `0.76.1` separados con `vuln,secret` reportan `0` vulnerabilidades
+y `0` secretos en runtime y probe; las imágenes se retiraron por digest.
+La provenance es local y no firmada, por lo que no sustituye la revisión
+humana de seguridad, licencias, NOTICE, VEX o release governance.
+
 D88 revalida el despliegue Helm/kind sobre la imagen del candidato exacto
 `633980dd3b08affcc604dc918c1a6cbf026cc408`: Helm 4.3.1 pasa lint, render de
 `4` recursos con el token confinado al `Secret`, instalación/readiness,

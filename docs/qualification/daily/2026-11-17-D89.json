@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D89",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate artifact identity, container SBOMs and strict supply-chain",
+  "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D89.md",
+  "execution_scope": "exact-candidate-artifact-identity-container-sboms-and-strict-supply-chain",
+  "result": {
+    "artifacts": "PASS: wheel/sdist, runtime/probe TARs and artifact identity bind to the exact candidate",
+    "security": "PASS: Trivy 0.76.1 scans with vuln,secret report 0 vulnerabilities and 0 secrets for runtime and probe",
+    "sbom": "PASS: application CycloneDX SBOM has 110 components; runtime/probe container inventories are distinct at 59/56 OS packages",
+    "provenance": "PASS: local in-toto/SLSA provenance regenerated and strict supply-chain evidence validates with container inventory",
+    "cleanup": "PASS: runtime/probe images removed by immutable digest",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "Local provenance is unsigned and auto-reported; human Alpine/VEX/license/NOTICE/security acceptance remains open.",
+    "Provider breadth, indefinite operation, complete Public v1 family qualification and final release approval remain open."
+  ]
+}

@@ -3,6 +3,11 @@
 ## Current exact-SHA snapshot — 17 November 2026
 
 The current code/evidence candidate is `633980dd3b08affcc604dc918c1a6cbf026cc408`.
+D89 refreshes exact-candidate wheel/sdist identity, runtime/probe TARs,
+application SBOM, two distinct container inventories, local provenance and
+strict supply-chain evidence. Trivy `0.76.1` `vuln,secret` scans report `0`
+vulnerabilities and `0` secrets for both images; the technical evidence is
+not human VEX/license/security acceptance.
 D88 revalidates the exact-candidate Helm/kind deployment: Helm 4.3.1 passes
 lint, four-resource render with the token confined to the Secret,
 install/readiness, health/UI/jobs API, queued-job persistence after restart,
