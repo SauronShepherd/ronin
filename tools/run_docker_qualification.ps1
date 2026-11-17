@@ -342,6 +342,8 @@ try {
         if ($LASTEXITCODE -ne 0) {
             throw "Strict Docker acceptance gate failed with exit code $LASTEXITCODE"
         }
+        Write-Output ("Docker integration acceptance: PASS; {0} tests, 0 skipped, 0 failed; Ronin image {1} ({2}); selected fixtures: {3}; pytest {4}s; cleanup pending." -f `
+            $testCount, $resolvedImageId, $imageAction, $fixtureSummary, [Math]::Round($junitDuration, 2))
         Write-Output "Docker qualification evidence: $evidenceRoot"
     }
 } finally {

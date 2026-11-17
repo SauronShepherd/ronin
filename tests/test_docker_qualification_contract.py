@@ -75,6 +75,7 @@ def test_local_docker_qualification_script_uses_immutable_image_and_real_suites(
     assert "TestFilter" in script
     assert "if ($TestFilter) {" in script
     assert "Diagnostic only: strict v0.1 acceptance was not evaluated" in script
+    assert "Docker integration acceptance: PASS;" in script
     assert "qualification_python.psm1" in script
     assert "Get-RoninTestPythonEnvironment" in script
     assert "Executed: $caseName" in script
