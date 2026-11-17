@@ -12,8 +12,11 @@ green local streaming/worker regression (`87/87`) and a scaled live
 single-broker backpressure journey with `16,384` records. The live case passes
 `1/1`, verifies cap `73`, durable resume to lag zero, idle replay, reset and
 two `7`-record replays, and correlates `12/12` API events, all `OK`, with
-cleanup succeeded. The run is bounded and uses `RequestTimeoutSeconds=300`;
-it is not indefinite operation or complete P11 qualification. D66 remains
+cleanup succeeded. The same candidate's full Python/PostgreSQL regression
+passes `4,753` with `31` explicit skips and `0` failures out of `4,784`, with
+cleanup succeeded and `13` ResourceWarnings retained for follow-up. The live
+run is bounded and uses `RequestTimeoutSeconds=300`; it is not indefinite
+operation or complete P11 qualification. D66 remains
 linked for the real worker-backed Notebook (`1/1`, `16/16`), three-broker
 failover (`1/1`, `5/5`) and clean security scans. The ledger remains
 **NO-GO** at `1/13` families and `0/10` gates.

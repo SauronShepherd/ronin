@@ -57,6 +57,7 @@
   "qualification_matrix": {
     "candidate_boundary": "PASS: exact source archive and manifest verified; 1,566 files and 16,624,451 sandbox bytes",
     "local_regression": "PASS: 87 tests, 0 failed, 0 skipped in 13.15 seconds across streaming runtime/Kafka/contracts/health, worker execution/runtime/cancellation and Docker qualification contracts",
+    "full_python_regression": "PASS: 4,753 passed, 31 skipped, 0 failed out of 4,784 collected cases against isolated PostgreSQL 16.4; pytest 661.66 seconds, runner 672.82 seconds, cleanup succeeded, with 13 ResourceWarnings retained for follow-up",
     "live_backpressure": "PASS: 1/1 Playwright case; 16,384 seeded records across two partitions; cap at 73, resume drains the remaining 16,311 records to lag zero, idle replay is empty, reset restores the backlog and two 7-record replays succeed; 12/12 API events correlated, all OK, cleanup succeeded in 138.69 seconds",
     "security": "NOT_RERUN: D66 exact-candidate Gitleaks, pip-audit and Trivy filesystem/exported-image scans remain linked; D67 changed no product source",
     "release": "NO-GO: no family or release gate closes; P11 remains in_progress, P13 remains blocked and the ledger remains 1/13 families and 0/10 gates"
@@ -82,6 +83,22 @@
       "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d67-backpressure-16384-candidate-018176e0-20261117\\browser-live.log",
       "sha256": "eaae8dd35221b7824265cf2215254dbdf0fb40dbdf09add312ee1c9a41ab50ff",
       "size": 202
+    },
+    "python_suite_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-full-d67-20261117",
+    "python_suite_runner_timings": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-full-d67-20261117\\runner-timings.json",
+      "sha256": "4a4e7670284ebbcf0e10934ef0ca0b9d1e94aec3023ae7ef94168b3416bd622e",
+      "size": 635
+    },
+    "python_suite_junit": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-full-d67-20261117\\pytest-postgres.xml",
+      "sha256": "b41bed3fde1dc2d0a9c6f0ee7fa4f49fdcb643cb5e629443bb2403a190c53216",
+      "size": 704806
+    },
+    "python_suite_output": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-full-d67-20261117\\pytest-output.log",
+      "sha256": "dcb535c4cc3acb81305da930ed81944dc5a432bd376836b000e6e60865d03dd5",
+      "size": 55092
     }
   },
   "progress": {

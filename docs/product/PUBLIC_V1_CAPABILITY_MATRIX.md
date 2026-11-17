@@ -6,9 +6,11 @@ The current code/evidence candidate is `018176e0a3693d668bac0d049a6ce4db3c7f2723
 D67 adds a `87/87` local streaming/worker regression and a live single-broker
 backpressure journey over `16,384` records. The case passes `1/1`, preserves
 the durable cap/resume/reset/replay assertions and correlates `12/12` API
-events, all `OK`, with cleanup succeeded. The run is bounded and uses an
-explicit `RequestTimeoutSeconds=300`; it does not qualify P11 or close any
-release gate. D66 remains the source of the separate real worker Notebook,
+events, all `OK`, with cleanup succeeded. The same candidate's full
+Python/PostgreSQL regression passes `4,753/4,784` with `31` explicit skips and
+`0` failures. The run is bounded and uses an explicit
+`RequestTimeoutSeconds=300`; it does not qualify P11 or close any release gate.
+D66 remains the source of the separate real worker Notebook,
 three-broker failover and clean security scans.
 D38 adds candidate-bound P11 broker-restart recovery and a probe Alpine lock
 refresh after the preceding image showed 11 MEDIUM findings with available

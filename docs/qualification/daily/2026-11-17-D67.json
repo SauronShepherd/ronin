@@ -12,6 +12,7 @@
   "result": {
     "candidate_boundary": "PASS: 1,566 files, 16,624,451 sandbox bytes, archive and manifest verification passed",
     "local_regression": "PASS: 87 passed, 0 failed, 0 skipped",
+    "full_python_regression": "PASS: 4,753 passed, 31 skipped, 0 failed out of 4,784 collected cases against isolated PostgreSQL 16.4; 13 ResourceWarnings retained as a follow-up",
     "live_backpressure": "PASS: 1/1 case, 16,384 records, cap/resume/reset/replay assertions, 12/12 correlated API events all OK and cleanup succeeded",
     "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
   },

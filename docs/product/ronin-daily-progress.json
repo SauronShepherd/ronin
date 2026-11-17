@@ -560,7 +560,7 @@
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D67 is the latest exact candidate source 018176e0a3693d668bac0d049a6ce4db3c7f2723: the local streaming/worker regression passes 87/87 and the live single-broker 16,384-record backpressure/cap/resume/reset/replay case passes 1/1 with 12/12 correlated OK events. D66 remains linked for the real worker Notebook, three-broker failover and clean Gitleaks, pip-audit and Trivy filesystem/image scans. P11 remains open for indefinite backpressure, supervisor continuity, production topology, provider breadth, the complete family journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D67 is the latest exact candidate source 018176e0a3693d668bac0d049a6ce4db3c7f2723: the local streaming/worker regression passes 87/87, the full Python/PostgreSQL regression passes 4,753/4,784 with 31 explicit skips and 0 failures, and the live single-broker 16,384-record backpressure/cap/resume/reset/replay case passes 1/1 with 12/12 correlated OK events. D66 remains linked for the real worker Notebook, three-broker failover and clean Gitleaks, pip-audit and Trivy filesystem/image scans. P11 remains open for indefinite backpressure, supervisor continuity, production topology, provider breadth, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",
@@ -575,7 +575,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D58 full Python/PostgreSQL regression is green on the exact clean candidate: 4753 passed, 31 expected external/platform skips and 0 failed. D67 adds a 87/87 local streaming/worker regression and a 16,384-record bounded live P11 backpressure cap/resume/reset/replay pass with explicit request timeout. D66 remains linked for the real local worker Notebook, separate three-broker failover and clean Gitleaks, pip-audit and Trivy filesystem/image scans. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open, and the 13 SQLite ResourceWarnings remain a follow-up quality item. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
+      "summary": "D67 is the latest full regression receipt: 4,753 passed, 31 expected external/platform skips and 0 failed, plus the 87/87 local streaming/worker regression and a 16,384-record bounded live P11 backpressure cap/resume/reset/replay pass with explicit request timeout. D66 remains linked for the real local worker Notebook, separate three-broker failover and clean Gitleaks, pip-audit and Trivy filesystem/image scans. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open, and the 13 SQLite ResourceWarnings remain a follow-up quality item. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
     },
     {
       "id": "catalog-project-scope",
