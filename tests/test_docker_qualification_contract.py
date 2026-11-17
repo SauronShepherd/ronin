@@ -28,6 +28,17 @@ def test_local_docker_qualification_script_uses_immutable_image_and_real_suites(
     assert "selected zero test cases; an empty selection cannot pass" in script
     assert "$imageWasBuiltFromCheckout = $false" in script
     assert "$imageWasBuiltFromCheckout = $true" in script
+    assert "function Get-DockerImageId" in script
+    assert "function Remove-OwnedQualificationImage" in script
+    assert "$resolvedImageId = $ImageId" in script
+    assert "$env:RONIN_DOCKER_QUALIFICATION_IMAGE = $resolvedImageId" in script
+    assert "org.ronin.qualification.run=$runId" in script
+    assert "docker image rm --force $BuiltImageId" in script
+    assert "docker rm --force --volumes $ownedContainers" in script
+    assert '$imageCleanupStatus = "caller-supplied-image-left-intact"' in script
+    assert '$imageCleanupStatus = "kept-by-operator"' in script
+    assert '"docker-cleanup.json"' in script
+    assert "if ($cleanupFailures.Count -gt 0)" in script
     assert (
         '$imageAction = if ($imageWasBuiltFromCheckout) { "built from checkout" } else { "reused" }'
         in script
@@ -46,7 +57,6 @@ def test_local_docker_qualification_script_uses_immutable_image_and_real_suites(
     assert "if ($needsPostgres) {" in script
     assert "if ($needsFloci) {" in script
     assert "if ($needsAzurite) {" in script
-    assert "docker image inspect $ImageTag --format '{{.Id}}'" in script
     assert "RONIN_DOCKER_QUALIFICATION_IMAGE" in script
     assert "function Get-FreeLoopbackPort" in script
     assert "postgres:16.4-alpine" in script

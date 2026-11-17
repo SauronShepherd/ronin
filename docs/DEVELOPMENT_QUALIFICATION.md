@@ -146,14 +146,21 @@ $dockerEvidence = Join-Path $env:TEMP "ronin-docker-$runId"
 $helmEvidence = Join-Path $env:TEMP "ronin-helm-$runId"
 $imageTag = "ronin:qualification-$($runId.Substring(0, 8))"
 pwsh -NoProfile -File tools/run_docker_qualification.ps1 `
-  -EvidenceDirectory $dockerEvidence -ImageTag $imageTag -AllowDirtyWorktree
+  -EvidenceDirectory $dockerEvidence -ImageTag $imageTag -KeepImage -AllowDirtyWorktree
 if ($LASTEXITCODE -ne 0) { throw "Docker qualification failed; see $dockerEvidence" }
 
 # This consumes the exact Docker receipt and immutable image ID from above.
-pwsh -NoProfile -File tools/run_helm_qualification.ps1 `
-  -EvidenceDirectory $helmEvidence -DockerEvidenceDirectory $dockerEvidence `
-  -ImageRef $imageTag -AllowDirtyWorktree
-if ($LASTEXITCODE -ne 0) { throw "Helm/kind qualification failed; see $helmEvidence" }
+# KeepImage is an explicit hand-off exception; remove the image after the
+# dependent Helm lane, including when that lane fails.
+try {
+  pwsh -NoProfile -File tools/run_helm_qualification.ps1 `
+    -EvidenceDirectory $helmEvidence -DockerEvidenceDirectory $dockerEvidence `
+    -ImageRef $imageTag -AllowDirtyWorktree
+  if ($LASTEXITCODE -ne 0) { throw "Helm/kind qualification failed; see $helmEvidence" }
+} finally {
+  docker image rm --force $imageTag
+  if ($LASTEXITCODE -ne 0) { throw "Could not remove the hand-off qualification image $imageTag" }
+}
 
 # Fast Docker integration diagnostic for a specific pytest name/expression.
 # Real services still start, but strict acceptance is intentionally omitted.
@@ -173,6 +180,13 @@ browser journeys); the expanded Docker run took 157.19s (155.96s in pytest).
 Both runners retain per-phase timings and now print a concise final receipt
 with executed/pass/skip/fail counts and real-service/API/log status. These
 measurements are a baseline, not a performance promise.
+
+`run_docker_qualification.ps1` removes the image it built by default, together
+with any containers descended from that image. It records the result in
+`docker-cleanup.json` and a failed cleanup invalidates the run. `-ImageId`
+diagnostics deliberately leave the caller-owned image intact. Use `-KeepImage`
+only for an explicit hand-off to a subsequent lane, as in the Docker-to-Helm
+example above; the hand-off cleanup must be in the caller's `finally` block.
 
 For the shortest reliable feedback loop, start with one changed test file or a
 pytest `-k` expression, then run the Docker integration gate when the change

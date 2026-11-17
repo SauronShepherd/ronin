@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$EvidenceDirectory,
     [string]$TestFilter,
+    [switch]$KeepImage,
     [switch]$AllowDirtyWorktree
 )
 
@@ -17,6 +18,77 @@ function Get-FreeLoopbackPort {
     } finally {
         $listener.Stop()
     }
+}
+
+function Get-DockerImageId([string]$Reference) {
+    $raw = (& docker image inspect $Reference --format '{{.Id}}' 2>$null | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0 -or $raw -notmatch '^sha256:[0-9a-f]{64}$') {
+        return $null
+    }
+    return $raw
+}
+
+function Remove-OwnedQualificationImage {
+    param(
+        [Parameter(Mandatory = $true)] [string]$BuiltImageId,
+        [Parameter(Mandatory = $true)] [string]$ImageTag,
+        [Parameter(Mandatory = $true)] [string]$OwnerRunId,
+        [string]$PreexistingImageId
+    )
+
+    $owner = (& docker image inspect $BuiltImageId `
+        --format '{{ index .Config.Labels "org.ronin.qualification.run" }}' 2>$null | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not inspect the built Ronin qualification image '$BuiltImageId' during cleanup."
+    }
+    if ($owner -ne $OwnerRunId) {
+        throw "Refusing to delete Ronin image '$BuiltImageId': ownership label '$owner' does not match qualification run '$OwnerRunId'."
+    }
+
+    # A worker test can launch child containers from the qualification image.
+    # Remove only descendants of this run's owned image before removing the image
+    # itself; an image still referenced by a container must never be reported as
+    # cleaned up.
+    $ownedContainers = @(& docker ps -a --filter "ancestor=$BuiltImageId" --format "{{.ID}}" 2>$null |
+        Where-Object { $_.Trim() })
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not enumerate containers based on owned Ronin image '$BuiltImageId'."
+    }
+    if ($ownedContainers.Count -gt 0) {
+        & docker rm --force --volumes $ownedContainers 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not remove containers based on owned Ronin image '$BuiltImageId'."
+        }
+        $remainingContainers = @(& docker ps -a --filter "ancestor=$BuiltImageId" --format "{{.ID}}" 2>$null |
+            Where-Object { $_.Trim() })
+        if ($LASTEXITCODE -ne 0 -or $remainingContainers.Count -gt 0) {
+            throw "Containers based on owned Ronin image '$BuiltImageId' remain after cleanup."
+        }
+    }
+
+    & docker image rm --force $BuiltImageId 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not remove owned Ronin qualification image '$BuiltImageId'."
+    }
+    if (Get-DockerImageId $BuiltImageId) {
+        throw "Owned Ronin qualification image '$BuiltImageId' still exists after cleanup."
+    }
+
+    # A caller may deliberately reuse a tag that existed before this run. The
+    # run owns the newly built image, not the caller's old image; restore the
+    # old tag so cleanup does not destroy pre-existing local state.
+    if ($PreexistingImageId) {
+        & docker tag $PreexistingImageId $ImageTag 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "Owned image was removed, but the pre-existing image '$PreexistingImageId' could not be restored as '$ImageTag'."
+        }
+    }
+}
+
+$cleanupFailures = [System.Collections.Generic.List[string]]::new()
+function Add-CleanupFailure([string]$Message) {
+    $script:cleanupFailures.Add($Message)
+    Write-Warning $Message
 }
 
 $checkout = [IO.Path]::GetFullPath((Get-Location).Path).TrimEnd([IO.Path]::DirectorySeparatorChar)
@@ -54,6 +126,7 @@ $postgresLog = Join-Path $evidenceRoot "postgres-qualification.log"
 $flociLog = Join-Path $evidenceRoot "floci-s3-qualification.log"
 $azuriteLog = Join-Path $evidenceRoot "azurite-qualification.log"
 $pytestOutput = Join-Path $evidenceRoot "docker-pytest-output.log"
+$cleanupReceiptPath = Join-Path $evidenceRoot "docker-cleanup.json"
 $runId = [guid]::NewGuid().ToString("N").Substring(0, 10)
 $postgresContainerName = "ronin-docker-pg-$($candidateSha.Substring(0, 8))-$runId".ToLowerInvariant()
 $flociProject = "ronin-docker-s3-$($candidateSha.Substring(0, 8))-$runId".ToLowerInvariant()
@@ -71,6 +144,10 @@ foreach ($name in @("RONIN_FLOCI_PORT", "RONIN_TEST_S3_ENDPOINT", "AWS_DEFAULT_R
 $postgresStarted = $false
 $flociStarted = $false
 $azuriteStarted = $false
+$imageWasBuiltFromCheckout = $false
+$preexistingImageId = $null
+$resolvedImageId = $null
+$imageCleanupStatus = "not-required"
 $needsPostgres = -not $TestFilter -or $TestFilter -match 'postgres|appliance|worker|docker|v01_journey'
 $needsFloci = -not $TestFilter -or $TestFilter -match 's3_json|ml_s3_artifact'
 $needsAzurite = -not $TestFilter -or $TestFilter -match 'azure_blob'
@@ -96,20 +173,22 @@ Start-Transcript -LiteralPath $transcript -Force | Out-Null
 try {
     Write-Output "Source HEAD: $candidateSha"
     Write-Output "Qualification mode: $qualificationMode"
-    $imageWasBuiltFromCheckout = $false
     if ($ImageId) {
         if (-not $TestFilter) { throw "-ImageId is allowed only with -TestFilter; full qualification must build from this checkout." }
         if ($ImageId -notmatch '^sha256:[0-9a-f]{64}$') { throw "-ImageId must be an immutable sha256 digest." }
-        $imageId = $ImageId
-        Write-Output "Filtered diagnostic reuses caller-supplied image $imageId; the current checkout's Docker image is not qualified."
+        $resolvedImageId = $ImageId
+        Write-Output "Filtered diagnostic reuses caller-supplied image $resolvedImageId; the current checkout's Docker image is not qualified."
     } else {
-        docker build --file docker/Dockerfile --tag $ImageTag .
+        $preexistingImageId = Get-DockerImageId $ImageTag
+        docker build --file docker/Dockerfile `
+            --label "org.ronin.qualification.run=$runId" `
+            --tag $ImageTag .
         if ($LASTEXITCODE -ne 0) {
             throw "Docker image build failed with exit code $LASTEXITCODE"
         }
         $imageWasBuiltFromCheckout = $true
-        $imageId = docker image inspect $ImageTag --format '{{.Id}}'
-        if ($LASTEXITCODE -ne 0 -or -not $imageId -or $imageId -notmatch '^sha256:[0-9a-f]{64}$') {
+        $resolvedImageId = Get-DockerImageId $ImageTag
+        if (-not $resolvedImageId) {
             throw "Docker qualification image did not resolve to an immutable image id"
         }
     }
@@ -199,7 +278,7 @@ try {
         }
         Write-Output "Azurite Blob integration endpoint ready: $env:RONIN_AZURITE_ENDPOINT"
     }
-    $env:RONIN_DOCKER_QUALIFICATION_IMAGE = $imageId
+    $env:RONIN_DOCKER_QUALIFICATION_IMAGE = $resolvedImageId
     $env:RONIN_DOCKER_QUALIFICATION_EVIDENCE = $evidenceRoot
     $env:RONIN_POSTGRES_TEST_DSN = $postgresDsn
 
@@ -249,8 +328,8 @@ try {
     if ($needsFloci) { $fixtureNames += "Floci/S3" }
     if ($needsAzurite) { $fixtureNames += "Azurite/Azure" }
     $fixtureSummary = if ($fixtureNames.Count -gt 0) { $fixtureNames -join ", " } else { "none" }
-    Write-Output ("{0}: PASS; {1} tests, {2} skipped, {3} failed; Ronin image {4} ({5}); selected fixtures: {6}; pytest {7}s." -f `
-        $dockerRunKind, $testCount, $skipped, $failed, $imageId, $imageAction, $fixtureSummary, [Math]::Round($junitDuration, 2))
+    Write-Output ("{0}: tests completed; {1} tests, {2} skipped, {3} failed; Ronin image {4} ({5}); selected fixtures: {6}; pytest {7}s; cleanup pending." -f `
+        $dockerRunKind, $testCount, $skipped, $failed, $resolvedImageId, $imageAction, $fixtureSummary, [Math]::Round($junitDuration, 2))
     foreach ($caseName in $executedCases) { Write-Output "Executed: $caseName" }
     Write-Output "Docker pytest console output: $pytestOutput"
 
@@ -277,11 +356,18 @@ try {
             }
             docker compose -p $azuriteProject -f $azuriteCompose down --volumes --remove-orphans 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) {
-                Write-Warning "Could not remove isolated Azurite project '$azuriteProject'."
+                Add-CleanupFailure "Could not remove isolated Azurite project '$azuriteProject'."
             }
         } catch {
-            Write-Warning "Azurite cleanup for '$azuriteProject' raised an error: $($_.Exception.Message)"
-            docker compose -p $azuriteProject -f $azuriteCompose down --volumes --remove-orphans 2>&1 | Out-Null
+            Add-CleanupFailure "Azurite cleanup for '$azuriteProject' raised an error: $($_.Exception.Message)"
+            try {
+                docker compose -p $azuriteProject -f $azuriteCompose down --volumes --remove-orphans 2>&1 | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    Add-CleanupFailure "Retry could not remove isolated Azurite project '$azuriteProject'."
+                }
+            } catch {
+                Add-CleanupFailure "Retry of Azurite cleanup for '$azuriteProject' raised an error: $($_.Exception.Message)"
+            }
         } finally {
             $ErrorActionPreference = $previousErrorActionPreference
         }
@@ -297,11 +383,18 @@ try {
             }
             docker compose -p $flociProject -f $flociCompose down --volumes --remove-orphans 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) {
-                Write-Warning "Could not remove isolated Floci project '$flociProject'."
+                Add-CleanupFailure "Could not remove isolated Floci project '$flociProject'."
             }
         } catch {
-            Write-Warning "Floci cleanup for '$flociProject' raised an error: $($_.Exception.Message)"
-            docker compose -p $flociProject -f $flociCompose down --volumes --remove-orphans 2>&1 | Out-Null
+            Add-CleanupFailure "Floci cleanup for '$flociProject' raised an error: $($_.Exception.Message)"
+            try {
+                docker compose -p $flociProject -f $flociCompose down --volumes --remove-orphans 2>&1 | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    Add-CleanupFailure "Retry could not remove isolated Floci project '$flociProject'."
+                }
+            } catch {
+                Add-CleanupFailure "Retry of Floci cleanup for '$flociProject' raised an error: $($_.Exception.Message)"
+            }
         } finally {
             $ErrorActionPreference = $previousErrorActionPreference
         }
@@ -320,18 +413,100 @@ try {
             }
             docker rm --force --volumes $postgresContainerName 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) {
-                Write-Warning "Could not remove isolated PostgreSQL container '$postgresContainerName'."
+                Add-CleanupFailure "Could not remove isolated PostgreSQL container '$postgresContainerName'."
             }
         } catch {
-            Write-Warning "Docker cleanup for isolated PostgreSQL container '$postgresContainerName' raised an error: $($_.Exception.Message)"
-            docker rm --force --volumes $postgresContainerName 2>&1 | Out-Null
+            Add-CleanupFailure "Docker cleanup for isolated PostgreSQL container '$postgresContainerName' raised an error: $($_.Exception.Message)"
+            try {
+                docker rm --force --volumes $postgresContainerName 2>&1 | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    Add-CleanupFailure "Retry could not remove isolated PostgreSQL container '$postgresContainerName'."
+                }
+            } catch {
+                Add-CleanupFailure "Retry of PostgreSQL cleanup for '$postgresContainerName' raised an error: $($_.Exception.Message)"
+            }
         } finally {
             $ErrorActionPreference = $previousErrorActionPreference
         }
+    }
+    if ($imageWasBuiltFromCheckout) {
+        if ($KeepImage) {
+            $imageCleanupStatus = "kept-by-operator"
+            Write-Warning "Ronin qualification image '$ImageTag' ($resolvedImageId) was kept by explicit -KeepImage; remove it after the dependent qualification lane finishes."
+        } else {
+            try {
+                if (-not $resolvedImageId) {
+                    $resolvedImageId = Get-DockerImageId $ImageTag
+                }
+                Remove-OwnedQualificationImage `
+                    -BuiltImageId $resolvedImageId `
+                    -ImageTag $ImageTag `
+                    -OwnerRunId $runId `
+                    -PreexistingImageId $preexistingImageId
+                $imageCleanupStatus = "succeeded"
+                Write-Output "Ronin qualification image cleanup: removed owned image $resolvedImageId."
+            } catch {
+                $imageCleanupStatus = "failed"
+                Add-CleanupFailure "Ronin qualification image cleanup failed: $($_.Exception.Message)"
+            }
+        }
+    } elseif ($ImageId) {
+        $imageCleanupStatus = "caller-supplied-image-left-intact"
+        Write-Output "Ronin qualification image cleanup: caller-supplied image left intact."
+    } else {
+        $imageCleanupStatus = "build-did-not-produce-owned-image"
+        Write-Output "Ronin qualification image cleanup: no owned image was produced."
+    }
+    $cleanupReceipt = [ordered]@{
+        schema = "ronin.docker-cleanup/v1"
+        run_id = $runId
+        image_tag = $ImageTag
+        image_id = $resolvedImageId
+        image_built_from_checkout = $imageWasBuiltFromCheckout
+        image_cleanup = $imageCleanupStatus
+        postgres_container = $postgresContainerName
+        postgres_started = $postgresStarted
+        floci_project = $flociProject
+        floci_started = $flociStarted
+        azurite_project = $azuriteProject
+        azurite_started = $azuriteStarted
+        status = if ($cleanupFailures.Count -gt 0) {
+            "failed"
+        } elseif ($imageCleanupStatus -eq "kept-by-operator") {
+            "passed-with-explicit-retention"
+        } elseif ($imageCleanupStatus -eq "build-did-not-produce-owned-image") {
+            "not-applicable"
+        } else {
+            "passed"
+        }
+        failures = @($cleanupFailures)
+    }
+    try {
+        $cleanupReceipt | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $cleanupReceiptPath -Encoding utf8
+    } catch {
+        Add-CleanupFailure "Could not write Docker cleanup receipt '$cleanupReceiptPath': $($_.Exception.Message)"
+    }
+    if ($cleanupFailures.Count -gt 0) {
+        Write-Output ("Docker qualification cleanup: FAILED ({0})." -f ($cleanupFailures -join "; "))
+    } elseif ($imageCleanupStatus -eq "kept-by-operator") {
+        Write-Output "Docker qualification cleanup: PASS for temporary resources; image intentionally retained by -KeepImage."
+    } else {
+        Write-Output "Docker qualification cleanup: PASS."
     }
     [Environment]::SetEnvironmentVariable("RONIN_POSTGRES_TEST_DSN", $savedPostgresTestDsn, "Process")
     foreach ($name in $savedFlociEnvironment.Keys) {
         [Environment]::SetEnvironmentVariable($name, $savedFlociEnvironment[$name], "Process")
     }
     Stop-Transcript | Out-Null
+}
+
+if ($cleanupFailures.Count -gt 0) {
+    throw ("Docker qualification cleanup failed: " + ($cleanupFailures -join "; "))
+}
+if ($KeepImage -and $imageWasBuiltFromCheckout) {
+    Write-Output "Docker qualification: PASS; temporary resources cleaned and image retained only for the explicit downstream hand-off."
+} elseif (-not $imageWasBuiltFromCheckout) {
+    Write-Output "Docker qualification: PASS; tests and runner-owned resources cleaned, caller-supplied image preserved."
+} else {
+    Write-Output "Docker qualification: PASS; tests and owned resources cleaned."
 }
