@@ -133,7 +133,7 @@
       "name": "Real-time and streaming",
       "observed_implementation": "partial",
       "qualification": "in_progress",
-      "receipt": "docs/qualification/candidates/candidate-b69204d0-d53.json",
+      "receipt": "docs/qualification/candidates/candidate-b69204d0-d54.json",
       "candidate_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2"
     },
     {
@@ -414,13 +414,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D53.md",
       "candidate_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
       "commit_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2"
+    },
+    {
+      "id": "D54",
+      "date": "2026-11-17",
+      "phase": "p11-same-candidate-regression-revalidation-d50-d51",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D54.md",
+      "candidate_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+      "commit_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D53 is the current exact candidate b69204d02cd3b7649cab49fc42b6bc68443a94b2: it adds a real HTTP/control-plane journey over a three-node, three-replica Redpanda topic, confirms one record, stops broker-0, resumes four records from the durable checkpoint, restores the broker and reaches zero lag. D50/D51 bounded cap/reset and byte-boundary evidence and D52 direct-runtime recovery remain separately attributed to their original candidates. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D54 is the current exact-candidate revalidation at b69204d02cd3b7649cab49fc42b6bc68443a94b2: D50's 256-record cap/resume/reset/replay journey passes 1/1 with 12/12 correlated events, and D51's byte-boundary journey passes 1/1 with 13/13 correlated events. D53's three-node API failover and D52's direct-runtime recovery remain linked on the same code candidate. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",

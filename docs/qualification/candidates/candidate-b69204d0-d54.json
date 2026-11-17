@@ -1,0 +1,109 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D54",
+  "status": "pass",
+  "outcome": "pass for same-candidate live revalidation of the D50 bounded 256-record cap/reset/replay cell and the D51 near-limit byte-boundary cell; this does not qualify P11 or close a release gate",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+    "origin_main_sha_when_candidate_was_tested": "a854e7e87c997a4ffa6e1dc8b3a0b7417af203b3",
+    "worktree_source_mode": "exact-commit checkout for live runs; documentation commit was not included in the tested candidate"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53\\candidate-b69204d02cd3b7649cab49fc42b6bc68443a94b2.tar",
+      "format": "tar",
+      "sha256": "92d7830ef58a63683c242b023f9cc8f126c6578e02679a4ca15a0fd0f6d65bf2",
+      "size": 17653760
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53\\candidate-b69204d02cd3b7649cab49fc42b6bc68443a94b2.manifest.json",
+      "sha256": "75fd0d75333c7e0fb1144fb3bea7dbd70398e4d6b8d827537360694186451679",
+      "size": 235487
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53\\candidate-b69204d02cd3b7649cab49fc42b6bc68443a94b2.sha256",
+      "sha256": "fe0cc84058d0bcd45efb3ba704ad967801a7a6881ca204ef9a537631682d2060",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1525,
+    "total_bytes": 16410389,
+    "file_listing_sorted": true,
+    "output_outside_repository": true,
+    "archive_reused_from": "docs/qualification/candidates/candidate-b69204d0-d53.json"
+  },
+  "implementation": {
+    "code_commit": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+    "candidate_docs_commit": null,
+    "summary": "D54 makes no production or fixture changes; it reruns the D50 and D51 live journeys from the exact D53 code candidate after the D53 multi-broker implementation was fixed and published.",
+    "production_files_changed": [],
+    "fixture_files_changed": [],
+    "test_files_changed": []
+  },
+  "commands": {
+    "d50_live": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d50-candidate-b692-20261117 -TestGrep \"live streaming sustained backpressure drains 256 records with reset-safe replay\"",
+    "d51_live": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d51-candidate-b692-20261117 -TestGrep \"live streaming enforces near-record and near-batch byte boundaries\"",
+    "candidate_contracts": "D53 exact candidate sandbox: python -m pytest -q -p no:cacheprovider tests/test_docker_qualification_contract.py tests/test_streaming_runtime.py tests/test_streaming_kafka.py tests/test_streaming_bundle.py tests/test_streaming_contracts.py tests/test_stream_table.py -> 60 passed, 0 failed, 0 skipped"
+  },
+  "qualification_matrix": {
+    "d50_bounded_backpressure": "PASS: 1/1 live case on the exact candidate; the 256-record two-partition cap/resume/reset/replay journey produced 12/12 correlated API events, all OK, with zero server/network errors",
+    "d51_byte_boundaries": "PASS: 1/1 live case on the exact candidate; near-record and near-batch acceptance plus repeated over-batch rejection produced 13/13 correlated API events, 11 OK and 2 expected WARN, with zero server/network errors",
+    "candidate_identity": "PASS: both live runs reported CLEAN-CANDIDATE QUALIFICATION at b69204d02cd3b7649cab49fc42b6bc68443a94b2 and reused the verified D53 exact archive",
+    "candidate_contracts": "PASS: 60/60 focused contracts, 0 failures and 0 skips in the exact D53 candidate sandbox",
+    "browser_media_cleanup": "PASS: both filtered live evidence directories report media cleanup succeeded with removed=0",
+    "cluster_cleanup": "PASS: both single-broker live campaigns removed their temporary containers, volume and network",
+    "route_audit": "NOT_RUN: filtered streaming diagnostics only",
+    "security_scans": "NOT_RERUN in D54; earlier evidence remains separate",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license_qualification": "INHERITED FAIL/CLOSED; human review decisions remain open",
+    "result": "D54 strengthens same-candidate P11 traceability without qualifying P11, closing a gate or changing release NO-GO"
+  },
+  "evidence": {
+    "d50": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d50-candidate-b692-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d50-candidate-b692-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "8375f07503dd34c4c610cdbbbd7efa33d94e8b0469b73196d9c377a6b5119fe2",
+      "qualification_summary_size": 2788,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d50-candidate-b692-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "fec66b3f62022aebac4bf0946dff6029a15539339527f4cd946409b7b3fb6a81",
+      "live_api_traffic_size": 3880,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d50-candidate-b692-20261117\\browser-live.xml",
+      "browser_junit_sha256": "50e5895b589400bebb0ae3a4d0de3f920291ca97e0277ee000bac2365543c0fa",
+      "browser_junit_size": 432,
+      "status": "PASS: Playwright 1/1, 12/12 correlated events, 12 OK, duration 36.69 seconds"
+    },
+    "d51": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d51-candidate-b692-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d51-candidate-b692-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "ff7161a77598c78d17478eb15b069f3594e704b8b39ce37b40cebd8be18f2f36",
+      "qualification_summary_size": 2806,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d51-candidate-b692-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "fab91260fc94438ebc14da0c8d5560a91713dc1d548256f4dd979348338db420",
+      "live_api_traffic_size": 4348,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d51-candidate-b692-20261117\\browser-live.xml",
+      "browser_junit_sha256": "07c28ad951822b6670b6602955566e92cb2ded0bcacb1e4eabb0b59f64cd4a85",
+      "browser_junit_size": 416,
+      "status": "PASS: Playwright 1/1, 13/13 correlated events, 11 OK and 2 expected WARN, duration 56.17 seconds"
+    }
+  },
+  "open_cells": [
+    "P11 remains in_progress: D54 revalidates bounded backpressure and byte-boundary behavior on the D53 candidate, but indefinite operation, supervisor continuity, worker/provider breadth, production topology support and the complete family journey remain open.",
+    "D52 direct-runtime recovery and D53 API failover remain separate cells; D54 adds regression traceability for D50 and D51 on the D53 code candidate.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external provider was available.",
+    "No release gate closes; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "Both D54 runs are filtered live diagnostics, not route-wide browser qualification or a complete P11 family journey.",
+    "The campaigns use the existing single-broker fixture; D54 does not add production topology or worker/provider evidence.",
+    "The verified exact archive is reused from D53 rather than regenerated because D54 makes no source change; the live runs were executed from the detached b69204d exact commit and main was restored afterward."
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D54",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "P11 same-candidate regression revalidation of bounded backpressure/reset/replay and byte-boundary journeys",
+  "candidate_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+  "candidate_receipt": "docs/qualification/candidates/candidate-b69204d0-d54.json",
+  "code_commit": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+  "origin_main_at_code_commit": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+  "implementation": {
+    "production_change": false,
+    "summary": "D54 makes no code changes; it reruns D50 and D51 from the exact D53 code candidate after the multi-broker runner compatibility fix.",
+    "changed_paths": [],
+    "candidate_archive": "Reused and reverified from docs/qualification/candidates/candidate-b69204d0-d53.json."
+  },
+  "tests": {
+    "candidate_boundary": "PASS/inherited: exact b69204d archive and clean sandbox from D53; 1525 files, 16410389 sandbox bytes, no Git metadata or generated artifacts",
+    "candidate_contracts": "PASS/inherited and source-rerun: 60 passed, 0 failed, 0 skipped",
+    "d50_live": "PASS: clean exact-candidate Playwright 1/1; 12/12 correlated API events, all OK, zero server/network errors, cleanup succeeded",
+    "d51_live": "PASS: clean exact-candidate Playwright 1/1; 13/13 correlated API events, 11 OK and 2 expected WARN, zero server/network errors, cleanup succeeded",
+    "route_audit": "NOT_RUN: filtered streaming diagnostics only",
+    "security_scans": "NOT_RERUN in D54",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license": "INHERITED FAIL/CLOSED; human review decisions remain open"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "evidence": {
+    "d50": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d50-candidate-b692-20261117\\qualification-summary.json",
+    "d51": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d54-d51-candidate-b692-20261117\\qualification-summary.json"
+  },
+  "limitations": [
+    "D54 revalidates two bounded filtered journeys on the D53 candidate; it does not prove indefinite backpressure, production topologies, worker/provider breadth or complete P11 qualification.",
+    "No release gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}

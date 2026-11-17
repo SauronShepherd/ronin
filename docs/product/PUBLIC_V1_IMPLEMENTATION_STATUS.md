@@ -22,6 +22,14 @@ worker/provider breadth, production topology support, route-wide audit and the
 remaining release gates remain open. Release remains **NO-GO** at `1/13`
 families and `0/10` gates.
 
+D54 revalidates the bounded D50 and D51 journeys on the same `b69204d` code
+candidate: the 256-record cap/resume/reset/replay case passes `1/1` with
+`12/12` correlated HTTP events, and the near-record/near-batch byte-boundary
+case passes `1/1` with `13/13` correlated events (`11` OK and `2` expected
+WARN). Both filtered live runs report zero server/network errors and complete
+cleanup. This strengthens same-candidate bounded evidence, but does not claim
+indefinite operation, worker/provider breadth or complete P11 qualification.
+
 ### Historical exact-SHA qualification — D52 — 17 November 2026
 
 D52 advanced the exact candidate to `fe5be99c535ca4eb17ee371744e7b7a6acd87ba0`.
