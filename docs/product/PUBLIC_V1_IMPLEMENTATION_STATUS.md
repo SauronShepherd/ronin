@@ -7,6 +7,18 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D80 reruns the current exact-candidate Docker-to-Helm/kind chain on
+`5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`: Docker passes `27/27` with `0`
+skips and `0` failures, strict v0.1 acceptance is `15/15`, and Helm 4.3.1
+passes lint, the four-resource Secret boundary, kind installation/readiness,
+health, Studio/jobs API, queued-job persistence across restart, revision-2
+upgrade, revision-1 rollback and cleanup. The digest-bound image
+`sha256:8ae42159584824205bf64bf8f2151b57caccf6b1b3765680c8c2093dd9b28ec2`
+was retained only for the hand-off and removed by immutable ID afterward.
+This updates the finite deployment/worker evidence for the candidate; it does
+not establish indefinite supervisor operation, production topology or a
+complete P11/P14 family qualification.
+
 D79 reruns the complete Docker/worker qualification on the exact candidate
 `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`: `27/27` tests pass with `0`
 skips and `0` failures in `201.208 s`, and strict v0.1 acceptance is `15/15`

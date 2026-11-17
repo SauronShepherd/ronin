@@ -3,6 +3,12 @@
 ## Current exact-SHA snapshot — 17 November 2026
 
 The current code/evidence candidate is `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`.
+D80 refreshes the exact-candidate Docker-to-Helm/kind chain: Docker passes
+`27/27` with strict v0.1 `15/15`; Helm 4.3.1 passes lint, the four-resource
+Secret boundary, install/readiness, health/UI/jobs API, queued-job persistence
+after restart, revision-2 upgrade, revision-1 rollback and cleanup. The image
+is removed by immutable ID after the hand-off. This is finite deployment and
+worker evidence, not complete P11/P14 qualification or indefinite operation.
 D79 revalidates the exact-candidate Docker/worker and strict v0.1 cell:
 `27/27` tests pass with `0` skips and `0` failures, strict acceptance is
 `15/15`, the digest-bound image is cleaned up, and PostgreSQL, Floci/S3,

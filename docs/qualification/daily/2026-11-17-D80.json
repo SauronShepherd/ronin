@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D80",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate Docker-to-Helm/kind deployment qualification",
+  "candidate_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "implementation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "documentation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D80.md",
+  "execution_scope": "exact-candidate-docker-strict-acceptance-and-helm-kind-deployment",
+  "result": {
+    "docker": "PASS: 27 passed, 0 skipped and 0 failed; strict v0.1 acceptance 15/15; image sha256:8ae42159584824205bf64bf8f2151b57caccf6b1b3765680c8c2093dd9b28ec2",
+    "helm": "PASS: Helm 4.3.1 lint, 4-resource Secret boundary, kind install/readiness, health/UI/jobs API, queued-job restart persistence, revision-2 upgrade, revision-1 rollback and cleanup",
+    "image_cleanup": "PASS: image was retained only for the Docker-to-Helm hand-off, then removed by immutable ID after Helm; cluster and fixtures cleaned",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "D80 qualifies the local Docker-to-Helm deployment cell, not the complete P11 or P14 families, indefinite supervisor operation or production topology.",
+    "The chain does not qualify cloud providers, external secret backends, supported-platform breadth or human-owned release decisions.",
+    "D80's Docker receipt intentionally records explicit image retention while Helm consumed the image; final immutable-ID removal and resource hygiene were verified separately.",
+    "Provider breadth, complete family journeys, human decisions and release approval remain open."
+  ]
+}
