@@ -554,6 +554,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D67.md",
       "candidate_sha": "018176e0a3693d668bac0d049a6ce4db3c7f2723",
       "commit_sha": "018176e0a3693d668bac0d049a6ce4db3c7f2723"
+    },
+    {
+      "id": "D68",
+      "date": "2026-11-17",
+      "phase": "docker-helm-qualification-receipt-correction",
+      "status": "pass",
+      "families": [],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D68.md",
+      "candidate_sha": "1ae749a074c023b665e3373ec68fa7c82cbf3131",
+      "commit_sha": "1ae749a074c023b665e3373ec68fa7c82cbf3131"
     }
   ],
   "known_blockers": [
@@ -575,7 +585,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D67 is the latest full regression receipt: 4,753 passed, 31 expected external/platform skips and 0 failed, plus the 87/87 local streaming/worker regression and a 16,384-record bounded live P11 backpressure cap/resume/reset/replay pass with explicit request timeout. D66 remains linked for the real local worker Notebook, separate three-broker failover and clean Gitleaks, pip-audit and Trivy filesystem/image scans. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open, and the 13 SQLite ResourceWarnings remain a follow-up quality item. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
+      "summary": "D67 remains the latest full regression receipt: 4,753 passed, 31 expected external/platform skips and 0 failed, plus the 87/87 local streaming/worker regression and a 16,384-record bounded live P11 backpressure cap/resume/reset/replay pass with explicit request timeout. D68 adds exact-candidate Docker 27/27 with strict v0.1 acceptance 15/15 and a Helm/kind install/restart-persistence/upgrade/rollback/cleanup pass after correcting the acceptance receipt contract. D66 remains linked for the real local worker Notebook, separate three-broker failover and clean Gitleaks, pip-audit and Trivy filesystem/image scans. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open, and the 13 SQLite ResourceWarnings remain a follow-up quality item. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
     },
     {
       "id": "catalog-project-scope",

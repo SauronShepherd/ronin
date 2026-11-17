@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D68",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Exact-candidate Docker acceptance receipt correction and Helm/kind deployment qualification",
+  "candidate_sha": "1ae749a074c023b665e3373ec68fa7c82cbf3131",
+  "implementation_commit_sha": "1ae749a074c023b665e3373ec68fa7c82cbf3131",
+  "documentation_commit_sha": "1ae749a074c023b665e3373ec68fa7c82cbf3131",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D68.md",
+  "execution_scope": "exact-candidate-docker-strict-acceptance-and-helm-kind-deployment",
+  "result": {
+    "harness_contract": "PASS: Docker acceptance receipt is emitted only after the strict gate; 25 contract tests passed",
+    "docker": "PASS: 27 passed, 0 skipped, 0 failed; strict v0.1 acceptance 15/15; PostgreSQL, worker, Floci/S3, Azurite/Azure and backup/restore exercised",
+    "helm": "PASS: lint, 4-resource secret boundary, kind install/readiness, health/UI/jobs API, queued-job restart persistence, revision-2 upgrade, revision-1 rollback and cleanup",
+    "image_cleanup": "PASS: retained image was removed by immutable ID after Helm and no containers or Docker resources remained",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "D68 qualifies the local Docker-to-Helm deployment cell, not the complete P11 family or indefinite supervisor operation.",
+    "The full Python/PostgreSQL regression and security scans were not rerun after this qualification-harness-only fix; D67 and D66 remain linked as separate exact evidence.",
+    "Production topology, external provider breadth, complete family journey, human review and final release approval remain open."
+  ]
+}
