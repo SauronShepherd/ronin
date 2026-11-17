@@ -7,6 +7,14 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D82 revalidates the bounded live multi-broker failover diagnostic on exact
+candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`: the three-broker,
+replication-factor-3 journey passes `1/1`, correlates `5/5` API events as
+`OK`, records zero unexpected authorization/server/network errors and cleans
+up in `330.14 s`. PostgreSQL and worker execution are intentionally absent
+and the filtered run does not perform the route-wide audit; this is recovery
+evidence, not indefinite operation or complete P11 qualification.
+
 D81 reruns the bounded live P11 backpressure diagnostic on the exact
 candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0` with `16,384` records and
 an explicit `300 s` request timeout. The single-broker Playwright journey

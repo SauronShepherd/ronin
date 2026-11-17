@@ -3,6 +3,11 @@
 ## Current exact-SHA snapshot — 17 November 2026
 
 The current code/evidence candidate is `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`.
+D82 revalidates current exact-candidate bounded three-broker failover:
+replication factor `3`, journey `1/1`, and `5/5` correlated `OK` API events
+with cleanup. PostgreSQL, worker execution and route-wide audit are outside
+this filtered cell, so it does not qualify indefinite operation or the full
+P11 family.
 D81 adds current exact-candidate bounded single-broker backpressure evidence:
 `16,384` records pass in `1/1`, with `12/12` correlated `OK` API events,
 request timeout `300 s`, no unexpected errors and cleanup. PostgreSQL, worker,

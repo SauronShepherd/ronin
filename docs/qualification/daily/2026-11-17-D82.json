@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D82",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate bounded live multi-broker failover",
+  "candidate_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "implementation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "documentation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D82.md",
+  "execution_scope": "exact-candidate-bounded-live-multi-broker-failover",
+  "result": {
+    "journey": "PASS: 1/1 Playwright case against three Redpanda brokers with replication factor 3",
+    "api_traffic": "PASS: 5/5 API events correlated with structured logs, all OK, 0 uncorrelated and 0 unexpected authorization/server/network errors",
+    "services": "PASS: real three-broker Kafka/Redpanda and Ronin API; PostgreSQL false, worker image null, multi-broker true",
+    "runner": "PASS: clean-candidate live-api-diagnostic, request timeout 300 seconds, total 330.14 seconds, application ERROR/CRITICAL 0 and cleanup succeeded",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "This is bounded multi-broker evidence; it does not establish indefinite supervisor operation, sustained backpressure in the same selection, worker-backed execution, PostgreSQL or production topology.",
+    "The filtered diagnostic does not run the route-wide audit; the runner reports the available 25-route inventory without claiming route qualification.",
+    "Provider breadth, complete sink/replay coverage, complete P11 family qualification, human decisions and release approval remain open."
+  ]
+}
