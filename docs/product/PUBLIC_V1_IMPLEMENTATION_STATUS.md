@@ -7,6 +7,24 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D61 scales the live P11 backpressure fixture without changing production
+runtime behavior. The runner and fixture preserve `256` as the default and
+accept an explicit bounded record count; the exact candidate
+`aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d` passes `1/1` at `1,024` records on
+two real Kafka partitions. The journey caps at `73`, resumes the remaining
+`951` records through `119` microbatches to lag zero, verifies an idle replay,
+resets to lag `1,024`, and repeats a `7`-record replay after a second reset.
+All `12/12` API events correlate with Ronin logs and are `OK`; cleanup succeeds
+in `66.12 s`. The runner records the fixture size in its qualification
+summary. The implementation baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`.
+
+D61 is bounded load evidence, not indefinite operation or a complete P11 or
+Public v1 qualification. The filtered runner reports `25` active routes but
+does not run the route-wide audit, and no worker image or external provider
+profile was available. Production topology, worker/provider breadth, security
+scans, the complete family journey and human review remain open. Release
+remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D60 adds bounded live evidence for P11 on the exact documentation-inclusive
 candidate `7f0a005db3b853b55e6a4b00f660d8b5753c2ef5`; the implementation code
 baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`. Three filtered live

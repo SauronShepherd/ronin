@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D61",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "P11 parameterized 1024-record sustained backpressure",
+  "candidate_sha": "aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d",
+  "implementation_commit_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
+  "documentation_commit_sha": "aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D61.md",
+  "execution_scope": "live-api-browser-parameterized-backpressure",
+  "result": {
+    "parameterization": "PASS: the fixture and runner preserve the 256-record default and expose a bounded BackpressureRecords control",
+    "live_backpressure": "PASS: 1/1 case on 1024 records across two partitions; cap 73, resume 951, lag zero, reset to 1024 and reset/replay idempotency; 12/12 correlated events all OK",
+    "static_quality": "PASS: PowerShell parse, Node syntax, Ruff targeted checks and runner contract 25/25",
+    "release_effect": "No family or release gate changes; P11 remains in_progress and release remains NO-GO"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "D61 scales a bounded backpressure case; it does not claim indefinite operation, production topology qualification, worker/provider applicability or a complete P11 journey.",
+    "The filtered runner reports 25 active routes, 24 API-contract routes and 1 UI-only route, but routeCoverage.audited=false.",
+    "No production runtime file changed; security scans, external provider evidence and human review remain open."
+  ]
+}

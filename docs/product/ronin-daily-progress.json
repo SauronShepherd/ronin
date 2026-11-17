@@ -484,13 +484,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D60.md",
       "candidate_sha": "7f0a005db3b853b55e6a4b00f660d8b5753c2ef5",
       "commit_sha": "7f0a005db3b853b55e6a4b00f660d8b5753c2ef5"
+    },
+    {
+      "id": "D61",
+      "date": "2026-11-17",
+      "phase": "p11-parameterized-1024-record-backpressure",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D61.md",
+      "candidate_sha": "aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d",
+      "commit_sha": "aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D60 is the latest exact documentation-inclusive candidate boundary at 7f0a005db3b853b55e6a4b00f660d8b5753c2ef5: three filtered live P11 slices pass 7/7 cases and correlate 90/90 HTTP events, while the implementation baseline remains 0a0cd36d47e403808db519f62eefd726f95637a4. The broad streaming attempt is retained as a non-pass diagnostic because it contained one deliberate skip. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D61 is the latest exact candidate at aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d: the parameterized live backpressure cell passes 1/1 at 1024 records with 12/12 correlated events, while the implementation baseline remains 0a0cd36d47e403808db519f62eefd726f95637a4. D60's three filtered live slices remain green at 7/7. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",
@@ -505,7 +515,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D58 full Python/PostgreSQL regression is green on the exact clean candidate: 4753 passed, 31 expected external/platform skips and 0 failed. D60 adds bounded live P11 evidence on exact source 7f0a005d, with 7/7 valid filtered cases and 90 correlated events; Docker/worker, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain unqualified where skipped, and the 13 SQLite ResourceWarnings remain a follow-up quality item. Skips and warnings are not counted as PASS."
+      "summary": "D58 full Python/PostgreSQL regression is green on the exact clean candidate: 4753 passed, 31 expected external/platform skips and 0 failed. D61 adds a parameterized 1024-record live P11 cell on exact source aaab84e8, with 1/1 case and 12 correlated events; Docker/worker, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain unqualified where skipped, and the 13 SQLite ResourceWarnings remain a follow-up quality item. Skips and warnings are not counted as PASS."
     },
     {
       "id": "catalog-project-scope",

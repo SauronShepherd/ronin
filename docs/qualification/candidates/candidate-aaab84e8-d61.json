@@ -1,0 +1,98 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D61",
+  "status": "pass",
+  "outcome": "pass for the parameterized 1024-record live backpressure slice on the exact candidate; this does not qualify P11, close a release gate or change release NO-GO",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d",
+    "origin_main_sha_when_candidate_was_tested": "aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d",
+    "worktree_source_mode": "exact-commit checkout; clean candidate boundary verified after live qualification"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-aaab84e8-d61",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d.tar",
+      "format": "tar",
+      "sha256": "81cdf1ff9fda897fd8f0bc3d860de7b17516d5aa64914ff3028e6c932d53eae7",
+      "size": 17786880
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-aaab84e8-d61\\candidate-aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d.manifest.json",
+      "sha256": "ed40f5a0feb3b47efed9706095f35b0e4800371dd1cc34e92cf27a0047d74ebb",
+      "size": 239267
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-aaab84e8-d61\\candidate-aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d.sha256",
+      "sha256": "efa0285032ff9159c8cec9a6d5562a922b22319ecec1e6c1487b4fb12455d2b8",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-aaab84e8-d61\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1548,
+    "total_bytes": 16529269,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "0a0cd36d47e403808db519f62eefd726f95637a4",
+    "candidate_docs_commit": "aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d",
+    "production_files_changed": [],
+    "fixture_files_changed": [
+      "tools/seed_live_streaming.py"
+    ],
+    "test_files_changed": [
+      "web-tests/tests/product-live.spec.mjs",
+      "tests/test_docker_qualification_contract.py"
+    ],
+    "qualification_tooling_changed": [
+      "tools/run_live_product_qualification.ps1"
+    ],
+    "summary": "D61 parameterizes the live backpressure fixture and runner while preserving the 256-record default. The implementation baseline remains 0a0cd36d47e403808db519f62eefd726f95637a4; no production runtime file changed."
+  },
+  "commands": {
+    "candidate_generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-aaab84e8-d61",
+    "candidate_verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-aaab84e8-d61",
+    "static_contracts": "python -m pytest -q -p no:cacheprovider tests/test_docker_qualification_contract.py",
+    "live_backpressure_1024": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d61-backpressure-1024-candidate-aaab84e8-20261117 -TestGrep \"sustained backpressure\" -BackpressureRecords 1024"
+  },
+  "qualification_matrix": {
+    "parameterized_fixture": "PASS: the runner exposes BackpressureRecords, restores RONIN_LIVE_BACKPRESSURE_RECORDS, records streamingFixture metadata and preserves the default of 256",
+    "live_backpressure_1024": "PASS: 1/1 Playwright case; initial lag 1024 across two partitions; max_records cap 73 leaves 951; resume drains 951 and reaches lag zero; reset restores 1024; replay/reset replay remains idempotent; 12/12 correlated API events all OK; zero unexpected server/network errors; cleanup succeeded; 66.12 seconds",
+    "real_services": "PASS: Kafka/Redpanda and Ronin API were real and active; PostgreSQL was intentionally not started for this streaming-only diagnostic; workerImage is null",
+    "static_contracts": "PASS: PowerShell parse, Node syntax, Ruff targeted checks and qualification-runner contract selection 25/25",
+    "route_audit": "NOT_RUN: filtered diagnostic; activeRoutes=25, routesWithApiContracts=24 and uiOnlyRoutes=1 are reported but routeCoverage.audited=false",
+    "worker_provider_matrix": "NOT_RUN: no worker image or authorized external provider profile was available",
+    "release": "NO-GO: no family or release gate closes; the ledger remains 1/13 families and 0/10 gates"
+  },
+  "evidence": {
+    "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d61-backpressure-1024-candidate-aaab84e8-20261117",
+    "summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d61-backpressure-1024-candidate-aaab84e8-20261117\\qualification-summary.json",
+    "summary_sha256": "38865cfd6091849a110d22d3e42ad0e5bac78791554ed269d9548bdf9abfdf87",
+    "summary_size": 3038,
+    "traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d61-backpressure-1024-candidate-aaab84e8-20261117\\live-api-traffic.json",
+    "traffic_sha256": "302796713eb01bd9404bf7a8dd4e7862b61fe23117ca391bcccfaf644e9aa649",
+    "traffic_size": 3883,
+    "junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d61-backpressure-1024-candidate-aaab84e8-20261117\\browser-live.xml",
+    "junit_sha256": "c0e78215d3bea0a4481bfdcb72a4a4bc96a218b90f1b884034417c5fc90a60c7",
+    "junit_size": 446,
+    "browser_log_sha256": "2ec08e00e21d67bb24bef4a9550b6fa16b29b7b802822c0cb2bc14de5a63ef9c",
+    "browser_log_size": 203
+  },
+  "open_cells": [
+    "D61 scales a bounded single-broker backpressure cell to 1024 records; it does not establish indefinite operation, exhaustion behavior beyond the fixture, production topology qualification or the complete P11 family journey.",
+    "The live runner route audit was not enabled for this filtered case; route-wide coverage, security scans, worker/provider qualification and human visual/accessibility review remain open.",
+    "P11 remains in_progress and P13 remains blocked by external secret-provider evidence; no release gate closes and release remains NO-GO."
+  ],
+  "limitations": [
+    "The test and fixture parameterization changes the qualification harness only; no production runtime behavior changed in D61.",
+    "Expected defaults remain 256 records, while the D61 receipt is specifically the clean 1024-record run on aaab84e8cbb111e28e9e81dfc7f5f684bde7f94d.",
+    "The candidate archive and live evidence are local reproducibility artifacts under %TEMP%; the repository receipt records their paths and SHA-256 digests but does not commit binary evidence."
+  ]
+}
