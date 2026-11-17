@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0",
+    "base_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -133,8 +133,8 @@
       "name": "Real-time and streaming",
       "observed_implementation": "partial",
       "qualification": "in_progress",
-      "receipt": "docs/qualification/candidates/candidate-fe5be99c-d52.json",
-      "candidate_sha": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0"
+      "receipt": "docs/qualification/candidates/candidate-b69204d0-d53.json",
+      "candidate_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2"
     },
     {
       "id": "P12",
@@ -404,13 +404,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D52.md",
       "candidate_sha": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0",
       "commit_sha": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0"
+    },
+    {
+      "id": "D53",
+      "date": "2026-11-17",
+      "phase": "p11-same-candidate-api-multi-broker-failover",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D53.md",
+      "candidate_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+      "commit_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D52 is the current exact candidate fe5be99c535ca4eb17ee371744e7b7a6acd87ba0: it proves direct runtime recovery after stopping one leader in a real three-node, three-replica Kafka/Redpanda topic and resumes four records from the durable checkpoint. D51's byte-boundary API evidence is on parent candidate 5a4557aa; D50's 256-record cap/resume/reset evidence and D48's consumer/session fix remain the product basis. P11 remains open for the complete API journey, indefinite backpressure, worker/provider breadth, production topology support, final release dossier, human decisions and aggregate approval."
+      "summary": "D53 is the current exact candidate b69204d02cd3b7649cab49fc42b6bc68443a94b2: it adds a real HTTP/control-plane journey over a three-node, three-replica Redpanda topic, confirms one record, stops broker-0, resumes four records from the durable checkpoint, restores the broker and reaches zero lag. D50/D51 bounded cap/reset and byte-boundary evidence and D52 direct-runtime recovery remain separately attributed to their original candidates. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",

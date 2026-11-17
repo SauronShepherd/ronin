@@ -1,0 +1,63 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D53",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "P11 same-candidate API/control-plane multi-broker failover",
+  "candidate_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+  "candidate_receipt": "docs/qualification/candidates/candidate-b69204d0-d53.json",
+  "code_commit": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+  "origin_main_at_code_commit": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+  "implementation": {
+    "production_change": false,
+    "summary": "D53 adds the multi-broker qualification profile, runner wiring, replication-aware seed and a real HTTP/API failover journey; no production streaming runtime module changed.",
+    "changed_paths": [
+      "compose.multi-broker.yaml",
+      "tools/run_live_product_qualification.ps1",
+      "tools/seed_live_streaming.py",
+      "web-tests/tests/product-live.spec.mjs"
+    ],
+    "compatibility_fix": "The first D53 candidate exposed one existing static runner-contract assertion; b69204d restores the literal single-broker Compose calls, regenerates the candidate and reruns the clean multi-broker journey."
+  },
+  "tests": {
+    "candidate_boundary": "PASS: archive regenerated and verified; 1525 files, 16410389 sandbox bytes, no Git metadata or generated artifacts",
+    "candidate_contracts": "PASS: 60 passed, 0 failed, 0 skipped in the exact candidate sandbox",
+    "candidate_quality": "PASS: Ruff, mypy on 13 streaming/control-plane/integration source files, Node syntax, Compose config and PowerShell parse",
+    "multi_broker_api": "PASS: clean candidate Playwright 1/1; first run committed 1 record, broker-0 was stopped, second run committed 4 records, restored health reached lag 0",
+    "api_traffic": "PASS: 5/5 events correlated, 5 OK, 0 server/network errors",
+    "cluster_cleanup": "PASS: all temporary containers and network removed",
+    "byte_boundary_api_evidence": "INHERITED from D51 parent candidate only; not rerun in D53",
+    "direct_runtime_recovery": "INHERITED from D52 separate receipt; D53 adds the API/control-plane layer",
+    "route_audit": "NOT_RUN: filtered streaming diagnostic only",
+    "security_scans": "NOT_RERUN in D53",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license": "INHERITED FAIL/CLOSED; human review decisions remain missing"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "evidence": {
+    "live_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d53-multi-broker-api-candidate-20261117-r2\\qualification-summary.json",
+    "junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d53-multi-broker-api-candidate-20261117-r2\\browser-live.xml",
+    "api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d53-multi-broker-api-candidate-20261117-r2\\live-api-traffic.json"
+  },
+  "limitations": [
+    "D53 validates one same-candidate API failover journey with a local three-node, one-partition replicated topic; it does not qualify production topologies, indefinite operation, provider breadth or the complete P11 family.",
+    "D50/D51/D52 evidence remains separately attributed to its original candidate SHA and receipt.",
+    "No release gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}

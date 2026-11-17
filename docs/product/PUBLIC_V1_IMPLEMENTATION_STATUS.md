@@ -7,18 +7,33 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
-D52 advances the exact candidate to `fe5be99c535ca4eb17ee371744e7b7a6acd87ba0`.
-The exact sandbox verifies `61/61` focused contracts with no skips, including
+D53 advances the exact candidate to `b69204d02cd3b7649cab49fc42b6bc68443a94b2`.
+The exact sandbox verifies `60/60` focused contracts with no skips, including
+the multi-broker compose profile, runner/seed contract and API/browser failover
+journey against a real three-node, three-replica Redpanda topic. After one
+committed record, the journey stops broker-0, resumes four records from the
+durable checkpoint through surviving brokers, restores the failed container and
+reaches final lag zero. The clean candidate-bound Playwright run passes `1/1`
+with `5/5` correlated HTTP events, zero server/network errors and cleanup
+success. Final health is checked after broker restoration; the failure window
+is asserted while broker-0 is stopped. This is same-candidate P11 recovery
+evidence, not a complete family qualification: sustained backpressure,
+worker/provider breadth, production topology support, route-wide audit and the
+remaining release gates remain open. Release remains **NO-GO** at `1/13`
+families and `0/10` gates.
+
+### Historical exact-SHA qualification — D52 — 17 November 2026
+
+D52 advanced the exact candidate to `fe5be99c535ca4eb17ee371744e7b7a6acd87ba0`.
+The exact sandbox verified `61/61` focused contracts with no skips, including
 an opt-in direct-runtime recovery test against a real three-node, three-replica
-Redpanda topic. After one committed record, the test stops the leader, resumes
+Redpanda topic. After one committed record, the test stopped the leader, resumed
 four records from the durable SQLite checkpoint through surviving brokers,
-restores the failed container and observes a healthy cluster. D51's live API
-byte-boundary evidence remains on parent candidate `5a4557aa`; D52 is a
-test-only delta and does not claim that API journey on the new SHA. This is
-bounded P11 recovery evidence, not a complete family qualification: indefinite
-backpressure, worker/provider breadth, production topology support, route-wide
-audit and the remaining release gates remain open. Release remains **NO-GO**
-at `1/13` families and `0/10` gates.
+restored the failed container and observed a healthy cluster. D52 was bounded
+direct-runtime recovery evidence; it did not claim the D51 API journey on this
+SHA. Indefinite backpressure, worker/provider breadth, production topology
+support, route-wide audit and the remaining release gates remained open.
+Release remained **NO-GO** at `1/13` families and `0/10` gates.
 
 ### Historical exact-SHA qualification — D51 — 17 November 2026
 
@@ -283,7 +298,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `fe5be99c535ca4eb17ee371744e7b7a6acd87ba0` (2026-11-17).
+**Observed source head:** `b69204d02cd3b7649cab49fc42b6bc68443a94b2` (2026-11-17).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

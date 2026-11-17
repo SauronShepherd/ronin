@@ -1,0 +1,114 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D53",
+  "status": "pass",
+  "outcome": "pass for the clean-candidate HTTP/control-plane multi-broker failover journey; this does not qualify P11 or close a release gate",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+    "origin_main_sha_when_candidate_was_tested": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53\\candidate-b69204d02cd3b7649cab49fc42b6bc68443a94b2.tar",
+      "format": "tar",
+      "sha256": "92d7830ef58a63683c242b023f9cc8f126c6578e02679a4ca15a0fd0f6d65bf2",
+      "size": 17653760
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53\\candidate-b69204d02cd3b7649cab49fc42b6bc68443a94b2.manifest.json",
+      "sha256": "75fd0d75333c7e0fb1144fb3bea7dbd70398e4d6b8d827537360694186451679",
+      "size": 235487
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53\\candidate-b69204d02cd3b7649cab49fc42b6bc68443a94b2.sha256",
+      "sha256": "fe0cc84058d0bcd45efb3ba704ad967801a7a6881ca204ef9a537631682d2060",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1525,
+    "total_bytes": 16410389,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "b69204d02cd3b7649cab49fc42b6bc68443a94b2",
+    "candidate_docs_commit": null,
+    "parent_commit": "d1f7469572bfb3cd64c3721511f52a7d2541f3f9",
+    "summary": "D53 adds an opt-in three-node Redpanda Compose profile, a runner mode with three external bootstrap ports and profile-aware cleanup, a replication-aware streaming seed, and a real API/control-plane journey that consumes one record, stops broker-0, resumes four records from the durable checkpoint, restores the broker and verifies zero lag.",
+    "production_files_changed": [],
+    "fixture_files_changed": [
+      "compose.multi-broker.yaml",
+      "tools/seed_live_streaming.py"
+    ],
+    "test_files_changed": [
+      "web-tests/tests/product-live.spec.mjs",
+      "tools/run_live_product_qualification.ps1"
+    ]
+  },
+  "commands": {
+    "generate": "python tools/ronin_candidate_boundary.py generate --repo . --sha b69204d02cd3b7649cab49fc42b6bc68443a94b2 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53",
+    "verify": "python tools/ronin_candidate_boundary.py verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b69204d0-d53",
+    "candidate_contracts": "exact candidate sandbox: python -m pytest -q -p no:cacheprovider tests/test_docker_qualification_contract.py tests/test_streaming_runtime.py tests/test_streaming_kafka.py tests/test_streaming_bundle.py tests/test_streaming_contracts.py tests/test_stream_table.py -> 60 passed, 0 failed",
+    "candidate_quality": "exact candidate selection: Ruff format/check passed for tools/seed_live_streaming.py; mypy python/studio_streaming python/studio_server/control_plane.py tests/integration/test_streaming_multi_broker_real.py passed on 13 source files; node --check passed for playwright.config.mjs, platform-studio-journeys.spec.mjs and product-live.spec.mjs; Compose config and PowerShell parse passed",
+    "multi_broker_api_runtime": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d53-multi-broker-api-candidate-20261117-r2 -TestGrep \"live streaming multi-broker failover resumes from the durable checkpoint\" -MultiBroker"
+  },
+  "qualification_matrix": {
+    "replicated_topic": "PASS: the seed creates the multi-broker topic with replication factor 3 in the three-node Redpanda profile",
+    "api_failover": "PASS: the clean candidate executes 1/1 Playwright case; one record is committed before broker-0 stops and four records resume while it is stopped",
+    "durable_resume": "PASS: the API run returns 1 record before failover and 4 records after failover; after broker restoration health reports total_lag 0",
+    "api_traffic": "PASS: 5/5 API events are correlated with structured logs, all outcome OK, with no server/network errors",
+    "candidate_contracts": "PASS: 60/60 candidate-bound contracts, 0 failures",
+    "candidate_boundary": "PASS: exact archive and sandbox verified; 1525 files and 16410389 sandbox bytes with no Git metadata or generated artifacts",
+    "cluster_cleanup": "PASS: the three temporary broker containers and their network were removed by the profile-aware cleanup",
+    "route_audit": "NOT_RUN: this is a filtered streaming API diagnostic, not a route-wide qualification",
+    "security_scans": "NOT_RERUN in D53; earlier evidence remains separate",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license_qualification": "INHERITED FAIL/CLOSED; human review decisions remain open",
+    "result": "D53 adds same-candidate API failover evidence without qualifying P11, closing a gate or changing release NO-GO"
+  },
+  "evidence": {
+    "live_summary": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d53-multi-broker-api-candidate-20261117-r2\\qualification-summary.json",
+      "status": "PASS: clean candidate, 1 Playwright case, 5 correlated API events, 0 errors, 61.26 seconds"
+    },
+    "junit": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d53-multi-broker-api-candidate-20261117-r2\\browser-live.xml",
+      "sha256": "6379c987c4e51ab93ca6dc56759cbe6a4d22b5fd4faea88b0f076671ead0bc3b",
+      "size": 423,
+      "status": "PASS: 1 test, 0 errors, 0 failures, 0 skipped"
+    },
+    "api_traffic": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d53-multi-broker-api-candidate-20261117-r2\\live-api-traffic.json",
+      "sha256": "454056d1d6e838f3187a3457dc48f865421b884480d274a80bca1ff237df48c2",
+      "size": 1642,
+      "status": "PASS: 5 events, 5 correlated HTTP logs, 5 OK, 0 errors"
+    },
+    "runtime": {
+      "real_services": "Kafka/Redpanda and Ronin API; PostgreSQL and worker image were not applicable to this focused diagnostic",
+      "broker_restore": "PASS: broker-0 was restarted before final health verification; final health total_lag was 0",
+      "cleanup": "PASS: no temporary Ronin containers or networks remained after the run"
+    }
+  },
+  "open_cells": [
+    "P11 remains in_progress: D53 proves a same-candidate API/control-plane failover journey, but indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support and the complete family journey remain open.",
+    "D50 and D51 remain separate candidate-bound evidence; their bounded cap/reset and byte-boundary journeys were not silently reclassified as D53 runs.",
+    "D52 direct-runtime replicated leader recovery remains a separate receipt; D53 validates the HTTP/control-plane path on the new candidate.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external provider was available.",
+    "No release gate closes; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The API journey uses one partition and a local three-node Redpanda cluster; it is not a claim of production topology support across deployment platforms.",
+    "The final health request is made after the stopped broker is restored; the failover assertion is the successful four-record API run while broker-0 is stopped.",
+    "The focused diagnostic does not run PostgreSQL, the worker image, route-wide audit, full suite, security scans, external providers or license review."
+  ]
+}
