@@ -7,17 +7,17 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
-D69 binds the published exact candidate `b39a10b4ff743abaac457b43f8c2bfa516a5efbe` to
-the full Python/PostgreSQL regression: `4,753` passed, `31` explicit skips and
-`0` failures out of `4,784`, with isolated PostgreSQL `16.4-alpine`, cleanup
-succeeded and `13` ResourceWarnings retained for follow-up. D68 remains linked
-for the corrected Docker→Helm qualification chain on implementation candidate
-`1ae749a074c023b665e3373ec68fa7c82cbf3131`: `27/27` Docker tests, strict v0.1
-acceptance `15/15`, all Helm/kind phases, and image cleanup. D69 is a full
-regression revalidation; it does not turn the explicit service/platform skips
-into PASS or qualify the complete P11 family.
+D70 binds the current exact candidate `b18a8438de1c218d4caa28b59e47cb446c9f512b` to
+a live single-broker `16,384`-record sustained-backpressure journey. The
+filtered Playwright case passes `1/1`, correlates `12/12` real API events, all
+`OK`, reports zero unexpected authorization/server/network errors and cleans up
+in `259,96 s`. The bounded slice uses Redpanda and Ronin API only, with
+`RequestTimeoutSeconds=300`; it does not qualify indefinite operation or the
+complete P11 family. D69 remains linked for the published candidate's full
+Python/PostgreSQL regression (`4,753` passed, `31` skips, `0` failures) and D68
+for the corrected Docker→Helm chain (`27/27`, strict `15/15`, all Helm phases).
 
-D67 remains linked as the scaled live regression on the preceding exact
+D67 remains linked as the earlier scaled live regression on the preceding exact
 candidate and binds `018176e0a3693d668bac0d049a6ce4db3c7f2723` to a
 green local streaming/worker regression (`87/87`) and a scaled live
 single-broker backpressure journey with `16,384` records. The live case passes
@@ -481,7 +481,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `b39a10b4ff743abaac457b43f8c2bfa516a5efbe` (2026-11-17).
+**Observed source head:** `b18a8438de1c218d4caa28b59e47cb446c9f512b` (2026-11-17).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. D66 binds a local worker image
 and exact multi-broker evidence, while its unfiltered aggregate remains
