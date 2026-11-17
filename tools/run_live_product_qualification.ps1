@@ -143,6 +143,7 @@ $mlOnlyDiagnostic = $TestGrep -eq "mlstudio"
 $syntheticOnlyDiagnostic = $TestGrep -eq "synthetic"
 $qualityOnlyDiagnostic = $TestGrep -eq "quality"
 $backpressureOnlyDiagnostic = $TestGrep -eq "sustained backpressure"
+$performancePluginDiagnostic = -not $TestGrep -or $TestGrep -match "performance|route"
 $streamingOnlyDiagnostic = $TestGrep -eq "streaming" -or $multiBrokerDiagnostic -or $backpressureOnlyDiagnostic
 if ($multiBrokerDiagnostic -and (-not $TestGrep -or $TestGrep -notmatch "streaming")) {
     throw "-MultiBroker requires a focused streaming -TestGrep so the three-broker fixture cannot be mistaken for the default live qualification."
@@ -356,13 +357,13 @@ try {
     $pythonCacheHit = $environment.CacheHit
     Write-Output "Python dependency cache: $(if ($pythonCacheHit) { 'HIT' } else { 'MISS (created)' }) [$($environment.Fingerprint.Substring(0, 12))]"
     $pluginTarget = Join-Path $liveDataDir "python-plugins"
-    if (-not $TestGrep) {
+    if ($performancePluginDiagnostic) {
         & $python -m pip install --disable-pip-version-check --no-build-isolation --no-deps `
             --target $pluginTarget (Join-Path $repoRoot "packages/ronin-plugin-performance")
         if ($LASTEXITCODE -ne 0) { throw "Could not stage the repository's Performance plugin in the isolated live-test environment." }
     } else {
         New-Item -ItemType Directory -Force -Path $pluginTarget | Out-Null
-        Write-Output "Filtered live diagnostic: skipping Performance plugin build (not used by a filtered route; full qualification still builds it)."
+        Write-Output "Filtered live diagnostic: skipping Performance plugin build (the selected tests do not target Performance Studio)."
     }
     $pythonManifest = Join-Path $evidenceRoot "live-python-freeze.txt"
     (& $python --version 2>&1 | Out-String).Trim() | Set-Content -LiteralPath $pythonManifest -Encoding utf8
