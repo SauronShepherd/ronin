@@ -294,6 +294,7 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert "Invoke-WebRequest $env:RONIN_STUDIO_E2E_URL -UseBasicParsing -TimeoutSec 2" in script
     assert "[System.Collections.Generic.Queue[object]]::new()" in script
     assert "$routeQueue.Enqueue($nestedRouteEntry)" in script
+    assert "$publishedRoutes.ToArray()" in script
     assert "[System.Collections.Generic.HashSet[string]]::new" in script
     assert "$caseNameSet.Contains($expectedRouteCase)" in script
     assert "$trafficQueue.Enqueue($trafficDocument)" in script

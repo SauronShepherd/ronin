@@ -513,7 +513,10 @@ try {
             $publishedRoutes.Add($routeEntry)
         }
     }
-    $activeRoutes = @($publishedRoutes | Where-Object { $_.state -eq "active" })
+    # Generic List[object] is treated as one pipeline input by PowerShell; make
+    # the route entries explicit before filtering or the audit silently sees 0.
+    $publishedRouteEntries = $publishedRoutes.ToArray()
+    $activeRoutes = @($publishedRouteEntries | Where-Object { $_.state -eq "active" })
     $apiRequiredRoutes = @($activeRoutes | Where-Object { @($_.required_api | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }).Count -gt 0 })
     if (-not $TestGrep) {
         $caseNameSet = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
@@ -592,8 +595,11 @@ try {
             $serverErrors.Add($trafficEvent)
         }
     }
+    $brokerRestartCaseSelected = $TestGrep -eq "live streaming broker restart"
+    $brokerRestartCaseExecuted = $caseNames -contains "live streaming broker restart resumes from the durable checkpoint"
+    $allowExpectedBrokerRestartOutages = $brokerRestartCaseSelected -or $brokerRestartCaseExecuted
     $expectedBrokerRestartOutages = @($serverErrors | Where-Object {
-        $TestGrep -eq "live streaming broker restart" -and
+        $allowExpectedBrokerRestartOutages -and
         [int]$_.status -eq 503 -and
         [string]$_.path -match '^/v1/workspaces/[^/]+/streams/events%2Ffault-recovery/(health|run)$'
     })
@@ -604,7 +610,7 @@ try {
         [string]$_.path -match '/health$'
     })
     if (
-        $TestGrep -eq "live streaming broker restart" -and
+        $allowExpectedBrokerRestartOutages -and
         (
             $expectedBrokerRestartOutages.Count -lt 2 -or
             $expectedBrokerRestartRunOutages.Count -lt 1 -or
@@ -615,7 +621,7 @@ try {
     }
     $unexpectedServerErrors = @($serverErrors | Where-Object {
         -not (
-            $TestGrep -eq "live streaming broker restart" -and
+            $allowExpectedBrokerRestartOutages -and
             [int]$_.status -eq 503 -and
             [string]$_.path -match '^/v1/workspaces/[^/]+/streams/events%2Ffault-recovery/(health|run)$'
         )
