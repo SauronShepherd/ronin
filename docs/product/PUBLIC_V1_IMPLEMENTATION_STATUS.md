@@ -7,70 +7,31 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
-D82 revalidates the bounded live multi-broker failover diagnostic on exact
-candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`: the three-broker,
-replication-factor-3 journey passes `1/1`, correlates `5/5` API events as
-`OK`, records zero unexpected authorization/server/network errors and cleans
-up in `330.14 s`. PostgreSQL and worker execution are intentionally absent
-and the filtered run does not perform the route-wide audit; this is recovery
-evidence, not indefinite operation or complete P11 qualification.
+D88 revalida el despliegue Helm/kind sobre la imagen del candidato exacto
+`633980dd3b08affcc604dc918c1a6cbf026cc408`: Helm 4.3.1 pasa lint, render de
+`4` recursos con el token confinado al `Secret`, instalación/readiness,
+health `200`, Studio/jobs API, persistencia del job tras restart, upgrade a
+revisión `2`, rollback a revisión `1` y cleanup. La imagen
+`sha256:c8f2d52af735703ace9bcf10a9d928cf086e5b1b907ad7d8f0703c8fcbfbf2d9`
+se eliminó por ID inmutable al terminar.
 
-D81 reruns the bounded live P11 backpressure diagnostic on the exact
-candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0` with `16,384` records and
-an explicit `300 s` request timeout. The single-broker Playwright journey
-passes `1/1`, correlates `12/12` API events, records `12` `OK` outcomes, zero
-unexpected authorization/server/network errors and cleanup success in
-`480.55 s`. PostgreSQL and worker execution are intentionally absent and the
-filtered run does not perform the route-wide audit; this is bounded P11
-evidence, not indefinite operation or complete family qualification.
+D87 reconstruye la misma imagen y revalida Docker `27/27` con `0` skips y
+`0` fallos, además de aceptación v0.1 estricta `15/15`. D86 revalida el
+failover bounded live con tres brokers y RF `3` (`1/1`, `5/5` eventos API
+correlacionados, todos `OK`); D85 revalida el backpressure single-broker de
+`16,384` registros (`1/1`, `12/12` eventos `OK`); D84 revalida Docker/worker
+`27/27` y v0.1 `15/15`; y D83 revalida la suite completa Python/PostgreSQL
+(`4,753/4,784`, `31` skips explícitos, `0` fallos, cleanup correcto) sobre
+el mismo SHA. La nueva frontera exacta contiene `1,599` archivos y
+`16,765,557` bytes.
 
-D80 reruns the current exact-candidate Docker-to-Helm/kind chain on
-`5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`: Docker passes `27/27` with `0`
-skips and `0` failures, strict v0.1 acceptance is `15/15`, and Helm 4.3.1
-passes lint, the four-resource Secret boundary, kind installation/readiness,
-health, Studio/jobs API, queued-job persistence across restart, revision-2
-upgrade, revision-1 rollback and cleanup. The digest-bound image
-`sha256:8ae42159584824205bf64bf8f2151b57caccf6b1b3765680c8c2093dd9b28ec2`
-was retained only for the hand-off and removed by immutable ID afterward.
-This updates the finite deployment/worker evidence for the candidate; it does
-not establish indefinite supervisor operation, production topology or a
-complete P11/P14 family qualification.
-
-D79 reruns the complete Docker/worker qualification on the exact candidate
-`5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`: `27/27` tests pass with `0`
-skips and `0` failures in `201.208 s`, and strict v0.1 acceptance is `15/15`
-with no missing, unexpected, skipped, xfailed or failed steps. The run builds
-and exercises image `sha256:89231072a6f4f5bbe0569a0b790ff2f92ab43c9cc047838df5bc959adfae2c10`
-from the exact checkout, covers the real Docker worker/runtime, PostgreSQL,
-Floci/S3, Azurite/Azure Blob, recovery and appliance backup/restore, and
-removes the image and fixtures successfully. This is current finite worker
-and journey evidence; it does not establish indefinite supervisor operation,
-production topology or complete P11 qualification.
-
-D78 reruns the full non-performance Python/PostgreSQL suite on the same exact
-candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`: `4,753/4,784` pass,
-`31` explicit cases skip and `0` fail. The JUnit time is `696.082 s`; the
-runner records `699.218 s` pytest wall time, `702.589 s` total, isolated
-PostgreSQL `16.4-alpine`, successful cleanup and `13` SQLite `ResourceWarning`
-entries retained for follow-up. The skips cover opt-in Docker/worker,
-multi-broker, external providers/collectors/CLIs, symlink privileges and
-Windows-specific capabilities. This broad regression is current-SHA evidence
-but does not replace the separate live or provider cells and does not qualify
-the complete P11 family.
-
-D77 refreshes the current exact candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`
-with wheel/sdist identity, runtime/probe TARs, a `110`-component application
-SBOM, two bound Trivy container inventories and local in-toto/SLSA provenance.
-The strict supply-chain validator passes with two distinct images, and current
-runtime/probe Trivy scans report `0` vulnerabilities and `0` secrets each.
-D76 remains the live qualification evidence for the same source: its default
-run audits `25` active routes (`24` API-backed and `1` UI-only), correlates
-`376/376` API events and records `0` unexpected server errors; it closes
-**FAIL/CLOSED** only because the default fixture explicitly skips the
-multi-broker case. The separate three-broker diagnostic passes `1/1` with
-`5/5` correlated `OK` events and replication factor `3`. These finite local
-cells and the technical supply-chain evidence do not qualify indefinite
-operation or the complete P11 family; the release remains **NO-GO**.
+Estas celdas actualizan la evidencia bounded del candidato nuevo, pero no
+prueban operación indefinida, topología productiva, amplitud de proveedores,
+la familia P11 completa ni la aprobación de release. D76–D82 permanecen como
+recibos del candidato anterior `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0` y
+no se reatribuyen al SHA nuevo; la renovación exacta de artefactos,
+SBOM/provenance y scans de supply-chain sigue pendiente. El release permanece
+**NO-GO** en `1/13` familias y `0/10` gates.
 
 D67 remains linked as an earlier scaled live regression on the preceding exact
 candidate and binds `018176e0a3693d668bac0d049a6ce4db3c7f2723` to a
@@ -536,7 +497,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0` (2026-11-17).
+**Observed source head:** `633980dd3b08affcc604dc918c1a6cbf026cc408` (2026-11-17).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. D66 binds a local worker image
 and exact multi-broker evidence, while its unfiltered aggregate remains

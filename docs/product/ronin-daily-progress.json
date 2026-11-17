@@ -704,13 +704,73 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D82.md",
       "candidate_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
       "commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0"
+    },
+    {
+      "id": "D83",
+      "date": "2026-11-17",
+      "phase": "exact-candidate-full-python-postgresql-regression-current-sha",
+      "status": "pass",
+      "families": [],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D83.md",
+      "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+      "commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408"
+    },
+    {
+      "id": "D84",
+      "date": "2026-11-17",
+      "phase": "exact-candidate-docker-worker-strict-acceptance-refresh",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D84.md",
+      "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+      "commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408"
+    },
+    {
+      "id": "D85",
+      "date": "2026-11-17",
+      "phase": "exact-candidate-bounded-live-single-broker-backpressure-16384",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D85.md",
+      "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+      "commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408"
+    },
+    {
+      "id": "D86",
+      "date": "2026-11-17",
+      "phase": "exact-candidate-bounded-live-multi-broker-failover",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D86.md",
+      "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+      "commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408"
+    },
+    {
+      "id": "D87",
+      "date": "2026-11-17",
+      "phase": "exact-candidate-docker-helm-handoff-image",
+      "status": "pass",
+      "families": [],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D87.md",
+      "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+      "commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408"
+    },
+    {
+      "id": "D88",
+      "date": "2026-11-17",
+      "phase": "exact-candidate-helm-kind-deployment-and-rollback",
+      "status": "pass",
+      "families": [],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D88.md",
+      "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+      "commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D82 is the latest exact candidate bounded P11 multi-broker evidence on source 5c17dd7a642ef1e6a16d00967f9aec38ccce91d0: three-broker failover passes at 1/1 with replication factor 3, 5/5 correlated OK API events, zero unexpected errors and cleanup. D81 provides current 16,384-record single-broker backpressure at 1/1 with 12/12 correlated OK events; D80 the Docker-to-Helm deployment chain; D79 the current Docker/worker evidence; D78 the clean Python/PostgreSQL cell at 4,753/4,784 with 31 explicit skips and 0 failures; and D77 the strict current artifact/supply-chain evidence. D76 remains the route-wide live evidence with 25 active routes and 376/376 correlated events; its default cell remains closed by the explicit multi-broker skip. P11 remains open for indefinite operation, supervisor continuity, production topology, provider breadth, the complete family journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D88 is the latest exact-candidate Helm/kind evidence on source 633980dd3b08affcc604dc918c1a6cbf026cc408: lint, four-resource Secret boundary, install/readiness, health/UI/jobs API, queued-job persistence after restart, revision-2 upgrade, revision-1 rollback and cleanup all pass on image sha256:c8f2d52af735703ace9bcf10a9d928cf086e5b1b907ad7d8f0703c8fcbfbf2d9. D87 revalidates Docker 27/27 and strict v0.1 15/15 for the same image; D86 and D85 revalidate three-broker RF3 failover and 16,384-record single-broker backpressure; D84 revalidates Docker 27/27 with a second exact-candidate image; and D83 revalidates the full Python/PostgreSQL cell at 4,753/4,784 with 31 explicit skips and 0 failures. The D76/D77/D78/D79/D80/D81/D82 receipts on 5c17dd7a remain prior-candidate evidence and are not claimed as current-SHA artifacts. P11 remains open for indefinite operation, supervisor continuity, production topology, provider breadth, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",
@@ -725,7 +785,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D82 refreshes current exact-candidate bounded live multi-broker failover on 5c17dd7a: three brokers at replication factor 3 pass 1/1 with 5/5 correlated OK API events, request timeout 300 seconds, no unexpected errors and cleanup. D81 refreshes current bounded single-broker backpressure at 16,384 records with 1/1 and 12/12 correlated OK events. D80 refreshes the current exact-candidate Docker-to-Helm deployment chain: Docker 27/27 with strict v0.1 15/15; Helm/kind lint, Secret boundary, install/readiness, health/UI/jobs API, queued-job persistence after restart, revision-2 upgrade, revision-1 rollback and cleanup pass, with final image removal by immutable ID. D79 refreshes current exact-candidate Docker/worker evidence with 27/27 and 15/15. D78 refreshes the current full Python/PostgreSQL regression on 5c17dd7a: 4,753 passed, 31 explicit external/platform skips and 0 failed out of 4,784, with cleanup success and 13 ResourceWarnings retained for follow-up. D77 refreshes current-SHA wheel/sdist identity, runtime/probe TARs, CycloneDX application/container SBOMs and local provenance for 5c17dd7a; strict supply-chain validation passes with two distinct bound inventories and current runtime/probe scans report 0 vulnerabilities and 0 secrets. D76 fixes the live qualification route audit and expected broker-restart classification, then records the current candidate's 25-route/376-event default cell plus a passing three-broker diagnostic; the default cell remains FAIL/CLOSED because one multi-broker case is intentionally skipped. D74 adds exact-candidate wheel/sdist identity, application SBOM and local provenance; D73 adds current exact-candidate source security evidence: Gitleaks 0 findings, pip-audit 0 known vulnerability records, Trivy filesystem 0/0 and Trivy worker-image 0/0, plus 193 supply-chain/release/security contracts. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
+      "summary": "D88 refreshes exact-candidate Helm/kind deployment on 633980dd3b08affcc604dc918c1a6cbf026cc408: lint, Secret boundary, install/readiness, health/UI/jobs API, queued-job persistence after restart, upgrade, rollback and cleanup pass; D87 binds the image to Docker 27/27 and strict v0.1 15/15, with final image removal by immutable ID. D86 refreshes three-broker RF3 failover at 1/1 with 5/5 correlated OK API events; D85 refreshes 16,384-record single-broker backpressure at 1/1 with 12/12 correlated OK events; D84 refreshes exact-candidate Docker/worker evidence with 27/27 and 15/15; and D83 refreshes the full Python/PostgreSQL regression with 4,753 passed, 31 explicit skips and 0 failed out of 4,784, cleanup success and 13 ResourceWarnings retained for follow-up. A new boundary for 633980dd contains 1,599 files and 16,765,557 bytes. D77 supply-chain artifacts and D76 route-wide evidence remain bound to the prior 5c17dd7a candidate and are not reattributed to the new SHA; current artifact/SBOM/provenance refresh is still pending. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
     },
     {
       "id": "catalog-project-scope",

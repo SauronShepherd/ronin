@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D83",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate full Python/PostgreSQL regression",
+  "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D83.md",
+  "execution_scope": "exact-candidate-full-python-postgresql-regression",
+  "result": {
+    "suite": "PASS: 4,753 passed, 31 skipped and 0 failed out of 4,784",
+    "service": "PASS: isolated PostgreSQL 16.4; clean candidate checkout and cleanup succeeded",
+    "timing": "JUnit 1,089.679 seconds; runner total 1,268.716 seconds; 13 ResourceWarnings retained",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "31 explicit skips remain for opt-in Docker/worker, multi-broker, external providers/collectors/CLIs, symlink privileges and Windows-specific capabilities.",
+    "The 13 SQLite ResourceWarnings remain follow-up evidence and do not count as failures.",
+    "This broad regression does not qualify indefinite operation, provider breadth, complete P11 or human release decisions."
+  ]
+}

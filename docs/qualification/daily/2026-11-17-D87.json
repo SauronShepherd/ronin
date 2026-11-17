@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D87",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate Docker handoff image for Helm",
+  "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D87.md",
+  "execution_scope": "exact-candidate-docker-handoff-image-for-helm",
+  "result": {
+    "docker": "PASS: 27/27 tests, 0 skips, 0 failures; image sha256:c8f2d52af735703ace9bcf10a9d928cf086e5b1b907ad7d8f0703c8fcbfbf2d9",
+    "v01": "PASS: strict acceptance 15/15",
+    "handoff": "PASS: image retained only for D88 and bound to the same candidate SHA",
+    "cleanup": "PASS: temporary resources cleaned; retained image removed by immutable ID after D88",
+    "release_effect": "No family or release gate changes; release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The image retention was an explicit downstream handoff only; no release artifact or registry publication is implied.",
+    "Helm and production qualification are documented separately in D88."
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D88",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate Helm/kind deployment and rollback",
+  "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D88.md",
+  "execution_scope": "exact-candidate-helm-kind-deployment-and-rollback",
+  "result": {
+    "helm": "PASS: Helm 4.3.1 lint, four-resource render with token confined to Secret, install/readiness, upgrade revision 2 and rollback revision 1",
+    "api": "PASS: health HTTP 200, Studio HTTP 200, authorized jobs API HTTP 200 and queued job HTTP 201",
+    "restart": "PASS: same queued job ID persisted after deployment restart",
+    "cleanup": "PASS: kind cluster removed and image sha256:c8f2d52af735703ace9bcf10a9d928cf086e5b1b907ad7d8f0703c8fcbfbf2d9 removed by immutable ID",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "This is a bounded local kind rehearsal, not production Kubernetes qualification or indefinite operation.",
+    "Provider breadth, complete Public v1 family qualification, human review and release approval remain open."
+  ]
+}

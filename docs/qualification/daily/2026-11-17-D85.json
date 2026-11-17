@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D85",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate bounded live single-broker backpressure 16,384",
+  "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D85.md",
+  "execution_scope": "exact-candidate-bounded-live-single-broker-backpressure-16384",
+  "result": {
+    "journey": "PASS: 1/1 Playwright case, 16,384 records, single broker, request timeout 300 seconds",
+    "api_traffic": "PASS: 12/12 API events correlated with structured logs, all OK, 0 uncorrelated and 0 unexpected authorization/server/network errors",
+    "services": "PASS: real Redpanda and Ronin API; PostgreSQL false, worker image null, multi-broker false",
+    "runner": "PASS: total 177.58 seconds, application ERROR/CRITICAL 0 and cleanup succeeded",
+    "release_effect": "P11 remains in_progress; no family or release gate changes; release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "This filtered live cell does not run the route-wide audit and does not establish indefinite operation.",
+    "Worker-backed execution, PostgreSQL, multi-broker in the same selection, provider breadth and complete P11 remain open."
+  ]
+}
