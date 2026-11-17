@@ -7,15 +7,15 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
-D71 binds the current exact candidate `02e49ae3497c2701922d571b1150023b0ca73da2` to
-a live three-broker Redpanda failover journey. The filtered Playwright case
-passes `1/1`, correlates `5/5` real API events, all `OK`, reports zero
-unexpected authorization/server/network errors and cleans up in `134,64 s`.
-The bounded slice uses replication factor `3` and no PostgreSQL or worker; it
-does not qualify indefinite operation or the complete P11 family. D70 remains
-linked for the current `16,384`-record single-broker journey, D69 for the full
-Python/PostgreSQL regression (`4,753` passed, `31` skips, `0` failures), and D68
-for the corrected Docker→Helm chain (`27/27`, strict `15/15`, all Helm phases).
+D72 binds the current exact candidate `94d594cbd103db1045b4b1498f9d1433b7e9f821` to
+the Docker worker and live Notebook journey. Docker passes `27/27` with strict
+v0.1 `15/15`; the filtered Notebook case passes `1/1` with `18/18` correlated
+API events, all `OK`, real PostgreSQL/Redpanda/API/worker participation and
+cleanup. The image is removed after the dependent lane. This finite local cell
+does not qualify indefinite operation or the complete P11 family. D71 remains
+linked for three-broker failover, D70 for the current `16,384`-record
+single-broker journey, D69 for the full Python/PostgreSQL regression, and D68
+for the Helm chain.
 
 D67 remains linked as an earlier scaled live regression on the preceding exact
 candidate and binds `018176e0a3693d668bac0d049a6ce4db3c7f2723` to a
@@ -481,7 +481,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `02e49ae3497c2701922d571b1150023b0ca73da2` (2026-11-17).
+**Observed source head:** `94d594cbd103db1045b4b1498f9d1433b7e9f821` (2026-11-17).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. D66 binds a local worker image
 and exact multi-broker evidence, while its unfiltered aggregate remains

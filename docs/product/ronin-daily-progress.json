@@ -594,6 +594,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D71.md",
       "candidate_sha": "02e49ae3497c2701922d571b1150023b0ca73da2",
       "commit_sha": "02e49ae3497c2701922d571b1150023b0ca73da2"
+    },
+    {
+      "id": "D72",
+      "date": "2026-11-17",
+      "phase": "p11-docker-worker-notebook-live-revalidation",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D72.md",
+      "candidate_sha": "94d594cbd103db1045b4b1498f9d1433b7e9f821",
+      "commit_sha": "94d594cbd103db1045b4b1498f9d1433b7e9f821"
     }
   ],
   "known_blockers": [
@@ -615,7 +625,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D69 is the latest full regression receipt on the published candidate: 4,753 passed, 31 expected external/platform skips and 0 failed out of 4,784, plus cleanup success and 13 ResourceWarnings retained for follow-up. D70 revalidates the current 16,384-record bounded live P11 backpressure cap/resume/reset/replay pass with 1/1 and 12/12 correlated OK events. D71 revalidates the current three-broker failover journey with 1/1 and 5/5 correlated OK events. D68 adds exact-candidate Docker 27/27 with strict v0.1 acceptance 15/15 and a Helm/kind install/restart-persistence/upgrade/rollback/cleanup pass after correcting the acceptance receipt contract. D66 remains linked for the real local worker Notebook and clean Gitleaks, pip-audit and Trivy filesystem/image scans. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
+      "summary": "D69 is the latest full regression receipt on the published candidate: 4,753 passed, 31 expected external/platform skips and 0 failed out of 4,784, plus cleanup success and 13 ResourceWarnings retained for follow-up. D70 revalidates the current 16,384-record bounded live P11 backpressure cap/resume/reset/replay pass with 1/1 and 12/12 correlated OK events. D71 revalidates the current three-broker failover journey with 1/1 and 5/5 correlated OK events. D72 revalidates current Docker 27/27 with strict 15/15 and a live worker/Notebook journey with 1/1 and 18/18 correlated OK events. D68 remains the Helm/kind install/restart-persistence/upgrade/rollback/cleanup pass after correcting the acceptance receipt contract. The unfiltered D66 aggregate remains NOT_COUNTED because one deliberate multi-broker case is skipped in the default single-broker fixture. Full route/family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
     },
     {
       "id": "catalog-project-scope",

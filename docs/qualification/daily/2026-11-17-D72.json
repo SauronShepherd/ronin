@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D72",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Exact-candidate Docker strict acceptance and live worker Notebook journey",
+  "candidate_sha": "94d594cbd103db1045b4b1498f9d1433b7e9f821",
+  "implementation_commit_sha": "94d594cbd103db1045b4b1498f9d1433b7e9f821",
+  "documentation_commit_sha": "94d594cbd103db1045b4b1498f9d1433b7e9f821",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D72.md",
+  "execution_scope": "exact-candidate-docker-worker-notebook-live",
+  "result": {
+    "candidate_boundary": "PASS: 1,577 files, 16,665,438 sandbox bytes, archive and manifest verification passed",
+    "docker": "PASS: 27 passed, 0 skipped, 0 failed; strict v0.1 acceptance 15/15; real worker, PostgreSQL, Floci/S3, Azurite/Azure, backup/restore and frozen journey",
+    "worker_notebook": "PASS: 1/1 live Notebook case, 18/18 correlated API events all OK, real digest-pinned worker image, PostgreSQL and Redpanda active",
+    "image_cleanup": "PASS: retained image removed by immutable ID after the dependent live lane and no containers remained",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The worker Notebook cell is finite and local; it does not prove indefinite operation or production topology.",
+    "External provider breadth, complete P11 family coverage, route-wide audit, security scans and human review remain separate or open.",
+    "The Docker lane is current exact-candidate evidence but the dependent Helm lane remains linked from D68; this cell alone does not close a release gate."
+  ]
+}

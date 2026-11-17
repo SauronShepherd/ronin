@@ -2,8 +2,11 @@
 
 ## Current exact-SHA snapshot — 17 November 2026
 
-The current code/evidence candidate is `02e49ae3497c2701922d571b1150023b0ca73da2`.
-D71 adds an exact-candidate live three-broker failover slice: `1/1` with
+The current code/evidence candidate is `94d594cbd103db1045b4b1498f9d1433b7e9f821`.
+D72 adds an exact-candidate Docker worker/Notebook cell: Docker `27/27`, strict
+v0.1 `15/15`, and live Notebook `1/1` with `18/18` correlated `OK` API events.
+The worker uses a digest-pinned image with real PostgreSQL and Redpanda. D71
+adds an exact-candidate live three-broker failover slice: `1/1` with
 replication factor `3`, `5/5` correlated `OK` API events and cleanup. The
 bounded case excludes PostgreSQL and worker execution and does not qualify the
 full P11 family. D70 adds an exact-candidate live single-broker sustained-backpressure slice:
@@ -174,7 +177,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `02e49ae3497c2701922d571b1150023b0ca73da2` (current exact candidate; the implementation code baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`, this is not a release qualification claim, and the required human/provider gates remain open).
+**Observed source baseline:** `94d594cbd103db1045b4b1498f9d1433b7e9f821` (current exact candidate; the implementation code baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`, this is not a release qualification claim, and the required human/provider gates remain open).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
