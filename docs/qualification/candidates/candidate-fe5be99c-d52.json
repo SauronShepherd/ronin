@@ -1,0 +1,104 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D52",
+  "status": "pass",
+  "outcome": "pass for opt-in real replicated Kafka leader-failure recovery in the streaming runtime; this does not qualify P11 or close a release gate",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0",
+    "origin_main_sha_when_candidate_was_tested": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0",
+    "worktree_source_mode": "exact-commit-archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fe5be99c-d52",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fe5be99c-d52\\candidate-fe5be99c535ca4eb17ee371744e7b7a6acd87ba0.tar",
+      "format": "tar",
+      "sha256": "2f4a9d9a1f6e54529c23f483070824b250e586f57f41982dffd991c0d23e9f27",
+      "size": 17623040
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fe5be99c-d52\\candidate-fe5be99c535ca4eb17ee371744e7b7a6acd87ba0.manifest.json",
+      "sha256": "db21d9fd6b7ea02fc76542b6e1389a282dcaf306073dae0c35dc9449bf4ae6c9",
+      "size": 234851
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fe5be99c-d52\\candidate-fe5be99c535ca4eb17ee371744e7b7a6acd87ba0.sha256",
+      "sha256": "d4e07675c08c1673a11de7eea4c7703cf44fa2df7a6b10f0ef6d7157f525e2c5",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fe5be99c-d52\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1521,
+    "total_bytes": 16381414,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0",
+    "candidate_docs_commit": null,
+    "summary": "D52 adds an opt-in real integration contract that consumes one record, stops a live replicated Kafka leader, resumes four records from the durable SQLite checkpoint through the surviving brokers, and restores the failed container. No streaming production runtime code changed.",
+    "production_files_changed": [],
+    "fixture_files_changed": [],
+    "test_files_changed": [
+      "tests/integration/test_streaming_multi_broker_real.py"
+    ],
+    "parent_commit": "3c1908cc5f999ab83eceb8e74f0cba1ab2269c62"
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha fe5be99c535ca4eb17ee371744e7b7a6acd87ba0 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fe5be99c-d52",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-fe5be99c-d52",
+    "candidate_contracts": "exact candidate sandbox with RONIN_MULTI_BROKER_BOOTSTRAP and RONIN_MULTI_BROKER_FAILOVER_CONTAINER: python -m pytest -q -p no:cacheprovider tests/test_docker_qualification_contract.py tests/test_streaming_runtime.py tests/test_streaming_kafka.py tests/test_streaming_bundle.py tests/test_streaming_contracts.py tests/test_stream_table.py tests/integration/test_streaming_multi_broker_real.py -> 61 passed, 0 failed, 0 skipped",
+    "candidate_quality": "exact candidate selection: Ruff format/check passed for the changed fixture/runtime/integration files; mypy python/studio_streaming python/studio_server/control_plane.py tests/integration/test_streaming_multi_broker_real.py passed on 13 source files; node --check passed for playwright.config.mjs, platform-studio-journeys.spec.mjs and product-live.spec.mjs",
+    "multi_broker_runtime": "RONIN_MULTI_BROKER_BOOTSTRAP=127.0.0.1:19092,127.0.0.1:19093,127.0.0.1:19094 RONIN_MULTI_BROKER_FAILOVER_CONTAINER=ronin-d51-broker-0 RONIN_MULTI_BROKER_TOPIC=ronin-d51-recovery python -m pytest -q tests/integration/test_streaming_multi_broker_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d52-multi-broker-20261117\\multi-broker.xml"
+  },
+  "qualification_matrix": {
+    "replicated_topic": "PASS: a real Redpanda topic has 1 partition and 3 replicas",
+    "leader_failure": "PASS: the broker-0 container is stopped after the first committed record; surviving brokers elect controller 1 and retain a non-leaderless cluster",
+    "durable_resume": "PASS: the runtime resumes 4 remaining records from the SQLite checkpoint and records the resulting checkpoint after failover",
+    "container_recovery": "PASS: the failed broker is started again in the test finally block; post-run cluster health reports all nodes [0, 1, 2], no leaderless partitions and no under-replication",
+    "candidate_contracts": "PASS: 61/61 candidate-bound tests with no skips",
+    "junit": "PASS: one pytest testcase, zero errors, zero failures and zero skips",
+    "byte_boundary_api_evidence": "INHERITED from D51 parent candidate 5a4557aa; the D51 filtered live API journey was not rerun on this test-only candidate",
+    "route_audit": "NOT_RUN: this is a direct runtime integration contract, not a route-wide browser qualification",
+    "security_scans": "NOT_RERUN in D52; previous evidence remains separate",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license_qualification": "INHERITED FAIL/CLOSED; 21 human review decisions remain missing",
+    "result": "D52 adds real replicated-broker recovery evidence without qualifying P11, closing a gate or changing release NO-GO"
+  },
+  "evidence": {
+    "multi_broker_junit": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d52-multi-broker-20261117\\multi-broker.xml",
+      "sha256": "37c2ef895b2589808df2cec640213f82cf70e05fbdb95bc952a71401c02db3d2",
+      "size": 400,
+      "status": "PASS: 1 test, 0 errors, 0 failures, 0 skipped, test time 5.269 seconds"
+    },
+    "cluster": {
+      "image": "redpandadata/redpanda@sha256:0270951e8793c77f0dd9178d137198018fa7ffd920e5a2a3b02a050ec76195b8",
+      "nodes": 3,
+      "topic": "ronin-d51-recovery",
+      "replicas": 3,
+      "post_recovery_health": "Healthy=true; controller=1; nodes_down=[]; leaderless_partitions=0; under_replicated_partitions=0"
+    },
+    "cleanup": "PASS: the three explicitly named temporary broker containers and ronin-d51-multi-broker network were removed; no temporary Ronin containers or networks remained"
+  },
+  "open_cells": [
+    "P11 remains in_progress: D52 proves direct runtime recovery from one failed leader in a replicated local cluster, but the complete API journey, indefinite backpressure, worker/provider breadth and production topology support remain open.",
+    "D51 byte-boundary API evidence remains on parent candidate 5a4557aa and is not re-stated as same-candidate D52 live evidence.",
+    "P2 and P14 remain in_progress; D52 adds no connector/provider or backup/restore qualification.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external secret provider or credential was available.",
+    "No release gate is closed; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "The integration contract is opt-in and exercises the streaming runtime directly; it does not start the Ronin HTTP API or browser route.",
+    "The local three-node Redpanda cluster is a real replicated test environment, not a claim of production multi-broker support across all deployment platforms.",
+    "No hosted workflow, branch or worktree was used; license review remains FAIL/CLOSED with 21 human decisions pending."
+  ]
+}

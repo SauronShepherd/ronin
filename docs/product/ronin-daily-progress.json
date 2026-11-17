@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "5a4557aa158f4046ca19e0dd28e83ee747d31399",
+    "base_sha": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0",
     "tracked_candidate": true
   },
   "operating_policy": {
@@ -133,8 +133,8 @@
       "name": "Real-time and streaming",
       "observed_implementation": "partial",
       "qualification": "in_progress",
-      "receipt": "docs/qualification/candidates/candidate-5a4557aa-d51.json",
-      "candidate_sha": "5a4557aa158f4046ca19e0dd28e83ee747d31399"
+      "receipt": "docs/qualification/candidates/candidate-fe5be99c-d52.json",
+      "candidate_sha": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0"
     },
     {
       "id": "P12",
@@ -394,13 +394,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D51.md",
       "candidate_sha": "5a4557aa158f4046ca19e0dd28e83ee747d31399",
       "commit_sha": "5a4557aa158f4046ca19e0dd28e83ee747d31399"
+    },
+    {
+      "id": "D52",
+      "date": "2026-11-17",
+      "phase": "p11-multi-broker-replicated-leader-failure-recovery",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D52.md",
+      "candidate_sha": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0",
+      "commit_sha": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D51 is the current exact candidate 5a4557aa158f4046ca19e0dd28e83ee747d31399: it proves real Kafka byte-boundary acceptance near 1 MiB, acceptance of an 8,000,000-byte micro-batch, and repeated rejection of a 9,000,000-byte micro-batch without checkpoint advancement. D50's 256-record cap/resume/reset evidence and D48's consumer/session fix remain the product basis. P11 remains open for indefinite backpressure, worker/provider breadth, multi-broker recovery, the complete journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D52 is the current exact candidate fe5be99c535ca4eb17ee371744e7b7a6acd87ba0: it proves direct runtime recovery after stopping one leader in a real three-node, three-replica Kafka/Redpanda topic and resumes four records from the durable checkpoint. D51's byte-boundary API evidence is on parent candidate 5a4557aa; D50's 256-record cap/resume/reset evidence and D48's consumer/session fix remain the product basis. P11 remains open for the complete API journey, indefinite backpressure, worker/provider breadth, production topology support, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",

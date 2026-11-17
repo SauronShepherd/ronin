@@ -1,0 +1,53 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D52",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "P11 direct runtime recovery after real replicated Kafka leader failure",
+  "candidate_sha": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0",
+  "candidate_receipt": "docs/qualification/candidates/candidate-fe5be99c-d52.json",
+  "code_commit": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0",
+  "origin_main_at_code_commit": "fe5be99c535ca4eb17ee371744e7b7a6acd87ba0",
+  "implementation": {
+    "production_change": false,
+    "summary": "D52 adds an opt-in integration test for a real three-node Redpanda cluster: it commits one record, stops the leader, resumes four records via surviving replicas from the durable SQLite checkpoint, and restores the failed broker.",
+    "changed_paths": [
+      "tests/integration/test_streaming_multi_broker_real.py"
+    ],
+    "multi_broker_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d52-multi-broker-20261117\\multi-broker.xml"
+  },
+  "tests": {
+    "candidate_boundary": "PASS: archive regenerated and verified; 1521 files, 16381414 sandbox bytes, no Git metadata or generated test artifacts",
+    "candidate_contracts": "PASS: 61 passed, 0 failed, 0 skipped; includes the opt-in real multi-broker recovery contract",
+    "candidate_quality": "PASS: Ruff format/check, mypy on 13 streaming/control-plane/integration source files and Node syntax for the Playwright config plus two live specs",
+    "multi_broker_runtime": "PASS: one real replicated-topic recovery test, zero JUnit errors/failures/skips; broker-0 stopped after the first commit and four records resumed",
+    "cluster_cleanup": "PASS: explicitly created broker containers and network removed; no temporary Ronin containers or networks remained",
+    "byte_boundary_api_evidence": "INHERITED from D51 parent candidate only; not rerun on D52 because this delta is test-only and direct-runtime scoped",
+    "route_audit": "NOT_RUN: direct runtime integration contract only",
+    "security_scans": "NOT_RERUN in D52; prior evidence remains separate",
+    "trivy": "NOT_RUN",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license": "INHERITED FAIL/CLOSED; 21 human review decisions missing and not counted as D52 PASS"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "limitations": [
+    "D52 proves direct runtime recovery from one failed leader in a real three-node local cluster; it does not qualify the HTTP/API journey, production topology support, indefinite backpressure or worker/provider breadth.",
+    "D51 byte-boundary API evidence remains on parent candidate 5a4557aa and is not claimed as a D52 same-candidate live run.",
+    "No release gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}
