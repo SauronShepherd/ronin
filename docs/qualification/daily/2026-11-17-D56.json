@@ -1,0 +1,52 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D56",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "P11 same-candidate supervised drain to idle with durable checkpoint progress",
+  "candidate_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
+  "candidate_receipt": "docs/qualification/candidates/candidate-0a0cd36d-d56.json",
+  "code_commit": "0a0cd36d47e403808db519f62eefd726f95637a4",
+  "origin_main_at_code_commit": "0a0cd36d47e403808db519f62eefd726f95637a4",
+  "implementation": {
+    "production_change": false,
+    "summary": "D56 makes no code changes; it reruns the supervised drain contract on the exact D55 candidate.",
+    "changed_paths": [],
+    "candidate_archive": "Reused from docs/qualification/candidates/candidate-0a0cd36d-d55.json."
+  },
+  "tests": {
+    "candidate_boundary": "PASS/inherited: exact archive and clean sandbox from D55; 1531 files, 16444240 sandbox bytes",
+    "supervised_drain": "PASS: Playwright 1/1; 64 records, stop_reason=idle, final lag 0, invalid cap rejected with 400",
+    "api_traffic": "PASS: 5/5 correlated events, 4 OK and 1 expected WARN, zero server/network errors",
+    "cleanup": "PASS: temporary containers, volume and network removed",
+    "route_audit": "NOT_RUN: filtered streaming diagnostic only",
+    "security_scans": "NOT_RERUN in D56",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license": "INHERITED FAIL/CLOSED; human review decisions remain open"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "evidence": {
+    "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d56-supervised-candidate-0a0cd36d-20261117\\qualification-summary.json",
+    "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d56-supervised-candidate-0a0cd36d-20261117\\live-api-traffic.json",
+    "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d56-supervised-candidate-0a0cd36d-20261117\\browser-live.xml"
+  },
+  "limitations": [
+    "D56 is a filtered bounded journey; it does not establish indefinite operation, provider breadth, production topology support or complete P11 qualification.",
+    "No release gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}

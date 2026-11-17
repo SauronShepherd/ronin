@@ -7,21 +7,31 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
-D55 advances the exact candidate to `0a0cd36d47e403808db519f62eefd726f95637a4`.
-The exact sandbox verifies `60/60` focused contracts with no skips and the
-qualification runner contract selection verifies `25/25`. D55 repairs the
-broker-restart audit so that it requires health/run outage coverage while
-allowing transient repeated health `503` responses during recovery; Ronin
-production streaming code is unchanged. Four clean candidate-bound streaming
-journeys pass `1/1`: single-broker restart (`11/11` correlated events, `8` OK
-and `3` expected `503` errors), three-node multi-broker failover (`5/5` OK),
-D50's 256-record cap/resume/reset/replay (`12/12` OK), and D51's byte-boundary
-journey (`13/13`, `11` OK and `2` expected WARN). The runner reports zero
-unexpected server/network errors and cleanup succeeds. This is bounded
-same-candidate P11 evidence, not a complete family qualification: indefinite
-operation, worker/provider breadth, production topology support, route-wide
-audit and the remaining release gates remain open. Release remains **NO-GO**
-at `1/13` families and `0/10` gates.
+D56 extends the exact candidate `0a0cd36d47e403808db519f62eefd726f95637a4`
+with a supervised drain-to-idle journey. The exact sandbox remains `60/60`
+focused contracts with no skips and the qualification runner contract
+selection is `25/25`. The supervised two-partition fixture consumes `64`
+records, returns `stop_reason=idle`, persists durable progress to lag zero and
+rejects `max_batches=0` with HTTP `400`; its clean live run passes `1/1` with
+`5/5` correlated events (`4` OK and `1` expected WARN). D55's four streaming
+journeys remain green on the same SHA: single-broker restart, three-node
+multi-broker failover, D50's 256-record cap/resume/reset/replay, and D51's
+byte-boundary journey. The runner reports zero unexpected server/network
+errors and cleanup succeeds. This is bounded same-candidate P11 evidence, not
+a complete family qualification: indefinite operation, worker/provider
+breadth, production topology support, route-wide audit and the remaining
+release gates remain open. Release remains **NO-GO** at `1/13` families and
+`0/10` gates.
+
+### Historical exact-SHA qualification — D55 — 17 November 2026
+
+D55 advanced the exact candidate to `0a0cd36d47e403808db519f62eefd726f95637a4`
+and repaired the broker-restart audit contract. The exact sandbox verified
+`60/60` focused contracts and `25/25` runner contracts. Four clean candidate
+journeys passed `1/1`: single-broker restart (`11/11` correlated events with
+three expected `503` errors), multi-broker failover (`5/5`), D50 (`12/12`) and
+D51 (`13/13`); the audit reported zero unexpected server/network errors.
+D55 was bounded same-candidate evidence, not a complete P11 qualification.
 
 ### Historical exact-SHA qualification — D54 — 17 November 2026
 

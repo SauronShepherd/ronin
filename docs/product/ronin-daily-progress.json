@@ -133,7 +133,7 @@
       "name": "Real-time and streaming",
       "observed_implementation": "partial",
       "qualification": "in_progress",
-      "receipt": "docs/qualification/candidates/candidate-0a0cd36d-d55.json",
+      "receipt": "docs/qualification/candidates/candidate-0a0cd36d-d56.json",
       "candidate_sha": "0a0cd36d47e403808db519f62eefd726f95637a4"
     },
     {
@@ -434,13 +434,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D55.md",
       "candidate_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
       "commit_sha": "0a0cd36d47e403808db519f62eefd726f95637a4"
+    },
+    {
+      "id": "D56",
+      "date": "2026-11-17",
+      "phase": "p11-same-candidate-supervised-drain-to-idle",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D56.md",
+      "candidate_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
+      "commit_sha": "0a0cd36d47e403808db519f62eefd726f95637a4"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D55 is the current exact candidate 0a0cd36d47e403808db519f62eefd726f95637a4: the resilient broker-restart audit passes with 1/1 and three expected 503 responses, while D50, D51 and D53 each pass 1/1 on the same SHA with 12/12, 13/13 and 5/5 correlated events respectively. D52 direct-runtime recovery remains separately linked to its original candidate. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D56 is the current exact-candidate continuity evidence at 0a0cd36d47e403808db519f62eefd726f95637a4: the supervised two-partition drain consumes 64 records, stops at idle, persists durable progress and reaches lag zero, with a negative cap returning 400. D55's resilient broker-restart, D50, D51 and D53 journeys also pass on the same SHA. D52 direct-runtime recovery remains separately linked to its original candidate. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",

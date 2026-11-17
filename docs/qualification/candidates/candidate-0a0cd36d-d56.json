@@ -1,0 +1,72 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D56",
+  "status": "pass",
+  "outcome": "pass for the same-candidate supervised drain to idle with durable checkpoint progress; this does not qualify P11 or close a release gate",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
+    "origin_main_sha_when_candidate_was_tested": "b9e75870970b8469f4108fd0a76ec1716298994d",
+    "worktree_source_mode": "exact-commit checkout for live run; documentation commits were excluded from the tested candidate"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0a0cd36d-d55",
+    "archive_reused_from": "docs/qualification/candidates/candidate-0a0cd36d-d55.json",
+    "archive_sha256": "8481dc1fae2986fcdcfa917024e303664039db20a2e28d1a8981cb89fed6fed1",
+    "manifest_sha256": "856add3a07d613e9b524f94e0ffeca6d9778e6d46bb585166290af567729a779",
+    "file_count": 1531,
+    "total_bytes": 16444240,
+    "sandbox_git_metadata_present": false,
+    "sandbox_generated_test_artifacts_after_cleanup": false
+  },
+  "implementation": {
+    "code_commit": "0a0cd36d47e403808db519f62eefd726f95637a4",
+    "candidate_docs_commit": null,
+    "production_files_changed": [],
+    "fixture_files_changed": [],
+    "test_files_changed": [],
+    "summary": "D56 makes no code changes; it exercises the existing supervised streaming drain on the exact D55 code candidate."
+  },
+  "commands": {
+    "live": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d56-supervised-candidate-0a0cd36d-20261117 -TestGrep \"live streaming supervised drain stops at idle with durable checkpoint progress\""
+  },
+  "qualification_matrix": {
+    "supervised_drain": "PASS: Playwright 1/1; 64 records consumed with stop_reason=idle, final durable lag 0 and invalid max_batches=0 rejected with 400",
+    "api_traffic": "PASS: 5/5 events correlated, 4 OK and 1 expected WARN, 0 server/network errors",
+    "candidate_identity": "PASS: clean candidate run reported 0a0cd36d47e403808db519f62eefd726f95637a4",
+    "candidate_boundary": "PASS/inherited from D55: exact archive and sandbox verified; 1531 files and 16444240 sandbox bytes",
+    "cleanup": "PASS: temporary containers, volume and network removed; no matching Docker residue remained",
+    "route_audit": "NOT_RUN: filtered streaming diagnostic only",
+    "security_scans": "NOT_RERUN in D56",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license_qualification": "INHERITED FAIL/CLOSED; human review decisions remain open",
+    "result": "D56 strengthens same-candidate supervisor/checkpoint evidence without qualifying P11, closing a gate or changing release NO-GO"
+  },
+  "evidence": {
+    "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d56-supervised-candidate-0a0cd36d-20261117",
+    "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d56-supervised-candidate-0a0cd36d-20261117\\qualification-summary.json",
+    "qualification_summary_sha256": "c0f0fc963111df4da0097a3a7bc31ef5a8695f3e9f1d9000cfae0915a64f346c",
+    "qualification_summary_size": 2900,
+    "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d56-supervised-candidate-0a0cd36d-20261117\\live-api-traffic.json",
+    "live_api_traffic_sha256": "87ff84ad3f1b36d3cf82bfd8b18abebab107089b1fa4c3690284fb32e3bccfc2",
+    "live_api_traffic_size": 1649,
+    "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d56-supervised-candidate-0a0cd36d-20261117\\browser-live.xml",
+    "browser_junit_sha256": "10add7cee8216b697999c19348d3d6816bfa028adb0e551b08823812114139a4",
+    "browser_junit_size": 429,
+    "status": "PASS: 1 test, 5 correlated API events, 4 OK, 1 expected WARN, duration 77.61 seconds"
+  },
+  "open_cells": [
+    "P11 remains in_progress: D56 proves one supervised bounded drain to idle and durable lag zero, but indefinite operation, sustained backpressure exhaustion, worker/provider breadth, production topology support and the complete family journey remain open.",
+    "D52 direct-runtime recovery remains a separate receipt on an earlier candidate; D55 covers the current candidate's recovery and audit layers.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external provider was available.",
+    "No release gate closes; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "D56 is a filtered live diagnostic using the existing 64-record two-partition fixture, not route-wide or full-family qualification.",
+    "The worker image and external provider matrix were not exercised.",
+    "The verified candidate archive is reused from D55 because D56 makes no source change."
+  ]
+}
