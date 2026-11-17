@@ -221,6 +221,66 @@ def test_runtime_supervisor_stops_at_max_batches_without_losing_checkpoint(tmp_p
     assert checkpoints.get(runtime_id).offset_for(0) == 1
 
 
+def test_runtime_supervisor_stops_at_max_records_and_resumes_checkpoint(
+    tmp_path: Path,
+) -> None:
+    workspace = "workspace-a"
+    stream_id = "events/main"
+    checkpoints = SqliteStreamCheckpointStore(tmp_path / "state.sqlite3")
+    checkpoints.commit_stream_bundle_import(workspace, (_definition(),), {stream_id: "reset"})
+    connection = SimpleNamespace(
+        connector_id="kafka",
+        options=(("bootstrap.servers", "broker:9092"),),
+        secret_refs=(),
+    )
+    source_instances = []
+
+    class _ContinuousSource:
+        def __init__(self) -> None:
+            self.closed = False
+
+        def poll(self, checkpoint, *, limit, timeout_seconds):
+            del limit, timeout_seconds
+            previous = checkpoint.offset_for(0)
+            offset = 0 if previous is None else previous + 1
+            record = StreamRecord(0, offset, 1, f"event-{offset}", {"event": "created"})
+            return StreamBatch((record,), StreamCheckpoint((StreamPosition(0, offset),)))
+
+        def close(self) -> None:
+            self.closed = True
+
+    def source_factory(**_kwargs):
+        source = _ContinuousSource()
+        source_instances.append(source)
+        return source
+
+    runtime = KafkaStreamingRuntime(
+        checkpoints,
+        lambda _workspace, _connection_id: connection,
+        lambda _reference: "unused",
+        tmp_path / "data",
+        source_factory=source_factory,
+    )
+
+    first = runtime.run_until_idle(workspace, stream_id, max_batches=10, max_records=2)
+    second = runtime.run_until_idle(workspace, stream_id, max_batches=10, max_records=2)
+
+    runtime_id = checkpoints.runtime_stream_id(workspace, stream_id)
+    table = SqliteStreamTable(tmp_path / "data" / "streaming.sqlite3")
+    assert first["status"] == "limit_reached"
+    assert first["stop_reason"] == "max_records"
+    assert first["records"] == 2
+    assert first["rows"] == 2
+    assert second["status"] == "limit_reached"
+    assert second["stop_reason"] == "max_records"
+    assert second["records"] == 2
+    assert second["rows"] == 2
+    assert checkpoints.get(runtime_id).offset_for(0) == 3
+    assert [item.offset for item in table.read(runtime_id)] == [0, 1, 2, 3]
+    assert len(source_instances) == 2
+    assert all(source.closed for source in source_instances)
+
+
 def test_runtime_supervisor_rejects_unbounded_or_empty_caps(tmp_path: Path) -> None:
     checkpoints = SqliteStreamCheckpointStore(tmp_path / "state.sqlite3")
     checkpoints.commit_stream_bundle_import(
