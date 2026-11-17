@@ -7,6 +7,15 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D59 repaired the stale Studio web-budget ratchet exposed by the static gate.
+The normalized asset measurement is now `2,171,102` bytes across `71` assets,
+with `37` JavaScript modules, `15` stylesheets and `5,838` HTML bytes; the
+static web audit reports `72` files, `184` route invocations and `0` failures.
+Ruff, mypy, architecture, negative gates, route consistency, Studio surface,
+dependency surfaces, OpenAPI, canonical JSON, runner protocol, capability
+status and Node syntax also pass. The ratchet accounts for the bounded
+supervised-streaming controls; it is not live UI or manual release evidence.
+
 D58 validates the documentation-inclusive exact candidate
 `b86a784e997ce03921d26d99aae7c5f6dced1ebe` after correcting the stale observed
 source marker in the public capability matrix to the implementation baseline

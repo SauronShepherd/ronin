@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D59",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Streaming Studio web-budget ratchet and static surface gates",
+  "candidate_sha": "f5504ec9e2ffbdf24c6bdc3047bbce75522c042d",
+  "implementation_commit_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
+  "documentation_commit_sha": "f5504ec9e2ffbdf24c6bdc3047bbce75522c042d",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D59.md",
+  "execution_scope": "static-gates-and-budget-ratchet",
+  "result": {
+    "root_cause": "The supervised streaming UI controls added by the D56-era streaming commits increased normalized web asset bytes after the previous budget ratchet.",
+    "web_budget_before": "FAIL: 2170474-byte baseline versus 2171102 measured bytes",
+    "web_budget_after": "PASS: 2171102-byte baseline and 2171102 measured bytes; 71 assets, 37 JavaScript modules, 15 stylesheets and 5838 HTML bytes",
+    "web_audit": "PASS: 72 files, 184 route invocations, 0 failures",
+    "focused_web_contracts": "PASS: 24 tests",
+    "static_quality": "PASS: Ruff format 933 files, Ruff, mypy 451 source files, architecture, negative gates, route consistency 200 operations, Studio surface 129/242, dependency surfaces, OpenAPI, canonical JSON 10 vectors/5 rejections, runner protocol 2 fixtures, capability status and Node syntax",
+    "release_effect": "No family or release gate changes; release remains NO-GO"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "D59 changes only the measured UI budget baseline; it does not alter production behavior or claim a live UI or release qualification.",
+    "The static web audit is not a candidate-bound live route traversal and does not replace manual visual/accessibility review.",
+    "The implementation baseline remains 0a0cd36d47e403808db519f62eefd726f95637a4; D59 does not close P11 or any release gate."
+  ]
+}

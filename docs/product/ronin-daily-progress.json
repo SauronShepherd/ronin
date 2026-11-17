@@ -464,6 +464,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D58.md",
       "candidate_sha": "b86a784e997ce03921d26d99aae7c5f6dced1ebe",
       "commit_sha": "b86a784e997ce03921d26d99aae7c5f6dced1ebe"
+    },
+    {
+      "id": "D59",
+      "date": "2026-11-17",
+      "phase": "streaming-studio-web-budget-and-static-gates",
+      "status": "pass",
+      "families": [],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D59.md",
+      "candidate_sha": "f5504ec9e2ffbdf24c6bdc3047bbce75522c042d",
+      "commit_sha": "f5504ec9e2ffbdf24c6bdc3047bbce75522c042d"
     }
   ],
   "known_blockers": [
