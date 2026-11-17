@@ -1490,6 +1490,149 @@ test('live streaming max-record cap resumes the durable checkpoint without repla
   await flushLiveTraffic();
 });
 
+test('live streaming sustained backpressure drains 256 records with reset-safe replay', async ({ page }) => {
+  test.setTimeout(240_000);
+  test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
+
+  const calls = installLiveApiProxy(page);
+  const workspace = process.env.RONIN_LIVE_WORKSPACE;
+  const api = process.env.RONIN_LIVE_API_URL;
+  const token = process.env.RONIN_LIVE_API_TOKEN;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+  const streamId = 'events/backpressure';
+  const encodedWorkspace = encodeURIComponent(workspace);
+  const encodedStream = encodeURIComponent(streamId);
+  const streamPath = `/v1/workspaces/${encodedWorkspace}/streams/${encodedStream}`;
+  const runPath = `${streamPath}/run`;
+  const healthPath = `${streamPath}/health`;
+  const definition = {
+    id: streamId,
+    name: 'Live sustained backpressure qualification',
+    source: {
+      connection_id: 'live-kafka',
+      resource: 'ronin-live-backpressure-events',
+      partitions: [0, 1],
+      format: 'json',
+    },
+    sink: { kind: 'table', target_ref: 'live-backpressure-events', mode: 'append' },
+    schema: [{ name: 'event', data_type: 'string', nullable: false }],
+    runtime: { profile_id: 'local', batch_limit: 8, timeout_seconds: 1 },
+  };
+
+  const request = async (method, path, data) => {
+    const response = await page.evaluate(async ({ apiBase, requestPath, requestMethod, requestHeaders, body }) => {
+      const upstream = await fetch(`${apiBase}${requestPath}`, {
+        method: requestMethod,
+        headers: requestHeaders,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      return { status: upstream.status, text: await upstream.text() };
+    }, { apiBase: api, requestPath: path, requestMethod: method, requestHeaders: headers, body: data });
+    return {
+      status: () => response.status,
+      text: async () => response.text,
+      json: async () => JSON.parse(response.text),
+    };
+  };
+
+  const saved = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
+  expect(saved.status(), await saved.text()).toBe(200);
+
+  const initialHealth = await request('GET', healthPath);
+  expect(initialHealth.status(), await initialHealth.text()).toBe(200);
+  expect(await initialHealth.json()).toMatchObject({
+    source_status: 'available',
+    partitions: 2,
+    lag: { '0': 128, '1': 128 },
+    total_lag: 256,
+  });
+
+  const capped = await request('POST', runPath, {
+    limit: 8,
+    timeout_seconds: 1,
+    max_batches: 20,
+    max_records: 73,
+    idle_polls: 3,
+  });
+  expect(capped.status(), await capped.text()).toBe(200);
+  expect(await capped.json()).toMatchObject({
+    stream_id: streamId,
+    status: 'limit_reached',
+    stop_reason: 'max_records',
+    batches: 10,
+    records: 73,
+    rows: 73,
+  });
+
+  const afterCapHealth = await request('GET', healthPath);
+  expect(afterCapHealth.status(), await afterCapHealth.text()).toBe(200);
+  const afterCapPayload = await afterCapHealth.json();
+  expect(afterCapPayload.total_lag).toBe(183);
+  expect(afterCapPayload.total_lag).toBeLessThan(256);
+
+  const resumed = await request('POST', runPath, {
+    limit: 8,
+    timeout_seconds: 1,
+    max_batches: 40,
+    max_records: 256,
+    idle_polls: 3,
+  });
+  expect(resumed.status(), await resumed.text()).toBe(200);
+  expect(await resumed.json()).toMatchObject({
+    stream_id: streamId,
+    status: 'succeeded',
+    stop_reason: 'idle',
+    batches: 23,
+    records: 183,
+    rows: 183,
+  });
+
+  const finalHealth = await request('GET', healthPath);
+  expect(finalHealth.status(), await finalHealth.text()).toBe(200);
+  expect((await finalHealth.json()).total_lag).toBe(0);
+
+  const replay = await request('POST', runPath, { limit: 8, timeout_seconds: 1 });
+  expect(replay.status(), await replay.text()).toBe(200);
+  expect(await replay.json()).toMatchObject({
+    stream_id: streamId,
+    status: 'idle',
+    records: 0,
+    rows: 0,
+  });
+
+  const reset = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
+  expect(reset.status(), await reset.text()).toBe(200);
+  const resetHealth = await request('GET', healthPath);
+  expect(resetHealth.status(), await resetHealth.text()).toBe(200);
+  expect((await resetHealth.json()).total_lag).toBe(256);
+
+  const firstReplay = await request('POST', runPath, { limit: 7, timeout_seconds: 1 });
+  expect(firstReplay.status(), await firstReplay.text()).toBe(200);
+  expect(await firstReplay.json()).toMatchObject({
+    stream_id: streamId,
+    status: 'succeeded',
+    records: 7,
+    rows: 7,
+  });
+  expect((await firstReplay.json()).sink_commit_id).toMatch(/^sqlite-batch:/);
+
+  const secondReset = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
+  expect(secondReset.status(), await secondReset.text()).toBe(200);
+  const secondReplay = await request('POST', runPath, { limit: 7, timeout_seconds: 1 });
+  expect(secondReplay.status(), await secondReplay.text()).toBe(200);
+  expect(await secondReplay.json()).toMatchObject({
+    stream_id: streamId,
+    status: 'succeeded',
+    records: 7,
+    rows: 7,
+  });
+  expect(calls.some(call => call.path === runPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
+  await flushLiveTraffic();
+});
+
 test('live Projects create, export, and reimport a secret-safe Bundle through the UI', async ({ page }) => {
   test.setTimeout(60_000);
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and PostgreSQL fixture.');

@@ -43,6 +43,7 @@ def main() -> int:
     partitioned_topic = "ronin-live-partitioned-events"
     fault_topic = "ronin-live-fault-events"
     sustained_topic = "ronin-live-sustained-events"
+    backpressure_topic = "ronin-live-backpressure-events"
     stream_id = "events/main"
     poison_stream_id = "events/poison"
     oversized_stream_id = "events/oversized"
@@ -58,6 +59,7 @@ def main() -> int:
         (partitioned_topic, 2, {}),
         (fault_topic, 1, {}),
         (sustained_topic, 2, {}),
+        (backpressure_topic, 2, {}),
     ):
         results = admin.create_topics(
             [
@@ -112,6 +114,13 @@ def main() -> int:
             partition=index % 2,
             key=f"ronin-live-sustained-{index}",
             value=json.dumps({"event": f"sustained-{index}"}),
+        )
+    for index in range(256):
+        producer.produce(
+            backpressure_topic,
+            partition=index % 2,
+            key=f"ronin-live-backpressure-{index}",
+            value=json.dumps({"event": f"backpressure-{index:04d}"}),
         )
     producer.produce(fault_topic, key="ronin-live-fault-0", value=json.dumps({"event": "fault-0"}))
     if producer.flush(15) != 0:

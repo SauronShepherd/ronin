@@ -7,6 +7,7 @@ import pytest
 from studio_streaming import (
     KafkaInputRejected,
     KafkaStreamingRuntime,
+    ParquetMicroBatchSink,
     SqliteStreamCheckpointStore,
     SqliteStreamTable,
     StreamBatch,
@@ -418,3 +419,25 @@ def test_runtime_does_not_advance_checkpoint_after_poison_message(tmp_path: Path
     assert str(error.value) == "stream input is invalid or exceeds local processing limits"
     assert checkpoints.get(runtime_id) == StreamCheckpoint()
     assert table.read(runtime_id) == ()
+
+
+def test_parquet_sink_replays_identical_checkpoint_without_duplicate_output(
+    tmp_path: Path,
+) -> None:
+    from studio_lakehouse import read_parquet_rows
+
+    record = StreamRecord(0, 4, 1, "event-4", {"event": "created"})
+    batch = StreamBatch((record,), StreamCheckpoint((StreamPosition(0, 4),)))
+    rows = ({"event": "created"},)
+    sink = ParquetMicroBatchSink(tmp_path / "warehouse")
+
+    first = sink.write("events/main", batch, rows)
+    replay = sink.write("events/main", batch, rows)
+
+    assert replay == first
+    files = tuple((tmp_path / "warehouse").rglob("*.parquet"))
+    assert len(files) == 1
+    assert read_parquet_rows(files[0]) == rows
+
+    with pytest.raises(RuntimeError, match="conflicts with replayed row content"):
+        sink.write("events/main", batch, ({"event": "changed"},))
