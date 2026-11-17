@@ -1,0 +1,58 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D58",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Full Python/PostgreSQL regression and public capability-baseline coherence",
+  "candidate_sha": "b86a784e997ce03921d26d99aae7c5f6dced1ebe",
+  "candidate_receipt": "docs/qualification/candidates/candidate-b86a784e-d58.json",
+  "code_commit": "0a0cd36d47e403808db519f62eefd726f95637a4",
+  "origin_main_at_code_commit": "b86a784e997ce03921d26d99aae7c5f6dced1ebe",
+  "implementation": {
+    "production_change": false,
+    "summary": "D58 fixes a stale documentation baseline in the public capability matrix and validates the resulting clean candidate with the full Python/PostgreSQL suite.",
+    "changed_paths": [
+      "docs/product/PUBLIC_V1_CAPABILITY_MATRIX.md"
+    ],
+    "candidate_archive": "docs/qualification/candidates/candidate-b86a784e-d58.json"
+  },
+  "tests": {
+    "candidate_boundary": "PASS: exact b86a784e boundary verified; 1540 files and 16490484 sandbox bytes, no Git metadata or generated test artifacts",
+    "full_suite": "PASS: 4753 passed, 31 skipped, 0 failed, 13 warnings",
+    "public_baseline_regression": "PASS: 13/13 focused public/status/progress tests; stale observed-source mismatch is resolved",
+    "postgresql": "PASS: postgres:16.4-alpine on isolated port 54258",
+    "cleanup": "PASS: runner completed and PostgreSQL cleanup succeeded",
+    "external_provider_and_platform_lanes": "NOT_QUALIFIED: 31 expected skips remain",
+    "security_scans": "NOT_RERUN in D58",
+    "route_audit": "NOT_RUN in D58",
+    "worker_provider_matrix": "NOT_RUN in D58",
+    "license": "INHERITED FAIL/CLOSED; human review decisions remain open"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "evidence": {
+    "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-d58-full-20261117-r2",
+    "pytest_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-d58-full-20261117-r2\\pytest-postgres.xml",
+    "pytest_output": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-d58-full-20261117-r2\\pytest-output.log",
+    "candidate_archive": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b86a784e-d58\\candidate-b86a784e997ce03921d26d99aae7c5f6dced1ebe.tar"
+  },
+  "limitations": [
+    "D58 is a regression and ledger-coherence pass; it does not establish complete P11 qualification or release readiness.",
+    "The 31 skipped tests and 13 warnings remain explicit follow-up items; skipped external lanes are not counted as PASS.",
+    "No release gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}

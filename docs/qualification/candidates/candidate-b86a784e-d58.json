@@ -1,0 +1,98 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D58",
+  "status": "pass",
+  "outcome": "pass for the full Python/PostgreSQL regression and public capability-baseline coherence on the exact documentation-inclusive candidate; this does not qualify P11, close a release gate or change release NO-GO",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "b86a784e997ce03921d26d99aae7c5f6dced1ebe",
+    "origin_main_sha_when_candidate_was_tested": "b86a784e997ce03921d26d99aae7c5f6dced1ebe",
+    "worktree_source_mode": "exact-commit checkout; clean candidate boundary verified after the full suite"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b86a784e-d58",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b86a784e-d58\\candidate-b86a784e997ce03921d26d99aae7c5f6dced1ebe.tar",
+      "format": "tar",
+      "sha256": "d036bdb74b48d79e486a655c5b25e3a5507fce14d2f494a69427f24e3cbaa5a8",
+      "size": 17745920
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b86a784e-d58\\candidate-b86a784e997ce03921d26d99aae7c5f6dced1ebe.manifest.json",
+      "sha256": "0362f465e5907ca980bb5ad0299dcf3ae890aab00cb8b2218c04d3a51d2ad03d",
+      "size": 237958
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b86a784e-d58\\candidate-b86a784e997ce03921d26d99aae7c5f6dced1ebe.sha256",
+      "sha256": "03b6371b6aa6025f9d2446082c5f2b62d2f209d6b3e4712c7238f7802f006ba8",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b86a784e-d58\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1540,
+    "total_bytes": 16490484,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "0a0cd36d47e403808db519f62eefd726f95637a4",
+    "candidate_docs_commit": "b86a784e997ce03921d26d99aae7c5f6dced1ebe",
+    "production_files_changed": [],
+    "fixture_files_changed": [],
+    "test_files_changed": [],
+    "documentation_changed_in_candidate_docs_commit": [
+      "docs/product/PUBLIC_V1_CAPABILITY_MATRIX.md"
+    ],
+    "summary": "D58 corrects the capability-matrix observed-source marker to the tracked implementation baseline and reruns the full Python/PostgreSQL suite on the resulting clean candidate. No production or test source changed in D58."
+  },
+  "commands": {
+    "candidate_generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha b86a784e997ce03921d26d99aae7c5f6dced1ebe --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b86a784e-d58",
+    "candidate_verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-b86a784e-d58",
+    "full_suite": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-d58-full-20261117-r2",
+    "focused_baseline_regression": "python -m pytest -q -p no:cacheprovider tests/test_public_capability_matrix.py tests/test_generate_public_v1_status.py tests/test_public_v1_status.py tests/test_ronin_daily_progress.py"
+  },
+  "qualification_matrix": {
+    "full_python_postgresql_suite": "PASS: 4753 passed, 31 skipped, 0 failed; 13 warnings; pytest 893.71 seconds",
+    "postgresql_service": "PASS: postgres:16.4-alpine on isolated loopback port 54258",
+    "public_capability_baseline": "PASS: the previous stale-baseline failure is corrected; focused public/status/progress selection passes 13/13 and the full suite includes the matrix test",
+    "candidate_identity": "PASS: exact source b86a784e997ce03921d26d99aae7c5f6dced1ebe; archive, manifest and sandbox verification succeeded",
+    "external_and_platform_skips": "NOT_QUALIFIED: 31 expected skips remain for Docker/worker, Trino, OTLP, S3/Azure, external CLI, symlink and POSIX/Windows-privilege lanes",
+    "warnings": "OBSERVED: 13 ResourceWarning entries for unclosed SQLite database connections; they did not fail the suite and remain a follow-up quality item",
+    "security_scans": "NOT_RERUN in D58",
+    "route_audit": "NOT_RUN in D58",
+    "worker_provider_matrix": "NOT_RUN in D58",
+    "license_qualification": "INHERITED FAIL/CLOSED; human review decisions remain open",
+    "release": "NO-GO: no release gate closes and the family ledger remains 1/13"
+  },
+  "evidence": {
+    "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-d58-full-20261117-r2",
+    "pytest_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-d58-full-20261117-r2\\pytest-postgres.xml",
+    "pytest_junit_sha256": "da0147bd07d830b019a4c83c438835d66a36838a2e60572e5662625f97c3886e",
+    "pytest_junit_size": 704727,
+    "pytest_output": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-d58-full-20261117-r2\\pytest-output.log",
+    "pytest_output_sha256": "1ea4fbf0dc791830f3dd5fa08a3782902c64ef59db4e98590d0a89c6c9c92c5",
+    "pytest_output_size": 55791,
+    "runner_timings": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-python-d58-full-20261117-r2\\runner-timings.json",
+    "runner_timings_sha256": "429cd659018f00250535846b77d67033d7048befe7560c4cafee8d0392f63576",
+    "runner_timings_size": 634,
+    "status": "PASS: full Python/PostgreSQL suite 4753/4784 passed or explicitly skipped, 0 failures"
+  },
+  "open_cells": [
+    "The 31 skipped external/platform lanes are not counted as PASS and still require authorized Docker, worker, provider, POSIX or external CLI environments where applicable.",
+    "The 13 SQLite ResourceWarning entries should be investigated separately; D58 does not turn warnings into failures or claim that resource lifecycle quality is closed.",
+    "P11 remains in_progress: D58 is a broad regression pass, not a complete streaming-family qualification; indefinite operation, sustained backpressure exhaustion, worker/provider breadth, production topology support and the complete family journey remain open.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external provider was available.",
+    "No release gate closes; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "D58 validates the full Python/PostgreSQL lane on the exact candidate but does not execute the Docker, live-browser, security-scan, provider or human-owned release lanes.",
+    "The candidate includes the documentation-only matrix-baseline correction; the implementation baseline remains 0a0cd36d47e403808db519f62eefd726f95637a4.",
+    "Skipped tests are reported explicitly and are not converted to qualification passes."
+  ]
+}

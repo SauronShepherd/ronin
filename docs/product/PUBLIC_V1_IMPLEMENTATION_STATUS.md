@@ -7,6 +7,18 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D58 validates the documentation-inclusive exact candidate
+`b86a784e997ce03921d26d99aae7c5f6dced1ebe` after correcting the stale observed
+source marker in the public capability matrix to the implementation baseline
+`0a0cd36d47e403808db519f62eefd726f95637a4`. The full Python/PostgreSQL suite
+passes `4753` tests, skips `31` externally or platform-gated tests and reports
+`0` failures, with `13` SQLite `ResourceWarning` entries recorded for follow-up.
+The focused public/status/progress selection passes `13/13`. This is broad
+regression evidence, not a complete P11 or Public v1 qualification: skipped
+Docker/worker/provider lanes, security scans, route-wide audit, human review
+and the remaining release gates remain open. Release remains **NO-GO** at
+`1/13` families and `0/10` gates.
+
 D57 extends the exact candidate `0a0cd36d47e403808db519f62eefd726f95637a4`
 with explicit `max_records` cap/resume/replay evidence. The exact sandbox
 remains `60/60` focused contracts with no skips and the qualification runner

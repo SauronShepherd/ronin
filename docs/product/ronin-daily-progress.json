@@ -454,13 +454,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D57.md",
       "candidate_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
       "commit_sha": "0a0cd36d47e403808db519f62eefd726f95637a4"
+    },
+    {
+      "id": "D58",
+      "date": "2026-11-17",
+      "phase": "full-python-regression-public-ledger-coherence",
+      "status": "pass",
+      "families": [],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D58.md",
+      "candidate_sha": "b86a784e997ce03921d26d99aae7c5f6dced1ebe",
+      "commit_sha": "b86a784e997ce03921d26d99aae7c5f6dced1ebe"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D57 is the current exact-candidate cap evidence at 0a0cd36d47e403808db519f62eefd726f95637a4: max_records=10 returns limit_reached with lag 54, resume consumes 54 to lag zero, replay is empty and max_records=0 returns 400. D56's supervised drain-to-idle and D55's resilient broker-restart, multi-broker, D50 and D51 journeys also pass on the same SHA. D52 direct-runtime recovery remains separately linked to its original candidate. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D58 is the latest clean candidate regression at b86a784e997ce03921d26d99aae7c5f6dced1ebe: the full Python/PostgreSQL suite reports 4753 passed, 31 skipped and 0 failed after the public capability matrix baseline was corrected. The implementation baseline remains 0a0cd36d47e403808db519f62eefd726f95637a4; D57 is the latest bounded max_records streaming evidence on that code SHA. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",
@@ -475,7 +485,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D02 baseline is green on the exact clean candidate and Chromium; the latest full local Python lane has 81 skips for unavailable Docker, provider, PostgreSQL, POSIX/symlink, Windows privilege and external CLI environments, and they are not counted as PASS."
+      "summary": "D58 full Python/PostgreSQL regression is green on the exact clean candidate: 4753 passed, 31 expected external/platform skips and 0 failed. Docker/worker, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain unqualified where skipped, and the 13 SQLite ResourceWarnings remain a follow-up quality item; skips and warnings are not counted as PASS."
     },
     {
       "id": "catalog-project-scope",
