@@ -326,7 +326,10 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert "RONIN_LIVE_REQUEST_TIMEOUT_SECONDS" in live_support
     assert "streamingFixture" in script
     assert '$TestGrep -eq "live streaming broker restart"' in script
-    assert '$performancePluginDiagnostic = -not $TestGrep -or $TestGrep -match "performance|route"' in script
+    assert (
+        '$performancePluginDiagnostic = -not $TestGrep -or $TestGrep -match "performance|route"'
+        in script
+    )
     assert "if ($performancePluginDiagnostic) {" in script
     assert "the selected tests do not target Performance Studio" in script
     assert "expectedBrokerRestartOutages" in script
