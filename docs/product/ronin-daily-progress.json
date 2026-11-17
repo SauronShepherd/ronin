@@ -133,7 +133,7 @@
       "name": "Real-time and streaming",
       "observed_implementation": "partial",
       "qualification": "in_progress",
-      "receipt": "docs/qualification/candidates/candidate-0a0cd36d-d56.json",
+      "receipt": "docs/qualification/candidates/candidate-0a0cd36d-d57.json",
       "candidate_sha": "0a0cd36d47e403808db519f62eefd726f95637a4"
     },
     {
@@ -444,13 +444,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D56.md",
       "candidate_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
       "commit_sha": "0a0cd36d47e403808db519f62eefd726f95637a4"
+    },
+    {
+      "id": "D57",
+      "date": "2026-11-17",
+      "phase": "p11-same-candidate-max-record-cap-resume-replay",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D57.md",
+      "candidate_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
+      "commit_sha": "0a0cd36d47e403808db519f62eefd726f95637a4"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D56 is the current exact-candidate continuity evidence at 0a0cd36d47e403808db519f62eefd726f95637a4: the supervised two-partition drain consumes 64 records, stops at idle, persists durable progress and reaches lag zero, with a negative cap returning 400. D55's resilient broker-restart, D50, D51 and D53 journeys also pass on the same SHA. D52 direct-runtime recovery remains separately linked to its original candidate. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D57 is the current exact-candidate cap evidence at 0a0cd36d47e403808db519f62eefd726f95637a4: max_records=10 returns limit_reached with lag 54, resume consumes 54 to lag zero, replay is empty and max_records=0 returns 400. D56's supervised drain-to-idle and D55's resilient broker-restart, multi-broker, D50 and D51 journeys also pass on the same SHA. D52 direct-runtime recovery remains separately linked to its original candidate. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",

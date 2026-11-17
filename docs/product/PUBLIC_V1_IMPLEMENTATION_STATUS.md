@@ -7,21 +7,29 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
-D56 extends the exact candidate `0a0cd36d47e403808db519f62eefd726f95637a4`
-with a supervised drain-to-idle journey. The exact sandbox remains `60/60`
-focused contracts with no skips and the qualification runner contract
-selection is `25/25`. The supervised two-partition fixture consumes `64`
-records, returns `stop_reason=idle`, persists durable progress to lag zero and
-rejects `max_batches=0` with HTTP `400`; its clean live run passes `1/1` with
-`5/5` correlated events (`4` OK and `1` expected WARN). D55's four streaming
-journeys remain green on the same SHA: single-broker restart, three-node
-multi-broker failover, D50's 256-record cap/resume/reset/replay, and D51's
-byte-boundary journey. The runner reports zero unexpected server/network
-errors and cleanup succeeds. This is bounded same-candidate P11 evidence, not
-a complete family qualification: indefinite operation, worker/provider
-breadth, production topology support, route-wide audit and the remaining
-release gates remain open. Release remains **NO-GO** at `1/13` families and
-`0/10` gates.
+D57 extends the exact candidate `0a0cd36d47e403808db519f62eefd726f95637a4`
+with explicit `max_records` cap/resume/replay evidence. The exact sandbox
+remains `60/60` focused contracts with no skips and the qualification runner
+contract selection is `25/25`. The live journey caps at `10` records with
+`stop_reason=max_records` and lag `54`, resumes the remaining `54` to lag
+zero, returns an empty replay, and rejects `max_records=0` with HTTP `400`;
+its clean run passes `1/1` with `8/8` correlated events (`7` OK and `1`
+expected WARN). D56's supervised drain-to-idle and D55's four streaming
+journeys remain green on the same SHA. The runner reports zero unexpected
+server/network errors and cleanup succeeds. This is bounded same-candidate P11
+evidence, not a complete family qualification: indefinite operation,
+worker/provider breadth, production topology support, route-wide audit and the
+remaining release gates remain open. Release remains **NO-GO** at `1/13`
+families and `0/10` gates.
+
+### Historical exact-SHA qualification — D56 — 17 November 2026
+
+D56 added supervised drain-to-idle evidence on the exact candidate
+`0a0cd36d47e403808db519f62eefd726f95637a4`. The two-partition fixture consumed
+`64` records, returned `stop_reason=idle`, reached durable lag zero and
+rejected `max_batches=0` with HTTP `400`; the live run passed `1/1` with `5/5`
+correlated events (`4` OK and `1` expected WARN). D56 was bounded continuity
+evidence, not a complete P11 qualification.
 
 ### Historical exact-SHA qualification — D55 — 17 November 2026
 
