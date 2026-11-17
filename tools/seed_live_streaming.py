@@ -36,6 +36,12 @@ def main() -> int:
     if not api.hostname or api.port is None:
         raise SystemExit("RONIN_LIVE_API_URL must include a host and port")
     token = _required("RONIN_LIVE_API_TOKEN")
+    try:
+        replication_factor = int(os.environ.get("RONIN_LIVE_STREAMING_REPLICATION_FACTOR", "1"))
+    except ValueError as exc:
+        raise SystemExit("RONIN_LIVE_STREAMING_REPLICATION_FACTOR must be an integer") from exc
+    if replication_factor < 1:
+        raise SystemExit("RONIN_LIVE_STREAMING_REPLICATION_FACTOR must be at least 1")
     topic = "ronin-live-events"
     poison_topic = "ronin-live-poison-events"
     oversized_topic = "ronin-live-oversized-events"
@@ -47,6 +53,7 @@ def main() -> int:
     near_record_limit_topic = "ronin-live-near-record-limit-events"
     near_batch_limit_topic = "ronin-live-near-batch-limit-events"
     over_batch_limit_topic = "ronin-live-over-batch-limit-events"
+    multi_broker_topic = "ronin-live-multi-broker-events"
     stream_id = "events/main"
     poison_stream_id = "events/poison"
     oversized_stream_id = "events/oversized"
@@ -66,13 +73,14 @@ def main() -> int:
         (near_record_limit_topic, 1, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
         (near_batch_limit_topic, 1, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
         (over_batch_limit_topic, 1, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
+        (multi_broker_topic, 1, {}),
     ):
         results = admin.create_topics(
             [
                 kafka_admin.NewTopic(
                     topic_name,
                     num_partitions=num_partitions,
-                    replication_factor=1,
+                    replication_factor=replication_factor,
                     config=topic_config,
                 )
             ]
@@ -137,6 +145,12 @@ def main() -> int:
         key="ronin-live-recovery-1",
         value=json.dumps({"event": "recovered"}),
     )
+    for index in range(5):
+        producer.produce(
+            multi_broker_topic,
+            key=f"ronin-live-multi-broker-{index}",
+            value=json.dumps({"event": f"multi-broker-{index}"}),
+        )
     for index in range(12):
         producer.produce(
             partitioned_topic,
@@ -236,8 +250,8 @@ def main() -> int:
         },
     )
     print(
-        "Seeded valid/poison/oversized/recovery broker topics, a two-partition topic, "
-        "connection, and durable stream definitions."
+        "Seeded valid/poison/oversized/recovery/multi-broker topics, a two-partition topic, "
+        f"replication factor {replication_factor}, connection, and durable stream definitions."
     )
     return 0
 

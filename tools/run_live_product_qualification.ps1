@@ -2,7 +2,8 @@ param(
     [string]$EvidenceDirectory = (Join-Path $env:TEMP ("ronin-live-qualification-" + [guid]::NewGuid().ToString("N"))),
     [string]$TestGrep,
     [string]$WorkerImage,
-    [switch]$AllowDirtyWorktree
+    [switch]$AllowDirtyWorktree,
+    [switch]$MultiBroker
 )
 
 $ErrorActionPreference = "Stop"
@@ -134,11 +135,15 @@ if ($workingTreeStatus.Count -gt 0 -and -not $AllowDirtyWorktree) {
     throw "Refusing release qualification with a dirty worktree. Use -AllowDirtyWorktree only for diagnostics; its evidence is not release-candidate evidence."
 }
 $qualificationMode = if ($workingTreeStatus.Count -gt 0) { "DIRTY-WORKTREE DIAGNOSTIC" } else { "CLEAN-CANDIDATE QUALIFICATION" }
-$streamingOnlyDiagnostic = $TestGrep -eq "streaming"
+$multiBrokerDiagnostic = $MultiBroker.IsPresent
+$streamingOnlyDiagnostic = $TestGrep -eq "streaming" -or $multiBrokerDiagnostic
 $semanticOnlyDiagnostic = $TestGrep -eq "semantic"
 $mlOnlyDiagnostic = $TestGrep -eq "mlstudio"
 $syntheticOnlyDiagnostic = $TestGrep -eq "synthetic"
 $qualityOnlyDiagnostic = $TestGrep -eq "quality"
+if ($multiBrokerDiagnostic -and (-not $TestGrep -or $TestGrep -notmatch "streaming")) {
+    throw "-MultiBroker requires a focused streaming -TestGrep so the three-broker fixture cannot be mistaken for the default live qualification."
+}
 $workerImageId = $null
 if (-not $WorkerImage -and -not $TestGrep) {
     throw "Full live product qualification requires -WorkerImage so notebook execution is exercised by a real worker."
@@ -164,9 +169,23 @@ if (Test-Path -LiteralPath $liveDataDir) {
     throw "Unique live data directory already exists; refusing to reuse it: $liveDataDir"
 }
 $postgresPort = Get-FreeLoopbackPort
-$kafkaPort = Get-FreeLoopbackPort
+$kafkaPorts = @()
+if ($multiBrokerDiagnostic) {
+    1..3 | ForEach-Object { $kafkaPorts += Get-FreeLoopbackPort }
+} else {
+    $kafkaPorts += Get-FreeLoopbackPort
+}
+$kafkaPort = $kafkaPorts[0]
 $serverPort = Get-FreeLoopbackPort
 $controlPlanePort = Get-FreeLoopbackPort
+$composeFiles = @("-f", (Join-Path $repoRoot "compose.yaml"))
+$composeProfile = "qualification-streaming"
+$composeServices = @("streaming-broker")
+if ($multiBrokerDiagnostic) {
+    $composeFiles += @("-f", (Join-Path $repoRoot "compose.multi-broker.yaml"))
+    $composeProfile = "qualification-multi-broker"
+    $composeServices = @("streaming-broker-0", "streaming-broker-1", "streaming-broker-2")
+}
 $evidenceFiles = @{
     ServerOut = Join-Path $evidenceRoot "live-server.stdout.log"
     ServerErr = Join-Path $evidenceRoot "live-server.stderr.log"
@@ -179,14 +198,14 @@ $evidenceFiles = @{
     WorkerErr = Join-Path $evidenceRoot "live-worker.stderr.log"
 }
 $envNames = @(
-    "POSTGRES_USER", "POSTGRES_DB", "POSTGRES_PASSWORD", "RONIN_POSTGRES_PORT", "RONIN_KAFKA_PORT",
+    "POSTGRES_USER", "POSTGRES_DB", "POSTGRES_PASSWORD", "RONIN_POSTGRES_PORT", "RONIN_KAFKA_PORT", "RONIN_KAFKA_PORT_0", "RONIN_KAFKA_PORT_1", "RONIN_KAFKA_PORT_2",
     "RONIN_TOKEN", "RONIN_TOKEN_SCOPES", "RONIN_RUNNER_BROKER_TOKEN",
     "RONIN_SERVER_PROFILE", "RONIN_STORAGE_BACKEND", "RONIN_HOST", "RONIN_DB",
     "RONIN_DATA_DIR", "RONIN_SQL_PARQUET_ROOT", "RONIN_WORKSPACE_ID", "RONIN_CONTROL_PLANE_TOKEN",
     "RONIN_CONTROL_PLANE_PERMISSIONS", "RONIN_CONTROL_PLANE_PORT", "RONIN_PORT",
     "RONIN_PG_TEST_USER", "RONIN_PG_TEST_PASSWORD", "RONIN_LIVE_API_URL", "RONIN_LIVE_JOBS_API_URL",
     "RONIN_LIVE_API_TOKEN", "RONIN_LIVE_WORKSPACE", "RONIN_LIVE_PG_PORT",
-    "RONIN_LIVE_PG_DATABASE", "RONIN_LIVE_REQUIRE_POSTGRES", "RONIN_LIVE_STREAMING_BOOTSTRAP", "RONIN_LIVE_API_TRAFFIC_OUTPUT", "RONIN_STUDIO_E2E_URL", "RONIN_STUDIO_E2E_TOKEN",
+    "RONIN_LIVE_PG_DATABASE", "RONIN_LIVE_REQUIRE_POSTGRES", "RONIN_LIVE_STREAMING_BOOTSTRAP", "RONIN_LIVE_STREAMING_REPLICATION_FACTOR", "RONIN_LIVE_MULTIBROKER", "RONIN_LIVE_API_TRAFFIC_OUTPUT", "RONIN_STUDIO_E2E_URL", "RONIN_STUDIO_E2E_TOKEN",
     "PLAYWRIGHT_OUTPUT_DIR", "PLAYWRIGHT_HTML_OUTPUT_DIR", "PLAYWRIGHT_JUNIT_OUTPUT_FILE", "RONIN_KEEP_BROWSER_MEDIA",
     "RONIN_IMAGE", "RONIN_WORKSPACE", "RONIN_WORKER_OWNER", "RONIN_LIVE_WORKER_ENABLED",
     "PYTHONPATH", "RONIN_LIVE_PYTHON", "FORCE_COLOR", "npm_config_color", "NO_COLOR", "DEBUG_COLORS",
@@ -248,6 +267,11 @@ try {
     $env:POSTGRES_PASSWORD = [guid]::NewGuid().ToString("N")
     $env:RONIN_POSTGRES_PORT = [string]$postgresPort
     $env:RONIN_KAFKA_PORT = [string]$kafkaPort
+    $env:RONIN_KAFKA_PORT_0 = [string]$kafkaPorts[0]
+    $env:RONIN_KAFKA_PORT_1 = if ($multiBrokerDiagnostic) { [string]$kafkaPorts[1] } else { $null }
+    $env:RONIN_KAFKA_PORT_2 = if ($multiBrokerDiagnostic) { [string]$kafkaPorts[2] } else { $null }
+    $env:RONIN_LIVE_MULTIBROKER = if ($multiBrokerDiagnostic) { "1" } else { "0" }
+    $env:RONIN_LIVE_STREAMING_REPLICATION_FACTOR = if ($multiBrokerDiagnostic) { "3" } else { "1" }
     $env:RONIN_TOKEN = [guid]::NewGuid().ToString("N")
     $env:RONIN_LIVE_WORKER_ENABLED = if ($WorkerImage) { "1" } else { "0" }
     $env:RONIN_RUNNER_BROKER_TOKEN = [guid]::NewGuid().ToString("N")
@@ -258,10 +282,11 @@ try {
         $diagnosticName = if ($mlOnlyDiagnostic) { "Machine Learning Studio" } elseif ($semanticOnlyDiagnostic) { "Semantic Studio" } elseif ($qualityOnlyDiagnostic) { "Quality Studio" } else { "Synthetic Data Studio" }
         Write-Output "$diagnosticName-only diagnostic: SQLite product routes do not require PostgreSQL or Kafka containers."
     } elseif ($streamingOnlyDiagnostic) {
-        Write-Output "Streaming-only diagnostic: starting Redpanda without unrelated PostgreSQL fixtures."
-        docker compose -p $composeProject --profile qualification-streaming up -d --wait --wait-timeout 120 streaming-broker
+        $brokerTopology = if ($multiBrokerDiagnostic) { "three-broker" } else { "single-broker" }
+        Write-Output "Streaming-only diagnostic: starting $brokerTopology Redpanda without unrelated PostgreSQL fixtures."
+        docker compose @composeFiles -p $composeProject --profile $composeProfile up -d --wait --wait-timeout 120 @composeServices
     } else {
-        docker compose -p $composeProject --profile qualification-streaming up -d --wait --wait-timeout 120 postgres streaming-broker
+        docker compose @composeFiles -p $composeProject --profile $composeProfile up -d --wait --wait-timeout 120 postgres @composeServices
     }
     if (-not $sqliteOnlyDiagnostic -and $LASTEXITCODE -ne 0) { throw "Could not start the required isolated live-test services for '$composeProject'." }
     $servicesReady = $true
@@ -269,10 +294,10 @@ try {
     $kafkaStarted = -not $sqliteOnlyDiagnostic
 
     if ($postgresStarted) {
-        $databaseExists = (docker compose -p $composeProject exec -T postgres psql -U $env:POSTGRES_USER -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = 'ronin_test'" | Out-String).Trim()
+        $databaseExists = (docker compose @composeFiles -p $composeProject exec -T postgres psql -U $env:POSTGRES_USER -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = 'ronin_test'" | Out-String).Trim()
         if ($LASTEXITCODE -ne 0) { throw "Could not inspect the isolated PostgreSQL database list." }
         if ($databaseExists -ne "1") {
-            docker compose -p $composeProject exec -T postgres psql -v ON_ERROR_STOP=1 -U $env:POSTGRES_USER -d postgres -c "CREATE DATABASE ronin_test;"
+            docker compose @composeFiles -p $composeProject exec -T postgres psql -v ON_ERROR_STOP=1 -U $env:POSTGRES_USER -d postgres -c "CREATE DATABASE ronin_test;"
             if ($LASTEXITCODE -ne 0) { throw "Could not create isolated database ronin_test." }
         }
         $seedPowerShell = Get-Command pwsh -ErrorAction SilentlyContinue
@@ -303,7 +328,8 @@ try {
     $env:RONIN_LIVE_PG_PORT = [string]$postgresPort
     $env:RONIN_LIVE_PG_DATABASE = "ronin_test"
     $env:RONIN_LIVE_REQUIRE_POSTGRES = if ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic) { "0" } else { "1" }
-    $env:RONIN_LIVE_STREAMING_BOOTSTRAP = "127.0.0.1:$kafkaPort"
+    $bootstrapEndpoints = @($kafkaPorts | ForEach-Object { "127.0.0.1:$($_)" })
+    $env:RONIN_LIVE_STREAMING_BOOTSTRAP = [string]::Join(",", $bootstrapEndpoints)
     $env:RONIN_LIVE_API_TRAFFIC_OUTPUT = $evidenceFiles.Traffic
     # The jobs server serves the installed Studio assets. The control-plane
     # listener owns the live workspace APIs and is the proxy target.
@@ -417,6 +443,8 @@ try {
         "run Synthetic Data Studio generation/export against isolated SQLite and real Ronin APIs"
     } elseif ($qualityOnlyDiagnostic) {
         "run Quality Studio passing and blocking checks against isolated SQLite and real Ronin APIs"
+    } elseif ($multiBrokerDiagnostic) {
+        "run multi-broker streaming failover journey against Redpanda and real Ronin APIs"
     } elseif ($streamingOnlyDiagnostic) {
         "run streaming browser journey against Redpanda and real Ronin APIs"
     } else {
@@ -600,7 +628,7 @@ try {
         if (-not $server.HasExited) { Stop-Process -Id $server.Id -Force }
     }
     if ($composeStarted) {
-        docker compose -p $composeProject down -v --remove-orphans
+        docker compose @composeFiles -p $composeProject --profile $composeProfile down -v --remove-orphans
         if ($LASTEXITCODE -ne 0) {
             Write-Warning "Cleanup failed for isolated Compose project '$composeProject'."
             $resultCode = 1

@@ -1202,6 +1202,114 @@ test('live streaming broker restart resumes from the durable checkpoint', async 
   await flushLiveTraffic();
 });
 
+test('live streaming multi-broker failover resumes from the durable checkpoint', async ({ page }) => {
+  test.setTimeout(120_000);
+  test.skip(
+    !liveReady || process.env.RONIN_LIVE_MULTIBROKER !== '1',
+    'Run via the multi-broker live qualification diagnostic with a three-node Redpanda fixture.',
+  );
+
+  const calls = installLiveApiProxy(page);
+  const workspace = process.env.RONIN_LIVE_WORKSPACE;
+  const api = process.env.RONIN_LIVE_API_URL;
+  const token = process.env.RONIN_LIVE_API_TOKEN;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+  const streamId = 'events/multi-broker-api';
+  const encodedWorkspace = encodeURIComponent(workspace);
+  const encodedStream = encodeURIComponent(streamId);
+  const streamPath = `/v1/workspaces/${encodedWorkspace}/streams/${encodedStream}`;
+  const runPath = `${streamPath}/run`;
+  const healthPath = `${streamPath}/health`;
+  const definition = {
+    id: streamId,
+    name: 'Live multi-broker failover recovery',
+    source: {
+      connection_id: 'live-kafka',
+      resource: 'ronin-live-multi-broker-events',
+      partitions: [0],
+      format: 'json',
+    },
+    sink: { kind: 'table', target_ref: 'live-multi-broker-events', mode: 'append' },
+    schema: [{ name: 'event', data_type: 'string', nullable: false }],
+    runtime: { profile_id: 'local', batch_limit: 4, timeout_seconds: 5 },
+  };
+
+  const request = async (method, path, data) => {
+    const response = await page.evaluate(async ({ apiBase, requestPath, requestMethod, requestHeaders, body }) => {
+      const upstream = await fetch(`${apiBase}${requestPath}`, {
+        method: requestMethod,
+        headers: requestHeaders,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      return { status: upstream.status, text: await upstream.text() };
+    }, { apiBase: api, requestPath: path, requestMethod: method, requestHeaders: headers, body: data });
+    return {
+      status: () => response.status,
+      text: async () => response.text,
+      json: async () => JSON.parse(response.text),
+    };
+  };
+
+  const saved = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
+  expect(saved.status(), await saved.text()).toBe(200);
+  const initialHealth = await request('GET', healthPath);
+  expect(initialHealth.status(), await initialHealth.text()).toBe(200);
+  expect((await initialHealth.json()).total_lag).toBe(5);
+
+  const firstRun = await request('POST', runPath, { limit: 1, timeout_seconds: 5 });
+  expect(firstRun.status(), await firstRun.text()).toBe(200);
+  expect(await firstRun.json()).toMatchObject({ status: 'succeeded', records: 1, rows: 1 });
+
+  const { execFileSync } = await import('node:child_process');
+  const brokerNames = execFileSync(
+    'docker',
+    ['ps', '--filter', 'name=streaming-broker-0', '--format', '{{.Names}}'],
+    { encoding: 'utf8' },
+  ).trim().split(/\r?\n/).filter(Boolean);
+  expect(brokerNames).toHaveLength(1);
+  const broker = brokerNames[0];
+  let brokerStopped = false;
+  try {
+    execFileSync('docker', ['stop', broker], { encoding: 'utf8', timeout: 20_000 });
+    brokerStopped = true;
+    // Allow the replica leader election and the client metadata refresh to settle
+    // before exercising the API path; the request itself must remain successful.
+    await page.waitForTimeout(3_000);
+
+    const resumed = await request('POST', runPath, { limit: 4, timeout_seconds: 5 });
+    expect(resumed.status(), await resumed.text()).toBe(200);
+    expect(await resumed.json()).toMatchObject({ status: 'succeeded', records: 4, rows: 4 });
+
+    expect(execFileSync('docker', ['inspect', '-f', '{{.State.Running}}', broker], { encoding: 'utf8' }).trim()).toBe('false');
+    execFileSync('docker', ['start', broker], { encoding: 'utf8', timeout: 20_000 });
+    brokerStopped = false;
+    let brokerHealth = '';
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      brokerHealth = execFileSync(
+        'docker',
+        ['inspect', '-f', '{{.State.Health.Status}}', broker],
+        { encoding: 'utf8' },
+      ).trim();
+      if (brokerHealth === 'healthy') break;
+      await page.waitForTimeout(500);
+    }
+    expect(brokerHealth).toBe('healthy');
+    await page.waitForTimeout(1_000);
+
+    const finalHealth = await request('GET', healthPath);
+    expect(finalHealth.status(), await finalHealth.text()).toBe(200);
+    expect((await finalHealth.json()).total_lag).toBe(0);
+    expect(calls.some(call => call.path === runPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
+    expect(calls.some(call => call.path === healthPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
+    await flushLiveTraffic();
+  } finally {
+    if (brokerStopped) execFileSync('docker', ['start', broker], { encoding: 'utf8', timeout: 20_000 });
+  }
+});
+
 test('live streaming drains a two-partition backlog in bounded micro-batches', async ({ page }) => {
   test.setTimeout(180_000);
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
