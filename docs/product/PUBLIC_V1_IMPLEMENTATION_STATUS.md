@@ -7,21 +7,23 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
-D74 binds the current exact candidate `e48aa5f43836d0fd7906834abe6396712a8e30ac`
-to a verified release artifact bundle: candidate boundary `1,581` files and
-`16,681,515` sandbox bytes, wheel/sdist identity, a `106`-component CycloneDX
-application SBOM and local in-toto/SLSA provenance. Basic supply-chain
-validation passes, while strict validation exits `2` until two distinct bound
-Trivy container inventories exist. D73 remains linked for the clean exact-
-candidate security scans: Gitleaks `0`, pip-audit `0` known vulnerability
-records, Trivy filesystem `0/0`, Trivy worker-image `0/0`, and `193`
-supply-chain/release/security contracts passed. D72 remains linked for the
-Docker worker and live Notebook journey (`27/27`, strict `15/15`, then `1/1`
-with `18/18` correlated `OK` events); D71 for three-broker failover, D70 for
-the current `16,384`-record single-broker journey, D69 for the full
-Python/PostgreSQL regression, and D68 for the Helm chain. This finite local
-artifact/security cell does not qualify indefinite operation or the complete
-P11 family; the release remains **NO-GO**.
+D75 binds the current exact candidate `e48aa5f43836d0fd7906834abe6396712a8e30ac`
+to a complete runtime/probe release artifact bundle: the D74 candidate
+boundary, wheel/sdist identity, two distinct Trivy CycloneDX `1.7` inventories,
+a `110`-component application SBOM and local in-toto/SLSA provenance. Trivy
+`0.76.1` reports `0` vulnerabilities and `0` secrets for both images; basic
+and strict supply-chain validation pass, with runtime `59` and probe `56` OS
+packages recorded. D74 remains linked for the candidate boundary and
+application artifact bundle; D73 for the clean exact-candidate security scans:
+Gitleaks `0`, pip-audit `0` known vulnerability records, Trivy filesystem
+`0/0`, Trivy worker-image `0/0`, and `193` supply-chain/release/security
+contracts passed. D72 remains linked for the Docker worker and live Notebook
+journey (`27/27`, strict `15/15`, then `1/1` with `18/18` correlated `OK`
+events); D71 for three-broker failover, D70 for the current `16,384`-record
+single-broker journey, D69 for the full Python/PostgreSQL regression, and D68
+for the Helm chain. This finite local artifact/security cell does not qualify
+indefinite operation or the complete P11 family; the release remains
+**NO-GO**.
 
 D67 remains linked as an earlier scaled live regression on the preceding exact
 candidate and binds `018176e0a3693d668bac0d049a6ce4db3c7f2723` to a

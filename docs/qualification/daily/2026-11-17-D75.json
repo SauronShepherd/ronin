@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D75",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate runtime/probe container SBOM binding and strict supply-chain pass",
+  "candidate_sha": "e48aa5f43836d0fd7906834abe6396712a8e30ac",
+  "implementation_commit_sha": "e48aa5f43836d0fd7906834abe6396712a8e30ac",
+  "documentation_commit_sha": "e48aa5f43836d0fd7906834abe6396712a8e30ac",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D75.md",
+  "execution_scope": "exact-candidate-runtime-probe-container-sboms-and-strict-supply-chain",
+  "result": {
+    "runtime_image": "PASS: runtime TAR 5ab8cd71, config ffb2d740, Trivy CycloneDX 1.7 bound with 59 OS packages",
+    "probe_image": "PASS: probe TAR 205a53db, config 6deec76c, Trivy CycloneDX 1.7 bound with 56 OS packages",
+    "container_scans": "PASS: Trivy 0.76.1 runtime/probe findings exit 0 with 0 vulnerabilities and 0 secrets each",
+    "artifact_identity": "PASS: wheel, sdist, runtime/probe TARs and raw Trivy SBOMs bind to candidate e48aa5f4",
+    "application_sbom": "PASS: CycloneDX 1.6 regenerated and verified against all identity subjects",
+    "local_provenance": "PASS: in-toto/SLSA local statement regenerated for the complete artifact identity",
+    "supply_chain_basic": "PASS: complete identity, application SBOM, two bound container SBOMs and provenance",
+    "supply_chain_strict": "PASS: validator accepted two distinct bound Trivy container inventories",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The local provenance is self-reported and unsigned; it is not a trusted builder attestation.",
+    "The strict container-inventory requirement is technically satisfied, but human security/VEX, license, product and release decisions remain open.",
+    "Indefinite operation, provider breadth and complete P11 qualification remain open."
+  ]
+}

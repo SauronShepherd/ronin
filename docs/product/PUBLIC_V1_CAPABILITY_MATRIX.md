@@ -3,11 +3,12 @@
 ## Current exact-SHA snapshot — 17 November 2026
 
 The current code/evidence candidate is `e48aa5f43836d0fd7906834abe6396712a8e30ac`.
-D74 adds exact-candidate release artifact evidence: the candidate boundary,
-wheel/sdist identity, a `106`-component CycloneDX application SBOM and local
-in-toto/SLSA provenance pass basic supply-chain validation. Strict validation
-fails closed with exit `2` until two distinct bound Trivy container inventories
-exist. D73 adds exact-candidate security evidence: Gitleaks and pip-audit are clean,
+D75 completes exact-candidate release artifact evidence: runtime and probe TARs
+have distinct bound Trivy CycloneDX `1.7` inventories, both image scans report
+`0` vulnerabilities and `0` secrets, and basic plus strict supply-chain
+validation pass. D74 adds the candidate boundary, wheel/sdist identity, a
+`106`-component CycloneDX application SBOM and local in-toto/SLSA provenance.
+D73 adds exact-candidate security evidence: Gitleaks and pip-audit are clean,
 Trivy filesystem and worker-image scans report `0` vulnerabilities and `0`
 secrets, and `193` supply-chain/release/security contracts pass. D72 adds an
 exact-candidate Docker worker/Notebook cell: Docker `27/27`, strict
