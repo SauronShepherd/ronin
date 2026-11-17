@@ -7,6 +7,22 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D90 refreshes the route-wide live audit on the exact candidate
+`633980dd3b08affcc604dc918c1a6cbf026cc408` with PostgreSQL, Redpanda, the
+Ronin API and a real worker image built from the same source: `25` active
+routes (`24` API-backed and `1` UI-only), `39/40` browser cases passed and
+`379/379` API events correlated. The single skipped case is explicitly the
+multi-broker failover, which the runner requires to be selected as a focused
+three-broker diagnostic; the route-wide result is therefore kept open rather
+than promoted to a full PASS.
+
+D91 runs that focused multi-broker case on the same candidate with three
+brokers at RF3 and the worker image available: `1/1` passed, `0` skips, `0`
+failures and `5/5` correlated API events, all `OK`, with isolated cleanup.
+Together D90 and D91 provide current-SHA route coverage and the separate
+multi-broker recovery cell without claiming indefinite operation or a complete
+P11 family journey.
+
 D89 renueva el dossier de artefactos y supply-chain para la misma frontera
 exacta: wheel/sdist, TARs runtime/probe, identidad de artefactos, SBOM de
 aplicación de `110` componentes, dos inventarios de contenedor distintos
@@ -38,9 +54,8 @@ Estas celdas actualizan la evidencia bounded del candidato nuevo, pero no
 prueban operación indefinida, topología productiva, amplitud de proveedores,
 la familia P11 completa ni la aprobación de release. D76–D82 permanecen como
 recibos del candidato anterior `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0` y
-no se reatribuyen al SHA nuevo; la renovación exacta de artefactos,
-SBOM/provenance y scans de supply-chain sigue pendiente. El release permanece
-**NO-GO** en `1/13` familias y `0/10` gates.
+no se reatribuyen al SHA nuevo. El release permanece **NO-GO** en `1/13`
+familias y `0/10` gates.
 
 D67 remains linked as an earlier scaled live regression on the preceding exact
 candidate and binds `018176e0a3693d668bac0d049a6ce4db3c7f2723` to a

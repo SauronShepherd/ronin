@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D90",
+  "date": "2026-11-17",
+  "status": "in_progress",
+  "cell": "Exact-candidate route-wide live audit with real worker",
+  "candidate_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D90.md",
+  "execution_scope": "exact-candidate-route-wide-live-audit-with-postgresql-redpanda-ronin-api-and-real-worker",
+  "result": {
+    "runner": "OPEN: route-wide runner records 39 passed, 1 explicit multi-broker skip and 0 case failures; the default mode intentionally requires a focused three-broker diagnostic for that case",
+    "coverage": "PASS: 25 active routes, 24 API-backed and 1 UI-only; routeCoverage.audited=true",
+    "api": "PASS WITH EXPECTED FIXTURE RESPONSES: 379/379 events correlated, 0 uncorrelated; 355 OK, 21 expected WARN and 3 correlated 503 streaming_unavailable responses during broker recovery/availability",
+    "worker": "PASS: real worker image sha256:43229621f96e91ea32617fe34535fd129be4e6cfde44a710994a4c7350d594d3 supplied from the exact candidate",
+    "cleanup": "PASS: isolated services closed and temporary worker image removed by immutable digest",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The default route-wide runner intentionally skips the multi-broker case; D91 supplies that focused cell separately.",
+    "The bounded route audit does not qualify indefinite operation, production topology, provider breadth, complete P11 family evidence or human release approval."
+  ]
+}
