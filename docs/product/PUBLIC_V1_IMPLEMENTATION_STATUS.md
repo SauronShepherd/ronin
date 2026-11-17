@@ -7,6 +7,21 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D64 fixes the live qualification harness so a filtered diagnostic that selects
+`performance` or the complete route surface stages the repository's
+`ronin-plugin-performance` package. The first broad route attempt exposed the
+gap as a `404` on `/api/v1/performance/analyze`; that attempt is not counted.
+The corrected exact candidate `728e1b7861790e7b44bd3081dbdaae60159e2ab4`
+passes the route-surface diagnostic `26/26` with `25` active routes (`24`
+API-backed and `1` UI-only), `220/220` real API events correlated with
+structured logs (`212` OK and `8` expected WARN), zero unexpected
+authorization/server/network errors and successful cleanup in `135.95 s`.
+`routeCoverage.audited=false` because this is an explicit filtered diagnostic;
+the worker image remains unavailable. D64 is route-surface evidence, not the
+full worker-backed live qualification, a complete family journey or a release
+gate. The ledger remains unchanged: release is **NO-GO** at `1/13` families
+and `0/10` gates.
+
 D63 adds clean source, locked-dependency and filesystem vulnerability/secret
 scan evidence over the already verified exact candidate
 `e27cb00fe680c6ff30ee7e26da2d8556970f8ca5`. Gitleaks `8.30.1` scans
@@ -426,11 +441,11 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `e27cb00fe680c6ff30ee7e26da2d8556970f8ca5` (2026-11-17).
+**Observed source head:** `728e1b7861790e7b44bd3081dbdaae60159e2ab4` (2026-11-17).
 The runtime/test candidate is recorded separately in the exact qualification
-receipt; the ledger does not close the release. The live qualification harness
-was rerun on this candidate with the same worker image used for Docker/Helm;
-earlier receipts remain historical.
+receipt; the ledger does not close the release. D64 is a filtered route-surface
+run with `workerImage=null`; earlier worker-backed receipts remain historical
+and are not inherited as current D64 evidence.
 
 **D21 scheduler evidence update (2026-11-15):** exact candidate
 `f667460650525a5d8a155cad1be5dcff2fc3fd14` passes the bounded local

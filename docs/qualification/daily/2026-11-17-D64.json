@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D64",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "Exact-candidate live route surface and qualification-harness correction",
+  "candidate_sha": "728e1b7861790e7b44bd3081dbdaae60159e2ab4",
+  "implementation_commit_sha": "728e1b7861790e7b44bd3081dbdaae60159e2ab4",
+  "documentation_commit_sha": "728e1b7861790e7b44bd3081dbdaae60159e2ab4",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D64.md",
+  "execution_scope": "exact-candidate-filtered-live-route-surface",
+  "result": {
+    "runner_fix": "PASS: the filtered runner stages ronin-plugin-performance for performance or route patterns; 25 qualification contracts pass",
+    "live_route_surface": "PASS: 26/26 Playwright cases across 25 active routes, 220/220 correlated API events, 212 OK and 8 expected WARN, zero unexpected authorization/server/network errors, cleanup succeeded",
+    "route_coverage": "BOUNDED: 25 active routes observed (24 API-backed and 1 UI-only), but routeCoverage.audited=false because this is a filtered diagnostic",
+    "release_effect": "No family or release gate changes; workerImage is null and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The first prior-candidate route attempt was rejected as evidence because the skipped Performance plugin caused a 404; the fix is included in candidate 728e1b78 and the final run is the counted result.",
+    "This is filtered route-surface evidence, not the unfiltered route-wide audit or worker-backed full live qualification.",
+    "P11, P13, provider lanes, family journeys and all mandatory release decisions remain open."
+  ]
+}

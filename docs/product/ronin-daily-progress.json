@@ -514,13 +514,23 @@
       "evidence": "docs/qualification/handoffs/2026-11-17-D63.md",
       "candidate_sha": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5",
       "commit_sha": "e27cb00fe680c6ff30ee7e26da2d8556970f8ca5"
+    },
+    {
+      "id": "D64",
+      "date": "2026-11-17",
+      "phase": "exact-candidate-live-route-surface-and-qualification-harness",
+      "status": "pass",
+      "families": [],
+      "evidence": "docs/qualification/handoffs/2026-11-17-D64.md",
+      "candidate_sha": "728e1b7861790e7b44bd3081dbdaae60159e2ab4",
+      "commit_sha": "728e1b7861790e7b44bd3081dbdaae60159e2ab4"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D63 is the latest scan receipt over the verified exact candidate e27cb00fe680c6ff30ee7e26da2d8556970f8ca5: Gitleaks, pip-audit and pinned Trivy filesystem vuln/secret scans are clean. D62's active Streaming Studio route passes 1/1 with 52/52 correlated events, while the implementation baseline remains 0a0cd36d47e403808db519f62eefd726f95637a4. D61's parameterized 1024-record live backpressure cell remains green at 1/1. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
+      "summary": "D64 is the latest exact candidate source 728e1b7861790e7b44bd3081dbdaae60159e2ab4: corrected filtered route-surface diagnostics pass 26/26 cases and 220/220 correlated events across 25 active routes, while routeCoverage.audited=false and workerImage=null. D63's Gitleaks, pip-audit and pinned Trivy filesystem vuln/secret scans are clean. The implementation baseline remains 0a0cd36d47e403808db519f62eefd726f95637a4. D61's parameterized 1024-record live backpressure cell remains green at 1/1. P11 remains open for indefinite backpressure, supervisor continuity, worker/provider breadth, production topology support, the complete family journey, final release dossier, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",
@@ -535,7 +545,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D58 full Python/PostgreSQL regression is green on the exact clean candidate: 4753 passed, 31 expected external/platform skips and 0 failed. D63 adds clean Gitleaks, pip-audit and pinned Trivy filesystem scans over the verified D62 sandbox; D62 adds a candidate-bound live Streaming Studio route pass on exact source e27cb00f with 1/1 case and 52 correlated events; D61 adds the 1024-record live backpressure cell. Docker/worker, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain unqualified where skipped, and the 13 SQLite ResourceWarnings remain a follow-up quality item. Scans, skips and warnings are not counted as complete release PASS."
+      "summary": "D58 full Python/PostgreSQL regression is green on the exact clean candidate: 4753 passed, 31 expected external/platform skips and 0 failed. D64 adds corrected exact-candidate filtered route-surface evidence at 26/26 cases and 220/220 correlated events; D63 adds clean Gitleaks, pip-audit and pinned Trivy filesystem scans over the verified D62 sandbox; D62 adds a candidate-bound live Streaming Studio route pass on exact source e27cb00f with 1/1 case and 52 correlated events; D61 adds the 1024-record live backpressure cell. Full route audit, Docker/worker, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain unqualified where skipped, and the 13 SQLite ResourceWarnings remain a follow-up quality item. Scans, route diagnostics, skips and warnings are not counted as complete release PASS."
     },
     {
       "id": "catalog-project-scope",

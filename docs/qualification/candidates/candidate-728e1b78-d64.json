@@ -1,0 +1,90 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D64",
+  "status": "pass",
+  "outcome": "pass for corrected filtered live route-surface diagnostics over the exact candidate; this does not close the route-wide, worker-backed or Public v1 release gate",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "728e1b7861790e7b44bd3081dbdaae60159e2ab4",
+    "origin_main_sha_when_candidate_was_tested": "728e1b7861790e7b44bd3081dbdaae60159e2ab4",
+    "worktree_source_mode": "clean exact candidate; live route-surface evidence was written outside the repository"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-728e1b78-d64",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-728e1b78-d64\\candidate-728e1b7861790e7b44bd3081dbdaae60159e2ab4.tar",
+      "format": "tar",
+      "sha256": "b1aa64d87daebc240981e0cbb82bc61fc0b2de9684876985c784560f71b66617",
+      "size": 17838080
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-728e1b78-d64\\candidate-728e1b7861790e7b44bd3081dbdaae60159e2ab4.manifest.json",
+      "sha256": "0b614110e623eac7078da40b424dcb08fd12a99b98337c2dd493f1966bc249ef",
+      "size": 240749
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-728e1b78-d64\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1557,
+    "total_bytes": 16570645,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "728e1b7861790e7b44bd3081dbdaae60159e2ab4",
+    "candidate_docs_commit": "728e1b7861790e7b44bd3081dbdaae60159e2ab4",
+    "production_files_changed": [],
+    "fixture_files_changed": [],
+    "test_files_changed": [
+      "tests/test_docker_qualification_contract.py"
+    ],
+    "qualification_tooling_changed": [
+      "tools/run_live_product_qualification.ps1"
+    ],
+    "summary": "D64 fixes filtered live route diagnostics so the Performance plugin is staged when the selected pattern can exercise Performance Studio or the complete route surface. No Ronin production runtime or fixture source changed."
+  },
+  "commands": {
+    "candidate_generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 728e1b7861790e7b44bd3081dbdaae60159e2ab4 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-728e1b78-d64",
+    "candidate_verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-728e1b78-d64",
+    "static_contracts": "python -m pytest -q -p no:cacheprovider tests/test_docker_qualification_contract.py; PowerShell parser check for tools/run_live_product_qualification.ps1; node --check web-tests/tests/product-live.spec.mjs; git diff --check",
+    "live_route_surface": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d64-all-routes-candidate-728e1b78-20261117 -TestGrep route"
+  },
+  "qualification_matrix": {
+    "runner_fix": "PASS: qualification-runner contract selection 25/25, PowerShell parse, Node syntax and diff checks pass; Performance plugin is staged for TestGrep patterns matching performance or route",
+    "live_route_surface": "PASS: 26/26 filtered Playwright cases; 25 active routes (24 API-backed and 1 UI-only); 220/220 real API events correlated with structured logs, 212 OK and 8 expected WARN; zero unexpected authorization/server/network errors; cleanup succeeded; 135.95 seconds",
+    "real_services": "PASS: PostgreSQL, Kafka/Redpanda and Ronin API were real and active; workerImage is null",
+    "route_audit": "NOT_RUN: the route pattern is an explicit filtered diagnostic, so routeCoverage.audited=false even though all active route cases were selected",
+    "security_and_release": "INHERITED: D63 source/dependency/filesystem scans remain clean; this D64 cell does not add runtime/probe image, SBOM/provenance, provider, license or human acceptance evidence",
+    "release": "NO-GO: no family or release gate closes; the ledger remains 1/13 families and 0/10 gates"
+  },
+  "evidence": {
+    "live_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d64-all-routes-candidate-728e1b78-20261117",
+    "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d64-all-routes-candidate-728e1b78-20261117\\qualification-summary.json",
+    "qualification_summary_sha256": "8b3691edc01432750163479b9e47d30c20e5e55760a1e99d9d12393b3e54a3b7",
+    "qualification_summary_size": 3005,
+    "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d64-all-routes-candidate-728e1b78-20261117\\live-api-traffic.json",
+    "live_api_traffic_sha256": "a0d310f05c6a1112e6050eee5f100994283217353aa2cc962013cf3a2ce481c3",
+    "live_api_traffic_size": 66341,
+    "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d64-all-routes-candidate-728e1b78-20261117\\browser-live.xml",
+    "browser_junit_sha256": "37f92b6d36131b0be4c51800ca18c261bacc054883bf62bc46fe54c40321b0a3",
+    "browser_junit_size": 3504,
+    "browser_log": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d64-all-routes-candidate-728e1b78-20261117\\browser-live.log",
+    "browser_log_sha256": "67f4d7e44020a5f72368dc5e036585e5b63cf46b8de93c5acb0173fa23a0003d",
+    "browser_log_size": 2866
+  },
+  "open_cells": [
+    "D64 is filtered route-surface evidence only; the runner deliberately records routeCoverage.audited=false for TestGrep diagnostics and the full unfiltered audit remains open.",
+    "workerImage is null, so worker/provider breadth, notebook execution, production topology and the complete family journey remain unqualified.",
+    "D64 does not change the ledger: P11 remains in_progress, P13 remains blocked, no family or release gate closes and release remains NO-GO."
+  ],
+  "limitations": [
+    "A first broad route attempt on the prior candidate was not counted because the filtered runner skipped the Performance plugin and the performance route returned 404; the harness fix is included and tested in this candidate.",
+    "The route pattern selects all active route cases plus the traffic-integrity case, but because it is filtered it does not activate the runner's unfiltered routeCoverage audit.",
+    "Live evidence outputs are local under %TEMP%; the repository receipt records paths and SHA-256 digests but does not commit binary reports."
+  ]
+}
