@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D60",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "P11 exact-candidate live streaming slices",
+  "candidate_sha": "7f0a005db3b853b55e6a4b00f660d8b5753c2ef5",
+  "implementation_commit_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
+  "documentation_commit_sha": "7f0a005db3b853b55e6a4b00f660d8b5753c2ef5",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D60.md",
+  "execution_scope": "live-api-browser-streaming-slices",
+  "result": {
+    "core_streaming": "PASS: 5/5 cases, 74/74 correlated events, 70 OK and 4 expected WARN, 0 unexpected server/network errors, 85.46 seconds",
+    "multi_broker_failover": "PASS: 1/1 case, 5/5 correlated events all OK, three brokers with replication factor three, 0 unexpected server/network errors, 65.96 seconds",
+    "broker_restart": "PASS: 1/1 case, 11/11 correlated events, 8 OK and 3 expected 503 outage outcomes, 0 unexpected server/network errors, 56.13 seconds",
+    "aggregate": "PASS: 7/7 valid cases and 90 correlated events across the three filtered runs; all isolated services cleaned up successfully",
+    "release_effect": "No family or release gate changes; P11 remains in_progress and release remains NO-GO"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The broad streaming diagnostic executed 7/8 with one deliberate multi-broker skip and was not counted as a pass; the exact multi-broker, broker-restart and core slices above are the valid D60 evidence.",
+    "The runner summaries report 25 active routes, 24 API-contract routes and 1 UI-only route, but routeCoverage.audited=false for these filtered runs.",
+    "No worker image or external provider profile was available; worker/provider, security-scan and human review lanes remain open.",
+    "D60 is bounded live P11 evidence and does not close the family or any release gate."
+  ]
+}

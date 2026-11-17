@@ -1,0 +1,114 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D60",
+  "status": "pass",
+  "outcome": "pass for bounded live P11 streaming slices on the exact documentation-inclusive candidate; this does not qualify P11, close a release gate or change release NO-GO",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "7f0a005db3b853b55e6a4b00f660d8b5753c2ef5",
+    "origin_main_sha_when_candidate_was_tested": "7f0a005db3b853b55e6a4b00f660d8b5753c2ef5",
+    "worktree_source_mode": "exact-commit checkout; clean candidate boundary verified after live qualification"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7f0a005d-d60",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7f0a005db3b853b55e6a4b00f660d8b5753c2ef5.tar",
+      "format": "tar",
+      "sha256": "b4583192428448fcdaddd86d8202bd3a7661af1e54eaecd0ac15f930bdd617e2",
+      "size": 17766400
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7f0a005d-d60\\candidate-7f0a005db3b853b55e6a4b00f660d8b5753c2ef5.manifest.json",
+      "sha256": "11c2cf5074b23eb596c3ca30a5b8c882272a941e559619a759a58b442e5ea352",
+      "size": 238773
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7f0a005d-d60\\candidate-7f0a005db3b853b55e6a4b00f660d8b5753c2ef5.sha256",
+      "sha256": "25e40124bb3015b57f53397f9a5f3b82ec4c301f618e5e5e66691fa8f438220f",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7f0a005d-d60\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1545,
+    "total_bytes": 16509858,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "0a0cd36d47e403808db519f62eefd726f95637a4",
+    "candidate_docs_commit": "7f0a005db3b853b55e6a4b00f660d8b5753c2ef5",
+    "production_files_changed": [],
+    "fixture_files_changed": [],
+    "test_files_changed": [],
+    "documentation_changed_in_candidate_docs_commit": [
+      "docs/qualification/daily/2026-11-17-D59.json",
+      "docs/qualification/handoffs/2026-11-17-D59.md",
+      "docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md",
+      "docs/product/public-v1-status.json",
+      "docs/product/ronin-daily-progress.json"
+    ],
+    "summary": "D60 runs the exact candidate through three filtered live streaming slices. The implementation baseline remains 0a0cd36d47e403808db519f62eefd726f95637a4; D60 changes no production or test source."
+  },
+  "commands": {
+    "candidate_generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 7f0a005db3b853b55e6a4b00f660d8b5753c2ef5 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7f0a005d-d60",
+    "candidate_verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-7f0a005d-d60",
+    "core_streaming": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d60-streaming-core-candidate-7f0a005d-20261117 -TestGrep \"live streaming (?!broker restart|multi-broker)\"",
+    "multi_broker": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d60-multi-broker-candidate-7f0a005d-20261117 -TestGrep \"live streaming multi-broker failover\" -MultiBroker",
+    "broker_restart": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d60-broker-restart-candidate-7f0a005d-20261117 -TestGrep \"live streaming broker restart\""
+  },
+  "qualification_matrix": {
+    "exact_candidate_boundary": "PASS: source 7f0a005db3b853b55e6a4b00f660d8b5753c2ef5; archive, manifest and sandbox verification succeeded",
+    "core_streaming": "PASS: 5/5 Playwright cases; 74/74 correlated API events, 70 OK and 4 expected WARN; PostgreSQL, Kafka and Ronin API real services; zero unexpected server/network errors; cleanup succeeded; 85.46 seconds",
+    "multi_broker_failover": "PASS: 1/1 case; 5/5 correlated API events all OK; three broker nodes with replication factor three; Kafka and Ronin API real services; zero unexpected server/network errors; cleanup succeeded; 65.96 seconds",
+    "broker_restart": "PASS: 1/1 case; 11/11 correlated API events, 8 OK and 3 expected 503 outage outcomes; PostgreSQL, Kafka and Ronin API real services; zero unexpected server/network errors; cleanup succeeded; 56.13 seconds",
+    "aggregate_live_slices": "PASS: 7/7 cases across the three valid filtered runs and 90 correlated events; expected WARN/503 outcomes remain explicitly classified and no unexpected server/network error was observed",
+    "combined_diagnostic_attempt": "NOT_COUNTED: the broad streaming grep executed 7/8 with one deliberate multi-broker skip and therefore failed the runner's no-skips audit; it is retained only as diagnostic context, not as a qualification receipt",
+    "route_audit": "NOT_RUN: the live runner summaries report activeRoutes=25, routesWithApiContracts=24 and uiOnlyRoutes=1, but routeCoverage.audited=false",
+    "worker_provider_matrix": "NOT_RUN: workerImage is null and no external provider profile was authorized",
+    "release": "NO-GO: no family or release gate closes; the ledger remains 1/13 families and 0/10 gates"
+  },
+  "evidence": {
+    "core_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d60-streaming-core-candidate-7f0a005d-20261117",
+    "core_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d60-streaming-core-candidate-7f0a005d-20261117\\qualification-summary.json",
+    "core_summary_sha256": "f7c49fdafb4427fd962055165fda2cf661861e666f005c220ebe65d710d78b6b",
+    "core_summary_size": 2942,
+    "core_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d60-streaming-core-candidate-7f0a005d-20261117\\live-api-traffic.json",
+    "core_traffic_sha256": "ed85f11f406c491b359b85f5cd6c07bddd070b014f63b2dc73b3d600bc0a205d",
+    "core_traffic_size": 24105,
+    "core_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d60-streaming-core-candidate-7f0a005d-20261117\\browser-live.xml",
+    "core_junit_sha256": "81819cc8659b1f2fe371e276f2f81369e382bd096e17f593a862004808bf9ece",
+    "core_junit_size": 1033,
+    "multi_broker_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d60-multi-broker-candidate-7f0a005d-20261117",
+    "multi_broker_summary_sha256": "9b13dea16bc181dea9911de74cbc7b8b62622649627ef1eda136ad5c8137658e",
+    "multi_broker_summary_size": 2912,
+    "multi_broker_traffic_sha256": "40dbe497c1ccd09cdcda76572f259c9c9434908325cfa791d19d15b860f8ec74",
+    "multi_broker_traffic_size": 1642,
+    "multi_broker_junit_sha256": "198148bf3fcf9e98cb498ed2dcbde25b800aef0add603d26e69a655165848b20",
+    "multi_broker_junit_size": 424,
+    "broker_restart_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d60-broker-restart-candidate-7f0a005d-20261117",
+    "broker_restart_summary_sha256": "5b6fb8faffb27fef780c4db6cac5173676ea767448931069dbb96788bba5149d",
+    "broker_restart_summary_size": 2943,
+    "broker_restart_traffic_sha256": "3a0c90645c2f83754a5b5f55123e07b4f281c65017af85788a5dc9540bc0531b",
+    "broker_restart_traffic_size": 3727,
+    "broker_restart_junit_sha256": "cc58197e0d06cb0e1c724c2e25aa44603349fcd0c386e15bb0dfe1b2b9cec20c",
+    "broker_restart_junit_size": 427
+  },
+  "open_cells": [
+    "P11 remains in_progress: D60 is bounded live evidence, not indefinite operation, production topology qualification, worker/provider applicability, broader sink/replay coverage or the complete family journey.",
+    "The live runner route audit was not enabled for these filtered slices; route-wide coverage, security scans and human visual/accessibility review remain open.",
+    "No Ronin worker image or authorized external provider profile was available in the environment; skipped Docker/worker/provider/platform lanes remain not qualified.",
+    "D58's 13 SQLite ResourceWarning entries remain a separate follow-up quality item; warnings and expected skips are not counted as PASS.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no release gate closes and release remains NO-GO."
+  ],
+  "limitations": [
+    "D60 validates three filtered live API/browser slices on one clean source SHA. It does not claim that the broad streaming grep passed because that attempt intentionally skipped the exact multi-broker fixture.",
+    "The candidate archive and live evidence are local reproducibility artifacts under %TEMP%; the repository receipt records their paths and SHA-256 digests but does not commit binary evidence.",
+    "The documentation commit that records this receipt is subsequent to the tested source SHA; no production or test source changed in D60."
+  ]
+}

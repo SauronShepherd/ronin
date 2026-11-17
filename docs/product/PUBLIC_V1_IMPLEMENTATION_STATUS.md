@@ -7,6 +7,25 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
+D60 adds bounded live evidence for P11 on the exact documentation-inclusive
+candidate `7f0a005db3b853b55e6a4b00f660d8b5753c2ef5`; the implementation code
+baseline remains `0a0cd36d47e403808db519f62eefd726f95637a4`. Three filtered live
+API/browser slices pass `7/7` cases and correlate `90/90` HTTP events with the
+Ronin logs: the core streaming slice passes `5/5` with `74` events (`70` OK,
+`4` expected WARN), multi-broker failover passes `1/1` with `5/5` OK events on
+three brokers, and broker restart passes `1/1` with `11` events (`8` OK and
+`3` expected `503` outage outcomes). All valid slices report zero unexpected
+server/network errors and successful cleanup. The initial broad `streaming`
+grep is retained as a diagnostic non-pass because it contained one deliberate
+multi-broker skip; it is not mixed into the `7/7` result.
+
+D60 is bounded live evidence, not a complete P11 or Public v1 qualification.
+The runner route audit was not enabled (`routeCoverage.audited=false`), no
+worker image or external provider profile was available, and indefinite
+operation, production topology support, broader sink/replay coverage, the
+complete family journey, security scans and human review remain open. Release
+remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D59 repaired the stale Studio web-budget ratchet exposed by the static gate.
 The normalized asset measurement is now `2,171,102` bytes across `71` assets,
 with `37` JavaScript modules, `15` stylesheets and `5,838` HTML bytes; the
