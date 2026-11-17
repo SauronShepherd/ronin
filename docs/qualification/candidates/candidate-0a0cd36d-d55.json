@@ -1,0 +1,146 @@
+{
+  "schema": "ronin.candidate-receipt/v1",
+  "phase": "D55",
+  "status": "pass",
+  "outcome": "pass for the candidate-bound streaming regression set and the resilient single-broker outage audit; this does not qualify P11 or close a release gate",
+  "execution_date": "2026-11-17",
+  "planned_date": "2026-11-17",
+  "repository": {
+    "remote": "https://github.com/SauronShepherd/ronin.git",
+    "branch": "main",
+    "candidate_source_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
+    "origin_main_sha_when_candidate_was_tested": "0a0cd36d47e403808db519f62eefd726f95637a4",
+    "worktree_source_mode": "exact-commit archive; working-tree changes were excluded"
+  },
+  "candidate": {
+    "output_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0a0cd36d-d55",
+    "archive": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0a0cd36d-d55\\candidate-0a0cd36d47e403808db519f62eefd726f95637a4.tar",
+      "format": "tar",
+      "sha256": "8481dc1fae2986fcdcfa917024e303664039db20a2e28d1a8981cb89fed6fed1",
+      "size": 17694720
+    },
+    "manifest": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0a0cd36d-d55\\candidate-0a0cd36d47e403808db519f62eefd726f95637a4.manifest.json",
+      "sha256": "856add3a07d613e9b524f94e0ffeca6d9778e6d46bb585166290af567729a779",
+      "size": 236475
+    },
+    "digest_file": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0a0cd36d-d55\\candidate-0a0cd36d47e403808db519f62eefd726f95637a4.sha256",
+      "sha256": "ded64203f3354f821992244a1fd7bdc6642f830e0e3a95392a84047528b4b7ee",
+      "size": 252
+    },
+    "sandbox": {
+      "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0a0cd36d-d55\\sandbox",
+      "git_metadata_present": false,
+      "generated_test_artifacts_after_cleanup": false
+    },
+    "file_count": 1531,
+    "total_bytes": 16444240,
+    "file_listing_sorted": true,
+    "output_outside_repository": true
+  },
+  "implementation": {
+    "code_commit": "0a0cd36d47e403808db519f62eefd726f95637a4",
+    "candidate_docs_commit": null,
+    "parent_commit": "6e59df97",
+    "summary": "D55 fixes the qualification runner's broker-restart outage contract: it requires health and run coverage while allowing transient repeated health 503 responses during broker recovery. The focused contract test records this rule. Ronin production streaming code is unchanged.",
+    "production_files_changed": [],
+    "fixture_files_changed": [],
+    "test_files_changed": [
+      "tools/run_live_product_qualification.ps1",
+      "tests/test_docker_qualification_contract.py"
+    ]
+  },
+  "commands": {
+    "generate": "python -m tools.ronin_candidate_boundary generate --repo . --sha 0a0cd36d47e403808db519f62eefd726f95637a4 --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0a0cd36d-d55",
+    "verify": "python -m tools.ronin_candidate_boundary verify --repo . --output-dir C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-candidate-0a0cd36d-d55",
+    "candidate_contracts": "exact candidate sandbox: python -m pytest -q -p no:cacheprovider tests/test_docker_qualification_contract.py tests/test_streaming_runtime.py tests/test_streaming_kafka.py tests/test_streaming_bundle.py tests/test_streaming_contracts.py tests/test_stream_table.py -> 60 passed, 0 failed, 0 skipped",
+    "candidate_quality": "exact candidate selection: Ruff format/check, mypy on 13 streaming/control-plane/integration source files, Node syntax for the Playwright config and live specs, PowerShell parse, and candidate verify passed",
+    "single_broker_restart": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-broker-restart-candidate-0a0cd36d-r2-20261117 -TestGrep \"live streaming broker restart\"",
+    "multi_broker_failover": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-multi-broker-candidate-0a0cd36d-20261117 -TestGrep \"live streaming multi-broker failover resumes from the durable checkpoint\" -MultiBroker",
+    "d50_regression": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d50-candidate-0a0cd36d-20261117 -TestGrep \"live streaming sustained backpressure drains 256 records with reset-safe replay\"",
+    "d51_regression": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d51-candidate-0a0cd36d-20261117 -TestGrep \"live streaming enforces near-record and near-batch byte boundaries\""
+  },
+  "qualification_matrix": {
+    "runner_contract": "PASS: 25 Docker qualification contract tests; the outage audit requires at least one health and one run 503 and allows transient repeated health 503 responses",
+    "candidate_contracts": "PASS: 60/60 focused contracts, 0 failures and 0 skips in the exact candidate sandbox",
+    "single_broker_restart": "PASS: Playwright 1/1; 11/11 HTTP events correlated; 8 OK and 3 expected 503 ERROR responses during broker outage/recovery; 0 unexpected server/network errors",
+    "multi_broker_failover": "PASS: Playwright 1/1; real three-node/three-replica topic, broker-0 stopped during resume, 5/5 correlated events, 0 unexpected errors",
+    "d50_regression": "PASS: Playwright 1/1; 12/12 correlated events, all OK, 0 unexpected errors",
+    "d51_regression": "PASS: Playwright 1/1; 13/13 correlated events, 11 OK and 2 expected WARN, 0 unexpected errors",
+    "candidate_boundary": "PASS: exact archive and sandbox verified; 1531 files and 16444240 sandbox bytes with no Git metadata or generated artifacts",
+    "cleanup": "PASS: all four isolated live runs removed their temporary services, networks and volumes; no matching Docker residue remained",
+    "route_audit": "NOT_RUN: filtered streaming diagnostics only",
+    "security_scans": "NOT_RERUN in D55; earlier evidence remains separate",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license_qualification": "INHERITED FAIL/CLOSED; human review decisions remain open",
+    "result": "D55 strengthens same-candidate P11 evidence and repairs the outage-audit contract without qualifying P11, closing a gate or changing release NO-GO"
+  },
+  "evidence": {
+    "single_broker_restart": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-broker-restart-candidate-0a0cd36d-r2-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-broker-restart-candidate-0a0cd36d-r2-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "dc6f56e27725a337e5927acf2f4e0a3fc979c7a785d44ec8fad12718b8f6b24c",
+      "qualification_summary_size": 2969,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-broker-restart-candidate-0a0cd36d-r2-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "d8e9363f4e7696f95dd55cef0ce0d0f62acf0cd1a0fed694ac7c387d8c2f3fbf",
+      "live_api_traffic_size": 3728,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-broker-restart-candidate-0a0cd36d-r2-20261117\\browser-live.xml",
+      "browser_junit_sha256": "de864d4134f2545d5a61043d87779abdbf4932d9eba7c3fe7490bb78d87c990c",
+      "browser_junit_size": 418,
+      "status": "PASS: 1/1; 11 correlated events; 8 OK and 3 expected 503 ERROR responses; 0 unexpected server/network errors; duration 44.49 seconds"
+    },
+    "multi_broker_failover": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-multi-broker-candidate-0a0cd36d-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-multi-broker-candidate-0a0cd36d-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "df71915c4a8fb0c4650e928a61bb7a0d3605af7b168a5ca17ba8aca5f66ad49d",
+      "qualification_summary_size": 2911,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-multi-broker-candidate-0a0cd36d-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "ba14cc583616a200088d210f41294fa1472d27db08697d8d92819fd6365575cf",
+      "live_api_traffic_size": 1641,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-multi-broker-candidate-0a0cd36d-20261117\\browser-live.xml",
+      "browser_junit_sha256": "126f35b249eee4e6cbb2facfd4d350a904d082eece111ab26f2b16d3794a5667",
+      "browser_junit_size": 434,
+      "status": "PASS: 1/1; 5/5 correlated events; all OK; duration 43.00 seconds"
+    },
+    "d50_regression": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d50-candidate-0a0cd36d-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d50-candidate-0a0cd36d-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "601c2d1a704e0b58f835b9c252eaf45609496c40161f5ea8273c391690d7504d",
+      "qualification_summary_size": 2823,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d50-candidate-0a0cd36d-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "41239b317e82a06b93477012014bb0fc780ee4a3c57134b49e8fa19e5cbf6ca9",
+      "live_api_traffic_size": 3882,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d50-candidate-0a0cd36d-20261117\\browser-live.xml",
+      "browser_junit_sha256": "e0a9f3d4801b8d576cc317c131e3e0ed89245a3183647ce9617ec6734893d6e7",
+      "browser_junit_size": 441,
+      "status": "PASS: 1/1; 12/12 correlated events; all OK; duration 38.91 seconds"
+    },
+    "d51_regression": {
+      "qualification_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d51-candidate-0a0cd36d-20261117",
+      "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d51-candidate-0a0cd36d-20261117\\qualification-summary.json",
+      "qualification_summary_sha256": "80aac8004ba2fbaedac8d76c8d3c85a83d22b5e3162ed820f31d4694de40662f",
+      "qualification_summary_size": 2841,
+      "live_api_traffic": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d51-candidate-0a0cd36d-20261117\\live-api-traffic.json",
+      "live_api_traffic_sha256": "d0eb934f85e37183c988e43316808736a00f0a02b4312797dbb30eb7e778088d",
+      "live_api_traffic_size": 4350,
+      "browser_junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d51-candidate-0a0cd36d-20261117\\browser-live.xml",
+      "browser_junit_sha256": "7ffb51143193a320db85f57339b446bc300981d8751e17b9a2daf89f1d907382",
+      "browser_junit_size": 413,
+      "status": "PASS: 1/1; 13/13 correlated events; 11 OK and 2 expected WARN; duration 31.07 seconds"
+    }
+  },
+  "open_cells": [
+    "P11 remains in_progress: D55 covers bounded cap/reset/replay, byte boundaries, single-broker recovery and multi-broker API failover on one candidate, but indefinite operation, supervisor continuity, worker/provider breadth, production topology support and the complete family journey remain open.",
+    "D52 direct-runtime replicated recovery remains a separate receipt on an earlier candidate; D55 validates the API/control-plane and qualification-audit layers on the current candidate.",
+    "P13 remains blocked by external secret-provider qualification and release evidence; no authorized external provider was available.",
+    "No release gate closes; release remains NO-GO at 1/13 families and 0/10 gates."
+  ],
+  "limitations": [
+    "All four live journeys are filtered diagnostics, not route-wide browser qualification or a complete P11 family journey.",
+    "The single-broker restart summary contains three expected ERROR outcomes because the API correctly returns 503 while the broker is unavailable; the runner separately reports zero unexpected server/network errors.",
+    "PostgreSQL and workerImage are not applicable to the focused multi-broker diagnostic; no worker/provider matrix was exercised.",
+    "The runner fix changes qualification tooling only; Ronin production streaming modules were not changed."
+  ]
+}

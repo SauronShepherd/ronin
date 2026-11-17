@@ -7,28 +7,44 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
-D53 advances the exact candidate to `b69204d02cd3b7649cab49fc42b6bc68443a94b2`.
-The exact sandbox verifies `60/60` focused contracts with no skips, including
-the multi-broker compose profile, runner/seed contract and API/browser failover
-journey against a real three-node, three-replica Redpanda topic. After one
-committed record, the journey stops broker-0, resumes four records from the
-durable checkpoint through surviving brokers, restores the failed container and
-reaches final lag zero. The clean candidate-bound Playwright run passes `1/1`
-with `5/5` correlated HTTP events, zero server/network errors and cleanup
-success. Final health is checked after broker restoration; the failure window
-is asserted while broker-0 is stopped. This is same-candidate P11 recovery
-evidence, not a complete family qualification: sustained backpressure,
-worker/provider breadth, production topology support, route-wide audit and the
-remaining release gates remain open. Release remains **NO-GO** at `1/13`
-families and `0/10` gates.
+D55 advances the exact candidate to `0a0cd36d47e403808db519f62eefd726f95637a4`.
+The exact sandbox verifies `60/60` focused contracts with no skips and the
+qualification runner contract selection verifies `25/25`. D55 repairs the
+broker-restart audit so that it requires health/run outage coverage while
+allowing transient repeated health `503` responses during recovery; Ronin
+production streaming code is unchanged. Four clean candidate-bound streaming
+journeys pass `1/1`: single-broker restart (`11/11` correlated events, `8` OK
+and `3` expected `503` errors), three-node multi-broker failover (`5/5` OK),
+D50's 256-record cap/resume/reset/replay (`12/12` OK), and D51's byte-boundary
+journey (`13/13`, `11` OK and `2` expected WARN). The runner reports zero
+unexpected server/network errors and cleanup succeeds. This is bounded
+same-candidate P11 evidence, not a complete family qualification: indefinite
+operation, worker/provider breadth, production topology support, route-wide
+audit and the remaining release gates remain open. Release remains **NO-GO**
+at `1/13` families and `0/10` gates.
 
-D54 revalidates the bounded D50 and D51 journeys on the same `b69204d` code
-candidate: the 256-record cap/resume/reset/replay case passes `1/1` with
-`12/12` correlated HTTP events, and the near-record/near-batch byte-boundary
-case passes `1/1` with `13/13` correlated events (`11` OK and `2` expected
-WARN). Both filtered live runs report zero server/network errors and complete
-cleanup. This strengthens same-candidate bounded evidence, but does not claim
-indefinite operation, worker/provider breadth or complete P11 qualification.
+### Historical exact-SHA qualification — D54 — 17 November 2026
+
+D54 revalidated the bounded D50 and D51 journeys on candidate
+`b69204d02cd3b7649cab49fc42b6bc68443a94b2`: the 256-record
+cap/resume/reset/replay case passed `1/1` with `12/12` correlated HTTP events,
+and the near-record/near-batch byte-boundary case passed `1/1` with `13/13`
+correlated events (`11` OK and `2` expected WARN). Both filtered live runs
+reported zero server/network errors and complete cleanup. D54 was bounded
+same-candidate evidence, not a complete P11 qualification.
+
+### Historical exact-SHA qualification — D53 — 17 November 2026
+
+D53 advanced the exact candidate to `b69204d02cd3b7649cab49fc42b6bc68443a94b2`.
+The exact sandbox verified `60/60` focused contracts with no skips, and the
+clean candidate-bound API/browser failover journey used a real three-node,
+three-replica Redpanda topic. After one committed record, the journey stopped
+broker-0, resumed four records from the durable checkpoint through surviving
+brokers, restored the failed container and reached final lag zero. The run
+passed `1/1` with `5/5` correlated HTTP events and zero server/network errors.
+Final health was checked after broker restoration; the failure window was
+asserted while broker-0 was stopped. D53 was bounded recovery evidence, not a
+complete family qualification.
 
 ### Historical exact-SHA qualification — D52 — 17 November 2026
 
@@ -306,7 +322,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `b69204d02cd3b7649cab49fc42b6bc68443a94b2` (2026-11-17).
+**Observed source head:** `0a0cd36d47e403808db519f62eefd726f95637a4` (2026-11-17).
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. The live qualification harness
 was rerun on this candidate with the same worker image used for Docker/Helm;

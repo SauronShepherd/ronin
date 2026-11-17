@@ -1,0 +1,59 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D55",
+  "date": "2026-11-17",
+  "status": "PASS",
+  "cell": "P11 same-candidate streaming regression set and resilient broker-restart traffic audit",
+  "candidate_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
+  "candidate_receipt": "docs/qualification/candidates/candidate-0a0cd36d-d55.json",
+  "code_commit": "0a0cd36d47e403808db519f62eefd726f95637a4",
+  "origin_main_at_code_commit": "0a0cd36d47e403808db519f62eefd726f95637a4",
+  "implementation": {
+    "production_change": false,
+    "summary": "D55 repairs the live qualification runner's broker-restart outage contract and adds static assertions for health/run coverage; production streaming code is unchanged.",
+    "changed_paths": [
+      "tools/run_live_product_qualification.ps1",
+      "tests/test_docker_qualification_contract.py"
+    ]
+  },
+  "tests": {
+    "candidate_boundary": "PASS: archive and sandbox verified; 1531 files, 16444240 sandbox bytes, no Git metadata or generated artifacts",
+    "candidate_contracts": "PASS: 60 passed, 0 failed, 0 skipped in the exact candidate sandbox",
+    "runner_contract": "PASS: Docker qualification contract selection 25/25; PowerShell parse, Ruff and Node syntax pass",
+    "single_broker_restart": "PASS: clean candidate Playwright 1/1; 11/11 correlated HTTP events, 8 OK and 3 expected 503 ERROR outcomes, 0 unexpected server/network errors",
+    "multi_broker_failover": "PASS: clean candidate Playwright 1/1; 5/5 correlated HTTP events, all OK, cleanup succeeded",
+    "d50_regression": "PASS: clean candidate Playwright 1/1; 12/12 correlated HTTP events, all OK, cleanup succeeded",
+    "d51_regression": "PASS: clean candidate Playwright 1/1; 13/13 correlated HTTP events, 11 OK and 2 expected WARN, cleanup succeeded",
+    "route_audit": "NOT_RUN: filtered streaming diagnostics only",
+    "security_scans": "NOT_RERUN in D55",
+    "full_suite": "NOT_RERUN; no full Python suite PASS is claimed",
+    "license": "INHERITED FAIL/CLOSED; human review decisions remain open"
+  },
+  "progress": {
+    "before": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    },
+    "after": {
+      "families_qualified": "1/13",
+      "release_gates_closed": "0/10",
+      "release": "NO-GO",
+      "P11": "in_progress",
+      "P13": "blocked"
+    }
+  },
+  "evidence": {
+    "single_broker_restart": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-broker-restart-candidate-0a0cd36d-r2-20261117\\qualification-summary.json",
+    "multi_broker_failover": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-multi-broker-candidate-0a0cd36d-20261117\\qualification-summary.json",
+    "d50_regression": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d50-candidate-0a0cd36d-20261117\\qualification-summary.json",
+    "d51_regression": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d55-d51-candidate-0a0cd36d-20261117\\qualification-summary.json"
+  },
+  "limitations": [
+    "D55 is a filtered candidate-bound streaming set; it does not prove indefinite operation, worker/provider breadth, production topologies or complete P11 qualification.",
+    "D52 direct-runtime recovery remains separately attributed to its earlier candidate.",
+    "No release gate closes and release remains NO-GO at 1/13 families and 0/10 gates."
+  ]
+}
