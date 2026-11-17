@@ -3,15 +3,17 @@
 ## Current exact-SHA snapshot — 17 November 2026
 
 The current code/evidence candidate is `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`.
-D76 fixes the live qualification route audit and records a bounded exact-
-candidate route-wide cell: `25` active routes (`24` API-backed, `1` UI-only),
-`376/376` correlated events and `0` unexpected server errors; its default
-fixture remains closed by one explicit multi-broker skip. The separate
-three-broker diagnostic passes `1/1` with `5/5` correlated `OK` events. D75's
-strict runtime/probe artifact evidence remains bound to the preceding
-`e48aa5f4` candidate and is not a current-SHA release claim. D74 adds the
-candidate boundary, wheel/sdist identity, a `106`-component CycloneDX
-application SBOM and local in-toto/SLSA provenance. D73 adds exact-candidate security evidence: Gitleaks and pip-audit are clean,
+D77 refreshes current-SHA wheel/sdist identity, runtime/probe TARs, a `110`-
+component CycloneDX application SBOM, two bound Trivy container inventories
+and local in-toto/SLSA provenance. Strict supply-chain validation passes, and
+current runtime/probe Trivy scans report `0` vulnerabilities and `0` secrets
+each. D76 fixes the live qualification route audit and records a bounded
+exact-candidate route-wide cell: `25` active routes (`24` API-backed,
+`1` UI-only), `376/376` correlated events and `0` unexpected server errors;
+its default fixture remains closed by one explicit multi-broker skip. The
+separate three-broker diagnostic passes `1/1` with `5/5` correlated `OK`
+events. D74 adds the candidate boundary, wheel/sdist identity and local
+provenance; D73 adds exact-candidate source security evidence: Gitleaks and pip-audit are clean,
 Trivy filesystem and worker-image scans report `0` vulnerabilities and `0`
 secrets, and `193` supply-chain/release/security contracts pass. D72 adds an
 exact-candidate Docker worker/Notebook cell: Docker `27/27`, strict

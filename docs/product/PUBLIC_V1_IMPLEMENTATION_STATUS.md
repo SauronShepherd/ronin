@@ -7,20 +7,19 @@
 
 ## Current exact-SHA qualification — 17 November 2026
 
-D76 binds the current exact candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`
-to a live qualification-harness correction and two bounded live cells. The
-default run audits `25` active routes (`24` API-backed and `1` UI-only),
-correlates `376/376` API events and records `0` unexpected server errors; it
-closes **FAIL/CLOSED** only because the default fixture explicitly skips the
+D77 refreshes the current exact candidate `5c17dd7a642ef1e6a16d00967f9aec38ccce91d0`
+with wheel/sdist identity, runtime/probe TARs, a `110`-component application
+SBOM, two bound Trivy container inventories and local in-toto/SLSA provenance.
+The strict supply-chain validator passes with two distinct images, and current
+runtime/probe Trivy scans report `0` vulnerabilities and `0` secrets each.
+D76 remains the live qualification evidence for the same source: its default
+run audits `25` active routes (`24` API-backed and `1` UI-only), correlates
+`376/376` API events and records `0` unexpected server errors; it closes
+**FAIL/CLOSED** only because the default fixture explicitly skips the
 multi-broker case. The separate three-broker diagnostic passes `1/1` with
-`5/5` correlated `OK` events and replication factor `3`. D75 remains linked
-for the strict runtime/probe artifact bundle on the preceding exact candidate
-`e48aa5f4`; that supply-chain evidence is not claimed for D76's SHA. D73
-remains linked for clean security scans, D72 for the Docker worker and live
-Notebook journey, D70 for the current `16,384`-record single-broker journey,
-D69 for the full Python/PostgreSQL regression, and D68 for the Helm chain.
-These finite local cells do not qualify indefinite operation or the complete
-P11 family; the release remains **NO-GO**.
+`5/5` correlated `OK` events and replication factor `3`. These finite local
+cells and the technical supply-chain evidence do not qualify indefinite
+operation or the complete P11 family; the release remains **NO-GO**.
 
 D67 remains linked as an earlier scaled live regression on the preceding exact
 candidate and binds `018176e0a3693d668bac0d049a6ce4db3c7f2723` to a

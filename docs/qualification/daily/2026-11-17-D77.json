@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D77",
+  "date": "2026-11-17",
+  "status": "pass",
+  "cell": "Exact-candidate current-SHA release artifacts, container SBOMs and strict supply-chain refresh",
+  "candidate_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "implementation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "documentation_commit_sha": "5c17dd7a642ef1e6a16d00967f9aec38ccce91d0",
+  "evidence": "docs/qualification/handoffs/2026-11-17-D77.md",
+  "execution_scope": "exact-candidate-current-sha-release-artifacts-container-sboms-security-scans-and-strict-supply-chain",
+  "result": {
+    "candidate_boundary": "PASS: reused D76 exact boundary with 1,585 files, 16,702,716 sandbox bytes, archive SHA 34ff4a8c and manifest SHA 0c7653a1",
+    "artifacts": "PASS: wheel ae4ee0b4, sdist bedec3cd, runtime TAR ac7f5906 and probe TAR e140ac0e are bound to candidate 5c17dd7a",
+    "runtime_image": "PASS: runtime image f483cbe6, config 0fde1328, TAR 60,798,976 bytes and Trivy CycloneDX 1.7 bound with 59 OS packages",
+    "probe_image": "PASS: probe image 6ecd2c3e, config 6deec76c, TAR 46,072,832 bytes and Trivy CycloneDX 1.7 bound with 56 OS packages",
+    "container_scans": "PASS: current Trivy 0.76.1 runtime/probe scans exit 0 with 0 vulnerabilities and 0 secrets each",
+    "application_sbom": "PASS: CycloneDX 1.6 regenerated and verified with 110 components",
+    "local_provenance": "PASS: in-toto/SLSA local statement regenerated for the complete current artifact identity",
+    "supply_chain_strict": "PASS: validator accepted two distinct bound Trivy container inventories for candidate 5c17dd7a",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The exact candidate boundary is the D76 sandbox; D77 refreshes artifacts from that boundary and does not claim the later documentation commit as source content.",
+    "The local provenance is self-reported and unsigned; it is not a trusted builder attestation.",
+    "Trivy 0/0 results are technical scan evidence only; Alpine Edge policy, VEX, license, NOTICE and human release decisions remain open.",
+    "Indefinite operation, provider breadth and complete P11 qualification remain open; D76's default live cell remains FAIL/CLOSED on its explicit multi-broker skip."
+  ]
+}
