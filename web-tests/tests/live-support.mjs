@@ -5,6 +5,10 @@ const apiBase = process.env.RONIN_LIVE_API_URL;
 const jobsApiBase = process.env.RONIN_LIVE_JOBS_API_URL;
 const token = process.env.RONIN_LIVE_API_TOKEN;
 const trafficOutput = process.env.RONIN_LIVE_API_TRAFFIC_OUTPUT;
+const configuredRequestTimeoutSeconds = Number.parseFloat(process.env.RONIN_LIVE_REQUEST_TIMEOUT_SECONDS || '15');
+const defaultRequestTimeoutMs = Number.isFinite(configuredRequestTimeoutSeconds) && configuredRequestTimeoutSeconds > 0
+  ? Math.round(configuredRequestTimeoutSeconds * 1000)
+  : 15_000;
 let traffic = [];
 let trafficReady;
 let trafficWrite = Promise.resolve();
@@ -64,7 +68,7 @@ export function installLiveApiProxy(page, expectedToken = token) {
     }
     const method = request.method();
     const timeoutMs = requestUrl.pathname.startsWith('/v1/ml-studio/labs/') &&
-      requestUrl.pathname.endsWith('/search') ? 90_000 : 15_000;
+      requestUrl.pathname.endsWith('/search') ? Math.max(90_000, defaultRequestTimeoutMs) : defaultRequestTimeoutMs;
     let upstream;
     try {
       upstream = await fetch(upstreamUrl, {
