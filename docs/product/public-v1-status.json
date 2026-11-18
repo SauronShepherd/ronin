@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-11-18T23:59:00Z",
-  "observed_main_sha": "4fbd7183da644d3c516da309e7ea86c62b2485ad",
+  "observed_main_sha": "357061ef64281f3bbee39bc41839d4d7c7a3197b",
   "latest_automated_evidence": "D247 on current candidate a01b8d6b passes the complete non-performance Python/PostgreSQL suite: 4759 passed, 31 explicit skips, 0 failed, with isolated PostgreSQL 16.4 cleanup. D246 scheduler recovery passes 2/2, D245 Docker acceptance is 27/27 plus strict v0.1 15/15, and D244 PostgreSQL RF3 multi-broker failover passes 1/1 separately. Historical D83-D100 receipts remain bound to their exact candidates and are not reattributed. P11 remains in_progress, P13 remains blocked, and release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_observation": "2026-11-18 current main 715935a7: D247 full non-performance Python/PostgreSQL regression is 4759/4790 passed with 31 explicit skips and 0 failures; D246 scheduler recovery is 2/2 PASS; D245 Docker integration is 27/27 PASS and strict v0.1 is 15/15 PASS; D244 is the separate PostgreSQL/RF3 companion at 1/1 PASS. These remain bounded evidence; release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_p11_observation": "D247 strengthens current-candidate full Python/PostgreSQL regression; D246 strengthens PostgreSQL scheduler recovery; D245 strengthens Docker worker and external-emulator fixture evidence; D244 strengthens PostgreSQL-configured RF3 failover evidence. These bounded cells do not prove indefinite operation, production SLO, HA/multi-worker, external provider certification, complete P11 or release approval. The production implementation boundary remains 59004dae6b483e1629646af3cd28f03e05fa88ad; P11 stays in_progress and P13 stays blocked.",
