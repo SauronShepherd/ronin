@@ -854,6 +854,8 @@ D144 requalified full Docker integration (`27/27`) and strict v0.1 (`15/15`) wit
 D145 passed `2/2` bounded PostgreSQL scheduler-daemon recovery tests: reacquisition after an expired leadership lease and replay after process crash without duplicate work. Cleanup passed; this strengthens scheduler recovery evidence but does not establish indefinite operation, HA, complete family coverage, or release readiness.
 
 D146 passed the complete bounded PostgreSQL scheduler integration file (`21/21`) with cleanup. This broadens persistence, fencing, dispatch, cancellation, backfill, outbox, leadership, and recovery evidence, but does not establish indefinite operation, HA, complete family coverage, or release readiness.
+
+D147 passed `20/20` bounded PostgreSQL store/adapter integration tests with all three required DSN aliases configured and zero skips. Cleanup passed; this broadens runtime persistence evidence but does not establish indefinite operation, HA, complete family coverage, or release readiness.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact

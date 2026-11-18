@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D147",
+  "date": "2026-11-18",
+  "candidate_sha": "08aed55dd13ad970a2730dcf104d768b0409038b",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "bounded PostgreSQL store and adapter integration block with all required DSN aliases configured",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN=$dsn; $env:RONIN_TEST_POSTGRES_DSN=$dsn; $env:RONIN_CONNECTOR_POSTGRES_DSN=$dsn; python -m pytest tests/integration/test_postgres_jobstore_real.py tests/integration/test_postgres_connector_real.py tests/integration/test_postgres_connector_control_plane_real.py tests/integration/test_postgres_connector_checkpoint_real.py tests/integration/test_postgres_bundle_real.py tests/integration/test_postgres_catalog_store.py tests/integration/test_postgres_audit_store.py tests/integration/test_postgres_artifact_retention_barrier.py tests/integration/test_postgres_data_engineering_revisions_real.py -q",
+  "result": {"status": "PASS", "selected": 20, "passed": 20, "skipped": 0, "failed": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d147-postgres-stores-valid-20261118", "postgres_image": "postgres:16.4-alpine", "dsn_aliases": ["RONIN_POSTGRES_TEST_DSN", "RONIN_TEST_POSTGRES_DSN", "RONIN_CONNECTOR_POSTGRES_DSN"], "cleanup": "PASS; PostgreSQL container removed"},
+  "limitations": ["Bounded store/adapter integration block; not indefinite operation, HA, multi-worker, external provider breadth, complete family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
