@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D264 on current candidate `5b4e000d89e40c1b4b4ff7c74430f8c7c569beb8`
+passes the PostgreSQL scheduler leadership generation-fencing and persistence
+case `1/1`, with cleanup PASS. This is bounded recovery evidence and does not
+prove indefinite operation, HA/multi-worker, complete controller conformance,
+P11 or release approval. P11 remains `in_progress`, P13 remains `blocked`, and
+release remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D263 on current candidate `7a7b004370d53d8f4d7234654201ac1bb4360f3f`
 passes two new PostgreSQL scheduler recovery cases `2/2`: attempt-lease
 worker fencing/reclaim and execution-outbox survival/reconciliation after
