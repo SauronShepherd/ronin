@@ -22,6 +22,7 @@ from studio_core import (
     WorkflowId,
     Workspace,
     WorkspaceId,
+    ProjectManifest,
 )
 from studio_lakehouse import write_parquet_rows
 from studio_semantic import (
@@ -79,6 +80,27 @@ def main() -> int:
         # The non-scheduler Studio fixtures remain SQLite-backed; keep their
         # workspace namespace available without presenting it as the server DB.
         SqliteWorkspaceStore(database, migration_now=now).create_workspace(workspace, now=now)
+        PostgresSchedulerSnapshotStore(
+            postgres_dsn, application_name="ronin-live-project-seeder"
+        ).register_project(
+            workspace_id,
+            ProjectManifest.from_data(
+                {
+                    "schema": "ronin.project/v1",
+                    "project": {
+                        "id": "examples/demo",
+                        "name": "Ronin Live Qualification Fixture",
+                        "repositories": [],
+                        "execution": {
+                            "requirements": [],
+                            "resolution": "strict",
+                            "runtime": {"adapter_id": "python", "profile_id": "3.11"},
+                        },
+                    },
+                }
+            ),
+            now=now,
+        )
     if args.workspace_only:
         print("Seeded only the isolated workspace required for this filtered live route.")
         return 0
