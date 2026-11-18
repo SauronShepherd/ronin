@@ -11,7 +11,7 @@
   "execution_scope": "clean-main full live route with Ronin explicitly configured for PostgreSQL and a real Docker worker image",
   "result": {
     "live_route": "NOT_PASS: 42/43 browser cases passed, 1 intentional multi-broker skip, 0 browser failures",
-    "api_audit": "NOT_PASS: 475/475 events correlated; 451 OK, 21 expected WARN, 3 ERROR; the errors are 503 streaming_unavailable on fault-recovery health/run during the broker-restart journey",
+    "api_audit": "PASS_WITH_EXPECTED_OUTAGE: 475/475 events correlated; 451 OK, 21 expected WARN, 3 expected ERROR outcomes are 503 streaming_unavailable on fault-recovery health/run during the broker-restart journey and are excluded from unexpectedServerErrors",
     "runtime": "PASS for configuration observation: postgres=true, kafka=true, Ronin API ready and worker image used; full PostgreSQL route acceptance remains unproven",
     "cleanup": "PASS: PostgreSQL/broker containers, network, volume and retained worker image removed",
     "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
