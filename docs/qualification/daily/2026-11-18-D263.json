@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D263",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler attempt fencing and execution-outbox recovery",
+  "candidate_sha": "7a7b004370d53d8f4d7234654201ac1bb4360f3f",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D263.md",
+  "execution_scope": "clean-main filtered integration selection against isolated real PostgreSQL 16.4",
+  "result": {
+    "attempt_leases": "PASS: worker fencing and expired attempt lease reclaim",
+    "execution_outbox": "PASS: outbox survives expiry and reconciles idempotently",
+    "tests": "PASS: 2 selected, 19 deselected, 0 selected skips, 0 selected failures",
+    "cleanup": "PASS: isolated PostgreSQL removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d263-scheduler-fencing-outbox-current-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_attempt_leases_fence_workers_and_reclaim_expiry or test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d263-scheduler-fencing-outbox-current-20261118",
+    "postgres_image": "postgres:16.4-alpine",
+    "sha256": {
+      "pytest-output.log": "49AEE4F674576C1D0A4FA912CAB45D4DDC8E0DE90BB9CFBE4FD68FFCF84C8FA7",
+      "pytest-postgres.log": "2E49A50C2603ED6764C8E60C458FD6686BAFA8AF2E57EEB8AD4BFD3DB64FF71E",
+      "pytest-postgres.xml": "739A54BC75200875372A437F7109B3D1AE37DE1D6E2CA9C5927B3F006BD5BB20",
+      "pytest-timings.json": "7053D2C0AB2D8A2C50AE1E1FC2DCE87D9ABA3CFCD0910591228975EF97C7A929",
+      "runner-timings.json": "7E1EA95AA3F03C85B523118499E4CFB836360B24ABFD24134AEE3CD066974120"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded scheduler recovery evidence, not indefinite operation, HA/multi-worker, full controller conformance, complete P11 or release approval.",
+    "D263 is distinct from, and does not reattribute, D246, D222, D145, D225, D261, D262, D100 or earlier receipts."
+  ]
+}
