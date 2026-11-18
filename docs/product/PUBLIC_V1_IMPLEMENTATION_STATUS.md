@@ -7,6 +7,17 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D130 adds a filtered direct PostgreSQL scheduler-consistency cell on clean
+candidate `2132475f3ee966891f427543f61e3bbc4d2f3978`: atomic and idempotent
+run/task snapshots pass `1/1`, with `0` skips and `0` failures and isolated
+cleanup. This is bounded PostgreSQL consistency evidence only; it is not the
+complete PostgreSQL suite, indefinite operation, HA, external-provider
+recovery, complete P11 qualification or a release gate. There was no
+production code change, and the implementation boundary remains
+`e6f635dfe9159351711f44af9199e573e6e8a5bb`. P11 remains `in_progress`, P13
+remains `blocked`, and release remains **NO-GO** at `1/13` families and
+`0/10` gates.
+
 D129 adds a filtered direct PostgreSQL workspace-isolation cell on clean
 candidate `7b51bf299339e5e2e34f9dd4300ab2652672e593`: workflow mutations
 requiring an active workspace pass `1/1`, with `0` skips and `0` failures and
@@ -781,7 +792,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `7b51bf299339e5e2e34f9dd4300ab2652672e593` (2026-11-18).
+**Observed source head:** `2132475f3ee966891f427543f61e3bbc4d2f3978` (2026-11-18).
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
