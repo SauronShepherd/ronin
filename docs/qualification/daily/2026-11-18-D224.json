@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D224",
+  "date": "2026-11-18",
+  "candidate_sha": "904fe3f30470233d4b121d66d0fc5645df17c150",
+  "implementation_boundary_sha": "561ba5e5f8e95f786921e52a060c35fae6801799",
+  "scope": "complete bounded local scheduler daemon contract selection",
+  "command": "python -m pytest -q tests/test_scheduler_daemon.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d224-scheduler-daemon-contracts.xml",
+  "result": {"status": "PASS", "pytest_selected": 12, "pytest_passed": 12, "pytest_skipped": 0, "pytest_failed": 0},
+  "evidence": {
+    "test_file": "tests/test_scheduler_daemon.py",
+    "coverage": ["lifecycle limits", "signal handling", "SIGTERM release", "health/readiness", "lease lifecycle", "transient retry", "notification dispatch", "leadership renewal", "exclusive leadership", "schedule work", "loop shutdown", "generation fencing"],
+    "junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d224-scheduler-daemon-contracts.xml",
+    "sha256": {"junit": "F45EF17C8CA7290549E4CB0509FBBA45248B58800155353695821F15DEB0B41E"},
+    "cleanup": "PASS; local scheduler fixtures released"
+  },
+  "limitations": ["Bounded local contract suite; it does not prove PostgreSQL process/container termination, indefinite operation, HA/multi-worker, notification-provider certification, the complete P11 family or release gates."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

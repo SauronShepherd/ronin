@@ -7,6 +7,16 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D224 passes the complete local scheduler daemon contract file `12/12` on
+candidate `904fe3f30470233d4b121d66d0fc5645df17c150`, at production boundary
+`561ba5e5f8e95f786921e52a060c35fae6801799`. It covers lifecycle limits, signal
+handling, lease release, readiness, retries, notifications, renewal, exclusive
+leadership, schedule work, shutdown and generation fencing. This remains bounded
+local evidence; PostgreSQL process/container termination, indefinite operation,
+HA, providers, complete P11 and release gates remain open. P11 remains
+`in_progress`, P13 remains `blocked`, and release remains **NO-GO** at `1/13`
+families and `0/10` gates.
+
 D223 passes `3/3` scheduler shutdown regressions on current candidate
 `e432fc73022b018bfd645dc05c501ec49e5aa1c3`, with production boundary
 `561ba5e5f8e95f786921e52a060c35fae6801799`: signal-handler restoration, SIGTERM
