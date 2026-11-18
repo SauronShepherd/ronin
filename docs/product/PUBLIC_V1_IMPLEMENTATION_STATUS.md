@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D257 on current candidate `82924dc5aef4f8ddd6aa5b187ee9004d9f714d45`
+passes the PostgreSQL-configured RF3 multi-broker failover companion `1/1`,
+with three brokers, `5/5` correlated API events and cleanup PASS. P11 remains
+`in_progress`, P13 remains `blocked`, and release remains **NO-GO** at `1/13`
+families and `0/10` gates.
+
 D256 on current candidate `3d11f16e9972f4b9860ebd73149c3d3cc8b3f73e`
 passes the explicit 300-second PostgreSQL-configured supervisor soak at
 default producer load after balancing the bounded harness microbatch to `32`:
