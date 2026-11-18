@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D244",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL multi-broker RF3 failover companion",
+  "candidate_sha": "af7169f85191737c72ff83c8b055a298301cfc65",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "pending",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D244.md",
+  "execution_scope": "clean-main filtered live companion with PostgreSQL server configuration and three Redpanda brokers",
+  "result": {
+    "multi_broker": "PASS: live streaming multi-broker failover resumes from the durable checkpoint 1/1",
+    "api_audit": "PASS: 5/5 real API events correlated, 0 unexpected authorization gaps, 0 unexpected server/network errors",
+    "rf3_fixture": "PASS: replication factor 3 and all three broker services provisioned by the corrected runner",
+    "cleanup": "PASS: three brokers, PostgreSQL, network and volume removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "af7169f85191737c72ff83c8b055a298301cfc65",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d244-live-multibroker-postgres-current-20261118 -StorageBackend postgres -TestGrep 'live streaming multi-broker failover resumes from the durable checkpoint' -MultiBroker -RequestTimeoutSeconds 60",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d244-live-multibroker-postgres-current-20261118",
+    "sha256": {
+      "browser-live.log": "F8AA20B223E532E2EF8FC8E1FFA358136EB2A5242D6C950794FD747D7730EA1D",
+      "browser-live.xml": "F69D0C806D94229FC3F97159D2519C2D43C367124D8B6CCE53171C2EB6FA1ACE",
+      "live-api-traffic.json": "25369DAAE79F1E3EB41A5B9FF8827B9A32B16B7052665696C04897371126BED4",
+      "qualification-summary.json": "BEF535C583461753BB51E5F909A1012D1D6AE161FB895362690E0F84F50C4B18"
+    }
+  }
+}
