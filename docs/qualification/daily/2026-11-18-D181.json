@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D181",
+  "date": "2026-11-18",
+  "candidate_sha": "dcd562b5e132c984d3caa09b0227478e29c27282",
+  "implementation_boundary_sha": "dcd562b5e132c984d3caa09b0227478e29c27282",
+  "scope": "bounded live single-operator authorization diagnostic with Ronin configured against real PostgreSQL and Kafka",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d181-live-postgres-authorization-20261118 -TestGrep \"single-operator authorization\" -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 10, "api_correlated": 10, "api_ok": 7, "api_warn": 3, "log_errors": 0, "log_critical": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d181-live-postgres-authorization-20261118", "postgres": true, "kafka": true, "cleanup": "PASS; isolated containers, network and volume removed; no temporary images created"},
+  "limitations": ["This is a bounded authorization diagnostic, not a complete family journey, indefinite operation, HA/multi-worker, external-provider recovery, or release gate."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
