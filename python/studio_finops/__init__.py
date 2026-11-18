@@ -22,6 +22,7 @@ from .service import (
     price_usage,
 )
 from .store import FinOpsConflict, SqliteFinOpsStore
+from .postgres import PostgresFinOpsStore
 
 __all__ = (
     "BudgetAction",
@@ -35,6 +36,7 @@ __all__ = (
     "RateCard",
     "RateCardNotFound",
     "SqliteFinOpsStore",
+    "PostgresFinOpsStore",
     "UsageProvenance",
     "UsageRecord",
     "evaluate_budget",

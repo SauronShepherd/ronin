@@ -56,7 +56,7 @@ from studio_execution.scheduler_daemon import (
     SchedulerDaemonWork,
 )
 from studio_execution.stream_scheduler import ingest_stream_record
-from studio_finops import SqliteFinOpsStore
+from studio_finops import PostgresFinOpsStore, SqliteFinOpsStore
 from studio_migration import (
     MigrationAPIRouter,
     MigrationSessionService,
@@ -561,7 +561,11 @@ def build_local_composed_from_env() -> LocalServerComposition:
 
     quality_reader = QualityHTTPAdapter(quality_store, on_run=record_quality_alerts)
     alert_reader = AlertHTTPAdapter(telemetry_for_workspace)
-    finops_reader = SqliteFinOpsStore(database) if postgres_dsn is None else None
+    finops_reader = (
+        SqliteFinOpsStore(database)
+        if postgres_dsn is None
+        else PostgresFinOpsStore(postgres_dsn, application_name="ronin-composed-finops")
+    )
     data_engineering_reader = (
         _LocalDataEngineeringRevisions(SqliteRevisionStore(database), database.parent / "artifacts")
         if postgres_dsn is None
