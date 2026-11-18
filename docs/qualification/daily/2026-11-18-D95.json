@@ -6,7 +6,7 @@
   "cell": "Current-main local bounded supervisor soak with Parquet sink reset and replay",
   "candidate_sha": "e5ef16525164bfb346def250dd7d4d8053526144",
   "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
-  "documentation_commit_sha": "705173a98766157944acd2008528a1cfa3b6a1d8",
+  "documentation_commit_sha": "537c8fa59d3f0c6fd42f6f9d25ecf5064859743a",
   "evidence": "docs/qualification/handoffs/2026-11-18-D95.md",
   "execution_scope": "current-main-local-bounded-supervisor-soak-parquet-sink-reset-replay-synthetic-continuous-source",
   "result": {
