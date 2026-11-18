@@ -1,0 +1,67 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D97",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-main live Redpanda/API bounded supervisor-duration soak",
+  "candidate_sha": "5dd019fdc89c0d7886ea47db794d70e563c8cb03",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "5dd019fdc89c0d7886ea47db794d70e563c8cb03",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D97.md",
+  "execution_scope": "clean-candidate-filtered-live-single-broker-redpanda-ronin-api-supervisor-duration-soak",
+  "result": {
+    "journey": "PASS: 1/1 filtered Playwright case passed, 0 skips and 0 failures",
+    "bounded_soak": "PASS: a real Kafka producer ran for the configured 60 seconds while the supervisor was repeatedly run; the case observed at least 15 drain cycles, records consumed, checkpoint values and source availability, then drained the tail to total_lag=0",
+    "producer": "PASS: the producer created/used a real two-partition Redpanda topic, emitted a completed payload with a positive record count and required duration of at least 58 seconds",
+    "api": "PASS: 35/35 real API events correlated with structured HTTP logs, all OK, 0 uncorrelated and 0 unexpected server/network errors",
+    "services": "PASS: real single-broker Redpanda and Ronin API; PostgreSQL and worker are intentionally not applicable to this filtered streaming cell",
+    "cleanup": "PASS: isolated broker/network cleanup, browser media cleanup and environment restoration; no Ronin containers or images remained",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "request_timeout_seconds": 300,
+    "supervisor_soak_seconds": 60,
+    "source_topic": "ronin-live-supervisor-soak-events",
+    "source_partitions": 2,
+    "records_per_tick": 4,
+    "interval_seconds": 0.25,
+    "drain_limit": 8,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d97-supervisor-soak-candidate-5dd019fd-20261118",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d97-supervisor-soak-candidate-5dd019fd-20261118 -TestGrep 'supervisor soak' -SupervisorSoakSeconds 60 -RequestTimeoutSeconds 300"
+  },
+  "services": {
+    "postgres": false,
+    "kafka": true,
+    "ronin_api": true,
+    "worker_image": null,
+    "route_coverage_audited": false,
+    "active_routes": 25,
+    "api_routes": 24,
+    "ui_only_routes": 1
+  },
+  "hashes": {
+    "browser_live_log": "93e305f74f39fc6b00c6d4baa0d9fc9850bef429d24bffe334733d76313becd9",
+    "browser_live_xml": "b1950a4b0c5e394815986704f1fbf3d4cce7027a488aedcf6052251ec121cd72",
+    "live_api_traffic": "b278e88fd71a20ef041e1f9e1be7543b84b970ed1696af3669f50ca4e1cddcbe",
+    "qualification_summary": "2991efa5dc16fcd1119771af28ed31b3f9b84eb96cc4ef78c904121a88f352d0",
+    "live_server_stderr": "9df6f843e448d5d3cceeaeddef933d4c4e42d5c3b68047ff65ca8d1e41df2bd7",
+    "live_python_freeze": "c2bd7d577e4fccb19f658eaab66022127eb51e4c0c76b6d2c529bff39178dc68"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "This is a filtered streaming-only diagnostic with routeCoverage.audited=false, PostgreSQL=false and workerImage=null.",
+    "The 60-second bounded campaign is not indefinite operation, a production-duration SLO or a claim of supervisor availability across restarts.",
+    "The cell uses one Redpanda broker and the local table sink; it does not certify an external object store/provider, multi-worker topology, HA, provider breadth or the complete P11 family journey.",
+    "The production implementation boundary remains 633980dd; 5dd019fd adds qualification tooling/specification only and does not reattribute D83-D96 evidence.",
+    "D97 does not close P11, the 13-family aggregate, P13 external-secret-provider qualification or human release approval."
+  ]
+}

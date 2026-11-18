@@ -2,13 +2,13 @@
 
 ## Estado transferido
 
-D96 queda cerrado con evidencia live nueva; D93 sigue siendo la última celda de
-alto volumen, pero el release no es GO:
+D97 queda cerrado con una celda live bounded nueva; D93 sigue siendo la última
+celda de alto volumen, pero el release no es GO:
 
 ```text
 production implementation boundary: 633980dd3b08affcc604dc918c1a6cbf026cc408
-qualification-harness/current main at D96: b7b938c3d9712b6a74e87b3b10569161c9e8c789
-documentation state: D94 receipt and status updates are included in current main history
+qualification-harness/current main at D97: 5dd019fdc89c0d7886ea47db794d70e563c8cb03
+documentation state: D97 receipt, handoff and status updates are included in current main history
 worktree at handoff creation: main, limpio
 familias: 1/13
 release gates: 0/10
@@ -17,14 +17,19 @@ P13: blocked
 release: NO-GO
 ```
 
-`b7b938c3` sólo añade una celda de cualificación live y su contrato de arnés; no
-cambia el runtime de producción respecto de `633980dd`. D96 usa Redpanda y
-Ronin API reales con sink Parquet local, cap, continuación y reset/replay. D95
-mantiene la celda local PyArrow y D94 la celda SQLite de 1.024 registros. D93
-califica por separado el journey live de alto volumen en `549ffe30`; ninguna de
-las fronteras debe ocultarse.
+`5dd019fd` sólo añade el productor y la cualificación live del supervisor; no
+cambia el runtime de producción respecto de `633980dd`. D97 usa Redpanda y
+Ronin API reales durante 60 segundos configurados, exige ciclos repetidos
+mientras llegan datos y verifica drenaje final a lag cero. D96 usa el sink
+Parquet local/live con cap y reset/replay; D95 mantiene la celda local PyArrow,
+D94 la celda SQLite de 1.024 registros y D93 el journey live de alto volumen en
+`549ffe30`. Ninguna de las fronteras debe ocultarse.
 
 ## Evidencia más reciente
+
+- [D97](2026-11-18-D97.md): soak live bounded de supervisor con productor real,
+  `1/1` Playwright, `35/35` eventos API `OK`, al menos `15` ciclos durante la
+  llegada de datos, checkpoints, lag final `0` y cleanup correcto.
 
 - [D96](2026-11-18-D96.md): sink Parquet con Redpanda/API reales, `1/1`
   Playwright, `11/11` eventos `OK`, cap/lag-zero/reset/replay y cleanup.
@@ -51,17 +56,20 @@ las fronteras debe ocultarse.
 
 ## Cambios del arnés
 
-`tools/run_live_product_qualification.ps1` expone
-`-BackpressureTimeoutSeconds` (`240–1800`, default `240`), lo propaga como
-`RONIN_LIVE_BACKPRESSURE_TIMEOUT_SECONDS` y lo registra en el resumen. El caso
-live segmenta reanudaciones de gran volumen para respetar un límite bounded por
-petición. Contratos de cualificación: `25 passed`; Node y PowerShell syntax:
-PASS.
+- `tools/streaming_supervisor_soak_producer.py` crea un tópico temporal de dos
+  particiones y produce datos JSON durante una duración bounded.
+- `tools/run_live_product_qualification.ps1` expone
+  `-SupervisorSoakSeconds` (`60–900`) y lo propaga como
+  `RONIN_LIVE_SUPERVISOR_SOAK_SECONDS`.
+- `web-tests/tests/product-live.spec.mjs` añade el caso filtrable del supervisor
+  durante la llegada de datos; el contrato estático lo protege.
+- Las validaciones estáticas pasan: Ruff, contrato focalizado `1/1`, Node,
+  PowerShell y Playwright list `1`; el run live pasa `1/1`.
 
 ## Límites que siguen abiertos
 
-1. operación indefinida/soak y continuidad del supervisor a duración de
-   producción; D96 es live pero bounded y D94–D95 son soaks locales;
+1. operación indefinida o SLO de producción; D97 sólo dura 60 segundos y es
+   bounded, mientras D94–D96 son celdas locales/live acotadas;
 2. topología productiva, multi-worker y HA;
 3. amplitud de proveedores externos, object store y matriz completa de
    recovery;
@@ -70,7 +78,7 @@ PASS.
    plataformas y freeze;
 6. cualificación P13 con proveedor externo de secretos.
 
-D96 y D93 son diagnósticos streaming-only: PostgreSQL y worker no aplican,
+D97, D96 y D93 son diagnósticos streaming-only: PostgreSQL y worker no aplican,
 `routeCoverage.audited=false` y los límites explícitos no equivalen a operación
 indefinida.
 
@@ -81,7 +89,7 @@ indefinida.
 - Mantener SHA exacto, logs, hashes y cleanup. No usar mocks para certificar
   proveedores reales.
 - Cualquier cambio de producción exige una nueva frontera y recualificación;
-  no reatribuir D83–D93 automáticamente.
+  no reatribuir D83–D97 automáticamente.
 - Antes de publicar el siguiente recibo, ejecutar:
 
 ```powershell
@@ -93,8 +101,8 @@ git diff --check
 
 ## Próximo paso recomendado
 
-No repetir D93, D94, D95 ni D96. Elegir una brecha P11 externa nueva: cualificar una
-celda bounded con proveedor/topología autorizados y criterio de parada
+No repetir D93, D94, D95, D96 ni el mismo soak temporal. Elegir una brecha P11
+externa nueva: cualificar una celda bounded con proveedor/topología autorizados y criterio de parada
 explícito; o, si el entorno no permite esa duración, HA o proveedor, registrar
 el bloqueo reproducible y preparar la matriz de decisión humana. Mantener P11
 `in_progress`, P13 `blocked` y release `NO-GO`.
