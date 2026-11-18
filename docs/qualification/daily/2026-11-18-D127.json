@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D127",
+  "date": "2026-11-18",
+  "candidate_sha": "51a8a6d91dc08fd1a13b5b701797fd13cb2e7092",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "P11 bounded PostgreSQL cancellation claim fencing",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d127-postgres-cancellation-fencing-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter postgres_workflow_cancellation_fences_claim_before_intent",
+  "result": {"selected": 1, "passed": 1, "skipped": 0, "failed": 0, "deselected": 20, "duration_seconds": 1.80},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d127-postgres-cancellation-fencing-20261118", "test": "tests/integration/test_postgres_workflow_store_real.py::test_postgres_workflow_cancellation_fences_claim_before_intent", "service": "postgres:16.4-alpine", "cleanup": "runner completed isolated PostgreSQL cleanup; temporary image removed after receipt"},
+  "limitations": ["Filtered diagnostic only; not full PostgreSQL suite or coverage.", "Bounded cancellation-authority evidence; does not qualify the complete P11 family, indefinite operation, HA, external providers or release gates.", "No production code changed; the previous live route used SQLite for the Ronin server runtime."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
