@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D151",
+  "date": "2026-11-18",
+  "candidate_sha": "c7e85d287c64e897b0909ff1e39c1ff861832586",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "bounded Docker appliance backup and restore with PostgreSQL and local data volume",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d151-appliance-valid-20261118 -ImageTag ronin:qualification-d151 -TestFilter appliance_backup",
+  "result": {"status": "PASS", "selected": 1, "passed": 1, "skipped": 0, "failed": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d151-appliance-valid-20261118", "worker_image_digest": "sha256:9094d6c89f0c9b638a3cb18d1719f3e9e37d3232a3baa0f040578908dcbdc8ff", "fixtures": ["PostgreSQL", "Docker worker", "local data volume"], "cleanup": "PASS; owned image and services removed"},
+  "limitations": ["Filtered bounded diagnostic; strict v0.1 acceptance was not evaluated, and this does not establish indefinite operation, HA, complete family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

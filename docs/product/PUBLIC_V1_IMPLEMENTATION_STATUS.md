@@ -862,6 +862,8 @@ D148 passed `12/12` bounded PostgreSQL ML/artifact integration tests with zero s
 D149 passed the bounded PostgreSQL quality-store integration (`1/1`) with zero skips. Cleanup passed; this adds a focused quality-store runtime check without changing release status.
 
 D150 passed the bounded PostgreSQL local-composed catalog HTTP integration (`1/1`) with zero skips. Cleanup passed; this adds a service-layer catalog check without changing release status.
+
+D151 passed the filtered Docker appliance backup/restore case (`1/1`) with PostgreSQL, a Ronin image, and a local data volume. Cleanup passed; strict v0.1 was not evaluated and the release status remains unchanged.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
