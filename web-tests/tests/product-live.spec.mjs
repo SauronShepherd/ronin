@@ -2133,7 +2133,7 @@ test('live streaming event workflow is triggered by a committed record', async (
     name: 'Live stream event workflow qualification',
     source: {
       connection_id: 'live-kafka',
-      resource: 'ronin-live-sustained-events',
+      resource: 'ronin-live-fault-events',
       partitions: [0],
       format: 'json',
     },
@@ -2172,7 +2172,7 @@ test('live streaming event workflow is triggered by a committed record', async (
 
   const initialHealth = await request('GET', healthPath);
   expect(initialHealth.status(), await initialHealth.text()).toBe(200);
-  expect((await initialHealth.json()).total_lag).toBe(32);
+  expect((await initialHealth.json()).total_lag).toBe(1);
 
   let runPayload;
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -2198,7 +2198,7 @@ test('live streaming event workflow is triggered by a committed record', async (
 
   const afterRunHealth = await request('GET', healthPath);
   expect(afterRunHealth.status(), await afterRunHealth.text()).toBe(200);
-  expect((await afterRunHealth.json()).total_lag).toBe(31);
+  expect((await afterRunHealth.json()).total_lag).toBe(0);
 
   let delivery;
   await expect.poll(async () => {
