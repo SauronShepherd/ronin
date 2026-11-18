@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D268 on current candidate `0fe59605dd696bba1acd6f16a64da55c6c143a47`
+passes the PostgreSQL scheduler timeout-request and dispatch-authority
+durability case `1/1`, with cleanup PASS. This is bounded scheduler evidence and
+does not prove indefinite operation, HA/multi-worker, complete controller
+conformance, P11 or release approval. P11 remains `in_progress`, P13 remains
+`blocked`, and release remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D267 on current candidate `074f81fc6124302ccfa5c873127faee4af601d4d`
 passes the PostgreSQL scheduler backfill schema-five-to-six migration case
 `1/1`, with cleanup PASS. This is bounded migration evidence and does not
