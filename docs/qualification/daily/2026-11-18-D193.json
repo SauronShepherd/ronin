@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D193",
+  "date": "2026-11-18",
+  "candidate_sha": "521c1f5ec42399ee5cdf27a1715784c1490c3b1a",
+  "implementation_boundary_sha": "521c1f5ec42399ee5cdf27a1715784c1490c3b1a",
+  "scope": "control-plane HTTP JSON connector preview against a real loopback paginated service",
+  "command": "python -m pytest tests/integration/test_http_json_control_plane_real.py -q",
+  "result": {"status": "NOT_PASS", "pytest_selected": 1, "pytest_passed": 0, "pytest_skipped": 0, "pytest_failed": 1, "failure": "POST /v1/platform/connectors/preview returns 500; expected 200"},
+  "evidence": {"test": "tests/integration/test_http_json_control_plane_real.py::test_control_plane_preview_reads_real_paginated_http_json_service", "service": "real loopback HTTP JSON server", "cleanup": "PASS; composed server and loopback fixture stopped"},
+  "limitations": ["The direct HTTP JSON connector suite remains 8/8 PASS, but the control-plane integration is not qualified until the 500 is fixed."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

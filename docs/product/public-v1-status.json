@@ -57,6 +57,7 @@
   "d190_qualification_note": "D190 on b3ec3809 passed 1/1 bounded S3 JSON connector integration against real Floci S3-compatible storage: sink put/read/retry round trip, 0 skips/failures, cleanup PASS. This is one provider cell only; statuses remain unchanged.",
   "d191_qualification_note": "D191 on 32aa09d7 passed 1/1 bounded Azure Blob JSON connector integration against real Azurite: discovery/read/snapshot replay, 0 skips/failures and cleanup PASS. This is one provider cell only; statuses remain unchanged.",
   "d192_qualification_note": "D192 on e04631cf passed 8/8 bounded HTTP JSON connector integration tests against a real loopback HTTP service, covering 503 retry, redirect rejection, byte limits and cross-origin pagination rejection. The incorrect Docker filter selected 0/27 and is not counted; statuses remain unchanged.",
+  "d193_qualification_note": "D193 was NOT_PASS: the real control-plane HTTP JSON preview integration returned 500 instead of 200 against a paginated loopback service, while D192's direct connector suite remains 8/8. Cleanup passed; no status changes and the control-plane cell must be fixed before qualification.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",

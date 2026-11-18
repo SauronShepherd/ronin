@@ -926,6 +926,8 @@ D190 pasa `1/1` integración del conector S3 JSON contra Floci S3-compatible rea
 D191 pasa `1/1` integración del conector Azure Blob JSON contra Azurite real, cubriendo discovery, lectura y replay de snapshot, sin skips/fallos y con cleanup PASS. Es una celda de proveedor acotada; la matriz externa y los estados de release permanecen sin cambios.
 
 D192 pasa `8/8` pruebas del conector HTTP JSON contra un servidor loopback real, cubriendo retry 503, rechazo de redirects, límites de bytes y paginación cross-origin, sin skips/fallos. El filtro Docker incorrecto seleccionó `0/27` y no se cuenta. Es evidencia bounded y no cambia P11, P13 o release.
+
+D193 detecta un fallo nuevo: el preview HTTP JSON a través del control plane devuelve `500` contra un servicio paginado real, aunque el conector directo de D192 pasa `8/8`. Se registra como **NOT_PASS** y requiere corregir el wiring/contrato antes de repetir la cualificación.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
