@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D102",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "PostgreSQL scheduler HTTP adapter and event-inbox replay runtime",
+  "candidate_sha": "874a93f6d0e165915d1552c91729e130d212730b",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D102.md",
+  "execution_scope": "clean-main-isolated-postgresql-16.4-durable-scheduler-http-and-event-inbox",
+  "result": {
+    "http_adapter": "PASS: authenticated workflow HTTP routes use the durable PostgreSQL scheduler adapter",
+    "event_inbox": "PASS: PostgreSQL event inbox freezes and replays deliveries without losing the durable delivery state",
+    "focused_result": "PASS: 2/2 selected tests, 0 selected skips, 0 selected failures, 19 deselected",
+    "service": "PASS: isolated real postgres:16.4-alpine; per-test schemas were dropped by finalizers",
+    "cleanup": "PASS: qualification container was removed; logs/XML/timings preserved",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d102-postgres-runtime-20261118-r2 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'postgres_workflow_http_routes_use_durable_scheduler_adapter or postgres_scheduler_event_inbox_freezes_and_replays_deliveries'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d102-postgres-runtime-20261118-r2",
+    "pytest_xml": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d102-postgres-runtime-20261118-r2\\pytest-postgres.xml",
+    "candidate_sha": "874a93f6d0e165915d1552c91729e130d212730b"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is bounded direct PostgreSQL runtime evidence, not the complete P11 family journey, indefinite operation, HA, multi-worker or production SLO qualification.",
+    "The D100 live Ronin server remains SQLite-backed; D102 does not reclassify that route as PostgreSQL server/runtime evidence.",
+    "D102 does not qualify an external provider/object store, P13, a release gate or human release approval."
+  ]
+}
