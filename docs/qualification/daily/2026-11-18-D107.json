@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D107",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Docker PostgreSQL-backed worker and appliance backup/restore diagnostic",
+  "candidate_sha": "57afb1fab6376d4373d4d1870f961cac79fa629f",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D107.md",
+  "execution_scope": "clean-main-docker-filtered-postgres-worker-and-appliance-recovery",
+  "result": {
+    "postgres_worker": "PASS: real Docker worker executes the demo against isolated PostgreSQL",
+    "appliance_recovery": "PASS: appliance backup restores PostgreSQL rows and local data volume",
+    "focused_result": "PASS: 2/2 selected tests, 0 skips, 0 failures, 25 deselected",
+    "image": "PASS: candidate-built image executed; digest sha256:d191ee86caf7fdcba2b5bd298d43bb56a751be14d47a284e546f19eb2fd9b730",
+    "cleanup": "PASS: PostgreSQL container and candidate image cleanup succeeded",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d107-docker-postgres-worker-backup-20261118 -TestFilter 'test_real_docker_worker_executes_demo_against_postgres or test_appliance_backup_restores_postgres_and_local_data_volume'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d107-docker-postgres-worker-backup-20261118",
+    "cleanup_receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d107-docker-postgres-worker-backup-20261118\\docker-cleanup.json",
+    "candidate_sha": "57afb1fab6376d4373d4d1870f961cac79fa629f"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered Docker diagnostic and not the complete strict Docker v0.1 acceptance gate or complete P11 journey.",
+    "D106 attempted the full Docker gate but was cancelled by kernel.container.timeout during the first Docker resource tests; it is not counted as PASS and its temporary services were explicitly cleaned.",
+    "D107 does not prove indefinite operation, HA/multi-worker, production SLO, external provider breadth, P13, a release gate or human release approval."
+  ]
+}
