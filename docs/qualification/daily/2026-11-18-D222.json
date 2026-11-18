@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D222",
+  "date": "2026-11-18",
+  "candidate_sha": "94abdced913cfba16aa774a4bcde5d6704566b7f",
+  "implementation_boundary_sha": "561ba5e5f8e95f786921e52a060c35fae6801799",
+  "scope": "current-candidate PostgreSQL scheduler daemon recovery requalification",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://ronin:ronin@127.0.0.1:55440/ronin'; python -m pytest -q tests/integration/test_postgres_workflow_store_real.py -k 'scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate' --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d222-scheduler-postgres.xml",
+  "result": {"status": "PASS", "pytest_selected": 2, "pytest_passed": 2, "pytest_skipped": 0, "pytest_failed": 0, "real_postgres": true},
+  "evidence": {
+    "tests": ["scheduler daemon reacquires after expired lease without duplicate fire", "scheduler daemon replays job after process crash without duplicate"],
+    "postgres_image": "postgres:16.4",
+    "cleanup": "PASS; temporary PostgreSQL container removed",
+    "junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d222-scheduler-postgres.xml",
+    "sha256": {"junit": "73C9C1E1B184588BF1BAC5D998D5874CDD6774D1B3DA6BF2E06BA28C85F79C80"}
+  },
+  "limitations": ["Two bounded daemon recovery cases only; this does not prove complete controller/daemon conformance, indefinite operation, HA/multi-worker, notification-provider qualification, the complete P11 family or release gates. D145/D195 remain separate historical receipts."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
