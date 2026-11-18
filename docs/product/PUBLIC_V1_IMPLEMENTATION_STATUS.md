@@ -890,6 +890,8 @@ D166 passed the filtered environments and deployments journeys (`2/2`) with Roni
 D168 passed the explicit bounded streaming supervisor-soak criterion (`1/1`) for 60 seconds on the single-broker SQLite runtime. It produced `33/33` correlated API events, all OK, with no skips or failures and cleanup passing. This narrows the D163 soak failure to campaign interference or load interaction but does not qualify indefinite operation, PostgreSQL, HA/multi-broker or release readiness.
 
 D170 passed the filtered Synthetic Data Studio journey (`1/1`) on its configured SQLite runtime, with `8/8` correlated API events, all OK, and cleanup passing. The runner is explicitly SQLite-only for this route; D169's PostgreSQL request timed out before startup and provides no PostgreSQL evidence. This remains bounded local evidence and does not change P11, P13 or release status.
+
+D171 passed the filtered Graphs journey (`1/1`) on the configured SQLite runtime, with `5/5` correlated API events, all OK, and cleanup passing. The PostgreSQL profile still reports `graph_unavailable`; D171 therefore qualifies only the existing SQLite graph path and does not close the PostgreSQL adapter gap or any release gate.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
