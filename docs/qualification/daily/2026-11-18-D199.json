@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D199",
+  "date": "2026-11-18",
+  "candidate_sha": "496d5c3b17085cf4dacba63a7ac70dea021a2bd8",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL artifact reference retention barrier and writer/collector fencing",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d199-postgres-artifact-barrier-20261118 -TestPath tests/integration/test_postgres_artifact_retention_barrier.py",
+  "result": {"status": "PASS", "pytest_selected": 3, "pytest_passed": 3, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 5.52},
+  "evidence": {
+    "tests": ["test_bounded_reference_collection_uses_real_postgres_collector_lease", "test_async_worker_writer_blocks_collector_until_reference_commit", "test_collector_waits_for_writers_and_fences_new_writers"],
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "assertions": ["collector lease", "writer/collector ordering", "reference commit barrier", "new-writer fencing"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d199-postgres-artifact-barrier-20261118",
+    "sha256": {"pytest-output.log": "EC24CA1D4A1D8711A036EA326183339FF49F9DA6921F1941CF05F259B8B59CD6", "pytest-postgres.log": "140E5E29F6170594C995B59D42797346DEDAB9D7E15508007E2C5E9B844998DE", "pytest-postgres.xml": "1B9D4B8960B383BA4432605B44D303C0BA5F13328129F9E6B8F2ADB998B051CC", "pytest-timings.json": "953BD86465CACD51218C8E3C1C248D1CDA4663D1870DFCC9051F167508614B14", "runner-timings.json": "BE889476404D1E38161F334AED75F607B4D6FBBC6A46D6AFA0FAE2169BDE6609"}
+  },
+  "limitations": ["Bounded PostgreSQL retention-barrier evidence only; it does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
