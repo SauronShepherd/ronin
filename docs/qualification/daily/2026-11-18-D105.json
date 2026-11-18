@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D105",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Docker candidate-bound Azurite Azure Blob JSONL discovery, read and snapshot replay",
+  "candidate_sha": "51189eb61aba70789443335bab8bee2835f96e98",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D105.md",
+  "execution_scope": "clean-main-docker-filtered-azurite-azure-blob-provider-diagnostic",
+  "result": {
+    "azure_blob": "PASS: real Azure SDK path discovers, reads and replays an Azure Blob JSONL snapshot against Azurite",
+    "focused_result": "PASS: 1/1 selected test, 0 skips, 0 failures, 26 deselected",
+    "provider": "PASS: isolated Azurite Blob endpoint with real SDK data-plane calls",
+    "cleanup": "PASS: qualification image and Azurite project cleanup succeeded",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d105-azure-provider-20261118 -TestFilter 'azure_blob'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d105-azure-provider-20261118",
+    "cleanup_receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d105-azure-provider-20261118\\docker-cleanup.json",
+    "worker_image_digest": "sha256:564f925644e5be50e61b0f5fc4cdde51d42a3bee1f811b92c48cb95f4cc8c914",
+    "candidate_sha": "51189eb61aba70789443335bab8bee2835f96e98"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Azurite is a local Azure Blob emulator; D105 does not certify Microsoft Azure cloud, managed identity, network policy or external-secret-provider behavior.",
+    "This is a filtered Docker diagnostic and not the complete strict Docker v0.1 acceptance gate or complete P11 journey.",
+    "D105 does not prove indefinite operation, HA/multi-worker, production SLO, full provider failure recovery, a release gate or human release approval."
+  ]
+}
