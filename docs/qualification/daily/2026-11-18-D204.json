@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D204",
+  "date": "2026-11-18",
+  "candidate_sha": "6faf7e3fa9c729d2928aa2eb6244cad715f035d7",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL CatalogStore assets, governance, revisions and lineage",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d204-postgres-catalog-20261118 -TestPath tests/integration/test_postgres_catalog_store.py",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 7.41},
+  "evidence": {
+    "test": "test_postgres_catalog_assets_governance_revisions_and_lineage",
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "assertions": ["catalog assets", "governance", "revisions", "lineage"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d204-postgres-catalog-20261118",
+    "sha256": {"pytest-output.log": "FF60F2EEA49D937A43070F4D5A8289C3F3C28C71FB7948AE28981A3CF45C49C4", "pytest-postgres.log": "376218FF5449A59EDDC19EF154B9B45F2EC65A1E8496E57A1DFDFC8B54A622F3", "pytest-postgres.xml": "97B9E1017EC81CC58B1EC5E251495E0BEA42EA6107E17E25645A4A3A554B2D7F", "pytest-timings.json": "A77D2C62C87D8E7E96651052556ED60B3D5FAC57F9EE55322129E02C35A92E98", "runner-timings.json": "602BA985438E026A3BD5A8E98A2164E03D098FD0153EA42BD8D36315D2E3BFDA"}
+  },
+  "limitations": ["Bounded PostgreSQL catalog evidence only; it does not prove external provider certification, indefinite operation, HA/multi-worker, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
