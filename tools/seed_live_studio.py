@@ -90,7 +90,17 @@ def main() -> int:
                     "project": {
                         "id": "examples/demo",
                         "name": "Ronin Live Qualification Fixture",
-                        "repositories": [],
+                        "repositories": [
+                            {
+                                "adapter_id": "git",
+                                "alias": "code",
+                                "default_ref": "main",
+                                "role": "primary",
+                                "subdirectory": None,
+                                "sync_policy": "manual",
+                                "uri": "https://git.example.test/ronin/live.git",
+                            }
+                        ],
                         "execution": {
                             "requirements": [],
                             "resolution": "strict",
