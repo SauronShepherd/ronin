@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D137",
+  "date": "2026-11-18",
+  "candidate_sha": "abf0dfab5f2a36ee4a66bc30cdfd1047960421dd",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "bounded live API traffic identity and outcome audit",
+  "command": "PowerShell audit of live-api-traffic.json from D136: requestId uniqueness, HTTP/log correlation, and allowlisted WARN/ERROR classification",
+  "result": {"events": 448, "unique_request_ids": 448, "duplicate_request_ids": 0, "correlated_http_logs": 448, "unexpected_errors": 0, "unexpected_warnings": 0, "expected_error_records": 3, "expected_warning_records": 21},
+  "evidence": {"source": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d136-live-product-0e7db34272d94154a58ce8341771fbcf\\live-api-traffic.json", "criterion": "every event has a unique requestId; every event is correlated; errors are expected streaming_unavailable 503; warnings use the runner's expected authorization/input/scope/conflict classes"},
+  "limitations": ["This is bounded log/traffic evidence, not indefinite operation, PostgreSQL scheduler/runtime qualification, external-provider qualification, or release approval.", "D136 remains FAIL because its aggregate runner contains one deliberate multi-broker skip."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
