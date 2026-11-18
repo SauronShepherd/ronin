@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D266 on current candidate `eb8ae4ad9d489b1d9f0a21ebc20e452e4ce9e884`
+passes the PostgreSQL scheduler backfill-through-service and store-reopen case
+`1/1`, with cleanup PASS. This is bounded backfill evidence and does not prove
+indefinite operation, HA/multi-worker, complete controller conformance, P11 or
+release approval. P11 remains `in_progress`, P13 remains `blocked`, and release
+remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D265 on current candidate `fc907f19c4ec06de7c730c0cdb2a03cc6f60c242`
 passes the PostgreSQL durable event-inbox freeze and delivery-replay case
 `1/1`, with cleanup PASS. This is bounded event-delivery evidence and does not
