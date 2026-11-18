@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D256 on current candidate `3d11f16e9972f4b9860ebd73149c3d3cc8b3f73e`
+passes the explicit 300-second PostgreSQL-configured supervisor soak at
+default producer load after balancing the bounded harness microbatch to `32`:
+`1/1` case, `203/203` correlated API events, all `OK`, and cleanup PASS. P11
+remains `in_progress`, P13 remains `blocked`, and release remains **NO-GO** at
+`1/13` families and `0/10` gates.
+
 D254 on current candidate `825755e6e030099df64efc30efcfa55491f27b8c`
 passes Docker integration `27/27` and strict v0.1 acceptance `15/15` with
 PostgreSQL, Docker worker, Floci/S3 and Azurite/Azure fixtures. Cleanup is
