@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D162",
+  "date": "2026-11-18",
+  "candidate_sha": "849fcb00646a42dbb1e938c528d10c6d28d87817",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "bounded live Quality diagnostic with PostgreSQL-backed Ronin runtime",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d162-live-postgres-quality-20261118 -TestGrep quality -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 7, "api_ok": 6, "api_warn": 1},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d162-live-postgres-quality-20261118", "cleanup": "PASS; runner removed containers, volume and network"},
+  "limitations": ["Filtered Quality route only; route-wide live audit, indefinite operation, external providers and release gates remain open. This is bounded PostgreSQL runtime evidence, not complete P11 qualification."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

@@ -33,6 +33,7 @@
   "d158_qualification_note": "D158 on 9db35464 passed 2/2 filtered real S3/ML artifact round-trip tests against Floci with cleanup PASS. Strict v0.1 was not evaluated and this does not change P11, P13 or release status.",
   "d159_qualification_note": "D159 on 4e618942 passed 1/1 filtered real Azure Blob snapshot replay test against Azurite with cleanup PASS. Strict v0.1 was not evaluated and this does not change P11, P13 or release status.",
   "d160_qualification_note": "D160 attempted Quality live with StorageBackend postgres but was NOT_PASS: the quality-only runner skipped PostgreSQL/Kafka and the seeder timed out before server start; 0/0 cases, cleanup PASS. No status changes.",
+  "d162_qualification_note": "D162 on 849fcb00 passed 1/1 filtered live Quality Studio case with Ronin and Quality persistence on real PostgreSQL: 7 correlated API events (6 OK, 1 expected WARN), 0 skips/failures, cleanup PASS. The fixture now seeds catalog revisions in PostgreSQL for the PostgreSQL backend. This is bounded P11 evidence; P11 remains in_progress, P13 blocked and release NO-GO at 1/13 families and 0/10 gates.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",
