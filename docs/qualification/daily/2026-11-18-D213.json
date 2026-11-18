@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D213",
+  "date": "2026-11-18",
+  "candidate_sha": "c96de2b4258e11f9e0b8f5b88c35ab84c46207af",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "live Catalog route with Ronin server configured for PostgreSQL",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d213-live-catalog-postgres-20261118 -StorageBackend postgres -TestGrep 'route catalog loads and reaches the live API' -RequestTimeoutSeconds 60",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 4, "correlated_http_logs": 4, "unexpected_errors": 0, "elapsed_seconds": 67.17},
+  "evidence": {
+    "test": "route catalog loads and reaches the live API",
+    "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+    "api_outcomes": {"OK": 4},
+    "route_coverage": "filtered diagnostic; route-wide coverage not run",
+    "cleanup": "PASS; PostgreSQL, Kafka, volume and network removed",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d213-live-catalog-postgres-20261118",
+    "sha256": {"browser-live.log": "03718892A04D74A9429C3C8E4D2734E9238D8D823EA5268C0CE343D8E17BA175", "browser-live.xml": "8836232797EA76C329CB3EEC03869E8EC81957C530E7973D2D5C4F5AF24F3F94", "live-api-traffic.json": "44C36B4624D1EAC1AD3593E6879FECEBD7FADEDEC832B8724FC5FA92408E8BB7", "live-python-freeze.txt": "47160D7B8C1BF8528C8C7B68C5CDA5F01EC8A0ABF39DDEA2FF48D90FBA01C6BC", "live-server.stderr.log": "91EA32677E5A08E89BB44D4B7246D7D8878B6B259B07A5EC97C3B47314A87A67", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "F9445D52601E1E22AC14155963D5CD8047FA6630E4CA24485E764C65B9291B4F", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"}
+  },
+  "limitations": ["Filtered live diagnostic only; route-wide coverage was not run and this does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
