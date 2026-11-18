@@ -50,6 +50,7 @@
   "d183_qualification_note": "D183 changed only qualification tooling: absent live-api-traffic.json is now treated as empty evidence so skipped diagnostics preserve the intended API-evidence failure. The affected contract regression passed 26/26 on 04c2fc5e; D182 remains NOT_PASS and no qualification evidence is reattributed.",
   "d184_qualification_note": "D184 built a Docker worker image for the Notebook follow-up but selected 0 of 27 Python tests; it is build preparation only and not Docker qualification.",
   "d185_qualification_note": "D185 on a774a029 passed 1/1 bounded live Notebook Studio create/version/execute journey with a real Docker worker plus PostgreSQL/Kafka: 20/20 API events correlated, all OK, zero log errors/critical and cleanup PASS. This is bounded P11 evidence; statuses remain unchanged.",
+  "d186_qualification_note": "D186 full live PostgreSQL/Kafka/worker campaign was NOT_PASS: 38/43 passed, 1 skipped and 4 failed; 426/426 API events correlated (399 OK, 21 WARN, 6 ERROR), cleanup PASS. Failures were FinOps PostgreSQL unavailable, Synthetic catalog internal error, Graphs unconfigured and supervisor soak 8/15 cycles. No status changes.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",

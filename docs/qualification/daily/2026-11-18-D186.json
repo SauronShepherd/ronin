@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D186",
+  "date": "2026-11-18",
+  "candidate_sha": "0b48f4d92b9ff5b524760c0aa53135cadd0b3faf",
+  "implementation_boundary_sha": "0b48f4d92b9ff5b524760c0aa53135cadd0b3faf",
+  "scope": "full live PostgreSQL/Kafka/worker product qualification attempt",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d186-full-live-20261118 -StorageBackend postgres -WorkerImage ronin:d186-full-live-worker -RequestTimeoutSeconds 30",
+  "result": {"status": "NOT_PASS", "playwright_executed": 43, "playwright_passed": 38, "playwright_skipped": 1, "playwright_failed": 4, "api_events": 426, "api_correlated": 426, "api_ok": 399, "api_warn": 21, "api_error": 6, "log_errors": 6},
+  "failures": ["FinOps route: PostgreSQL FinOps unavailable (503)", "Synthetic route: catalog assets returned internal_error (500)", "Graphs route: graph query not configured (503)", "Streaming supervisor soak: 8 cycles, required at least 15"],
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d186-full-live-20261118", "postgres": true, "kafka": true, "worker_image": "sha256:e958ad00f211f00b7b9f6b317a4ef506f79d1a3c64a4aaefdddfd3c905da3c9a", "cleanup": "PASS; isolated containers, network and volume removed"},
+  "limitations": ["The full route campaign is not a release gate: four cases failed and one skipped; no family or gate promotion is made."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
