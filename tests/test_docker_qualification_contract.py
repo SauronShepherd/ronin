@@ -394,7 +394,7 @@ def test_semantic_live_diagnostic_skips_unrelated_postgres_and_kafka_containers(
     )
     assert (
         "$sqliteOnlyDiagnostic = $semanticOnlyDiagnostic -or $mlOnlyDiagnostic -or "
-        "$syntheticOnlyDiagnostic -or $qualityOnlyDiagnostic" in script
+        "$syntheticOnlyDiagnostic -or ($qualityOnlyDiagnostic -and $StorageBackend -eq \"sqlite\")" in script
     )
     assert "$postgresStarted = -not ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)" in script
     assert "$kafkaStarted = -not $sqliteOnlyDiagnostic" in script
@@ -413,6 +413,14 @@ def test_semantic_live_diagnostic_skips_unrelated_postgres_and_kafka_containers(
     assert '"live_orders.parquet"' in seed
     assert "Execute dashboard" in live
     assert "semantic/dashboards/live_overview/execute" in live
+
+
+def test_quality_live_postgres_diagnostic_keeps_real_postgres_services() -> None:
+    script = (ROOT / "tools" / "run_live_product_qualification.ps1").read_text(encoding="utf-8")
+
+    assert '$qualityOnlyDiagnostic = $TestGrep -eq "quality"' in script
+    assert '($qualityOnlyDiagnostic -and $StorageBackend -eq "sqlite")' in script
+    assert '$env:RONIN_LIVE_REQUIRE_POSTGRES = if ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)' in script
 
 
 def test_ml_live_diagnostic_skips_unrelated_postgres_and_kafka_containers() -> None:

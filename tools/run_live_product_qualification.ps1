@@ -291,7 +291,7 @@ try {
     $env:RONIN_LIVE_WORKER_ENABLED = if ($WorkerImage) { "1" } else { "0" }
     $env:RONIN_RUNNER_BROKER_TOKEN = [guid]::NewGuid().ToString("N")
     $env:RONIN_TOKEN_SCOPES = '{"version":1,"grants":[{"version":1,"actions":["read","list","events","submit","execute","cancel","evidence:read"],"resource":{"kind":"project","identifier":"examples/demo"},"constraints":{}}]}'
-    $sqliteOnlyDiagnostic = $semanticOnlyDiagnostic -or $mlOnlyDiagnostic -or $syntheticOnlyDiagnostic -or $qualityOnlyDiagnostic
+    $sqliteOnlyDiagnostic = $semanticOnlyDiagnostic -or $mlOnlyDiagnostic -or $syntheticOnlyDiagnostic -or ($qualityOnlyDiagnostic -and $StorageBackend -eq "sqlite")
     $composeStarted = -not $sqliteOnlyDiagnostic
     if ($sqliteOnlyDiagnostic) {
         $diagnosticName = if ($mlOnlyDiagnostic) { "Machine Learning Studio" } elseif ($semanticOnlyDiagnostic) { "Semantic Studio" } elseif ($qualityOnlyDiagnostic) { "Quality Studio" } else { "Synthetic Data Studio" }
