@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D247 on current candidate `a01b8d6b7e161bfa6a13668aea9e4e412bf121e6`
+passes the complete non-performance Python/PostgreSQL regression: `4759`
+passed, `31` explicit skips, `0` failed, with isolated PostgreSQL 16.4 cleanup.
+The skips remain explicit unavailable or opt-in environments and are not
+counted as PASS. P11 remains `in_progress`, P13 remains `blocked`, and release
+remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D246 on current candidate `23dd0c25ea821c54b49bc6baa8da1682e28a009b`
 passes `2/2` explicit real-PostgreSQL scheduler daemon recovery cases:
 reacquisition after an expired lease without duplicate fire, and process-crash
