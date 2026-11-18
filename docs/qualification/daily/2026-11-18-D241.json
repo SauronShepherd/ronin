@@ -6,7 +6,7 @@
   "cell": "Full Python/PostgreSQL suite rerun after capability baseline correction",
   "candidate_sha": "da9e0649b20b293db56e4e1ef3e468c0ba4e2273",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "pending",
+  "documentation_commit_sha": "f0f525623f418e3b7fab2719abedce47e9360db7",
   "evidence": "docs/qualification/handoffs/2026-11-18-D241.md",
   "execution_scope": "clean-main full non-performance Python suite against isolated PostgreSQL 16.4, repeated after D240 baseline diagnosis",
   "result": {
