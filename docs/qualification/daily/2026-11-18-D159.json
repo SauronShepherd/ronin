@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D159",
+  "date": "2026-11-18",
+  "candidate_sha": "4e61894241021f6ec6e2d4ebe1a7ab309c190d9e",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "bounded real Azure Blob connector snapshot replay against Azurite",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d159-azure-azurite-20261118 -ImageTag ronin:qualification-d159 -TestFilter azure_blob",
+  "result": {"status": "PASS", "selected": 1, "passed": 1, "skipped": 0, "failed": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d159-azure-azurite-20261118", "worker_image_digest": "sha256:1cfac8e3a0346328f0eeaf18260f829a5896841e79a1b6c58bece59f9020e7cc", "fixture": "Azurite/Azure Blob", "cleanup": "PASS; owned image and temporary service removed"},
+  "limitations": ["Filtered bounded diagnostic; strict v0.1 acceptance was not evaluated, and this does not certify an external production Azure account, indefinite operation, HA, complete family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
