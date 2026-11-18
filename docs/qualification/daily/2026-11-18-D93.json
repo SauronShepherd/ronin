@@ -1,0 +1,53 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D93",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate bounded live sustained backpressure at 65536 records with segmented resume",
+  "candidate_sha": "549ffe30d6df66e92325c90b582c31880536bcb5",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "549ffe30d6df66e92325c90b582c31880536bcb5",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D93.md",
+  "execution_scope": "clean-candidate-focused-single-broker-sustained-backpressure-65536-with-segmented-checkpoint-resume-reset-replay",
+  "result": {
+    "journey": "PASS: 1/1 Playwright case passed, 0 skips and 0 failures",
+    "backpressure": "PASS: 65536-record, two-partition fixture drained through a 73-record cap and eight bounded resume requests capped at 8192 records each",
+    "checkpoint_sink_replay": "PASS: cap checkpoint advanced, lag reached zero, idle replay was empty, reset restored 65536 lag, and two 7-record reset replays returned stable sink commits",
+    "api": "PASS: 19/19 real API events correlated with structured logs, all OK, 0 uncorrelated and 0 unexpected errors",
+    "services": "PASS: real single-broker Redpanda and Ronin API; PostgreSQL and worker are intentionally not applicable to this filtered cell",
+    "cleanup": "PASS: isolated broker/network cleanup, browser media cleanup and environment restoration",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "backpressure_records": 65536,
+    "segment_max_records": 8192,
+    "backpressure_timeout_seconds": 1800,
+    "request_timeout_seconds": 600,
+    "runtime_batch_limit": 8,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d93-backpressure-65536-candidate-549ffe30-20261118"
+  },
+  "hashes": {
+    "browser_live_log": "dd66d12108c146c56a4c48dff062180a0ea70deb4ed317e59f17dee4f54f8a30",
+    "browser_live_xml": "3d64fbfc4d58fe73b0745dd71cf5df9233ca7451bad249d780f91f29a483d134",
+    "live_api_traffic": "7cfc49d108f2dfb882f05478c10c88569afacdbdabaaac34c1a1bb68c298662f",
+    "qualification_summary": "df75e310bcf9be0667d256877cfe93f788031a2e665424b280607a23c6442711",
+    "live_server_stderr": "ca02b064f11669878e0d7fb41ffcacd3d896f9be42feea783652e2d813090b7e",
+    "live_python_freeze": "d53dae4d39031a03ec345922e183862b790313995eeeddbb82c13115600e4fba"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "This is a filtered streaming-only diagnostic with routeCoverage.audited=false, PostgreSQL=false and workerImage=null.",
+    "The production implementation boundary is 633980dd; 549ffe30 contains only qualification-harness timeout/segmentation changes relative to that production boundary.",
+    "The 496.94-second bounded campaign does not qualify indefinite operation, production supervisor continuity, production topology, provider breadth, the complete P11 family or human release approval.",
+    "The first two D93 attempts are retained as non-counted diagnostics: the first hit the prior 240-second Playwright cap, and the second exposed a single-request network timeout before segmentation; only the final clean run is counted as PASS."
+  ]
+}
