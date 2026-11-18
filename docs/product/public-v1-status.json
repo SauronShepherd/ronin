@@ -89,6 +89,7 @@
   "d223_qualification_note": "D223 passes 3/3 current-candidate scheduler shutdown regressions: signal handler restore, SIGTERM stop with leadership lease release, and service lifecycle acquisition/release. This is bounded local evidence; PostgreSQL process/container termination, indefinite operation, HA, providers and release status remain open.",
   "d224_qualification_note": "D224 passes the complete local scheduler daemon contract file 12/12 on the current candidate, covering lifecycle limits, signals, release, readiness, retries, notifications, renewal, exclusivity, schedule work, shutdown and fencing. This remains bounded local evidence; statuses are unchanged.",
   "d225_qualification_note": "D225 passes 2/2 filtered Docker S3-compatible provider cases against Floci: JSON sink retry after lost response and ML durable input/output with retention cleanup. Owned containers, volume, network and Ronin image cleanup PASS. This is not cloud-provider certification and does not change P11, P13 or release status.",
+  "d226_qualification_note": "D226 passes 1/1 filtered Docker Azure Blob case against Azurite: discovery, read and snapshot replay. Owned containers, volume, network and Ronin image cleanup PASS. Azurite is local emulator evidence, not Azure cloud certification; statuses remain unchanged.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",

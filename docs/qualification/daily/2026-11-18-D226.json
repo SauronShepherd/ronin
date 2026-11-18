@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D226",
+  "date": "2026-11-18",
+  "candidate_sha": "cfec47a028bc385cfc4b0f0dcffe0d5370c2deae",
+  "implementation_boundary_sha": "561ba5e5f8e95f786921e52a060c35fae6801799",
+  "scope": "filtered Docker Azure Blob provider discovery/read/replay",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d226-azure-provider-20261118 -TestFilter 'azure_blob_discovers_reads_and_replays_snapshot_against_azurite'",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "strict_v01_evaluated": false},
+  "evidence": {
+    "test": "Azure Blob discovers, reads and replays snapshot against Azurite",
+    "provider": "Azurite local Azure Blob emulator",
+    "image_digest": "sha256:298620c49f97a138edb6e79a84b57067fac9011ad9cb0363857db04903940fda",
+    "cleanup": "PASS; Azurite container, volume, network and owned Ronin image removed",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d226-azure-provider-20261118",
+    "sha256": {
+      "azurite-qualification.log": "CA0F4A7472128D9D802D78AFF7BEEBDE6E39FA95F5EF0371A85A896C34F903D2",
+      "docker-cleanup.json": "5A0AD1A1BE1B2BBF700D1D6A52F31F86BADA8899DD8BBA0B0BE72FD1B1735B77",
+      "docker-pytest-output.log": "1B06DE2A3A4847A349A71F83E0EB6649E35976EA285780610B9C7C18E4C1DF06",
+      "docker-qualification.log": "8323D5E8866CC5D8E7082E47E81F224F5F1BFF8431E95FDBEE9C4D999B951612",
+      "v01-acceptance.xml": "020389930CE02A15B8593E88B3AB7C89DD35B8EC1E8C078844B35C8D319C24CE"
+    }
+  },
+  "limitations": ["Filtered Docker diagnostic only; Azurite is local emulator evidence, not Azure cloud certification. Strict v0.1, indefinite operation, HA/multi-worker, complete P11 and release gates remain unproven."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

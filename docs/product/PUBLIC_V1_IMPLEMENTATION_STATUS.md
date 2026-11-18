@@ -7,6 +7,15 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D226 passes `1/1` filtered Docker Azure Blob provider case against real local
+Azurite on candidate `cfec47a028bc385cfc4b0f0dcffe0d5370c2deae`, at production
+boundary `561ba5e5f8e95f786921e52a060c35fae6801799`: discovery, read and
+snapshot replay. Azurite, volume, network and owned Ronin image cleanup pass.
+This is not Azure cloud certification; strict v0.1, indefinite operation, HA,
+complete P11 and release gates remain open. P11 remains `in_progress`, P13
+remains `blocked`, and release remains **NO-GO** at `1/13` families and
+`0/10` gates.
+
 D225 passes `2/2` filtered Docker provider cases against real local Floci
 S3-compatible service on candidate `021a59c57a79e748b34f57556a3840acce29767d`,
 at production boundary `561ba5e5f8e95f786921e52a060c35fae6801799`: JSON sink
