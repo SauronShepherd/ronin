@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D219",
+  "date": "2026-11-18",
+  "candidate_sha": "68b8224770b6716ae72d3f897cedede355c08cf5",
+  "implementation_boundary_sha": "68b8224770b6716ae72d3f897cedede355c08cf5",
+  "scope": "live FinOps Studio route with Ronin server configured for PostgreSQL",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d219-live-finops-postgres-20261118 -StorageBackend postgres -TestGrep 'route finops loads and reaches the live API' -RequestTimeoutSeconds 60",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 3, "correlated_http_logs": 3, "unexpected_errors": 0, "elapsed_seconds": 88.69},
+  "evidence": {
+    "test": "route finops loads and reaches the live API",
+    "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+    "api_outcomes": {"OK": 3},
+    "route_coverage": "filtered diagnostic; route-wide coverage not run",
+    "cleanup": "PASS; PostgreSQL, Kafka, volume and network removed",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d219-live-finops-postgres-20261118",
+    "sha256": {
+      "browser-live.log": "415E0D4EC5604B38E12379A958715219B771166C3C8CD4144673B5EFEA781351",
+      "browser-live.xml": "1A224B94E7625F83752BF1BD08785401492F033E6FFA78A2ED66DB4DD7F1CEF0",
+      "live-api-traffic.json": "DB38F86CFF8B7D84A2E57CD0519A0D0A9850C7070B446CC1D954B76B8C50CF1A",
+      "live-python-freeze.txt": "F3EAE7D5A9A18D5F44A7F7BDFD0BBB3CDD6915B18D89A12D01316AC993727124",
+      "live-server.stderr.log": "68AAAB9D0B7C22FB80AACE16E01F2F082D4D1553829CD53FF335BCED16A3BF13",
+      "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "qualification-summary.json": "E108237C9803AE5A7AD8DEF3936894B70BA6EC915B7742E49BA4CBEAF49FC835",
+      "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+    }
+  },
+  "limitations": ["Filtered live diagnostic only; route-wide coverage was not run and this does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates. D218's prior PostgreSQL failure is retained as NOT_PASS; D219 qualifies the wiring fix only."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
