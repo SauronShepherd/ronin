@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D146",
+  "date": "2026-11-18",
+  "candidate_sha": "400bcef54903fd534add4d11465ce62fd12d2549",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "full bounded PostgreSQL scheduler workflow-store integration suite",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://ronin:<redacted>@127.0.0.1:55440/ronin_test'; python -m pytest tests/integration/test_postgres_workflow_store_real.py -q",
+  "result": {"status": "PASS", "selected": 21, "passed": 21, "failed": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d146-postgres-scheduler-full-20261118", "postgres_image": "postgres:16.4-alpine", "cleanup": "PASS; PostgreSQL container removed"},
+  "limitations": ["Bounded integration suite; not indefinite operation, HA, multi-worker, external provider breadth, complete family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

@@ -18,6 +18,7 @@
   "d143_qualification_note": "D143 on f509f3e3 passed the live streaming event-trigger workflow with Ronin PostgreSQL backend: 1/1 passed, 12/12 API events correlated, 0 skips/failures, cleanup PASS. This is bounded event-trigger continuity evidence; statuses remain unchanged.",
   "d144_qualification_note": "D144 on f12a2bcb requalified full Docker integration 27/27 and strict v0.1 15/15 with 0 skips/failures, using PostgreSQL, Docker worker, Floci/S3 and Azurite/Azure; cleanup PASS. This does not change P11, P13 or release status.",
   "d145_qualification_note": "D145 on 31a3f37d passed 2/2 bounded PostgreSQL scheduler-daemon recovery tests: reacquisition after expired leadership and post-crash replay without duplicate work; cleanup PASS. This does not change P11, P13 or release status.",
+  "d146_qualification_note": "D146 on 400bcef5 passed the complete bounded PostgreSQL scheduler integration file 21/21 with cleanup PASS. This broadens scheduler persistence/recovery evidence but does not change P11, P13 or release status.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",
