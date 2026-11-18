@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D104",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Docker candidate-bound Floci S3 provider breadth for connector and ML artifacts",
+  "candidate_sha": "e557b78352242dbd2725018b29a36daccb3f0fbd",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D104.md",
+  "execution_scope": "clean-main-docker-filtered-floci-s3-provider-diagnostic",
+  "result": {
+    "s3_connector": "PASS: real S3 JSON sink put/read and retry round trip",
+    "ml_artifacts": "PASS: durable ML input/output and retention round trip through real S3-compatible storage",
+    "focused_result": "PASS: 2/2 selected tests, 0 skips, 0 failures, 25 deselected",
+    "provider": "PASS: isolated Floci S3-compatible endpoint with real boto3 data-plane calls",
+    "cleanup": "PASS: qualification image and Floci project cleanup succeeded",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d104-s3-provider-20261118 -TestFilter 's3_json or ml_s3_artifact'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d104-s3-provider-20261118",
+    "cleanup_receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d104-s3-provider-20261118\\docker-cleanup.json",
+    "worker_image_digest": "sha256:97e8cc2bafb5b46c6ca4faf8a4f440d75c824c11def23bef98651ad94670cbdf",
+    "candidate_sha": "e557b78352242dbd2725018b29a36daccb3f0fbd"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Floci is a local S3-compatible provider; D104 does not certify AWS, Azure, another external cloud provider or P13 external-secret-provider evidence.",
+    "This is a filtered Docker diagnostic and not the complete strict Docker v0.1 acceptance gate or complete P11 journey.",
+    "D104 does not prove indefinite operation, HA/multi-worker, production SLO, external provider recovery breadth, a release gate or human release approval."
+  ]
+}
