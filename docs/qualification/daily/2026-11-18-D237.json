@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D237",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "P11 PostgreSQL-backed Docker worker execution and crash recovery",
+  "candidate_sha": "4f81473d08065cd4c332af9738bf30b1bfe29711",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "pending",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D237.md",
+  "execution_scope": "clean-main Docker diagnostics with isolated PostgreSQL fixture and Ronin image built from the candidate checkout",
+  "result": {
+    "postgres_worker": "PASS: test_real_docker_worker_executes_demo_against_postgres 1/1",
+    "postgres_worker_crash": "PASS: test_real_process_sigkill_reclaims_postgres_run_and_reuses_three_cells 1/1; crash recovery reclaimed the run and reused the three completed cells",
+    "cleanup": "PASS: each diagnostic removed its owned Ronin image and all temporary resources",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "4f81473d08065cd4c332af9738bf30b1bfe29711",
+    "execution_command_1": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d237b-docker-postgres-worker-20261118 -TestFilter 'real_docker_worker_executes_demo_against_postgres'",
+    "execution_command_2": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d237b-docker-postgres-worker-crash-20261118 -TestFilter 'real_process_sigkill_reclaims_postgres_run_and_reuses_three_cells'",
+    "evidence_directories": [
+      "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d237b-docker-postgres-worker-20261118",
+      "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d237b-docker-postgres-worker-crash-20261118"
+    ],
+    "sha256": {
+      "worker/docker-pytest-output.log": "57CCBEA67822C6239D1065D692C60F9A962E5C5ABDB87A93205781591BCA9146",
+      "worker/v01-acceptance.xml": "BB5F6D920108B33F25F208018AC61C6D3A0449CC213D49AA1DC8B08B9E2E983D",
+      "worker/docker-cleanup.json": "D847538F9DBF82933157D8042A2375414DDE86CA73C56DFAC0FB1C6815A2BD78",
+      "crash/docker-pytest-output.log": "44B36C60ADA04169901BCDFB7EB1915EB75E8FCA0041122F54A74D94C938AA5D",
+      "crash/v01-acceptance.xml": "2B79B292E50A1B0E96EE53C96FC3706D737D59AA785A9488FF9BCEF84D89DBB9",
+      "crash/docker-cleanup.json": "1D9BE59564107B79FA13B2483D34DEA299F6165EE87B79FE4299DF816F8D7ACF"
+    }
+  }
+}
