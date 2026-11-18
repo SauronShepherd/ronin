@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D242",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Public status/capability-matrix synchronization tooling",
+  "candidate_sha": "c274b01524f082d183f0af8c303bde553c64a365",
+  "implementation_commit_sha": "92d245490c910a70c3750604320aeb653c398677",
+  "documentation_commit_sha": "pending",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D242.md",
+  "execution_scope": "bounded tooling correction after D240/D241 baseline mismatch; no production runtime change",
+  "result": {
+    "fix": "PASS: generate_public_v1_status now synchronizes PUBLIC_V1_IMPLEMENTATION_STATUS.md, public-v1-status.json and PUBLIC_V1_CAPABILITY_MATRIX.md in one operation",
+    "regression": "PASS: tests/test_generate_public_v1_status.py and tests/test_public_capability_matrix.py 7/7",
+    "validators": "PASS: daily progress, public status check, capability status and git diff --check",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "implementation_commit": "92d245490c910a70c3750604320aeb653c398677",
+    "test_command": "pytest -q tests/test_generate_public_v1_status.py tests/test_public_capability_matrix.py",
+    "result_summary": "7 passed in 0.45s",
+    "status_command": "python -m tools.generate_public_v1_status --check"
+  }
+}
