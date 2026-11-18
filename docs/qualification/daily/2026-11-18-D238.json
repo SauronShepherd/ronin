@@ -6,7 +6,7 @@
   "cell": "Current-candidate full Docker integration and strict v0.1 acceptance",
   "candidate_sha": "ab00d4b111c6f7ef22ca483db60d05cd60d0d9b3",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "pending",
+  "documentation_commit_sha": "bbc77418d9556a0a55cfce0e11cd6a3b4f62e9ba",
   "evidence": "docs/qualification/handoffs/2026-11-18-D238.md",
   "execution_scope": "clean-main full Docker qualification with PostgreSQL, real Docker worker, Floci S3, Azurite Azure Blob and frozen v0.1 journey",
   "result": {
