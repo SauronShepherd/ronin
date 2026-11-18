@@ -15,6 +15,7 @@
   "d138_qualification_note": "D138 adds a clean live PostgreSQL-runtime cell on f1608da0: Ronin server configured with RONIN_STORAGE_BACKEND=postgres, Runs route 1/1 passed, 2/2 API events correlated, 0 skips/failures, cleanup PASS. This is bounded evidence only; P11 remains in_progress, P13 blocked and release NO-GO.",
   "d141_qualification_note": "D141 on 7a7ed952 requalified the Workflows route with Ronin and scheduler on PostgreSQL after fixing the live seeder's backend mismatch: 1/1 passed, 30/30 API events correlated, 0 skips/failures, cleanup PASS; affected Python regressions 49/49. Bounded evidence only; statuses unchanged.",
   "d142_qualification_note": "D142 on c8558e3f passed the live Notebook Studio worker cell with Ronin PostgreSQL backend and a real Docker worker: 1/1 passed, 20/20 API events correlated, 0 skips/failures, cleanup PASS. This is bounded PostgreSQL+worker evidence; statuses remain unchanged.",
+  "d143_qualification_note": "D143 on f509f3e3 passed the live streaming event-trigger workflow with Ronin PostgreSQL backend: 1/1 passed, 12/12 API events correlated, 0 skips/failures, cleanup PASS. This is bounded event-trigger continuity evidence; statuses remain unchanged.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",

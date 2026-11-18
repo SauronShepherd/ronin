@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D143",
+  "date": "2026-11-18",
+  "candidate_sha": "f509f3e35e861e5f2ca197283590b76654236489",
+  "implementation_boundary_sha": "f509f3e35e861e5f2ca197283590b76654236489",
+  "scope": "live streaming event-trigger workflow with Ronin PostgreSQL backend",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d143-live-postgres-event-workflow-a5fc1c5c454e49feaead361d3f03c920 -TestGrep 'live streaming event workflow is triggered by a committed record' -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 12, "correlated_http_logs": 12, "unexpected_errors": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d143-live-postgres-event-workflow-a5fc1c5c454e49feaead361d3f03c920", "server_backend": "postgres", "fixtures": ["PostgreSQL", "Kafka", "event trigger", "workflow delivery"], "cleanup": "PASS; isolated services removed"},
+  "limitations": ["Bounded event-trigger cell; not indefinite operation, HA, multi-broker quorum, provider breadth, complete family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
