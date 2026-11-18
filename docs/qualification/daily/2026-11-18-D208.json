@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D208",
+  "date": "2026-11-18",
+  "candidate_sha": "309160bc555ab93003d7d6076d529791b8fda321",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "Docker appliance backup and restore with real PostgreSQL and local data volume",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d207b-appliance-backup-20261118 -TestFilter test_appliance_backup_restores_postgres_and_local_data_volume -ImageTag ronin:qualification-d207b",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "pytest_deselected": 26, "pytest_seconds": 33.56},
+  "evidence": {
+    "test": "test_appliance_backup_restores_postgres_and_local_data_volume",
+    "backend": "Docker qualification with real PostgreSQL service, Ronin image built from checkout and local data volume",
+    "assertions": ["appliance backup", "PostgreSQL restore", "local data volume restore"],
+    "cleanup": "PASS; qualification image, services and volumes removed; no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d207b-appliance-backup-20261118",
+    "sha256": {"docker-cleanup.json": "6F055303D273DE2227CC45601D770728A398F362707BBC522A422A67AEC60359", "docker-pytest-output.log": "367D112C55659D8D16091B114260A3BDFF35F744E6DBC05DC859E643FE939D0A", "docker-qualification.log": "01C354730A951AA703EACFC225780576191CC0CF24DD75FBD456EADF31B731E7", "postgres-qualification.log": "A4ED34988B61B73984ABC9841803F7463C307A7E45DB6ABC0C303AE09FA2342F", "v01-acceptance.xml": "29E44C5B054C8D9F4BBD3C677CB7BBDDD11BC199FB47B45C3208DC4763765571"}
+  },
+  "limitations": ["Bounded Docker appliance evidence only; strict v0.1 acceptance was not evaluated, and this does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
