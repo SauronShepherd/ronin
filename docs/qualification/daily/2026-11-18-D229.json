@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D229",
+  "date": "2026-11-18",
+  "candidate_sha": "dc07d5e8b5211d88906e133d4fb5b40542b1e640",
+  "implementation_boundary_sha": "dc07d5e8b5211d88906e133d4fb5b40542b1e640",
+  "scope": "live Synthetic Data Studio catalog route on PostgreSQL after backend-contract wiring fix",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d229-live-synthetic-postgres-20261118 -StorageBackend postgres -TestGrep 'route synthetic loads and reaches the live API' -RequestTimeoutSeconds 60",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 8, "correlated_http_logs": 8, "unexpected_errors": 0, "elapsed_seconds": 38.48},
+  "evidence": {
+    "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+    "api_outcomes": {"OK": 8},
+    "cleanup": "PASS; PostgreSQL, Kafka, volume and network removed",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d229-live-synthetic-postgres-20261118",
+    "sha256": {
+      "browser-live.log": "2A845C1A7714C6B492461FEFAE68997F3D59AA6A06B8E677315E42EE85F0439A",
+      "browser-live.xml": "6643B840D3804F36455D1B7953E99A51CE271118CD6FB197AD0BF2EB1B2CBA53",
+      "live-api-traffic.json": "0A4928E3428B3B433790B854ECE2F76C6E1502F9978B1D27D6D9C7114B3ABD04",
+      "live-server.stderr.log": "CE22CE3BFE465D373A013D358595C016B9685DC7E139F7EE8EAFC50912F19132",
+      "qualification-summary.json": "44DED716D868A4D3129604E31984DD46775245818A31880040EBC41CCF28B675"
+    }
+  },
+  "limitations": ["Filtered live route only; Graphs remains unconfigured, and this does not prove route-wide coverage, indefinite operation, HA, external provider certification, complete P11 or release gates."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

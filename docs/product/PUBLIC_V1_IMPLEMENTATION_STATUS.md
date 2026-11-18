@@ -7,6 +7,20 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D229 passes `1/1` filtered live Synthetic Data Studio route on candidate and
+production boundary `dc07d5e8b5211d88906e133d4fb5b40542b1e640`: after binding
+the catalog by backend contract, PostgreSQL/Kafka produce `8/8` correlated API
+events, all `OK`, with cleanup PASS. D228 remains explicitly `NOT_PASS` for
+the full campaign's two real failures; Graphs remains unconfigured. P11 remains
+`in_progress`, P13 remains `blocked`, and release remains **NO-GO** at `1/13`
+families and `0/10` gates.
+
+D228 full live PostgreSQL/Kafka/worker campaign on candidate
+`d5d8b9427e0d79266ba17233bdabf421e3c28c72` is `NOT_PASS`: `40/43` passed, one
+deliberate skip and two real failures (Synthetic catalog assets `500` and
+Graphs `503`), with `519/519` API events correlated and cleanup PASS. The
+failures remain retained and are not reattributed.
+
 D227 passes `1/1` real PostgreSQL 16.4 FinOps integration on candidate and
 production boundary `2a6e049c85451abbe339e4e6d2a8ef1abb549068`: conflicting
 replay of an existing cost is rejected with `FinOpsConflict`, while pricing,

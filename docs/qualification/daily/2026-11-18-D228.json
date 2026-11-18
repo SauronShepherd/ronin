@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D228",
+  "date": "2026-11-18",
+  "candidate_sha": "d5d8b9427e0d79266ba17233bdabf421e3c28c72",
+  "implementation_boundary_sha": "2a6e049c85451abbe339e4e6d2a8ef1abb549068",
+  "scope": "full live PostgreSQL/Kafka/worker product campaign",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d228-live-full-current-20261118 -StorageBackend postgres -WorkerImage ronin:qualification -RequestTimeoutSeconds 60",
+  "result": {"status": "NOT_PASS", "playwright_selected": 43, "playwright_passed": 40, "playwright_skipped": 1, "playwright_failed": 2, "api_events": 519, "correlated_http_logs": 519, "unexpected_errors": 5, "elapsed_seconds": 410.61},
+  "evidence": {
+    "real_services": {"postgres": true, "kafka": true, "ronin_api": true, "worker_image": "sha256:e1f1dd3d3fb823182b817125b74455632674c4a2cf507e09d79ac42be3d7859d6b3481d429a529dd06"},
+    "api_outcomes": {"OK": 493, "WARN": 21, "ERROR": 5},
+    "failures": ["Synthetic catalog assets returned 500 internal_error", "Graphs route returned 503 graph_unavailable"],
+    "cleanup": "PASS; PostgreSQL, Kafka, volume, network and temporary Ronin worker image removed",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d228-live-full-current-20261118",
+    "sha256": {
+      "browser-live.log": "CA980028D78B85C63F38CF14F435183C0E190FAA3A15710688A8680FB65519B9",
+      "browser-live.xml": "A53390AA93826E51C96F21B720828A2CF75D948243AEEDD611CB3A0FE35A4BB4",
+      "live-api-traffic.json": "DD949A8812F435BD8DC5BA58ABDEEE352A9147B431F02457B8F339319781066B",
+      "live-server.stderr.log": "30EA12DFED4606E4EE58155A17D812055BC499291F95A5904FF2B8B5F8DB2EDF",
+      "qualification-summary.json": "A5817D4989D8673B7F6F2F77BF65BC06FA1E5CC10E7F53BD0AF887E4216C8504"
+    }
+  },
+  "limitations": ["NOT_PASS campaign; D228 is not release evidence. Two failures are retained verbatim and are not reattributed to earlier receipts."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
