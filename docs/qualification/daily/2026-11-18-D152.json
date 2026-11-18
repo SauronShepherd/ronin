@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D152",
+  "date": "2026-11-18",
+  "candidate_sha": "88536cc182b897c8b08975d802d7a0f850321a56",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "bounded real Docker worker/runtime with PostgreSQL execution and SIGKILL recovery",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d152-worker-runtime-20261118 -ImageTag ronin:qualification-d152 -TestFilter worker_runtime",
+  "result": {"status": "PASS", "selected": 4, "passed": 4, "skipped": 0, "failed": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d152-worker-runtime-20261118", "worker_image_digest": "sha256:8d98382129336c403654e60dae3192ebfe045865279997bc879c69ea0121b4ce", "fixtures": ["PostgreSQL", "Docker worker", "process SIGKILL recovery"], "cleanup": "PASS; owned image and services removed"},
+  "limitations": ["Filtered bounded diagnostic; strict v0.1 acceptance was not evaluated, and this does not establish indefinite operation, HA, complete family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
