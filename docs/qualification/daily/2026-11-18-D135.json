@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D135",
+  "date": "2026-11-18",
+  "candidate_sha": "e204e483ce24f6f5edbec7b1e1a4604832ac712d",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "P11 full Docker integration and strict v0.1 acceptance",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d135-docker-full-fixed-20261118 -ImageTag ronin:qualification-d135",
+  "result": {"pytest_selected": 27, "pytest_passed": 27, "pytest_skipped": 0, "pytest_failed": 0, "strict_v01_selected": 15, "strict_v01_passed": 15, "strict_v01_skipped": 0, "strict_v01_failed": 0, "pytest_duration_seconds": 212.95},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d135-docker-full-fixed-20261118", "image_digest": "sha256:e1299c35038c4ff7109c6e0da90929cce2c4f6c3efb4192742cccfed8482aeed", "fixtures": ["PostgreSQL", "Docker worker", "Floci/S3", "Azurite/Azure"], "cleanup": "Docker qualification cleanup PASS; owned image and temporary services removed"},
+  "limitations": ["Docker integration and strict v0.1 acceptance only; this does not certify indefinite operation, production HA, all 13 families, human release decisions or every external provider.", "The Ronin server in the earlier live route used SQLite; this Docker result is not reattributed as PostgreSQL scheduler/runtime evidence for that route."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

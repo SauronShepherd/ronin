@@ -7,6 +7,16 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D135 adds full Docker qualification on candidate
+`e204e483ce24f6f5edbec7b1e1a4604832ac712d`: `27/27` integration tests pass,
+with `0` skips/failures, and strict v0.1 acceptance passes `15/15`, using real
+PostgreSQL, Docker worker, Floci/S3 and Azurite/Azure fixtures. Cleanup passes.
+This does not prove indefinite operation, production HA, all 13 families,
+human release decisions or every external provider. The production boundary is
+`a9413421c27a11ea0e65bfba70777aa2127f37a9`; P11 remains `in_progress`, P13
+remains `blocked`, and release remains **NO-GO** at `1/13` families and
+`0/10` gates.
+
 D134 is a complete local Python/PostgreSQL suite on candidate
 `a9413421c27a11ea0e65bfba70777aa2127f37a9`: `4757/4788` passed, `31` explicit
 skips and `0` failures, with isolated PostgreSQL cleanup. The candidate also
@@ -825,7 +835,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `a9413421c27a11ea0e65bfba70777aa2127f37a9` (2026-11-18).
+**Observed source head:** `e204e483ce24f6f5edbec7b1e1a4604832ac712d` (2026-11-18).
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
