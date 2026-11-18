@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D259",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL event-to-workflow continuity",
+  "candidate_sha": "a227029f0bc16d6407c39ae862b0e8db8e33cb35",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "a227029f0bc16d6407c39ae862b0e8db8e33cb35",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D259.md",
+  "execution_scope": "clean-main live streaming event-to-workflow journey with Ronin configured for real PostgreSQL and Kafka",
+  "result": {
+    "event_workflow": "PASS: 1/1 filtered event-driven workflow case",
+    "api_audit": "PASS: 12/12 real API events correlated, all OK, 0 unexpected authorization gaps and 0 unexpected server/network errors",
+    "runtime": "PASS: committed streaming record triggers the durable workflow path on the PostgreSQL-configured live server",
+    "cleanup": "PASS: PostgreSQL, broker, network and volume removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "a227029f0bc16d6407c39ae862b0e8db8e33cb35",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d259-live-event-workflow-postgres-current-20261118 -StorageBackend postgres -TestGrep 'live streaming event workflow is triggered by a committed record' -RequestTimeoutSeconds 60",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d259-live-event-workflow-postgres-current-20261118",
+    "sha256": {
+      "browser-live.log": "2B5ABA6FE05360300AF4042B838A10EF79B197D4DC7AB8FBE8DD3AB21711D1C3",
+      "browser-live.xml": "AFF3652A2B2D40E5547E8F9C12937E024BDB5E51E6C1328B0D19F797FCD6B266",
+      "live-api-traffic.json": "52227946A98D1B96A65E8BF4C5A40CD6A1BBAF93E93964FB5AA0D8B5B77E68E4",
+      "live-server.stderr.log": "3E3149266EC5C3817747387686BEB3B0649DB7D0B448E81CC17C8611451E5650",
+      "qualification-summary.json": "94E7ADD6750F9D6D5941F17DD0CD115D3F47DFDF44452E76903C58EBC80CAA8F"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded event-to-workflow evidence, not route-wide coverage, indefinite operation, HA/multi-worker, complete P11 or release approval.",
+    "D259 does not reattribute D143, D235, D236, D244, D100 or earlier receipts."
+  ]
+}
