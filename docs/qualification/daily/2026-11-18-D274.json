@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D274",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler late branch decision integrity",
+  "candidate_sha": "b16749e3aff75402bd354fb5dc16abf2fce1b624",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D274.md",
+  "execution_scope": "clean-main filtered integration selection against isolated real PostgreSQL 16.4",
+  "result": {
+    "branch_integrity": "PASS: late branch decision is rejected without mutating terminal task",
+    "tests": "PASS: 1 selected, 20 deselected, 0 selected skips, 0 selected failures",
+    "cleanup": "PASS: isolated PostgreSQL removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d274-scheduler-branch-integrity-current-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_rejects_late_branch_decision_without_mutating_terminal_task'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d274-scheduler-branch-integrity-current-20261118",
+    "postgres_image": "postgres:16.4-alpine",
+    "sha256": {
+      "pytest-output.log": "432B2A810A755BF8663C06E3582584AA2AC42FE946B5654B57AE811240F5F661",
+      "pytest-postgres.log": "E54AC248CE46D4B0951C8A01E380F0043A071C4B3E15A2C5DD7B5946C6080AC3",
+      "pytest-postgres.xml": "8FECA3417F8ECED30B7286C39A3D96B90853D3C0890DC96F7A6EC682A060E0C8",
+      "pytest-timings.json": "5CC5B477046D1241CD1C729D774A44E3689245D1ED23B5DCBBBBFAFFB37A2330",
+      "runner-timings.json": "B7643E63605D097491790CD20DAAB350F27DD01CB3EBFA4E885A66F4DEEFBD3E"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded scheduler branch-integrity evidence, not indefinite operation, HA/multi-worker, full controller conformance, complete P11 or release approval.",
+    "D274 is distinct from, and does not reattribute, D273, D272, D271, D270, D269, D268, D267, D266, D265, D264, D263, D246, D222, D145 or earlier receipts."
+  ]
+}
