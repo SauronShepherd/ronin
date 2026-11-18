@@ -6,7 +6,7 @@
   "cell": "Current-candidate PostgreSQL scheduler late branch decision integrity",
   "candidate_sha": "b16749e3aff75402bd354fb5dc16abf2fce1b624",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "e71a65593c51f5dfab5f55e2627806b79fef7b37",
   "evidence": "docs/qualification/handoffs/2026-11-18-D274.md",
   "execution_scope": "clean-main filtered integration selection against isolated real PostgreSQL 16.4",
   "result": {
