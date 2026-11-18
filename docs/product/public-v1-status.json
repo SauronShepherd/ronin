@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-11-18T23:59:00Z",
-  "observed_main_sha": "7e032970337ce81b13de0da350c0ee7780bdd0ae",
+  "observed_main_sha": "4fbd7183da644d3c516da309e7ea86c62b2485ad",
   "latest_automated_evidence": "D246 on current candidate 23dd0c25 passes 2/2 explicit PostgreSQL scheduler daemon recovery cases: expired leadership reacquisition without duplicate fire and process-crash replay without duplicate job. D245 Docker acceptance is 27/27 plus strict v0.1 15/15, and D244 PostgreSQL RF3 multi-broker failover passes 1/1 separately. Historical D83-D100 receipts remain bound to their exact candidates and are not reattributed. P11 remains in_progress, P13 remains blocked, and release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_observation": "2026-11-18 current main c422f9e3: D246 PostgreSQL scheduler recovery is 2/2 PASS with cleanup; D245 Docker integration is 27/27 PASS and strict v0.1 is 15/15 PASS; D244 is the separate PostgreSQL/RF3 multi-broker companion at 1/1 PASS. These are bounded cells; release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_p11_observation": "D246 strengthens current-candidate PostgreSQL scheduler recovery evidence; D245 strengthens Docker worker and external-emulator fixture evidence; D244 strengthens PostgreSQL-configured RF3 failover evidence. These bounded cells do not prove indefinite operation, production SLO, HA/multi-worker, external provider certification, full scheduler/runtime family coverage, complete P11 or release approval. The production implementation boundary remains 59004dae6b483e1629646af3cd28f03e05fa88ad; P11 stays in_progress and P13 stays blocked.",
