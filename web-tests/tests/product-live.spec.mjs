@@ -2179,7 +2179,7 @@ test('live streaming event workflow is triggered by a committed record', async (
     const run = await request('POST', runPath, {
       limit: 1,
       timeout_seconds: 1,
-      max_batches: 1,
+      max_batches: 2,
       max_records: 1,
       idle_polls: 1,
     });
@@ -2220,7 +2220,7 @@ test('live streaming event workflow is triggered by a committed record', async (
   const replay = await request('POST', runPath, {
     limit: 1,
     timeout_seconds: 1,
-    max_batches: 1,
+    max_batches: 2,
     max_records: 1,
     idle_polls: 1,
   });
