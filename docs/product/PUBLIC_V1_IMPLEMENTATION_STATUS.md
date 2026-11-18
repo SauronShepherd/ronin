@@ -7,6 +7,15 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D260 on current candidate `253c935680e168cbd79fe25d5741433dedc9125d`
+passes the PostgreSQL-configured live Notebook Studio journey with a real
+Docker worker `1/1`, with `18/18` correlated API events, all `OK`, and cleanup
+PASS. The worker image was `sha256:6872290f91ce9cb9279b25194732889c07d5e8eb44f83731fdbc12d3f5197d14`
+and was removed after the run. This is bounded PostgreSQL plus worker evidence;
+it does not establish route-wide coverage, indefinite operation, HA/multi-worker,
+complete P11 or release approval. P11 remains `in_progress`, P13 remains
+`blocked`, and release remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D259 on current candidate `a227029f0bc16d6407c39ae862b0e8db8e33cb35`
 passes PostgreSQL-configured event-to-workflow continuity `1/1`, with `12/12`
 correlated API events, all `OK`, and cleanup PASS. P11 remains `in_progress`,
