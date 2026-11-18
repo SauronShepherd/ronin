@@ -7,6 +7,14 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D270 on current candidate `f51131b3f7d04f9ea5f4b5593c4b491d9a758cab`
+passes two PostgreSQL cancellation-authority cases `2/2`: persistence before
+waiting on tasks and retirement of unsubmitted outbox, with cleanup PASS. This
+is bounded evidence and does not prove indefinite operation, HA/multi-worker,
+complete controller conformance, P11 or release approval. P11 remains
+`in_progress`, P13 remains `blocked`, and release remains **NO-GO** at `1/13`
+families and `0/10` gates.
+
 D269 on current candidate `1d39d2eef8e6a2c928196b635de0a01b35f72a32`
 passes two PostgreSQL workflow-cancellation cases `2/2`: durable job/outbox
 reconciliation and claim fencing before intent, with cleanup PASS. This is
