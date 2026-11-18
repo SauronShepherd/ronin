@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D200",
+  "date": "2026-11-18",
+  "candidate_sha": "0c714e6ec2053db672d45e4ce166e10493013e38",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL-backed ML registry, durable checkpoints, atomic bundles and job fencing",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d200-postgres-ml-20261118 -TestPath tests/integration/test_postgres_ml_real.py",
+  "result": {"status": "PASS", "pytest_selected": 12, "pytest_passed": 12, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 22.63},
+  "evidence": {
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "coverage": ["ML registry round trip and conflict guards", "atomic concurrent/replayable registry bundles", "rollback after feature/model/dataset conflicts", "node checkpoint after reopen", "lab v1 clustering and metadata", "shared job claim/cancel fencing", "archived-workspace mutation rejection", "fail-closed reference limits"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d200-postgres-ml-20261118",
+    "sha256": {"pytest-output.log": "45B3F825882FAC4DDCE92896A1D9C1A91A11E29B0EBAE8B6ED41863ABD484527", "pytest-postgres.log": "8706629C765628CB447A18193AE129343C8BB7618C536B16273917ED3E5EF619", "pytest-postgres.xml": "A2229032FCC6D65915E07AFB942293CC49D6ADFB0318FDEBEC7B8A38470C7373", "pytest-timings.json": "5BFD8C21D5B5B8505581351C7F18050820B1EDBDCF36608351391DF9253885D7", "runner-timings.json": "E3E9B056938A717BADFA14F5F3F781E731F3CB24E2E971B00CEB0DC5569DCAAB"}
+  },
+  "limitations": ["Bounded PostgreSQL ML evidence only; it does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
