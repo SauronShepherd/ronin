@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D172",
+  "date": "2026-11-18",
+  "candidate_sha": "d3193f6affcdf6a44ec308f35d37dc102f07c7d7",
+  "implementation_boundary_sha": "d3193f6affcdf6a44ec308f35d37dc102f07c7d7",
+  "scope": "bounded live PostgreSQL Catalog journey after environment-store composition change",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d172-live-postgres-catalog-20261118 -TestGrep catalog -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 4, "api_correlated": 4, "api_ok": 4},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d172-live-postgres-catalog-20261118", "cleanup": "PASS; containers, volume, network and temporary images removed"},
+  "limitations": ["Filtered Catalog journey only; PostgreSQL Graphs remains unconfigured, and no release gate or complete P11 claim follows."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

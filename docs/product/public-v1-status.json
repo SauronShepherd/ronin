@@ -39,6 +39,7 @@
   "d168_qualification_note": "D168 on a3891fb6 passed 1/1 bounded 60-second streaming supervisor-soak case: 33/33 API events correlated, all OK, 0 skips/failures, cleanup PASS. This is single-broker SQLite streaming evidence only; P11 remains in_progress, P13 blocked and release NO-GO.",
   "d170_qualification_note": "D170 on 4b3dded0 passed 1/1 filtered Synthetic Data Studio journey on its configured SQLite runtime: 8/8 API events correlated, all OK, 0 skips/failures, cleanup PASS. D169's PostgreSQL request was SQLite-only and timed out before startup; no PostgreSQL claim is made. Statuses remain unchanged.",
   "d171_qualification_note": "D171 on 7d5b1650 passed 1/1 filtered live Graphs journey on the configured SQLite runtime: 5/5 API events correlated, all OK, 0 skips/failures, cleanup PASS. PostgreSQL Graphs remains unconfigured; this does not change P11, P13 or release status.",
+  "d172_qualification_note": "D172 on d3193f6a passed 1/1 filtered live Catalog journey with Ronin on real PostgreSQL: 4/4 API events correlated, all OK, 0 skips/failures, cleanup PASS. This confirms the environment-store composition change did not regress Catalog; statuses remain unchanged.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",
