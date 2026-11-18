@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D111",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "PostgreSQL connector checkpoint fencing, restart inventory and scoped sync worker",
+  "candidate_sha": "6b40883b7d0d89b31132bb9b451a5955558076c7",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D111.md",
+  "execution_scope": "clean-main-isolated-postgresql-16.4-connector-checkpoint-diagnostic",
+  "result": {
+    "checkpoint_fencing": "PASS: PostgreSQL connector checkpoint inventory, fencing and restart behavior",
+    "sync_worker": "PASS: PostgreSQL sync worker reads/writes and advances a scoped checkpoint",
+    "focused_result": "PASS: 2/2 selected tests, 0 skips, 0 failures, 1 deselected",
+    "service": "PASS: isolated real postgres:16.4-alpine; temporary schemas were removed by finalizers",
+    "cleanup": "PASS: runner completed and preserved XML/log/timing evidence",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d111-postgres-connector-checkpoint-20261118 -TestPath tests/integration/test_postgres_connector_checkpoint_real.py -TestFilter 'postgres_connector_checkpoint_fencing_inventory_and_restart or postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpoint'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d111-postgres-connector-checkpoint-20261118",
+    "pytest_xml": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d111-postgres-connector-checkpoint-20261118\\pytest-postgres.xml",
+    "candidate_sha": "6b40883b7d0d89b31132bb9b451a5955558076c7"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered direct PostgreSQL connector diagnostic, not the complete Python/PostgreSQL suite, full provider matrix or complete P11 journey.",
+    "D111 does not certify an external cloud provider, indefinite operation, HA/multi-worker, production SLO, P13, a release gate or human release approval.",
+    "The D100 live server/backend distinction remains unchanged: its live Ronin server used SQLite."
+  ]
+}
