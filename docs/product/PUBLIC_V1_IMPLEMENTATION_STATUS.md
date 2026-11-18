@@ -886,6 +886,8 @@ D162 passed `1/1` filtered Quality Studio live case with Ronin configured agains
 D163 ran the full live browser campaign with PostgreSQL, Kafka and a Docker worker from the candidate. It is **NOT_PASS**: `34/43` cases passed, one deliberate multi-broker case was skipped and eight failed. The PostgreSQL profile exposed unconfigured environments, FinOps, synthetic catalog, graphs and deployments services; the sustained backpressure and supervisor-soak scenarios also missed their criteria. All `411/411` API events were correlated, and cleanup passed. This diagnostic does not change P11, P13 or release status.
 
 D166 passed the filtered environments and deployments journeys (`2/2`) with Ronin configured against real PostgreSQL. All `10/10` API events correlated and were OK; no cases were skipped or failed and cleanup passed. The PostgreSQL composition now wires its existing environment/binding persistence through `PostgresSchedulerSnapshotStore`, and the live fixture registers a valid project for the binding FK. This is bounded evidence only; P11 remains in progress, P13 blocked and release NO-GO at `1/13` families and `0/10` gates.
+
+D168 passed the explicit bounded streaming supervisor-soak criterion (`1/1`) for 60 seconds on the single-broker SQLite runtime. It produced `33/33` correlated API events, all OK, with no skips or failures and cleanup passing. This narrows the D163 soak failure to campaign interference or load interaction but does not qualify indefinite operation, PostgreSQL, HA/multi-broker or release readiness.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact

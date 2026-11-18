@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D168",
+  "date": "2026-11-18",
+  "candidate_sha": "a3891fb621cedf3a44f1e1636649cd92ba8b4595",
+  "implementation_boundary_sha": "a3891fb621cedf3a44f1e1636649cd92ba8b4595",
+  "scope": "bounded live streaming supervisor soak with explicit 60-second duration and cycle criterion",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d168-live-supervisor-soak-20261118 -TestGrep \"supervisor soak\" -StorageBackend sqlite -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 33, "api_correlated": 33, "api_ok": 33},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d168-live-supervisor-soak-20261118", "cleanup": "PASS; streaming container, network and temporary image removed"},
+  "limitations": ["Single-broker streaming-only diagnostic using the SQLite local runtime; it does not qualify PostgreSQL, multi-broker HA, indefinite operation or release readiness."],
+  "notes": ["D167 was an invalid preparatory attempt because the streaming-only runner was asked for PostgreSQL without starting PostgreSQL; its timeout is not reattributed to D168."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
