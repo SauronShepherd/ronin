@@ -134,7 +134,13 @@ def main() -> int:
     )
     store = SqliteKnowledgeGraphStore(database)
     store.put(workspace_id, "graph-1", graph)
-    catalog = SqliteCatalogStore(database, migration_now=now)
+    catalog = (
+        PostgresSchedulerSnapshotStore(
+            postgres_dsn, application_name="ronin-live-catalog-seeder"
+        )
+        if storage_backend == "postgres"
+        else SqliteCatalogStore(database, migration_now=now)
+    )
     source = CatalogAsset(AssetId("live-lineage-source"), "table", "Live source")
     target = CatalogAsset(AssetId("live-lineage-target"), "table", "Live target")
     catalog.create_asset(workspace_id, source, now=now)
