@@ -250,6 +250,9 @@ def test_live_postgres_seed_is_repeatable_and_keeps_existing_database_data() -> 
 def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     script = (ROOT / "tools" / "run_live_product_qualification.ps1").read_text(encoding="utf-8")
     live_support = (ROOT / "web-tests" / "tests" / "live-support.mjs").read_text(encoding="utf-8")
+    live_suite = (ROOT / "web-tests" / "tests" / "product-live.spec.mjs").read_text(
+        encoding="utf-8"
+    )
 
     assert "Get-FreeLoopbackPort" in script
     assert script.index("docker image inspect $WorkerImage") < script.index(
@@ -319,12 +322,16 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert "apiTraffic" in script
     assert "BackpressureRecords" in script
     assert "RONIN_LIVE_BACKPRESSURE_RECORDS" in script
+    assert "BackpressureTimeoutSeconds" in script
+    assert "RONIN_LIVE_BACKPRESSURE_TIMEOUT_SECONDS" in script
     assert "RequestTimeoutSeconds" in script
     assert "RONIN_HTTP_REQUEST_TIMEOUT_SECONDS" in script
     assert "RONIN_LIVE_REQUEST_TIMEOUT_SECONDS" in script
     assert "requestTimeoutSeconds" in script
     assert "RONIN_LIVE_REQUEST_TIMEOUT_SECONDS" in live_support
     assert "streamingFixture" in script
+    assert "backpressureTimeoutSeconds" in script
+    assert "RONIN_LIVE_BACKPRESSURE_TIMEOUT_SECONDS" in live_suite
     assert '$TestGrep -eq "live streaming broker restart"' in script
     assert (
         '$performancePluginDiagnostic = -not $TestGrep -or $TestGrep -match "performance|route"'

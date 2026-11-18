@@ -1599,7 +1599,13 @@ test('live streaming max-record cap resumes the durable checkpoint without repla
 });
 
 test('live streaming sustained backpressure drains configured records with reset-safe replay', async ({ page }) => {
-  test.setTimeout(240_000);
+  const configuredTimeoutSeconds = Number(
+    process.env.RONIN_LIVE_BACKPRESSURE_TIMEOUT_SECONDS || '240',
+  );
+  expect(Number.isInteger(configuredTimeoutSeconds)).toBe(true);
+  expect(configuredTimeoutSeconds).toBeGreaterThanOrEqual(240);
+  expect(configuredTimeoutSeconds).toBeLessThanOrEqual(1800);
+  test.setTimeout(configuredTimeoutSeconds * 1_000);
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
 
   const calls = installLiveApiProxy(page);
