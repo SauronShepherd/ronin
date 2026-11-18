@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D234",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "P11 multi-broker RF3 companion with PostgreSQL backend after runner correction",
+  "candidate_sha": "763d648989b6c64fdad0dad2ead0b4d7032f19a7",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "pending",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D234.md",
+  "execution_scope": "dirty-worktree diagnostic used only to validate the runner correction; product boundary unchanged",
+  "result": {
+    "runner_fix": "PASS: postgres plus MultiBroker now starts compose.yaml and compose.multi-broker.yaml with postgres and all three broker services; the prior path incorrectly started only the single broker service",
+    "live_route": "PASS: 1/1 filtered Playwright case passed, 5/5 real API events correlated, 0 unexpected authorization or server/network errors",
+    "cleanup": "PASS: all four containers, network and PostgreSQL volume were removed by the runner; no qualification container remains",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "763d648989b6c64fdad0dad2ead0b4d7032f19a7",
+    "local_command": "python -m pytest tests/test_docker_qualification_contract.py -q",
+    "local_result": "26 passed",
+    "live_command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d234-live-multibroker-postgres-20261118-rerun -StorageBackend postgres -TestGrep 'live streaming multi-broker failover resumes from the durable checkpoint' -MultiBroker -RequestTimeoutSeconds 60 -AllowDirtyWorktree",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d234-live-multibroker-postgres-20261118-rerun",
+    "sha256": {
+      "browser-live.log": "7D51515241CFFCE4795B3A30A617FA447F82AC01F2AEAA97DB6D7CB94188057A",
+      "browser-live.xml": "D1169DEB6AFDE6BA60010526238AAAA5EDEB2DB50D407198AC737DE9685100C4",
+      "live-api-traffic.json": "DB3E2ECF83AF585C621925FD211CD9A9C69208C53B0C614DE55FA27209F3E385",
+      "qualification-summary.json": "0D64205DDEA793E6480E54449A6CF4098303A544545EA074FA710F27CF57AA6C"
+    }
+  }
+}
