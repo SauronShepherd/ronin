@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D265",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler event inbox freeze and delivery replay",
+  "candidate_sha": "fc907f19c4ec06de7c730c0cdb2a03cc6f60c242",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D265.md",
+  "execution_scope": "clean-main filtered integration selection against isolated real PostgreSQL 16.4",
+  "result": {
+    "event_inbox": "PASS: durable event inbox freezes and replays deliveries",
+    "tests": "PASS: 1 selected, 20 deselected, 0 selected skips, 0 selected failures",
+    "cleanup": "PASS: isolated PostgreSQL removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d265-scheduler-event-inbox-current-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d265-scheduler-event-inbox-current-20261118",
+    "postgres_image": "postgres:16.4-alpine",
+    "sha256": {
+      "pytest-output.log": "0BF87AF948888A79DE3D81B216431892E7969BA77655C7BF8F94EC790A695D9C",
+      "pytest-postgres.log": "8E0557CD50FEDBB8DA44C2005093E3FE1C046DE00C16562DE3A8FE81A57A2ABA",
+      "pytest-postgres.xml": "0440A8E2279D5359EFE6BD4223AAD1A20D8D701054DBE3339CF0928CBE015E8C",
+      "pytest-timings.json": "888FE82BC3B61DADFD892CA14F0C26820002C88B017ED5C8BC7AAC967F094ABB",
+      "runner-timings.json": "79AC9F9CAEA2CE02DDC4E6C77BE44B68D4D19960B5CBB67EDCA63F912A5D83BB"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded durable event-delivery evidence, not indefinite operation, HA/multi-worker, full controller conformance, complete P11 or release approval.",
+    "D265 is distinct from, and does not reattribute, D264, D263, D246, D222, D145 or earlier receipts."
+  ]
+}
