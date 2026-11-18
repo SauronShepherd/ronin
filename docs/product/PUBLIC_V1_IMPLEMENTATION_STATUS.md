@@ -894,6 +894,8 @@ D170 passed the filtered Synthetic Data Studio journey (`1/1`) on its configured
 D171 passed the filtered Graphs journey (`1/1`) on the configured SQLite runtime, with `5/5` correlated API events, all OK, and cleanup passing. The PostgreSQL profile still reports `graph_unavailable`; D171 therefore qualifies only the existing SQLite graph path and does not close the PostgreSQL adapter gap or any release gate.
 
 D172 passed the filtered Catalog journey (`1/1`) with Ronin on real PostgreSQL. It produced `4/4` correlated API events, all OK, with no skips or failures and cleanup passing. This confirms the environment/binding composition change did not regress PostgreSQL Catalog; it remains bounded evidence only.
+
+D173 passed the filtered FinOps journey (`1/1`) on its configured SQLite runtime, with `3/3` correlated API events, all OK, and cleanup passing. PostgreSQL FinOps remains unconfigured, so this is local bounded evidence only and does not change P11, P13 or release status.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D173",
+  "date": "2026-11-18",
+  "candidate_sha": "bf8ef1b1c9d17d09e598916ee4bd0804f9ea707d",
+  "implementation_boundary_sha": "bf8ef1b1c9d17d09e598916ee4bd0804f9ea707d",
+  "scope": "bounded live FinOps journey on its configured SQLite runtime",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d173-live-finops-20261118 -TestGrep finops -StorageBackend sqlite -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 3, "api_correlated": 3, "api_ok": 3},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d173-live-finops-20261118", "cleanup": "PASS; containers, volume, network and temporary images removed"},
+  "limitations": ["FinOps is still SQLite-backed in the composed profile; this does not qualify PostgreSQL FinOps, external providers, indefinite operation or release readiness."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
