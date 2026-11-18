@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D183",
+  "date": "2026-11-18",
+  "candidate_sha": "04c2fc5e1b955c6199c51d578c2e689831551cce",
+  "implementation_boundary_sha": "04c2fc5e1b955c6199c51d578c2e689831551cce",
+  "scope": "qualification-runner robustness for skipped live diagnostics with absent API traffic evidence",
+  "change": "run_live_product_qualification.ps1 now treats an absent traffic file as empty evidence and preserves the intentional API-evidence failure instead of masking it with a file-path exception",
+  "regression": {"command": "python -m pytest tests/test_docker_qualification_contract.py -q", "status": "PASS", "passed": 26, "failed": 0, "skipped": 0},
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
