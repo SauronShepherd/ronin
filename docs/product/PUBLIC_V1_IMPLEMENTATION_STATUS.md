@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D253 on current candidate `86f8412cb2ef24a55091c53c7934f4ae2fd83fcb`
+passes an explicit 300-second PostgreSQL-configured supervisor soak at one
+record per 0.5 seconds: `1/1` case, `148` run/health cycles and `297/297`
+correlated API events, all `OK`, with cleanup PASS. D251 remains NOT_PASS under
+the higher default producer load. P11 remains `in_progress`, P13 remains
+`blocked`, and release remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D252 on current candidate `f35ab4d8ca01d044befc70051278d5d0651610dc`
 passes an explicit 180-second PostgreSQL-configured supervisor soak: `1/1`
 case, the criterion of at least `45` cycles exceeded, `259/259` correlated API
