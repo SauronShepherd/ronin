@@ -2,6 +2,8 @@ param(
     [string]$EvidenceDirectory = (Join-Path $env:TEMP ("ronin-live-qualification-" + [guid]::NewGuid().ToString("N"))),
     [string]$TestGrep,
     [string]$WorkerImage,
+    [ValidateSet("sqlite", "postgres")]
+    [string]$StorageBackend = "sqlite",
     [switch]$AllowDirtyWorktree,
     [switch]$MultiBroker,
     [ValidateRange(256, 1000000)]
@@ -326,7 +328,10 @@ try {
     }
 
     $env:RONIN_SERVER_PROFILE = "local-composed"
-    $env:RONIN_STORAGE_BACKEND = "sqlite"
+    $env:RONIN_STORAGE_BACKEND = $StorageBackend
+    $env:RONIN_POSTGRES_DSN = if ($StorageBackend -eq "postgres") {
+        "postgresql://$($env:POSTGRES_USER):$($env:POSTGRES_PASSWORD)@127.0.0.1:$postgresPort/ronin"
+    } else { $null }
     $env:RONIN_HOST = "127.0.0.1"
     $env:RONIN_DB = Join-Path $liveDataDir "ronin.sqlite3"
     $env:RONIN_DATA_DIR = $liveDataDir
