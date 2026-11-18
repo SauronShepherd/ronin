@@ -334,10 +334,14 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert "RONIN_LIVE_BACKPRESSURE_TIMEOUT_SECONDS" in live_suite
     assert '$parquetStreamingDiagnostic = $TestGrep -eq "live streaming parquet sink"' in script
     assert (
-        "$streamingOnlyDiagnostic = $TestGrep -eq \"streaming\" -or $multiBrokerDiagnostic -or "
-        "$backpressureOnlyDiagnostic -or $parquetStreamingDiagnostic -or $supervisorSoakDiagnostic"
+        '$streamingOnlyDiagnostic = $TestGrep -eq "streaming" -or $multiBrokerDiagnostic -or '
         in script
     )
+    assert (
+        "$backpressureOnlyDiagnostic -or $parquetStreamingDiagnostic -or "
+        "$supervisorSoakDiagnostic" in script
+    )
+    assert "$streamEventWorkflowDiagnostic" in script
     assert "live streaming parquet sink" in live_suite
     assert '$supervisorSoakDiagnostic = $TestGrep -eq "supervisor soak"' in script
     assert "SupervisorSoakSeconds" in script
@@ -346,6 +350,18 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert (
         "live streaming supervisor soak drains while records arrive for a bounded duration"
         in live_suite
+    )
+    assert (
+        '$streamEventWorkflowDiagnostic = $TestGrep -eq "live streaming event workflow"'
+        in script
+    )
+    assert (
+        "live streaming event workflow is triggered by a committed record"
+        in live_suite
+    )
+    assert (
+        "if ($streamEventWorkflowDiagnostic) {\n            & $python -m tools.seed_live_studio"
+        in script
     )
     assert '$TestGrep -eq "live streaming broker restart"' in script
     assert (

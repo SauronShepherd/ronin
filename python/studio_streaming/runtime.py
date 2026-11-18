@@ -5,10 +5,12 @@ from __future__ import annotations
 import hashlib
 import tempfile
 from collections.abc import Callable, Mapping
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
 from studio_core import WorkspaceId
+from studio_orchestrator import Instant
 
 from .bundle import (
     MAX_STREAM_BUNDLE_BYTES,
@@ -57,12 +59,40 @@ class KafkaStreamingRuntime:
         data_root: Path,
         *,
         source_factory: Callable[..., Any] = KafkaJsonSource,
+        event_store: Any | None = None,
+        clock: Callable[[], Instant | str] | None = None,
     ) -> None:
         self._checkpoints = checkpoints
         self._resolve_connection = resolve_connection
         self._resolve_secret = resolve_secret
         self._data_root = data_root.expanduser().resolve()
         self._source_factory = source_factory
+        self._event_store = event_store
+        self._clock = clock or (
+            lambda: Instant(datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        )
+
+    def _ingest_stream_events(
+        self,
+        workspace_id: str,
+        stream_id: str,
+        batch: StreamBatch,
+    ) -> None:
+        if self._event_store is None:
+            return
+        # Keep this import local: studio_execution depends on the streaming
+        # contracts, while the runtime only needs the bridge at execution time.
+        from studio_execution.stream_scheduler import ingest_stream_record
+
+        received_at = self._clock()
+        for record in batch.records:
+            ingest_stream_record(
+                self._event_store,
+                record,
+                workspace_id=WorkspaceId(workspace_id),
+                stream_id=stream_id,
+                received_at=received_at,
+            )
 
     def _resolve_run_options(
         self,
@@ -152,9 +182,22 @@ class KafkaStreamingRuntime:
                 f"{workspace}\0{definition.sink.target_ref}".encode()
             ).hexdigest()[:24]
             sink = ParquetMicroBatchSink(self._data_root / "streaming" / target)
+        before_checkpoint: Callable[[str, StreamBatch], None] | None = None
+        if self._event_store is not None:
+            def before_checkpoint(
+                _current_stream_id: str,
+                current_batch: StreamBatch,
+            ) -> None:
+                self._ingest_stream_events(workspace, stream_id, current_batch)
+
         return (
             runtime_id,
-            MicroBatchProcessor(source, sink, self._checkpoints),
+            MicroBatchProcessor(
+                source,
+                sink,
+                self._checkpoints,
+                before_checkpoint=before_checkpoint,
+            ),
             batch_limit,
             timeout,
         )

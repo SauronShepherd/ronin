@@ -63,11 +63,13 @@ class MicroBatchProcessor:
         sink: StreamSink,
         checkpoints: StreamCheckpointStore,
         transform: StreamTransform | None = None,
+        before_checkpoint: Callable[[str, StreamBatch], None] | None = None,
     ) -> None:
         self._source = source
         self._sink = sink
         self._checkpoints = checkpoints
         self._transform = transform or IdentityTransform()
+        self._before_checkpoint = before_checkpoint
 
     def run_once(
         self,
@@ -112,6 +114,9 @@ class MicroBatchProcessor:
             raise ValueError("stream sink commit row count does not match transformed rows")
         if commit.checkpoint_digest != batch.checkpoint.digest:
             raise ValueError("stream sink commit checkpoint digest does not match batch")
+
+        if self._before_checkpoint is not None:
+            self._before_checkpoint(stream_id, batch)
 
         if not self._checkpoints.compare_and_set(
             stream_id,

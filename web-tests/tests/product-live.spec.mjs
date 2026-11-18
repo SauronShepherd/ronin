@@ -2108,6 +2108,141 @@ test('live streaming supervisor soak drains while records arrive for a bounded d
   }
 });
 
+test('live streaming event workflow is triggered by a committed record', async ({ page }) => {
+  test.setTimeout(120_000);
+  test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
+
+  const calls = installLiveApiProxy(page);
+  const workspace = process.env.RONIN_LIVE_WORKSPACE;
+  const api = process.env.RONIN_LIVE_API_URL;
+  const token = process.env.RONIN_LIVE_API_TOKEN;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+  const streamId = 'events/live-workflow-trigger';
+  const encodedWorkspace = encodeURIComponent(workspace);
+  const encodedStream = encodeURIComponent(streamId);
+  const schedulerPath = `/v1/workspaces/${encodedWorkspace}`;
+  const streamPath = `${schedulerPath}/streams/${encodedStream}`;
+  const runPath = `${streamPath}/run`;
+  const healthPath = `${streamPath}/health`;
+  const deliveriesPath = `${schedulerPath}/event-deliveries`;
+  const definition = {
+    id: streamId,
+    name: 'Live stream event workflow qualification',
+    source: {
+      connection_id: 'live-kafka',
+      resource: 'ronin-live-sustained-events',
+      partitions: [0, 1],
+      format: 'json',
+    },
+    sink: { kind: 'table', target_ref: 'live-stream-workflow-events', mode: 'append' },
+    schema: [{ name: 'event', data_type: 'string', nullable: false }],
+    runtime: { profile_id: 'local', batch_limit: 1, timeout_seconds: 1 },
+  };
+
+  const request = async (method, path, data) => {
+    const response = await page.evaluate(async ({ apiBase, requestPath, requestMethod, requestHeaders, body }) => {
+      const upstream = await fetch(`${apiBase}${requestPath}`, {
+        method: requestMethod,
+        headers: requestHeaders,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      return { status: upstream.status, text: await upstream.text() };
+    }, { apiBase: api, requestPath: path, requestMethod: method, requestHeaders: headers, body: data });
+    return {
+      status: () => response.status,
+      text: async () => response.text,
+      json: async () => JSON.parse(response.text),
+    };
+  };
+
+  const saved = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
+  expect(saved.status(), await saved.text()).toBe(200);
+  const trigger = await request('PUT', `${schedulerPath}/event-triggers/live-stream-trigger`, {
+    id: 'live-stream-trigger',
+    workflow_id: 'live-main',
+    event_type: 'stream.record',
+    source_ref: streamId,
+    subject_ref: null,
+    enabled: true,
+  });
+  expect(trigger.status(), await trigger.text()).toBe(200);
+
+  const initialHealth = await request('GET', healthPath);
+  expect(initialHealth.status(), await initialHealth.text()).toBe(200);
+  expect((await initialHealth.json()).total_lag).toBe(64);
+
+  let runPayload;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const run = await request('POST', runPath, {
+      limit: 1,
+      timeout_seconds: 1,
+      max_batches: 1,
+      max_records: 1,
+      idle_polls: 1,
+    });
+    expect(run.status(), await run.text()).toBe(200);
+    runPayload = await run.json();
+    if (runPayload.records === 1) break;
+    await page.waitForTimeout(250);
+  }
+  expect(runPayload).toMatchObject({
+    stream_id: streamId,
+    status: 'limit_reached',
+    stop_reason: 'max_records',
+    records: 1,
+    rows: 1,
+  });
+
+  const afterRunHealth = await request('GET', healthPath);
+  expect(afterRunHealth.status(), await afterRunHealth.text()).toBe(200);
+  expect((await afterRunHealth.json()).total_lag).toBe(63);
+
+  let delivery;
+  await expect.poll(async () => {
+    const response = await request('GET', deliveriesPath);
+    if (response.status() !== 200) return `HTTP ${response.status()}`;
+    const items = (await response.json()).items.filter(item => item.event_id.startsWith(`stream-${streamId}-`));
+    delivery = items[0];
+    return delivery?.state || 'not visible';
+  }, { timeout: 15_000, message: 'the committed stream record should reach the event-trigger workflow' }).toBe('delivered');
+  expect(delivery.workflow_run_id).toMatch(/^workflow-run-event-/);
+
+  const workflowRun = await request(
+    'GET',
+    `${schedulerPath}/workflow-runs/${encodeURIComponent(delivery.workflow_run_id)}`,
+  );
+  expect(workflowRun.status(), await workflowRun.text()).toBe(200);
+  expect((await workflowRun.json()).id).toBe(delivery.workflow_run_id);
+
+  const replay = await request('POST', runPath, {
+    limit: 1,
+    timeout_seconds: 1,
+    max_batches: 1,
+    max_records: 1,
+    idle_polls: 1,
+  });
+  expect(replay.status(), await replay.text()).toBe(200);
+  expect(await replay.json()).toMatchObject({
+    stream_id: streamId,
+    status: 'idle',
+    records: 0,
+    rows: 0,
+  });
+  const deliveries = await request('GET', deliveriesPath);
+  expect(deliveries.status(), await deliveries.text()).toBe(200);
+  const matchingDeliveries = (await deliveries.json()).items.filter(
+    item => item.event_id.startsWith(`stream-${streamId}-`),
+  );
+  expect(matchingDeliveries).toHaveLength(1);
+  expect(matchingDeliveries[0].workflow_run_id).toBe(delivery.workflow_run_id);
+  expect(calls.some(call => call.path === runPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
+  expect(calls.some(call => call.path === deliveriesPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
+  await flushLiveTraffic();
+});
+
 test('live streaming enforces near-record and near-batch byte boundaries', async ({ page }) => {
   test.setTimeout(300_000);
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');

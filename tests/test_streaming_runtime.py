@@ -4,6 +4,17 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from studio_core import (
+    Pipeline,
+    WorkflowDefinition,
+    WorkflowId,
+    Workspace,
+    WorkspaceId,
+)
+from studio_core.scheduler_events import EventTriggerDefinition, EventTriggerId, SchedulerEventId
+from studio_orchestrator import Instant
+from studio_storage.scheduler_events import SchedulerEventStore
+from studio_storage.workspaces import SqliteWorkspaceStore
 from studio_streaming import (
     KafkaInputRejected,
     KafkaStreamingRuntime,
@@ -22,6 +33,8 @@ from studio_streaming import (
     StreamSinkDefinition,
     StreamSourceDefinition,
 )
+
+EVENT_NOW = Instant("2026-11-18T10:00:00.000000Z")
 
 
 class _Source:
@@ -97,6 +110,62 @@ def test_runtime_processes_once_and_persists_sink_before_checkpoint(tmp_path: Pa
     ]
     assert len(factory_calls) == 2
     assert factory_calls[0]["bootstrap_servers"] == "broker:9092"
+
+
+def test_runtime_ingests_committed_records_into_scheduler_event_inbox(tmp_path: Path) -> None:
+    workspace = WorkspaceId("workspace-a")
+    stream_id = "events/main"
+    database = tmp_path / "state.sqlite3"
+    SqliteWorkspaceStore(database, migration_now=EVENT_NOW).create_workspace(
+        Workspace(workspace, "Workspace"),
+        now=EVENT_NOW,
+    )
+    event_store = SchedulerEventStore(database, migration_now=EVENT_NOW)
+    event_store.put_workflow(
+        workspace,
+        WorkflowDefinition(WorkflowId("workflow-a"), "Workflow", Pipeline()),
+        now=EVENT_NOW,
+    )
+    event_store.put_event_trigger(
+        workspace,
+        EventTriggerDefinition(
+            EventTriggerId("trigger-a"),
+            WorkflowId("workflow-a"),
+            "stream.record",
+            source_ref=stream_id,
+        ),
+        now=EVENT_NOW,
+    )
+    checkpoints = SqliteStreamCheckpointStore(database)
+    checkpoints.commit_stream_bundle_import(workspace.value, (_definition(),), {stream_id: "reset"})
+    connection = SimpleNamespace(
+        connector_id="kafka",
+        options=(("bootstrap.servers", "broker:9092"),),
+        secret_refs=(),
+    )
+
+    runtime = KafkaStreamingRuntime(
+        checkpoints,
+        lambda _workspace, _connection_id: connection,
+        lambda _reference: "unused",
+        tmp_path / "data",
+        source_factory=lambda **_kwargs: _Source(),
+        event_store=event_store,
+        clock=lambda: EVENT_NOW,
+    )
+
+    result = runtime.run_once(workspace.value, stream_id)
+
+    event_id = SchedulerEventId("stream-events/main-0-0")
+    event = event_store.get_event(workspace, event_id)
+    deliveries = event_store.list_event_deliveries(workspace)
+    assert result["status"] == "succeeded"
+    assert event is not None
+    assert event.event_type == "stream.record"
+    assert event.source_ref == stream_id
+    assert len(deliveries) == 1
+    assert deliveries[0].event_id == event_id
+    assert deliveries[0].trigger.id == EventTriggerId("trigger-a")
 
 
 def test_runtime_supervisor_drains_until_idle_with_bounded_provider_polls(

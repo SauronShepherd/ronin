@@ -494,6 +494,8 @@ def build_local_composed_from_env() -> LocalServerComposition:
         resolve_connection,
         lambda reference: secrets_resolver.resolve(reference).reveal_text(),
         database.parent,
+        event_store=cast(SchedulerEventStore, workflow_scheduler),
+        clock=scheduler_clock,
     )
 
     def resolve_asset(reference: str) -> AssetHandle:

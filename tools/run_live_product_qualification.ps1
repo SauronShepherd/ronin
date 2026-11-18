@@ -151,8 +151,9 @@ $qualityOnlyDiagnostic = $TestGrep -eq "quality"
 $backpressureOnlyDiagnostic = $TestGrep -eq "sustained backpressure"
 $parquetStreamingDiagnostic = $TestGrep -eq "live streaming parquet sink"
 $supervisorSoakDiagnostic = $TestGrep -eq "supervisor soak"
+$streamEventWorkflowDiagnostic = $TestGrep -eq "live streaming event workflow"
 $performancePluginDiagnostic = -not $TestGrep -or $TestGrep -match "performance|route"
-$streamingOnlyDiagnostic = $TestGrep -eq "streaming" -or $multiBrokerDiagnostic -or $backpressureOnlyDiagnostic -or $parquetStreamingDiagnostic -or $supervisorSoakDiagnostic
+$streamingOnlyDiagnostic = $TestGrep -eq "streaming" -or $multiBrokerDiagnostic -or $backpressureOnlyDiagnostic -or $parquetStreamingDiagnostic -or $supervisorSoakDiagnostic -or $streamEventWorkflowDiagnostic
 if ($multiBrokerDiagnostic -and (-not $TestGrep -or $TestGrep -notmatch "streaming")) {
     throw "-MultiBroker requires a focused streaming -TestGrep so the three-broker fixture cannot be mistaken for the default live qualification."
 }
@@ -406,7 +407,11 @@ try {
     } elseif ($syntheticOnlyDiagnostic) {
         & $python -m tools.seed_live_studio --workspace-only
     } elseif ($streamingOnlyDiagnostic) {
-        & $python -m tools.seed_live_studio --workspace-only
+        if ($streamEventWorkflowDiagnostic) {
+            & $python -m tools.seed_live_studio
+        } else {
+            & $python -m tools.seed_live_studio --workspace-only
+        }
     } else {
         & $python -m tools.seed_live_studio
     }
@@ -779,7 +784,7 @@ try {
         playwright = [ordered]@{ executed = $junitCaseCount; passed = $junitPassedCount; skipped = $junitSkippedCount; failed = $junitFailedCount; durationSeconds = $junitDurationSeconds }
         routeCoverage = [ordered]@{ audited = (-not [bool]$TestGrep); activeRoutes = $activeRoutes.Count; routesWithApiContracts = $apiRequiredRoutes.Count; uiOnlyRoutes = $activeRoutes.Count - $apiRequiredRoutes.Count }
         realServices = [ordered]@{ postgres = $postgresStarted; kafka = $kafkaStarted; roninApi = $apiReady; workerImage = $workerImageId }
-        streamingFixture = [ordered]@{ backpressureRecords = $BackpressureRecords; backpressureTimeoutSeconds = $BackpressureTimeoutSeconds; supervisorSoakSeconds = $SupervisorSoakSeconds; multiBroker = $multiBrokerDiagnostic }
+        streamingFixture = [ordered]@{ backpressureRecords = $BackpressureRecords; backpressureTimeoutSeconds = $BackpressureTimeoutSeconds; supervisorSoakSeconds = $SupervisorSoakSeconds; multiBroker = $multiBrokerDiagnostic; eventWorkflow = $streamEventWorkflowDiagnostic }
         requestTimeoutSeconds = $RequestTimeoutSeconds
         apiTraffic = [ordered]@{ events = $trafficCount; correlatedHttpLogs = ($trafficCount - $uncorrelatedTraffic.Count); uncorrelated = $uncorrelatedTraffic.Count; outcomes = $apiOutcomes; evidence = $evidenceFiles.Traffic }
         applicationLogLevels = $logLevels
