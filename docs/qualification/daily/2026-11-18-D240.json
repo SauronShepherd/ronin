@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D240",
+  "date": "2026-11-18",
+  "status": "not_pass",
+  "cell": "Full Python/PostgreSQL suite current candidate",
+  "candidate_sha": "8c922516b905e062f71da3cc02ad760b6390238f",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "pending",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D240.md",
+  "execution_scope": "clean-main full non-performance Python suite against isolated PostgreSQL 16.4",
+  "result": {
+    "full_suite": "NOT_PASS: 4758 passed, 31 skipped, 1 failed out of 4790 collected",
+    "failure": "tests/test_public_capability_matrix.py::test_matrix_observed_source_baseline_matches_status_ledger failed because the capability matrix retained b99b2583 while the status ledger recorded 75269d0c",
+    "correction_regression": "PASS: after aligning the documented baseline, tests/test_public_capability_matrix.py passed 3/3; the original full run is not retroactively promoted",
+    "cleanup": "PASS: isolated PostgreSQL runner cleanup completed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "8c922516b905e062f71da3cc02ad760b6390238f",
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d240-python-postgres-full-current-20261118",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d240-python-postgres-full-current-20261118",
+    "sha256": {
+      "pytest-postgres.xml": "C29351D0CC3458401E14DF87CC7495B6FDBE3BC1540A2FA4844EC62A49D9AAF0",
+      "pytest-output.log": "37BF6D26F8B4663E7A703DA912A5A8E8C4BFC60FEE8544A67FD97B41E4B5A80F",
+      "runner-timings.json": "57978379C38A7F97DA833B784A5F037F22B24D540415D4A942340E285C7DC470"
+    }
+  }
+}
