@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D194",
+  "date": "2026-11-18",
+  "candidate_sha": "6079a1c9cfcaac55e0ddfa7e004c813664fc3d8e",
+  "implementation_boundary_sha": "6079a1c9cfcaac55e0ddfa7e004c813664fc3d8e",
+  "scope": "control-plane HTTP JSON connector preview against a real loopback paginated service",
+  "command": "python -m pytest tests/integration/test_http_json_control_plane_real.py -q",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "repeated_runs": "5/5 passed"},
+  "evidence": {"test": "tests/integration/test_http_json_control_plane_real.py::test_control_plane_preview_reads_real_paginated_http_json_service", "service": "real loopback HTTP JSON server", "assertions": ["authenticated connection creation", "paginated preview rows Ada and Grace", "empty checkpoint", "page 1/page 2/page 3 requests"], "cleanup": "PASS; composed server and loopback fixture stopped after each run"},
+  "limitations": ["Bounded local loopback evidence only; it does not qualify PostgreSQL runtime, external providers, indefinite operation, the complete P11 family or release gates."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

@@ -835,7 +835,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `dbe9d4221c9ccc0880b212bcd68b593c41df30d6` (2026-11-18).
+**Observed source head:** `6079a1c9cfcaac55e0ddfa7e004c813664fc3d8e` (2026-11-18).
 
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 
@@ -1620,6 +1620,10 @@ Release remains **NO-GO, 0/13 families release-qualified** pending a clean
 candidate and complete journeys, human version/license/NOTICE/claims decisions,
 manual visual approval, and supported-platform runs. No CI, integrated GenAI,
 or Public multi-user support was added.
+
+## Qualification follow-up — 2026-11-18 (D194)
+
+D194 pasa la integración real del preview HTTP JSON del control plane: `1/1`, repetida `5/5`, contra un servicio loopback paginado. La evidencia cubre creación autenticada de la conexión, páginas 1/2/3, filas Ada/Grace, checkpoint vacío y cleanup. Está ligada al candidato `6079a1c9cfcaac55e0ddfa7e004c813664fc3d8e`; no es cualificación PostgreSQL ni de proveedor externo. D193 permanece registrado como `NOT_PASS` y no se reatribuye. P11 continúa `in_progress`, P13 `blocked` y release `NO-GO` (`1/13`, `0/10`). Receipt: `docs/qualification/daily/2026-11-18-D194.json`; handoff: `docs/qualification/handoffs/2026-11-18-D194.md`.
 
 ## Full diagnostic rerun — 2026-10-30
 
