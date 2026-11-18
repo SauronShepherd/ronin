@@ -56,6 +56,7 @@
   "d189_qualification_note": "D189 on 0d2cc9bc passed 1/1 bounded supervisor soak with real PostgreSQL/Kafka: 93/93 API events correlated, all OK, zero log errors/critical and cleanup PASS. The case now bounds each HTTP cycle to one micro-batch while retaining the explicit 15-cycle criterion; this is single-broker evidence and does not change release status.",
   "d190_qualification_note": "D190 on b3ec3809 passed 1/1 bounded S3 JSON connector integration against real Floci S3-compatible storage: sink put/read/retry round trip, 0 skips/failures, cleanup PASS. This is one provider cell only; statuses remain unchanged.",
   "d191_qualification_note": "D191 on 32aa09d7 passed 1/1 bounded Azure Blob JSON connector integration against real Azurite: discovery/read/snapshot replay, 0 skips/failures and cleanup PASS. This is one provider cell only; statuses remain unchanged.",
+  "d192_qualification_note": "D192 on e04631cf passed 8/8 bounded HTTP JSON connector integration tests against a real loopback HTTP service, covering 503 retry, redirect rejection, byte limits and cross-origin pagination rejection. The incorrect Docker filter selected 0/27 and is not counted; statuses remain unchanged.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",
