@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D235",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "P11 bounded PostgreSQL scheduler/runtime workflows journey",
+  "candidate_sha": "ef408d2b8c10a0354e0e1aee7e91791aa666199d",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "pending",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D235.md",
+  "execution_scope": "clean-main live server explicitly configured with RONIN_STORAGE_BACKEND=postgres",
+  "result": {
+    "live_route": "PASS: route workflows 1/1; schedule save/inspect/list/preview/history, idempotent run, cancel, event trigger delivery, backfill preview/start/poll/cancel",
+    "api_audit": "PASS: 30/30 API events correlated with structured logs; 29 OK and 1 expected WARN; 0 unexpected authorization gaps or server/network errors",
+    "runtime": "PASS: live server received PostgreSQL DSN and runner reports postgres=true; bounded evidence only",
+    "cleanup": "PASS: live PostgreSQL and broker containers, network and volume removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "ef408d2b8c10a0354e0e1aee7e91791aa666199d",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d235-live-postgres-scheduler-runtime-20261118 -StorageBackend postgres -TestGrep 'route workflows loads and reaches the live API' -RequestTimeoutSeconds 60",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d235-live-postgres-scheduler-runtime-20261118",
+    "sha256": {
+      "browser-live.log": "B3B808417FE56EE1F3F89CD32EC304944AFFC87E3DF7B782D09160351BE4A6F8",
+      "browser-live.xml": "65A2B980E0899525890CF7F6E24FB434211B2CA9B015BF7644BAD3B15A386B6B",
+      "live-api-traffic.json": "8C1B2215EE1A7AA4EA544B1D0B8C25115ED3210AF2547FCBE36CDCDB1E6A6359",
+      "qualification-summary.json": "EE8038ABB9CC7C10E6C5F25426471804C32D1993F549BB5004DFB55B1E894359"
+    }
+  }
+}
