@@ -33,7 +33,11 @@ from studio_semantic import (
     SqliteSemanticStore,
     semantic_project_scope,
 )
-from studio_storage import SqliteCatalogStore, SqliteKnowledgeGraphStore
+from studio_storage import (
+    PostgresSchedulerSnapshotStore,
+    SqliteCatalogStore,
+    SqliteKnowledgeGraphStore,
+)
 from studio_storage.scheduler_backfill import SchedulerBackfillStore
 from studio_storage.workspaces import SqliteWorkspaceStore
 
@@ -52,15 +56,22 @@ def main() -> int:
     )
     args = parser.parse_args()
     raw_database = os.environ.get("RONIN_DB")
-    if not raw_database:
+    storage_backend = os.environ.get("RONIN_STORAGE_BACKEND", "sqlite").strip().casefold()
+    postgres_dsn = os.environ.get("RONIN_POSTGRES_DSN", "").strip()
+    if storage_backend == "sqlite" and not raw_database:
         raise SystemExit("RONIN_DB must identify the isolated live-test SQLite database")
-    database = Path(raw_database).expanduser().resolve()
+    if storage_backend == "postgres" and not postgres_dsn:
+        raise SystemExit("RONIN_POSTGRES_DSN must identify the isolated live-test PostgreSQL database")
+    if storage_backend not in {"sqlite", "postgres"}:
+        raise SystemExit("RONIN_STORAGE_BACKEND must be sqlite or postgres")
+    database = Path(raw_database).expanduser().resolve() if raw_database else None
     workspace_id = WorkspaceId(os.environ.get("RONIN_WORKSPACE_ID", "default"))
     now = "2026-09-17T00:00:00.000000Z"
-    SqliteWorkspaceStore(database, migration_now=now).create_workspace(
-        Workspace(workspace_id, "Live Qualification Workspace", "Ephemeral live UI fixture."),
-        now=now,
-    )
+    if storage_backend == "sqlite":
+        SqliteWorkspaceStore(database, migration_now=now).create_workspace(
+            Workspace(workspace_id, "Live Qualification Workspace", "Ephemeral live UI fixture."),
+            now=now,
+        )
     if args.workspace_only:
         print("Seeded only the isolated workspace required for this filtered live route.")
         return 0
@@ -191,7 +202,11 @@ def main() -> int:
         now=now,
     )
     catalog.create_asset(workspace_id, incremental_target, now=now)
-    scheduler = SchedulerBackfillStore(database, migration_now=now)
+    scheduler = (
+        SchedulerBackfillStore(database, migration_now=now)
+        if storage_backend == "sqlite"
+        else PostgresSchedulerSnapshotStore(postgres_dsn, application_name="ronin-live-seeder")
+    )
     scheduler.put_workflow(
         workspace_id,
         WorkflowDefinition(WorkflowId("live-main"), "Ronin live scheduler fixture", Pipeline()),
