@@ -835,7 +835,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `a67433cd774ea244843026f8c142f6e894a73664` (2026-11-18).
+**Observed source head:** `9cdfd6a81c916d9686841ab869a2346b52bcfa57` (2026-11-18).
 
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 
@@ -1620,6 +1620,10 @@ Release remains **NO-GO, 0/13 families release-qualified** pending a clean
 candidate and complete journeys, human version/license/NOTICE/claims decisions,
 manual visual approval, and supported-platform runs. No CI, integrated GenAI,
 or Public multi-user support was added.
+
+## Qualification follow-up — 2026-11-18 (D211)
+
+D211 pasa `1/1` del journey live Projects UI/API con el servidor Ronin realmente configurado con PostgreSQL y Kafka: 12/12 eventos API correlacionados, `0` errores inesperados y cleanup PASS. Es evidencia PostgreSQL nueva y distinta de D100; la cobertura route-wide no se ejecutó. No hubo cambios de producción; la frontera sigue siendo `e6f635dfe9159351711f44af9199e573e6e8a5bb`. La evidencia es filtered/bounded y no cambia P11, P13 ni release. Receipt: `docs/qualification/daily/2026-11-18-D211.json`; handoff: `docs/qualification/handoffs/2026-11-18-D211.md`.
 
 ## Qualification follow-up — 2026-11-18 (D210)
 

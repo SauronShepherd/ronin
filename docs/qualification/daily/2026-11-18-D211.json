@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D211",
+  "date": "2026-11-18",
+  "candidate_sha": "9cdfd6a81c916d9686841ab869a2346b52bcfa57",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "live Projects UI/API journey with Ronin server configured for PostgreSQL",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d211-live-projects-postgres-20261118 -StorageBackend postgres -TestGrep 'live Projects create, export, and reimport' -RequestTimeoutSeconds 60",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 12, "correlated_http_logs": 12, "unexpected_errors": 0, "elapsed_seconds": 80.91},
+  "evidence": {
+    "test": "live Projects create, export, and reimport a secret-safe Bundle through the UI",
+    "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+    "api_outcomes": {"OK": 11, "WARN": 1},
+    "route_coverage": "filtered diagnostic; route-wide coverage not run",
+    "cleanup": "PASS; PostgreSQL, Kafka, volume and network removed",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d211-live-projects-postgres-20261118",
+    "sha256": {"browser-live.log": "1B1D6BBD473703D794BE1F90F27DC9D4499A8F64077B9ED419B6EDD7F4EBA773", "browser-live.xml": "63E8AC2A557AE4B7B59458C710A0E4AB3C59BEAE115E6255D8EA8FA133179F8A", "live-api-traffic.json": "85D9987FA09122F66A6FAA21829018A16D1DC81A13D532FF36A24A0D6FE47271", "live-python-freeze.txt": "DE1092DEA1598D5EF8C1526AAE6450510CD2595D8B1149F392AEE3E7F002834D", "live-server.stderr.log": "9B37A912F25933078DC2DFC20E54CCAAAEC8D6CC4D5F8E780CA751B7ACD6575E", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "FF580CC902FFAEDA43AF5AC0F1FF90780F2BF98F41F5411D957EA05FF6A80CF9", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"}
+  },
+  "limitations": ["Filtered live diagnostic only; route-wide coverage was not run, no Docker worker was used, and this does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
