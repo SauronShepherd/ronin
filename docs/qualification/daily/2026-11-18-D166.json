@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D166",
+  "date": "2026-11-18",
+  "candidate_sha": "4997f98a34cbe23d4e429becd2b63eebbd5af4b5",
+  "implementation_boundary_sha": "4997f98a34cbe23d4e429becd2b63eebbd5af4b5",
+  "scope": "bounded live PostgreSQL environments and deployment bindings journey",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d166-live-postgres-environments-20261118 -TestGrep environments|deployments -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 2, "playwright_passed": 2, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 10, "api_correlated": 10, "api_ok": 10},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d166-live-postgres-environments-20261118", "cleanup": "PASS; containers, volume, network and temporary images removed"},
+  "limitations": ["Filtered journey only; full route campaign, indefinite operation, external providers and release gates remain open."],
+  "notes": ["D164 and D165 were preparatory NOT_PASS attempts caused by fixture defects and are not reattributed to D166: D164 lacked the PostgreSQL project fixture; D165 used an invalid empty repository list."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
