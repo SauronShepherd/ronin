@@ -918,6 +918,8 @@ D186 intentó la campaña live completa con PostgreSQL, Kafka y worker Docker: *
 D187 no ejecutó el supervisor soak: el modo streaming-only no inicia PostgreSQL, pero se solicitó `StorageBackend postgres` y el seeder agotó el timeout contra el DSN ausente. Kafka y cleanup pasaron; se registra como limitación del runner, no como evidencia del supervisor.
 
 D188 corrigió esa limitación de modo y ejecutó el supervisor sobre PostgreSQL/Kafka reales: `19/19` eventos API correlacionados, todos OK y cero errores. Aun así queda **NOT_PASS** por `9` ciclos frente a los `15` exigidos; el criterio no se relajó.
+
+D189 pasa el supervisor soak focalizado: `1/1` caso, `93/93` eventos API correlacionados, todos OK, cero errores y cleanup PASS. El caso limita cada ciclo HTTP a un micro-batch (`max_batches=1`) para que el criterio explícito de `15` ciclos mida realmente ciclos de supervisor; no se relajó el umbral. Es evidencia single-broker acotada.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact

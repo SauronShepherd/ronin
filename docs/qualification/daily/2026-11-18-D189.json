@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D189",
+  "date": "2026-11-18",
+  "candidate_sha": "0d2cc9bc4f0ea9ac0ab865e3c5746e00f847115f",
+  "implementation_boundary_sha": "0d2cc9bc4f0ea9ac0ab865e3c5746e00f847115f",
+  "scope": "bounded live supervisor soak with one explicit micro-batch per HTTP cycle and real PostgreSQL/Kafka services",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d189-supervisor-20261118 -TestGrep \"supervisor soak\" -StorageBackend postgres -WorkerImage ronin:d189-supervisor-worker -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 93, "api_correlated": 93, "api_ok": 93, "api_warn": 0, "api_error": 0, "log_errors": 0, "log_critical": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d189-supervisor-20261118", "postgres": true, "kafka": true, "worker_image": "sha256:361c61e03df126e0ae5fbf09cd9920d454bdd748a71ad6a61f75bc89ebf08c6a", "cleanup": "PASS; isolated containers, network and volume removed"},
+  "limitations": ["This is bounded single-broker supervisor evidence; it does not qualify indefinite operation, HA/multi-worker, full family coverage or release gates."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
