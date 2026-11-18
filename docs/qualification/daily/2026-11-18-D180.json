@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D180",
+  "date": "2026-11-18",
+  "candidate_sha": "f2bb34a18df3fbd3e572e6875ca56fac17034f30",
+  "implementation_boundary_sha": "f2bb34a18df3fbd3e572e6875ca56fac17034f30",
+  "scope": "bounded live Machine Learning Studio journey on its configured SQLite runtime",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d180-live-mlstudio-20261118 -TestGrep mlstudio -StorageBackend sqlite -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 38, "api_correlated": 38, "api_ok": 37, "api_warn": 1},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d180-live-mlstudio-20261118", "cleanup": "PASS; no containers or temporary images remained"},
+  "limitations": ["Machine Learning Studio is explicitly SQLite-only in this runner; D179's PostgreSQL request timed out before startup and is not PostgreSQL evidence. This does not qualify external providers or release readiness."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

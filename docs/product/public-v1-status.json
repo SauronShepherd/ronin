@@ -44,6 +44,7 @@
   "d174_qualification_note": "D174 on 157ca474 passed 1/1 filtered live Workflows journey with Ronin/scheduler on real PostgreSQL: 29/29 API events correlated (28 OK, 1 expected WARN), 0 skips/failures, cleanup PASS. This strengthens bounded scheduler/runtime evidence; statuses remain unchanged.",
   "d176_qualification_note": "D176 on 23bc742c passed 1/1 filtered live Semantic Studio journey on its configured SQLite runtime: 9/9 API events correlated, all OK, 0 skips/failures, cleanup PASS. D175's PostgreSQL request was SQLite-only and timed out before startup; no PostgreSQL claim is made. Statuses remain unchanged.",
   "d178_qualification_note": "D178 on abb1f09f passed 1/1 filtered live PostgreSQL Ingestion route case: 4/4 API events correlated, all OK, 0 skips/failures, cleanup PASS. D177's broader ingestion selection had 2 explicit skips and is not reattributed; statuses remain unchanged.",
+  "d180_qualification_note": "D180 on f2bb34a1 passed 1/1 filtered live Machine Learning Studio journey on its configured SQLite runtime: 38/38 API events correlated (37 OK, 1 expected WARN), 0 skips/failures, cleanup PASS. D179's PostgreSQL request was SQLite-only and timed out before startup; no PostgreSQL claim is made. Statuses remain unchanged.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",
