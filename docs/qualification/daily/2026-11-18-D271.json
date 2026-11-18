@@ -6,7 +6,7 @@
   "cell": "Current-candidate PostgreSQL scheduler schedule cursor fire and HTTP adapter",
   "candidate_sha": "401e541a36f800af43f638f2e61ca846ee3dff55",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "f9074dd4538fb13232a4e5c610fe0ff934aa317e",
   "evidence": "docs/qualification/handoffs/2026-11-18-D271.md",
   "execution_scope": "clean-main filtered integration selection against isolated real PostgreSQL 16.4",
   "result": {
