@@ -74,8 +74,21 @@ class SyntheticDataStudioPlugin:
         if reference_barrier is not None:
             self.artifact_reference_barrier = cast(ArtifactReferenceBarrier, reference_barrier)
         injected_catalog = context.services.get("catalog_store")
-        if isinstance(injected_catalog, SqliteCatalogStore):
-            self.catalog_store = injected_catalog
+        # The PostgreSQL composed profile supplies its durable catalog through
+        # the scheduler-backed store. Bind by the catalog contract rather than
+        # by the SQLite implementation so the route cannot degrade to a 500
+        # merely because the selected runtime backend changed.
+        required_catalog_methods = (
+            "list_assets",
+            "search_assets",
+            "list_revisions",
+            "upstream",
+            "downstream",
+        )
+        if injected_catalog is not None and all(
+            callable(getattr(injected_catalog, name, None)) for name in required_catalog_methods
+        ):
+            self.catalog_store = cast(SqliteCatalogStore, injected_catalog)
         context.contributions.add_route(
             "GET",
             "/v1/synthetic-data-studio/formats",
