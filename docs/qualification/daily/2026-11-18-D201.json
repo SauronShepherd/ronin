@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D201",
+  "date": "2026-11-18",
+  "candidate_sha": "5168c5f8073fb4ffa89ed0d3c5bc50e8002564fd",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL durable JobStore lifecycle, claim/update and keyset pagination",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d201-postgres-jobstore-20261118 -TestPath tests/integration/test_postgres_jobstore_real.py",
+  "result": {"status": "PASS", "pytest_selected": 2, "pytest_passed": 2, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 2.96},
+  "evidence": {
+    "tests": ["test_postgres_jobstore_complete_lifecycle", "test_postgres_jobstore_list_filters_and_keyset_pagination"],
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "assertions": ["job/run creation", "claim and lifecycle updates", "durable job listing", "filters", "keyset pagination"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d201-postgres-jobstore-20261118",
+    "sha256": {"pytest-output.log": "00765806861148C99E8EE2DCB2723172DDB90C9071CF93F648ACE32839EC6041", "pytest-postgres.log": "270D01052D791C28463CACDCC51DDD66FA20C323A4C148F393EF12563AA5FC16", "pytest-postgres.xml": "F2BA59FC7591BF29D8AA328F293F2655709B580D4AA0C3CD81D3CA3EA75C187E", "pytest-timings.json": "1EDF36E12DDCA57B4C7C95477FDC8C8922EAFEB2F31433598E0F016762E2C8DB", "runner-timings.json": "1C0B3EC5C392DBFEFA58C2979D7A3E668B2DC30277FDE7E40B72243D95D7E08E"}
+  },
+  "limitations": ["Bounded PostgreSQL JobStore evidence only; it does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
