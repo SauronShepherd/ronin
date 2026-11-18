@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D170",
+  "date": "2026-11-18",
+  "candidate_sha": "4b3dded0baa81f2b2e601c9578c29f15c60732dc",
+  "implementation_boundary_sha": "4b3dded0baa81f2b2e601c9578c29f15c60732dc",
+  "scope": "bounded live Synthetic Data Studio journey on its configured SQLite runtime",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d170-live-synthetic-20261118 -TestGrep synthetic -StorageBackend sqlite -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 8, "api_correlated": 8, "api_ok": 8},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d170-live-synthetic-20261118", "cleanup": "PASS; no containers or temporary images remained"},
+  "limitations": ["Synthetic Data Studio is explicitly SQLite-only in this runner; D169's PostgreSQL request timed out before startup and is not PostgreSQL evidence. This does not qualify external providers or release readiness."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

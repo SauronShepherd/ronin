@@ -888,6 +888,8 @@ D163 ran the full live browser campaign with PostgreSQL, Kafka and a Docker work
 D166 passed the filtered environments and deployments journeys (`2/2`) with Ronin configured against real PostgreSQL. All `10/10` API events correlated and were OK; no cases were skipped or failed and cleanup passed. The PostgreSQL composition now wires its existing environment/binding persistence through `PostgresSchedulerSnapshotStore`, and the live fixture registers a valid project for the binding FK. This is bounded evidence only; P11 remains in progress, P13 blocked and release NO-GO at `1/13` families and `0/10` gates.
 
 D168 passed the explicit bounded streaming supervisor-soak criterion (`1/1`) for 60 seconds on the single-broker SQLite runtime. It produced `33/33` correlated API events, all OK, with no skips or failures and cleanup passing. This narrows the D163 soak failure to campaign interference or load interaction but does not qualify indefinite operation, PostgreSQL, HA/multi-broker or release readiness.
+
+D170 passed the filtered Synthetic Data Studio journey (`1/1`) on its configured SQLite runtime, with `8/8` correlated API events, all OK, and cleanup passing. The runner is explicitly SQLite-only for this route; D169's PostgreSQL request timed out before startup and provides no PostgreSQL evidence. This remains bounded local evidence and does not change P11, P13 or release status.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
