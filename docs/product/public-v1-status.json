@@ -20,6 +20,7 @@
   "d145_qualification_note": "D145 on 31a3f37d passed 2/2 bounded PostgreSQL scheduler-daemon recovery tests: reacquisition after expired leadership and post-crash replay without duplicate work; cleanup PASS. This does not change P11, P13 or release status.",
   "d146_qualification_note": "D146 on 400bcef5 passed the complete bounded PostgreSQL scheduler integration file 21/21 with cleanup PASS. This broadens scheduler persistence/recovery evidence but does not change P11, P13 or release status.",
   "d147_qualification_note": "D147 on 08aed55d passed 20/20 bounded PostgreSQL store/adapter integration tests with all three required DSN aliases configured and zero skips; cleanup PASS. This does not change P11, P13 or release status.",
+  "d148_qualification_note": "D148 on 13eecdc0 passed 12/12 bounded PostgreSQL ML/artifact integration tests with zero skips and cleanup PASS. This does not change P11, P13 or release status.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",
