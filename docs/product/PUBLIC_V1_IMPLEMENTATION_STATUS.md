@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D273 on current candidate `f7b070194c6a8b3962210b3f989ec62272bd4e7d`
+passes the PostgreSQL workflow/task snapshot atomicity and idempotency case
+`1/1`, with cleanup PASS. This is bounded persistence evidence and does not
+prove indefinite operation, HA/multi-worker, complete controller conformance,
+P11 or release approval. P11 remains `in_progress`, P13 remains `blocked`, and
+release remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D272 on current candidate `d7fee14ef3c530dfad2a9986e2689fe23579dea5`
 passes the PostgreSQL scheduler deployment-binding workspace-scope and runnable
 case `1/1`, with cleanup PASS. This is bounded scheduler evidence and does not
