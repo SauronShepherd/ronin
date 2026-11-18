@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-11-18T23:59:00Z",
-  "observed_main_sha": "c96de2b4258e11f9e0b8f5b88c35ab84c46207af",
+  "observed_main_sha": "629c0f9e3242996e327fd53114b6796c11e8ae6b",
   "latest_automated_evidence": "D130 on clean candidate 2132475f adds filtered direct PostgreSQL consistency evidence: 1/1 selected test passes for atomic and idempotent scheduler run/task snapshots. D129 active-workspace mutation isolation, D128 cancellation authority persistence, D127 claim fencing, D126 schema migration five to six, D125 atomic/idempotent bundle import and D124 schedule cursor/firing/HTTP remain separately recorded; D115/D116 startup attempts are not counted as PASS. D106's strict full Docker attempt was cancelled by kernel.container.timeout and is not counted as PASS. The implementation boundary remains e6f635df. P11 remains in_progress, P13 remains blocked, and release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_observation": "2026-11-18 current main 2132475f: D130 exercises real PostgreSQL atomic and idempotent scheduler run/task snapshots. The strict full Docker gate remains incomplete because D106 hit the kernel container timeout; filtered D110–D130 do not promote that gate. Release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_p11_observation": "D130 adds a new bounded PostgreSQL scheduler-consistency cell: 1/1 scenario passes for atomic and idempotent run/task snapshots, with cleanup. This strengthens snapshot consistency evidence but does not prove the full PostgreSQL suite, indefinite operation, production SLO, HA/multi-worker, external provider failure recovery, the complete 13-family journey or release approval. The production implementation boundary remains e6f635df; P11 stays in_progress and P13 stays blocked.",
@@ -77,6 +77,7 @@
   "d211_qualification_note": "D211 passes 1/1 filtered live Projects UI/API journey with the Ronin server configured for real PostgreSQL plus Kafka: 12/12 API events correlated, 0 unexpected errors and cleanup PASS. This is new PostgreSQL-runtime evidence distinct from D100; route-wide coverage was not run and statuses remain unchanged.",
   "d212_qualification_note": "D212 passes 1/1 filtered live Quality route with the Ronin server configured for real PostgreSQL plus Kafka: 7/7 API events correlated, 0 unexpected errors and cleanup PASS. Route-wide coverage was not run; this is bounded PostgreSQL-runtime evidence and statuses remain unchanged.",
   "d213_qualification_note": "D213 passes 1/1 filtered live Catalog route with the Ronin server configured for real PostgreSQL plus Kafka: 4/4 API events correlated, all OK, 0 unexpected errors and cleanup PASS. Route-wide coverage was not run; this bounded PostgreSQL-runtime evidence does not change P11, P13 or release status.",
+  "d214_qualification_note": "D214 passes 1/1 filtered live ML Studio route with the Ronin server configured for real PostgreSQL plus Kafka: 40/40 API events correlated, 0 unexpected errors and cleanup PASS. Route-wide coverage was not run; this bounded PostgreSQL-runtime evidence does not change P11, P13 or release status.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",
