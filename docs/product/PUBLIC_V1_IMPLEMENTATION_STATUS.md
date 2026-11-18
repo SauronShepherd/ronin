@@ -914,6 +914,8 @@ D183 endurece el runner de cualificación: un diagnóstico omitido sin `live-api
 D184 preparó una imagen Docker de worker para el seguimiento de Notebook, pero el filtro seleccionó `0/27` tests y no es cualificación. D185 sí pasó `1/1` journey live de Notebook Studio con worker Docker, PostgreSQL y Kafka reales: `20/20` eventos API correlacionados, todos OK, cero errores y cleanup PASS. Sigue siendo evidencia acotada; P11 permanece **in_progress**, P13 **blocked** y release **NO-GO** (`1/13`, `0/10`).
 
 D186 intentó la campaña live completa con PostgreSQL, Kafka y worker Docker: **NOT_PASS**, `38/43` casos pasaron, `1` se omitió y `4` fallaron. Los `426/426` eventos API quedaron correlacionados (`399 OK`, `21 WARN`, `6 ERROR`). Persisten FinOps PostgreSQL no configurado, error interno del catálogo Synthetic, Graphs no configurado y supervisor soak con `8/15` ciclos. No cambia P11, P13 ni release.
+
+D187 no ejecutó el supervisor soak: el modo streaming-only no inicia PostgreSQL, pero se solicitó `StorageBackend postgres` y el seeder agotó el timeout contra el DSN ausente. Kafka y cleanup pasaron; se registra como limitación del runner, no como evidencia del supervisor.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
