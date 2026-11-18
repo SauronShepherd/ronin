@@ -6,7 +6,7 @@
   "cell": "P11 bounded PostgreSQL scheduler/runtime workflows journey",
   "candidate_sha": "ef408d2b8c10a0354e0e1aee7e91791aa666199d",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "pending",
+  "documentation_commit_sha": "40a132f7c99e5e18d6fcf7b52cde80c806e0607c",
   "evidence": "docs/qualification/handoffs/2026-11-18-D235.md",
   "execution_scope": "clean-main live server explicitly configured with RONIN_STORAGE_BACKEND=postgres",
   "result": {
