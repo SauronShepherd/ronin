@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D176",
+  "date": "2026-11-18",
+  "candidate_sha": "23bc742cf8118925ae79438822caff3ad111355a",
+  "implementation_boundary_sha": "23bc742cf8118925ae79438822caff3ad111355a",
+  "scope": "bounded live Semantic Studio journey on its configured SQLite runtime",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d176-live-semantic-20261118 -TestGrep semantic -StorageBackend sqlite -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 9, "api_correlated": 9, "api_ok": 9},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d176-live-semantic-20261118", "cleanup": "PASS; no containers or temporary images remained"},
+  "limitations": ["Semantic Studio is explicitly SQLite-only in this runner; D175's PostgreSQL request timed out before startup and is not PostgreSQL evidence. This does not qualify external providers or release readiness."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

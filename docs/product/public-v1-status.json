@@ -42,6 +42,7 @@
   "d172_qualification_note": "D172 on d3193f6a passed 1/1 filtered live Catalog journey with Ronin on real PostgreSQL: 4/4 API events correlated, all OK, 0 skips/failures, cleanup PASS. This confirms the environment-store composition change did not regress Catalog; statuses remain unchanged.",
   "d173_qualification_note": "D173 on bf8ef1b1 passed 1/1 filtered live FinOps journey on its configured SQLite runtime: 3/3 API events correlated, all OK, 0 skips/failures, cleanup PASS. PostgreSQL FinOps remains unconfigured; no status changes.",
   "d174_qualification_note": "D174 on 157ca474 passed 1/1 filtered live Workflows journey with Ronin/scheduler on real PostgreSQL: 29/29 API events correlated (28 OK, 1 expected WARN), 0 skips/failures, cleanup PASS. This strengthens bounded scheduler/runtime evidence; statuses remain unchanged.",
+  "d176_qualification_note": "D176 on 23bc742c passed 1/1 filtered live Semantic Studio journey on its configured SQLite runtime: 9/9 API events correlated, all OK, 0 skips/failures, cleanup PASS. D175's PostgreSQL request was SQLite-only and timed out before startup; no PostgreSQL claim is made. Statuses remain unchanged.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",
