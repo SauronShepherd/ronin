@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-11-18T13:00:00Z",
-  "observed_main_sha": "b99b2583783a3771f6f168b07631ff9162dcb4a4",
+  "observed_at": "2026-11-18T23:59:00Z",
+  "observed_main_sha": "438fa7b57e7c82653957b033c7a3e58c9847286a",
   "latest_automated_evidence": "D130 on clean candidate 2132475f adds filtered direct PostgreSQL consistency evidence: 1/1 selected test passes for atomic and idempotent scheduler run/task snapshots. D129 active-workspace mutation isolation, D128 cancellation authority persistence, D127 claim fencing, D126 schema migration five to six, D125 atomic/idempotent bundle import and D124 schedule cursor/firing/HTTP remain separately recorded; D115/D116 startup attempts are not counted as PASS. D106's strict full Docker attempt was cancelled by kernel.container.timeout and is not counted as PASS. The implementation boundary remains e6f635df. P11 remains in_progress, P13 remains blocked, and release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_observation": "2026-11-18 current main 2132475f: D130 exercises real PostgreSQL atomic and idempotent scheduler run/task snapshots. The strict full Docker gate remains incomplete because D106 hit the kernel container timeout; filtered D110–D130 do not promote that gate. Release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_p11_observation": "D130 adds a new bounded PostgreSQL scheduler-consistency cell: 1/1 scenario passes for atomic and idempotent run/task snapshots, with cleanup. This strengthens snapshot consistency evidence but does not prove the full PostgreSQL suite, indefinite operation, production SLO, HA/multi-worker, external provider failure recovery, the complete 13-family journey or release approval. The production implementation boundary remains e6f635df; P11 stays in_progress and P13 stays blocked.",
