@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D113",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "PostgreSQL scheduler attempt lease fencing and expiry reclaim",
+  "candidate_sha": "40471fbb518f4727e0d7c6f38c2bde681cf291fe",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D113.md",
+  "execution_scope": "clean-main-isolated-postgresql-16.4-attempt-lease-fencing-diagnostic",
+  "result": {
+    "attempt_leases": "PASS: PostgreSQL scheduler attempt leases fence workers and reclaim expiry safely",
+    "focused_result": "PASS: 1/1 selected test, 0 skips, 0 failures, 20 deselected",
+    "service": "PASS: isolated real postgres:16.4-alpine and temporary schema cleanup",
+    "cleanup": "PASS: runner completed and preserved XML/log/timing evidence",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d113-postgres-attempt-leases-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'postgres_scheduler_attempt_leases_fence_workers_and_reclaim_expiry'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d113-postgres-attempt-leases-20261118",
+    "pytest_xml": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d113-postgres-attempt-leases-20261118\\pytest-postgres.xml",
+    "candidate_sha": "40471fbb518f4727e0d7c6f38c2bde681cf291fe"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered direct PostgreSQL scheduler diagnostic, not the complete Python/PostgreSQL suite or complete P11 journey.",
+    "D113 does not certify an external cloud provider, indefinite operation, HA/multi-worker, production SLO, P13, a release gate or human release approval.",
+    "The D100 live server/backend distinction remains unchanged: its live Ronin server used SQLite."
+  ]
+}
