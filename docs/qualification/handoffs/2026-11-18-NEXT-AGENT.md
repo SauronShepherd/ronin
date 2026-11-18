@@ -7,8 +7,8 @@ celda de alto volumen, pero el release no es GO:
 
 ```text
 production implementation boundary: 633980dd3b08affcc604dc918c1a6cbf026cc408
-qualification-harness/current main at D97: 5dd019fdc89c0d7886ea47db794d70e563c8cb03
-documentation state: D97 receipt, handoff and status updates are included in current main history
+qualification candidate at D97: 5dd019fdc89c0d7886ea47db794d70e563c8cb03
+documentation/main HEAD at handoff: 6a3d395c870ad146900edac5c48c9f3e4ee49c48
 worktree at handoff creation: main, limpio
 familias: 1/13
 release gates: 0/10
