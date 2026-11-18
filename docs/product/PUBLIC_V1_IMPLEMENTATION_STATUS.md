@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D265 on current candidate `fc907f19c4ec06de7c730c0cdb2a03cc6f60c242`
+passes the PostgreSQL durable event-inbox freeze and delivery-replay case
+`1/1`, with cleanup PASS. This is bounded event-delivery evidence and does not
+prove indefinite operation, HA/multi-worker, complete controller conformance,
+P11 or release approval. P11 remains `in_progress`, P13 remains `blocked`, and
+release remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D264 on current candidate `5b4e000d89e40c1b4b4ff7c74430f8c7c569beb8`
 passes the PostgreSQL scheduler leadership generation-fencing and persistence
 case `1/1`, with cleanup PASS. This is bounded recovery evidence and does not
