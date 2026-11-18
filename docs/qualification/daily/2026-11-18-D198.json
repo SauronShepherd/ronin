@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D198",
+  "date": "2026-11-18",
+  "candidate_sha": "a03b15dc79856b8cd7b95307c8645f1d68f628e5",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL-backed connector checkpoint fencing, inventory, restart and shared composition",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d198-postgres-checkpoint-20261118 -TestPath tests/integration/test_postgres_connector_checkpoint_real.py",
+  "result": {"status": "PASS", "pytest_selected": 3, "pytest_passed": 3, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 15.53},
+  "evidence": {
+    "tests": ["test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpoint", "test_postgres_connector_checkpoint_fencing_inventory_and_restart", "test_postgres_local_composition_mounts_shared_connector_ingestion"],
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "assertions": ["scoped checkpoint advancement", "checkpoint fencing", "checkpoint inventory", "restart persistence", "shared connector ingestion composition"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d198-postgres-checkpoint-20261118",
+    "sha256": {"pytest-output.log": "8CBE6E1A9007F352EE7D229B01DCF2E5D7A00FE4A8E9223CEB6BB64A9F69DF6A", "pytest-postgres.log": "DFE0D51605F64DB7F4F613991A8A24C478D7534D9ECC4D88545205020B8478C8", "pytest-postgres.xml": "2EC0AA444220596EE76C1BE59BA9A077953CF6690FFB996DF342AC7DDFEA9557", "pytest-timings.json": "1D717B55D0E16A9C30C78175DC2515594B93343DDFD94DE1F41EAD80DF084D06", "runner-timings.json": "A848192542292575B77EC525ED46D89FBC959F3DFF896C072454F07552BF0814"}
+  },
+  "limitations": ["Bounded PostgreSQL ingestion evidence only; it does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
