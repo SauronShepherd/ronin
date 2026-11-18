@@ -6,7 +6,7 @@
   "cell": "Current-candidate PostgreSQL multi-broker RF3 failover companion",
   "candidate_sha": "af7169f85191737c72ff83c8b055a298301cfc65",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "pending",
+  "documentation_commit_sha": "09c1a1413ceefd339dd393f3c8f804a4a6d63bce",
   "evidence": "docs/qualification/handoffs/2026-11-18-D244.md",
   "execution_scope": "clean-main filtered live companion with PostgreSQL server configuration and three Redpanda brokers",
   "result": {
