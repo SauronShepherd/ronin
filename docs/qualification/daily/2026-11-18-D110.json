@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D110",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Docker v0.1 journey steps candidate-bound diagnostic",
+  "candidate_sha": "a63082cf2ea4d69c4bf9a8f4180b825e0690a78f",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D110.md",
+  "execution_scope": "clean-main-docker-filtered-v01-journey-steps",
+  "result": {
+    "journey": "PASS: 15/15 v0.1 journey steps executed successfully",
+    "coverage": "PASS: compose health, doctor, validate, plan, submit, worker execution, SIGKILL lease reclaim, restart resume, terminal result, events, evidence, idempotency, cancellation and SDK/CLI round trip",
+    "focused_result": "PASS: 15 passed, 0 skipped, 0 failed, 12 deselected",
+    "cleanup": "PASS: candidate-built image and qualification resources cleanup succeeded",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d110-v01-journey-20261118 -TestFilter 'test_step_'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d110-v01-journey-20261118",
+    "cleanup_receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d110-v01-journey-20261118\\docker-cleanup.json",
+    "worker_image_digest": "sha256:77bfdc2d1096863ed95691163746bd0a61005e08f24b468272c70aa7089fac68",
+    "candidate_sha": "a63082cf2ea4d69c4bf9a8f4180b825e0690a78f"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "The runner used -TestFilter, so it recorded a filtered Docker diagnostic and did not evaluate the strict v0.1 acceptance gate or its full-gate aggregation policy.",
+    "D110 is bounded and local; it does not prove indefinite operation, production SLO, HA/multi-worker, external provider breadth, P13 or the complete 13-family release qualification.",
+    "D106's full-gate attempt remains a separate kernel.container.timeout result and is not reclassified by D110."
+  ]
+}
