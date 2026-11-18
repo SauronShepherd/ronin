@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D209",
+  "date": "2026-11-18",
+  "candidate_sha": "604b97bda63b88d698ccf1553013ef6727d30d01",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "Direct PostgreSQL connector watermark pagination, schema/null/timezone and large-value handling",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d209-postgres-connector-20261118 -TestPath tests/integration/test_postgres_connector_real.py",
+  "result": {"status": "PASS", "pytest_selected": 2, "pytest_passed": 2, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 2.38},
+  "evidence": {
+    "tests": ["test_postgres_connector_real_watermark_pages_same_timestamp_without_loss", "test_postgres_connector_real_schema_null_timezone_and_large_value"],
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "assertions": ["same-timestamp watermark pagination without loss", "schema discovery", "null handling", "timezone handling", "large value handling"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d209-postgres-connector-20261118",
+    "sha256": {"pytest-output.log": "C73957535224C70E99642FE529750EE0F0F5FC874CEAA42DBA2EEDC239D72D43", "pytest-postgres.log": "70BAB07CAE51C498E46143E6E35F0873655853B0D33E9F12E9FB4AE75BAF350C", "pytest-postgres.xml": "BC1351AFAD9E3D2F18D39590B9ECA855C998C88BB902D47B0D37FB998C50CAC3", "pytest-timings.json": "15C06D09BC9DA1D0C543E94417B9E40B358F21C970B4A9F8EB009626AE24238B", "runner-timings.json": "B70DE086CC08BB5781AF8B49B629A72D9346C83E5925594E346146378ECFCABA"}
+  },
+  "limitations": ["Bounded direct PostgreSQL connector evidence only; it does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
