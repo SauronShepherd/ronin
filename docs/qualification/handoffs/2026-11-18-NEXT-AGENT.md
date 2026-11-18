@@ -7,6 +7,7 @@ La ronda D93 queda cerrada con evidencia nueva, pero el release no es GO:
 ```text
 production implementation boundary: 633980dd3b08affcc604dc918c1a6cbf026cc408
 qualification-harness/current main at D93: 549ffe30d6df66e92325c90b582c31880536bcb5
+documentation HEAD after D93 handoff: 967983de45ca12a93cf9b40ede3c3a3669d82d69
 worktree at handoff creation: main, limpio
 familias: 1/13
 release gates: 0/10
