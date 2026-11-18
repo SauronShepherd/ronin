@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D195",
+  "date": "2026-11-18",
+  "candidate_sha": "dd6d82750ba689b21caba1fe927ed149c04c8399",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL-backed scheduler recovery and persistence selection",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d195-postgres-scheduler-recovery-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "result": {"status": "PASS", "pytest_selected": 21, "pytest_passed": 21, "pytest_skipped": 0, "pytest_failed": 0, "pytest_deselected": 0, "unrelated_collection_skips": 0, "pytest_seconds": 44.52},
+  "evidence": {
+    "recovery_cases": ["test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire", "test_postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate"],
+    "additional_cases": "The complete selected tests/integration/test_postgres_workflow_store_real.py file also passed: lease fencing/reclaim, durable outbox, schedule fire/cursor, cancellation authority, leadership generation fencing, backfill/reopen, schema migrations, active-workspace mutation, HTTP adapter and atomic/idempotent snapshots.",
+    "backend": "real PostgreSQL 16.4 Alpine container on isolated loopback port, DSN injected by runner",
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d195-postgres-scheduler-recovery-20261118",
+    "sha256": {"pytest-output.log": "707BD2208BB9144006FD75C31EFF5A5981CB61AAABE72D8A9A6C1C1188F1AECB", "pytest-postgres.log": "AD73A9526A6690A6FFE65EAD1C422329EC717CEDBCD24FE81F135E7E8E3B7EE0", "pytest-postgres.xml": "6F548884D9BF2DB808DCE15D86629DA203E1CFCFBC2C943C26595B8100F18B74", "pytest-timings.json": "9DDA741F6965FD56181CECA402063B35DA6A78C14A14AFC1B52D7E065293C82A", "runner-timings.json": "B046CCD14CC2B7E081DBAACD66244D81640D633F929C92655B74B05A4F708685"}
+  },
+  "limitations": ["Bounded filtered PostgreSQL evidence only; it does not prove indefinite operation, HA/multi-worker, external providers, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
