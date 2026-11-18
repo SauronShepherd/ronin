@@ -55,6 +55,7 @@ from studio_execution.scheduler_daemon import (
     SchedulerDaemonService,
     SchedulerDaemonWork,
 )
+from studio_execution.stream_scheduler import ingest_stream_record
 from studio_finops import SqliteFinOpsStore
 from studio_migration import (
     MigrationAPIRouter,
@@ -495,6 +496,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         lambda reference: secrets_resolver.resolve(reference).reveal_text(),
         database.parent,
         event_store=cast(SchedulerEventStore, workflow_scheduler),
+        event_ingestor=ingest_stream_record,
         clock=scheduler_clock,
     )
 

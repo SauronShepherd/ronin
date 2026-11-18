@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, cast
 
 from studio_core import WorkspaceId
-from studio_orchestrator import Instant
 
 from .bundle import (
     MAX_STREAM_BUNDLE_BYTES,
@@ -60,7 +59,8 @@ class KafkaStreamingRuntime:
         *,
         source_factory: Callable[..., Any] = KafkaJsonSource,
         event_store: Any | None = None,
-        clock: Callable[[], Instant | str] | None = None,
+        event_ingestor: Callable[..., Any] | None = None,
+        clock: Callable[[], str] | None = None,
     ) -> None:
         self._checkpoints = checkpoints
         self._resolve_connection = resolve_connection
@@ -68,8 +68,9 @@ class KafkaStreamingRuntime:
         self._data_root = data_root.expanduser().resolve()
         self._source_factory = source_factory
         self._event_store = event_store
+        self._event_ingestor = event_ingestor
         self._clock = clock or (
-            lambda: Instant(datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+            lambda: datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         )
 
     def _ingest_stream_events(
@@ -78,15 +79,11 @@ class KafkaStreamingRuntime:
         stream_id: str,
         batch: StreamBatch,
     ) -> None:
-        if self._event_store is None:
+        if self._event_store is None or self._event_ingestor is None:
             return
-        # Keep this import local: studio_execution depends on the streaming
-        # contracts, while the runtime only needs the bridge at execution time.
-        from studio_execution.stream_scheduler import ingest_stream_record
-
         received_at = self._clock()
         for record in batch.records:
-            ingest_stream_record(
+            self._event_ingestor(
                 self._event_store,
                 record,
                 workspace_id=WorkspaceId(workspace_id),

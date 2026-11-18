@@ -13,6 +13,7 @@ from studio_core import (
 )
 from studio_core.scheduler_events import EventTriggerDefinition, EventTriggerId, SchedulerEventId
 from studio_orchestrator import Instant
+from studio_execution.stream_scheduler import ingest_stream_record
 from studio_storage.scheduler_events import SchedulerEventStore
 from studio_storage.workspaces import SqliteWorkspaceStore
 from studio_streaming import (
@@ -151,6 +152,7 @@ def test_runtime_ingests_committed_records_into_scheduler_event_inbox(tmp_path: 
         tmp_path / "data",
         source_factory=lambda **_kwargs: _Source(),
         event_store=event_store,
+        event_ingestor=ingest_stream_record,
         clock=lambda: EVENT_NOW,
     )
 
@@ -230,6 +232,7 @@ def test_runtime_retries_after_event_store_failure_without_duplicate_sink_or_del
         tmp_path / "data",
         source_factory=lambda **_kwargs: _Source(),
         event_store=failing_store,
+        event_ingestor=ingest_stream_record,
         clock=lambda: next(clock_values),
     )
 
@@ -251,6 +254,7 @@ def test_runtime_retries_after_event_store_failure_without_duplicate_sink_or_del
         tmp_path / "data",
         source_factory=lambda **_kwargs: _Source(),
         event_store=event_store,
+        event_ingestor=ingest_stream_record,
         clock=lambda: next(clock_values),
     )
     result = retry_runtime.run_once(workspace.value, stream_id)
