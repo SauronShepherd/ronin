@@ -7,6 +7,14 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D263 on current candidate `7a7b004370d53d8f4d7234654201ac1bb4360f3f`
+passes two new PostgreSQL scheduler recovery cases `2/2`: attempt-lease
+worker fencing/reclaim and execution-outbox survival/reconciliation after
+expiry. Cleanup is PASS. This is bounded recovery evidence and does not prove
+indefinite operation, HA/multi-worker, complete controller conformance, P11 or
+release approval. P11 remains `in_progress`, P13 remains `blocked`, and release
+remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D262 on current candidate `34589b4bfc369b895c8dbf01ec6c1959740bf10e`
 passes the Azure Blob-compatible Azurite journey `1/1` for discovery, read and
 snapshot replay, with cleanup PASS. This is bounded emulator evidence, not
