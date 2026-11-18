@@ -48,6 +48,8 @@
   "d181_qualification_note": "D181 on dcd562b5 passed 1/1 bounded live single-operator authorization diagnostic with Ronin on real PostgreSQL/Kafka: 10/10 API events correlated (7 OK, 3 expected WARN), zero log errors/critical and cleanup PASS. This is bounded authorization evidence only; P11 remains in_progress, P13 blocked and release NO-GO at 1/13 families and 0/10 gates.",
   "d182_qualification_note": "D182 was NOT_PASS: the selected live Notebook Studio worker case was explicitly skipped, produced 0 API events, and the audit could not find live-api-traffic.json; isolated PostgreSQL/Kafka cleanup passed. It is not Docker-worker or PostgreSQL qualification; statuses remain unchanged.",
   "d183_qualification_note": "D183 changed only qualification tooling: absent live-api-traffic.json is now treated as empty evidence so skipped diagnostics preserve the intended API-evidence failure. The affected contract regression passed 26/26 on 04c2fc5e; D182 remains NOT_PASS and no qualification evidence is reattributed.",
+  "d184_qualification_note": "D184 built a Docker worker image for the Notebook follow-up but selected 0 of 27 Python tests; it is build preparation only and not Docker qualification.",
+  "d185_qualification_note": "D185 on a774a029 passed 1/1 bounded live Notebook Studio create/version/execute journey with a real Docker worker plus PostgreSQL/Kafka: 20/20 API events correlated, all OK, zero log errors/critical and cleanup PASS. This is bounded P11 evidence; statuses remain unchanged.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",

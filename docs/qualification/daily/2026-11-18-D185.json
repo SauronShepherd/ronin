@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D185",
+  "date": "2026-11-18",
+  "candidate_sha": "a774a0296093b1f680e9f73248f62a03de130567",
+  "implementation_boundary_sha": "a774a0296093b1f680e9f73248f62a03de130567",
+  "scope": "bounded live Notebook Studio create/version/execute journey with a real Docker worker and PostgreSQL/Kafka services",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d185-live-notebook-worker-20261118 -TestGrep \"live Notebook Studio creates, versions and executes a notebook on a Docker worker\" -StorageBackend postgres -WorkerImage ronin:d184-notebook-worker -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 20, "api_correlated": 20, "api_ok": 20, "api_warn": 0, "log_errors": 0, "log_critical": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d185-live-notebook-worker-20261118", "postgres": true, "kafka": true, "worker_image": "sha256:d7727283a2cbc2f2dd596dff292a72421dd39ebca65ba2aa4d08b531c8d0a321", "cleanup": "PASS; isolated containers, network and volume removed"},
+  "limitations": ["This is one bounded Notebook Studio journey; it does not qualify the complete 13-family journey, indefinite operation, HA/multi-worker or release gates."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

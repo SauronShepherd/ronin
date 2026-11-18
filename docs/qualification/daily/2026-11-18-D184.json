@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D184",
+  "date": "2026-11-18",
+  "candidate_sha": "a774a0296093b1f680e9f73248f62a03de130567",
+  "implementation_boundary_sha": "a774a0296093b1f680e9f73248f62a03de130567",
+  "scope": "filtered Docker worker image build diagnostic for Notebook Studio follow-up",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d184-docker-notebook-image-20261118 -TestFilter notebook -KeepImage -ImageTag ronin:d184-notebook-worker",
+  "result": {"status": "NOT_PASS", "pytest_selected": 0, "pytest_deselected": 27, "pytest_failed": 0, "image_built": true, "image_sha256": "sha256:d7727283a2cbc2f2dd596dff292a72421dd39ebca65ba2aa4d08b531c8d0a321"},
+  "limitations": ["The Python filter selected no tests; D184 is build preparation only and not Docker qualification."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
