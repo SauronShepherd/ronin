@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D182",
+  "date": "2026-11-18",
+  "candidate_sha": "fb759dc639b83e60c631d4fce6cb800787fe16d8",
+  "implementation_boundary_sha": "fb759dc639b83e60c631d4fce6cb800787fe16d8",
+  "scope": "bounded live Notebook Studio worker diagnostic requested with PostgreSQL backend",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d182-live-notebook-worker-20261118 -TestGrep \"live Notebook Studio creates, versions and executes a notebook on a Docker worker\" -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {"status": "NOT_PASS", "playwright_selected": 1, "playwright_passed": 0, "playwright_skipped": 1, "playwright_failed": 0, "api_events": 0, "api_correlated": 0, "runner_failure": "audit could not find live-api-traffic.json after the selected case was skipped"},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d182-live-notebook-worker-20261118", "cleanup": "PASS; isolated containers, network and volume removed"},
+  "limitations": ["The selected Notebook Studio case is skipped by the live fixture and the summary reports workerImage null; this is not Docker-worker or PostgreSQL runtime qualification."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

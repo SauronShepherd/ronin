@@ -46,6 +46,7 @@
   "d178_qualification_note": "D178 on abb1f09f passed 1/1 filtered live PostgreSQL Ingestion route case: 4/4 API events correlated, all OK, 0 skips/failures, cleanup PASS. D177's broader ingestion selection had 2 explicit skips and is not reattributed; statuses remain unchanged.",
   "d180_qualification_note": "D180 on f2bb34a1 passed 1/1 filtered live Machine Learning Studio journey on its configured SQLite runtime: 38/38 API events correlated (37 OK, 1 expected WARN), 0 skips/failures, cleanup PASS. D179's PostgreSQL request was SQLite-only and timed out before startup; no PostgreSQL claim is made. Statuses remain unchanged.",
   "d181_qualification_note": "D181 on dcd562b5 passed 1/1 bounded live single-operator authorization diagnostic with Ronin on real PostgreSQL/Kafka: 10/10 API events correlated (7 OK, 3 expected WARN), zero log errors/critical and cleanup PASS. This is bounded authorization evidence only; P11 remains in_progress, P13 blocked and release NO-GO at 1/13 families and 0/10 gates.",
+  "d182_qualification_note": "D182 was NOT_PASS: the selected live Notebook Studio worker case was explicitly skipped, produced 0 API events, and the audit could not find live-api-traffic.json; isolated PostgreSQL/Kafka cleanup passed. It is not Docker-worker or PostgreSQL qualification; statuses remain unchanged.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",

@@ -906,6 +906,8 @@ D178 passed the single PostgreSQL Ingestion route case (`1/1`), with `4/4` corre
 D180 passed the filtered Machine Learning Studio journey (`1/1`) on its configured SQLite runtime, with `38/38` correlated API events (`37 OK`, `1` expected WARN), no skips or failures and cleanup passing. The runner is explicitly SQLite-only for this route; D179's PostgreSQL request timed out before startup and provides no PostgreSQL evidence. This remains bounded local evidence.
 
 D181 passed `1/1` bounded live single-operator authorization diagnostic with Ronin configured against real PostgreSQL/Kafka, with `10/10` correlated API events (`7 OK`, `3` expected WARN), zero server error/critical logs and cleanup passing. This is authorization evidence only and does not qualify a complete family, indefinite operation, HA/multi-worker, external-provider recovery or release gate. P11 remains **in_progress**, P13 **blocked** and release **NO-GO** (`1/13`, `0/10`).
+
+D182 queda **NOT_PASS**: el caso live de Notebook Studio fue seleccionado pero explícitamente omitido (`1 skipped`), produjo `0` eventos API y el auditor no encontró `live-api-traffic.json`; el cleanup de PostgreSQL/Kafka pasó. No es evidencia de worker Docker ni de runtime PostgreSQL, y no cambia P11, P13 ni release.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
