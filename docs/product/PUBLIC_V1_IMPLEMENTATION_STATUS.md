@@ -922,6 +922,8 @@ D188 corrigió esa limitación de modo y ejecutó el supervisor sobre PostgreSQL
 D189 pasa el supervisor soak focalizado: `1/1` caso, `93/93` eventos API correlacionados, todos OK, cero errores y cleanup PASS. El caso limita cada ciclo HTTP a un micro-batch (`max_batches=1`) para que el criterio explícito de `15` ciclos mida realmente ciclos de supervisor; no se relajó el umbral. Es evidencia single-broker acotada.
 
 D190 pasa `1/1` integración del conector S3 JSON contra Floci S3-compatible real, cubriendo sink put/read/retry round-trip, sin skips/fallos y con cleanup PASS. Es una celda de proveedor acotada; no cierra la matriz de providers ni cambia P11, P13 o release.
+
+D191 pasa `1/1` integración del conector Azure Blob JSON contra Azurite real, cubriendo discovery, lectura y replay de snapshot, sin skips/fallos y con cleanup PASS. Es una celda de proveedor acotada; la matriz externa y los estados de release permanecen sin cambios.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact

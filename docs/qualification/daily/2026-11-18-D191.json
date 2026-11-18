@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D191",
+  "date": "2026-11-18",
+  "candidate_sha": "32aa09d7e6daa1c8fad946fdda0c467230cb8708",
+  "implementation_boundary_sha": "32aa09d7e6daa1c8fad946fdda0c467230cb8708",
+  "scope": "bounded real Azure Blob JSON connector qualification against Azurite",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d191-azure-blob-20261118 -TestFilter azure_blob",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "service": "Azurite Azure Blob", "image_digest": "sha256:647c63a91102a9d8e8000aab803436e1fc85fbb285e7ce830a82ee5d6661cf37", "cleanup": "PASS"},
+  "limitations": ["Filtered diagnostic only; strict v0.1 acceptance, indefinite operation, provider matrix and release gates remain open."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
