@@ -6,7 +6,7 @@
   "cell": "Current-candidate Docker and strict v0.1 acceptance reconfirmation",
   "candidate_sha": "18da1d4e5bd8147af9a8a8d87473fe5c8023abaa",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "tooling_commit_sha": "92d24549",
+  "tooling_commit_sha": "92d245490c910a70c3750604320aeb653c398677",
   "evidence": "docs/qualification/handoffs/2026-11-18-D245.md",
   "execution_scope": "clean-main Docker qualification using PostgreSQL, Docker worker, Floci/S3 and Azurite/Azure fixtures",
   "result": {
