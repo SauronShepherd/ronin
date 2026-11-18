@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D243",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Full Python/PostgreSQL suite after atomic public-ledger synchronization fix",
+  "candidate_sha": "761183dec8a49b1aa766f4a48cf0ec2761eae8d1",
+  "implementation_commit_sha": "92d245490c910a70c3750604320aeb653c398677",
+  "documentation_commit_sha": "pending",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D243.md",
+  "execution_scope": "clean-main full non-performance Python suite against isolated PostgreSQL 16.4",
+  "result": {
+    "full_suite": "PASS: 4759 passed, 31 explicit skips, 0 failed out of 4790 collected",
+    "duration": "846.09 seconds",
+    "postgres": "PASS: real PostgreSQL-backed integration cases executed in the isolated runner",
+    "cleanup": "PASS: isolated PostgreSQL runner cleanup completed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "761183dec8a49b1aa766f4a48cf0ec2761eae8d1",
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d243-python-postgres-full-current-20261118",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d243-python-postgres-full-current-20261118",
+    "sha256": {
+      "pytest-output.log": "C450ED3D052387D6970D9C3A4BAE137F22E9E9931187597562ED3A86A3F5EE7A",
+      "pytest-postgres.xml": "874B521AC9569C4F0D99D32D20AD1355FE157DCC33757A63476104BEBF1301FE",
+      "runner-timings.json": "9F08FB142779C0FF7021247921E67FF3DF2A9127C5ABAC77B82979228B22FD29"
+    }
+  }
+}
