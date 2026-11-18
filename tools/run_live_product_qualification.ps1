@@ -147,8 +147,9 @@ $mlOnlyDiagnostic = $TestGrep -eq "mlstudio"
 $syntheticOnlyDiagnostic = $TestGrep -eq "synthetic"
 $qualityOnlyDiagnostic = $TestGrep -eq "quality"
 $backpressureOnlyDiagnostic = $TestGrep -eq "sustained backpressure"
+$parquetStreamingDiagnostic = $TestGrep -eq "live streaming parquet sink"
 $performancePluginDiagnostic = -not $TestGrep -or $TestGrep -match "performance|route"
-$streamingOnlyDiagnostic = $TestGrep -eq "streaming" -or $multiBrokerDiagnostic -or $backpressureOnlyDiagnostic
+$streamingOnlyDiagnostic = $TestGrep -eq "streaming" -or $multiBrokerDiagnostic -or $backpressureOnlyDiagnostic -or $parquetStreamingDiagnostic
 if ($multiBrokerDiagnostic -and (-not $TestGrep -or $TestGrep -notmatch "streaming")) {
     throw "-MultiBroker requires a focused streaming -TestGrep so the three-broker fixture cannot be mistaken for the default live qualification."
 }
