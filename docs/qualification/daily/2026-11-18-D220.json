@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D220",
+  "date": "2026-11-18",
+  "candidate_sha": "561ba5e5f8e95f786921e52a060c35fae6801799",
+  "implementation_boundary_sha": "561ba5e5f8e95f786921e52a060c35fae6801799",
+  "scope": "repeat live FinOps Studio route after completing PostgreSQL ledger operations",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d220-live-finops-postgres-20261118 -StorageBackend postgres -TestGrep 'route finops loads and reaches the live API' -RequestTimeoutSeconds 60",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 3, "correlated_http_logs": 3, "unexpected_errors": 0, "elapsed_seconds": 57.41},
+  "evidence": {
+    "test": "route finops loads and reaches the live API",
+    "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+    "api_outcomes": {"OK": 3},
+    "route_coverage": "filtered diagnostic; route-wide coverage not run",
+    "cleanup": "PASS; PostgreSQL, Kafka, volume and network removed",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d220-live-finops-postgres-20261118",
+    "sha256": {
+      "browser-live.log": "9FFBF0D0A36057532A30CCF65599003723A6C9B9FBC7763A34E6C1FD84EFF8BC",
+      "browser-live.xml": "AB46E5991F732870E1BF70A1C5DC67F66000B3550AFD6E74FFAA5CB049137B5B",
+      "live-api-traffic.json": "09E63105CDE5C07972BC965421F91518AFD54E1CD1C42402D752244E7AAC501F",
+      "live-python-freeze.txt": "57B6B2DA7D5015D0DC226B81B80A6289BE06BA2B7952E5A9D9F1651CAF14D72D",
+      "live-server.stderr.log": "5DC8399282D17455028CA60F8BABD287D5B7EF78CF420932D7A4209B64834F0F",
+      "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "qualification-summary.json": "2A805AE014967877CE767809A397679F677039465ACDBCB6F2A46C98558E452A",
+      "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+    }
+  },
+  "limitations": ["Filtered live diagnostic only; route-wide coverage was not run and this does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

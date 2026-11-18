@@ -7,6 +7,16 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D220 repeats the filtered live FinOps route on candidate and production boundary
+`561ba5e5f8e95f786921e52a060c35fae6801799` after completing PostgreSQL ledger
+operations for usage, rate cards, costs and budgets: `1/1` Playwright case,
+`3/3` PostgreSQL/Kafka-backed API events correlated, all `OK`, and cleanup PASS.
+The affected local regression selection passes `40/40`. This remains bounded
+evidence; route-wide coverage, indefinite operation, HA, external providers,
+complete P11 and release gates remain open. P11 remains `in_progress`, P13
+remains `blocked`, and release remains **NO-GO** at `1/13` families and
+`0/10` gates.
+
 D219 passes the filtered live FinOps route on candidate and production boundary
 `68b8224770b6716ae72d3f897cedede355c08cf5`: `1/1` Playwright case, `3/3`
 PostgreSQL/Kafka-backed API events correlated, all `OK`, and cleanup PASS. The
