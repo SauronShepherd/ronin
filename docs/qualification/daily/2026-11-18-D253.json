@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D253",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate 300-second sustainable PostgreSQL supervisor soak",
+  "candidate_sha": "86f8412cb2ef24a55091c53c7934f4ae2fd83fcb",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "86f8412cb2ef24a55091c53c7934f4ae2fd83fcb",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D253.md",
+  "execution_scope": "clean-main live single-broker Redpanda plus real PostgreSQL 16.4; 300-second soak at one record per 0.5 seconds",
+  "result": {
+    "soak": "PASS: 1/1 filtered Playwright case; SupervisorSoakSeconds=300; criterion of at least 75 cycles exceeded with 148 run/health cycles",
+    "api_audit": "PASS: 297/297 real API events correlated with structured HTTP logs, all OK, 0 unexpected authorization gaps and 0 unexpected server/network errors",
+    "services": "PASS: Ronin API, Redpanda and PostgreSQL 16.4 were live and PostgreSQL was the configured Ronin backend",
+    "cleanup": "PASS: PostgreSQL, broker, volume and network removed; no containers or qualification images remain",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "86f8412cb2ef24a55091c53c7934f4ae2fd83fcb",
+    "command": "$env:RONIN_LIVE_SUPERVISOR_SOAK_RECORDS_PER_TICK='1'; $env:RONIN_LIVE_SUPERVISOR_SOAK_INTERVAL_SECONDS='0.5'; pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d253-supervisor-soak-300-sustainable-postgres-current-20261118 -TestGrep 'supervisor soak' -StorageBackend postgres -SupervisorSoakSeconds 300 -RequestTimeoutSeconds 30",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d253-supervisor-soak-300-sustainable-postgres-current-20261118",
+    "sha256": {
+      "browser-live.log": "7F8D48388764FA9FE217782C5E1A36A150CD05EB49F5AD047580F793139AFD21",
+      "browser-live.xml": "35080B695B59A9DEFD3C9FFEE05223A6DAD48C47D8C397B9EF3B3FF4339891DE",
+      "live-api-traffic.json": "600AAAD61F022FBCDA291FB9F7D255D51D1491AFD4BC1F6CE637654DC28ADB3A",
+      "live-server.stderr.log": "63500D0DD7E8784FCA563152748094817A7A1C103C1F289F210A3F811B49FDB6",
+      "qualification-summary.json": "B28801EEA0706DB2BF8B7F9086CD273607B5C3EDF12222219EC623F512BE9C89",
+      "live-python-freeze.txt": "2F7A7F8067B0130AEBC80EBAABFD83C8DF4660762F6026A5937AB19905F9D27E"
+    }
+  },
+  "limitations": [
+    "This is bounded 300-second single-broker evidence at a deliberately sustainable producer rate; it is not indefinite operation, production SLO, HA/multi-worker, multi-broker recovery, complete P11 or release approval.",
+    "D251 remains NOT_PASS under the higher default producer load; D253 must not be generalized to that load or to indefinite operation.",
+    "D253 does not reattribute D252, D249, D189 or D83-D100."
+  ]
+}
