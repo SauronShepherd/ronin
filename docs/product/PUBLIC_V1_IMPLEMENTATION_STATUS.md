@@ -872,6 +872,8 @@ D153 passed `2/2` bounded local worker lease-renewal/reclaim contention tests in
 D154 passed the bounded local orchestrator/runtime contention test (`1/1`) in `3.04s`, preserving unrelated progress. This is local evidence only and does not establish PostgreSQL, indefinite operation, HA, or release readiness.
 
 D155’s full Python/PostgreSQL campaign reached `4756 passed`, `31 skipped`, and one documentation-baseline failure; cleanup passed. D156 corrected that capability-matrix/status-ledger mismatch and passed its regression `3/3`; D155 is not reclassified as PASS.
+
+D157 repeated the full Python/PostgreSQL campaign after the synchronization fix: `4757 passed`, `31` explicit skips, `0` failures, and cleanup passed in `693.32s`. This is bounded campaign evidence and does not establish indefinite operation, HA, complete family coverage, or release readiness.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact

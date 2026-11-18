@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D157",
+  "date": "2026-11-18",
+  "candidate_sha": "246d0d106324f5f6ea5156b4be00274880e70eac",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "full bounded Python/PostgreSQL suite rerun after capability-ledger synchronization",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d157-postgres-full-rerun-20261118",
+  "result": {"status": "PASS", "passed": 4757, "skipped": 31, "failed": 0, "total": 4788, "pytest_seconds": 693.32},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d157-postgres-full-rerun-20261118", "postgres_image": "postgres:16.4-alpine", "cleanup": "PASS; isolated PostgreSQL service removed"},
+  "limitations": ["31 explicit platform/service skips remain; this does not qualify indefinite operation, HA, external provider breadth, complete family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
