@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D259 on current candidate `a227029f0bc16d6407c39ae862b0e8db8e33cb35`
+passes PostgreSQL-configured event-to-workflow continuity `1/1`, with `12/12`
+correlated API events, all `OK`, and cleanup PASS. P11 remains `in_progress`,
+P13 remains `blocked`, and release remains **NO-GO** at `1/13` families and
+`0/10` gates.
+
 D258 on current candidate `0e6df97b11c4eead9d773a9b9796d9701c81a0d1`
 passes the PostgreSQL-configured live Workflows route `1/1`, with `30/30`
 correlated API events (`29 OK`, `1` expected WARN) and cleanup PASS. P11
