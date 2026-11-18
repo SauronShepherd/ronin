@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D261",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate external S3-compatible provider and object-store recovery",
+  "candidate_sha": "642c7d14a584af027addf647580371716e9049d1",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D261.md",
+  "execution_scope": "clean-main Docker diagnostic against the real Floci S3-compatible provider",
+  "result": {
+    "provider": "PASS: Floci S3-compatible endpoint started and served real requests",
+    "s3_connector": "PASS: JSON sink write/read/discover and retry after lost provider response",
+    "ml_artifact_store": "PASS: durable input/output round trip, digest verification and unreferenced-object retention cleanup",
+    "tests": "PASS: 2 selected, 25 deselected, 0 skipped, 0 failed",
+    "cleanup": "PASS: Floci container, network, volume and Ronin qualification image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "642c7d14a584af027addf647580371716e9049d1",
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d261-s3-provider-current-20261118-rerun -TestFilter 'test_s3_json_sink_put_read_and_retry_round_trip or test_ml_durable_input_output_and_retention_round_trip_through_s3'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d261-s3-provider-current-20261118-rerun",
+    "worker_image_digest": "sha256:ad70058fe2f482282c5cf45a135a66fe87b85b9a1375113a0a88f38517421ec9",
+    "sha256": {
+      "docker-cleanup.json": "5D33230426730A076F856C22D953140F9A05635DE906065ACA19F274F06ABF5D",
+      "docker-pytest-output.log": "9EEBDE15490E01F845B2AEC9E13E3D502C5D3B1929C49489B5C6ECEDAC27747A",
+      "docker-qualification.log": "80CD1E9D8F4526D7AE3B6F2176DB40F5A9B4A00B622E8F680E57FD44495BFD30",
+      "floci-s3-qualification.log": "F6CD04DD485F2B08D32E87B04C18B00FC6DFE8E2033A156E8FE97ADBEF853578",
+      "v01-acceptance.xml": "F87E97FDC800C919153136942A34C415D529DF609C59CC0CDE387AB93955BEBA"
+    }
+  },
+  "limitations": [
+    "This is bounded S3-compatible provider evidence, not certification of AWS/Azure/GCP production services or external network/SLA behavior.",
+    "This filtered diagnostic omits the strict v0.1 acceptance aggregate and does not prove indefinite operation, HA/multi-worker, complete P11 or release approval.",
+    "The first D261 attempt used an invalid pytest selector, ran 0 tests and is not counted; its resources were cleaned. D261 does not reattribute D225, D254, D100 or earlier receipts."
+  ]
+}
