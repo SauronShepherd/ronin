@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D210",
+  "date": "2026-11-18",
+  "candidate_sha": "a67433cd774ea244843026f8c142f6e894a73664",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL local composition catalog and governance over real HTTP",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d210-postgres-catalog-http-20261118 -TestPath tests/integration/test_postgres_local_composed_catalog_http.py",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 12.96},
+  "evidence": {
+    "test": "test_postgres_composition_serves_catalog_and_governance_over_real_http",
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "assertions": ["local composition", "catalog HTTP routes", "governance HTTP routes", "PostgreSQL persistence"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d210-postgres-catalog-http-20261118",
+    "sha256": {"pytest-output.log": "C4DEA17517B98435AB72AD54F8F4FF07F8ECE76A57CD9D74B5BC57C5584B0C79", "pytest-postgres.log": "9C7BDCDE79404E04E28F693A3C747185712831354AD1794AFFA82EA0CB0936CA", "pytest-postgres.xml": "B7865A60B9AD51E8656E0FA25C73614AD505B23B3C650614566375604C15B304", "pytest-timings.json": "5564194DA8A5DB08EE5A52D17B58AC9856EC6FD59572ACC871FAB32A62430E3C", "runner-timings.json": "9705CC7B5F3AE3498986C2D460FB72BD009121BE247A5E7E4C63F7EA671FA1A4"}
+  },
+  "limitations": ["Bounded PostgreSQL HTTP composition evidence only; it does not prove external provider certification, indefinite operation, HA/multi-worker, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
