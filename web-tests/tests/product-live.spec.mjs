@@ -2039,7 +2039,10 @@ test('live streaming supervisor soak drains while records arrive for a bounded d
       const run = await request('POST', runPath, {
         limit: 8,
         timeout_seconds: 1,
-        max_batches: 16,
+        // One bounded micro-batch per HTTP cycle keeps the soak's cycle
+        // criterion meaningful; allowing 16 batches here makes one request
+        // monopolize the 60-second window while still counting as one cycle.
+        max_batches: 1,
         max_records: 64,
         idle_polls: 1,
       });
