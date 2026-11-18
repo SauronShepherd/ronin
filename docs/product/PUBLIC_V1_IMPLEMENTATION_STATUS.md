@@ -866,6 +866,8 @@ D150 passed the bounded PostgreSQL local-composed catalog HTTP integration (`1/1
 D151 passed the filtered Docker appliance backup/restore case (`1/1`) with PostgreSQL, a Ronin image, and a local data volume. Cleanup passed; strict v0.1 was not evaluated and the release status remains unchanged.
 
 D152 passed `4/4` filtered real Docker worker/runtime cases with PostgreSQL, including two `SIGKILL` recovery cases that reused persisted cells. Cleanup passed; strict v0.1 was not evaluated and release status remains unchanged.
+
+D153 passed `2/2` bounded local worker lease-renewal/reclaim contention tests in `5.93s`. This is SQLite/artifact-store evidence only and does not establish PostgreSQL, indefinite operation, HA, or release readiness.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
