@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D174",
+  "date": "2026-11-18",
+  "candidate_sha": "157ca474fdc683fbd7f392561b1ec399eecf3873",
+  "implementation_boundary_sha": "157ca474fdc683fbd7f392561b1ec399eecf3873",
+  "scope": "bounded live PostgreSQL Workflows journey after environment/binding composition change",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d174-live-postgres-workflows-20261118 -TestGrep workflows -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 29, "api_correlated": 29, "api_ok": 28, "api_warn": 1},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d174-live-postgres-workflows-20261118", "cleanup": "PASS; containers, volume, network and temporary images removed"},
+  "limitations": ["Filtered Workflows journey only; the expected WARN is bounded negative-path evidence. This does not qualify indefinite scheduler operation, HA, external providers or release readiness."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
