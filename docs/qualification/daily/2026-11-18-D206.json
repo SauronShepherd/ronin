@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D206",
+  "date": "2026-11-18",
+  "candidate_sha": "4758ab059560bbaece1583b0f93a2dc9920221fd",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL audit store durability, isolation, idempotency and tamper detection",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d206-postgres-audit-20261118 -TestPath tests/integration/test_postgres_audit_store.py",
+  "result": {"status": "PASS", "pytest_selected": 5, "pytest_passed": 5, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 4.46},
+  "evidence": {
+    "tests": ["test_postgres_audit_rejects_unknown_workspace", "test_postgres_audit_resource_listing_is_newest_first_and_bounded", "test_postgres_audit_database_check_rejects_invalid_outcome", "test_postgres_audit_round_trip_idempotency_and_conflict", "test_postgres_audit_workspace_listing_and_tamper_detection"],
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "assertions": ["workspace isolation", "newest-first bounded listing", "invalid outcome rejection", "idempotent round trip", "conflict detection", "tamper detection"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d206-postgres-audit-20261118",
+    "sha256": {"pytest-output.log": "58A931FB514436F94C463342062DF968E99E23863272A315D08AF44550412908", "pytest-postgres.log": "ABD98E88B30E99DE875C359467F0CD9DE35F000B4F645FEFB91DB378EF2183CD", "pytest-postgres.xml": "523A636178A52744F535B5A4DBF4D69A0C526F3BB2E9C3CEA4A038926C43829A", "pytest-timings.json": "A3CF88B2D0BD091F71721BE70BC943856597B432139538A26F5AA59265ABAAEA", "runner-timings.json": "91E16C73326E730A36D566D5452105E34D7EA5B1FAACBFC2E49204413C6BA229"}
+  },
+  "limitations": ["Bounded PostgreSQL audit evidence only; it does not prove external provider certification, indefinite operation, HA/multi-worker, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
