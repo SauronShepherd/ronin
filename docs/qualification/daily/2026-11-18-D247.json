@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D247",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate complete Python/PostgreSQL regression",
+  "candidate_sha": "a01b8d6b7e161bfa6a13668aea9e4e412bf121e6",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "a01b8d6b7e161bfa6a13668aea9e4e412bf121e6",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D247.md",
+  "execution_scope": "clean-main full non-performance Python/PostgreSQL suite with isolated PostgreSQL 16.4",
+  "result": {
+    "suite": "PASS: 4759 passed, 31 explicit skips, 0 failed, 13 warnings; 4787 collected with 3 collection skips",
+    "postgresql": "PASS: isolated postgres:16.4-alpine service enabled the real PostgreSQL integration cases",
+    "cleanup": "PASS: isolated PostgreSQL resources removed; no containers or qualification images remain",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "a01b8d6b7e161bfa6a13668aea9e4e412bf121e6",
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d247-python-postgres-full-current-20261118",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d247-python-postgres-full-current-20261118",
+    "sha256": {
+      ".coverage": "5372533C94026D37E6C1D127E75894346A12924A1C41FA0758B86A940B83F91F",
+      "pytest-output.log": "003FAE68BC31BD7EFFB85FB8E86B33CB8AD025BF0708C213D637D8162BB580F1",
+      "pytest-postgres.log": "078AE2DE8FA37AF6D1FD80436FB9193A41142AF7FECA650C0FE41B50456EA082",
+      "pytest-postgres.xml": "01A5A42BDF7F5AC58E33D3E6457CD7CBCB5C7BBD0768261DA2B35DE1679D967D",
+      "pytest-timings.json": "1B22230607FA11DF166B03EAB75C4BCB654F31717452FD0B2F77E1C33F3FAAF1",
+      "runner-timings.json": "EC7861A94EDC3CA29B98F560CEADA43C8EF198F1621B0163D0B4494817B84D71"
+    }
+  },
+  "limitations": [
+    "31 skips remain explicit unavailable or opt-in environments: Docker/provider fixtures, external Trino/Spark/SDP endpoints, symlink/Windows privilege cases and other platform boundaries.",
+    "This full non-performance regression does not prove indefinite operation, HA/multi-worker, external provider certification, complete P11 qualification or release approval.",
+    "D247 is a new observation on the current candidate and does not reattribute D83-D100 or earlier receipts."
+  ]
+}
