@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D236",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "P11 real PostgreSQL scheduler/workflow store integration breadth",
+  "candidate_sha": "d8451474d4d1980199f125341264debb9846a80e",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "pending",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D236.md",
+  "execution_scope": "clean-main filtered PostgreSQL diagnostic using the exact integration file against an isolated postgres:16.4-alpine service",
+  "result": {
+    "integration": "PASS: 21/21 selected tests passed, 0 skipped, 0 failed, 0 deselected",
+    "coverage": "PASS: leadership generation fencing, attempt lease fencing/reclaim, crash replay without duplicate, outbox expiry/reconciliation, timeout authority, atomic/idempotent snapshots, schedule cursor/fire, migrations 5-to-6 and 6-to-10, backfill reopen, event inbox replay, bundle import, deployment binding, active-workspace guards and durable HTTP adapter",
+    "cleanup": "PASS: isolated PostgreSQL container, network and volume removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "d8451474d4d1980199f125341264debb9846a80e",
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d236-postgres-workflow-store-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d236-postgres-workflow-store-20261118",
+    "sha256": {
+      "pytest-output.log": "75F40F809D2507D4F1E68355FB5120615D6173CE154A97A0F6963CEDE19CD47F",
+      "pytest-postgres.log": "5992174165940186E231784361F21B7B5BD055542F82C1269E2203DEA357FB8E",
+      "pytest-postgres.xml": "9BC25E3681209BB1D76ECACD86181B7128A469C6CCA581BDE0C3340EFD4151AE",
+      "runner-timings.json": "D45B6091BD13F974F99BB180ECF8A28103BB4D4DE59792671C4A1BF58E0E23B7"
+    }
+  }
+}
