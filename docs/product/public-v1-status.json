@@ -27,6 +27,8 @@
   "d152_qualification_note": "D152 on 88536cc1 passed 4/4 filtered real Docker worker/runtime cases with PostgreSQL, including two SIGKILL recovery cases; cleanup PASS. Strict v0.1 was not evaluated and statuses remain unchanged.",
   "d153_qualification_note": "D153 on 4d4b08de passed 2/2 bounded local worker lease-renewal/reclaim contention tests in 5.93s. This is local SQLite/artifact evidence and does not change P11, P13 or release status.",
   "d154_qualification_note": "D154 on 9e7fbc1d passed 1/1 bounded local orchestrator/runtime contention test in 3.04s, preserving unrelated progress. This does not change P11, P13 or release status.",
+  "d155_qualification_note": "D155 full Python/PostgreSQL campaign was not PASS: 4756 passed, 31 skipped and one documentation-baseline failure; runner cleanup PASS. D156 corrected the matrix and passed its 3/3 regression; release statuses remain unchanged.",
+  "d156_qualification_note": "D156 passed 3/3 capability-matrix/status-ledger synchronization regressions after correcting the observed baseline. This does not change P11, P13 or release status.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",

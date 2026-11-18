@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D155",
+  "date": "2026-11-18",
+  "candidate_sha": "7272e5cb42fb859b4657b6adf686d654afbf7bcd",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "full bounded Python/PostgreSQL suite diagnostic",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d155-postgres-full-20261118",
+  "result": {"status": "NOT_PASS", "passed": 4756, "skipped": 31, "failed": 1, "total": 4788, "failure": "capability matrix observed source baseline was stale relative to the public status ledger"},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d155-postgres-full-20261118", "postgres_image": "postgres:16.4-alpine", "cleanup": "PASS; runner cleanup completed"},
+  "limitations": ["Not release evidence because the suite ended with one documentation-consistency failure; no functional failure was observed."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

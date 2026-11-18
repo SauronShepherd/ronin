@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D156",
+  "date": "2026-11-18",
+  "candidate_sha": "7272e5cb42fb859b4657b6adf686d654afbf7bcd",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "capability-matrix/public-status synchronization regression",
+  "command": "python -m pytest tests/test_public_capability_matrix.py -q",
+  "result": {"status": "PASS", "selected": 3, "passed": 3, "skipped": 0, "failed": 0, "duration_seconds": 1.24},
+  "evidence": {"scope": "public capability matrix and status ledger consistency", "cleanup": "not applicable"},
+  "limitations": ["Documentation-consistency regression only; does not qualify runtime, providers, indefinite operation, complete family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

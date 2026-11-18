@@ -870,6 +870,8 @@ D152 passed `4/4` filtered real Docker worker/runtime cases with PostgreSQL, inc
 D153 passed `2/2` bounded local worker lease-renewal/reclaim contention tests in `5.93s`. This is SQLite/artifact-store evidence only and does not establish PostgreSQL, indefinite operation, HA, or release readiness.
 
 D154 passed the bounded local orchestrator/runtime contention test (`1/1`) in `3.04s`, preserving unrelated progress. This is local evidence only and does not establish PostgreSQL, indefinite operation, HA, or release readiness.
+
+D155’s full Python/PostgreSQL campaign reached `4756 passed`, `31 skipped`, and one documentation-baseline failure; cleanup passed. D156 corrected that capability-matrix/status-ledger mismatch and passed its regression `3/3`; D155 is not reclassified as PASS.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
