@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D254",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate complete Docker and strict v0.1 acceptance",
+  "candidate_sha": "825755e6e030099df64efc30efcfa55491f27b8c",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "825755e6e030099df64efc30efcfa55491f27b8c",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D254.md",
+  "execution_scope": "clean-main Docker qualification with PostgreSQL, Docker worker, Floci/S3, Azurite/Azure and strict v0.1 journeys",
+  "result": {
+    "docker_integration": "PASS: 27/27 tests, 0 skipped, 0 failed",
+    "v01_strict": "PASS: 15/15, 0 skipped, 0 xfailed, 0 failed, 0 errors, strict_success=true",
+    "image": "sha256:b94c2d2a0553f28a2432b41f064609f43982190ab1e604bb631fcdc047ae4419",
+    "cleanup": "PASS: owned Ronin image and qualification resources removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "825755e6e030099df64efc30efcfa55491f27b8c",
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d254-docker-full-current-20261118",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d254-docker-full-current-20261118",
+    "sha256": {
+      "qualification-summary.json": "B3DE94A2FF387D9DBE5EE15CDD4B1CCF4C8DEAC6AC1B47FC4D47EE494A985B75",
+      "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+      "docker-cleanup.json": "8EF9F086AD709020DC3089231D184FEAAB3E4D636BBAA96DDC578D488442AB8F",
+      "docker-pytest-output.log": "54D25AF70CBCC1309FF3046CC6C5A97763BC3395960E414C84D9625D4F2CE331",
+      "docker-qualification.log": "6B984795C5D41E84293F6076328B8ABCA89A352F83F7F705C3766E8F0962FD27"
+    }
+  },
+  "limitations": [
+    "This is bounded Docker acceptance and does not prove indefinite operation, HA/multi-worker, external provider certification, complete P11 or release approval.",
+    "D254 does not reattribute D100 or earlier receipts."
+  ]
+}
