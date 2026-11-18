@@ -448,13 +448,13 @@ def build_local_composed_from_env() -> LocalServerComposition:
         else SqliteMLLabStore(database, migration_now=now)
     )
     secrets_resolver = CompositeSecretResolver(environment=EnvironmentSecretResolver())
-    graph_adapter = (
-        OntologyHTTPAdapter(
-            cast(Any, SqliteOntologyStore(database, migration_now=now)),
-            SqliteKnowledgeGraphStore(database),
-        )
-        if postgres_dsn is None
-        else None
+    # Graph materializations remain a separate local SQLite projection in the
+    # PostgreSQL profile. The live seeder and graph store share this explicit
+    # projection path; this must not be interpreted as PostgreSQL scheduler
+    # qualification, but it does keep the graph route configured and fail-closed.
+    graph_adapter = OntologyHTTPAdapter(
+        cast(Any, SqliteOntologyStore(database, migration_now=now)),
+        SqliteKnowledgeGraphStore(database),
     )
     catalog_reader = _catalog_reader_for_backend(catalog_store)
     configured_sql_parquet_root = os.environ.get("RONIN_SQL_PARQUET_ROOT", "").strip()
