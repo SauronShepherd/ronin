@@ -206,6 +206,9 @@ def test_runtime_retries_after_event_store_failure_without_duplicate_sink_or_del
         def __init__(self) -> None:
             self.failed = False
 
+        def get_event(self, workspace_id, event_id):
+            return event_store.get_event(workspace_id, event_id)
+
         def ingest_event(self, record):
             deliveries = event_store.ingest_event(record)
             if not self.failed:
@@ -214,6 +217,12 @@ def test_runtime_retries_after_event_store_failure_without_duplicate_sink_or_del
             return deliveries
 
     failing_store = _FailAfterPersistingEvent()
+    clock_values = iter(
+        (
+            EVENT_NOW,
+            Instant("2026-09-15T00:00:01.000000Z"),
+        )
+    )
     first_runtime = KafkaStreamingRuntime(
         checkpoints,
         lambda _workspace, _connection_id: connection,
@@ -221,7 +230,7 @@ def test_runtime_retries_after_event_store_failure_without_duplicate_sink_or_del
         tmp_path / "data",
         source_factory=lambda **_kwargs: _Source(),
         event_store=failing_store,
-        clock=lambda: EVENT_NOW,
+        clock=lambda: next(clock_values),
     )
 
     with pytest.raises(StreamingRunUnavailable):
@@ -242,7 +251,7 @@ def test_runtime_retries_after_event_store_failure_without_duplicate_sink_or_del
         tmp_path / "data",
         source_factory=lambda **_kwargs: _Source(),
         event_store=event_store,
-        clock=lambda: EVENT_NOW,
+        clock=lambda: next(clock_values),
     )
     result = retry_runtime.run_once(workspace.value, stream_id)
 
