@@ -858,6 +858,8 @@ D146 passed the complete bounded PostgreSQL scheduler integration file (`21/21`)
 D147 passed `20/20` bounded PostgreSQL store/adapter integration tests with all three required DSN aliases configured and zero skips. Cleanup passed; this broadens runtime persistence evidence but does not establish indefinite operation, HA, complete family coverage, or release readiness.
 
 D148 passed `12/12` bounded PostgreSQL ML/artifact integration tests with zero skips. Cleanup passed; this broadens configured-runtime evidence but does not establish indefinite operation, HA, complete family coverage, or release readiness.
+
+D149 passed the bounded PostgreSQL quality-store integration (`1/1`) with zero skips. Cleanup passed; this adds a focused quality-store runtime check without changing release status.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
