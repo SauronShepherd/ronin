@@ -6,7 +6,7 @@
   "cell": "P11 multi-broker RF3 companion with PostgreSQL backend after runner correction",
   "candidate_sha": "763d648989b6c64fdad0dad2ead0b4d7032f19a7",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "pending",
+  "documentation_commit_sha": "f4de86db8e5ef26f4be3c10aa0baf9a488148a87",
   "evidence": "docs/qualification/handoffs/2026-11-18-D234.md",
   "execution_scope": "dirty-worktree diagnostic used only to validate the runner correction; product boundary unchanged",
   "result": {
