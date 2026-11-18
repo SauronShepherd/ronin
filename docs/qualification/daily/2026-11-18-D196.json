@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D196",
+  "date": "2026-11-18",
+  "candidate_sha": "0e3193a96ca1e5e1fc2d1463debb21021da00222",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL-backed connector control-plane discovery, preview and reopen",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d196-postgres-control-plane-20261118 -TestPath tests/integration/test_postgres_connector_control_plane_real.py",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 16.96},
+  "evidence": {
+    "test": "test_postgres_connector_control_plane_discover_preview_survives_reopen",
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "assertions": ["authenticated connection creation", "PostgreSQL discovery", "invalid page-size rejection", "preview of three source rows", "preview after composition reopen"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d196-postgres-control-plane-20261118",
+    "sha256": {"pytest-output.log": "8E14CE0FD6FBE7B6A6A23ADC2A425240F7F16EBCE8918FB0822A5ED528779B9E", "pytest-postgres.log": "2732580B21133D1B3685708B8DD5E1CA62B322EB5DA792C17BFBDE8727CAE1CB", "pytest-postgres.xml": "70EEEF4BBEEF31F10ADF04C43B8C773C77B5ECE70C97AE142ADCCF95B15F1055", "pytest-timings.json": "7D6FA830610282162BDDE821EC3243779463B1ADE7864CB0991451AD96D5D92F", "runner-timings.json": "5EC6C9D3FAFD3078BD516EAD04F44E5F3502FE05ADF3345374ADAB6ABE86C5D4"}
+  },
+  "limitations": ["Bounded PostgreSQL control-plane evidence only; it does not qualify external providers, indefinite operation, HA/multi-worker, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
