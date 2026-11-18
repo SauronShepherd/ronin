@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D223",
+  "date": "2026-11-18",
+  "candidate_sha": "e432fc73022b018bfd645dc05c501ec49e5aa1c3",
+  "implementation_boundary_sha": "561ba5e5f8e95f786921e52a060c35fae6801799",
+  "scope": "bounded scheduler cooperative shutdown and leadership release",
+  "command": "python -m pytest -q tests/test_scheduler_daemon.py -k 'stop_signals_request_stop_and_restore or process_entrypoint_stops_on_sigterm_and_releases_lease or service_acquires_and_releases_lease_on_lifecycle' --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d223-scheduler-shutdown.xml",
+  "result": {"status": "PASS", "pytest_selected": 3, "pytest_passed": 3, "pytest_skipped": 0, "pytest_failed": 0},
+  "evidence": {
+    "tests": ["stop signal requests stop and restores handler", "process entrypoint stops on SIGTERM and releases lease", "service acquires and releases lease on lifecycle"],
+    "junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d223-scheduler-shutdown.xml",
+    "sha256": {"junit": "1CC665564FD5BCF7EFC808A13D3AA76C7A3C251D8ED4F61E1BDC7A01D85B5DC8"},
+    "cleanup": "PASS; local in-memory scheduler fixtures released"
+  },
+  "limitations": ["Bounded local shutdown contract; this does not prove PostgreSQL daemon shutdown under process/container termination, indefinite operation, HA/multi-worker, provider qualification, complete P11 or release gates."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

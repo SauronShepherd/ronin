@@ -7,6 +7,15 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D223 passes `3/3` scheduler shutdown regressions on current candidate
+`e432fc73022b018bfd645dc05c501ec49e5aa1c3`, with production boundary
+`561ba5e5f8e95f786921e52a060c35fae6801799`: signal-handler restoration, SIGTERM
+stop with leadership lease release, and service lifecycle acquisition/release.
+This is bounded local evidence; PostgreSQL process/container termination,
+indefinite operation, HA, providers, complete P11 and release gates remain open.
+P11 remains `in_progress`, P13 remains `blocked`, and release remains **NO-GO**
+at `1/13` families and `0/10` gates.
+
 D222 requalifies two scheduler recovery cases on current candidate
 `94abdced913cfba16aa774a4bcde5d6704566b7f`, with production boundary
 `561ba5e5f8e95f786921e52a060c35fae6801799`: real PostgreSQL 16.4 passes `2/2`
