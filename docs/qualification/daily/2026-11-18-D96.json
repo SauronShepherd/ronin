@@ -6,7 +6,7 @@
   "cell": "Current-main live Redpanda/API Parquet sink bounded reset and replay",
   "candidate_sha": "b7b938c3d9712b6a74e87b3b10569161c9e8c789",
   "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
-  "documentation_commit_sha": "f77ad948dcf60519a7fd78040d6b6f3a22657320",
+  "documentation_commit_sha": "fe4c85214dd6f6871507fae0c5b5f47536e29505",
   "evidence": "docs/qualification/handoffs/2026-11-18-D96.md",
   "execution_scope": "clean-candidate-filtered-live-single-broker-redpanda-ronin-api-parquet-sink-bounded-cap-resume-reset-replay",
   "result": {
