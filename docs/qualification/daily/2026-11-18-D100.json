@@ -6,7 +6,7 @@
   "cell": "Current-candidate live replay-idempotency, real worker and multi-broker P11 qualification",
   "candidate_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
   "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
-  "documentation_commit_sha": "pending-doc-binding",
+  "documentation_commit_sha": "c9f3be7da7bef4b42a127623bb4c4a64d62f35d4",
   "evidence": "docs/qualification/handoffs/2026-11-18-D100.md",
   "execution_scope": "clean-main-current-candidate-live-full-route-with-real-worker-plus-three-broker-companion-and-local-replay-regression",
   "result": {
