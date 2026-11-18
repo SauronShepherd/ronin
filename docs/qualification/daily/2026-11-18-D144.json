@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D144",
+  "date": "2026-11-18",
+  "candidate_sha": "f12a2bcb5bdd2283a3f289014048597df95a9e7d",
+  "implementation_boundary_sha": "f12a2bcb5bdd2283a3f289014048597df95a9e7d",
+  "scope": "full Docker integration acceptance and strict v0.1 requalification",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d144-docker-full-20261118 -ImageTag ronin:qualification-d144",
+  "result": {"status": "PASS", "pytest_selected": 27, "pytest_passed": 27, "pytest_skipped": 0, "pytest_failed": 0, "strict_v01_selected": 15, "strict_v01_passed": 15, "strict_v01_skipped": 0, "strict_v01_failed": 0, "pytest_duration_seconds": 329.37},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d144-docker-full-20261118", "image_digest": "sha256:47cd8f71d9b51fb68fae3eba45cd9915256d37a2d5735613f4b251b268c79443", "fixtures": ["PostgreSQL", "Docker worker", "Floci/S3", "Azurite/Azure"], "cleanup": "PASS; owned image and temporary services removed; base images removed manually"},
+  "limitations": ["Docker integration and strict v0.1 acceptance only; this does not certify indefinite operation, production HA, all 13 families, human release decisions or every external provider."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
