@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D251",
+  "date": "2026-11-18",
+  "status": "not_pass",
+  "cell": "Current-candidate 300-second PostgreSQL supervisor soak attempt",
+  "candidate_sha": "dc1cd4db511bf4466c3f1468abc012f5973a7e8f",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D251.md",
+  "execution_scope": "clean-main live single-broker Redpanda plus real PostgreSQL 16.4, explicit 300-second supervisor soak",
+  "result": {
+    "soak": "NOT_PASS: Playwright test timeout 600000 ms before the 300-second criterion completed; 199 observed run/health cycles (399 API events)",
+    "api_audit": "PASS as far as observed: 399/399 events correlated, all OK, 0 unexpected authorization gaps and 0 unexpected server/network errors",
+    "cleanup": "PASS: PostgreSQL, broker, volume and network removed; no containers or qualification images remain",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "dc1cd4db511bf4466c3f1468abc012f5973a7e8f",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d251-supervisor-soak-300-postgres-current-20261118 -TestGrep 'supervisor soak' -StorageBackend postgres -SupervisorSoakSeconds 300 -RequestTimeoutSeconds 30",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d251-supervisor-soak-300-postgres-current-20261118",
+    "sha256": {
+      "browser-live.log": "AB46847A99B1A8EA58F063E332E8A2FBA3B274E7D0F6B1E27B59D3EE1B571168",
+      "browser-live.xml": "C591E6E1820DBBCDC9519C371D72A427D7BEE6F9A8B4AE8AA6E93C4C3C1B9385",
+      "live-api-traffic.json": "6525A1B572673142D97277AF33ADA8264F92A4360E21C5D7FDEA07ED9F8C92C5",
+      "live-server.stderr.log": "A933B311E80581E0F5B96F7FF96073B0533FF23D8C1C523DDE7AB47F14B4417E",
+      "qualification-summary.json": "6D52B0A4A90C03C57F11340A5292570E740C5A215AE878AAA04248C503FABFC2",
+      "live-python-freeze.txt": "0BE5039CD83E560130DCF7C9FF758DAAA16AD31657BAA9F23F9675375001F6F6"
+    }
+  },
+  "limitations": [
+    "The 300-second criterion is not passed; the test timed out after 600 seconds while the services remained ready and all observed API events were OK.",
+    "This is a diagnostic failure and must not be promoted to P11 or a release gate. D249 remains the valid 120-second bounded PASS.",
+    "D251 does not reattribute D249, D189 or D83-D100."
+  ]
+}
