@@ -7,6 +7,20 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D100 adds the current-candidate live replay-idempotency and worker route cell
+on clean candidate e6f635dfe9159351711f44af9199e573e6e8a5bb. The production
+bridge now reuses the first persisted received_at for a deterministic
+stream.record replay when stable content matches, while preserving real event
+conflict rejection. The local runtime selection passes 14/14 and the combined
+Docker-contract, streaming-runtime and scheduler-bridge selection passes
+40/40. The full live route with PostgreSQL/Redpanda/API and the worker passes
+42/43 with 0 failures and 1 deliberate multi-broker skip; the required
+three-broker companion passes 1/1, and the route audit correlates 439/439 API
+events. The runner's non-zero status is only its strict skip policy. The
+production implementation boundary is now e6f635dfe9159351711f44af9199e573e6e8a5bb.
+The full route starts PostgreSQL for the ingestion fixture but the live server
+uses SQLite storage, so this is not PostgreSQL scheduler/runtime qualification.
+
 D99 adds a local failure-boundary retry regression on clean candidate
 `df4013704ffe41010e765cd0ff030fbe07e77e3d`: after the real SQLite event store
 commits a stream event, a simulated failure occurs before checkpoint CAS; the
@@ -611,16 +625,14 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `df4013704ffe41010e765cd0ff030fbe07e77e3d` (2026-11-18).
-The production implementation boundary is now `8afd9df8d3b52bc7830642c2e59e242cffab8f20`;
-the observed head adds exact checkpoint-boundary retry evidence. The runtime
-bridge was implemented at that boundary; earlier D83–D98 receipts remain
-bound to their own documented candidates and the prior `633980dd` boundary.
-The runtime/test candidate is recorded separately in the exact qualification
-receipt; the ledger does not close the release. D66 binds a local worker image
-and exact multi-broker evidence, while its unfiltered aggregate remains
-`NOT_COUNTED` because the single-broker fixture deliberately skips the
-three-broker case.
+**Observed source head:** `e6f635dfe9159351711f44af9199e573e6e8a5bb` (2026-11-18).
+The production implementation boundary is now
+`e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
+behavior and binds the full route, worker and companion evidence to that exact
+candidate. Earlier D83–D99 receipts remain bound to their own documented
+candidates and are not reattributed. The runner's one deliberate multi-broker
+skip is covered by D100's separate RF3 diagnostic; the release ledger does not
+close the release.
 
 **D21 scheduler evidence update (2026-11-15):** exact candidate
 `f667460650525a5d8a155cad1be5dcff2fc3fd14` passes the bounded local

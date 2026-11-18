@@ -894,13 +894,25 @@
       "evidence": "docs/qualification/handoffs/2026-11-18-D99.md",
       "candidate_sha": "df4013704ffe41010e765cd0ff030fbe07e77e3d",
       "commit_sha": "df4013704ffe41010e765cd0ff030fbe07e77e3d"
+    },
+    {
+      "id": "D100",
+      "date": "2026-11-18",
+      "phase": "p11-current-candidate-replay-idempotency-worker-and-multi-broker",
+      "status": "pass",
+      "families": [
+        "P11"
+      ],
+      "evidence": "docs/qualification/handoffs/2026-11-18-D100.md",
+      "candidate_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+      "commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D99 adds a local failure-boundary retry regression on candidate df401370: after the real SQLite event store commits but before checkpoint CAS, a simulated failure leaves the checkpoint unchanged while the sink and one delivery persist; a retry advances the checkpoint without duplicates, with 14/14 runtime tests and Ruff passing. D98 adds the current filtered live stream-to-event-triggered-workflow cell on candidate 6bb64f01; D97 the bounded supervisor-duration cell; D96 the live Parquet sink; D95 the local Parquet matrix; D94 the complementary SQLite sink; and D93 the high-volume real live cell at 65,536 records. The production implementation boundary remains 8afd9df8. P11 remains open for indefinite operation/SLO, production topology, provider breadth, external object-store recovery, scheduler recovery, the complete family journey, human decisions and aggregate approval."
+      "summary": "D100 is the latest current-candidate P11 receipt on e6f635df: stable stream.record replay reuses the first persisted received_at while conflicts remain rejected; local runtime passes 14/14 and combined contract/runtime/bridge passes 40/40. The full live route passes 42/43 with 0 failures and 1 deliberate multi-broker skip; the separate RF3 companion passes 1/1, the exact worker diagnostic passes 1/1, and 439/439 API events correlate. D99 through D93 remain bound to their exact candidates. The production implementation boundary is e6f635df. P11 remains open for indefinite operation/SLO, production topology, provider breadth, external object-store recovery, scheduler recovery, the complete family journey, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",
@@ -915,7 +927,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D99 adds a local stream event checkpoint-boundary retry regression on candidate df401370 with 14/14 runtime tests and no duplicate sink row or event delivery. D98 adds live stream-to-event-triggered-workflow continuity; D97 live bounded supervisor-duration continuity; D96 live Parquet sink continuity and reset/replay; D95 local Parquet; D94 local SQLite; and D93 the high-volume real live bounded backpressure cell at 65,536 records. The production implementation boundary is 8afd9df8. D92 remains the prior 32,768-record cell; D90 route-wide, D91 focused RF3, D89 supply-chain, D88 Helm/kind, D87 Docker, D85/D84 and D83 remain bounded receipts. Full family audit, indefinite operation/SLO, provider, external object-store, scheduler restart recovery, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
+      "summary": "D100 adds current-candidate replay-idempotency, exact worker and live route evidence on e6f635df: 14/14 streaming runtime tests, 40/40 combined contract/runtime/bridge tests, full route 42/43 with 0 failures and the deliberate multi-broker skip covered by RF3 1/1, plus 439/439 correlated API events. D99 through D83 remain exact bounded receipts. The production implementation boundary is e6f635df. Full family audit, indefinite operation/SLO, provider, external object-store, scheduler restart recovery, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
     },
     {
       "id": "catalog-project-scope",

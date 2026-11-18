@@ -1,0 +1,76 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D100",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate live replay-idempotency, real worker and multi-broker P11 qualification",
+  "candidate_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": "pending-doc-binding",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D100.md",
+  "execution_scope": "clean-main-current-candidate-live-full-route-with-real-worker-plus-three-broker-companion-and-local-replay-regression",
+  "result": {
+    "production_fix": "PASS: the deterministic stream.record bridge reuses the first persisted receipt timestamp when stable event content matches on replay, while preserving SchedulerEventConflict for stable-content mismatches and racing inserts",
+    "local_regression": "PASS: tests/test_streaming_runtime.py 14/14; combined Docker contract, streaming runtime and scheduler bridge selection 40/40; Ruff, Node syntax, PowerShell parse and git diff --check pass",
+    "streaming_rerun": "PASS cases: 9/10 filtered streaming cases passed with 0 failures; the only skip is the deliberately separate three-broker multi-broker case. Event workflow, sustained-backpressure reset replay and Parquet reset replay pass on the corrected candidate",
+    "full_live_route": "PASS with expected companion: 42/43 browser cases passed, 0 failed and 1 deliberate multi-broker skip; 25 active routes were audited (24 API-backed and 1 UI-only), 439/439 API events correlated with structured logs, and the runner reports 0 unexpected authorization or server/network errors",
+    "multi_broker": "PASS: the required three-broker Redpanda RF3 diagnostic passes 1/1 with 0 skips, 0 failures and 5/5 correlated API events",
+    "worker": "PASS: the current-candidate Docker worker diagnostic passes 1/1 filtered case; image digest sha256:2a725e756e3d9dd1dfc5ff7b724b3f88c9ea10176fa6eebc9e748cf9004fd0d8",
+    "cleanup": "PASS: live Compose services and diagnostic containers/networks were cleaned up; the two qualification images were removed after the dependent live route completed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+    "local_command": "python -m pytest tests/test_docker_qualification_contract.py tests/test_streaming_runtime.py tests/test_stream_scheduler_bridge.py -q",
+    "streaming_command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d100-streaming-retry-20261118 -TestGrep 'live streaming' -RequestTimeoutSeconds 15",
+    "docker_worker_command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-e6f635df -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d100-docker-worker-fixed-20261118 -TestFilter 'test_real_docker_worker_executes_clean_container_demo' -KeepImage",
+    "full_live_command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d100-live-fixed-20261118 -WorkerImage ronin:qualification-e6f635df",
+    "multi_broker_command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d100-multi-broker-20261118 -TestGrep 'live streaming multi-broker' -MultiBroker -RequestTimeoutSeconds 15",
+    "full_live_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d100-live-fixed-20261118",
+    "multi_broker_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d100-multi-broker-20261118",
+    "streaming_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d100-streaming-retry-20261118",
+    "docker_worker_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d100-docker-worker-fixed-20261118",
+    "worker_image_digest": "sha256:2a725e756e3d9dd1dfc5ff7b724b3f88c9ea10176fa6eebc9e748cf9004fd0d8"
+  },
+  "services": {
+    "full_route_postgres_fixture": true,
+    "full_route_kafka": true,
+    "full_route_ronin_api": true,
+    "worker_image": "sha256:2a725e756e3d9dd1dfc5ff7b724b3f88c9ea10176fa6eebc9e748cf9004fd0d8",
+    "route_coverage_audited": true,
+    "active_routes": 25,
+    "api_routes": 24,
+    "ui_only_routes": 1,
+    "multi_broker_rf": 3
+  },
+  "hashes": {
+    "full_browser_live_log": "55338de2886d31be6c73fd64b7b96a664040383db41432f5b79cda13b9bf3354",
+    "full_browser_live_xml": "130ae4b8e2fba3b3d1cc1d0974f4578c48fd9da64c7e11887b0d0f4d004d4031",
+    "full_live_api_traffic": "a12729893725821225b2bbaa2510d209e4cff51d94b87e544bb05c3e758a0069",
+    "full_qualification_summary": "1bf1bd580521c70651c07b797574c6055be4f7edac091e53cc479ea949dfae69",
+    "full_server_stderr": "d4b182561afdfe6712b2875f182bfbd6678283a5dbac4e40d60ffbdaaff91d1d",
+    "multi_broker_browser_live_log": "867db548630e5a99f45cf19eb3d5ec0c97227770d4298e90f9378fbf582a2f47",
+    "multi_broker_browser_live_xml": "4fff114ea2201afef9381e2adc9bcc4802460aafb6ff5d87ba72be451ea55e6b",
+    "multi_broker_live_api_traffic": "05ebcc6064d7e528a84cd5c3cbf6f69f355b63f1bd6cd5bc5fbc85268132e25c",
+    "multi_broker_qualification_summary": "b30b1f26afa5cda4812638e210a6b386aa1e037c9cf5d0cdc65be12917ba4e8a",
+    "streaming_qualification_summary": "0f4c12962f7e5b2dd6a76b3c9aff331ee6510ff4b63f97346a7489dc7cf89c69",
+    "docker_v01_acceptance": "110338de2f10f43243932a0c09ac3ccf21404b90860a4cd2bf8161327bf8113b"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The default full-live runner exits non-zero because its single-broker fixture deliberately skips the multi-broker case; the companion -MultiBroker diagnostic is the explicit 1/1 pass for that case. The route result is therefore recorded as 42/43 plus a separate 1/1, not as an unconditional one-command 43/43 pass.",
+    "The full runner starts and seeds PostgreSQL, but the live Ronin server uses its SQLite storage backend; the route exercises the real PostgreSQL ingestion fixture, Redpanda, API and Docker worker, not PostgreSQL scheduler/runtime qualification.",
+    "The worker check is a filtered Docker diagnostic and not the complete strict Docker v0.1 acceptance gate. The image was built from the exact candidate and removed after the dependent live route.",
+    "All live cells are bounded. They do not prove indefinite operation, a production-duration SLO, multi-worker/HA, external object-store/provider recovery, scheduler restart recovery, or the complete P11 family journey.",
+    "D100 changes production behavior at e6f635dfe9159351711f44af9199e573e6e8a5bb; earlier D83-D99 receipts remain bound to their own candidates and are not reattributed. D100 does not close P11, the 13-family aggregate, P13 external-secret-provider qualification or human release approval."
+  ]
+}
