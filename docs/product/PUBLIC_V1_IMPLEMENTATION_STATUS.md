@@ -850,6 +850,8 @@ D142 passed the live Notebook Studio worker cell with Ronin configured for Postg
 D143 passed the live streaming event-trigger workflow with Ronin configured for PostgreSQL: `1/1` passed, `12/12` API events correlated, and cleanup passed. This is bounded continuity evidence only; release remains NO-GO.
 
 D144 requalified full Docker integration (`27/27`) and strict v0.1 (`15/15`) with zero skips/failures across PostgreSQL, Docker worker, Floci/S3, and Azurite/Azure fixtures. Cleanup passed; this does not establish indefinite operation, HA, complete family coverage, or release readiness.
+
+D145 passed `2/2` bounded PostgreSQL scheduler-daemon recovery tests: reacquisition after an expired leadership lease and replay after process crash without duplicate work. Cleanup passed; this strengthens scheduler recovery evidence but does not establish indefinite operation, HA, complete family coverage, or release readiness.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact

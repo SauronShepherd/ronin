@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D145",
+  "date": "2026-11-18",
+  "candidate_sha": "31a3f37d39aaada94926563069b9a238470df510",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "bounded PostgreSQL scheduler daemon recovery after expired leadership and process crash",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://ronin:<redacted>@127.0.0.1:55439/ronin_test'; python -m pytest tests/integration/test_postgres_workflow_store_real.py -k scheduler_daemon -q",
+  "result": {"status": "PASS", "selected": 2, "passed": 2, "deselected": 19, "failed": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d145-scheduler-recovery-direct-20261118", "postgres_image": "postgres:16.4-alpine", "scheduler_recovery": ["reacquires expired leadership without duplicate fire", "replays committed job after process crash without duplicate"], "cleanup": "PASS; PostgreSQL container removed"},
+  "limitations": ["Bounded direct integration cell; not full PostgreSQL scheduler/runtime conformance, indefinite operation, HA, multi-worker, provider breadth, complete family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
