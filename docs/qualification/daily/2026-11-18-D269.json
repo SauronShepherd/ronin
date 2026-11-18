@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D269",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL workflow cancellation durability and claim fencing",
+  "candidate_sha": "1d39d2eef8e6a2c928196b635de0a01b35f72a32",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D269.md",
+  "execution_scope": "clean-main filtered integration selection against isolated real PostgreSQL 16.4",
+  "result": {
+    "cancellation": "PASS: durable job/outbox cancellation reconciliation and claim fencing before intent",
+    "tests": "PASS: 2 selected, 19 deselected, 0 selected skips, 0 selected failures",
+    "cleanup": "PASS: isolated PostgreSQL removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d269-scheduler-cancellation-current-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_workflow_cancellation_reconciles_durable_job_and_outbox or test_postgres_workflow_cancellation_fences_claim_before_intent'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d269-scheduler-cancellation-current-20261118",
+    "postgres_image": "postgres:16.4-alpine",
+    "sha256": {
+      "pytest-output.log": "A4B2E06C6B43C04A1694A525A9EBA2689E82668DB25B25CBF8F3590CC00B3FB0",
+      "pytest-postgres.log": "2357ECE25B6D68AB40C6CC4A28CA42B024AB8CB97EFCFA14967FF84F658FB345",
+      "pytest-postgres.xml": "0A5F2FF456A80A909AFA7465D0C65E6DB908D75F2370210463C1779C6892FD7E",
+      "pytest-timings.json": "8BB4F8CF895E699CC659A93BCBF0ABE6B497756B80D4D16983E2D37DEF0263A3",
+      "runner-timings.json": "CDFB20FFFA741BD9912B2E49EE746C0BE0E931050FC055B5B288373D916EA8C0"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded scheduler cancellation evidence, not indefinite operation, HA/multi-worker, full controller conformance, complete P11 or release approval.",
+    "D269 is distinct from, and does not reattribute, D268, D267, D266, D265, D264, D263, D246, D222, D145 or earlier receipts."
+  ]
+}
