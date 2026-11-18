@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D123",
+  "date": "2026-11-18",
+  "candidate_sha": "d275ea3445b487edd0543432d00fd8a95ac8f7b1",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "P11 bounded PostgreSQL scheduler timeout and dispatch authority",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d123-postgres-timeout-authority-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter postgres_scheduler_timeout_requests_and_dispatch_authority_are_durable",
+  "result": {"selected": 1, "passed": 1, "skipped": 0, "failed": 0, "deselected": 20, "duration_seconds": 2.33},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d123-postgres-timeout-authority-20261118", "test": "tests/integration/test_postgres_workflow_store_real.py::test_postgres_scheduler_timeout_requests_and_dispatch_authority_are_durable", "service": "postgres:16.4-alpine", "cleanup": "runner completed isolated PostgreSQL cleanup; temporary image removed after receipt"},
+  "limitations": ["Filtered diagnostic only; not full PostgreSQL suite or coverage.", "Bounded timeout/dispatch-authority evidence; does not qualify the complete P11 family, indefinite operation, HA, external providers or release gates.", "No production code changed; the previous live route used SQLite for the Ronin server runtime."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
