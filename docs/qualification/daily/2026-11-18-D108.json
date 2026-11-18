@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D108",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Docker PostgreSQL worker SIGKILL reclaim and three-cell resume",
+  "candidate_sha": "6e3f03a7563dda3e58e9133601648f7a5a27cc82",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D108.md",
+  "execution_scope": "clean-main-docker-filtered-postgres-worker-crash-recovery",
+  "result": {
+    "worker_crash_recovery": "PASS: real process SIGKILL reclaims the PostgreSQL-backed run and reuses three persisted cells",
+    "focused_result": "PASS: 1/1 selected test, 0 skips, 0 failures, 26 deselected",
+    "image": "PASS: candidate-built image executed; digest sha256:448ed0a4c33f9c2f878c3f068d1b767c2a4c712aa1b5c652af20e73c51564f46",
+    "cleanup": "PASS: PostgreSQL container and candidate image cleanup succeeded",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d108-worker-crash-postgres-20261118 -TestFilter 'test_real_process_sigkill_reclaims_postgres_run_and_reuses_three_cells'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d108-worker-crash-postgres-20261118",
+    "cleanup_receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d108-worker-crash-postgres-20261118\\docker-cleanup.json",
+    "candidate_sha": "6e3f03a7563dda3e58e9133601648f7a5a27cc82"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered Docker diagnostic and not the complete strict Docker v0.1 acceptance gate or complete P11 journey.",
+    "D108 proves one bounded crash/reclaim/resume path; it does not prove indefinite operation, HA/multi-worker, production SLO or all worker failure modes.",
+    "D108 does not qualify external provider/object store behavior, P13, a release gate or human release approval."
+  ]
+}
