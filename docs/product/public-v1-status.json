@@ -12,6 +12,7 @@
   "d135_qualification_note": "D135 on clean candidate e204e483: Docker integration 27/27 passed, strict v0.1 acceptance 15/15 passed, 0 skips/failures, PostgreSQL/worker/Floci/Azurite fixtures and cleanup PASS. P11 remains in_progress, P13 blocked, release NO-GO at 1/13 families and 0/10 gates.",
   "d136_qualification_note": "D136 on clean candidate abf0dfab: live product/API/UI runner executed 43 cases with 42 passed, 1 skipped, 0 failed; 448 API events were correlated across 24 API-backed routes and 1 UI-only route. Strict result is FAIL because of the skip. Ronin live server used SQLite; PostgreSQL was only the ingestion/browser fixture. Cleanup PASS; statuses unchanged.",
   "d137_qualification_note": "D137 adds a bounded audit of D136 live traffic: 448/448 unique request IDs, 448/448 correlated HTTP events, 0 unexpected errors, and all 24 WARN/ERROR outcomes classified as expected. This is observability evidence only; D136 remains FAIL for its deliberate multi-broker skip and statuses remain unchanged.",
+  "d138_qualification_note": "D138 adds a clean live PostgreSQL-runtime cell on f1608da0: Ronin server configured with RONIN_STORAGE_BACKEND=postgres, Runs route 1/1 passed, 2/2 API events correlated, 0 skips/failures, cleanup PASS. This is bounded evidence only; P11 remains in_progress, P13 blocked and release NO-GO.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",

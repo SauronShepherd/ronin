@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D138",
+  "date": "2026-11-18",
+  "candidate_sha": "f1608da0ee5b657407ca74b0262acafc199ffc39",
+  "implementation_boundary_sha": "f1608da0ee5b657407ca74b0262acafc199ffc39",
+  "scope": "live Runs route with Ronin server configured for PostgreSQL",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d138-live-postgres-runtime-000f2694bbe94235a9b8e1595b523f59 -TestGrep 'live Runs saves server settings' -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 2, "correlated_http_logs": 2, "unexpected_errors": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d138-live-postgres-runtime-000f2694bbe94235a9b8e1595b523f59", "server_backend": "postgres", "service": "postgres:16.4-alpine", "cleanup": "PASS; isolated services removed"},
+  "limitations": ["This is one bounded live Runs cell, not full PostgreSQL scheduler/runtime conformance, indefinite operation, provider breadth, family coverage or release approval.", "The live fixture also started Kafka, but no multi-broker or worker evidence was claimed."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

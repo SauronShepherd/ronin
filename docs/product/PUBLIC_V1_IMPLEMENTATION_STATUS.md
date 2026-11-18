@@ -840,6 +840,8 @@ PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 ex
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 
 D137 adds a bounded audit of that live traffic: 448/448 unique request IDs, 448/448 correlated HTTP events, zero unexpected errors, and all WARN/ERROR outcomes classified as expected. This strengthens observability evidence only; it does not close the live skip, PostgreSQL runtime, external-provider, indefinite-operation, family, or release gaps.
+
+D138 adds a bounded live PostgreSQL-runtime cell: the Ronin server was configured with `RONIN_STORAGE_BACKEND=postgres`, the Runs route passed `1/1`, and `2/2` API events were correlated with zero skips or failures. This does not claim full scheduler/runtime conformance or change P11, P13, or release status.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
