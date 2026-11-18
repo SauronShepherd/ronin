@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D150",
+  "date": "2026-11-18",
+  "candidate_sha": "81f4747706cb2989caf756a4c08dc6a6211d0afb",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "bounded PostgreSQL local-composed catalog HTTP integration",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN=$dsn; $env:RONIN_TEST_POSTGRES_DSN=$dsn; python -m pytest tests/integration/test_postgres_local_composed_catalog_http.py -q",
+  "result": {"status": "PASS", "selected": 1, "passed": 1, "skipped": 0, "failed": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d150-postgres-catalog-http-20261118", "postgres_image": "postgres:16.4-alpine", "cleanup": "PASS; PostgreSQL container removed"},
+  "limitations": ["Single bounded HTTP/composition integration case; not indefinite operation, HA, provider breadth, complete family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

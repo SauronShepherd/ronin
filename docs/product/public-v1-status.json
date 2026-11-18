@@ -22,6 +22,7 @@
   "d147_qualification_note": "D147 on 08aed55d passed 20/20 bounded PostgreSQL store/adapter integration tests with all three required DSN aliases configured and zero skips; cleanup PASS. This does not change P11, P13 or release status.",
   "d148_qualification_note": "D148 on 13eecdc0 passed 12/12 bounded PostgreSQL ML/artifact integration tests with zero skips and cleanup PASS. This does not change P11, P13 or release status.",
   "d149_qualification_note": "D149 on 2088a716 passed the bounded PostgreSQL quality-store integration 1/1 with zero skips and cleanup PASS. This does not change P11, P13 or release status.",
+  "d150_qualification_note": "D150 on 81f47477 passed the bounded PostgreSQL local-composed catalog HTTP integration 1/1 with zero skips and cleanup PASS. This does not change P11, P13 or release status.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",
