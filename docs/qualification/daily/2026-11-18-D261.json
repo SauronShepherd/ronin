@@ -6,7 +6,7 @@
   "cell": "Current-candidate external S3-compatible provider and object-store recovery",
   "candidate_sha": "642c7d14a584af027addf647580371716e9049d1",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "82f24db1846d0c9e0c20bcad5cfd6428d0f930f0",
   "evidence": "docs/qualification/handoffs/2026-11-18-D261.md",
   "execution_scope": "clean-main Docker diagnostic against the real Floci S3-compatible provider",
   "result": {
