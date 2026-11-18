@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D262 on current candidate `34589b4bfc369b895c8dbf01ec6c1959740bf10e`
+passes the Azure Blob-compatible Azurite journey `1/1` for discovery, read and
+snapshot replay, with cleanup PASS. This is bounded emulator evidence, not
+Microsoft Azure production certification or release approval. P11 remains
+`in_progress`, P13 remains `blocked`, and release remains **NO-GO** at `1/13`
+families and `0/10` gates.
+
 D261 on current candidate `642c7d14a584af027addf647580371716e9049d1`
 passes two real Floci S3-compatible provider/object-store cases `2/2`: JSON
 sink write/read/discovery with a retry after lost provider response, and ML

@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D262",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate Azure Blob-compatible provider",
+  "candidate_sha": "34589b4bfc369b895c8dbf01ec6c1959740bf10e",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D262.md",
+  "execution_scope": "clean-main Docker diagnostic against a real Azurite Azure Blob-compatible service",
+  "result": {
+    "provider": "PASS: Azurite Blob endpoint started and served real requests",
+    "connector": "PASS: Azure Blob JSONL discovery, read and snapshot replay",
+    "tests": "PASS: 1 selected, 26 deselected, 0 skipped, 0 failed",
+    "cleanup": "PASS: Azurite container, network, volume and Ronin qualification image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d262-azure-provider-current-20261118 -TestFilter 'test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d262-azure-provider-current-20261118",
+    "worker_image_digest": "sha256:35f43d8e861e5354522355f2f3fc92ff53e3445f1c3377cd417401d6ee0b5f6af",
+    "sha256": {
+      "azurite-qualification.log": "C12EFD4FB8A9C64E5C5C595562D6461EB53D6DB5C69F2C39078F6F5738FC0418",
+      "docker-cleanup.json": "9D8623DC235C0E14ADF5527A411B388761AD8D53B5FADF770C517ECD713C6459",
+      "docker-pytest-output.log": "D8E0A540C5451AA238F2CFD2953B2D27405DD6C6D7B8ECEB21B23C956CFC6D80",
+      "docker-qualification.log": "2509FB827C88C0293952BAA410B274B857B4D5661C0A08A93AF80CAF4A6EBC2F",
+      "v01-acceptance.xml": "19CEED28DC9CBA1339AAF8D7CC0600270260DCADC864D88B64C8338DEC8A957D"
+    }
+  },
+  "limitations": [
+    "This is bounded Azure Blob-compatible emulator evidence, not Microsoft Azure production certification or external SLA/network evidence.",
+    "The filtered diagnostic omits the strict v0.1 aggregate and does not prove indefinite operation, HA/multi-worker, complete P11 or release approval.",
+    "D262 does not reattribute D225, D254, D261, D100 or earlier receipts."
+  ]
+}
