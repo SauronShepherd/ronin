@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D246",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler daemon recovery",
+  "candidate_sha": "23dd0c25ea821c54b49bc6baa8da1682e28a009b",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "23dd0c25ea821c54b49bc6baa8da1682e28a009b",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D246.md",
+  "execution_scope": "clean-main filtered real PostgreSQL 16.4 scheduler daemon recovery diagnostic",
+  "result": {
+    "selected_tests": "PASS: 2/2 selected, 0 selected skips, 0 selected failures; 19 deselected",
+    "recovery": "PASS: expired leadership is reacquired without duplicate fire and a process-crash dispatch is replayed without duplicate job",
+    "cleanup": "PASS: isolated PostgreSQL resources removed; no containers or qualification images remain",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "23dd0c25ea821c54b49bc6baa8da1682e28a009b",
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d246-scheduler-recovery-current-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or test_postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d246-scheduler-recovery-current-20261118",
+    "sha256": {
+      "pytest-postgres.xml": "D9CF3DF89F8F90EE809AD71E8890F45B964E228C080CE37D0134AA5F7649F888",
+      "pytest-output.log": "0794AE601FC804A418FC31064D4540E1A70F076B3579E9AE210F73CEE5513C66",
+      "pytest-postgres.log": "7FBD2841D617F37141068805EE9E477A7B46A9D74F03B80ABBAE77DA1989E32F",
+      "runner-timings.json": "08F4B2262154D391C38FFE09EE2B672E359F1451038E91CDD3A806C70B01550F"
+    }
+  },
+  "limitations": [
+    "This is a filtered bounded diagnostic, not the complete PostgreSQL suite or coverage gate.",
+    "It does not prove indefinite operation, HA/multi-worker, external provider recovery, complete P11 qualification or release approval.",
+    "D222 and D236 remain bound to their exact candidates; D246 is a new observation on the current candidate and does not reattribute prior evidence."
+  ]
+}
