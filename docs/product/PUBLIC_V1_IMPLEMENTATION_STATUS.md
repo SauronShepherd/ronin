@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D276 attempted a new 600-second PostgreSQL supervisor soak on candidate
+`44cb1f05b8dc1f0aa5e0b3f77564000d957677d8` but is **NOT_PASS**: Kafka fixture
+seeding failed before Playwright (`0/0` journeys, `0` API events). Runner
+cleanup is PASS and no containers remain. The 600-second criterion remains
+open; this does not reattribute D256/D253 or change P11, P13 or release.
+
 D275 on current candidate `253e6e47b9e1aaf5a155d0672f1ea852c96b98bb`
 passes the complete PostgreSQL workflow-store integration file `21/21`, with
 zero skips, failures or deselected cases, in 42.72 seconds and cleanup PASS.
