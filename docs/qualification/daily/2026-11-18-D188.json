@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D188",
+  "date": "2026-11-18",
+  "candidate_sha": "ce7a0c8a8676aa20788b00eb89c5a90653960aba",
+  "implementation_boundary_sha": "ce7a0c8a8676aa20788b00eb89c5a90653960aba",
+  "scope": "focused live supervisor soak with explicit PostgreSQL backend after runner provisioning fix",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d188-supervisor-postgres-20261118 -TestGrep \"supervisor soak\" -StorageBackend postgres -WorkerImage ronin:d188-supervisor-worker -RequestTimeoutSeconds 30",
+  "result": {"status": "NOT_PASS", "playwright_selected": 1, "playwright_passed": 0, "playwright_skipped": 0, "playwright_failed": 1, "api_events": 19, "api_correlated": 19, "api_ok": 19, "api_warn": 0, "api_error": 0, "log_errors": 0, "cycles": 9, "required_cycles": 15},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d188-supervisor-postgres-20261118", "postgres": true, "kafka": true, "worker_image": "sha256:b6bce77237466f01f1765638c13a285a32b965a0db336b9ed8910f44b3df9c82", "cleanup": "PASS; isolated containers, network and volume removed"},
+  "limitations": ["The supervisor runtime still misses the explicit bounded criterion of 15 cycles; no criterion was relaxed."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

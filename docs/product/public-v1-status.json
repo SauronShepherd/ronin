@@ -52,6 +52,7 @@
   "d185_qualification_note": "D185 on a774a029 passed 1/1 bounded live Notebook Studio create/version/execute journey with a real Docker worker plus PostgreSQL/Kafka: 20/20 API events correlated, all OK, zero log errors/critical and cleanup PASS. This is bounded P11 evidence; statuses remain unchanged.",
   "d186_qualification_note": "D186 full live PostgreSQL/Kafka/worker campaign was NOT_PASS: 38/43 passed, 1 skipped and 4 failed; 426/426 API events correlated (399 OK, 21 WARN, 6 ERROR), cleanup PASS. Failures were FinOps PostgreSQL unavailable, Synthetic catalog internal error, Graphs unconfigured and supervisor soak 8/15 cycles. No status changes.",
   "d187_qualification_note": "D187 did not execute the supervisor case: the streaming-only diagnostic was requested with PostgreSQL storage, but that mode intentionally did not start PostgreSQL and the graph seeder timed out on the absent DSN. Kafka/cleanup passed; this is a runner-mode limitation, not supervisor evidence.",
+  "d188_qualification_note": "D188 re-ran the supervisor soak after the runner fix with real PostgreSQL/Kafka: 1 selected case, 19/19 API events correlated and all OK, but NOT_PASS at 9 cycles versus the explicit 15-cycle criterion. No criterion was relaxed; statuses remain unchanged.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",
