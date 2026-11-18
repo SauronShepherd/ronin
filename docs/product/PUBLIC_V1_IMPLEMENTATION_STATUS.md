@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D254 on current candidate `825755e6e030099df64efc30efcfa55491f27b8c`
+passes Docker integration `27/27` and strict v0.1 acceptance `15/15` with
+PostgreSQL, Docker worker, Floci/S3 and Azurite/Azure fixtures. Cleanup is
+PASS. P11 remains `in_progress`, P13 remains `blocked`, and release remains
+**NO-GO** at `1/13` families and `0/10` gates.
+
 D253 on current candidate `86f8412cb2ef24a55091c53c7934f4ae2fd83fcb`
 passes an explicit 300-second PostgreSQL-configured supervisor soak at one
 record per 0.5 seconds: `1/1` case, `148` run/health cycles and `297/297`
