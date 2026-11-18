@@ -30,6 +30,7 @@
   "d155_qualification_note": "D155 full Python/PostgreSQL campaign was not PASS: 4756 passed, 31 skipped and one documentation-baseline failure; runner cleanup PASS. D156 corrected the matrix and passed its 3/3 regression; release statuses remain unchanged.",
   "d156_qualification_note": "D156 passed 3/3 capability-matrix/status-ledger synchronization regressions after correcting the observed baseline. This does not change P11, P13 or release status.",
   "d157_qualification_note": "D157 on 246d0d10 passed the full bounded Python/PostgreSQL suite: 4757 passed, 31 explicit skips, 0 failures, cleanup PASS. This strengthens the current candidate but does not change P11, P13 or release status.",
+  "d158_qualification_note": "D158 on 9db35464 passed 2/2 filtered real S3/ML artifact round-trip tests against Floci with cleanup PASS. Strict v0.1 was not evaluated and this does not change P11, P13 or release status.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",
