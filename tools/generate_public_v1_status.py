@@ -13,8 +13,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MARKDOWN = ROOT / "docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md"
 MACHINE = ROOT / "docs/product/public-v1-status.json"
+MATRIX = ROOT / "docs/product/PUBLIC_V1_CAPABILITY_MATRIX.md"
 SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
 HEAD_PATTERN = re.compile(r"(?m)^(\*\*Observed source head:\*\* `)[0-9a-f]{40}(` \()[^)]+(\)\.)$")
+MATRIX_PATTERN = re.compile(
+    r"(?m)^(\*\*Observed source baseline:\*\* `)[0-9a-f]{40}(` \()[^)]+(\).*)$"
+)
 MAX_LEDGER_AGE_COMMITS = 10
 
 
@@ -35,15 +39,22 @@ def synchronize(sha: str, observed_at: str) -> None:
     if machine.get("schema_version") != 1:
         raise ValueError("unsupported Public v1 ledger schema")
     markdown = MARKDOWN.read_text(encoding="utf-8")
+    matrix = MATRIX.read_text(encoding="utf-8")
     updated, count = HEAD_PATTERN.subn(
         rf"\g<1>{sha}\g<2>{observed_at[:10]}\g<3>", markdown, count=1
     )
     if count != 1:
         raise ValueError("human ledger must contain one observed source head")
+    updated_matrix, matrix_count = MATRIX_PATTERN.subn(
+        rf"\g<1>{sha}\g<2>{observed_at[:10]}\g<3>", matrix, count=1
+    )
+    if matrix_count != 1:
+        raise ValueError("capability matrix must contain one observed source baseline")
     machine["observed_main_sha"] = sha
     machine["observed_at"] = observed_at
     MACHINE.write_text(json.dumps(machine, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     MARKDOWN.write_text(updated, encoding="utf-8")
+    MATRIX.write_text(updated_matrix, encoding="utf-8")
 
 
 def check(reference_sha: str | None = None) -> None:
