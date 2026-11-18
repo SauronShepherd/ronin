@@ -94,6 +94,7 @@
   "d228_qualification_note": "D228 full live PostgreSQL/Kafka/worker campaign is retained as NOT_PASS: 40/43 passed, 1 deliberate skip and 2 real failures (Synthetic catalog assets 500 internal_error and Graphs 503 graph_unavailable), with 519/519 correlated events and cleanup PASS.",
   "d229_qualification_note": "D229 passes 1/1 filtered live Synthetic Data Studio route after binding its catalog by backend contract: 8/8 PostgreSQL/Kafka API events correlated, all OK, cleanup PASS. D228 remains NOT_PASS; Graphs remains unconfigured and statuses stay unchanged.",
   "d230_qualification_note": "D230 passes 1/1 filtered live Graphs route with PostgreSQL/Kafka services and an explicit SQLite materialized graph projection: 5/5 API events correlated, all OK, cleanup PASS. This is not PostgreSQL GraphStore qualification; D228 remains NOT_PASS and statuses stay unchanged.",
+  "d231_qualification_note": "D231 full live PostgreSQL/Kafka/worker campaign passes 42/43 with 1 deliberate multi-broker skip and 0 failures; 519/519 API events correlate. Synthetic and Graphs failures from D228 are resolved. Cleanup was manually completed and verified after a temporary Docker Desktop interruption; RF3 remains separate and statuses stay unchanged.",
   "release_status": "incomplete",
   "qualification_status": "qualification_pending",
   "release_decision_checklist": "docs/product/RELEASE_DECISION_CHECKLIST_2026-11-03.md",

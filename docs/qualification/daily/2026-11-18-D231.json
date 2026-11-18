@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D231",
+  "date": "2026-11-18",
+  "candidate_sha": "43a888425359bc906b91a900458c83a3241cf5d0",
+  "implementation_boundary_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "scope": "full live PostgreSQL/Kafka/worker product campaign after Synthetic and Graphs fixes",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d231-live-full-current-20261118 -StorageBackend postgres -WorkerImage ronin:qualification -RequestTimeoutSeconds 60",
+  "result": {"status": "PASS_WITH_INTENTIONAL_SKIP", "playwright_selected": 43, "playwright_passed": 42, "playwright_skipped": 1, "playwright_failed": 0, "api_events": 519, "correlated_http_logs": 519, "unexpected_errors": 0, "worker_image_digest": "sha256:77b20f7dd876aacf625f3f1ea3a060ae683c195cfe098ea353d5f131096edfee"},
+  "evidence": {
+    "xml_summary": "tests=43 failures=0 skipped=1 errors=0",
+    "api_outcomes": {"OK": 493, "WARN": 21, "ERROR": 5},
+    "failures": [],
+    "intentional_skip": "multi-broker failover case omitted by the default single-broker campaign and remains separately qualified",
+    "cleanup": "PASS; runner cleanup was interrupted by Docker Desktop unavailability, then exact D231 PostgreSQL/broker containers, volume, network and worker image were removed manually and verified absent",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d231-live-full-current-20261118",
+    "sha256": {
+      "browser-live.log": "6336AE1A4F191B15473D7B0FC682D773D2CA580723F4AFF47ECF952157D7BAEB",
+      "browser-live.xml": "EDB2E76C0C451CBDF6364A012CA924952AC563BA6BC62398D42630C8BD78F055",
+      "live-api-traffic.json": "05BCBB984B3F9FC87D74F93FA7F9D9A4C110D46C54C45101A5259894B19A127A",
+      "live-server.stderr.log": "9B59703256BA246C98F0ACD64E43CC7544011A7970808CCD0E18C98F0682A8F5",
+      "qualification_xml": "EDB2E76C0C451CBDF6364A012CA924952AC563BA6BC62398D42630C8BD78F055"
+    }
+  },
+  "limitations": ["The default campaign contains one deliberate multi-broker skip; the separate RF3 companion remains required evidence. This campaign does not prove indefinite operation, HA/multi-worker, external provider certification, complete P11 or release gates."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

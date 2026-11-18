@@ -7,6 +7,17 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D231 reruns the full live PostgreSQL/Kafka/worker campaign after the Synthetic
+and Graphs fixes on candidate `43a888425359bc906b91a900458c83a3241cf5d0`, with
+production boundary `59004dae6b483e1629646af3cd28f03e05fa88ad`: `42/43` pass,
+one deliberate multi-broker skip, zero failures, and `519/519` API events
+correlated. The runner cleanup was interrupted by temporary Docker Desktop
+unavailability; the exact D231 containers, volume, network and worker image were
+then removed manually and verified absent. RF3 remains separate. This still
+does not prove indefinite operation, HA, complete P11 or release gates. P11
+remains `in_progress`, P13 remains `blocked`, and release remains **NO-GO** at
+`1/13` families and `0/10` gates.
+
 D230 passes `1/1` filtered live Graphs route on candidate and production
 boundary `59004dae6b483e1629646af3cd28f03e05fa88ad`, with PostgreSQL/Kafka
 services and an explicit SQLite materialized graph projection: `5/5` API events
