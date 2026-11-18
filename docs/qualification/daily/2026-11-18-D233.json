@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D233",
+  "date": "2026-11-18",
+  "candidate_sha": "00a29f9449e5785ba7de69aa89fa25b776001ae8",
+  "implementation_boundary_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "scope": "retry of current-candidate three-broker Redpanda topic seeding",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d233-live-multibroker-postgres-20261118 -StorageBackend postgres -TestGrep 'live streaming multi-broker failover resumes from the durable checkpoint' -MultiBroker -RequestTimeoutSeconds 60",
+  "result": {"status": "NOT_PASS", "failure_phase": "seed live data and start Ronin server", "pytest_selected": 0, "pytest_passed": 0, "pytest_skipped": 0, "pytest_failed": 0, "api_events": 0},
+  "evidence": {
+    "failure": "Could not create the live Kafka qualification topic; broker reached healthy but topic seeding failed before Playwright",
+    "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+    "cleanup": "PASS after exact manual removal of D233 broker container and network; no containers remain",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d233-live-multibroker-postgres-20261118",
+    "sha256": {
+      "live-python-freeze.txt": "73D47D33A7347360F8CEF6E5481321F1FF72344010E782C7B5A60483F2C0C8F8",
+      "live-server.stderr.log": "47A1912C2F2D346F3494D5C0B9ADCAEDAA503023054104023C490A0B47D3C1A8",
+      "qualification-summary.json": "A5B6DD635B9E3F346F32708F7B57CC2E175AD006E5B396B772E7ECEC39106355"
+    }
+  },
+  "limitations": ["No test case executed; this is infrastructure NOT_PASS evidence, not product failure evidence. D232 reached the same failure phase. The multi-broker companion remains open and must not be counted as PASS."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

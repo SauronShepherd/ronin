@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D233 retries the current-candidate three-broker companion and remains
+`NOT_PASS` at infrastructure seeding: Redpanda reached `healthy`, but topic
+creation failed before Playwright (`0/0`, no API traffic). D232 reproduced the
+same phase. Exact D233 resources were removed and no containers remain. No RF3
+PASS is claimed; P11 remains `in_progress`, P13 remains `blocked`, and release
+remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D231 reruns the full live PostgreSQL/Kafka/worker campaign after the Synthetic
 and Graphs fixes on candidate `43a888425359bc906b91a900458c83a3241cf5d0`, with
 production boundary `59004dae6b483e1629646af3cd28f03e05fa88ad`: `42/43` pass,
