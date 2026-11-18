@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D141",
+  "date": "2026-11-18",
+  "candidate_sha": "7a7ed95296d0e66a9260bf5986e7312f1a3cdf3a",
+  "implementation_boundary_sha": "7a7ed95296d0e66a9260bf5986e7312f1a3cdf3a",
+  "scope": "live Workflows route with Ronin server and scheduler configured for PostgreSQL",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d141-live-postgres-workflows-7dfdb4ab08b84c0bbea7c0797742739d -TestGrep 'route workflows loads and reaches the live API' -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 30, "correlated_http_logs": 30, "outcomes": {"OK": 29, "WARN": 1}, "unexpected_errors": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d141-live-postgres-workflows-7dfdb4ab08b84c0bbea7c0797742739d", "server_backend": "postgres", "scheduler_fixture": "workspace and live-main workflow seeded in PostgreSQL; auxiliary Studio fixture namespace kept in SQLite", "cleanup": "PASS; isolated services removed"},
+  "regressions": {"command": "python -m pytest tests/test_local_composed.py tests/test_architecture_contracts.py -q", "passed": 49, "failed": 0},
+  "limitations": ["Bounded one-route live cell; not full PostgreSQL scheduler/runtime conformance, indefinite operation, external-provider breadth, family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

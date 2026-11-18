@@ -842,6 +842,8 @@ D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd104796
 D137 adds a bounded audit of that live traffic: 448/448 unique request IDs, 448/448 correlated HTTP events, zero unexpected errors, and all WARN/ERROR outcomes classified as expected. This strengthens observability evidence only; it does not close the live skip, PostgreSQL runtime, external-provider, indefinite-operation, family, or release gaps.
 
 D138 adds a bounded live PostgreSQL-runtime cell: the Ronin server was configured with `RONIN_STORAGE_BACKEND=postgres`, the Runs route passed `1/1`, and `2/2` API events were correlated with zero skips or failures. This does not claim full scheduler/runtime conformance or change P11, P13, or release status.
+
+D141 requalified the Workflows route with Ronin and scheduler on PostgreSQL after correcting the live seeder's backend mismatch: `1/1` passed, `30/30` API events were correlated, and the affected Python regressions passed `49/49`. This is a bounded wiring cell and does not change the NO-GO release decision.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
