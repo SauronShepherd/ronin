@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D103",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Live supervisor bounded soak at 90 seconds with PostgreSQL, Kafka and Ronin API",
+  "candidate_sha": "29a81b54c0034ce10d8ba24efe281c92cc318a6c",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D103.md",
+  "execution_scope": "clean-main-live-single-broker-supervisor-soak-90-seconds",
+  "result": {
+    "browser": "PASS: 1/1, 0 skipped, 0 failed; supervisor soak configured for 90 seconds",
+    "traffic": "PASS: 49/49 API events correlated with structured HTTP logs; 49 OK and 0 errors",
+    "services": "PASS: real PostgreSQL fixture, Kafka/Redpanda, Ronin API and live streaming fixture",
+    "cleanup": "PASS: isolated services and browser media cleanup succeeded",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d103-supervisor-soak-20261118 -TestGrep 'live streaming supervisor soak drains while records arrive for a bounded duration' -SupervisorSoakSeconds 90 -RequestTimeoutSeconds 15",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d103-supervisor-soak-20261118",
+    "qualification_summary": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d103-supervisor-soak-20261118\\qualification-summary.json",
+    "candidate_sha": "29a81b54c0034ce10d8ba24efe281c92cc318a6c"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a bounded 90-second single-broker soak; it does not prove indefinite operation, production SLO, HA/multi-worker, multi-broker quorum recovery or complete P11 qualification.",
+    "The live server backend remains SQLite in this runner; PostgreSQL is the ingestion fixture, so this is not PostgreSQL scheduler/runtime evidence.",
+    "D103 does not qualify an external provider/object store, P13, a release gate or human release approval."
+  ]
+}
