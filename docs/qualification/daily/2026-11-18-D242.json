@@ -6,7 +6,7 @@
   "cell": "Public status/capability-matrix synchronization tooling",
   "candidate_sha": "c274b01524f082d183f0af8c303bde553c64a365",
   "implementation_commit_sha": "92d245490c910a70c3750604320aeb653c398677",
-  "documentation_commit_sha": "pending",
+  "documentation_commit_sha": "edbed39b3041d29f67e77d1042822cdd02271365",
   "evidence": "docs/qualification/handoffs/2026-11-18-D242.md",
   "execution_scope": "bounded tooling correction after D240/D241 baseline mismatch; no production runtime change",
   "result": {
