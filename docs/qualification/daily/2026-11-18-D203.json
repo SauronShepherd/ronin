@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D203",
+  "date": "2026-11-18",
+  "candidate_sha": "ef28e7b0f44cad3d05decf3b721bbc75e89a42d6",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL Data Engineering revision inventory",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d203-postgres-data-engineering-20261118 -TestPath tests/integration/test_postgres_data_engineering_revisions_real.py",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 3.58},
+  "evidence": {
+    "test": "test_postgres_revision_inventory_discovers_all_project_artifacts",
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "assertions": ["revision inventory", "complete project artifact discovery"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d203-postgres-data-engineering-20261118",
+    "sha256": {"pytest-output.log": "69E70F8FE511D2EC5CC36858A2383855D284B6C17263B4F218A2E19EB64F80C8", "pytest-postgres.log": "60EBEFB534AED7A1A02F214B75CFAAF99506CDB706EEA050ED0FE6377EE92171", "pytest-postgres.xml": "5FD729DF0C60D415A365B4C6FA72287B12A358A79066852B4736CD0AEF56DF5B", "pytest-timings.json": "A6FAED781B415C59FD6DB8603DF1D1BDFDEBAC1396E4B9307AF85B5E2A7BA1FB", "runner-timings.json": "85B1E0F502A68E16181B529DD7EB58FE5BD7FA0B5FCA984A70379F8FDC9FC1F1"}
+  },
+  "limitations": ["Bounded PostgreSQL Data Engineering evidence only; it does not prove external provider certification, indefinite operation, HA/multi-worker, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
