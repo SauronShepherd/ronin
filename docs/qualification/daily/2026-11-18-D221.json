@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D221",
+  "date": "2026-11-18",
+  "candidate_sha": "e9ada9061eae405803d1c752d404610882e95d08",
+  "implementation_boundary_sha": "561ba5e5f8e95f786921e52a060c35fae6801799",
+  "scope": "real PostgreSQL FinOps ledger write/idempotency integration",
+  "command": "$env:RONIN_TEST_POSTGRES_DSN='postgresql://ronin:ronin@127.0.0.1:55439/ronin'; python -m pytest -q tests/integration/test_postgres_finops_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d221-finops-postgres.xml",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "real_postgres": true},
+  "evidence": {
+    "test": "test_postgres_finops_write_idempotency_pricing_and_budget_persistence",
+    "coverage": ["usage replay idempotency", "usage conflict rejection", "rate-card pricing", "cost persistence", "budget persistence"],
+    "postgres_image": "postgres:16.4",
+    "cleanup": "PASS; temporary PostgreSQL container removed",
+    "junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d221-finops-postgres.xml",
+    "sha256": {"junit": "D052DCC9F877320D4268B5123F72B577B6E54B5F416950A483C9B8D2141E0469"}
+  },
+  "limitations": ["Bounded single-process PostgreSQL integration; it does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

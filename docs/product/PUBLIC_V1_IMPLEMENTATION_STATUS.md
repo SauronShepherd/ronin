@@ -7,6 +7,15 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D221 passes `1/1` real PostgreSQL 16.4 FinOps integration test on candidate
+`e9ada9061eae405803d1c752d404610882e95d08`, at production boundary
+`561ba5e5f8e95f786921e52a060c35fae6801799`: usage replay idempotency, conflict
+rejection, rate-card pricing, cost persistence and budget persistence all pass.
+Temporary PostgreSQL cleanup passes. This is bounded single-process evidence;
+indefinite operation, HA, external providers, complete P11 and release gates
+remain open. P11 remains `in_progress`, P13 remains `blocked`, and release
+remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D220 repeats the filtered live FinOps route on candidate and production boundary
 `561ba5e5f8e95f786921e52a060c35fae6801799` after completing PostgreSQL ledger
 operations for usage, rate cards, costs and budgets: `1/1` Playwright case,
