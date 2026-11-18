@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D160",
+  "date": "2026-11-18",
+  "candidate_sha": "aa9a30089b27701a310655447544a7b5f99a94c2",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "attempted bounded live Quality diagnostic with StorageBackend postgres",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d160-live-postgres-quality-20261118 -TestGrep quality -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {"status": "NOT_PASS", "playwright_selected": 0, "playwright_passed": 0, "api_events": 0, "failure": "quality-only runner intentionally skipped PostgreSQL/Kafka startup; PostgreSQL seeder timed out before server start"},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d160-live-postgres-quality-20261118", "cleanup": "PASS; no containers or temporary images remained"},
+  "limitations": ["This attempt provides no Quality API evidence and must not be presented as PostgreSQL runtime qualification; the runner's quality-only path is SQLite-oriented and incompatible with this PostgreSQL seeder request."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

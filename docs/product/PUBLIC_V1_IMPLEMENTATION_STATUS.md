@@ -878,6 +878,8 @@ D157 repeated the full Python/PostgreSQL campaign after the synchronization fix:
 D158 passed `2/2` filtered real S3/ML artifact round-trip tests against Floci, including retry and retention behavior. Cleanup passed; strict v0.1 was not evaluated and this does not certify a production external provider or release readiness.
 
 D159 passed the filtered real Azure Blob snapshot replay test (`1/1`) against Azurite. Cleanup passed; strict v0.1 was not evaluated and this does not certify an external production Azure account or release readiness.
+
+D160 attempted a Quality live diagnostic with `StorageBackend postgres` but was not PASS: the quality-only runner skipped PostgreSQL/Kafka and the seeder timed out before server start (`0/0` cases). Cleanup passed; no PostgreSQL qualification is claimed.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact
