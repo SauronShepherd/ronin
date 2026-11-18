@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D272 on current candidate `d7fee14ef3c530dfad2a9986e2689fe23579dea5`
+passes the PostgreSQL scheduler deployment-binding workspace-scope and runnable
+case `1/1`, with cleanup PASS. This is bounded scheduler evidence and does not
+prove indefinite operation, HA/multi-worker, complete controller conformance,
+P11 or release approval. P11 remains `in_progress`, P13 remains `blocked`, and
+release remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D271 on current candidate `401e541a36f800af43f638f2e61ca846ee3dff55`
 passes the PostgreSQL scheduler schedule-cursor/fire and HTTP-adapter case
 `1/1`, with cleanup PASS. This is bounded scheduler evidence and does not prove
