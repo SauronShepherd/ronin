@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D270",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL cancellation authority and unsubmitted-outbox retirement",
+  "candidate_sha": "f51131b3f7d04f9ea5f4b5593c4b491d9a758cab",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D270.md",
+  "execution_scope": "clean-main filtered integration selection against isolated real PostgreSQL 16.4",
+  "result": {
+    "cancellation": "PASS: authority persists before waiting on tasks and unsubmitted outbox is retired",
+    "tests": "PASS: 2 selected, 19 deselected, 0 selected skips, 0 selected failures",
+    "cleanup": "PASS: isolated PostgreSQL removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d270-scheduler-cancellation-authority-current-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_workflow_cancellation_retires_unsubmitted_outbox or test_postgres_workflow_cancellation_persists_authority_before_waiting_on_tasks'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d270-scheduler-cancellation-authority-current-20261118",
+    "postgres_image": "postgres:16.4-alpine",
+    "sha256": {
+      "pytest-output.log": "0450E95AC31649BCB802402682DAFF4F62ECFAA464A9416A9CB5D9A4253B668B",
+      "pytest-postgres.log": "3A5AA8BFED827B17CD34B03767410F8E9D93C769201B8AC82D0157B7AB25E1B5",
+      "pytest-postgres.xml": "932835ACDF761308E3FC277EAFC024978CF1BF5C96836F8CF47FB5497EBD7720",
+      "pytest-timings.json": "310C8B17DC2607A45EBBD63051287E450EF794A6DD6C52649D8864B3B12487E9",
+      "runner-timings.json": "747F174AC13FBCC89D0B1D836736A581282351B8BC7072F661E7ACF8A0108CFD"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded scheduler cancellation evidence, not indefinite operation, HA/multi-worker, full controller conformance, complete P11 or release approval.",
+    "D270 is distinct from, and does not reattribute, D269, D268, D267, D266, D265, D264, D263, D246, D222, D145 or earlier receipts."
+  ]
+}
