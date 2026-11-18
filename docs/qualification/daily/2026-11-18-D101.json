@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D101",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "PostgreSQL scheduler daemon restart recovery without duplicate fire or job",
+  "candidate_sha": "fb378f93ed2d430eb1927582249492c41d0b43ae",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D101.md",
+  "execution_scope": "clean-main-isolated-postgresql-16.4-scheduler-daemon-recovery",
+  "result": {
+    "scheduler_reacquisition": "PASS: expired leader lease is reacquired at generation 2 and the already-fired schedule is not fired again",
+    "dispatch_replay": "PASS: process-crash dispatch recovery replays the durable execution intent and completes one job without a duplicate",
+    "focused_result": "PASS: 2/2 selected tests, 0 selected skips, 0 selected failures, 19 deselected",
+    "service": "PASS: isolated real postgres:16.4-alpine; per-test schemas were dropped by finalizers",
+    "cleanup": "PASS: the qualification runner removed the PostgreSQL container and preserved logs/XML/timings",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d101-scheduler-recovery-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d101-scheduler-recovery-20261118",
+    "pytest_xml": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d101-scheduler-recovery-20261118\\pytest-postgres.xml",
+    "candidate_sha": "fb378f93ed2d430eb1927582249492c41d0b43ae"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a bounded scheduler recovery diagnostic, not the complete P11 family journey, indefinite operation, HA, multi-worker or production SLO qualification.",
+    "The live Ronin server backend qualification from D100 remains SQLite; D101 qualifies these scheduler stores directly against isolated PostgreSQL and does not reattribute D100 server evidence.",
+    "D101 does not qualify an external provider/object store, P13, a release gate or human release approval."
+  ]
+}
