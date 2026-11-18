@@ -554,8 +554,16 @@ try {
             throw "Live JUnit report is missing routes: $($missingRoutes -join ', ')"
         }
     }
-    $trafficJson = Get-Content -Raw -LiteralPath $evidenceFiles.Traffic
-    $trafficDocument = ConvertFrom-Json -InputObject $trafficJson
+    # A Playwright case may be selected but skipped by its fixture (for
+    # example, when the required worker image is not configured). In that
+    # situation the browser harness legitimately emits no traffic file; keep
+    # the diagnostic failure focused on the missing API evidence below instead
+    # of masking it with a Get-Content path error.
+    $trafficDocument = @()
+    if (Test-Path -LiteralPath $evidenceFiles.Traffic -PathType Leaf) {
+        $trafficJson = Get-Content -Raw -LiteralPath $evidenceFiles.Traffic
+        $trafficDocument = ConvertFrom-Json -InputObject $trafficJson
+    }
     $traffic = [System.Collections.Generic.List[object]]::new()
     $trafficQueue = [System.Collections.Generic.Queue[object]]::new()
     $trafficQueue.Enqueue($trafficDocument)
