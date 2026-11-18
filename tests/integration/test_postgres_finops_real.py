@@ -8,6 +8,7 @@ import pytest
 from studio_core import WorkspaceId
 from studio_finops import (
     BudgetPolicy,
+    CostRecord,
     FinOpsConflict,
     PostgresFinOpsStore,
     RateCard,
@@ -49,6 +50,8 @@ def test_postgres_finops_write_idempotency_pricing_and_budget_persistence() -> N
         store.record_usage(conflicting)
     assert store.put_rate_card(rate) == rate
     assert price_usage(store, usage).amount == Decimal("8.00")
+    with pytest.raises(FinOpsConflict):
+        store.record_cost(CostRecord(usage.id, workspace, Decimal("9.00"), "EUR", "actual", rate.id))
     assert store.list_costs(workspace, period_start=usage.period_start, period_end=usage.period_end)
     assert store.put_budget(budget) == budget
     assert store.list_budgets(workspace) == (budget,)

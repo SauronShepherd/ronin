@@ -115,12 +115,17 @@ class PostgresFinOpsStore:
                 raise KeyError(f"usage record not found: {cost.usage_id}")
             if str(usage["workspace_id"]) != cost.workspace_id.value:
                 raise FinOpsConflict("cost workspace does not match usage workspace")
-            cursor.execute("""INSERT INTO finops_costs
-                (usage_id,workspace_id,amount,currency,provenance,rate_card_id)
-                VALUES (%s,%s,%s,%s,%s,%s)
-                ON CONFLICT (usage_id) DO NOTHING""",
-                (cost.usage_id, cost.workspace_id.value, str(cost.amount), cost.currency,
-                 cost.provenance, cost.rate_card_id))
+            cursor.execute("SELECT * FROM finops_costs WHERE usage_id=%s", (cost.usage_id,))
+            existing = cursor.fetchone()
+            payload = (cost.usage_id, cost.workspace_id.value, str(cost.amount), cost.currency,
+                       cost.provenance, cost.rate_card_id)
+            if existing is None:
+                cursor.execute("""INSERT INTO finops_costs
+                    (usage_id,workspace_id,amount,currency,provenance,rate_card_id)
+                    VALUES (%s,%s,%s,%s,%s,%s)""", payload)
+            elif (str(existing["usage_id"]), str(existing["workspace_id"]), str(existing["amount"]),
+                  str(existing["currency"]), str(existing["provenance"]), str(existing["rate_card_id"])) != payload:
+                raise FinOpsConflict(f"cost for usage already exists with different content: {cost.usage_id}")
         return cost
 
     def put_budget(self, budget: BudgetPolicy) -> BudgetPolicy:
