@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D257",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL RF3 multi-broker failover companion",
+  "candidate_sha": "82924dc5aef4f8ddd6aa5b187ee9004d9f714d45",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "82924dc5aef4f8ddd6aa5b187ee9004d9f714d45",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D257.md",
+  "execution_scope": "clean-main live three-broker Redpanda RF3 failover with Ronin configured for real PostgreSQL",
+  "result": {
+    "multi_broker": "PASS: live streaming multi-broker failover resumes from the durable checkpoint 1/1",
+    "api_audit": "PASS: 5/5 real API events correlated, 0 unexpected authorization gaps and 0 unexpected server/network errors",
+    "rf3_fixture": "PASS: three brokers provisioned with replication factor 3",
+    "cleanup": "PASS: three brokers, PostgreSQL, network and volume removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "82924dc5aef4f8ddd6aa5b187ee9004d9f714d45",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d257-live-multibroker-postgres-current-20261118 -StorageBackend postgres -TestGrep 'live streaming multi-broker failover resumes from the durable checkpoint' -MultiBroker -RequestTimeoutSeconds 60",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d257-live-multibroker-postgres-current-20261118",
+    "sha256": {
+      "browser-live.log": "3D37C7184A66584E8CFBC85181C9539B8DA353AF87E766243C6CA28CEC86814D",
+      "browser-live.xml": "69550DEDC0C29B4AB96E8DCD2C00A6F5A7CF4B57C3EB4DAF9DAE3211BA0B56EC",
+      "live-api-traffic.json": "5F046A54FCE2A2CBF7B26ADA5966C828F2AB50AF492C84D508E515130EAC2A73",
+      "live-server.stderr.log": "4B4B04D1CFB4901EE46756E566D543A73736B74765051EADEAE5812709A77FBD",
+      "qualification-summary.json": "82E89D782A7186095AE73BB8887254B6D48CA1C1DA8ADAE944FB3F858E646642"
+    }
+  },
+  "limitations": [
+    "This is bounded single-journey RF3 evidence, not indefinite operation, HA/multi-worker, complete P11 or release approval.",
+    "D257 is a new observation on the current candidate and does not reattribute D244, D100 or earlier receipts."
+  ]
+}
