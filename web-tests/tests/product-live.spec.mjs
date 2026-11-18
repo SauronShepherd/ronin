@@ -1904,7 +1904,11 @@ test('live streaming supervisor soak drains while records arrive for a bounded d
   expect(Number.isInteger(soakSeconds)).toBe(true);
   expect(soakSeconds).toBeGreaterThanOrEqual(60);
   expect(soakSeconds).toBeLessThanOrEqual(900);
-  test.setTimeout((soakSeconds + 120) * 1_000);
+  // The bounded window is followed by producer completion, final lag drain,
+  // and bounded HTTP waits. Reserve a separate tail budget so longer,
+  // explicitly requested soak criteria do not self-fail at the test harness
+  // timeout while the service remains healthy.
+  test.setTimeout((soakSeconds + 300) * 1_000);
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
 
   const calls = installLiveApiProxy(page);
