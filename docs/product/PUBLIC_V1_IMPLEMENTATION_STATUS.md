@@ -7,6 +7,15 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D227 passes `1/1` real PostgreSQL 16.4 FinOps integration on candidate and
+production boundary `2a6e049c85451abbe339e4e6d2a8ef1abb549068`: conflicting
+replay of an existing cost is rejected with `FinOpsConflict`, while pricing,
+cost and budget persistence remain green. The affected local regression passes
+`40/40`; cleanup passes. This is bounded single-process evidence; indefinite
+operation, HA, external providers, complete P11 and release gates remain open.
+P11 remains `in_progress`, P13 remains `blocked`, and release remains **NO-GO**
+at `1/13` families and `0/10` gates.
+
 D226 passes `1/1` filtered Docker Azure Blob provider case against real local
 Azurite on candidate `cfec47a028bc385cfc4b0f0dcffe0d5370c2deae`, at production
 boundary `561ba5e5f8e95f786921e52a060c35fae6801799`: discovery, read and

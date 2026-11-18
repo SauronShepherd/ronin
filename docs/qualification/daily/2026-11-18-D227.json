@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D227",
+  "date": "2026-11-18",
+  "candidate_sha": "2a6e049c85451abbe339e4e6d2a8ef1abb549068",
+  "implementation_boundary_sha": "2a6e049c85451abbe339e4e6d2a8ef1abb549068",
+  "scope": "real PostgreSQL FinOps cost replay conflict fencing after production fix",
+  "command": "$env:RONIN_TEST_POSTGRES_DSN='postgresql://ronin:ronin@127.0.0.1:55441/ronin'; python -m pytest -q tests/integration/test_postgres_finops_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d227-finops-postgres.xml",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "real_postgres": true},
+  "evidence": {
+    "test": "test_postgres_finops_write_idempotency_pricing_and_budget_persistence",
+    "new_criterion": "conflicting replay of an existing cost is rejected with FinOpsConflict",
+    "postgres_image": "postgres:16.4",
+    "cleanup": "PASS; temporary PostgreSQL container removed",
+    "junit": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d227-finops-postgres.xml",
+    "sha256": {"junit": "112E4E41F0193DD57388C180CDD8527EF2CC3070032FCDF3FFB559D892EFEF00"}
+  },
+  "limitations": ["Bounded single-process PostgreSQL integration; it does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
