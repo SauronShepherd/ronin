@@ -6,7 +6,7 @@
   "cell": "Current-main live Redpanda/API stream-to-event-triggered-workflow",
   "candidate_sha": "6bb64f01430d6123cf395d35a182d4840ff602fe",
   "implementation_commit_sha": "8afd9df8d3b52bc7830642c2e59e242cffab8f20",
-  "documentation_commit_sha": "6bb64f01430d6123cf395d35a182d4840ff602fe",
+  "documentation_commit_sha": "86546d77d2dc72c7cc66d8e464c54cb78f4a050f",
   "evidence": "docs/qualification/handoffs/2026-11-18-D98.md",
   "execution_scope": "clean-candidate-filtered-live-single-broker-redpanda-ronin-api-stream-event-workflow",
   "result": {

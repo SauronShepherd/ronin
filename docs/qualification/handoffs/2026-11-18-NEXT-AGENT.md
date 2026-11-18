@@ -8,7 +8,7 @@ con un workflow disparado por evento. El release sigue siendo NO-GO:
 ```text
 production implementation boundary: 8afd9df8d3b52bc7830642c2e59e242cffab8f20
 qualification candidate at D98: 6bb64f01430d6123cf395d35a182d4840ff602fe
-documentation/main HEAD at handoff: pending final documentation commit
+documentation baseline commit: 86546d77d2dc72c7cc66d8e464c54cb78f4a050f
 worktree at handoff creation: main, limpio
 familias: 1/13
 release gates: 0/10
