@@ -900,6 +900,8 @@ D173 passed the filtered FinOps journey (`1/1`) on its configured SQLite runtime
 D174 passed the filtered Workflows journey (`1/1`) with Ronin and scheduler on real PostgreSQL. It produced `29/29` correlated API events (`28 OK`, `1` expected WARN), with no skips or failures and cleanup passing. This strengthens bounded scheduler/runtime evidence after the environment/binding change, but does not qualify indefinite operation, HA or release readiness.
 
 D176 passed the filtered Semantic Studio journey (`1/1`) on its configured SQLite runtime, with `9/9` correlated API events, all OK, and cleanup passing. The runner is explicitly SQLite-only for this route; D175's PostgreSQL request timed out before startup and provides no PostgreSQL evidence. This remains bounded local evidence and does not change P11, P13 or release status.
+
+D178 passed the single PostgreSQL Ingestion route case (`1/1`), with `4/4` correlated API events, all OK, and cleanup passing. The broader D177 selection included two explicit skips and is kept separate; D178 is bounded route evidence only and does not change P11, P13 or release status.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D178",
+  "date": "2026-11-18",
+  "candidate_sha": "abb1f09fece528ea6116157b2db74598cf9abee0",
+  "implementation_boundary_sha": "abb1f09fece528ea6116157b2db74598cf9abee0",
+  "scope": "bounded live PostgreSQL Ingestion route journey",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d178-live-postgres-ingestion-route-20261118 -TestGrep \"route ingestion\" -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 4, "api_correlated": 4, "api_ok": 4},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d178-live-postgres-ingestion-route-20261118", "cleanup": "PASS; containers, volume, network and temporary images removed"},
+  "limitations": ["Only the product route case was selected; D177's broader ingestion selection had two explicit skips and is not reattributed. This does not qualify indefinite operation, external providers or release readiness."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
