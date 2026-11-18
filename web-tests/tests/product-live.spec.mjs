@@ -2044,7 +2044,7 @@ test('live streaming supervisor soak drains while records arrive for a bounded d
         // Keep one bounded supervisor cycle, but give it enough room to
         // consume the default producer rate (16 records/second) without
         // manufacturing backlog solely through the qualification harness.
-        limit: 64,
+        limit: 32,
         timeout_seconds: 1,
         // One bounded micro-batch per HTTP cycle keeps the soak's cycle
         // criterion meaningful; allowing 16 batches here makes one request
