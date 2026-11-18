@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D117",
+  "date": "2026-11-18",
+  "candidate_sha": "e05cda36bf99ec2abd3961b4514695a54f9999b3",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "P11 bounded PostgreSQL cancellation of unsubmitted outbox",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d117-postgres-cancellation-unsubmitted-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter postgres_workflow_cancellation_retires_unsubmitted_outbox",
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "deselected": 20,
+    "duration_seconds": 4.92
+  },
+  "evidence": {
+    "path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d117-postgres-cancellation-unsubmitted-20261118",
+    "test": "tests/integration/test_postgres_workflow_store_real.py::test_postgres_workflow_cancellation_retires_unsubmitted_outbox",
+    "service": "postgres:16.4-alpine",
+    "cleanup": "runner completed isolated PostgreSQL cleanup; temporary image removed after receipt"
+  },
+  "limitations": [
+    "Filtered diagnostic only; not full PostgreSQL suite or coverage.",
+    "Bounded cancellation/outbox evidence; does not qualify the complete P11 family, indefinite operation, HA, external providers or release gates.",
+    "No production code changed; PostgreSQL qualification does not imply that the previous live route used PostgreSQL runtime storage."
+  ],
+  "status": {
+    "p11": "in_progress",
+    "p13": "blocked",
+    "release": "NO-GO",
+    "families": "1/13",
+    "gates": "0/10"
+  }
+}
