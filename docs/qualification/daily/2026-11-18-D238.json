@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D238",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate full Docker integration and strict v0.1 acceptance",
+  "candidate_sha": "ab00d4b111c6f7ef22ca483db60d05cd60d0d9b3",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "pending",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D238.md",
+  "execution_scope": "clean-main full Docker qualification with PostgreSQL, real Docker worker, Floci S3, Azurite Azure Blob and frozen v0.1 journey",
+  "result": {
+    "docker_integration": "PASS: 27/27 tests, 0 skipped, 0 failed",
+    "strict_v01": "PASS: 15/15 acceptance steps, 0 skipped, 0 xfailed, 0 failed, 0 errors, strict_success=true",
+    "providers": "PASS: PostgreSQL-backed journeys, Docker workers, Floci/S3 round trips and Azurite/Azure Blob snapshot replay",
+    "cleanup": "PASS: qualification image, PostgreSQL/Floci/Azurite containers, networks and volumes removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "ab00d4b111c6f7ef22ca483db60d05cd60d0d9b3",
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d238-docker-full-current-20261118",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d238-docker-full-current-20261118",
+    "image_digest": "sha256:17bbb94c0793a99aebe22d12a8ccb872b32fd55b4fa29416ff6eefeae7642400",
+    "sha256": {
+      "qualification-summary.json": "871AAE8730094CE6B3AFF9AA30586B59C6FF61E9CE98825D6044D50650A0B8D9",
+      "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+      "v01-acceptance.xml": "9459FE68BAE2A7BAD3637A5C1EEF68DF17E99D6497F22D7C5196A90B2691FCA5",
+      "docker-cleanup.json": "B6DDD9B0FCA1057A92055FF42D0E1D8EE7FD7844FB471BD425C554B40925D854",
+      "docker-pytest-output.log": "6B046F6AFDCF8BA9A4225AA79E155FE825398FB7E82C8C3748D421CDA66339E7"
+    }
+  }
+}
