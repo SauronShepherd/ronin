@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D132",
+  "date": "2026-11-18",
+  "candidate_sha": "2edc6a28ef02ade780c75492dc730e461c1c76c7",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "P11 bounded Docker clean worker demo",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d132-docker-clean-worker-20261118 -TestFilter test_real_docker_worker_executes_clean_container_demo -AllowDirtyWorktree",
+  "result": {"selected": 1, "passed": 1, "skipped": 0, "failed": 0, "deselected": 26, "pytest_duration_seconds": 14.53},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d132-docker-clean-worker-20261118", "test": "tests/integration/test_worker_runtime_real.py::test_real_docker_worker_executes_clean_container_demo", "image_digest": "sha256:3fc9f5a6f2f534f271a6a4fe8e0f0bc9bdaa4f6215f9af7455aaafcfc4c45ff9", "cleanup": "Docker qualification cleanup PASS; owned image and temporary PostgreSQL service removed"},
+  "limitations": ["Filtered Docker diagnostic only; strict v0.1 acceptance was not evaluated.", "Bounded clean-worker runtime evidence; does not qualify the complete P11 family, indefinite operation, external provider breadth or release gates.", "No production code changed; the previous live route used SQLite for the Ronin server runtime."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
