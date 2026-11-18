@@ -7,6 +7,17 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D95 extends the local supervisor sink matrix on test candidate
+`e5ef16525164bfb346def250dd7d4d8053526144`: four bounded segments of 16
+single-record micro-batches (64 records total) use the runtime's Parquet sink,
+verify all 64 checkpoint-addressed files and numeric offsets `0..63`, reset the
+checkpoint, replay offset `0`, and confirm that no duplicate file is created.
+The new case passes `1/1`; the focused Docker-contract, streaming-runtime and
+workspace-project API selection passes `98/98`. This is local PyArrow/filesystem
+sink evidence only. The production implementation boundary remains
+`633980dd3b08affcc604dc918c1a6cbf026cc408`; D95 changes tests, not production
+runtime behavior.
+
 D94 adds a new local bounded supervisor-soak cell on test candidate
 `467f1a39ac5c4557355ff7df57c3e945d5affc5d`: four sequential segments of 256
 single-record micro-batches (1,024 records total), with explicit
@@ -557,9 +568,9 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `467f1a39ac5c4557355ff7df57c3e945d5affc5d` (2026-11-18).
+**Observed source head:** `e5ef16525164bfb346def250dd7d4d8053526144` (2026-11-18).
 The production implementation boundary remains `633980dd3b08affcc604dc918c1a6cbf026cc408`;
-the observed head adds only qualification-harness timeout/segmentation changes.
+the observed head adds only qualification-harness/test evidence changes.
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. D66 binds a local worker image
 and exact multi-broker evidence, while its unfiltered aggregate remains

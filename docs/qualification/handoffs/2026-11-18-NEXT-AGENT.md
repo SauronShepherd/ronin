@@ -2,12 +2,12 @@
 
 ## Estado transferido
 
-D94 queda cerrado con evidencia local nueva; D93 sigue siendo la última celda
+D95 queda cerrado con evidencia local nueva; D93 sigue siendo la última celda
 live, pero el release no es GO:
 
 ```text
 production implementation boundary: 633980dd3b08affcc604dc918c1a6cbf026cc408
-qualification-harness/current main at D94: 467f1a39ac5c4557355ff7df57c3e945d5affc5d
+qualification-harness/current main at D95: e5ef16525164bfb346def250dd7d4d8053526144
 documentation state: D94 receipt and status updates are included in current main history
 worktree at handoff creation: main, limpio
 familias: 1/13
@@ -17,13 +17,17 @@ P13: blocked
 release: NO-GO
 ```
 
-`467f1a39` sólo añade una regresión de cualificación local; no cambia el runtime
-de producción respecto de `633980dd`. D94 prueba cuatro segmentos de 256
-micro-lotes con checkpoint y sink SQLite observables. D93 califica por separado
-el arnés y el journey live de `549ffe30`; ninguna de las dos fronteras debe
-ocultarse.
+`e5ef1652` sólo añade una regresión de cualificación local; no cambia el runtime
+de producción respecto de `633980dd`. D95 prueba cuatro segmentos de 16
+micro-lotes con sink Parquet local, reset/replay y checkpoint durable; D94
+mantiene la celda SQLite de 1.024 registros. D93 califica por separado el
+arnés y el journey live de `549ffe30`; ninguna de las fronteras debe ocultarse.
 
 ## Evidencia más reciente
+
+- [D95](2026-11-18-D95.md): soak Parquet local bounded de `64` registros en
+  cuatro segmentos más replay tras reset, `1/1` caso nuevo y `98/98` en la
+  selección combinada; ficheros, offsets, idempotencia y cleanup verificados.
 
 - [D94](2026-11-18-D94.md): soak local bounded de `1.024` registros en cuatro
   segmentos, `1/1` caso nuevo y `97/97` en la selección combinada; checkpoint,
@@ -53,7 +57,7 @@ PASS.
 ## Límites que siguen abiertos
 
 1. operación indefinida/soak y continuidad del supervisor a duración de
-   producción; D94 sólo cubre un soak local bounded de 1.024 registros;
+   producción; D94 y D95 sólo cubren soaks locales bounded;
 2. topología productiva, multi-worker y HA;
 3. amplitud de proveedores externos y matriz completa de sinks, replay y
    recovery;
@@ -85,7 +89,7 @@ git diff --check
 
 ## Próximo paso recomendado
 
-No repetir D93 ni D94. Elegir una brecha P11 externa nueva: cualificar una
+No repetir D93, D94 ni D95. Elegir una brecha P11 externa nueva: cualificar una
 celda bounded con proveedor/topología autorizados y criterio de parada
 explícito; o, si el entorno no permite esa duración, HA o proveedor, registrar
 el bloqueo reproducible y preparar la matriz de decisión humana. Mantener P11

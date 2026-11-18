@@ -1,0 +1,52 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D95",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-main local bounded supervisor soak with Parquet sink reset and replay",
+  "candidate_sha": "e5ef16525164bfb346def250dd7d4d8053526144",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "705173a98766157944acd2008528a1cfa3b6a1d8",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D95.md",
+  "execution_scope": "current-main-local-bounded-supervisor-soak-parquet-sink-reset-replay-synthetic-continuous-source",
+  "result": {
+    "journey": "PASS: the new Parquet runtime cell passed 1/1; the broader Docker-contract, streaming-runtime and workspace-project API selection passed 98/98",
+    "supervisor_soak": "PASS: four sequential bounded segments of 16 single-record micro-batches persisted 64 records through KafkaStreamingRuntime.run_until_idle; every segment stopped explicitly at max_records",
+    "parquet_sink": "PASS: 64 checkpoint-addressed Parquet files were written and independently read back with exact numeric offsets 0 through 63",
+    "reset_replay": "PASS: resetting the durable checkpoint and replaying offset 0 returned one record without increasing the Parquet file count or changing the existing output",
+    "session_cleanup": "PASS: four segment source sessions plus one replay session were created and all five were closed; bounded limits were observed as 4...3,2,1 and replay 1",
+    "quality": "PASS: Ruff check, Python compilation and git diff check passed",
+    "services": "PASS: local PyArrow-backed Parquet filesystem and SQLite checkpoint store exercised; no external object store, broker, worker, PostgreSQL, provider or HA claim is made",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "segment_size": 16,
+    "segments": 4,
+    "total_records": 64,
+    "parquet_files": 64,
+    "replay_records": 1,
+    "max_batches_per_segment": 32,
+    "idle_polls": 1,
+    "runtime_batch_limit": 4,
+    "test_command": "python -m pytest tests/test_streaming_runtime.py::test_runtime_supervisor_bounded_soak_persists_parquet_and_replays_after_reset -q",
+    "broader_test_command": "python -m pytest tests/test_docker_qualification_contract.py tests/test_streaming_runtime.py tests/integration/test_workspace_project_http_api.py -q",
+    "evidence_test_file_sha256": "B9113AA1E4A5E703CEED0DF76BFD84980C6E9862B8F0C05A7D5380B03735A419",
+    "production_runtime_sha256": "5B6795632FF3140BBD8BBD96B74544EFAEBC282F9E68AB360E548F3ABF13A10E"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The source is a deterministic continuous test source and the Parquet root is local filesystem storage; this receipt is local sink-matrix evidence only.",
+    "The soak is bounded to 64 records and five source sessions; it does not qualify indefinite operation, production-duration SLOs, multi-worker scheduling, HA, external object stores or provider breadth.",
+    "The test-only candidate e5ef1652 does not change the production runtime relative to implementation boundary 633980dd; D83-D94 remain bound to their documented exact candidates and scopes.",
+    "A passing local Parquet replay does not close the P11 family, the 13-family aggregate, the human release decisions or P13 external-secret-provider qualification."
+  ]
+}
