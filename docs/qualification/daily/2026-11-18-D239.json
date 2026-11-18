@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D239",
+  "date": "2026-11-18",
+  "status": "not_pass",
+  "cell": "Full live PostgreSQL route on current candidate",
+  "candidate_sha": "8c34deb50d1fe5aa46d3a056993138610ee2eddb",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "pending",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D239.md",
+  "execution_scope": "clean-main full live route with Ronin explicitly configured for PostgreSQL and a real Docker worker image",
+  "result": {
+    "live_route": "NOT_PASS: 42/43 browser cases passed, 1 intentional multi-broker skip, 0 browser failures",
+    "api_audit": "NOT_PASS: 475/475 events correlated; 451 OK, 21 expected WARN, 3 ERROR; the errors are 503 streaming_unavailable on fault-recovery health/run during the broker-restart journey",
+    "runtime": "PASS for configuration observation: postgres=true, kafka=true, Ronin API ready and worker image used; full PostgreSQL route acceptance remains unproven",
+    "cleanup": "PASS: PostgreSQL/broker containers, network, volume and retained worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "8c34deb50d1fe5aa46d3a056993138610ee2eddb",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d239-live-full-postgres-current-20261118 -StorageBackend postgres -WorkerImage ronin:qualification-d239 -RequestTimeoutSeconds 60",
+    "worker_image_digest": "sha256:133d35ed467740d2a4071302c1fc0c0d107f9f0735fff5d8b95507f94d432fc2",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d239-live-full-postgres-current-20261118",
+    "sha256": {
+      "qualification-summary.json": "78CD3E01F2CE554184E7937D8EB328AF3C52CB840853DA029439A956CB9FE28F",
+      "browser-live.xml": "B680A3B59E414E228F045BF84F6D0400E51521BBF90E66A6EDCA2D1EAE96AC67",
+      "live-api-traffic.json": "063A286F81AF4B5E82BEBD8595D8AC736520BC27B040A6EEAB387EB93CEA1970",
+      "live-server.stderr.log": "F1B6924329FC2BB7AE8BE8599262374D8ED4ABCE282F1A525997ECBE95281D27",
+      "browser-live.log": "24F712D509C93C735FF77E805671F1CC41DFFED1DE74642A63A6B40598AA1201"
+    }
+  }
+}
