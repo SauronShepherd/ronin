@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D273",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL workflow and task snapshot atomicity/idempotency",
+  "candidate_sha": "f7b070194c6a8b3962210b3f989ec62272bd4e7d",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D273.md",
+  "execution_scope": "clean-main filtered integration selection against isolated real PostgreSQL 16.4",
+  "result": {
+    "snapshots": "PASS: workflow/task snapshots are atomic and idempotent",
+    "tests": "PASS: 1 selected, 20 deselected, 0 selected skips, 0 selected failures",
+    "cleanup": "PASS: isolated PostgreSQL removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d273-scheduler-snapshot-atomic-current-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_run_and_task_snapshots_are_atomic_and_idempotent'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d273-scheduler-snapshot-atomic-current-20261118",
+    "postgres_image": "postgres:16.4-alpine",
+    "sha256": {
+      "pytest-output.log": "386F730E9EDA5883F7775E9518C5011FD683ADF7FD500D95271E566A1AE4E7E8",
+      "pytest-postgres.log": "6E5D07A32732357E9001F5E2ABDA9CFA51B3C9FD44F4CB7F816E522EC4C79326",
+      "pytest-postgres.xml": "70298E01F44ED7A0562351D5C9EFC8F0BDDA1836073D4A795A9E308374705A68",
+      "pytest-timings.json": "4AB3CD3E3D954D4FC912CC3AE8E055CB66ECB714652CF2AA6DB76D73336C1EFB",
+      "runner-timings.json": "9AB38DBFF6307A1EBC4B78BDABBDD0FB740969A9341244D296946B71D3BC8893"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded snapshot persistence evidence, not indefinite operation, HA/multi-worker, full controller conformance, complete P11 or release approval.",
+    "D273 is distinct from, and does not reattribute, D272, D271, D270, D269, D268, D267, D266, D265, D264, D263, D246, D222, D145 or earlier receipts."
+  ]
+}
