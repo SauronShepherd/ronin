@@ -6,7 +6,7 @@
   "cell": "Full Python/PostgreSQL suite after atomic public-ledger synchronization fix",
   "candidate_sha": "761183dec8a49b1aa766f4a48cf0ec2761eae8d1",
   "implementation_commit_sha": "92d245490c910a70c3750604320aeb653c398677",
-  "documentation_commit_sha": "pending",
+  "documentation_commit_sha": "52d9d248f23c72346eb1bbc326da8f68e890960a",
   "evidence": "docs/qualification/handoffs/2026-11-18-D243.md",
   "execution_scope": "clean-main full non-performance Python suite against isolated PostgreSQL 16.4",
   "result": {
