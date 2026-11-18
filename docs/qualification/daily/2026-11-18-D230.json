@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D230",
+  "date": "2026-11-18",
+  "candidate_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "implementation_boundary_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "scope": "live Graphs route with PostgreSQL metadata and explicit SQLite graph projection",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d230-live-graphs-postgres-20261118 -StorageBackend postgres -TestGrep 'route graphs loads and reaches the live API' -RequestTimeoutSeconds 60",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 5, "correlated_http_logs": 5, "unexpected_errors": 0, "elapsed_seconds": 64.41},
+  "evidence": {
+    "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+    "api_outcomes": {"OK": 5},
+    "graph_backend": "SQLite materialized graph projection; PostgreSQL scheduler/runtime is not claimed",
+    "cleanup": "PASS; PostgreSQL, Kafka, volume and network removed",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d230-live-graphs-postgres-20261118",
+    "sha256": {
+      "browser-live.log": "CF58191EC1F5DC79B0B925DC115C9B7EE1E7154AD24744D5AC36F1CC93D6A36D",
+      "browser-live.xml": "2E144572221693EA42652EF7CF5280398422B9A1BE0F40597D0A448A04B3FAC1",
+      "live-api-traffic.json": "1A93D3B13C50028788AA3709CFD32B9ECB9D5162303DF560F2470AE3EFF9C2F9",
+      "live-server.stderr.log": "79EDD55F666471E7553D9E5FCD25DF8DEDA7762BC9D8A7D688DBE475F96A1278",
+      "qualification-summary.json": "1EA2E2373C641942D2A1B8F84E7F030FC4A302DFC92C5BC2943D843F40CB1B87"
+    }
+  },
+  "limitations": ["Graph route passes over an explicit SQLite projection while metadata/scheduler services use PostgreSQL; this is not PostgreSQL graph-store qualification. Filtered route only; indefinite operation, HA, complete P11 and release gates remain unproven."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

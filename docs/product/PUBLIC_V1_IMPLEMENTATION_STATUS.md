@@ -7,6 +7,15 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D230 passes `1/1` filtered live Graphs route on candidate and production
+boundary `59004dae6b483e1629646af3cd28f03e05fa88ad`, with PostgreSQL/Kafka
+services and an explicit SQLite materialized graph projection: `5/5` API events
+correlated, all `OK`, cleanup PASS. This is not PostgreSQL GraphStore
+qualification; D228 remains `NOT_PASS` and is not reattributed. Route-wide
+coverage, indefinite operation, HA, complete P11 and release gates remain open.
+P11 remains `in_progress`, P13 remains `blocked`, and release remains **NO-GO**
+at `1/13` families and `0/10` gates.
+
 D229 passes `1/1` filtered live Synthetic Data Studio route on candidate and
 production boundary `dc07d5e8b5211d88906e133d4fb5b40542b1e640`: after binding
 the catalog by backend contract, PostgreSQL/Kafka produce `8/8` correlated API
