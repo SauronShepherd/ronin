@@ -6,7 +6,7 @@
   "cell": "Full live PostgreSQL route on current candidate",
   "candidate_sha": "8c34deb50d1fe5aa46d3a056993138610ee2eddb",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "pending",
+  "documentation_commit_sha": "a812c86b1ea8c77f9a2b0d49cd9500ad5b4db3d1",
   "evidence": "docs/qualification/handoffs/2026-11-18-D239.md",
   "execution_scope": "clean-main full live route with Ronin explicitly configured for PostgreSQL and a real Docker worker image",
   "result": {
