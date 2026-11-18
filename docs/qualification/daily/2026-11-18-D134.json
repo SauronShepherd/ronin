@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D134",
+  "date": "2026-11-18",
+  "candidate_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "P11 complete local Python/PostgreSQL suite after streaming architecture fix",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d134-postgres-full-fixed-20261118",
+  "result": {"collected": 4785, "pytest_total_with_skips": 4788, "passed": 4757, "skipped": 31, "failed": 0, "duration_seconds": 1106.3},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d134-postgres-full-fixed-20261118", "scope": "all non-performance Python tests plus isolated real PostgreSQL service", "cleanup": "runner completed PostgreSQL cleanup"},
+  "limitations": ["Complete local Python/PostgreSQL suite only; the 31 skips are explicit platform/opt-in cases including Docker, external providers, Trino, S3/Azure and symlink-dependent tests.", "Does not qualify Docker strict v0.1 acceptance, external provider production certification, indefinite operation, HA, complete P11 family or release gates.", "The prior D133 run on e57d5bdc is not PASS because it exposed the architecture and matrix failures fixed before this candidate."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
