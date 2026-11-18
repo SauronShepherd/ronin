@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D258",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL-configured live Workflows runtime",
+  "candidate_sha": "0e6df97b11c4eead9d773a9b9796d9701c81a0d1",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "0e6df97b11c4eead9d773a9b9796d9701c81a0d1",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D258.md",
+  "execution_scope": "clean-main filtered live Workflows route with Ronin configured for real PostgreSQL and Kafka",
+  "result": {
+    "workflow_route": "PASS: 1/1 filtered live Workflows route",
+    "api_audit": "PASS: 30/30 real API events correlated; 29 OK, 1 expected WARN, 0 unexpected authorization gaps and 0 unexpected server/network errors",
+    "runtime": "PASS: live Ronin server configured with the PostgreSQL DSN; schedule, history, idempotent execution, cancellation, daemon delivery and backfill path exercised",
+    "cleanup": "PASS: PostgreSQL, broker, network and volume removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "0e6df97b11c4eead9d773a9b9796d9701c81a0d1",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d258-live-postgres-workflows-current-20261118 -StorageBackend postgres -TestGrep 'route workflows loads and reaches the live API' -RequestTimeoutSeconds 60",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d258-live-postgres-workflows-current-20261118",
+    "sha256": {
+      "browser-live.log": "6264428D40D38C09891830AAC65C19DB5FB83A4935D562EB15928CA372DC642F",
+      "browser-live.xml": "8CE61E85984340A91340DD2630B524BA0420C78EFF5EB91B71A9F46CB131EE03",
+      "live-api-traffic.json": "D70740A1D65FA7EE01FB6F16D2669F6176E79CFF2B5577B1FEF439A1340A8567",
+      "live-server.stderr.log": "C430487C4AB9463F6DA486FA5ED8C34F0699B81B91022A77976DD3AA3ADB62F3",
+      "qualification-summary.json": "21655628DCADBA09DC85ED018281DBC764CB60C0B5D8D9CC6337755216D35A10"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded Workflows route evidence, not route-wide coverage, indefinite operation, HA/multi-worker, complete P11 or release approval.",
+    "D258 does not reattribute D235, D236, D244, D100 or earlier receipts."
+  ]
+}
