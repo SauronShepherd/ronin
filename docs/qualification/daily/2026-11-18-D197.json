@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D197",
+  "date": "2026-11-18",
+  "candidate_sha": "3d720f5ba09b2c634e707f5132764cc02d4029f3",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "ML durable input/output and retention round trip through S3-compatible object storage",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d197b-s3-artifact-retention-20261118 -TestFilter ml_s3_artifact -ImageTag ronin:qualification-d197b",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "pytest_deselected": 26, "pytest_seconds": 8.51},
+  "evidence": {
+    "test": "test_ml_durable_input_output_and_retention_round_trip_through_s3",
+    "backend": "real Floci 2.1.0 S3-compatible service, image digest sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db",
+    "assertions": ["durable input artifact", "materialized model artifact", "digest-bound readback", "unreferenced artifact collection", "bucket/object cleanup"],
+    "cleanup": "PASS; Floci compose project, volume and qualification image removed; no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d197b-s3-artifact-retention-20261118",
+    "sha256": {"docker-cleanup.json": "94A613336B54EBFAA9C1DA4E66998BC2829330BE95C5E02A0365EE802C0D3E67", "docker-pytest-output.log": "F88771806A6FAFB7BEF235F552E737B2B826BCFF39CA0539D27834D50BC73FA3", "docker-qualification.log": "5D3A47612708AB0DEFEE5BB9C24BF59AFB3D892836DD3B00DFCF624308A2A453", "floci-s3-qualification.log": "18404EF5294883A1DA23E9219A1E66D95AA72E5F7A2102099870E8119D41A59B", "v01-acceptance.xml": "C9E4A34624B67CCF3FD89BF07227CFD19FAC541FB5B5E20A0EE467E1BE09220E"}
+  },
+  "limitations": ["Floci is an S3-compatible local service, not AWS production certification; this is bounded object-store evidence only and does not qualify indefinite operation, HA, external provider approval, the complete P11 family or release gates."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
