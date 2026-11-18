@@ -6,7 +6,7 @@
   "cell": "Full Python/PostgreSQL suite current candidate",
   "candidate_sha": "8c922516b905e062f71da3cc02ad760b6390238f",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "pending",
+  "documentation_commit_sha": "a72257e709a1c25684e13c0f92b90c5f48f98ff0",
   "evidence": "docs/qualification/handoffs/2026-11-18-D240.md",
   "execution_scope": "clean-main full non-performance Python suite against isolated PostgreSQL 16.4",
   "result": {
