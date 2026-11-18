@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D109",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Docker isolation resource limits, observed usage and cleanup",
+  "candidate_sha": "a3cb20bcb541c35acc7a480311ae7357b77997c9",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D109.md",
+  "execution_scope": "clean-main-docker-filtered-resource-isolation-contract",
+  "result": {
+    "swap": "PASS: Docker memory swap is capped as required",
+    "usage": "PASS: observed CPU and memory usage are recorded from cgroup v2",
+    "isolation": "PASS: resource limits, no-new-privileges and container cleanup contract pass",
+    "focused_result": "PASS: 3/3 selected tests, 0 skips, 0 failures, 24 deselected",
+    "cleanup": "PASS: candidate image and PostgreSQL fixture cleanup receipt reports no failures",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d109-docker-isolation-20261118 -TestFilter 'test_real_docker_memory_swap_capped or test_real_docker_records_observed_cpu_and_memory or test_real_docker_isolation_limits_usage_and_cleanup'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d109-docker-isolation-20261118",
+    "cleanup_receipt": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d109-docker-isolation-20261118\\docker-cleanup.json",
+    "worker_image_digest": "sha256:251f428472076c471282d8397afe617f9320c6784f34666c9f790efc36e9e4d7",
+    "candidate_sha": "a3cb20bcb541c35acc7a480311ae7357b77997c9"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered Docker resource-isolation diagnostic and not the complete strict Docker v0.1 acceptance gate or complete P11 journey.",
+    "The qualification summary retains an internal unavailable timeout-observation state from the runner; the selected pytest tests and explicit cleanup receipt pass, so this receipt claims only the selected contract cell.",
+    "D109 does not prove indefinite operation, HA/multi-worker, production SLO, external provider breadth, P13, a release gate or human release approval."
+  ]
+}
