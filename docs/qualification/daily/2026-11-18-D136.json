@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D136",
+  "date": "2026-11-18",
+  "candidate_sha": "abf0dfab5f2a36ee4a66bc30cdfd1047960421dd",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "P11 live product/API/UI qualification with real worker",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d136-live-product-0e7db34272d94154a58ce8341771fbcf -WorkerImage ronin:d136-live-worker -SupervisorSoakSeconds 60",
+  "result": {"status": "FAIL", "playwright_executed": 43, "playwright_passed": 42, "playwright_skipped": 1, "playwright_failed": 0, "api_events": 448, "correlated_http_logs": 448, "active_routes": 25, "api_routes": 24, "ui_only_routes": 1},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d136-live-product-0e7db34272d94154a58ce8341771fbcf", "worker_image_digest": "sha256:388eb254d1e2de45332c1bccd3e1a8162ee2a8cea6dbcbaf9190e7c973529e81", "failure": "Live qualification contains skipped tests", "cleanup": "PASS; isolated PostgreSQL/Redpanda services removed; temporary worker image removed"},
+  "limitations": ["The live Ronin server used SQLite. PostgreSQL was used only for the seeded ingestion/browser fixture and is not scheduler/runtime qualification.", "The strict runner rejects the single skipped test, so this receipt is negative evidence and does not close the live-product gap."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
