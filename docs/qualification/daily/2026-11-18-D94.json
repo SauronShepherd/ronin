@@ -1,0 +1,49 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D94",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-main local bounded supervisor soak with durable checkpoint and SQLite sink observables",
+  "candidate_sha": "467f1a39ac5c4557355ff7df57c3e945d5affc5d",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "31be2f263d3e08b2fada35923106a3f64fb5524f",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D94.md",
+  "execution_scope": "current-main-local-bounded-supervisor-soak-synthetic-continuous-source-sqlite-checkpoint-table",
+  "result": {
+    "journey": "PASS: focused supervisor test 1/1 passed; the broader Docker-contract, streaming-runtime and workspace-project API selection passed 97/97",
+    "supervisor_soak": "PASS: four sequential bounded segments of 256 single-record micro-batches drained 1024 records total; every segment stopped explicitly at max_records",
+    "checkpoint_sink": "PASS: checkpoint digest boundary and offset were checked after every segment; the SQLite sink contained exactly offsets 0 through 1023 with no duplicate rows",
+    "session_cleanup": "PASS: four source sessions were created and all four were closed; each segment observed the bounded limits 4...3,2,1",
+    "quality": "PASS: Ruff check, Python compilation and git diff check passed",
+    "services": "PASS: real local SQLite checkpoint and sink exercised; no external broker, worker, PostgreSQL, provider or HA claim is made",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "segment_size": 256,
+    "segments": 4,
+    "total_records": 1024,
+    "max_batches_per_segment": 512,
+    "idle_polls": 1,
+    "runtime_batch_limit": 4,
+    "test_command": "python -m pytest tests/test_streaming_runtime.py::test_runtime_supervisor_bounded_soak_preserves_checkpoint_and_sink_across_segments -q",
+    "broader_test_command": "python -m pytest tests/test_docker_qualification_contract.py tests/test_streaming_runtime.py tests/integration/test_workspace_project_http_api.py -q",
+    "evidence_test_file_sha256": "919D27411279FB628038D74B2D88EC22D25F68653BA55C78D04ABEC176253301",
+    "production_runtime_sha256": "5B6795632FF3140BBD8BBD96B74544EFAEBC282F9E68AB360E548F3ABF13A10E"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "The source is a deterministic continuous test source, not a real Kafka or Redpanda provider; this receipt is local supervisor continuity evidence only.",
+    "The soak is bounded to 1024 records and four source sessions; it does not qualify indefinite operation, production-duration SLOs, multi-worker scheduling, HA, provider breadth or external sink recovery.",
+    "The test-only candidate 467f1a39 does not change the production runtime relative to implementation boundary 633980dd; D83-D93 remain bound to their documented exact candidates and scopes.",
+    "A passing local soak does not close the P11 family, the 13-family aggregate, the human release decisions or P13 external-secret-provider qualification."
+  ]
+}

@@ -822,13 +822,25 @@
       "evidence": "docs/qualification/handoffs/2026-11-18-D93.md",
       "candidate_sha": "549ffe30d6df66e92325c90b582c31880536bcb5",
       "commit_sha": "549ffe30d6df66e92325c90b582c31880536bcb5"
+    },
+    {
+      "id": "D94",
+      "date": "2026-11-18",
+      "phase": "p11-local-bounded-supervisor-soak-checkpoint-sink",
+      "status": "pass",
+      "families": [
+        "P11"
+      ],
+      "evidence": "docs/qualification/handoffs/2026-11-18-D94.md",
+      "candidate_sha": "467f1a39ac5c4557355ff7df57c3e945d5affc5d",
+      "commit_sha": "467f1a39ac5c4557355ff7df57c3e945d5affc5d"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D93 extends the current candidate's bounded single-broker backpressure journey to 65,536 records with segmented 8,192-record HTTP drains: 1/1 Playwright passed, 19/19 API events correlated and all OK, with cap/checkpoint, lag-zero, idle replay and reset-safe replay. The production implementation boundary remains 633980dd; D93 also qualifies the timeout/segmentation harness at 549ffe30. D92, D91, D90 and D83-D89 remain explicitly bounded receipts. P11 remains open for indefinite operation, supervisor continuity, production topology, provider breadth, the complete family journey, human decisions and aggregate approval."
+      "summary": "D94 adds a local bounded supervisor soak on test candidate 467f1a39: four segments of 256 single-record micro-batches, 1,024 records total, explicit max_records stops, checkpoint digest/offset checks, exact SQLite sink offsets and source cleanup. The new case passes 1/1 and the focused combined selection passes 97/97. D93 remains the latest real live cell at 65,536 records with segmented 8,192-record HTTP drains, 1/1 Playwright and 19/19 correlated OK events. The production implementation boundary remains 633980dd. P11 remains open for indefinite operation, production topology, provider breadth, the complete family journey, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",
@@ -843,7 +855,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D93 extends current-candidate bounded backpressure to 65,536 records with 1/1 passed, 19/19 correlated OK events and successful cleanup; the journey uses segmented 8,192-record requests and explicit 1,800-second total/600-second per-request bounds. D92 remains the prior 32,768-record cell; D90 route-wide, D91 focused RF3, D89 supply-chain, D88 Helm/kind, D87 Docker, D85/D84 and D83 remain bounded receipts. The production implementation boundary remains 633980dd while the qualification harness candidate is 549ffe30. Full family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
+      "summary": "D94 adds local bounded supervisor continuity evidence on test candidate 467f1a39; D93 remains the latest real live bounded backpressure cell at 65,536 records with 1/1 passed, 19/19 correlated OK events and successful cleanup. The production implementation boundary remains 633980dd. D92 remains the prior 32,768-record cell; D90 route-wide, D91 focused RF3, D89 supply-chain, D88 Helm/kind, D87 Docker, D85/D84 and D83 remain bounded receipts. Full family audit, indefinite operation, provider, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
     },
     {
       "id": "catalog-project-scope",

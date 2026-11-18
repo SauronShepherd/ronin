@@ -2,12 +2,13 @@
 
 ## Estado transferido
 
-La ronda D93 queda cerrada con evidencia nueva, pero el release no es GO:
+D94 queda cerrado con evidencia local nueva; D93 sigue siendo la última celda
+live, pero el release no es GO:
 
 ```text
 production implementation boundary: 633980dd3b08affcc604dc918c1a6cbf026cc408
-qualification-harness/current main at D93: 549ffe30d6df66e92325c90b582c31880536bcb5
-documentation HEAD after D93 handoff: 967983de45ca12a93cf9b40ede3c3a3669d82d69
+qualification-harness/current main at D94: 467f1a39ac5c4557355ff7df57c3e945d5affc5d
+documentation state: D94 receipt and status updates are included in current main history
 worktree at handoff creation: main, limpio
 familias: 1/13
 release gates: 0/10
@@ -16,12 +17,17 @@ P13: blocked
 release: NO-GO
 ```
 
-`549ffe30` no cambia el runtime de producción respecto de `633980dd`: sólo
-parametriza el timeout bounded del runner y segmenta el drain live de gran
-volumen. D93 califica el arnés y el journey de ese candidato; no debe ocultarse
-la frontera de implementación.
+`467f1a39` sólo añade una regresión de cualificación local; no cambia el runtime
+de producción respecto de `633980dd`. D94 prueba cuatro segmentos de 256
+micro-lotes con checkpoint y sink SQLite observables. D93 califica por separado
+el arnés y el journey live de `549ffe30`; ninguna de las dos fronteras debe
+ocultarse.
 
 ## Evidencia más reciente
+
+- [D94](2026-11-18-D94.md): soak local bounded de `1.024` registros en cuatro
+  segmentos, `1/1` caso nuevo y `97/97` en la selección combinada; checkpoint,
+  sink, límites y cierre de sesiones verificados.
 
 - [D93](2026-11-18-D93.md): `65.536` registros en Redpanda single-broker
   real, cap `73`, ocho reanudaciones de máximo `8.192`, lag `0`, idle replay,
@@ -47,7 +53,7 @@ PASS.
 ## Límites que siguen abiertos
 
 1. operación indefinida/soak y continuidad del supervisor a duración de
-   producción;
+   producción; D94 sólo cubre un soak local bounded de 1.024 registros;
 2. topología productiva, multi-worker y HA;
 3. amplitud de proveedores externos y matriz completa de sinks, replay y
    recovery;
@@ -79,8 +85,8 @@ git diff --check
 
 ## Próximo paso recomendado
 
-No repetir D93. Elegir una brecha P11 nueva: cualificar un soak bounded del
-supervisor con checkpoint/sink observables y criterio de parada explícito; o,
-si el entorno no permite esa duración, topología o proveedor, registrar el
-bloqueo reproducible y preparar la matriz de decisión humana. Mantener P11
+No repetir D93 ni D94. Elegir una brecha P11 externa nueva: cualificar una
+celda bounded con proveedor/topología autorizados y criterio de parada
+explícito; o, si el entorno no permite esa duración, HA o proveedor, registrar
+el bloqueo reproducible y preparar la matriz de decisión humana. Mantener P11
 `in_progress`, P13 `blocked` y release `NO-GO`.

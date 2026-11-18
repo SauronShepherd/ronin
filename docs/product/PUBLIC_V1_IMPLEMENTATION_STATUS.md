@@ -7,8 +7,20 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
-D93 extends the current candidate's live bounded backpressure journey to
-`65,536` records over a real single-broker Redpanda fixture. The journey uses
+D94 adds a new local bounded supervisor-soak cell on test candidate
+`467f1a39ac5c4557355ff7df57c3e945d5affc5d`: four sequential segments of 256
+single-record micro-batches (1,024 records total), with explicit
+`max_records` stop, checkpoint digest/offset checks after every segment, exact
+SQLite sink offsets `0..1,023`, bounded `limit` reduction `4,3,2,1`, and
+source-session cleanup. The new case passes `1/1`; the focused Docker-contract,
+streaming-runtime and workspace-project API selection passes `97/97`. This is
+local synthetic supervisor evidence only. The production implementation
+boundary remains `633980dd3b08affcc604dc918c1a6cbf026cc408`; D94 changes tests,
+not production runtime behavior.
+
+D93 remains the latest real live cell and extends the current candidate's live
+bounded backpressure journey to `65,536` records over a real single-broker
+Redpanda fixture. The journey uses
 an explicit total timeout of `1,800 s` and segments the resume into requests of
 at most `8,192` records, preserving the durable checkpoint boundary between
 requests. The cap, lag-zero drain, idle replay, reset and two `7`-record replays
@@ -18,10 +30,11 @@ pass `1/1`, with `19/19` real API events correlated to structured logs, all
 boundary remains `633980dd3b08affcc604dc918c1a6cbf026cc408` because the new
 commit only changes qualification timeout/segmentation behavior.
 
-D93 is a filtered streaming-only diagnostic: PostgreSQL and worker are not
-applicable, and the evidence remains bounded rather than an indefinite
-operation claim. P11 remains `in_progress`, P13 remains `blocked`, and release
-remains **NO-GO** at `1/13` families and `0/10` gates.
+D93 is a filtered streaming-only diagnostic and D94 is a local synthetic
+diagnostic: PostgreSQL, worker, external providers and production topology are
+not established, and neither receipt is an indefinite-operation claim. P11
+remains `in_progress`, P13 remains `blocked`, and release remains **NO-GO** at
+`1/13` families and `0/10` gates.
 
 D90 refreshes the route-wide live audit on the exact candidate
 `633980dd3b08affcc604dc918c1a6cbf026cc408` with PostgreSQL, Redpanda, the
@@ -544,7 +557,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `549ffe30d6df66e92325c90b582c31880536bcb5` (2026-11-18).
+**Observed source head:** `467f1a39ac5c4557355ff7df57c3e945d5affc5d` (2026-11-18).
 The production implementation boundary remains `633980dd3b08affcc604dc918c1a6cbf026cc408`;
 the observed head adds only qualification-harness timeout/segmentation changes.
 The runtime/test candidate is recorded separately in the exact qualification
