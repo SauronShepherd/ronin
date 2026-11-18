@@ -1624,7 +1624,7 @@ test('live streaming sustained backpressure drains configured records with reset
   const recordsPerPartition = backpressureRecords / 2;
   const cappedRecords = 73;
   const remainingRecords = backpressureRecords - cappedRecords;
-  const expectedResumeBatches = Math.ceil(remainingRecords / 8);
+  const maxRecordsPerRequest = 8_192;
   const encodedWorkspace = encodeURIComponent(workspace);
   const encodedStream = encodeURIComponent(streamId);
   const streamPath = `/v1/workspaces/${encodedWorkspace}/streams/${encodedStream}`;
@@ -1695,23 +1695,33 @@ test('live streaming sustained backpressure drains configured records with reset
   expect(afterCapPayload.total_lag).toBe(remainingRecords);
   expect(afterCapPayload.total_lag).toBeLessThan(backpressureRecords);
 
-  const resumed = await request('POST', runPath, {
-    limit: 8,
-    timeout_seconds: 1,
-    max_batches: expectedResumeBatches + 3,
-    max_records: backpressureRecords,
-    idle_polls: 3,
-  });
-  expect(resumed.status(), await resumed.text()).toBe(200);
-  const resumedPayload = await resumed.json();
-  expect(resumedPayload).toMatchObject({
-    stream_id: streamId,
-    status: 'succeeded',
-    stop_reason: 'idle',
-    records: remainingRecords,
-    rows: remainingRecords,
-  });
-  expect(resumedPayload.batches).toBe(expectedResumeBatches);
+  let resumedRecords = 0;
+  while (resumedRecords < remainingRecords) {
+    const requestRecords = Math.min(
+      maxRecordsPerRequest,
+      remainingRecords - resumedRecords,
+    );
+    const finalRequest = requestRecords === remainingRecords - resumedRecords;
+    const resumed = await request('POST', runPath, {
+      limit: 8,
+      timeout_seconds: 1,
+      max_batches: Math.ceil(requestRecords / 8) + 3,
+      max_records: finalRequest ? requestRecords + 1 : requestRecords,
+      idle_polls: 3,
+    });
+    expect(resumed.status(), await resumed.text()).toBe(200);
+    const resumedPayload = await resumed.json();
+    expect(resumedPayload).toMatchObject({
+      stream_id: streamId,
+      status: finalRequest ? 'succeeded' : 'limit_reached',
+      stop_reason: finalRequest ? 'idle' : 'max_records',
+      records: requestRecords,
+      rows: requestRecords,
+    });
+    expect(resumedPayload.batches).toBe(Math.ceil(requestRecords / 8));
+    resumedRecords += resumedPayload.records;
+  }
+  expect(resumedRecords).toBe(remainingRecords);
 
   const finalHealth = await request('GET', healthPath);
   expect(finalHealth.status(), await finalHealth.text()).toBe(200);
