@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D246 on current candidate `23dd0c25ea821c54b49bc6baa8da1682e28a009b`
+passes `2/2` explicit real-PostgreSQL scheduler daemon recovery cases:
+reacquisition after an expired lease without duplicate fire, and process-crash
+replay without duplicate job. Cleanup is PASS. This is a filtered bounded
+diagnostic; P11 remains `in_progress`, P13 remains `blocked`, and release
+remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D245 on current candidate `18da1d4e5bd8147af9a8a8d87473fe5c8023abaa` passes
 Docker integration `27/27` and strict v0.1 acceptance `15/15`, using
 PostgreSQL, a Docker worker, Floci/S3 and Azurite/Azure fixtures. Cleanup is
