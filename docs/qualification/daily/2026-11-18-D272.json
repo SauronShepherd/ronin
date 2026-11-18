@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D272",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler deployment binding workspace scope",
+  "candidate_sha": "d7fee14ef3c530dfad2a9986e2689fe23579dea5",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D272.md",
+  "execution_scope": "clean-main filtered integration selection against isolated real PostgreSQL 16.4",
+  "result": {
+    "deployment": "PASS: scheduler deployment binding is workspace-scoped and runnable",
+    "tests": "PASS: 1 selected, 20 deselected, 0 selected skips, 0 selected failures",
+    "cleanup": "PASS: isolated PostgreSQL removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d272-scheduler-deployment-binding-current-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_deployment_binding_is_workspace_scoped_and_runnable'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d272-scheduler-deployment-binding-current-20261118",
+    "postgres_image": "postgres:16.4-alpine",
+    "sha256": {
+      "pytest-output.log": "5C6A830E28BB9942E00F8D098985E25A9BF600E9CD489E0C74722C0CAFA707B8",
+      "pytest-postgres.log": "DCA389E49EB89E433D4D5C91B46891F6B60A9856ABE13995DFC1819C502B6B69",
+      "pytest-postgres.xml": "AFB0AC9C3EBF71077E2390CF03B40A842B2C69438073FA547EAC5824CAC22F49",
+      "pytest-timings.json": "5A6DF0B9FEC8ABD3861F8ADB4F9B1CF88A36A9B197F0578C9FC178DFEC0F4292",
+      "runner-timings.json": "F1A659D9354479A3D41A929E37B5D4FCE5602939C0F9C02F615C5820850B4FFB"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded scheduler deployment-binding evidence, not indefinite operation, HA/multi-worker, full controller conformance, complete P11 or release approval.",
+    "D272 is distinct from, and does not reattribute, D271, D270, D269, D268, D267, D266, D265, D264, D263, D246, D222, D145 or earlier receipts."
+  ]
+}
