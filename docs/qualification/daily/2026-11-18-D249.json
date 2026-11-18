@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D249",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate 120-second PostgreSQL supervisor soak",
+  "candidate_sha": "3c9e4f87d21ae7252a611831270a76c42ccc9332",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "3c9e4f87d21ae7252a611831270a76c42ccc9332",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D249.md",
+  "execution_scope": "clean-main live single-broker Redpanda plus real PostgreSQL 16.4, with explicit 120-second supervisor soak",
+  "result": {
+    "soak": "PASS: 1/1 filtered Playwright case; SupervisorSoakSeconds=120; 113 run cycles and 113 health cycles observed",
+    "api_audit": "PASS: 227/227 real API events correlated with structured HTTP logs, all OK, 0 unexpected authorization gaps and 0 unexpected server/network errors",
+    "services": "PASS: Ronin API, Redpanda and PostgreSQL 16.4 were live and PostgreSQL was the configured Ronin backend",
+    "cleanup": "PASS: PostgreSQL, broker, volume and network removed; no containers or qualification images remain",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "3c9e4f87d21ae7252a611831270a76c42ccc9332",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d249-supervisor-soak-120-postgres-current-20261118 -TestGrep 'supervisor soak' -StorageBackend postgres -SupervisorSoakSeconds 120 -RequestTimeoutSeconds 30",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d249-supervisor-soak-120-postgres-current-20261118",
+    "sha256": {
+      "browser-live.log": "42792ABFE56F0613FBFEF72C064969882AED27075EEA6C69CC73A7CABF6FF972",
+      "browser-live.xml": "086921B98D6CBCD757AF9B4AD1ED0D0C9E3B3349F897734DA820F0E685C25282",
+      "live-api-traffic.json": "CA156BD00FAE1EF93E6C64B9F5DF18331503C3A75110FE6E4E30D8349BF3908C",
+      "live-server.stderr.log": "4423F4AD8F7FAC024F7EFF4294D2ED106D97A412D15D8712B307030B83734EB6",
+      "qualification-summary.json": "C45D7FD034F4F26AA752938F18AAAAE2E53207B8F0086FFE36DB837F4B115EB7",
+      "live-python-freeze.txt": "D517BC9547CD57D9AE63EF3F54B3314C46A5EB55750A1E055E3202CDF261F7B9"
+    }
+  },
+  "limitations": [
+    "This is bounded 120-second single-broker evidence, not indefinite operation, production SLO, HA/multi-worker, multi-broker recovery, complete P11 or release approval.",
+    "D248 used the runner default of 60 seconds despite an external environment override and is not counted as the new 120-second criterion; D249 uses the explicit -SupervisorSoakSeconds 120 parameter.",
+    "D249 does not reattribute D189 or any D83-D100 evidence."
+  ]
+}
