@@ -1,0 +1,70 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D98",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-main live Redpanda/API stream-to-event-triggered-workflow",
+  "candidate_sha": "6bb64f01430d6123cf395d35a182d4840ff602fe",
+  "implementation_commit_sha": "8afd9df8d3b52bc7830642c2e59e242cffab8f20",
+  "documentation_commit_sha": "6bb64f01430d6123cf395d35a182d4840ff602fe",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D98.md",
+  "execution_scope": "clean-candidate-filtered-live-single-broker-redpanda-ronin-api-stream-event-workflow",
+  "result": {
+    "journey": "PASS: 1/1 filtered Playwright case passed, 0 skips and 0 failures",
+    "event_workflow": "PASS: a committed record from the real single-record Redpanda fault topic created a deterministic stream event, matched the scoped stream.record trigger, reached delivered state and created a workflow-run-event-* run; a replay run was idle and produced no second delivery",
+    "checkpoint_and_lag": "PASS: the stream health lag moved from 1 to 0 after the bounded run and remained replay-safe",
+    "api": "PASS: 12/12 real API events correlated with structured HTTP logs, all OK, 0 uncorrelated and 0 unexpected server/network errors",
+    "services": "PASS: real single-broker Redpanda and Ronin API; PostgreSQL and worker are intentionally not applicable to this filtered streaming cell",
+    "cleanup": "PASS: isolated broker/network cleanup, browser media cleanup and environment restoration; no Ronin containers or images remained",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "request_timeout_seconds": 15,
+    "stream_id": "events/live-workflow-trigger",
+    "source_topic": "ronin-live-fault-events",
+    "source_partitions": 1,
+    "initial_lag": 1,
+    "final_lag": 0,
+    "event_type": "stream.record",
+    "trigger_id": "live-stream-trigger",
+    "workflow_id": "live-main",
+    "sink_kind": "table",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-qualification-916b60c1c6f44660b0de2ebf9cb444a6",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-qualification-916b60c1c6f44660b0de2ebf9cb444a6 -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 15"
+  },
+  "services": {
+    "postgres": false,
+    "kafka": true,
+    "ronin_api": true,
+    "worker_image": null,
+    "route_coverage_audited": false,
+    "active_routes": 25,
+    "api_routes": 24,
+    "ui_only_routes": 1
+  },
+  "hashes": {
+    "browser_live_log": "be58232ee19b2ea6cf7114b3eff23f41ce6dc367c24f6d8195bd28774f8b9269",
+    "browser_live_xml": "f15692012d44977cf83817711ea80cc7e242310c77f9ecf853b2ab1556522126",
+    "live_api_traffic": "d4106f02d5ce3dae9c533305ddfb5a07bbda8ab0f3b25aa69893393b62390407",
+    "qualification_summary": "179666bf410ddc1e49a4f4b320be654177e4142eed8ed4df13fd54ed4eeb625f",
+    "live_server_stderr": "d11a9394b14818ff40da133fb292005069f5d525af07ea746645b2fcf31b4d58",
+    "live_python_freeze": "a28ac3fa3b0f865950f727215bbc6b3cba4e5541b63e54bb0e07179f10388ecb"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "This is a filtered streaming-only diagnostic with routeCoverage.audited=false, PostgreSQL=false and workerImage=null.",
+    "The cell uses one Redpanda broker, one source partition and the local table sink; it does not certify an external object store/provider, multi-worker topology, HA, provider breadth or the complete P11 family journey.",
+    "The stream-to-event bridge is durable and idempotent across sink replay, event insertion and checkpoint retry, but it is not a cross-provider atomic transaction or an indefinite-operation/SLO claim.",
+    "The production implementation boundary is 8afd9df8d3b52bc7830642c2e59e242cffab8f20; the final live candidate 6bb64f01430d6123cf395d35a182d4840ff602fe includes the focused test fixture corrections.",
+    "D98 does not close P11, the 13-family aggregate, P13 external-secret-provider qualification or human release approval."
+  ]
+}

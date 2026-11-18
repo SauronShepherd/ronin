@@ -7,6 +7,17 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D98 adds a current-candidate live stream-to-event-triggered-workflow cell on
+clean candidate `6bb64f01430d6123cf395d35a182d4840ff602fe`: a real
+single-record Redpanda topic commits through the local table sink, creates a
+deterministic `stream.record` event, delivers it to `live-main`, creates a
+`workflow-run-event-*` run and keeps exactly one delivery on replay. The
+journey passes `1/1`, correlates `12/12` real API events as `OK`, reports no
+unexpected errors and cleans up the isolated services. This is a bounded
+single-broker diagnostic, not indefinite operation, a production-duration SLO,
+a distributed transaction or a complete P11 qualification. The production
+implementation boundary is `8afd9df8d3b52bc7830642c2e59e242cffab8f20`.
+
 D97 adds a bounded live supervisor-duration cell on clean candidate
 `5dd019fdc89c0d7886ea47db794d70e563c8cb03`: a real producer sends records to a
 two-partition Redpanda topic for `60` configured seconds while repeated

@@ -2,13 +2,13 @@
 
 ## Estado transferido
 
-D97 queda cerrado con una celda live bounded nueva; D93 sigue siendo la última
-celda de alto volumen, pero el release no es GO:
+D98 queda cerrado con la primera celda live que une un registro Kafka confirmado
+con un workflow disparado por evento. El release sigue siendo NO-GO:
 
 ```text
-production implementation boundary: 633980dd3b08affcc604dc918c1a6cbf026cc408
-qualification candidate at D97: 5dd019fdc89c0d7886ea47db794d70e563c8cb03
-documentation/main HEAD at handoff: 6a3d395c870ad146900edac5c48c9f3e4ee49c48
+production implementation boundary: 8afd9df8d3b52bc7830642c2e59e242cffab8f20
+qualification candidate at D98: 6bb64f01430d6123cf395d35a182d4840ff602fe
+documentation/main HEAD at handoff: pending final documentation commit
 worktree at handoff creation: main, limpio
 familias: 1/13
 release gates: 0/10
@@ -17,70 +17,45 @@ P13: blocked
 release: NO-GO
 ```
 
-`5dd019fd` sólo añade el productor y la cualificación live del supervisor; no
-cambia el runtime de producción respecto de `633980dd`. D97 usa Redpanda y
-Ronin API reales durante 60 segundos configurados, exige ciclos repetidos
-mientras llegan datos y verifica drenaje final a lag cero. D96 usa el sink
-Parquet local/live con cap y reset/replay; D95 mantiene la celda local PyArrow,
-D94 la celda SQLite de 1.024 registros y D93 el journey live de alto volumen en
-`549ffe30`. Ninguna de las fronteras debe ocultarse.
-
 ## Evidencia más reciente
 
-- [D97](2026-11-18-D97.md): soak live bounded de supervisor con productor real,
-  `1/1` Playwright, `35/35` eventos API `OK`, al menos `15` ciclos durante la
-  llegada de datos, checkpoints, lag final `0` y cleanup correcto.
+- [D98](2026-11-18-D98.md): stream-to-event-triggered-workflow live con
+  Redpanda/API reales, lag `1 → 0`, entrega `delivered`, run
+  `workflow-run-event-*`, replay idle, `1/1` Playwright y `12/12` eventos API
+  `OK`; cleanup correcto.
+- [D97](2026-11-18-D97.md): soak live bounded del supervisor con productor real,
+  `1/1` Playwright, `35/35` eventos API `OK`, ciclos repetidos y lag final `0`.
+- [D96](2026-11-18-D96.md): sink Parquet con Redpanda/API reales, cap/lag-zero,
+  reset/replay y `11/11` eventos `OK`.
+- [D95](2026-11-18-D95.md): soak Parquet local bounded de `64` registros.
+- [D94](2026-11-18-D94.md): soak SQLite local bounded de `1.024` registros.
+- [D93](2026-11-18-D93.md): `65.536` registros en Redpanda single-broker,
+  cap/resume segmentado, lag `0`, idle replay, reset y replay estable.
 
-- [D96](2026-11-18-D96.md): sink Parquet con Redpanda/API reales, `1/1`
-  Playwright, `11/11` eventos `OK`, cap/lag-zero/reset/replay y cleanup.
+La implementación productiva nueva está en `8afd9df8`; D98 no reatribuye D83–D97
+ni convierte los diagnósticos filtrados en una cualificación completa de P11.
 
-- [D95](2026-11-18-D95.md): soak Parquet local bounded de `64` registros en
-  cuatro segmentos más replay tras reset, `1/1` caso nuevo y `98/98` en la
-  selección combinada; ficheros, offsets, idempotencia y cleanup verificados.
+## Cambios relevantes para continuar
 
-- [D94](2026-11-18-D94.md): soak local bounded de `1.024` registros en cuatro
-  segmentos, `1/1` caso nuevo y `97/97` en la selección combinada; checkpoint,
-  sink, límites y cierre de sesiones verificados.
+- `KafkaStreamingRuntime` recibe `event_store` y `clock`; el callback se ejecuta
+  después del commit del sink y antes del checkpoint CAS.
+- `studio_execution.stream_scheduler.ingest_stream_record` sigue siendo el
+  adaptador determinista: `stream-{stream_id}-{partition}-{offset}`.
+- El diagnóstico live requiere seed completo para que exista `live-main`, pero
+  sólo levanta Redpanda y el perfil SQLite local; PostgreSQL/worker siguen fuera.
+- No usar `-AllowDirtyWorktree` para evidencia de candidato; D98 se ejecutó con
+  worktree limpio.
 
-- [D93](2026-11-18-D93.md): `65.536` registros en Redpanda single-broker
-  real, cap `73`, ocho reanudaciones de máximo `8.192`, lag `0`, idle replay,
-  reset y dos replays de `7`; `1/1` Playwright, `19/19` eventos correlacionados
-  `OK`, cleanup correcto. Evidencia:
-  `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-live-d93-backpressure-65536-candidate-549ffe30-20261118`.
-- [D92](2026-11-17-D92.md): celda anterior de `32.768` registros, bounded,
-  sobre `633980dd`.
-- D90/D91: route-wide con un skip explícito y failover RF3 focalizado,
-  respectivamente; no se combinan en una cualificación completa de P11.
-- D83–D89: regresión Python/PostgreSQL, Docker, Helm/kind y supply-chain,
-  todos ligados al candidato de implementación `633980dd`.
+## Límites abiertos
 
-## Cambios del arnés
-
-- `tools/streaming_supervisor_soak_producer.py` crea un tópico temporal de dos
-  particiones y produce datos JSON durante una duración bounded.
-- `tools/run_live_product_qualification.ps1` expone
-  `-SupervisorSoakSeconds` (`60–900`) y lo propaga como
-  `RONIN_LIVE_SUPERVISOR_SOAK_SECONDS`.
-- `web-tests/tests/product-live.spec.mjs` añade el caso filtrable del supervisor
-  durante la llegada de datos; el contrato estático lo protege.
-- Las validaciones estáticas pasan: Ruff, contrato focalizado `1/1`, Node,
-  PowerShell y Playwright list `1`; el run live pasa `1/1`.
-
-## Límites que siguen abiertos
-
-1. operación indefinida o SLO de producción; D97 sólo dura 60 segundos y es
-   bounded, mientras D94–D96 son celdas locales/live acotadas;
-2. topología productiva, multi-worker y HA;
-3. amplitud de proveedores externos, object store y matriz completa de
-   recovery;
-4. journey completo de P11 y agregación de las 13 familias;
-5. decisiones humanas de licencia, NOTICE, VEX, producto, soporte, versión,
-   plataformas y freeze;
-6. cualificación P13 con proveedor externo de secretos.
-
-D97, D96 y D93 son diagnósticos streaming-only: PostgreSQL y worker no aplican,
-`routeCoverage.audited=false` y los límites explícitos no equivalen a operación
-indefinida.
+1. journey completo de P11 y agregación de las 13 familias;
+2. operación indefinida o SLO de producción;
+3. topología productiva, multi-worker y HA;
+4. providers externos, object store y recovery externo;
+5. recovery del scheduler durante reinicio y matriz de recuperación completa;
+6. decisiones humanas de licencia, NOTICE, producto, soporte, plataformas y
+   freeze;
+7. cualificación P13 con proveedor externo de secretos.
 
 ## Reglas de continuación
 
@@ -88,9 +63,9 @@ indefinida.
 - D49 es contexto técnico, no autorización para relajar la matriz de evidencia.
 - Mantener SHA exacto, logs, hashes y cleanup. No usar mocks para certificar
   proveedores reales.
-- Cualquier cambio de producción exige una nueva frontera y recualificación;
-  no reatribuir D83–D97 automáticamente.
-- Antes de publicar el siguiente recibo, ejecutar:
+- Cualquier cambio de producción exige nueva frontera y recualificación; no
+  reatribuir D83–D98 automáticamente.
+- Antes del próximo handoff ejecutar:
 
 ```powershell
 python -m tools.ronin_daily_progress --check --report
@@ -101,8 +76,8 @@ git diff --check
 
 ## Próximo paso recomendado
 
-No repetir D93, D94, D95, D96 ni el mismo soak temporal. Elegir una brecha P11
-externa nueva: cualificar una celda bounded con proveedor/topología autorizados y criterio de parada
-explícito; o, si el entorno no permite esa duración, HA o proveedor, registrar
-el bloqueo reproducible y preparar la matriz de decisión humana. Mantener P11
-`in_progress`, P13 `blocked` y release `NO-GO`.
+No repetir D93–D98. Elegir una brecha P11 externa y autorizada —journey
+PostgreSQL/worker, recovery del scheduler, provider/object store o operación
+bounded con criterio explícito— y registrar límites exactos. Mantener P11
+`in_progress`, P13 `blocked` y release `NO-GO` hasta que la evidencia y las
+decisiones humanas permitan otra conclusión.
