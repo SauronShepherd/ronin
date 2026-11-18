@@ -249,6 +249,7 @@ def test_live_postgres_seed_is_repeatable_and_keeps_existing_database_data() -> 
 
 def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     script = (ROOT / "tools" / "run_live_product_qualification.ps1").read_text(encoding="utf-8")
+    seed = (ROOT / "tools" / "seed_live_streaming.py").read_text(encoding="utf-8")
     live_support = (ROOT / "web-tests" / "tests" / "live-support.mjs").read_text(encoding="utf-8")
     live_suite = (ROOT / "web-tests" / "tests" / "product-live.spec.mjs").read_text(
         encoding="utf-8"
@@ -359,6 +360,10 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
         "live streaming event workflow is triggered by a committed record"
         in live_suite
     )
+    assert 'event_workflow_topic = "ronin-live-event-workflow-events"' in seed
+    assert "(event_workflow_topic, 1, {})" in seed
+    assert "resource: 'ronin-live-event-workflow-events'" in live_suite
+    assert "resource: 'ronin-live-fault-events'" in live_suite
     assert (
         "if ($streamEventWorkflowDiagnostic) {\n            & $python -m tools.seed_live_studio"
         in script

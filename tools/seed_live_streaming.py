@@ -55,6 +55,7 @@ def main() -> int:
     recovery_topic = "ronin-live-recovery-events"
     partitioned_topic = "ronin-live-partitioned-events"
     fault_topic = "ronin-live-fault-events"
+    event_workflow_topic = "ronin-live-event-workflow-events"
     sustained_topic = "ronin-live-sustained-events"
     backpressure_topic = "ronin-live-backpressure-events"
     near_record_limit_topic = "ronin-live-near-record-limit-events"
@@ -75,6 +76,7 @@ def main() -> int:
         (recovery_topic, 1, {}),
         (partitioned_topic, 2, {}),
         (fault_topic, 1, {}),
+        (event_workflow_topic, 1, {}),
         (sustained_topic, 2, {}),
         (backpressure_topic, 2, {}),
         (near_record_limit_topic, 1, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
@@ -180,6 +182,11 @@ def main() -> int:
             value=json.dumps({"event": f"backpressure-{index:04d}"}),
         )
     producer.produce(fault_topic, key="ronin-live-fault-0", value=json.dumps({"event": "fault-0"}))
+    producer.produce(
+        event_workflow_topic,
+        key="ronin-live-event-workflow-0",
+        value=json.dumps({"event": "event-workflow-0"}),
+    )
     if producer.flush(15) != 0:
         raise SystemExit("Kafka did not acknowledge the live qualification record")
 

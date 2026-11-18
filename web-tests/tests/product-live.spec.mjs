@@ -2133,7 +2133,7 @@ test('live streaming event workflow is triggered by a committed record', async (
     name: 'Live stream event workflow qualification',
     source: {
       connection_id: 'live-kafka',
-      resource: 'ronin-live-fault-events',
+      resource: 'ronin-live-event-workflow-events',
       partitions: [0],
       format: 'json',
     },
