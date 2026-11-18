@@ -406,7 +406,9 @@ def build_local_composed_from_env() -> LocalServerComposition:
         retry_seconds=_seconds("RONIN_SCHEDULER_RETRY_SECONDS", "2"),
     )
     environment_store = (
-        SqliteEnvironmentStore(database, migration_now=now) if postgres_dsn is None else None
+        SqliteEnvironmentStore(database, migration_now=now)
+        if postgres_dsn is None
+        else scheduler
     )
     environment_service = (
         EnvironmentService(scheduler, environment_store) if environment_store is not None else None
