@@ -45,6 +45,17 @@ def _definition(*, partitions: tuple[int, ...] = (0,)) -> StreamDefinition:
     )
 
 
+def _parquet_definition() -> StreamDefinition:
+    return StreamDefinition(
+        id="events/main",
+        name="Events",
+        source=StreamSourceDefinition("kafka-local", "events", (0,)),
+        sink=StreamSinkDefinition("parquet", "events-parquet"),
+        schema=(StreamSchemaField("event", "string", nullable=False),),
+        runtime=StreamRuntimeBinding("local", batch_limit=4, timeout_seconds=0.0),
+    )
+
+
 def test_runtime_processes_once_and_persists_sink_before_checkpoint(tmp_path: Path) -> None:
     workspace = "workspace-a"
     stream_id = "events/main"
@@ -360,6 +371,111 @@ def test_runtime_supervisor_bounded_soak_preserves_checkpoint_and_sink_across_se
     assert [source.polls for source in source_instances] == [segment_size] * segments
     assert all(source.limits == [4] * (segment_size - 3) + [3, 2, 1] for source in source_instances)
     assert all(source.closed for source in source_instances)
+
+
+def test_runtime_supervisor_bounded_soak_persists_parquet_and_replays_after_reset(
+    tmp_path: Path,
+) -> None:
+    from studio_lakehouse import read_parquet_rows
+
+    workspace = "workspace-a"
+    stream_id = "events/main"
+    definition = _parquet_definition()
+    checkpoints = SqliteStreamCheckpointStore(tmp_path / "state.sqlite3")
+    checkpoints.commit_stream_bundle_import(workspace, (definition,), {stream_id: "reset"})
+    connection = SimpleNamespace(
+        connector_id="kafka",
+        options=(("bootstrap.servers", "broker:9092"),),
+        secret_refs=(),
+    )
+    source_instances = []
+    segment_size = 16
+    segments = 4
+
+    class _ContinuousSource:
+        def __init__(self) -> None:
+            self.closed = False
+            self.polls = 0
+            self.limits = []
+
+        def poll(self, checkpoint, *, limit, timeout_seconds):
+            assert 1 <= limit <= 4
+            assert timeout_seconds == 0.0
+            previous = checkpoint.offset_for(0)
+            offset = 0 if previous is None else previous + 1
+            self.polls += 1
+            self.limits.append(limit)
+            record = StreamRecord(0, offset, 1, f"event-{offset}", {"event": f"created-{offset}"})
+            return StreamBatch((record,), StreamCheckpoint((StreamPosition(0, offset),)))
+
+        def close(self) -> None:
+            self.closed = True
+
+    def source_factory(**_kwargs):
+        source = _ContinuousSource()
+        source_instances.append(source)
+        return source
+
+    runtime = KafkaStreamingRuntime(
+        checkpoints,
+        lambda _workspace, _connection_id: connection,
+        lambda _reference: "unused",
+        tmp_path / "data",
+        source_factory=source_factory,
+    )
+
+    runtime_id = checkpoints.runtime_stream_id(workspace, stream_id)
+    parquet_root = tmp_path / "data" / "streaming"
+
+    def parquet_files() -> tuple[Path, ...]:
+        return tuple(sorted(parquet_root.rglob("*.parquet")))
+
+    for segment in range(segments):
+        result = runtime.run_until_idle(
+            workspace,
+            stream_id,
+            max_batches=segment_size * 2,
+            max_records=segment_size,
+            idle_polls=1,
+        )
+        expected_records = (segment + 1) * segment_size
+        assert result["status"] == "limit_reached"
+        assert result["stop_reason"] == "max_records"
+        assert result["batches"] == segment_size
+        assert result["records"] == segment_size
+        assert result["rows"] == segment_size
+        assert checkpoints.get(runtime_id).offset_for(0) == expected_records - 1
+        files = parquet_files()
+        assert len(files) == expected_records
+        offsets = sorted(
+            int(row["event"].split("-", 1)[1])
+            for path in files
+            for row in read_parquet_rows(path)
+        )
+        assert offsets == list(range(expected_records))
+
+    checkpoints.commit_stream_bundle_import(workspace, (definition,), {stream_id: "reset"})
+    replay = runtime.run_until_idle(
+        workspace,
+        stream_id,
+        max_batches=2,
+        max_records=1,
+        idle_polls=1,
+    )
+
+    assert replay["status"] == "limit_reached"
+    assert replay["stop_reason"] == "max_records"
+    assert replay["records"] == 1
+    assert checkpoints.get(runtime_id).offset_for(0) == 0
+    assert len(parquet_files()) == segment_size * segments
+    assert len(source_instances) == segments + 1
+    assert [source.polls for source in source_instances] == [segment_size] * segments + [1]
+    assert all(source.closed for source in source_instances)
+    assert all(
+        source.limits == [4] * (segment_size - 3) + [3, 2, 1]
+        for source in source_instances[:segments]
+    )
+    assert source_instances[-1].limits == [1]
 
 
 def test_runtime_supervisor_rejects_unbounded_or_empty_caps(tmp_path: Path) -> None:
