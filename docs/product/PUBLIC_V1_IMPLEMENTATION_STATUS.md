@@ -7,6 +7,14 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D275 on current candidate `253e6e47b9e1aaf5a155d0672f1ea852c96b98bb`
+passes the complete PostgreSQL workflow-store integration file `21/21`, with
+zero skips, failures or deselected cases, in 42.72 seconds and cleanup PASS.
+This is complete-file but bounded evidence; it does not prove indefinite
+operation, HA/multi-worker, complete controller conformance, P11 or release
+approval. P11 remains `in_progress`, P13 remains `blocked`, and release remains
+**NO-GO** at `1/13` families and `0/10` gates.
+
 D274 on current candidate `b16749e3aff75402bd354fb5dc16abf2fce1b624`
 passes the PostgreSQL late-branch-decision integrity case `1/1`, rejecting the
 late decision without mutating the terminal task, with cleanup PASS. This is
