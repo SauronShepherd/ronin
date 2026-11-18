@@ -882,6 +882,8 @@ D159 passed the filtered real Azure Blob snapshot replay test (`1/1`) against Az
 D160 attempted a Quality live diagnostic with `StorageBackend postgres` but was not PASS: the quality-only runner skipped PostgreSQL/Kafka and the seeder timed out before server start (`0/0` cases). Cleanup passed; no PostgreSQL qualification is claimed.
 
 D162 passed `1/1` filtered Quality Studio live case with Ronin configured against real PostgreSQL. The run produced 7 correlated API events (6 OK and 1 expected WARN), with zero skipped or failed cases and cleanup passing. The PostgreSQL fixture now seeds the governed catalog revision in PostgreSQL, matching the foreign-key boundary used by `PostgresQualityStore`. This is bounded Quality runtime evidence only; P11 remains in progress, P13 blocked and release NO-GO at `1/13` families and `0/10` gates.
+
+D163 ran the full live browser campaign with PostgreSQL, Kafka and a Docker worker from the candidate. It is **NOT_PASS**: `34/43` cases passed, one deliberate multi-broker case was skipped and eight failed. The PostgreSQL profile exposed unconfigured environments, FinOps, synthetic catalog, graphs and deployments services; the sustained backpressure and supervisor-soak scenarios also missed their criteria. All `411/411` API events were correlated, and cleanup passed. This diagnostic does not change P11, P13 or release status.
 The production implementation boundary is now
 `e6f635dfe9159351711f44af9199e573e6e8a5bb`; D100 changes production replay
 behavior and binds the full route, worker and companion evidence to that exact

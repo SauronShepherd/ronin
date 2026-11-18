@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D163",
+  "date": "2026-11-18",
+  "candidate_sha": "7a7080932d14a127b882464fc85774730d455210",
+  "implementation_boundary_sha": "a9413421c27a11ea0e65bfba70777aa2127f37a9",
+  "scope": "full live product qualification with PostgreSQL, Kafka and Docker worker",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d163-live-postgres-full-20261118 -StorageBackend postgres -WorkerImage ronin-d163-worker:7a708093 -RequestTimeoutSeconds 30",
+  "result": {"status": "NOT_PASS", "playwright_executed": 43, "playwright_passed": 34, "playwright_skipped": 1, "playwright_failed": 8, "api_events": 411, "api_correlated": 411, "api_errors": 11},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d163-live-postgres-full-20261118", "cleanup": "PASS; containers, volume, network and temporary qualification images removed"},
+  "failures": ["PostgreSQL profile returned 500/503 in environments, finops, synthetic catalog, graphs and deployments journeys because those services are not configured in the current composed profile.", "Sustained streaming backpressure hit a fetch failure and supervisor soak observed 9 cycles instead of the required 15.", "Final traffic assertion saw an event without requestId after the preceding failures."],
+  "limitations": ["This is a failure diagnostic, not release evidence or complete P11 qualification. No historical evidence is reattributed."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
