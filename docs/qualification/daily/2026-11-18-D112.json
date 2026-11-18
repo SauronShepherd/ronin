@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D112",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "PostgreSQL ML registry Bundle atomic concurrency and replay",
+  "candidate_sha": "cbb5d753a4a574152c4a59313d1ce6311bceb5c8",
+  "implementation_commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "documentation_commit_sha": null,
+  "evidence": "docs/qualification/handoffs/2026-11-18-D112.md",
+  "execution_scope": "clean-main-isolated-postgresql-16.4-ml-registry-bundle-diagnostic",
+  "result": {
+    "ml_bundle": "PASS: PostgreSQL ML registry Bundle import is atomic under concurrency and replayable",
+    "focused_result": "PASS: 1/1 selected test, 0 skips, 0 failures, 11 deselected",
+    "service": "PASS: isolated real postgres:16.4-alpine and temporary schema cleanup",
+    "cleanup": "PASS: runner completed and preserved XML/log/timing evidence",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d112-postgres-ml-bundle-20261118 -TestPath tests/integration/test_postgres_ml_real.py -TestFilter 'postgres_ml_registry_bundle_is_atomic_concurrent_and_replayable'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d112-postgres-ml-bundle-20261118",
+    "pytest_xml": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d112-postgres-ml-bundle-20261118\\pytest-postgres.xml",
+    "candidate_sha": "cbb5d753a4a574152c4a59313d1ce6311bceb5c8"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered direct PostgreSQL ML diagnostic, not the complete Python/PostgreSQL suite or full Public v1 journey.",
+    "D112 does not certify an external cloud provider, indefinite operation, HA/multi-worker, production SLO, P13, a release gate or human release approval.",
+    "The D100 live server/backend distinction remains unchanged: its live Ronin server used SQLite."
+  ]
+}
