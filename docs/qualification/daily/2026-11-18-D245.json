@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D245",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate Docker and strict v0.1 acceptance reconfirmation",
+  "candidate_sha": "18da1d4e5bd8147af9a8a8d87473fe5c8023abaa",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "tooling_commit_sha": "92d24549",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D245.md",
+  "execution_scope": "clean-main Docker qualification using PostgreSQL, Docker worker, Floci/S3 and Azurite/Azure fixtures",
+  "result": {
+    "docker_integration": "PASS: 27/27 tests, 0 skipped, 0 failed",
+    "v01_strict": "PASS: 15/15, 0 skipped, 0 xfailed, 0 failed, 0 errors, strict_success=true",
+    "image": "sha256:8618dcc79f00c16bd00720ee13b45a78ec08ff2e37dbed5cb162df893c40302b",
+    "cleanup": "PASS: owned Ronin image and qualification resources removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "18da1d4e5bd8147af9a8a8d87473fe5c8023abaa",
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d245-docker-full-current-20261118",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d245-docker-full-current-20261118",
+    "sha256": {
+      "qualification-summary.json": "B13098A16AE8A640ADD4981BD2CA04BF22CE6887F33FA6F6578537A7B6535ED0",
+      "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+      "docker-cleanup.json": "D84EC9EC62CEABA936E72268D3D6805DFF33A7C679A0A5B9CD8F371DED1A6A52",
+      "docker-pytest-output.log": "B4E090C4BB5781268EAF75A4FBD6A585D3FABAFA38CF4B87DE9784A9E75E972B",
+      "docker-qualification.log": "FB9F9E5D5D135E35606BD9D57E3BA0B83950B0A06CC57B942D5E18A77496FD39"
+    }
+  }
+}
