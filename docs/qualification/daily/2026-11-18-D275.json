@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D275",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate complete PostgreSQL workflow-store integration file",
+  "candidate_sha": "253e6e47b9e1aaf5a155d0672f1ea852c96b98bb",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D275.md",
+  "execution_scope": "clean-main complete integration file against isolated real PostgreSQL 16.4",
+  "result": {
+    "workflow_store": "PASS: complete selected integration file",
+    "tests": "PASS: 21 selected, 0 deselected, 0 skips, 0 failures",
+    "duration_seconds": 42.72,
+    "cleanup": "PASS: isolated PostgreSQL removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d275-postgres-workflow-store-full-current-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d275-postgres-workflow-store-full-current-20261118",
+    "postgres_image": "postgres:16.4-alpine",
+    "sha256": {
+      "pytest-output.log": "EDAD0C48DFA077CFBBD28ABFA947ADDA239646C221917002C9FCD98487102C8A",
+      "pytest-postgres.log": "1CA1D69486CC734F06FB635FE32E841E5700B52BAE7E9F545CF8CA909B4BA6E8",
+      "pytest-postgres.xml": "0151B836C5CB9F4DF16DEF90FC32F0660794B8D9AA6EAE6494F7F9FFEDE0032E",
+      "pytest-timings.json": "E21D160B22F5341A741763EC7CAB6E4A656FA375FBBB1F0CA624D95F1F96BF9C",
+      "runner-timings.json": "CE256BC8B545FAAD0D82D8B9872B706F17E2EF8504D869F7CB01059C25287C30"
+    }
+  },
+  "limitations": [
+    "This is complete-file but bounded PostgreSQL scheduler integration evidence, not indefinite operation, HA/multi-worker, full controller conformance, complete P11 or release approval.",
+    "D275 consolidates current file coverage without reattributing D274, D273, D272, D271, D270, D269, D268, D267, D266, D265, D264, D263, D246, D222, D145 or earlier receipts."
+  ]
+}
