@@ -292,16 +292,24 @@ try {
     $env:RONIN_RUNNER_BROKER_TOKEN = [guid]::NewGuid().ToString("N")
     $env:RONIN_TOKEN_SCOPES = '{"version":1,"grants":[{"version":1,"actions":["read","list","events","submit","execute","cancel","evidence:read"],"resource":{"kind":"project","identifier":"examples/demo"},"constraints":{}}]}'
     $sqliteOnlyDiagnostic = $semanticOnlyDiagnostic -or $mlOnlyDiagnostic -or $syntheticOnlyDiagnostic -or ($qualityOnlyDiagnostic -and $StorageBackend -eq "sqlite")
+    # Streaming diagnostics normally omit PostgreSQL, but an explicit
+    # postgres backend request must still provision and seed it. Otherwise
+    # the seeder receives a DSN for a service the mode intentionally skipped.
+    $postgresRequired = -not $sqliteOnlyDiagnostic -and $StorageBackend -eq "postgres"
     $composeStarted = -not $sqliteOnlyDiagnostic
     if ($sqliteOnlyDiagnostic) {
         $diagnosticName = if ($mlOnlyDiagnostic) { "Machine Learning Studio" } elseif ($semanticOnlyDiagnostic) { "Semantic Studio" } elseif ($qualityOnlyDiagnostic) { "Quality Studio" } else { "Synthetic Data Studio" }
         Write-Output "$diagnosticName-only diagnostic: SQLite product routes do not require PostgreSQL or Kafka containers."
     } elseif ($streamingOnlyDiagnostic) {
         $brokerTopology = if ($multiBrokerDiagnostic) { "three-broker" } else { "single-broker" }
-        Write-Output "Streaming-only diagnostic: starting $brokerTopology Redpanda without unrelated PostgreSQL fixtures."
-        if ($multiBrokerDiagnostic) {
+        if ($postgresRequired) {
+            Write-Output "Streaming-only diagnostic: starting $brokerTopology Redpanda plus requested PostgreSQL backend."
+            docker compose -p $composeProject --profile qualification-streaming up -d --wait --wait-timeout 120 postgres streaming-broker
+        } elseif ($multiBrokerDiagnostic) {
+            Write-Output "Streaming-only diagnostic: starting $brokerTopology Redpanda without unrelated PostgreSQL fixtures."
             docker compose @composeFiles -p $composeProject --profile $composeProfile up -d --wait --wait-timeout 120 @composeServices
         } else {
+            Write-Output "Streaming-only diagnostic: starting $brokerTopology Redpanda without unrelated PostgreSQL fixtures."
             docker compose -p $composeProject --profile qualification-streaming up -d --wait --wait-timeout 120 streaming-broker
         }
     } else {
@@ -309,7 +317,7 @@ try {
     }
     if (-not $sqliteOnlyDiagnostic -and $LASTEXITCODE -ne 0) { throw "Could not start the required isolated live-test services for '$composeProject'." }
     $servicesReady = $true
-    $postgresStarted = -not ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)
+    $postgresStarted = $postgresRequired
     $kafkaStarted = -not $sqliteOnlyDiagnostic
 
     if ($postgresStarted) {

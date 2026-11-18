@@ -396,7 +396,7 @@ def test_semantic_live_diagnostic_skips_unrelated_postgres_and_kafka_containers(
         "$sqliteOnlyDiagnostic = $semanticOnlyDiagnostic -or $mlOnlyDiagnostic -or "
         "$syntheticOnlyDiagnostic -or ($qualityOnlyDiagnostic -and $StorageBackend -eq \"sqlite\")" in script
     )
-    assert "$postgresStarted = -not ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)" in script
+    assert "$postgresStarted = $postgresRequired" in script
     assert "$kafkaStarted = -not $sqliteOnlyDiagnostic" in script
     assert (
         "if (-not $sqliteOnlyDiagnostic) {\n        & $python -m tools.seed_live_streaming"
@@ -444,7 +444,7 @@ def test_synthetic_live_diagnostic_uses_sqlite_and_exercises_real_generation_exp
 
     assert '$syntheticOnlyDiagnostic = $TestGrep -eq "synthetic"' in script
     assert "$composeStarted = -not $sqliteOnlyDiagnostic" in script
-    assert "$postgresStarted = -not ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)" in script
+    assert "$postgresStarted = $postgresRequired" in script
     assert "$kafkaStarted = -not $sqliteOnlyDiagnostic" in script
     assert "& $python -m tools.seed_live_studio --workspace-only" in script
     assert (
@@ -462,7 +462,7 @@ def test_quality_live_diagnostic_uses_sqlite_and_checks_warn_outcomes() -> None:
     live = (ROOT / "web-tests" / "tests" / "product-live.spec.mjs").read_text(encoding="utf-8")
 
     assert '$qualityOnlyDiagnostic = $TestGrep -eq "quality"' in script
-    assert "$postgresStarted = -not ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)" in script
+    assert "$postgresStarted = $postgresRequired" in script
     assert (
         "} elseif ($qualityOnlyDiagnostic) {\n        & $python -m tools.seed_live_studio" in script
     )
