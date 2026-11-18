@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D202",
+  "date": "2026-11-18",
+  "candidate_sha": "c52f1f404489e673be98f1ea9d4a261a10e1b3ca",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL Bundle multi-object atomicity, idempotency and late-binding rollback",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d202-postgres-bundle-20261118 -TestPath tests/integration/test_postgres_bundle_real.py",
+  "result": {"status": "PASS", "pytest_selected": 2, "pytest_passed": 2, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 2.57},
+  "evidence": {
+    "tests": ["test_postgres_bundle_late_binding_conflict_rolls_back_earlier_connection_insert", "test_postgres_bundle_multi_object_commit_is_atomic_and_idempotent"],
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "assertions": ["multi-object atomic commit", "idempotent replay", "late-binding conflict rollback"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d202-postgres-bundle-20261118",
+    "sha256": {"pytest-output.log": "0A43AED42EB388BC4F2ED3974819116542C49B2B02806EB1A2D9D78DE9497217", "pytest-postgres.log": "77B64ED4F0AAB7A871C5BDB6F52C1AB36450490BBB2D33BF9D7555CDF6C4B713", "pytest-postgres.xml": "0FB50095CE481595AE2BF1F3B4CE5B6AA6721A57DE217D3D60A998AB4ED68940", "pytest-timings.json": "66C8C671075538956E9AEA09343FF241DE676B3034E45A80D803253CE682B066", "runner-timings.json": "54630A36E743D4A5131E101EBB3868E05A8D67B4A24D88880063F4D28E49DB78"}
+  },
+  "limitations": ["Bounded PostgreSQL Bundle evidence only; it does not prove indefinite operation, HA/multi-worker, external provider certification, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
