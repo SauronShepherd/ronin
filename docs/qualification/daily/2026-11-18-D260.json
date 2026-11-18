@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D260",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL Notebook Studio with Docker worker",
+  "candidate_sha": "253c935680e168cbd79fe25d5741433dedc9125d",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D260.md",
+  "execution_scope": "clean-main live Notebook Studio journey with Ronin configured for real PostgreSQL and Kafka, executing on a real Docker worker image",
+  "result": {
+    "notebook": "PASS: 1/1 filtered live Notebook Studio case",
+    "api_audit": "PASS: 18/18 real API events correlated, all OK, 0 unexpected authorization gaps and 0 unexpected server/network errors",
+    "runtime": "PASS: PostgreSQL-backed Ronin server created, versioned and executed a notebook through the Docker worker",
+    "worker_image": "sha256:6872290f91ce9cb9279b25194732889c07d5e8eb44f83731fdbc12d3f5197d14",
+    "cleanup": "PASS: PostgreSQL, broker, network, volumes and temporary worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "253c935680e168cbd79fe25d5741433dedc9125d",
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d260 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d260-worker-image-current-20261118 -TestFilter 'test_real_docker_worker_executes_demo_against_postgres' -KeepImage; pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d260-live-notebook-postgres-worker-current-20261118 -StorageBackend postgres -WorkerImage ronin:qualification-d260 -TestGrep 'live Notebook Studio creates, versions and executes a notebook on a Docker worker' -RequestTimeoutSeconds 60",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d260-live-notebook-postgres-worker-current-20261118",
+    "sha256": {
+      "browser-live.log": "C2B64F79D5175058A2B8DFCC9846430A66DB40B38A34E4C659450B4BF4788294",
+      "browser-live.xml": "A1BC03BE2ACE1A93DB9F93A3AFFD917BE946CFEA82855DEF8D1556C8017CA452",
+      "live-api-traffic.json": "006D2EA9D421F4CA3C5821F0EBA142260BFD4A4CD3CC737633856B0DB4D1B0C0",
+      "live-server.stderr.log": "F07BD3150EE7A97201ADC666C210151C18B6AE976E17CCC059EADDB2736A3220",
+      "qualification-summary.json": "2AE1AB7311515D6447CDC0A6F098EEC981A9F4939F2184AEDDC2618B6C33DE22"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded Notebook Studio evidence, not route-wide coverage, indefinite operation, HA/multi-worker, complete P11 or release approval.",
+    "The PostgreSQL qualification applies to this configured live server and journey; it does not reclassify the earlier SQLite-backed live route.",
+    "D260 does not reattribute D142, D235, D236, D244, D254, D100 or earlier receipts."
+  ]
+}
