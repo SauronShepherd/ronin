@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D264",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler leadership generation fencing",
+  "candidate_sha": "5b4e000d89e40c1b4b4ff7c74430f8c7c569beb8",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D264.md",
+  "execution_scope": "clean-main filtered integration selection against isolated real PostgreSQL 16.4",
+  "result": {
+    "leadership": "PASS: scheduler leadership is generation-fenced and persistent across reopen",
+    "tests": "PASS: 1 selected, 20 deselected, 0 selected skips, 0 selected failures",
+    "cleanup": "PASS: isolated PostgreSQL removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d264-scheduler-leadership-current-20261118 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_leadership_is_generation_fenced_and_persistent'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d264-scheduler-leadership-current-20261118",
+    "postgres_image": "postgres:16.4-alpine",
+    "sha256": {
+      "pytest-output.log": "9F9F402075DF4468D76CCA1ECEB9E46ADFA7C803B2D49A59DA6DD7A1731DDFE5",
+      "pytest-postgres.log": "D7AE668ECDB0F60F7D86F4A2FACDC593BD5C9BD7DFE1B67E098A6018A3806E96",
+      "pytest-postgres.xml": "86459DD7F8CA6933D2BDF7959B6BFEEC22A1DC59DC4E1E58A2134F0DD899090C",
+      "pytest-timings.json": "CFB0D21BAA4572E3C800337CCDCDBE559A64BA1D5EC734ECDE87C47CEC72F738",
+      "runner-timings.json": "2380094B86C702C48850E5122F1981B63A2342992350D5BEEA48B2239D419E14"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded scheduler leadership evidence, not indefinite operation, HA/multi-worker, full controller conformance, complete P11 or release approval.",
+    "D264 is distinct from, and does not reattribute, D263, D246, D222, D145 or earlier receipts."
+  ]
+}
