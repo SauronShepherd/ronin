@@ -2,13 +2,14 @@
 
 ## Estado transferido
 
-D98 queda cerrado con la primera celda live que une un registro Kafka confirmado
-con un workflow disparado por evento. El release sigue siendo NO-GO:
+D99 queda cerrado con una regresión de recuperación en la frontera evento→
+checkpoint, después de D98 que une un registro Kafka confirmado con un workflow
+disparado por evento. El release sigue siendo NO-GO:
 
 ```text
 production implementation boundary: 8afd9df8d3b52bc7830642c2e59e242cffab8f20
-qualification candidate at D98: 6bb64f01430d6123cf395d35a182d4840ff602fe
-documentation baseline commit: 86546d77d2dc72c7cc66d8e464c54cb78f4a050f
+qualification candidate at D99: df4013704ffe41010e765cd0ff030fbe07e77e3d
+documentation baseline: D99 documentation commit to be bound after creation
 worktree at handoff creation: main, limpio
 familias: 1/13
 release gates: 0/10
@@ -19,6 +20,9 @@ release: NO-GO
 
 ## Evidencia más reciente
 
+- [D99](2026-11-18-D99.md): regresión SQLite de fallo después de insertar el
+  evento y antes del CAS; checkpoint no avanza, sink y entrega permanecen una
+  vez, y el retry avanza sin duplicar; `14/14` tests y Ruff PASS.
 - [D98](2026-11-18-D98.md): stream-to-event-triggered-workflow live con
   Redpanda/API reales, lag `1 → 0`, entrega `delivered`, run
   `workflow-run-event-*`, replay idle, `1/1` Playwright y `12/12` eventos API
@@ -32,8 +36,9 @@ release: NO-GO
 - [D93](2026-11-18-D93.md): `65.536` registros en Redpanda single-broker,
   cap/resume segmentado, lag `0`, idle replay, reset y replay estable.
 
-La implementación productiva nueva está en `8afd9df8`; D98 no reatribuye D83–D97
-ni convierte los diagnósticos filtrados en una cualificación completa de P11.
+La implementación productiva nueva está en `8afd9df8`; D99 sólo añade
+verificación y D98 no reatribuye D83–D97 ni convierte los diagnósticos filtrados
+en una cualificación completa de P11.
 
 ## Cambios relevantes para continuar
 
@@ -43,6 +48,8 @@ ni convierte los diagnósticos filtrados en una cualificación completa de P11.
   adaptador determinista: `stream-{stream_id}-{partition}-{offset}`.
 - El diagnóstico live requiere seed completo para que exista `live-main`, pero
   sólo levanta Redpanda y el perfil SQLite local; PostgreSQL/worker siguen fuera.
+- D99 demuestra el retry del store de eventos real tras un fallo en la frontera
+  anterior al CAS, pero no certifica una transacción distribuida.
 - No usar `-AllowDirtyWorktree` para evidencia de candidato; D98 se ejecutó con
   worktree limpio.
 
@@ -64,7 +71,7 @@ ni convierte los diagnósticos filtrados en una cualificación completa de P11.
 - Mantener SHA exacto, logs, hashes y cleanup. No usar mocks para certificar
   proveedores reales.
 - Cualquier cambio de producción exige nueva frontera y recualificación; no
-  reatribuir D83–D98 automáticamente.
+  reatribuir D83–D99 automáticamente.
 - Antes del próximo handoff ejecutar:
 
 ```powershell
@@ -76,7 +83,7 @@ git diff --check
 
 ## Próximo paso recomendado
 
-No repetir D93–D98. Elegir una brecha P11 externa y autorizada —journey
+No repetir D93–D99. Elegir una brecha P11 externa y autorizada —journey
 PostgreSQL/worker, recovery del scheduler, provider/object store o operación
 bounded con criterio explícito— y registrar límites exactos. Mantener P11
 `in_progress`, P13 `blocked` y release `NO-GO` hasta que la evidencia y las

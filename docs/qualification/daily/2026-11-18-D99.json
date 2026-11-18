@@ -1,0 +1,42 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D99",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Local stream event checkpoint-boundary retry and idempotency",
+  "candidate_sha": "df4013704ffe41010e765cd0ff030fbe07e77e3d",
+  "implementation_commit_sha": "8afd9df8d3b52bc7830642c2e59e242cffab8f20",
+  "documentation_commit_sha": "df4013704ffe41010e765cd0ff030fbe07e77e3d",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D99.md",
+  "execution_scope": "clean-main-local-sqlite-stream-event-store-failure-after-insert-before-checkpoint-cas",
+  "result": {
+    "runtime_tests": "PASS: 14/14 tests in tests/test_streaming_runtime.py",
+    "failure_boundary": "PASS: a simulated failure after durable event insertion leaves the checkpoint unchanged while the sink and one event delivery remain persisted",
+    "retry": "PASS: a fresh runtime retry advances the checkpoint, keeps one sink row and keeps exactly one event delivery",
+    "static": "PASS: Ruff and git diff --check",
+    "services": "PASS: local SQLite workspace, scheduler event store, stream table and checkpoint store; no external service claim",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "test": "test_runtime_retries_after_event_store_failure_without_duplicate_sink_or_delivery",
+    "command": "python -m pytest tests/test_streaming_runtime.py -q",
+    "focused_result": "14 passed in 32.25s",
+    "ruff_command": "python -m ruff check tests/test_streaming_runtime.py",
+    "candidate_sha": "df4013704ffe41010e765cd0ff030fbe07e77e3d"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "This is a local deterministic failure-injection regression, not a live provider or PostgreSQL/worker qualification.",
+    "The simulated failure occurs after the event store commits and before checkpoint CAS; it proves replay safety at that boundary but not a distributed transaction across independent providers.",
+    "D99 does not close P11, the 13-family aggregate, P13 external-secret-provider qualification or human release approval."
+  ]
+}

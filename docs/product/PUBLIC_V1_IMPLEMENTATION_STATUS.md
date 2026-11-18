@@ -7,6 +7,16 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D99 adds a local failure-boundary retry regression on clean candidate
+`df4013704ffe41010e765cd0ff030fbe07e77e3d`: after the real SQLite event store
+commits a stream event, a simulated failure occurs before checkpoint CAS; the
+checkpoint remains unchanged while the sink and one delivery persist, and a
+retry advances without duplicates. The focused runtime selection passes
+`14/14` and Ruff passes. This is deterministic local recovery evidence, not a
+live provider, PostgreSQL/worker, distributed transaction or complete P11
+qualification. The production implementation boundary remains
+`8afd9df8d3b52bc7830642c2e59e242cffab8f20`.
+
 D98 adds a current-candidate live stream-to-event-triggered-workflow cell on
 clean candidate `6bb64f01430d6123cf395d35a182d4840ff602fe`: a real
 single-record Redpanda topic commits through the local table sink, creates a
