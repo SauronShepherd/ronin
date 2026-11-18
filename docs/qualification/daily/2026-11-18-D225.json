@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D225",
+  "date": "2026-11-18",
+  "candidate_sha": "021a59c57a79e748b34f57556a3840acce29767d",
+  "implementation_boundary_sha": "561ba5e5f8e95f786921e52a060c35fae6801799",
+  "scope": "filtered Docker S3-compatible provider recovery and artifact retention",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d225-s3-provider-20261118 -TestFilter 's3_json_sink_put_read_and_retry_round_trip or ml_durable_input_output_and_retention_round_trip_through_s3'",
+  "result": {"status": "PASS", "pytest_selected": 2, "pytest_passed": 2, "pytest_skipped": 0, "pytest_failed": 0, "strict_v01_evaluated": false},
+  "evidence": {
+    "tests": ["S3 JSON sink put/read/retry round trip", "ML durable input/output and retention round trip through S3"],
+    "provider": "Floci S3-compatible local service",
+    "image_digest": "sha256:7f5c38155554632674c4a2cf507e09d79ac42be3d7859d6b3481d429a529dd06",
+    "cleanup": "PASS; Floci container, volume, network and owned Ronin image removed",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d225-s3-provider-20261118",
+    "sha256": {
+      "docker-cleanup.json": "9EED5F41949661F2B3FB99379FF75EB14ACA4BFBFEC5F16D6194482CCE31CB48",
+      "docker-pytest-output.log": "A25C2723DC167DE50D5BC05A38C55593CFF7ED6F89165F14DBE770FD2123E8EE",
+      "docker-qualification.log": "1E8B6D28C1F8408C5A48068DF451993D6C27F4979581F9702C93F521FA221285",
+      "floci-s3-qualification.log": "6B6AA20D6D3F1F7F8E126F7639A3DD9DC90EFA416B8095A1AC2543D636C48AA5",
+      "v01-acceptance.xml": "6F65BBF973DE7FC1684EC1D51BF80DBD2E2A23C031E67CC07427B743938E46C0"
+    }
+  },
+  "limitations": ["Filtered Docker diagnostic only; Floci is S3-compatible local evidence, not cloud-provider certification. Strict v0.1, indefinite operation, HA/multi-worker, complete P11 and release gates remain unproven."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}

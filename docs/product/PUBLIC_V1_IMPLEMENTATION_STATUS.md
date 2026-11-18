@@ -7,6 +7,15 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D225 passes `2/2` filtered Docker provider cases against real local Floci
+S3-compatible service on candidate `021a59c57a79e748b34f57556a3840acce29767d`,
+at production boundary `561ba5e5f8e95f786921e52a060c35fae6801799`: JSON sink
+retry after a lost response and ML durable input/output with retention cleanup.
+Floci, volume, network and owned Ronin image cleanup pass. This is not
+cloud-provider certification; strict v0.1, indefinite operation, HA, complete
+P11 and release gates remain open. P11 remains `in_progress`, P13 remains
+`blocked`, and release remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D224 passes the complete local scheduler daemon contract file `12/12` on
 candidate `904fe3f30470233d4b121d66d0fc5645df17c150`, at production boundary
 `561ba5e5f8e95f786921e52a060c35fae6801799`. It covers lifecycle limits, signal
