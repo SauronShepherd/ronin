@@ -67,11 +67,18 @@ def main() -> int:
     database = Path(raw_database).expanduser().resolve() if raw_database else None
     workspace_id = WorkspaceId(os.environ.get("RONIN_WORKSPACE_ID", "default"))
     now = "2026-09-17T00:00:00.000000Z"
+    workspace = Workspace(
+        workspace_id, "Live Qualification Workspace", "Ephemeral live UI fixture."
+    )
     if storage_backend == "sqlite":
-        SqliteWorkspaceStore(database, migration_now=now).create_workspace(
-            Workspace(workspace_id, "Live Qualification Workspace", "Ephemeral live UI fixture."),
-            now=now,
-        )
+        SqliteWorkspaceStore(database, migration_now=now).create_workspace(workspace, now=now)
+    else:
+        PostgresSchedulerSnapshotStore(
+            postgres_dsn, application_name="ronin-live-workspace-seeder"
+        ).create_workspace(workspace, now=now)
+        # The non-scheduler Studio fixtures remain SQLite-backed; keep their
+        # workspace namespace available without presenting it as the server DB.
+        SqliteWorkspaceStore(database, migration_now=now).create_workspace(workspace, now=now)
     if args.workspace_only:
         print("Seeded only the isolated workspace required for this filtered live route.")
         return 0
