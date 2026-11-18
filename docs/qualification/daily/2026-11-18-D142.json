@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D142",
+  "date": "2026-11-18",
+  "candidate_sha": "c8558e3fa328104f3749b1550392c63c80bf35f6",
+  "implementation_boundary_sha": "c8558e3fa328104f3749b1550392c63c80bf35f6",
+  "scope": "live Notebook Studio execution with Ronin PostgreSQL backend and Docker worker",
+  "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d142-live-postgres-worker-ba633ddcf33d4fd3a365e6aea636372b -TestGrep 'live Notebook Studio creates, versions and executes a notebook on a Docker worker' -StorageBackend postgres -WorkerImage ronin:d142-live-worker -RequestTimeoutSeconds 30",
+  "result": {"status": "PASS", "playwright_selected": 1, "playwright_passed": 1, "playwright_skipped": 0, "playwright_failed": 0, "api_events": 20, "correlated_http_logs": 20, "unexpected_errors": 0},
+  "evidence": {"path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d142-live-postgres-worker-ba633ddcf33d4fd3a365e6aea636372b", "server_backend": "postgres", "worker_image_digest": "sha256:f982226b6b913b4f9a12fe2166cb2072966d72733b322824efa6fddb6c2a8285", "fixtures": ["PostgreSQL", "Docker worker", "Kafka"], "cleanup": "PASS; services and temporary worker image removed"},
+  "limitations": ["Bounded Notebook Studio cell; not indefinite worker operation, HA, external-provider breadth, complete family coverage or release approval."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
