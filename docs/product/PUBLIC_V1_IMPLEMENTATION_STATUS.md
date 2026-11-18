@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D249 on current candidate `3c9e4f87d21ae7252a611831270a76c42ccc9332`
+passes an explicit 120-second PostgreSQL-configured supervisor soak: `1/1`
+case, `113` run cycles, `113` health cycles and `227/227` correlated API
+events, all `OK`, with cleanup PASS. This is bounded single-broker evidence;
+P11 remains `in_progress`, P13 remains `blocked`, and release remains
+**NO-GO** at `1/13` families and `0/10` gates.
+
 D247 on current candidate `a01b8d6b7e161bfa6a13668aea9e4e412bf121e6`
 passes the complete non-performance Python/PostgreSQL regression: `4759`
 passed, `31` explicit skips, `0` failed, with isolated PostgreSQL 16.4 cleanup.
