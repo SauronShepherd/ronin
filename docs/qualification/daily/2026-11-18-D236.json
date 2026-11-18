@@ -6,7 +6,7 @@
   "cell": "P11 real PostgreSQL scheduler/workflow store integration breadth",
   "candidate_sha": "d8451474d4d1980199f125341264debb9846a80e",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "pending",
+  "documentation_commit_sha": "4ec9ad47e39de4e06ea04720caa1eaa5b0a9ab13",
   "evidence": "docs/qualification/handoffs/2026-11-18-D236.md",
   "execution_scope": "clean-main filtered PostgreSQL diagnostic using the exact integration file against an isolated postgres:16.4-alpine service",
   "result": {
