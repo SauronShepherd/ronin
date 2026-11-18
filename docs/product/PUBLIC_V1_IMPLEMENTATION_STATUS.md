@@ -7,6 +7,16 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D261 on current candidate `642c7d14a584af027addf647580371716e9049d1`
+passes two real Floci S3-compatible provider/object-store cases `2/2`: JSON
+sink write/read/discovery with a retry after lost provider response, and ML
+durable input/output with digest verification and unreferenced-object cleanup.
+Cleanup is PASS. This is bounded S3-compatible provider evidence, not AWS,
+Azure or GCP production certification, external SLA evidence, indefinite
+operation, HA/multi-worker, complete P11 or release approval. P11 remains
+`in_progress`, P13 remains `blocked`, and release remains **NO-GO** at `1/13`
+families and `0/10` gates.
+
 D260 on current candidate `253c935680e168cbd79fe25d5741433dedc9125d`
 passes the PostgreSQL-configured live Notebook Studio journey with a real
 Docker worker `1/1`, with `18/18` correlated API events, all `OK`, and cleanup
