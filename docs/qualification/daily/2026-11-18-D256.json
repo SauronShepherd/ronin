@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D256",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate 300-second default-load PostgreSQL supervisor soak after harness batching fix",
+  "candidate_sha": "3d11f16e9972f4b9860ebd73149c3d3cc8b3f73e",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "tooling_commit_sha": "3d11f16e9972f4b9860ebd73149c3d3cc8b3f73e",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D256.md",
+  "execution_scope": "clean-main live single-broker Redpanda plus real PostgreSQL 16.4, default producer load, explicit 300-second supervisor soak",
+  "result": {
+    "soak": "PASS: 1/1 filtered Playwright case; SupervisorSoakSeconds=300; default producer load; criterion of at least 75 cycles exceeded",
+    "api_audit": "PASS: 203/203 real API events correlated with structured HTTP logs, all OK, 0 unexpected authorization gaps and 0 unexpected server/network errors",
+    "services": "PASS: Ronin API, Redpanda and PostgreSQL 16.4 were live and PostgreSQL was the configured Ronin backend",
+    "cleanup": "PASS: PostgreSQL, broker, volume and network removed; no containers or qualification images remain",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "candidate_sha": "3d11f16e9972f4b9860ebd73149c3d3cc8b3f73e",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d256-supervisor-soak-300-default-load-current-20261118 -TestGrep 'supervisor soak' -StorageBackend postgres -SupervisorSoakSeconds 300 -RequestTimeoutSeconds 30",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d256-supervisor-soak-300-default-load-current-20261118",
+    "harness_change": "The soak case uses one bounded max_batches=1 cycle with limit=32, preserving the >=75-cycle assertion while avoiding artificial backlog from limit=8; D251 remains historical NOT_PASS at the old harness setting.",
+    "sha256": {
+      "browser-live.log": "DF5241E320AA2046AA69FF0509025C77DA46717154CFAB9C5F89CB4245C77477",
+      "browser-live.xml": "4C122DE576309E329425009FC9F4987BB61CAD149658428F5870456111428DAF",
+      "live-api-traffic.json": "D395F344BBBB7BAAADB85B9DF44C39FFFEDB6163927FDF71EE03033799AB05B1",
+      "live-server.stderr.log": "5A01AFD318EA4DF689870F889DBE093AC0FCA00006EC785FEB9019BB8B532F3F",
+      "qualification-summary.json": "3491BB08C1F96C9D65F1F13E380A92B36A045B400272190F4C9BA8334468DFBC",
+      "live-python-freeze.txt": "8758C16356D4D128F389811012A66B50AD01F9F8F0C7938A48E4EA2D62488289"
+    }
+  },
+  "limitations": [
+    "This is bounded 300-second single-broker evidence, not indefinite operation, production SLO, HA/multi-worker, multi-broker recovery, complete P11 or release approval.",
+    "D256 validates the harness microbatch balance; it does not claim that every arbitrary producer rate is sustainable.",
+    "D256 does not reattribute D255, D253, D252, D249, D189 or D83-D100."
+  ]
+}
