@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "receipt_id": "D205",
+  "date": "2026-11-18",
+  "candidate_sha": "25556b9d1ecb89d7feb5a83420b8afcebe372333",
+  "implementation_boundary_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
+  "scope": "PostgreSQL QualityStore durable scoped chronological records",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d205-postgres-quality-20261118 -TestPath tests/integration/test_postgres_quality_store.py",
+  "result": {"status": "PASS", "pytest_selected": 1, "pytest_passed": 1, "pytest_skipped": 0, "pytest_failed": 0, "pytest_seconds": 3.46},
+  "evidence": {
+    "test": "test_postgres_quality_store_is_durable_scoped_and_chronological",
+    "backend": "real PostgreSQL 16.4 Alpine container with RONIN_POSTGRES_TEST_DSN injected",
+    "assertions": ["durable quality records", "workspace scoping", "chronological retrieval"],
+    "cleanup": "PASS; runner removed the PostgreSQL container and no containers remained",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d205-postgres-quality-20261118",
+    "sha256": {"pytest-output.log": "19E29B5D9A6D9612B2B351172A4C752D4A49F88D06DA0D95A0AC5A0B84BFF3FB", "pytest-postgres.log": "040057FD8CFF22FEFBEFEC9F6271D2475ACCAF97406D345F419802385436F928", "pytest-postgres.xml": "72ADA87E86B027CE97107AA64A0B1E6218EFAEEFC19CFB82D9AAFC73B0CA7AB5", "pytest-timings.json": "3E8BC77CC97E6621532BF58444A429ACD1DB9F30F85DA3C70A59A7BA5CAAB8CB", "runner-timings.json": "34A01C9C081874379A2D4F22BA9F7D4E5596FE7921A3C53F48364274A1A05115"}
+  },
+  "limitations": ["Bounded PostgreSQL quality-store evidence only; it does not prove external provider certification, indefinite operation, HA/multi-worker, the complete P11 family or release gates. No production code changed in this cell."],
+  "status": {"p11": "in_progress", "p13": "blocked", "release": "NO-GO", "families": "1/13", "gates": "0/10"}
+}
