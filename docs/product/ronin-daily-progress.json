@@ -846,13 +846,25 @@
       "evidence": "docs/qualification/handoffs/2026-11-18-D95.md",
       "candidate_sha": "e5ef16525164bfb346def250dd7d4d8053526144",
       "commit_sha": "e5ef16525164bfb346def250dd7d4d8053526144"
+    },
+    {
+      "id": "D96",
+      "date": "2026-11-18",
+      "phase": "p11-live-parquet-sink-reset-replay",
+      "status": "pass",
+      "families": [
+        "P11"
+      ],
+      "evidence": "docs/qualification/handoffs/2026-11-18-D96.md",
+      "candidate_sha": "b7b938c3d9712b6a74e87b3b10569161c9e8c789",
+      "commit_sha": "b7b938c3d9712b6a74e87b3b10569161c9e8c789"
     }
   ],
   "known_blockers": [
     {
       "id": "candidate-identity",
       "status": "open",
-      "summary": "D95 extends the local sink matrix on test candidate e5ef1652: four segments of 16 single-record micro-batches, 64 records total, runtime Parquet files, reset/replay without duplicate output, and source cleanup. The new case passes 1/1 and the focused combined selection passes 98/98. D94 covers the complementary SQLite sink, and D93 remains the latest real live cell at 65,536 records with segmented 8,192-record HTTP drains, 1/1 Playwright and 19/19 correlated OK events. The production implementation boundary remains 633980dd. P11 remains open for indefinite operation, production topology, provider breadth, the complete family journey, human decisions and aggregate approval."
+      "summary": "D96 adds the first filtered live Parquet-sink cell on candidate b7b938c3: real single-broker Redpanda/Ronin API, bounded cap/resume to lag zero, idle replay, two reset/replay cycles, 1/1 Playwright, 11/11 correlated OK events and cleanup. D95 extends the local Parquet sink matrix and D94 covers the complementary SQLite sink. D93 remains the high-volume real live cell at 65,536 records. The production implementation boundary remains 633980dd. P11 remains open for indefinite operation, production topology, provider breadth, external object-store recovery, the complete family journey, human decisions and aggregate approval."
     },
     {
       "id": "provider-certification",
@@ -867,7 +879,7 @@
     {
       "id": "full-baseline",
       "status": "open",
-      "summary": "D95 adds local bounded Parquet sink continuity and reset/replay evidence on test candidate e5ef1652; D94 covers the complementary SQLite sink. D93 remains the latest real live bounded backpressure cell at 65,536 records with 1/1 passed, 19/19 correlated OK events and successful cleanup. The production implementation boundary remains 633980dd. D92 remains the prior 32,768-record cell; D90 route-wide, D91 focused RF3, D89 supply-chain, D88 Helm/kind, D87 Docker, D85/D84 and D83 remain bounded receipts. Full family audit, indefinite operation, provider, external object-store, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
+      "summary": "D96 adds live Parquet sink continuity and reset/replay evidence on candidate b7b938c3; D95 covers local Parquet and D94 local SQLite. D93 remains the high-volume real live bounded backpressure cell at 65,536 records with 1/1 passed, 19/19 correlated OK events and successful cleanup. The production implementation boundary remains 633980dd. D92 remains the prior 32,768-record cell; D90 route-wide, D91 focused RF3, D89 supply-chain, D88 Helm/kind, D87 Docker, D85/D84 and D83 remain bounded receipts. Full family audit, indefinite operation, provider, external object-store, POSIX/symlink, Windows-privilege and external-CLI lanes remain open. Scans, bounded diagnostics, skips and warnings are not counted as complete release PASS."
     },
     {
       "id": "catalog-project-scope",

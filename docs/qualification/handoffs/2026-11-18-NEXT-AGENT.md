@@ -2,12 +2,12 @@
 
 ## Estado transferido
 
-D95 queda cerrado con evidencia local nueva; D93 sigue siendo la última celda
-live, pero el release no es GO:
+D96 queda cerrado con evidencia live nueva; D93 sigue siendo la última celda de
+alto volumen, pero el release no es GO:
 
 ```text
 production implementation boundary: 633980dd3b08affcc604dc918c1a6cbf026cc408
-qualification-harness/current main at D95: e5ef16525164bfb346def250dd7d4d8053526144
+qualification-harness/current main at D96: b7b938c3d9712b6a74e87b3b10569161c9e8c789
 documentation state: D94 receipt and status updates are included in current main history
 worktree at handoff creation: main, limpio
 familias: 1/13
@@ -17,13 +17,17 @@ P13: blocked
 release: NO-GO
 ```
 
-`e5ef1652` sólo añade una regresión de cualificación local; no cambia el runtime
-de producción respecto de `633980dd`. D95 prueba cuatro segmentos de 16
-micro-lotes con sink Parquet local, reset/replay y checkpoint durable; D94
-mantiene la celda SQLite de 1.024 registros. D93 califica por separado el
-arnés y el journey live de `549ffe30`; ninguna de las fronteras debe ocultarse.
+`b7b938c3` sólo añade una celda de cualificación live y su contrato de arnés; no
+cambia el runtime de producción respecto de `633980dd`. D96 usa Redpanda y
+Ronin API reales con sink Parquet local, cap, continuación y reset/replay. D95
+mantiene la celda local PyArrow y D94 la celda SQLite de 1.024 registros. D93
+califica por separado el journey live de alto volumen en `549ffe30`; ninguna de
+las fronteras debe ocultarse.
 
 ## Evidencia más reciente
+
+- [D96](2026-11-18-D96.md): sink Parquet con Redpanda/API reales, `1/1`
+  Playwright, `11/11` eventos `OK`, cap/lag-zero/reset/replay y cleanup.
 
 - [D95](2026-11-18-D95.md): soak Parquet local bounded de `64` registros en
   cuatro segmentos más replay tras reset, `1/1` caso nuevo y `98/98` en la
@@ -57,18 +61,18 @@ PASS.
 ## Límites que siguen abiertos
 
 1. operación indefinida/soak y continuidad del supervisor a duración de
-   producción; D94 y D95 sólo cubren soaks locales bounded;
+   producción; D96 es live pero bounded y D94–D95 son soaks locales;
 2. topología productiva, multi-worker y HA;
-3. amplitud de proveedores externos y matriz completa de sinks, replay y
+3. amplitud de proveedores externos, object store y matriz completa de
    recovery;
 4. journey completo de P11 y agregación de las 13 familias;
 5. decisiones humanas de licencia, NOTICE, VEX, producto, soporte, versión,
    plataformas y freeze;
 6. cualificación P13 con proveedor externo de secretos.
 
-D93 sigue siendo un diagnóstico streaming-only: PostgreSQL y worker no
-aplican, `routeCoverage.audited=false` y los límites explícitos no equivalen a
-operación indefinida.
+D96 y D93 son diagnósticos streaming-only: PostgreSQL y worker no aplican,
+`routeCoverage.audited=false` y los límites explícitos no equivalen a operación
+indefinida.
 
 ## Reglas de continuación
 
@@ -89,7 +93,7 @@ git diff --check
 
 ## Próximo paso recomendado
 
-No repetir D93, D94 ni D95. Elegir una brecha P11 externa nueva: cualificar una
+No repetir D93, D94, D95 ni D96. Elegir una brecha P11 externa nueva: cualificar una
 celda bounded con proveedor/topología autorizados y criterio de parada
 explícito; o, si el entorno no permite esa duración, HA o proveedor, registrar
 el bloqueo reproducible y preparar la matriz de decisión humana. Mantener P11

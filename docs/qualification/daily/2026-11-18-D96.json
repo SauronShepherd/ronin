@@ -1,0 +1,68 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D96",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-main live Redpanda/API Parquet sink bounded reset and replay",
+  "candidate_sha": "b7b938c3d9712b6a74e87b3b10569161c9e8c789",
+  "implementation_commit_sha": "633980dd3b08affcc604dc918c1a6cbf026cc408",
+  "documentation_commit_sha": "f77ad948dcf60519a7fd78040d6b6f3a22657320",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D96.md",
+  "execution_scope": "clean-candidate-filtered-live-single-broker-redpanda-ronin-api-parquet-sink-bounded-cap-resume-reset-replay",
+  "result": {
+    "journey": "PASS: 1/1 filtered Playwright case passed, 0 skips and 0 failures",
+    "parquet_sink": "PASS: real Redpanda/API stream definition used the runtime Parquet sink; a 10-record max_records cap left lag 54, resume drained the remaining 54 to lag zero, idle replay returned no records, and sink commits were parquet-batch addressed",
+    "reset_replay": "PASS: two reset/replay cycles each returned the same 7-record replay and parquet-batch commit shape without application errors",
+    "api": "PASS: 11/11 real API events correlated with structured HTTP logs, all OK, 0 uncorrelated and 0 unexpected server/network errors",
+    "services": "PASS: real single-broker Redpanda and Ronin API; PostgreSQL and worker are intentionally not applicable to this filtered streaming cell",
+    "cleanup": "PASS: isolated broker/network cleanup, browser media cleanup and environment restoration; no Ronin containers or images remained",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "request_timeout_seconds": 300,
+    "backpressure_records_fixture": 256,
+    "source_topic": "ronin-live-sustained-events",
+    "source_partitions": 2,
+    "sink_kind": "parquet",
+    "capped_records": 10,
+    "resumed_records": 54,
+    "replay_records": 7,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d96-parquet-sink-candidate-b7b938c3-20261118",
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-live-d96-parquet-sink-candidate-b7b938c3-20261118 -TestGrep 'live streaming parquet sink' -RequestTimeoutSeconds 300"
+  },
+  "services": {
+    "postgres": false,
+    "kafka": true,
+    "ronin_api": true,
+    "worker_image": null,
+    "route_coverage_audited": false,
+    "active_routes": 25,
+    "api_routes": 24,
+    "ui_only_routes": 1
+  },
+  "hashes": {
+    "browser_live_log": "923fdb596ea67e13ceb487a7bf816ee5c836bf9ac9943fb99b8b1f8418f2ff9a",
+    "browser_live_xml": "f21630de34386a3f9c93010c5c7188328f3769471fac7289fc017319a75efb89",
+    "live_api_traffic": "101ff7d8a930e11fa0827b1c59a18dbb45cd7f34eb23b472d4a4303359a00136",
+    "qualification_summary": "e86079594fba8670d21d0cba5c2fdae59a35dd4eaa2d0cf355554c84077de410",
+    "live_server_stderr": "ac5e07406d0be60b224d4eb58234d534a43366dad5d8eafe774f75b0bcc1210e",
+    "live_python_freeze": "9e988932f9b839e9fccf7e106ee150e6a18d94f9307169777b458c1c87df54c7"
+  },
+  "progress_before": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "progress_after": {
+    "families": "1/13",
+    "gates": "0/10",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "This is a filtered streaming-only diagnostic with routeCoverage.audited=false, PostgreSQL=false and workerImage=null.",
+    "The Parquet sink is local PyArrow/filesystem storage; D96 does not certify an external object store, provider matrix, worker execution, multi-worker topology or HA.",
+    "The 65.56-second bounded campaign is not indefinite operation or a production-duration SLO claim; D93 remains the separate high-volume live backpressure cell.",
+    "The production implementation boundary remains 633980dd; b7b938c3 changes qualification tooling/specification only and does not reattribute D83-D95 evidence.",
+    "D96 does not close the P11 family, the 13-family aggregate, P13 external-secret-provider qualification or human release approval."
+  ]
+}
