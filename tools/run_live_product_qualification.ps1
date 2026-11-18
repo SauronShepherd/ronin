@@ -8,6 +8,8 @@ param(
     [int]$BackpressureRecords = 256,
     [ValidateRange(240, 1800)]
     [int]$BackpressureTimeoutSeconds = 240,
+    [ValidateRange(60, 900)]
+    [int]$SupervisorSoakSeconds = 60,
     [ValidateRange(15, 3600)]
     [int]$RequestTimeoutSeconds = 15
 )
@@ -148,8 +150,9 @@ $syntheticOnlyDiagnostic = $TestGrep -eq "synthetic"
 $qualityOnlyDiagnostic = $TestGrep -eq "quality"
 $backpressureOnlyDiagnostic = $TestGrep -eq "sustained backpressure"
 $parquetStreamingDiagnostic = $TestGrep -eq "live streaming parquet sink"
+$supervisorSoakDiagnostic = $TestGrep -eq "supervisor soak"
 $performancePluginDiagnostic = -not $TestGrep -or $TestGrep -match "performance|route"
-$streamingOnlyDiagnostic = $TestGrep -eq "streaming" -or $multiBrokerDiagnostic -or $backpressureOnlyDiagnostic -or $parquetStreamingDiagnostic
+$streamingOnlyDiagnostic = $TestGrep -eq "streaming" -or $multiBrokerDiagnostic -or $backpressureOnlyDiagnostic -or $parquetStreamingDiagnostic -or $supervisorSoakDiagnostic
 if ($multiBrokerDiagnostic -and (-not $TestGrep -or $TestGrep -notmatch "streaming")) {
     throw "-MultiBroker requires a focused streaming -TestGrep so the three-broker fixture cannot be mistaken for the default live qualification."
 }
@@ -214,7 +217,7 @@ $envNames = @(
     "RONIN_CONTROL_PLANE_PERMISSIONS", "RONIN_CONTROL_PLANE_PORT", "RONIN_PORT",
     "RONIN_PG_TEST_USER", "RONIN_PG_TEST_PASSWORD", "RONIN_LIVE_API_URL", "RONIN_LIVE_JOBS_API_URL",
     "RONIN_LIVE_API_TOKEN", "RONIN_LIVE_WORKSPACE", "RONIN_LIVE_PG_PORT",
-    "RONIN_LIVE_PG_DATABASE", "RONIN_LIVE_REQUIRE_POSTGRES", "RONIN_LIVE_STREAMING_BOOTSTRAP", "RONIN_LIVE_STREAMING_REPLICATION_FACTOR", "RONIN_LIVE_BACKPRESSURE_RECORDS", "RONIN_LIVE_BACKPRESSURE_TIMEOUT_SECONDS", "RONIN_LIVE_MULTIBROKER", "RONIN_LIVE_API_TRAFFIC_OUTPUT", "RONIN_HTTP_REQUEST_TIMEOUT_SECONDS", "RONIN_LIVE_REQUEST_TIMEOUT_SECONDS", "RONIN_STUDIO_E2E_URL", "RONIN_STUDIO_E2E_TOKEN",
+    "RONIN_LIVE_PG_DATABASE", "RONIN_LIVE_REQUIRE_POSTGRES", "RONIN_LIVE_STREAMING_BOOTSTRAP", "RONIN_LIVE_STREAMING_REPLICATION_FACTOR", "RONIN_LIVE_BACKPRESSURE_RECORDS", "RONIN_LIVE_BACKPRESSURE_TIMEOUT_SECONDS", "RONIN_LIVE_SUPERVISOR_SOAK_SECONDS", "RONIN_LIVE_MULTIBROKER", "RONIN_LIVE_API_TRAFFIC_OUTPUT", "RONIN_HTTP_REQUEST_TIMEOUT_SECONDS", "RONIN_LIVE_REQUEST_TIMEOUT_SECONDS", "RONIN_STUDIO_E2E_URL", "RONIN_STUDIO_E2E_TOKEN",
     "PLAYWRIGHT_OUTPUT_DIR", "PLAYWRIGHT_HTML_OUTPUT_DIR", "PLAYWRIGHT_JUNIT_OUTPUT_FILE", "RONIN_KEEP_BROWSER_MEDIA",
     "RONIN_IMAGE", "RONIN_WORKSPACE", "RONIN_WORKER_OWNER", "RONIN_LIVE_WORKER_ENABLED",
     "PYTHONPATH", "RONIN_LIVE_PYTHON", "FORCE_COLOR", "npm_config_color", "NO_COLOR", "DEBUG_COLORS",
@@ -346,6 +349,7 @@ try {
     $env:RONIN_LIVE_API_TRAFFIC_OUTPUT = $evidenceFiles.Traffic
     $env:RONIN_LIVE_BACKPRESSURE_RECORDS = [string]$BackpressureRecords
     $env:RONIN_LIVE_BACKPRESSURE_TIMEOUT_SECONDS = [string]$BackpressureTimeoutSeconds
+    $env:RONIN_LIVE_SUPERVISOR_SOAK_SECONDS = [string]$SupervisorSoakSeconds
     $env:RONIN_HTTP_REQUEST_TIMEOUT_SECONDS = [string]$RequestTimeoutSeconds
     $env:RONIN_LIVE_REQUEST_TIMEOUT_SECONDS = [string]$RequestTimeoutSeconds
     # The jobs server serves the installed Studio assets. The control-plane
@@ -387,7 +391,8 @@ try {
     & $python -m compileall -q `
         (Join-Path $repoRoot "python") `
         (Join-Path $repoRoot "tools/seed_live_studio.py") `
-        (Join-Path $repoRoot "tools/seed_live_streaming.py")
+        (Join-Path $repoRoot "tools/seed_live_streaming.py") `
+        (Join-Path $repoRoot "tools/streaming_supervisor_soak_producer.py")
     $compileResult = $LASTEXITCODE
     $compileClock.Stop()
     if ($compileResult -ne 0) { throw "Could not precompile Ronin source modules for the live qualification environment." }
@@ -774,7 +779,7 @@ try {
         playwright = [ordered]@{ executed = $junitCaseCount; passed = $junitPassedCount; skipped = $junitSkippedCount; failed = $junitFailedCount; durationSeconds = $junitDurationSeconds }
         routeCoverage = [ordered]@{ audited = (-not [bool]$TestGrep); activeRoutes = $activeRoutes.Count; routesWithApiContracts = $apiRequiredRoutes.Count; uiOnlyRoutes = $activeRoutes.Count - $apiRequiredRoutes.Count }
         realServices = [ordered]@{ postgres = $postgresStarted; kafka = $kafkaStarted; roninApi = $apiReady; workerImage = $workerImageId }
-        streamingFixture = [ordered]@{ backpressureRecords = $BackpressureRecords; backpressureTimeoutSeconds = $BackpressureTimeoutSeconds; multiBroker = $multiBrokerDiagnostic }
+        streamingFixture = [ordered]@{ backpressureRecords = $BackpressureRecords; backpressureTimeoutSeconds = $BackpressureTimeoutSeconds; supervisorSoakSeconds = $SupervisorSoakSeconds; multiBroker = $multiBrokerDiagnostic }
         requestTimeoutSeconds = $RequestTimeoutSeconds
         apiTraffic = [ordered]@{ events = $trafficCount; correlatedHttpLogs = ($trafficCount - $uncorrelatedTraffic.Count); uncorrelated = $uncorrelatedTraffic.Count; outcomes = $apiOutcomes; evidence = $evidenceFiles.Traffic }
         applicationLogLevels = $logLevels

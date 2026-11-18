@@ -333,8 +333,20 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert "backpressureTimeoutSeconds" in script
     assert "RONIN_LIVE_BACKPRESSURE_TIMEOUT_SECONDS" in live_suite
     assert '$parquetStreamingDiagnostic = $TestGrep -eq "live streaming parquet sink"' in script
-    assert "$streamingOnlyDiagnostic = $TestGrep -eq \"streaming\" -or $multiBrokerDiagnostic -or $backpressureOnlyDiagnostic -or $parquetStreamingDiagnostic" in script
+    assert (
+        "$streamingOnlyDiagnostic = $TestGrep -eq \"streaming\" -or $multiBrokerDiagnostic -or "
+        "$backpressureOnlyDiagnostic -or $parquetStreamingDiagnostic -or $supervisorSoakDiagnostic"
+        in script
+    )
     assert "live streaming parquet sink" in live_suite
+    assert '$supervisorSoakDiagnostic = $TestGrep -eq "supervisor soak"' in script
+    assert "SupervisorSoakSeconds" in script
+    assert "RONIN_LIVE_SUPERVISOR_SOAK_SECONDS" in script
+    assert "streaming_supervisor_soak_producer.py" in script
+    assert (
+        "live streaming supervisor soak drains while records arrive for a bounded duration"
+        in live_suite
+    )
     assert '$TestGrep -eq "live streaming broker restart"' in script
     assert (
         '$performancePluginDiagnostic = -not $TestGrep -or $TestGrep -match "performance|route"'

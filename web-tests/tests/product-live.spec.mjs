@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
 import {
   connectLiveStudio,
@@ -1895,6 +1897,215 @@ test('live streaming parquet sink preserves reset replay across bounded runs', a
   expect((await secondReplay.json()).sink_commit_id).toMatch(/^parquet-batch:/);
   expect(calls.some(call => call.path === runPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
   await flushLiveTraffic();
+});
+
+test('live streaming supervisor soak drains while records arrive for a bounded duration', async ({ page }) => {
+  const soakSeconds = Number.parseInt(process.env.RONIN_LIVE_SUPERVISOR_SOAK_SECONDS || '60', 10);
+  expect(Number.isInteger(soakSeconds)).toBe(true);
+  expect(soakSeconds).toBeGreaterThanOrEqual(60);
+  expect(soakSeconds).toBeLessThanOrEqual(900);
+  test.setTimeout((soakSeconds + 120) * 1_000);
+  test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
+
+  const calls = installLiveApiProxy(page);
+  const workspace = process.env.RONIN_LIVE_WORKSPACE;
+  const api = process.env.RONIN_LIVE_API_URL;
+  const token = process.env.RONIN_LIVE_API_TOKEN;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+  const streamId = 'events/supervisor-soak';
+  const topic = 'ronin-live-supervisor-soak-events';
+  const encodedWorkspace = encodeURIComponent(workspace);
+  const encodedStream = encodeURIComponent(streamId);
+  const streamPath = `/v1/workspaces/${encodedWorkspace}/streams/${encodedStream}`;
+  const runPath = `${streamPath}/run`;
+  const healthPath = `${streamPath}/health`;
+  const definition = {
+    id: streamId,
+    name: 'Live supervisor duration soak qualification',
+    source: {
+      connection_id: 'live-kafka',
+      resource: topic,
+      partitions: [0, 1],
+      format: 'json',
+    },
+    sink: { kind: 'table', target_ref: 'live-supervisor-soak-events', mode: 'append' },
+    schema: [
+      { name: 'event', data_type: 'string', nullable: false },
+      { name: 'sequence', data_type: 'int64', nullable: false },
+    ],
+    runtime: { profile_id: 'local', batch_limit: 8, timeout_seconds: 1 },
+  };
+
+  const request = async (method, path, data) => {
+    const response = await page.evaluate(async ({ apiBase, requestPath, requestMethod, requestHeaders, body }) => {
+      const upstream = await fetch(`${apiBase}${requestPath}`, {
+        method: requestMethod,
+        headers: requestHeaders,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      return { status: upstream.status, text: await upstream.text() };
+    }, { apiBase: api, requestPath: path, requestMethod: method, requestHeaders: headers, body: data });
+    return {
+      status: () => response.status,
+      text: async () => response.text,
+      json: async () => JSON.parse(response.text),
+    };
+  };
+
+  const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
+  const producerScript = fileURLToPath(
+    new URL('../../tools/streaming_supervisor_soak_producer.py', import.meta.url),
+  );
+  const producer = spawn(
+    process.env.RONIN_LIVE_PYTHON || 'python',
+    [producerScript],
+    {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        RONIN_LIVE_SUPERVISOR_SOAK_TOPIC: topic,
+        RONIN_LIVE_SUPERVISOR_SOAK_SECONDS: String(soakSeconds),
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    },
+  );
+  let producerOutput = '';
+  let producerError = '';
+  let readyPayload = null;
+  let completedPayload = null;
+  let readyResolve;
+  let readyReject;
+  const readyPromise = new Promise((resolve, reject) => {
+    readyResolve = resolve;
+    readyReject = reject;
+  });
+  const producerCompletion = new Promise((resolve, reject) => {
+    producer.on('error', reject);
+    producer.on('exit', (code, signal) => {
+      if (code === 0 && completedPayload) {
+        resolve(completedPayload);
+      } else {
+        reject(new Error(`soak producer exited with code=${code} signal=${signal}: ${producerError}`));
+      }
+    });
+  });
+  let lineBuffer = '';
+  producer.stdout.setEncoding('utf8');
+  producer.stderr.setEncoding('utf8');
+  producer.stdout.on('data', chunk => {
+    producerOutput += chunk;
+    lineBuffer += chunk;
+    const lines = lineBuffer.split('\n');
+    lineBuffer = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const payload = JSON.parse(line);
+      if (payload.status === 'ready') {
+        readyPayload = payload;
+        readyResolve(payload);
+      } else if (payload.status === 'completed') {
+        completedPayload = payload;
+      } else if (payload.status === 'failed') {
+        readyReject(new Error(`soak producer failed: ${payload.error}`));
+      }
+    }
+  });
+  producer.stderr.on('data', chunk => {
+    producerError += chunk;
+  });
+
+  try {
+    await Promise.race([
+      readyPromise,
+      page.waitForTimeout(30_000).then(() => {
+        throw new Error(`timed out waiting for supervisor soak producer: ${producerError}`);
+      }),
+    ]);
+    expect(readyPayload).toMatchObject({ status: 'ready', topic, partitions: 2 });
+
+    const saved = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
+    expect(saved.status(), await saved.text()).toBe(200);
+
+    const started = Date.now();
+    const deadline = started + soakSeconds * 1_000;
+    let cycles = 0;
+    let consumedRecords = 0;
+    let peakLag = 0;
+    const checkpoints = new Set();
+    while (Date.now() < deadline) {
+      const run = await request('POST', runPath, {
+        limit: 8,
+        timeout_seconds: 1,
+        max_batches: 16,
+        max_records: 64,
+        idle_polls: 1,
+      });
+      expect(run.status(), await run.text()).toBe(200);
+      const runPayload = await run.json();
+      expect(runPayload.stream_id).toBe(streamId);
+      expect(['idle', 'succeeded', 'limit_reached']).toContain(runPayload.status);
+      expect(['idle', 'max_batches', 'max_records']).toContain(runPayload.stop_reason);
+      expect(runPayload.records).toBeGreaterThanOrEqual(0);
+      expect(runPayload.records).toBeLessThanOrEqual(64);
+      expect(runPayload.rows).toBe(runPayload.records);
+      expect(typeof runPayload.checkpoint).toBe('string');
+      checkpoints.add(runPayload.checkpoint);
+      consumedRecords += runPayload.records;
+
+      const health = await request('GET', healthPath);
+      expect(health.status(), await health.text()).toBe(200);
+      const healthPayload = await health.json();
+      expect(healthPayload.source_status).toBe('available');
+      expect(healthPayload.total_lag).toBeGreaterThanOrEqual(0);
+      peakLag = Math.max(peakLag, healthPayload.total_lag);
+      cycles += 1;
+      await page.waitForTimeout(250);
+    }
+
+    const completed = await producerCompletion;
+    expect(completed.status).toBe('completed');
+    expect(completed.produced).toBeGreaterThan(0);
+    expect(completed.duration_seconds).toBeGreaterThanOrEqual(soakSeconds - 2);
+    expect(cycles).toBeGreaterThanOrEqual(Math.max(10, Math.floor(soakSeconds / 4)));
+    expect(consumedRecords).toBeGreaterThan(0);
+    expect(peakLag).toBeGreaterThanOrEqual(0);
+    expect(checkpoints.size).toBeGreaterThan(0);
+
+    let finalHealthPayload;
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const tail = await request('POST', runPath, {
+        limit: 8,
+        timeout_seconds: 1,
+        max_batches: 32,
+        max_records: 128,
+        idle_polls: 2,
+      });
+      expect(tail.status(), await tail.text()).toBe(200);
+      const tailPayload = await tail.json();
+      expect(tailPayload.rows).toBe(tailPayload.records);
+      const health = await request('GET', healthPath);
+      expect(health.status(), await health.text()).toBe(200);
+      finalHealthPayload = await health.json();
+      if (finalHealthPayload.total_lag === 0) break;
+      await page.waitForTimeout(250);
+    }
+    expect(finalHealthPayload.source_status).toBe('available');
+    expect(finalHealthPayload.total_lag).toBe(0);
+    expect(calls.some(call => call.path === runPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
+    expect(calls.some(call => call.path === healthPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
+    await flushLiveTraffic();
+  } finally {
+    if (producer.exitCode === null) {
+      producer.kill();
+      await Promise.race([producerCompletion.catch(() => undefined), page.waitForTimeout(10_000)]);
+    }
+    if (producerOutput.length === 0 && producerError.length === 0) {
+      throw new Error('supervisor soak producer emitted no diagnostics');
+    }
+  }
 });
 
 test('live streaming enforces near-record and near-batch byte boundaries', async ({ page }) => {
