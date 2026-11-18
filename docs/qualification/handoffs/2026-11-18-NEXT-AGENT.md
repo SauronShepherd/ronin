@@ -9,7 +9,7 @@ disparado por evento. El release sigue siendo NO-GO:
 ```text
 production implementation boundary: 8afd9df8d3b52bc7830642c2e59e242cffab8f20
 qualification candidate at D99: df4013704ffe41010e765cd0ff030fbe07e77e3d
-documentation baseline: D99 documentation commit to be bound after creation
+documentation baseline commit: 5abee3c7581247d1ff94b28d4cede4b4855d86f4
 worktree at handoff creation: main, limpio
 familias: 1/13
 release gates: 0/10

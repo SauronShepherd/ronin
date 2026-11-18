@@ -6,7 +6,7 @@
   "cell": "Local stream event checkpoint-boundary retry and idempotency",
   "candidate_sha": "df4013704ffe41010e765cd0ff030fbe07e77e3d",
   "implementation_commit_sha": "8afd9df8d3b52bc7830642c2e59e242cffab8f20",
-  "documentation_commit_sha": "df4013704ffe41010e765cd0ff030fbe07e77e3d",
+  "documentation_commit_sha": "5abee3c7581247d1ff94b28d4cede4b4855d86f4",
   "evidence": "docs/qualification/handoffs/2026-11-18-D99.md",
   "execution_scope": "clean-main-local-sqlite-stream-event-store-failure-after-insert-before-checkpoint-cas",
   "result": {
