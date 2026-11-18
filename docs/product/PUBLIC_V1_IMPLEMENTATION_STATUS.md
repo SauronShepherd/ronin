@@ -611,11 +611,11 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `6bb64f01430d6123cf395d35a182d4840ff602fe` (2026-11-18).
+**Observed source head:** `df4013704ffe41010e765cd0ff030fbe07e77e3d` (2026-11-18).
 The production implementation boundary is now `8afd9df8d3b52bc7830642c2e59e242cffab8f20`;
-the observed head adds the stream-to-event-triggered-workflow runtime bridge and
-its exact qualification evidence. Earlier D83–D97 receipts remain bound to
-their own documented candidates and the prior `633980dd` boundary.
+the observed head adds exact checkpoint-boundary retry evidence. The runtime
+bridge was implemented at that boundary; earlier D83–D98 receipts remain
+bound to their own documented candidates and the prior `633980dd` boundary.
 The runtime/test candidate is recorded separately in the exact qualification
 receipt; the ledger does not close the release. D66 binds a local worker image
 and exact multi-broker evidence, while its unfiltered aggregate remains
