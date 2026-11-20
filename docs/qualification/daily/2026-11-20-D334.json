@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-20",
+  "day": "D334",
+  "status": "PASS",
+  "candidate_sha": "788ea5dbcf51ef8f8888965aacb1739e182bf4b7",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "Isolated PostgreSQL live two-partition backlog",
+  "real_services": ["postgres:16.4-alpine", "single Redpanda broker", "Ronin API", "Chromium"],
+  "tests": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 34, "correlated": 34, "ok": 34, "unexpected_errors": 0},
+  "criterion": "backlog drains in bounded micro-batches with runAttempts < 40",
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d334-live-two-partition-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "085A08339D2B0E3A5C2B0CEA60B0CF513492DE5D6E87C515D3467B4E694C62DF",
+    "browser-live.xml": "59D863F2C6389202808713FF86031C5CC524B1A3F9723400E926DEE181422835",
+    "live-api-traffic.json": "0A0D6AFF989DC814BC027B2E1C119BC1F41EC7ACEA8B2F93B6505811FB67D4D7",
+    "live-python-freeze.txt": "239A6AABCAA384B7EABAF3A4036941CE0016FD83AC21F671D3555B5A989C3874",
+    "live-server.stderr.log": "331B1B4139727D33EA5B01F5659589FCA680A6C315B78AB3DBF08E4989022DA1",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "C4E023DE39E06722DF967BD6966A428E95C720707759AA5F4B23330004214B00",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["isolated filtered diagnostic; no route-wide audit or strict v0.1 aggregate", "does not erase or reattribute D333 NOT_PASS and does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
