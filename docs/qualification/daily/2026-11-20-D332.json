@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-20",
+  "day": "D332",
+  "status": "PASS",
+  "candidate_sha": "66dda49a57b6d70a45f82f32c8851c4acb238192",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "RF3 multi-broker live failover",
+  "real_services": ["postgres:16.4-alpine", "three Redpanda brokers", "Ronin API", "Chromium"],
+  "tests": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 5, "correlated": 5, "ok": 5, "unexpected_errors": 0},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d332-live-rf3-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "2B367C952D1D6E0828C182EA952938D9E7BC03D93C75702AE472C169F4678519",
+    "browser-live.xml": "958BE399B160831E46A62CCBF855933F2F0944FA5D6A0EBB71B551D27F404726",
+    "live-api-traffic.json": "6801BAC6653FAA8671CF2E21F33C4D8F6B7F877B2EC902DA11ED6FF8A0E22897",
+    "live-python-freeze.txt": "F04676078178F2720642998F5DED22921024C368B532A8431540DE679468992D",
+    "live-server.stderr.log": "7EEC2E629C539962E0E72FA4CEDF9328CAFDA58388D7796CE3878AD8449655BD",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "E7964F2DACFE8A0FBCC7EF6FFECBD226640CD21E6E2DDE0456EA7C5E0B4A6781",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["filtered RF3 cell only; route-wide audit and strict v0.1 aggregate were not run", "does not prove indefinite operation, HA/multi-worker, complete P11 or release and does not reattribute D319/D257/D100"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
