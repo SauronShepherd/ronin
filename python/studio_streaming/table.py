@@ -28,20 +28,39 @@ class SqliteStreamTable:
         if not stream_id or stream_id != stream_id.strip():
             raise ValueError("stream_id must be non-empty and trimmed")
         with closing(sqlite3.connect(self._path)) as connection, connection:
-            inserted = 0
-            for record in batch.records:
-                value_json = json.dumps(dict(record.value), sort_keys=True, separators=(",", ":"))
-                existing = connection.execute(
-                    "SELECT timestamp_ms,key_value,value_json FROM stream_table "
-                    "WHERE stream_id=? AND partition_id=? AND offset_value=?",
-                    (stream_id, record.partition, record.offset),
-                ).fetchone()
-                if existing is not None:
-                    if existing != (record.timestamp_ms, record.key, value_json):
+            if not batch.records:
+                return 0
+            encoded = [
+                (
+                    record,
+                    json.dumps(dict(record.value), sort_keys=True, separators=(",", ":")),
+                )
+                for record in batch.records
+            ]
+            predicates = " OR ".join(
+                "(partition_id=? AND offset_value=?)" for _record, _value in encoded
+            )
+            parameters: list[object] = [stream_id]
+            for record, _value in encoded:
+                parameters.extend((record.partition, record.offset))
+            existing_rows = connection.execute(
+                "SELECT partition_id,offset_value,timestamp_ms,key_value,value_json "
+                "FROM stream_table WHERE stream_id=? AND (" + predicates + ")",
+                parameters,
+            ).fetchall()
+            existing = {
+                (int(row[0]), int(row[1])): (row[2], row[3], row[4])
+                for row in existing_rows
+            }
+            pending: list[tuple[object, ...]] = []
+            for record, value_json in encoded:
+                key = (record.partition, record.offset)
+                stored = existing.get(key)
+                if stored is not None:
+                    if stored != (record.timestamp_ms, record.key, value_json):
                         raise ValueError("stream table replay conflicts with an existing record")
                     continue
-                cursor = connection.execute(
-                    "INSERT INTO stream_table VALUES (?,?,?,?,?,?)",
+                pending.append(
                     (
                         stream_id,
                         record.partition,
@@ -49,11 +68,11 @@ class SqliteStreamTable:
                         record.timestamp_ms,
                         record.key,
                         value_json,
-                    ),
+                    )
                 )
-                inserted += cursor.rowcount
+            connection.executemany("INSERT INTO stream_table VALUES (?,?,?,?,?,?)", pending)
             connection.commit()
-            return inserted
+            return len(pending)
 
     def read(self, stream_id: str, *, limit: int = 10_000) -> tuple[StreamRecord, ...]:
         if limit < 1 or limit > 100_000:
