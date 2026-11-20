@@ -139,6 +139,10 @@ class PostgresSchedulerSnapshotStore(
         self._event_batch_connection = connection
         try:
             yield connection
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
         finally:
             self._event_batch_connection = None
             connection.close()
@@ -2102,7 +2106,8 @@ class PostgresSchedulerSnapshotStore(
                         (str(event.workspace_id), str(event.id)),
                     )
                     rows = cursor.fetchall()
-                    connection.commit()
+                    if owns_connection:
+                        connection.commit()
                     return tuple(_delivery_from_row(row) for row in rows)
                 cursor.execute(
                     "INSERT INTO ronin_scheduler_events"
@@ -2150,7 +2155,8 @@ class PostgresSchedulerSnapshotStore(
                         ),
                     )
                     deliveries.append(EventDelivery(event.workspace_id, event.id, definition))
-            connection.commit()
+            if owns_connection:
+                connection.commit()
             return tuple(deliveries)
         except Exception:
             connection.rollback()
@@ -2171,7 +2177,8 @@ class PostgresSchedulerSnapshotStore(
                     (str(workspace_id), str(event_id)),
                 )
                 row = cursor.fetchone()
-            connection.commit()
+            if owns_connection:
+                connection.commit()
             return None if row is None else _event_from_row(row)
         finally:
             if owns_connection:
