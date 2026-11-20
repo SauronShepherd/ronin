@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D351 adds current-main near-record/near-batch byte-boundary evidence: `1/1` with `13/13`
+correlated API events (`11` OK and `2` expected warnings), using real worker/PostgreSQL.
+The worker Docker diagnostic passes `1/1` with 26 deselected. This remains filtered
+bounded evidence and does not close P11 or release.
+
 D350 adds current-main supervised streaming drain-to-idle evidence: `1/1` with `5/5`
 correlated API events (`4` OK and `1` expected warning), using real worker/PostgreSQL.
 The worker Docker diagnostic passes `1/1` with 26 deselected. This remains filtered
@@ -346,7 +351,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `4aed250bf2e2336c3c3e255b092fe9e8374705bd` (2026-11-20).
+**Observed source baseline:** `6e6e4ae00dcdeb0c6c3b88ccf09e1ef0ec6d7085` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
