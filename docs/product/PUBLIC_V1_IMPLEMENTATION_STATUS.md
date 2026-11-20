@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
+D379 tests conflict-safe PostgreSQL event insertion at `4,096` records on
+`main@a808daba` and remains **NOT_PASS**: the second request ends in `Failed to
+fetch`/status-0 after `137.75 s`, with `5/5` correlated events (`4` OK, `1`
+error), no server ERROR/CRITICAL logs and cleanup PASS. The SQL optimization is
+insufficient; P11/release remain open.
+
 D378 tests PostgreSQL event workspace-lock reuse at `4,096` records on
 `main@eff2419b` and remains **NOT_PASS**: the second request still ends in
 `Failed to fetch`/status-0 after `133.52 s`, with `5/5` correlated events (`4`
