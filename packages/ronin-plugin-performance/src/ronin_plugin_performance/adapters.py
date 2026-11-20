@@ -26,8 +26,8 @@ def normalize_spark_events(
         info = event.get("Stage Info", event.get("stage_info", event)) or {}
         sid = str(info.get("Stage ID", info.get("stage_id", event.get("stageId", "unknown"))))
         raw_metrics = info.get("Accumulables", info.get("task_metrics", {})) or {}
+        metrics: dict[str, Any] = {}
         if isinstance(raw_metrics, list):
-            metrics = {}
             for item in raw_metrics:
                 if isinstance(item, Mapping):
                     name = item.get("Name", item.get("name"))
@@ -35,7 +35,7 @@ def normalize_spark_events(
                     if name is not None:
                         metrics[str(name)] = value
         else:
-            metrics = raw_metrics if isinstance(raw_metrics, Mapping) else {}
+            metrics = dict(raw_metrics) if isinstance(raw_metrics, Mapping) else {}
         stage = stages.setdefault(
             sid,
             {
