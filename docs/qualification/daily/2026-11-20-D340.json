@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D340",
+  "status": "PASS",
+  "candidate_sha": "bce4e07f3419f88739052c01d23467d1c8259128",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "PostgreSQL scheduler recovery diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d340-scheduler-recovery-20261120 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate'",
+  "service": "postgres:16.4-alpine",
+  "tests": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 19},
+  "coverage": "disabled; filtered diagnostic only",
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d340-scheduler-recovery-20261120",
+  "evidence_sha256": {
+    "pytest-output.log": "424FF0977B27BAF6F545C7377F8E49C4BBBE2315A9649B81786D4855F4F43967",
+    "pytest-postgres.log": "CB7B89B095C032E1E09420A05C553BE414BCE7696B448937E16066A27C1D9BC5",
+    "pytest-postgres.xml": "2996A60DA9A8A8DC30FE2FDC06C98FD78A8BE4F4A9841115C45AC2B36AEA71C5",
+    "pytest-timings.json": "7C21BA3475310AC062205990404F47CA76FC668CE4B128FE61ABBBE485B7949C",
+    "runner-timings.json": "6A2D61228F9A635A888C79D99EB150976600E2D2B3C95731668AB61083DDA479"
+  },
+  "limitations": ["filtered diagnostic only; 19 tests deselected and coverage disabled", "does not prove complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
