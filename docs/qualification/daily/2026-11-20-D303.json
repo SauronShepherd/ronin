@@ -18,7 +18,7 @@
     "live-api-traffic.json": "65041EFA7F55EC90EEBD1063405A8336240855F90EE49121C9DAC05DC768CDFF",
     "qualification-summary.json": "404DA57EAD8B932D00F928C56ACE28B662050E805BFF1DA4AF941C90B32D111C"
   },
-  "documentation_commit_sha": null,
+  "documentation_commit_sha": "3f8599e128746ca173fcefbe4b46955153d07bd9",
   "limitations": ["PASS only at explicitly controlled sustainable load of approximately 8 records/second", "D300 default approximately 16 records/second remains NOT_PASS; no indefinite, full P11, family, or release qualification; no historical reattribution"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
