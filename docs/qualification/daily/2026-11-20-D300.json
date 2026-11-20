@@ -18,7 +18,7 @@
     "live-api-traffic.json": "353654472CCD29D6D044E2C4376724BF0F0F0FC1CC4FCA1E352E1EA7F238A498",
     "qualification-summary.json": "9213AAA4FEC3C02FFF4520B96BF6DEB5672F6A90936F352C5920FB868A270B80"
   },
-  "documentation_commit_sha": null,
+  "documentation_commit_sha": "fbc5ec12bff6ac55a2327e05534d8b502cc05cea",
   "limitations": ["NOT_PASS diagnostic; the 600-second drain criterion remains open", "does not reattribute D278/D291/D100 or change P11/P13/release states"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
