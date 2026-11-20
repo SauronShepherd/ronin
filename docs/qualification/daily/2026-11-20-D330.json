@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D330",
+  "status": "PASS",
+  "candidate_sha": "c624e973dfc6e0bcd269982c591e4117fcd0a873",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "S3-compatible external provider and object-store recovery",
+  "provider": "Floci S3-compatible real service",
+  "tests": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 25},
+  "scenarios": ["JSON sink write/read/discover and retry after lost provider response", "durable ML input/output round trip, digest verification and unreferenced-object retention cleanup"],
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d330-s3-provider-current-20261120",
+  "worker_image_digest": "sha256:13f23eccf03f328164dbf882c3f720a8554221e1c4c2a5a4ec113f1891010b2a",
+  "evidence_sha256": {
+    "docker-cleanup.json": "E3177D8BB99C8087F5AA97BC82AF4D964685F4EC80BC894E2366BC95ABA2D494",
+    "docker-pytest-output.log": "602CD5D2EAF055B3AC0A126D60BD8F84D0BE1574D0D8DA4B3E52D896C98DF123",
+    "docker-qualification.log": "4C3A8F2AD37AA1F53E8F944AA256F8DD2BF02C1343634D1F758D94C5359EFE7F",
+    "floci-s3-qualification.log": "996842333B957B6B8B652C381D474939211B7DE5EA5A01DDACABA923310F5272",
+    "v01-acceptance.xml": "5CA51DFFA14D44679BBCC7B595E85DF05C11C0F5AF8DC7E5BFE002C5B9F60C6A"
+  },
+  "limitations": ["bounded S3-compatible provider evidence, not AWS/Azure/GCP production certification or external SLA/network evidence", "filtered diagnostic omits strict v0.1 aggregate and does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
