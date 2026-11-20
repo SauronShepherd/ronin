@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D354 confirms the current-main sustained-backpressure limit: `16,384` records remains
+**NOT_PASS** after a `600 s` Playwright timeout (`0/1`), with `5/5` API events correlated
+and all OK. D353 remains a separate `8,192` PASS in `213.91 s`; neither result closes
+P11 or release.
+
 D353 adds current-main sustained-backpressure evidence at `8,192` records: Docker
 worker `1/1`, live `1/1`, `12/12` correlated API events all OK, and `213.91 s` elapsed.
 D352 remains **NOT_PASS** at `16,384` after the `240 s` timeout; D353 does not reattribute
@@ -361,7 +366,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `820c95e52930c4fc610d543cc9de7922ce16e465` (2026-11-20).
+**Observed source baseline:** `5b65a0b0e0c19884e5ddcac343b694f5a37115c7` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
