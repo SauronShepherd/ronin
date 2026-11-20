@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D302",
+  "status": "PASS",
+  "candidate_sha": "08809e5e6fafe4b3b777e0fe806a44584fd4c9b9",
+  "production_boundary_sha": "08809e5e6fafe4b3b777e0fe806a44584fd4c9b9",
+  "qualification": "typed performance adapter mapping fix and affected regression/static gates",
+  "change": "normalize Mapping to dict[str, Any] before metric access in ronin_plugin_performance.adapters",
+  "tests": {"performance_focused": 13, "passed": 13, "failed": 0},
+  "static": {"ruff_format": "PASS", "ruff_check": "PASS", "mypy_source_files": 402, "mypy": "PASS", "git_diff_check": "PASS"},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d302-performance-adapter-static-current-20261120",
+  "evidence_sha256": {
+    "pytest.log": "62C3C0907982AF538EA2401FBF98D2B285E0813F2747DEE0909ADCF8654D7375",
+    "ruff-format.log": "7688AE71C60AF2E4266827ABB3678CC2145655F587DAF33DFA649DBAC2C619C3",
+    "ruff-check.log": "A4443AFDCFB6D7363ADB285762515CCF7CF50473B1A05C20C1A50F6BED4D26B0",
+    "mypy.log": "597FC73E689DC092D3C7485D9EE2B1242E86F43C3975F0A80EEB7CB8ED57D804",
+    "qualification.json": "EECE922BCD191FAC6DF24827715EA18F2559D224007FF4F0BF4B5594016AEFFA"
+  },
+  "documentation_commit_sha": null,
+  "limitations": ["focused regression/static qualification only", "does not resolve D300 throughput gap or qualify full P11/family/release; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
