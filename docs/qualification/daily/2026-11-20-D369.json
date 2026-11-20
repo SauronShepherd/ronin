@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-20",
+  "day": "D369",
+  "status": "PASS",
+  "candidate_sha": "ce7451fb9a959aa6b41d71cfe0f3d904227c86d1",
+  "production_boundary_sha": "a06b46849b70f4a2af8ad7af79ac109ae7f7dd36",
+  "qualification": "PostgreSQL-configured live Parquet sink reset/replay route",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d369-live-postgres-parquet-20261120 -StorageBackend postgres -TestGrep 'live streaming parquet sink preserves reset replay across bounded runs' -RequestTimeoutSeconds 90",
+  "live": {"selected": 1, "passed": 1, "skipped": 0, "failed": 0, "api_events": 11, "correlated": 11, "ok": 11, "unexpected_authorization_gaps": 0, "unexpected_server_network_errors": 0},
+  "services": ["PostgreSQL 16.4", "single Redpanda broker", "Ronin API", "Chromium"],
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d369-live-postgres-parquet-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "EF86CFD1C8A2657C0DD75C3E742A73878A683C807BC387D5B78FF6C5A05EBA25",
+    "browser-live.xml": "1AAB5916FF88F7AC27B9744519B66A5F884FCF34C29EB2ED011C03FB9A84AB9B",
+    "live-api-traffic.json": "C744C4D538BB4BA033B52FB7E407E4B5B3F00BA48458E13D9BF321D467E80B76",
+    "live-python-freeze.txt": "CEF45A7AE36FDC146C119BA6B53086D099F15CEE7FF6F2BA04DFD7AD3487500F",
+    "live-server.stderr.log": "0A9BF13DBBB4F96E895F62EF625FC2019458BEB0723F6F2B9AE6FF15DD2AA1C6",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "EFE3607295266636EFB777A88C78634FFE891D8C877146B8CA7651C1D19F0839",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["filtered Parquet diagnostic only", "does not reattribute D349", "does not prove complete P11, HA/multi-worker, indefinite operation or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
