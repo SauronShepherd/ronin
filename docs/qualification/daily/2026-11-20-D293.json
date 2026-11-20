@@ -17,7 +17,7 @@
     "docker-cleanup.json": "F9C132E668984C353484E98826E0176A6B1A08BDF1F2B01C7609A900E7E15454",
     "floci-s3-qualification.log": "CA15FE6EA4B41D390CDF0A283E83463D8959889B7A7758AD8B3A28540A042187"
   },
-  "documentation_commit_sha": null,
+  "documentation_commit_sha": "228468c582b728e85e678c08e7ad9e27d453c876",
   "limitations": ["filtered external S3-compatible diagnostic", "not AWS/Azure production provider, full P11, family, or release qualification; does not reattribute D10/D100"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
