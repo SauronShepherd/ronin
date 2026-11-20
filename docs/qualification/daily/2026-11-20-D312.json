@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-20",
+  "day": "D312",
+  "status": "PASS",
+  "candidate_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "bounded per-DSN PostgreSQL connection reuse and affected storage regressions",
+  "change": "real psycopg connections are reused per DSN with a maximum of 16 and 5-second acquisition timeout; invalid connections are discarded; close release is idempotent",
+  "tests": {"postgres_storage_regressions": 30, "passed": 30, "failed": 0},
+  "static": {"ruff": "PASS", "mypy": "PASS", "git_diff_check": "PASS"},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d312-postgres-pool-current-20261120",
+  "evidence_sha256": {
+    "pytest.log": "C44ADDAE6ABE54C036A90CDBA461727DE33FFF097A0670B8B8FF1063F5709223",
+    "ruff.log": "82B3E6A6C090A57601D22943BD23FCA9218D1031DBE5A7B754092F9A156B4F18",
+    "mypy.log": "8228FCC5CE46D42D01CAF3CD941F4E9C5F2BCC372BB5B147A2F0572D2DD675A8",
+    "qualification.json": "0D0AA64A141E6BFB983BC2AD706811F4AF7DE0D0983224C85DD8EFF20FD39A2C"
+  },
+  "limitations": ["focused storage qualification only", "D311 remains NOT_PASS; no claim of 600-second live drain, full P11, family, or release qualification; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
