@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D399",
+  "status": "PASS",
+  "candidate_sha": "4865a48f71bdadbdb322b150361ec128eae5798e",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "real HTTP JSON control-plane preview and scope journey",
+  "command": "python -m pytest -q tests/integration/test_http_json_control_plane_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d399-http-control-plane-20261121\\http-control-plane.xml",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 9.58},
+  "coverage": ["control-plane preview over real paginated HTTP JSON service", "governed connection and scope behavior"],
+  "evidence_sha256": {"pytest.log": "138001B8DFA9F5EC99730E1408222E97D262A67447B7637EC673E136941F4B3A", "http-control-plane.xml": "03D95FC8FB91ADF924C52AC904A44EC269703C6CAECBC0083EABB6BEE5BBD0B5"},
+  "limitations": ["loopback HTTP provider fixture", "single bounded control-plane case", "does not prove external provider availability, indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

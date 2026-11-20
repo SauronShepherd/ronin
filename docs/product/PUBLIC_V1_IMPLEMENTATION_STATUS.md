@@ -7,6 +7,11 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D399 passes the real HTTP JSON control-plane preview and scope journey on
+`main@4865a48f`: `1/1` test passed in `9.58 s` against a paginated loopback
+service. This is bounded control-plane/provider-fixture evidence and does not
+prove external-provider availability or close P11/release.
+
 D398 passes the real loopback HTTP JSON connector integration on
 `main@368a3170`: `8/8` tests passed in `4.16 s`, covering pagination and
 snapshot replay, page/byte bounds, repeated or cross-origin next URLs, 503
