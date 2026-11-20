@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D336 adds bounded supervisor evidence at `600 s` and one record per
+`0.5 s`: `1/1`, `835/835` correlated events all OK. It does not prove
+default-load behavior, indefinite operation or close P11.
+
 D335 adds isolated event-to-workflow evidence: `1/1` PostgreSQL live case
 passes with `12/12` correlated API events and cleanup PASS. It is filtered
 evidence only and does not close P11.
@@ -313,7 +317,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `6cffa13e353dda0d712b58c911db066d6c32802d` (2026-11-20).
+**Observed source baseline:** `41405898eefa1a60db687477c299fd014534cae6` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
