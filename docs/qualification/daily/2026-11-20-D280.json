@@ -6,7 +6,7 @@
   "cell": "Current-candidate PostgreSQL live two-partition backlog drain",
   "candidate_sha": "43193b7954250f9df6030437c474de88a2bf0882",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "17b73026f13b69c499f98188b9b03d87a1eb7c26",
   "evidence": "docs/qualification/handoffs/2026-11-20-D280.md",
   "execution_scope": "clean-main filtered live Streaming Studio journey with real PostgreSQL and single-broker Kafka",
   "result": {
