@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D335 adds isolated event-to-workflow evidence: `1/1` PostgreSQL live case
+passes with `12/12` correlated API events and cleanup PASS. It is filtered
+evidence only and does not close P11.
+
 D334 isolates the D333 backlog case and passes `1/1` with the original
 `<40` attempt criterion and `34/34` correlated API events. D333 remains a
 NOT_PASS broader streaming diagnostic; neither result closes P11.
@@ -309,7 +313,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `f7d4b8b6f0965a2c1f76dd78900babb7cb294b48` (2026-11-20).
+**Observed source baseline:** `6cffa13e353dda0d712b58c911db066d6c32802d` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
