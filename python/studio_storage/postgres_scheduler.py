@@ -129,6 +129,7 @@ class PostgresSchedulerSnapshotStore(
         self._event_batch_connection: Any | None = None
         self._event_session_connection: Any | None = None
         self._event_batch_workspaces: set[str] = set()
+        self._event_batch_triggers: dict[str, tuple[Any, ...]] = {}
         self.migrate_scheduler()
 
     @contextmanager
@@ -155,6 +156,7 @@ class PostgresSchedulerSnapshotStore(
         owns_connection = self._event_session_connection is None
         self._event_batch_connection = connection
         self._event_batch_workspaces = set()
+        self._event_batch_triggers = {}
         try:
             yield connection
             connection.commit()
@@ -164,6 +166,7 @@ class PostgresSchedulerSnapshotStore(
         finally:
             self._event_batch_connection = None
             self._event_batch_workspaces = set()
+            self._event_batch_triggers = {}
             if owns_connection:
                 connection.close()
 
@@ -2157,12 +2160,16 @@ class PostgresSchedulerSnapshotStore(
                     if owns_connection:
                         connection.commit()
                     return tuple(_delivery_from_row(row) for row in rows)
-                cursor.execute(
-                    "SELECT definition_json FROM ronin_event_triggers "
-                    "WHERE workspace_id=%s ORDER BY event_trigger_id",
-                    (str(event.workspace_id),),
-                )
-                trigger_rows = cursor.fetchall()
+                workspace_key = str(event.workspace_id)
+                trigger_rows = self._event_batch_triggers.get(workspace_key)
+                if trigger_rows is None:
+                    cursor.execute(
+                        "SELECT definition_json FROM ronin_event_triggers "
+                        "WHERE workspace_id=%s ORDER BY event_trigger_id",
+                        (workspace_key,),
+                    )
+                    trigger_rows = tuple(cursor.fetchall())
+                    self._event_batch_triggers[workspace_key] = trigger_rows
                 deliveries: list[EventDelivery] = []
                 for row in trigger_rows:
                     definition = EventTriggerDefinition.from_json(row["definition_json"])
