@@ -17,7 +17,7 @@
     "live-api-traffic.json": "B4F15ED09C0394B662A100CB18D980231140D281622361229C0EEAD079260922",
     "qualification-summary.json": "6EBC5EFDA8BB3539B9CD5D97BC6D9A33AA38932BDAA3FCA1464615ED5093735B"
   },
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "48909717b047a717d722d2ed10ab7d48765cdaea",
   "limitations": ["filtered bounded single-broker supervised-drain journey", "not route-wide, indefinite, HA, full P11, or release approval"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
