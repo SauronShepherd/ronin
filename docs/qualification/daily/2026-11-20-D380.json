@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D380",
+  "status": "NOT_PASS",
+  "candidate_sha": "de9b5c460aff431dffb03b5bd2e75614e6e32dc0",
+  "production_boundary_sha": "de9b5c460aff431dffb03b5bd2e75614e6e32dc0",
+  "qualification": "4,096 sustained PostgreSQL-runtime backpressure after event-session reuse",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d380-live-postgres-event-session-4096-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 4096 -BackpressureTimeoutSeconds 600 -RequestTimeoutSeconds 90",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "api_events": 5, "correlated": 5, "api_ok": 4, "api_error": 1, "failure": "Failed to fetch during the second backpressure request; status 0 network error", "elapsed_seconds": 135.29},
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d380-live-postgres-event-session-4096-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "AA68AA4633436F94102301C7BB9FA91960D5C43EE44DC6CA7020B4F87058C22C",
+    "browser-live.xml": "CEA31D4CB96107D957B440A4777981C2E1087C063AD3B3ED3C8E1D20030933C1",
+    "live-api-traffic.json": "CB707D2C25B1D84CD00DA4E1E2A61C5C0D2225AC452233A0104DCCA084857581",
+    "live-python-freeze.txt": "A99AD3AA9683E37418F93E70ED14F091AAF7DA9891FFDA93589C5F23A721734C",
+    "live-server.stderr.log": "877419849832806A30D68F724174E5336366A162AC2FF6EB79C37BB248A19BAA",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "7F262EEC5FD6F4B7014844E2226C68C6F679AEF4756CCA4019ED2866DCE0A192",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["NOT_PASS bounded diagnostic", "connection reuse insufficient", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
