@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D331",
+  "status": "PASS",
+  "candidate_sha": "4d29cf5e9ca72c0afb0d481cac94b8b2ece6424e",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "Azure Blob-compatible provider",
+  "provider": "Azurite real local Blob service",
+  "tests": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26},
+  "scenario": "Azure Blob JSONL discovery, read and snapshot replay",
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d331-azure-provider-current-20261120",
+  "worker_image_digest": "sha256:2f292d1056513f3f7ad830a2d3442ab8d839f83e7e5e4b9c80135fc46a4e1198",
+  "evidence_sha256": {
+    "azurite-qualification.log": "C2ACE930E68D73C14562EDE3CE623C495172621556D149F24417C494C42B2206",
+    "docker-cleanup.json": "1DB76FC2A7155202E2E89FD95E0A968A00998B8D81E000606E3C028468E6819F",
+    "docker-pytest-output.log": "39ED7CEB46389847FC9E7A88176FFCF03AE705973D7CE67D94668B64CACC1039",
+    "docker-qualification.log": "B2483C45FE19ACF0C974CAB63757ABA1C3EEEB16C947D012D532C4EE19515E45",
+    "v01-acceptance.xml": "40676C68C297F705EAD6DA1EF990FA0899DFD55FC7717FC14471529620B6C032"
+  },
+  "limitations": ["bounded Azure Blob-compatible emulator evidence, not Microsoft Azure production certification or external SLA/network evidence", "filtered diagnostic omits strict v0.1 aggregate and does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
