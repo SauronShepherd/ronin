@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D322",
+  "status": "NOT_PASS",
+  "candidate_sha": "054d9eec8cfacbd559e231109300527f37fb77e9",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "repeat filtered live streaming journey with PostgreSQL-configured Ronin",
+  "journeys": {"passed": 9, "failed": 1, "skipped": 1},
+  "api_events": {"total": 223, "correlated": 223, "ok": 211, "unexpected": 4},
+  "application_logs": {"info": 268, "warn": 0, "warning": 8, "error": 4, "critical": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+  "failure": "the same event-workflow case reproducibly received HTTP 500 after the preceding streaming cases; isolated D321 still passes on a fresh fixture",
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d322-live-streaming-postgres-rerun-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "169045811C121230E72ECC0F9B66E679C76A1111AE019C2BD28C1008E9284677",
+    "browser-live.xml": "763714A84CA72B8BE3D82CBCC0E6AB22CCD08BA16889FCA5EF06B3FEE71FE8F9",
+    "live-api-traffic.json": "FAA5786F8016782A7FD1E7BE53E0D2ABCED1C1882B4555F88D25C88771FD0D9A",
+    "qualification-summary.json": "56010AD971C3BCC7BAC352C2BBA029F4E30460A9836632F87DE8C912FA1E55DD"
+  },
+  "limitations": ["NOT_PASS repeat diagnostic; no production change made", "does not reattribute D320/D321/D319/D100 or qualify full P11, family, release gates, indefinite operation or HA"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
