@@ -7,7 +7,8 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
-D346 revalidates current-main event-to-workflow with a real worker/PostgreSQL:
+D347 revalidates current-main two-partition backlog draining with a real
+worker/PostgreSQL: `1/1` and `34/34` correlated API events. D346 revalidates current-main event-to-workflow with a real worker/PostgreSQL:
 `1/1` and `12/12` correlated API events. D345 revalidates current-main multi-broker failover with three brokers and a real
 worker: `1/1` and `5/5` correlated API events. D344 completes the non-performance Python/PostgreSQL regression on candidate
 `98003383`: `4760/4791` pass, `31` explicit skips, `0` failures and `13`

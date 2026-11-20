@@ -2,7 +2,8 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
-D346 adds current-main event-to-workflow evidence: `1/1` with `12/12`
+D347 adds current-main two-partition backlog evidence: `1/1` with `34/34`
+correlated API events. D346 adds current-main event-to-workflow evidence: `1/1` with `12/12`
 correlated API events. D345 adds current-main multi-broker failover evidence: `1/1` with `5/5`
 correlated API events. D344 adds the complete non-performance Python/PostgreSQL regression: `4760/4791`
 pass, `31` explicit skips and `0` failures. D343 adds full live route evidence with real worker/PostgreSQL: `42/43` cases
