@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
+D389 adds new real PostgreSQL scheduler recovery evidence on `main@3341cd7d`:
+the expired-lease reacquisition and process-crash replay cases pass `2/2` in
+`4.31 s` against an isolated PostgreSQL 16.4 fixture. This is a bounded,
+focused recovery cell and does not reattribute D340/D100, prove HA or close
+P11/release.
+
 D388 passes the `16,384` PostgreSQL-runtime bounded backpressure cell on
 `main@29868a93` with an explicit `1,200 s` proxy timeout: `1/1` case passed in
 `1,089.14 s`, with `13/13` correlated API events OK, no unexpected
