@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D396 passes the complete bounded HTTP contention budget cell on
+`main@beb5ddd6`: `2/2` tests passed in `4.14 s`, with POST p95 `16.940 ms`
+against `<100 ms` and GET p95 `16.134 ms` against `<30 ms`. This bounded local
+SQLite evidence does not close P11/release.
+
 D395 passes the filtered real Azure Blob-compatible provider diagnostic on
 `main@b88e0fde`: `1/1` selected test passed in `2.41 s` against Azurite, with
 fixture and owned image cleanup PASS. This local bounded provider evidence is

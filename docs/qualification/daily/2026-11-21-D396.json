@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D396",
+  "status": "PASS",
+  "candidate_sha": "beb5ddd6d08f18e84a7ba11b891ee08cdd328a92",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "bounded HTTP contention latency budgets",
+  "command": "RONIN_PERFORMANCE_ARTIFACT=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d396-http-budget-20261121\\http-contention-performance.json python -m pytest -q tests/perf/test_http_contention_budgets.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "elapsed_seconds": 4.14},
+  "budgets": {"POST /v1/jobs": {"samples": 200, "p50_ms": 3.924, "p95_ms": 16.94, "max_ms": 64.363, "budget_ms": 100.0}, "GET /v1/jobs/{id}": {"samples": 200, "p50_ms": 2.649, "p95_ms": 16.134, "max_ms": 25.375, "budget_ms": 30.0}},
+  "environment": {"platform": "Windows-11-10.0.26200-SP0", "python": "3.13.15"},
+  "evidence_sha256": {"http-contention-performance.json": "F38C01525F81BD73F5C4051551BB8381B991A0EE76DE434A5DC39A755344D165"},
+  "limitations": ["bounded local SQLite contention benchmark", "no CPU/memory/IO resource profile", "does not prove indefinite operation, PostgreSQL latency, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
