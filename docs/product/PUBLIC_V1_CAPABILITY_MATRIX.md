@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D358 adds supervisor checkpoint reuse to the three prior optimizations tested against
+`16,384`; focused regressions pass, but live remains **NOT_PASS** with `Failed to fetch`
+during the second request (`384.79 s`, `5/5` events audited, `4` OK and `1` error).
+The scale gap, P11 and release remain open.
+
 D357 records three production optimizations tested against the same `16,384` case:
 batched table writes (D355), Kafka consumer reuse (D356), and persistent table connection
 (D357). All keep Docker `1/1`, but live remains **NOT_PASS** with `Failed to fetch` during
@@ -371,7 +376,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `0fb9615a878855db8be6b2aff74e0f8f88c95572` (2026-11-20).
+**Observed source baseline:** `794ed70f072a9b34640e5e74c303939dd752f7bb` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

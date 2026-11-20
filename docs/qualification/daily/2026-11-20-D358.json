@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-20", "day": "D358", "status": "NOT_PASS",
+  "candidate_sha": "794ed70f072a9b34640e5e74c303939dd752f7bb",
+  "production_boundary_sha": "794ed70f072a9b34640e5e74c303939dd752f7bb",
+  "qualification": "current-main 16,384 sustained backpressure after supervisor checkpoint reuse",
+  "result": {"docker_selected": 1, "docker_passed": 1, "live_selected": 1, "live_passed": 0, "api_events": 5, "api_correlated": 5, "api_ok": 4, "api_error": 1, "elapsed_seconds": 384.79, "failure": "Failed to fetch during the second backpressure request"},
+  "worker_image_sha256": "sha256:1ec16fcf5e496c530efacee1ee5ca2443fb1a96b33bf6626ed78a62824b4689e",
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d358-docker-worker-current-20261120", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d358-live-backpressure-16384-checkpoint-cache-current-20261120"],
+  "evidence_sha256": {"docker/docker-cleanup.json":"18756C4417C363D67417B718401552784F385F8E00437770173429F6609E5820","docker/docker-pytest-output.log":"ECF77FB36F85BF2CADBCD6EDED435C8EFB5C0ECCA40993B8F1A57519A54F4A8E","docker/docker-qualification.log":"CEA3A2316619C8636141F97ED9827581E8A167FB7E0A7110D58CF41307CBFF07","live/browser-live.log":"0EA23CA8844DCD7BCA793CFFA451379286BC9FDFFA79DF6D85264858C3C60E2D","live/live-api-traffic.json":"5750B08E8DEF5BA4A9B2B556BC9323608CEE5E78387F0B41B9893694FFF9FA1F","live/qualification-summary.json":"AE2F6F8E3A21BE12528D89643AFE5D82283D667052FBDDE2CA67EAADFEB21E17"},
+  "cleanup": "PASS; services and exact image deleted", "state": {"P11":"in_progress","P13":"blocked","release":"NO-GO"}
+}
