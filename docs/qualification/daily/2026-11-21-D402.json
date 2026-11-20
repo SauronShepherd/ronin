@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D402",
+  "status": "PASS",
+  "candidate_sha": "95604bc4be22a52b8400e3ab8272de59fbd1c3c4",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "workspace/project HTTP control-plane integration",
+  "command": "python -m pytest -q tests/integration/test_workspace_project_http_api.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d402-workspace-http-api-20261121\\workspace-http-api.xml",
+  "result": {"selected": 61, "passed": 61, "failed": 0, "skipped": 0, "elapsed_seconds": 37.09},
+  "coverage": ["workspace/project authorization and audit", "stream definitions, supervised runs and bundles", "plugin routes and capabilities", "catalog, glossary and lineage governance", "scheduler and workflow routes", "project lifecycle, archive/restart and idempotency", "control-plane validation and stable errors"],
+  "evidence_sha256": {"pytest.log": "CC00E59A756F2CFB21FA52AB28FD36654C97FEDFB13DF2B808626195978F9A3E", "workspace-http-api.xml": "C75FD9536EB145942E66768350BB257E46DCCF6DF0E1D556298C858D09644597"},
+  "limitations": ["bounded local HTTP control-plane integration", "SQLite/local service fixture", "does not qualify PostgreSQL runtime, indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

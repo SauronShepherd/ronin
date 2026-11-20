@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D402 passes the complete workspace/project HTTP control-plane integration on
+`main@95604bc4`: `61/61` tests passed in `37.09 s`, covering authorization,
+audit, streams, bundles, plugins, catalog governance, scheduler/workflow
+routes, project idempotency and archive/restart behavior. This is bounded local
+SQLite control-plane evidence and does not close P11/release.
+
 D401 passes the CLI operator surface integration on `main@480f76de`: `2/2`
 tests passed in `2.94 s`, covering reuse of the real HTTP contract, terminal
 idempotency and backend-state exposure without an unverified container-cleanup

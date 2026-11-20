@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D402 passes the complete workspace/project HTTP control-plane integration on
+`main@95604bc4`: `61/61` tests passed in `37.09 s`, covering authorization,
+audit, streams, bundles, plugins, catalog, scheduler and project lifecycle.
+This bounded local evidence does not close P11/release.
+
 D401 passes the CLI operator surface integration on `main@480f76de`: `2/2`
 tests passed in `2.94 s`, covering HTTP-contract reuse, terminal idempotency and
 backend-state reporting. This bounded local evidence does not close P11/release.
