@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D398 passes the real loopback HTTP JSON connector integration on
+`main@368a3170`: `8/8` tests passed in `4.16 s`, covering pagination/replay,
+limits, retry and URL safety. This bounded connector evidence does not close
+P11/release.
+
 D397 passes the bounded HTTP timeout boundary regression on
 `main@2d392664`: `4/4` tests passed in `1.67 s`, covering read/service
 deadlines and invalid configuration rejection. This local bounded evidence

@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D398",
+  "status": "PASS",
+  "candidate_sha": "368a3170c0fa4c09efc2258cbc5b217472c2358c",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "real loopback HTTP JSON connector integration",
+  "command": "python -m pytest -q tests/integration/test_http_json_connector_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d398-http-json-20261121\\http-json.xml",
+  "result": {"selected": 8, "passed": 8, "failed": 0, "skipped": 0, "elapsed_seconds": 4.16},
+  "coverage": ["paginated records and snapshot replay", "page and next-url bounds", "repeated next URL termination", "503 retry", "redirect rejection", "response byte limit", "cross-origin next-page rejection"],
+  "evidence_sha256": {"pytest.log": "0B2A74014CA02FBF7A8C804BE129CCA4FFD51FDE17A2FB0F96667249CD2F7F1F", "http-json.xml": "40032C398693957099E97AFE31F4C73A4259A9A3C574C0F9B9EC00BB8F720EE7"},
+  "limitations": ["loopback HTTP provider fixture", "bounded connector integration", "does not prove external provider availability, indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
