@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-21",
+  "day": "D393",
+  "status": "PASS",
+  "candidate_sha": "e1a321c5bfd790fd5e330b0ba0db2df2e39117ec",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "live PostgreSQL event-to-workflow route",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d393-live-postgres-event-workflow-20261121 -StorageBackend postgres -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 37.92, "api_events": 12, "correlated_http_logs": 12, "api_ok": 12},
+  "fixture": "PostgreSQL real backend plus single-broker Redpanda, isolated live qualification services",
+  "cleanup": "PASS; qualification summary reports isolated services cleanup succeeded; no temporary project containers or Ronin images remain",
+  "evidence_sha256": {
+    "qualification-summary.json": "809D393D03F0325AE3E4E7AC473E2E9B37B7C22CEA33AF79DA2D51E638D22EA3",
+    "live-api-traffic.json": "6752F433977EE895E14146B90E5BCDB0870A2CE8BEA00E36B0FB292DDDDE81CC"
+  },
+  "limitations": ["single bounded live route", "single broker; not multi-broker RF3", "does not prove indefinite operation, HA or production SLO", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

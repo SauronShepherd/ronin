@@ -1,6 +1,11 @@
 # Ronin Public v1 capability matrix
 
-## Current exact-SHA snapshot — 20 November 2026
+## Current exact-SHA snapshot — 21 November 2026
+
+D393 passes the live PostgreSQL event-to-workflow route on
+`main@e1a321c5`: `1/1` case passed in `37.92 s`, with `12/12` correlated API
+events OK and isolated service cleanup PASS. This bounded route evidence does
+not prove indefinite operation, HA, multi-broker RF3 or close P11/release.
 
 D392 passes the real PostgreSQL streaming checkpoint/table regression on
 `main@ebe042d1`: `2/2` tests passed in `1.17 s` against PostgreSQL 16.4, with

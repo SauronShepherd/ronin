@@ -5,7 +5,14 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 
-## Current exact-SHA qualification — 20 November 2026
+## Current exact-SHA qualification — 21 November 2026
+
+D393 passes the live PostgreSQL event-to-workflow route on
+`main@e1a321c5`: `1/1` case passed in `37.92 s`, with `12/12` correlated API
+events OK, no application errors, and isolated service cleanup PASS. This is
+bounded functional evidence for the configured PostgreSQL backend and live
+route; it does not prove indefinite operation, HA, multi-broker RF3 or close
+P11/release.
 
 D392 passes the real PostgreSQL streaming checkpoint/table regression on
 `main@ebe042d1`: `2/2` tests passed in `1.17 s` against PostgreSQL 16.4, with
