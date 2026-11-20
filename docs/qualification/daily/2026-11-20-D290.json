@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D290",
+  "status": "PASS",
+  "candidate_sha": "e98c146aab48a5d87161bf918f4a6c02f998d49e",
+  "production_boundary_sha": "7a9e3359f28e15a30ceba73e4a125b58b1996862",
+  "qualification": "live Notebook Studio creates, versions and executes a notebook on a Docker worker",
+  "backend": "postgres",
+  "real_services": ["postgres", "kafka", "ronin-api", "docker-worker"],
+  "worker_image": "sha256:8d462d0b0e81948af5085f3437fdbd2a8c93b4a55c744557a418d6ed2d861c18",
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 18, "correlated": 18, "ok": 18, "unexpected": 0},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d290-live-notebook-postgres-worker-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "4384265C3B029C217F6B602C3CBC243D3D2101F089516D68DD771DE982CA36B2",
+    "browser-live.xml": "EB1493FE79B22CD87AD043FBE3B58DF7514F4B764B46CCA6E792B226FA3C89EB",
+    "live-api-traffic.json": "0EC97F7F979C256080F4E5F6AC61D6695979928B354486578684E36D4EB88D79",
+    "qualification-summary.json": "2C5E064F750CE1735B8467377A4DAC82F6E98DD3AC3BCC7CB4206AE594AA0F0E"
+  },
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "limitations": ["filtered bounded Notebook journey", "not full P11, family, or release qualification; does not reattribute D260/D100"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
