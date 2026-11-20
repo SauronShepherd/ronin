@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-20",
+  "day": "D309",
+  "status": "PASS",
+  "candidate_sha": "f05b3de3fa60518df99a059a121be7556fbf6780",
+  "production_boundary_sha": "f05b3de3fa60518df99a059a121be7556fbf6780",
+  "qualification": "bounded shared PostgreSQL connection capacity and affected storage regressions",
+  "change": "shared adapters cap active PostgreSQL connections at 16, acquire within 5 seconds, and release slots exactly once on close",
+  "tests": {"postgres_storage_regressions": 30, "passed": 30, "failed": 0},
+  "static": {"ruff": "PASS", "mypy": "PASS", "git_diff_check": "PASS"},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d309-postgres-capacity-current-20261120",
+  "evidence_sha256": {
+    "pytest.log": "E98F6D9E794E3A9C0CEC17C0D1BFBF0EE65DA3F1C668F0ADD51B0493214E4200",
+    "ruff.log": "82B3E6A6C090A57601D22943BD23FCA9218D1031DBE5A7B754092F9A156B4F18",
+    "mypy.log": "8228FCC5CE46D42D01CAF3CD941F4E9C5F2BCC372BB5B147A2F0572D2DD675A8",
+    "qualification.json": "C9DD196C1A5EAA4B09EED812A216071BF02DF50813C5EA1172A1B51279F0BFEB"
+  },
+  "limitations": ["focused bounded storage qualification only", "does not requalify D308 or claim 600-second live drain; no full P11, family, or release qualification; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
