@@ -6,7 +6,7 @@
   "cell": "Current-candidate 600-second sustainable PostgreSQL supervisor soak",
   "candidate_sha": "0964588e850c9b10f6d01b2b5f9ab6f7ffa65cd9",
   "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "c76edb3d7f3da4e817ba0174e415550ec535d629",
   "evidence": "docs/qualification/handoffs/2026-11-18-D278.md",
   "execution_scope": "clean-main bounded live supervisor soak for 600 seconds with real PostgreSQL, single-broker Redpanda and sustainable producer load",
   "result": {
