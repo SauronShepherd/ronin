@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D364 recualifies the PostgreSQL-configured live event-to-workflow route after the streaming checkpoint backend change: `1/1` pass and `11/11` correlated API events all OK, cleanup PASS. It is filtered evidence and does not reattribute D346/D100 or close P11/release.
+
 D362 adds a new bounded sustainable supervisor soak: 900 seconds at one record every 0.5 seconds, `1/1` pass, `1015/1015` correlated API events OK and cleanup PASS. It does not prove indefinite operation or close P11/release.
 
 D361 revalidates current-main PostgreSQL scheduler leadership fencing/persistence and execution-outbox reconciliation (`2/2` pass, `19` deselected, cleanup PASS). D263/D264 already cover these properties; this receipt does not reattribute historical evidence and does not close P11 or release.
@@ -390,7 +392,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `e8e604d8aecfd5a89fe6fe08461bb481388232a9` (2026-11-20).
+**Observed source baseline:** `a63471c25388774069727d75b31a1958f7a7e09b` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

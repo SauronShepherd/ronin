@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-20",
+  "day": "D364",
+  "status": "PASS",
+  "candidate_sha": "a63471c25388774069727d75b31a1958f7a7e09b",
+  "production_boundary_sha": "a63471c25388774069727d75b31a1958f7a7e09b",
+  "qualification": "PostgreSQL-configured live event-to-workflow route after PostgreSQL streaming checkpoint selection",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d364-live-event-workflow-postgres-20261120 -StorageBackend postgres -TestGrep 'live streaming event workflow is triggered by a committed record' -RequestTimeoutSeconds 90",
+  "live": {"selected": 1, "passed": 1, "skipped": 0, "failed": 0, "api_events": 11, "correlated": 11, "ok": 11, "unexpected_authorization_gaps": 0, "unexpected_server_network_errors": 0},
+  "services": ["PostgreSQL 16.4", "single Redpanda broker", "Ronin API", "Chromium"],
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d364-live-event-workflow-postgres-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "F2BC52B7CDCC274ACCA4DEA727BFE218C96AE4A745E62BD7F77DDF08BA215635",
+    "browser-live.xml": "A7BA814ECC608EF64BFA6A1FA7BD3D1EF59038D1D2C05947A3BBED57509AF7AA",
+    "live-api-traffic.json": "4E26771B22E91248CAC9E8785A6C15CAC087BF2011C186414D7E5DFA8AB9A293",
+    "live-python-freeze.txt": "00E6836B0F00CCA5EB60DC6D2CB713C3F197F54DAC0B6B1E66EC380892F3F18E",
+    "live-server.stderr.log": "8F23020D56E949D075755AAB06E0F615922B1D3C6BA1A4B403F04C62943FB02F",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "086DA8C4A5AAC5C47B12A5F3FB63584CC1797A2FAB9A4CDEFA58A6A07B2E3626",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["filtered event-to-workflow diagnostic only", "does not prove complete P11, HA/multi-worker, indefinite operation or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
