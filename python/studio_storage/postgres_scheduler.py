@@ -2103,12 +2103,31 @@ class PostgresSchedulerSnapshotStore(
                     self._require_active_workspace(cursor, event.workspace_id)
                     self._lock_event_workspace(cursor, event.workspace_id)
                 cursor.execute(
-                    "SELECT * FROM ronin_scheduler_events "
-                    "WHERE workspace_id=%s AND event_id=%s FOR UPDATE",
-                    (str(event.workspace_id), str(event.id)),
+                    "INSERT INTO ronin_scheduler_events"
+                    "(workspace_id,event_id,event_type,source_ref,subject_ref,payload_digest,"
+                    "occurred_at,received_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s) "
+                    "ON CONFLICT (workspace_id,event_id) DO NOTHING RETURNING event_id",
+                    (
+                        str(event.workspace_id),
+                        str(event.id),
+                        event.event_type,
+                        event.source_ref,
+                        event.subject_ref,
+                        event.payload_digest,
+                        str(event.occurred_at),
+                        str(event.received_at),
+                    ),
                 )
-                existing = cursor.fetchone()
-                if existing is not None:
+                inserted = cursor.fetchone() is not None
+                if not inserted:
+                    cursor.execute(
+                        "SELECT * FROM ronin_scheduler_events "
+                        "WHERE workspace_id=%s AND event_id=%s FOR UPDATE",
+                        (str(event.workspace_id), str(event.id)),
+                    )
+                    existing = cursor.fetchone()
+                    if existing is None:
+                        raise SchedulerEventConflict("scheduler event disappeared during ingest")
                     if _event_from_row(existing) != event:
                         raise SchedulerEventConflict("scheduler event id has conflicting content")
                     cursor.execute(
@@ -2121,21 +2140,6 @@ class PostgresSchedulerSnapshotStore(
                     if owns_connection:
                         connection.commit()
                     return tuple(_delivery_from_row(row) for row in rows)
-                cursor.execute(
-                    "INSERT INTO ronin_scheduler_events"
-                    "(workspace_id,event_id,event_type,source_ref,subject_ref,payload_digest,"
-                    "occurred_at,received_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
-                    (
-                        str(event.workspace_id),
-                        str(event.id),
-                        event.event_type,
-                        event.source_ref,
-                        event.subject_ref,
-                        event.payload_digest,
-                        str(event.occurred_at),
-                        str(event.received_at),
-                    ),
-                )
                 cursor.execute(
                     "SELECT definition_json FROM ronin_event_triggers "
                     "WHERE workspace_id=%s ORDER BY event_trigger_id",
