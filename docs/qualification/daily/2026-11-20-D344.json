@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-20",
+  "day": "D344",
+  "status": "PASS",
+  "candidate_sha": "980033830242a14096e1707fd0b9ef168054a70a",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "complete non-performance Python regression with isolated PostgreSQL",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d344-postgres-full-current-20261120",
+  "service": "postgres:16.4-alpine",
+  "tests": {"collected": 4788, "passed": 4760, "failed": 0, "skipped": 31, "unexpected_failures": 0, "warnings": 13, "coverage": "collected"},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d344-postgres-full-current-20261120",
+  "evidence_sha256": {".coverage": "2C2D4F3590CE697579867EDC48DDD7C99CA37F0FDE3D6BACE38B062F3E7E9E6B", "pytest-output.log": "677FD85E6A2B6D9E2E7EF2CC66778860E6E8F412C63406401B1A9566CAA78A47", "pytest-postgres.log": "2BA5655114F9FD5C40BF7E53CEF9E33A17630CD0C5CF3EF8ED7EC75D8C3C4F71", "pytest-postgres.xml": "4AC2AB2DC2549291548E027324159D630F4156D48C590DD7BCDEA7538FF3A7D1", "pytest-timings.json": "B13DAF95C89166A2D76310686CDF96F232CB53A0A3B7AE2BEB6B0624E490BB71", "runner-timings.json": "54041BDE9E166BFBCE892DCE22152C3B41D54E03730B38DA25702A7A62B4AE5F"},
+  "limitations": ["31 explicit environment/opt-in skips remain", "does not prove complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

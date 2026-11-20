@@ -2,7 +2,8 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
-D343 adds full live route evidence with real worker/PostgreSQL: `42/43` cases
+D344 adds the complete non-performance Python/PostgreSQL regression: `4760/4791`
+pass, `31` explicit skips and `0` failures. D343 adds full live route evidence with real worker/PostgreSQL: `42/43` cases
 pass with one reserved skip and `487/487` correlated API events. D342 adds bounded default-load supervisor evidence at `900 s`: `1/1`,
 `999/999` correlated API events all OK and cleanup PASS. D341 adds Helm/kind deployment evidence: install, upgrade/rollback,
 readiness, health/API and queued-job persistence across restart all PASS.

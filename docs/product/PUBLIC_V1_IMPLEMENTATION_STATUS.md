@@ -7,7 +7,9 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
-D343 completes the full live route on candidate `46843252` with a real Docker
+D344 completes the non-performance Python/PostgreSQL regression on candidate
+`98003383`: `4760/4791` pass, `31` explicit skips, `0` failures and `13`
+warnings. D343 completes the full live route on candidate `46843252` with a real Docker
 worker and PostgreSQL: `42/43` cases pass, one matrix-reserved skip remains,
 and `487/487` API events correlate. D342 extends the default-load supervisor soak to `900 s` on candidate
 `712f9397`: `1/1`, `999/999` correlated API events all OK, zero unexpected
