@@ -13,7 +13,7 @@
   "skip_reason": "Run via the multi-broker live qualification diagnostic with a three-node Redpanda fixture.",
   "cleanup": "PASS",
   "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d287-live-routewide-postgres-current-20261120",
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "ed77707c97834fb51f083b08728897b0facb7572",
   "limitations": ["route-wide audit is not a strict PASS because multi-broker case was skipped", "not release approval and does not reattribute D100"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
