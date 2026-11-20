@@ -7,6 +7,14 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D279 on current candidate `84f524ea9ba563232a39e281b52ca89bd2d84142`
+passes the PostgreSQL/Kafka live Streaming Studio byte-boundary case `1/1`,
+with `13/13` correlated API events (`11 OK`, `2` expected WARN), zero
+unexpected errors and cleanup PASS. This is bounded byte-boundary evidence and
+does not prove route-wide coverage, indefinite operation, HA/multi-worker, P11
+or release approval. P11 remains `in_progress`, P13 remains `blocked`, and
+release remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D278 on current candidate `0964588e850c9b10f6d01b2b5f9ab6f7ffa65cd9`
 passes a bounded 600-second PostgreSQL supervisor soak under the explicit
 sustainable profile of one record per 0.5 seconds: `1/1`, `605/605` correlated
