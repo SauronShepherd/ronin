@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-20",
+  "day": "D317",
+  "status": "PASS",
+  "candidate_sha": "b3cf3206f883259b87fe9073a898473a957833a6",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "live Parquet sink reset/replay recovery with PostgreSQL-configured Ronin",
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 11, "correlated": 11, "ok": 11, "unexpected": 0},
+  "application_logs": {"info": 13, "warn": 0, "error": 0, "critical": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d317-live-parquet-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "AB9A3CF40AC6751244CF078AF241ADA24DFD5D4F200A6EF001A969A7E94FCFA7",
+    "browser-live.xml": "0DC0AFCF7C84EDAAA86B2544BD98CABE492E70280F8750FDD55F441F558AF5F1",
+    "live-api-traffic.json": "5FE0CF9177B9C797455EFC34E04FAA361CBA591F4B79D32C9C489C7196756E1D",
+    "qualification-summary.json": "E117A890CE35695235DDA98AA7222F21D6BC303BCD14A0F8915B44A1657F1679"
+  },
+  "limitations": ["filtered Parquet-sink diagnostic only", "does not reattribute D283/D100 or qualify full P11, family, release gates, indefinite operation or HA; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
