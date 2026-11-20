@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-20",
+  "day": "D336",
+  "status": "PASS",
+  "candidate_sha": "98ef4ff062b4cbb94a3ab5e48a3ccc62e4c602e8",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "600-second sustainable PostgreSQL supervisor soak",
+  "profile": {"duration_seconds": 600, "records_per_tick": 1, "interval_seconds": 0.5},
+  "real_services": ["postgres:16.4-alpine", "single Redpanda broker", "Ronin API", "Chromium"],
+  "tests": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 835, "correlated": 835, "ok": 835, "unexpected_errors": 0},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d336-supervisor-soak-600-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "F39818BD6F462363DAECCEB38C91A467BD0E3A970E7E137ACB23F1164895B87C",
+    "browser-live.xml": "EBD60E97FA37D28281CB6516E294170C8E1FD65658B2CC2443B390188FACD3B4",
+    "live-api-traffic.json": "0F7F6160B003E990EF13655D316061D3EA34D357813D0101DA29739C3696A3AF",
+    "live-python-freeze.txt": "D41EEC00E91CE0423A986C2E60DC77627207A03A7AABFB1214E0500EC85FBD73",
+    "live-server.stderr.log": "5710B1F7D370F12ADF152CB4D4A3F23A758E8351B40F1821214AD14C45C874ED",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "4FCF7190E7B9999531DB0B0DC2E5C068F6422BCAC9812C7A5D58FAE6CDB74C8F",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["bounded 600-second evidence only under the explicit sustainable profile of one record per 0.5 seconds", "does not qualify default load, indefinite operation, production SLO, HA/multi-worker, complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
