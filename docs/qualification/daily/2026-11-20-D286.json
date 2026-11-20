@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D286",
+  "status": "PASS",
+  "candidate_sha": "67a6c00f279f8d0764da1d9938698984dfeb8003",
+  "production_boundary_sha": "67a6c00f279f8d0764da1d9938698984dfeb8003",
+  "qualification": "live streaming supervised drain stops at idle with durable checkpoint progress",
+  "backend": "postgres",
+  "real_services": ["postgres", "kafka", "ronin-api"],
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 5, "correlated": 5, "ok": 4, "expected_warn": 1, "unexpected": 0},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d286-live-supervised-drain-postgres-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "37CEF2F4993CAB8BE5E58C08CA65D1F7B921A9F0C8342E3DD7B23AAB44F55CFE",
+    "browser-live.xml": "014004477C8BD56D17022A322C572E54273F8BAA0532BFA2274E5435B425ED63",
+    "live-api-traffic.json": "B4F15ED09C0394B662A100CB18D980231140D281622361229C0EEAD079260922",
+    "qualification-summary.json": "6EBC5EFDA8BB3539B9CD5D97BC6D9A33AA38932BDAA3FCA1464615ED5093735B"
+  },
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "limitations": ["filtered bounded single-broker supervised-drain journey", "not route-wide, indefinite, HA, full P11, or release approval"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
