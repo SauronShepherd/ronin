@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-20",
+  "day": "D306",
+  "status": "NOT_PASS",
+  "candidate_sha": "0bcb060534dfd3e85821ea146a80129058ec4fbd",
+  "production_boundary_sha": "3ef1a7114bb87b756752189bc9f4977964ba45bf",
+  "qualification": "600-second live supervisor soak at default producer load after Kafka metadata-probe optimization",
+  "worker_image": "sha256:0c7c19b6a05ff08d7d693b7c4898cccf27b42fd6336e5d420bd36894f7deeec5",
+  "supervisor_soak_seconds": 600,
+  "journeys": {"passed": 0, "failed": 1, "skipped": 0},
+  "criterion": {"expected_total_lag": 0, "observed_total_lag": 116},
+  "api_events": {"total": 473, "correlated": 473, "ok": 473, "unexpected": 0},
+  "application_logs": {"error": 0, "critical": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d306-live-600-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "2185B24A3FE24F706CE67D843A4CC4732F5B9531B0AD7D44FAD7C1481B016947",
+    "browser-live.xml": "0E073E22F4B2A443A7F26907CFF897656BFC30414A2748BC28533A89AB4D615D",
+    "live-api-traffic.json": "B2A85C88C2E112C76E9C0698E0E8D6DDBAF0361EDB7B6729F33B9103B9EFAE21",
+    "qualification-summary.json": "2293EA3106B4C3D98550FAA02B0ADC8CF2357FFEE2B9D12A4135F4DCB8AF1620"
+  },
+  "limitations": ["NOT_PASS: 600-second drain criterion remains open with total_lag=116", "does not reattribute D300 or change P11/P13/release states"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
