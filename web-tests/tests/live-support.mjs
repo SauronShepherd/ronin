@@ -97,12 +97,16 @@ export function installLiveApiProxy(page, expectedToken = token) {
     const method = request.method();
     const timeoutMs = requestUrl.pathname.startsWith('/v1/ml-studio/labs/') &&
       requestUrl.pathname.endsWith('/search') ? Math.max(90_000, defaultRequestTimeoutMs) : defaultRequestTimeoutMs;
+    const requestBody = ['GET', 'HEAD'].includes(method) ? undefined : await request.postDataBuffer();
+    if (requestBody !== undefined && !headers.has('content-length')) {
+      headers.set('content-length', String(requestBody.byteLength));
+    }
     let upstream;
     try {
       upstream = await requestUpstream(upstreamUrl, {
         method,
         headers,
-        body: ['GET', 'HEAD'].includes(method) ? undefined : await request.postDataBuffer(),
+        body: requestBody,
       }, timeoutMs);
     } catch (error) {
       const call = {
