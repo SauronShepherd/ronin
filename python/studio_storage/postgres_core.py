@@ -9,6 +9,8 @@ PostgreSQL supplies shared multi-process durability and transactional semantics.
 from __future__ import annotations
 
 import threading
+import time
+from collections import defaultdict
 from typing import Any
 
 from studio_core import (
@@ -52,14 +54,62 @@ from .workspaces import (
 
 _POSTGRES_CONNECTION_LIMIT = 16
 _POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_SECONDS = 5.0
-_postgres_connection_slots = threading.BoundedSemaphore(_POSTGRES_CONNECTION_LIMIT)
+
+
+class _PostgresConnectionPool:
+    def __init__(self) -> None:
+        self._condition = threading.Condition()
+        self._available: list[Any] = []
+        self._created = 0
+
+    def acquire(self, connect: Any) -> Any:
+        end = time.monotonic() + _POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_SECONDS
+        with self._condition:
+            while True:
+                if self._available:
+                    return self._available.pop()
+                if self._created < _POSTGRES_CONNECTION_LIMIT:
+                    self._created += 1
+                    break
+                remaining = end - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError("PostgreSQL connection capacity is temporarily exhausted")
+                self._condition.wait(remaining)
+        try:
+            return connect()
+        except Exception:
+            with self._condition:
+                self._created -= 1
+                self._condition.notify()
+            raise
+
+    def release(self, connection: Any) -> None:
+        try:
+            connection.rollback()
+        except Exception:
+            try:
+                connection.close()
+            finally:
+                with self._condition:
+                    self._created -= 1
+                    self._condition.notify()
+            return
+        with self._condition:
+            self._available.append(connection)
+            self._condition.notify()
+
+
+_postgres_connection_pools: defaultdict[str, _PostgresConnectionPool] = defaultdict(
+    _PostgresConnectionPool
+)
 
 
 class _BoundedPostgresConnection:
     """Return a PostgreSQL connection slot exactly once when closed."""
 
-    def __init__(self, connection: Any) -> None:
+    def __init__(self, connection: Any, pool: _PostgresConnectionPool | None) -> None:
         self._connection = connection
+        self._pool = pool
         self._closed = False
         self._lock = threading.Lock()
 
@@ -71,10 +121,10 @@ class _BoundedPostgresConnection:
             if self._closed:
                 return
             self._closed = True
-        try:
+        if self._pool is None:
             self._connection.close()
-        finally:
-            _postgres_connection_slots.release()
+        else:
+            self._pool.release(self._connection)
 
     def __enter__(self) -> _BoundedPostgresConnection:
         self._connection.__enter__()
@@ -94,23 +144,28 @@ def _connect_bounded(
     row_factory: Any,
     psycopg_module: Any | None = None,
 ) -> Any:
-    if not _postgres_connection_slots.acquire(
-        timeout=_POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_SECONDS
-    ):
-        raise TimeoutError("PostgreSQL connection capacity is temporarily exhausted")
-    try:
-        psycopg = psycopg_module if psycopg_module is not None else _psycopg()[0]
+    psycopg = psycopg_module if psycopg_module is not None else _psycopg()[0]
+    connection_type = getattr(psycopg, "Connection", None)
+    if connection_type is None:
         return _BoundedPostgresConnection(
             psycopg.connect(
                 dsn,
                 autocommit=False,
                 row_factory=row_factory,
                 application_name=application_name,
-            )
+            ),
+            None,
         )
-    except Exception:
-        _postgres_connection_slots.release()
-        raise
+    pool = _postgres_connection_pools[dsn]
+    connection = pool.acquire(
+        lambda: psycopg.connect(
+            dsn,
+            autocommit=False,
+            row_factory=row_factory,
+            application_name=application_name,
+        )
+    )
+    return _BoundedPostgresConnection(connection, pool)
 
 
 class PostgresDependencyError(RuntimeError):
