@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-20",
+  "day": "D348",
+  "status": "PASS",
+  "candidate_sha": "cd179d88625109342af8e348c69022aa670d568a",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "current-main max-record cap and durable checkpoint live route with PostgreSQL and real Docker worker",
+  "commands": {"docker": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d348-docker-worker-current-20261120 -ImageTag ronin:qualification-d348 -TestFilter 'test_real_docker_worker_executes_clean_container_demo' -KeepImage", "live": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d348-live-max-record-current-20261120 -StorageBackend postgres -WorkerImage ronin:qualification-d348 -TestGrep 'live streaming max-record cap resumes the durable checkpoint without replay' -RequestTimeoutSeconds 90"},
+  "worker_image_sha256": "sha256:85a7beff186b5afe93acbbd7d4f3d58fcd9f1ca5be59509091fa438344764b01",
+  "docker_diagnostic": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26},
+  "live": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 8, "correlated": 8, "ok": 7, "warn": 1, "unexpected_authorization_gaps": 0, "unexpected_server_network_errors": 0},
+  "cleanup": "PASS; isolated services removed and exact worker image deleted",
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d348-docker-worker-current-20261120", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d348-live-max-record-current-20261120"],
+  "evidence_sha256": {"docker/docker-cleanup.json": "656360F88EB7B4E7E34B227762B22D49DA8E24AD0A2EF9E9F4657ED27B1481D4", "docker/docker-qualification.log": "AA936ECE969CFA38CDB974EBF583097E61338C558EF8DCCC2C722C207A997362", "live/browser-live.log": "2EBF238DB0D21681BF0EE04AE2F1F9D1CB2A8E698998D90EBF2F8978BEBE810E", "live/browser-live.xml": "B4D3EF466CED1F08550CA55822B062A8DEC462169541EA017D43E2CEBE5B6264", "live/live-api-traffic.json": "ACE070CF91EA701D25874227482AB286A5AEF378BB011E375E3896F32DC8032D", "live/qualification-summary.json": "AECE07C8FED8AAC701BC0770F687B73ADF66D60CE9A877930A42C22E84B41D5D"},
+  "limitations": ["filtered diagnostic only; 26 Docker tests deselected", "one expected route warning is retained", "does not prove complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
