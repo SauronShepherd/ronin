@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D331 adds bounded Azure Blob-compatible evidence: `1/1` Azurite case passes
+for discovery, read and snapshot replay. It does not certify Microsoft Azure
+production or close P11.
+
 D330 adds bounded S3-compatible provider evidence: `2/2` Floci cases pass
 for JSON sink retry/read/discover and ML object-store retention. It does not
 certify AWS/Azure/GCP production services or close P11.
@@ -293,7 +297,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `cb3a9f0f45bca5b78a4319a15a2f9271ff814399` (2026-11-20).
+**Observed source baseline:** `7bcee79b381a1d712150bb8398dad8936dd03d21` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
