@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-20",
+  "day": "D353",
+  "status": "PASS",
+  "candidate_sha": "820c95e52930c4fc610d543cc9de7922ce16e465",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "current-main sustained backpressure at 8,192 records with reset-safe replay, PostgreSQL and real Docker worker",
+  "commands": {
+    "docker": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d353-docker-worker-current-20261120 -ImageTag ronin:qualification-d353 -TestFilter 'test_real_docker_worker_executes_clean_container_demo' -KeepImage",
+    "live": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d353-live-backpressure-8192-current-20261120 -StorageBackend postgres -WorkerImage ronin:qualification-d353 -BackpressureRecords 8192 -TestGrep 'live streaming sustained backpressure drains configured records with reset-safe replay' -RequestTimeoutSeconds 300"
+  },
+  "worker_image_sha256": "sha256:3d3e5025df9013c9ddb935ae840bcce7175774a755ce3e3f73085aad0d706c81",
+  "docker_diagnostic": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26},
+  "live": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 12, "correlated": 12, "ok": 12, "warn": 0, "unexpected_authorization_gaps": 0, "unexpected_server_network_errors": 0, "elapsed_seconds": 213.91},
+  "comparison": {"D352": "16,384 records NOT_PASS at 240s Playwright timeout", "D353": "8,192 records PASS at 213.91s"},
+  "cleanup": "PASS; isolated services and exact worker image deleted",
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d353-docker-worker-current-20261120", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d353-live-backpressure-8192-current-20261120"],
+  "evidence_sha256": {
+    "docker/docker-cleanup.json": "0E68374313C47711CC4ED6692901AE0C566DD76A3765005CEFB42FB30A5C0ECB",
+    "docker/docker-pytest-output.log": "B36E1C898995159E1AAA60DE9323E5B5CF2AFD568B3A936D5048DA464EFA22F0",
+    "docker/docker-qualification.log": "847B973777CCB9C6B26B296F78148C4C7FEB8745BB13A2D84D75335F03AA6F7E",
+    "docker/postgres-qualification.log": "7FF45FA192408855227E303C535AAA9360BC04B552CCF48AC989D04DAFE45907",
+    "docker/v01-acceptance.xml": "36724D41496B39953CFBB7871976409EF7725E51D0108CEDE1F8C7F06806EEAA",
+    "live/browser-live.log": "9C3CA4B09ED4A87E336C063468D984AC61BD9B6E67E816919736055B0A92BAA3",
+    "live/browser-live.xml": "71B1FD6962116DBD4446383E44A432C0E928BC8A8A03D6A4E08486A609111C52",
+    "live/live-api-traffic.json": "E2951572E20EA655A7AAEB56FA72C4C46C0086945B4CA7BE6D1494090526E87D",
+    "live/qualification-summary.json": "9D13E6E177A1823D57216DCCCBC6A103F17442DE5C6BFB668A60BAD4C092CD6E"
+  },
+  "limitations": ["filtered diagnostic only; 26 Docker tests deselected", "bounded evidence does not prove indefinite operation, complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

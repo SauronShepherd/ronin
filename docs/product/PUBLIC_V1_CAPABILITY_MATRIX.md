@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D353 adds current-main sustained-backpressure evidence at `8,192` records: Docker
+worker `1/1`, live `1/1`, `12/12` correlated API events all OK, and `213.91 s` elapsed.
+D352 remains **NOT_PASS** at `16,384` after the `240 s` timeout; D353 does not reattribute
+it or prove double-volume operation. These remain bounded diagnostics.
+
 D352 records a current-main sustained-backpressure attempt at `16,384` records:
 the Docker worker diagnostic passes `1/1`, but the live case is **NOT_PASS** (`0/1`)
 after the `240 s` Playwright timeout. The audit correlated `5/5` API events, all OK.
@@ -356,7 +361,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `9e9355952956d23351b7a1eca593374dd2f655cb` (2026-11-20).
+**Observed source baseline:** `820c95e52930c4fc610d543cc9de7922ce16e465` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
