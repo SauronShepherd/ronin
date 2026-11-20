@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D293",
+  "status": "PASS",
+  "candidate_sha": "52e3166e32890066cee033c7d58d8869416af754",
+  "production_boundary_sha": "7a9e3359f28e15a30ceba73e4a125b58b1996862",
+  "qualification": "external S3-compatible provider round-trip, retry and artifact retention",
+  "provider": "Floci S3-compatible Docker service",
+  "worker_image": "sha256:2d3f86a32411cd0151ca7528bf9ca28a1cca537d03cd3b14c07283331d0263c5",
+  "tests": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0},
+  "scenarios": ["S3 JSON sink put/read and retry round trip", "ML durable input/output and retention round trip through S3"],
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d293-s3-external-provider-current-20261120",
+  "evidence_sha256": {
+    "docker-pytest-output.log": "36A7A053BED72E4954D26CF9574421F1CED05FBD956E0DCA59485B61019F4436",
+    "v01-acceptance.xml": "DC4A0926A078BDEF7D04FEBDCA9B226061FE2D30A78C489662284451A8D7C0A9",
+    "docker-cleanup.json": "F9C132E668984C353484E98826E0176A6B1A08BDF1F2B01C7609A900E7E15454",
+    "floci-s3-qualification.log": "CA15FE6EA4B41D390CDF0A283E83463D8959889B7A7758AD8B3A28540A042187"
+  },
+  "documentation_commit_sha": null,
+  "limitations": ["filtered external S3-compatible diagnostic", "not AWS/Azure production provider, full P11, family, or release qualification; does not reattribute D10/D100"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
