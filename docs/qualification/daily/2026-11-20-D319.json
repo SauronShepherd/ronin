@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D319",
+  "status": "PASS",
+  "candidate_sha": "e09cc6a93e3ae55f9154c3e876338e5375d38499",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "live RF3 multi-broker streaming failover with PostgreSQL-configured Ronin",
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 5, "correlated": 5, "ok": 5, "unexpected": 0},
+  "application_logs": {"info": 7, "warn": 0, "error": 0, "critical": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+  "multi_broker": true,
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d319-live-rf3-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "FCDDCBF582D8C5571C04EC7265CC1D9F9B849D8DC4FCFB3DF5F40EA637DD72CE",
+    "browser-live.xml": "C15F5CAA47A60F6F1A03F701634B9BE2753839B3EB6F6D8AE63A60EDB7EC4CE0",
+    "live-api-traffic.json": "74E91140C77C425E8A390B6AD7887904C4F72BE5471F21FD736D83A589A14700",
+    "qualification-summary.json": "2A790852BFC65FC274C6CBE9BE5C58D00ACA8FE1403F4106C26EB50BBF125E56"
+  },
+  "limitations": ["filtered RF3 multi-broker diagnostic only", "does not reattribute D257/D100 or qualify full P11, family, release gates, indefinite operation or HA; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
