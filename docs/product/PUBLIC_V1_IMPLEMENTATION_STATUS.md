@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
+D384 re-tests the larger bounded PostgreSQL-runtime cell at `8,192` records on
+`main@503f6560` with a `600 s` request timeout and remains **NOT_PASS**: the
+second request ends in `Failed to fetch`/status-0 after `359.98 s`, with `5/5`
+correlated events (`4` OK, `1` error), no server ERROR/CRITICAL logs and
+cleanup PASS. This does not reattribute D383's 4,096-record bounded pass or
+close P11/release.
+
 D383 passes a bounded PostgreSQL-runtime backpressure cell at `4,096` records
 on `main@87f24a1e`, using an explicit `300 s` request timeout: `1/1` filtered
 case passed in `331.07 s`, with `12/12` correlated API events OK, no unexpected
