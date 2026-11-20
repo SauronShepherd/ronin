@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-20",
+  "day": "D349",
+  "status": "PASS",
+  "candidate_sha": "9ec9ee0d53cf5dd8afb651a36a6e209041a7e0b4",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "current-main Parquet sink and reset replay live diagnostic with PostgreSQL and real Docker worker",
+  "commands": {
+    "docker": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d349-docker-worker-current-20261120 -ImageTag ronin:qualification-d349 -TestFilter 'test_real_docker_worker_executes_clean_container_demo' -KeepImage",
+    "live": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d349-live-parquet-current-20261120 -StorageBackend postgres -WorkerImage ronin:qualification-d349 -TestGrep 'live streaming parquet sink preserves reset replay across bounded runs' -RequestTimeoutSeconds 90"
+  },
+  "worker_image_sha256": "sha256:af9e07d2fd6708496e512215478d068e34d962f6b7c4209337619ae5b5214368",
+  "docker_diagnostic": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26},
+  "live": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 11, "correlated": 11, "ok": 11, "warn": 0, "unexpected_authorization_gaps": 0, "unexpected_server_network_errors": 0},
+  "cleanup": "PASS; isolated services and exact worker image deleted",
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d349-docker-worker-current-20261120", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d349-live-parquet-current-20261120"],
+  "evidence_sha256": {
+    "docker/docker-cleanup.json": "D4C56ECA04DA75346E979F10961A56EBBBF6E0D6BE4D8379E37F19FB3BAD41A8",
+    "docker/docker-pytest-output.log": "131BB3D9E72CB0637264235DEC71686B09B7D6BD33A0367D74CEAE8BA7194737",
+    "docker/docker-qualification.log": "1A68D3B8F41591BA0A51C69A5B56A9981E0606B81BFFF6222E5F96ACB51C8B2F",
+    "docker/postgres-qualification.log": "FEB27D30ECFCB394C3820F3343AE98A924D15B98F690CDE7639858DE64596B91",
+    "docker/v01-acceptance.xml": "0A8614FB09D3D20C6A981929954F3B5A0A3B54DAA0CDF0F2A3B54DAA0CDF0F2A17F14F6783C8497",
+    "live/browser-live.log": "26FA700A823D7C48A5F4D5C8F0D5FDE6E0C985FD3E9E305AC80CB04FAACA9971",
+    "live/browser-live.xml": "4628AEBAF8F919ED5E6055DDC8F7602768F1D6E6DCA99301392B55BF88736BAE",
+    "live/live-api-traffic.json": "5CCB33B9434B742A2C0450DAB9FFEB058F897B0BA75E07E864AE6BAA6558A4B6",
+    "live/qualification-summary.json": "5149729430AE5EF3F7FC54D7E333C55E49E0C3AB3B4473542470ECFAD68F0746"
+  },
+  "limitations": ["filtered diagnostic only; 26 Docker tests deselected", "bounded evidence does not prove complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

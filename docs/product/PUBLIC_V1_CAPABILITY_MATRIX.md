@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D349 adds current-main Parquet sink reset/replay evidence: `1/1` with `11/11`
+correlated API events, all OK, using real worker/PostgreSQL. The worker Docker
+diagnostic passes `1/1` with 26 deselected. This remains filtered bounded evidence
+and does not close P11 or release.
+
 D348 adds current-main max-record checkpoint evidence: `1/1` with `8/8`
 correlated API events. D347 adds current-main two-partition backlog evidence: `1/1` with `34/34`
 correlated API events. D346 adds current-main event-to-workflow evidence: `1/1` with `12/12`
@@ -336,7 +341,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `dbb48fd69797f1a6673e02eafed111fec65b4bf3` (2026-11-20).
+**Observed source baseline:** `9ec9ee0d53cf5dd8afb651a36a6e209041a7e0b4` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
