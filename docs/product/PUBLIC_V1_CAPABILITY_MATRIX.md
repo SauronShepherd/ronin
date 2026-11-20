@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D370 re-tests `16,384` sustained backpressure after the PostgreSQL streaming migration and remains **NOT_PASS**: the second request ends in `Failed to fetch`/status-0 network error, with `5/5` correlated events (`4` OK, `1` error), cleanup PASS. This does not close P11/release.
+
 D369 qualifies the PostgreSQL-configured live Parquet reset/replay route: `1/1` pass, `11/11` correlated API events all OK and cleanup PASS. It is filtered evidence distinct from D367 and does not reattribute D349 or close P11/release.
 
 D368 adds the full current-main non-performance Python/PostgreSQL regression after the streaming sink change: `4763` passed, `31` skips, `0` failures and `23` warnings, cleanup PASS. It includes the real PostgreSQL streaming tests and does not close P11/release.
@@ -400,7 +402,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `ce7451fb9a959aa6b41d71cfe0f3d904227c86d1` (2026-11-20).
+**Observed source baseline:** `1470a1b5ed6b822f40b035cef733a28c6f25a52a` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

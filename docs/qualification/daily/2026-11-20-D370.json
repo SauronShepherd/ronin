@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-20",
+  "day": "D370",
+  "status": "NOT_PASS",
+  "candidate_sha": "1470a1b5ed6b822f40b035cef733a28c6f25a52a",
+  "production_boundary_sha": "a06b46849b70f4a2af8ad7af79ac109ae7f7dd36",
+  "qualification": "current-main 16,384 sustained backpressure after PostgreSQL streaming checkpoint and sink migration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d370-live-postgres-backpressure-16384-900-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 16384 -BackpressureTimeoutSeconds 900 -RequestTimeoutSeconds 90",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "api_events": 5, "correlated": 5, "api_ok": 4, "api_error": 1, "failure": "Failed to fetch during the second backpressure request; status 0 network error", "elapsed_seconds": 134.75},
+  "services": ["PostgreSQL 16.4", "single Redpanda broker", "Ronin API", "Chromium"],
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d370-live-postgres-backpressure-16384-900-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "DEEF7DF5AE6F23D5DADD2503A9533BD301B4BB5408B9911C6E08D217067AD15C",
+    "browser-live.xml": "8ED823DA4C3646B025DFE8776D81FC76AF7CDF8E6BE149985A67B274D87FE0F5",
+    "live-api-traffic.json": "61480A3B474D89A70466E2A4EC0E79420AC5457E6140B9101C3458606796F645",
+    "live-python-freeze.txt": "FC6D889351CB00D9D4FDF5237666287E544353E19A54AE85FF5B8A7C36B5B26E",
+    "live-server.stderr.log": "D4FF6BBFC0B690A157B744B979ADF72BA6B6EDDE303D579AAF4F84138767D492",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "B9E9E94B07C9161F30150E77DBB0B4B252526C38CEFAA810F8D0950D55EAC7FC",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["NOT_PASS bounded diagnostic", "no server error was logged; browser observed a network abort", "does not reattribute D352-D358 or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
