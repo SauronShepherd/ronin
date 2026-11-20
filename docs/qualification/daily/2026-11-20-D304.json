@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-20",
+  "day": "D304",
+  "status": "PASS",
+  "candidate_sha": "3ef1a7114bb87b756752189bc9f4977964ba45bf",
+  "production_boundary_sha": "3ef1a7114bb87b756752189bc9f4977964ba45bf",
+  "qualification": "bounded Kafka metadata-probe cache and affected streaming regression",
+  "change": "reuse successful broker metadata probes for 5 seconds across fresh bounded processors; failures are not cached and consume remains active",
+  "tests": {"kafka_streaming": 14, "passed": 14, "failed": 0},
+  "static": {"ruff_check": "PASS", "mypy_kafka": "PASS", "git_diff_check": "PASS"},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d304-kafka-metadata-cache-current-20261120",
+  "evidence_sha256": {
+    "pytest.log": "4E075844CB8AB1861080B045F02E17ADCAE9FFF79F3C0702323F5B175FBCA64B",
+    "ruff-check.log": "82B3E6A6C090A57601D22943BD23FCA9218D1031DBE5A7B754092F9A156B4F18",
+    "mypy.log": "5D4B6D285B77932E3D08212C3B4974D0A803F98EC60408AC6CCF6A063FA6C19E",
+    "qualification.json": "C9150A9A1DEC54575336D01DE8804F93D8424B39124242D7FE0E8C206B496B95"
+  },
+  "limitations": ["focused Kafka regression/static qualification only", "D300 default approximately 16 records/second remains NOT_PASS; no indefinite, full P11, family, or release qualification; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
