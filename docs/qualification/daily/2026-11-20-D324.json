@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D324",
+  "status": "PASS",
+  "candidate_sha": "6ecef126b72ee3174461757a926a5db2d681c8fd",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "filtered live streaming journey with PostgreSQL-configured Ronin and corrected runner fixture",
+  "journeys": {"passed": 10, "failed": 0, "skipped": 1},
+  "api_events": {"total": 263, "correlated": 263, "ok": 252, "unexpected": 0},
+  "application_logs": {"info": 309, "warn": 0, "warning": 8, "error": 3, "critical": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+  "expected_skip": "live streaming multi-broker failover resumes from the durable checkpoint (reserved for -MultiBroker RF3 fixture)",
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d324-live-streaming-postgres-runner-skip-fixed-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "62DE2A7875817E56E05B5496970CAF4D7A819945B6947CC469C1873182E148B6",
+    "browser-live.xml": "3E310B9FFB8489CC2B228879D021BF800A88595100CD2BC31B89FF696A4AFB1D",
+    "live-api-traffic.json": "7B8B024C876ACC833D987702C43B974A6FBD62BEA87F86AB2A03A98239AB2873",
+    "qualification-summary.json": "946E2F0BDDB5A07C97387D4AE1D6777A926EDEE0A6ADBCD7F75B79EF77FF9458"
+  },
+  "limitations": ["filtered streaming diagnostic only; one explicitly reserved RF3 skip remains covered by the separate multi-broker cell", "does not reattribute D320/D322/D100 or qualify full P11, family, release gates, indefinite operation or HA"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
