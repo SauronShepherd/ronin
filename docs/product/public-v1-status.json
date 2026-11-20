@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-11-20T18:30:00+01:00",
-  "observed_main_sha": "fab4af82e875be8d759cca39e67aa2f08c8435d2",
+  "observed_at": "2026-11-20T18:35:00+01:00",
+  "observed_main_sha": "bf9a5df0b23afe202fba7f92f481b1aab8a9d8b2",
   "latest_automated_evidence": "D328 on current main f73d1b44 passes the complete PostgreSQL integration file 21/21 against PostgreSQL 16.4, covering scheduler recovery, outbox and lease fencing, migrations, cancellation, event-inbox replay and the durable HTTP adapter. D327 remains the latest complete bounded live product qualification at 42/43 with one reserved RF3 skip, 25 routes and 473/473 API events. This evidence is filtered with coverage disabled and does not close P11. Historical D83-D100 receipts remain bound to their exact candidates and are not reattributed. P11 remains in_progress, P13 remains blocked, and release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_observation": "2026-11-20 current main fab4af82: D328 PostgreSQL runtime integration is 21/21 PASS with scheduler recovery and durable control-plane paths; D327 remains the complete bounded live qualification at 42/43 with one reserved RF3 skip and 473/473 API events. Release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_p11_observation": "D328 adds current-main PostgreSQL runtime evidence 21/21, including scheduler recovery, outbox/lease fencing, migrations, cancellation, event inbox replay and durable HTTP adapter coverage. D327 remains the complete bounded live route evidence at 42/43, 25 routes and 473/473 correlated events. These filtered and bounded cells do not prove complete P11, indefinite operation, production SLO, HA/multi-worker, external provider breadth or release approval. The production implementation boundary remains 01e01fde106f1ce720a123a3020e626baf209978; P11 stays in_progress and P13 stays blocked.",
