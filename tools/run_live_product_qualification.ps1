@@ -675,7 +675,21 @@ try {
     } else {
         Write-Output "UI-only diagnostic passed: 0 API calls (this does not qualify API behavior)."
     }
-    if ($junit.SelectNodes("//testcase/skipped").Count -gt 0) { throw "Live qualification contains skipped tests." }
+    $skippedCases = @($junit.SelectNodes("//testcase[skipped]"))
+    $expectedSingleBrokerStreamingSkip = @(
+        "live streaming multi-broker failover resumes from the durable checkpoint"
+    )
+    $unexpectedSkippedCases = @($skippedCases | Where-Object {
+        $caseName = [string]$_.GetAttribute("name")
+        -not (
+            $TestGrep -eq "streaming" -and
+            -not $MultiBroker.IsPresent -and
+            $expectedSingleBrokerStreamingSkip -contains $caseName
+        )
+    })
+    if ($unexpectedSkippedCases.Count -gt 0) {
+        throw "Live qualification contains unexpected skipped tests: $(@($unexpectedSkippedCases | ForEach-Object { $_.GetAttribute('name') }) -join ', ')."
+    }
     $resultCode = 0
     if ($TestGrep) {
         Write-Output "Live diagnostic passed: $($cases.Count) filtered Playwright cases, $($traffic.Count) real API calls."
