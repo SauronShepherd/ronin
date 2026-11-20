@@ -17,7 +17,7 @@
     "live-api-traffic.json": "6F497324800E2EE8EA6DBDDF1B4420CB2FBBB0C95BAF5A92B8DF8D7B5CF6B701",
     "qualification-summary.json": "70CCB28777960B15D629D04FA298E3315FB26C3FF0DCEBBC1EC9878AA0D62E0A"
   },
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "8b1e28876abd1a510ff352e9244d11184bbd6d54",
   "limitations": ["filtered bounded single-broker Parquet journey", "not route-wide, indefinite, HA, full P11, or release approval"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
