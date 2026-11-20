@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D400 passes the HTTP submit/status control-plane regression on
+`main@11fbe536`: `8/8` tests passed in `10.07 s`, covering the OpenAPI/SDK
+contract, typed SQL, submit/list/status/events/cancel idempotency, scopes,
+healthz, reopen persistence and invalid-token rejection. This is bounded local
+SQLite control-plane evidence and does not close P11/release.
+
 D399 passes the real HTTP JSON control-plane preview and scope journey on
 `main@4865a48f`: `1/1` test passed in `9.58 s` against a paginated loopback
 service. This is bounded control-plane/provider-fixture evidence and does not

@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D400",
+  "status": "PASS",
+  "candidate_sha": "11fbe536951c69bdf8669e4af24756b0d1a07514",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "HTTP control-plane submit/status contract and authorization regression",
+  "command": "python -m pytest -q tests/integration/test_http_submit_status.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d400-http-submit-status-20261121\\http-submit-status.xml",
+  "result": {"selected": 8, "passed": 8, "failed": 0, "skipped": 0, "elapsed_seconds": 10.07},
+  "coverage": ["OpenAPI and SDK states", "typed SQL bindings and rejection", "submit/list/status/events/cancel idempotency", "typed grant scope rejection", "unauthorized healthz", "bounded project SQL", "SQL after server reopen", "invalid static token rejection"],
+  "evidence_sha256": {"pytest.log": "1C21384A35D51F65481370C067365CA9CBAE706B312173137F664C36172B5E04", "http-submit-status.xml": "5E285DB6893E2131DC99E7FB44D79AC0A259DEE6BEAA780C18DDE72D7F2F24A6"},
+  "limitations": ["bounded local HTTP and SQLite control-plane regression", "does not qualify PostgreSQL runtime, indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

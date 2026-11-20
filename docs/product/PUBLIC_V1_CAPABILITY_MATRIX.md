@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D400 passes the HTTP submit/status control-plane regression on
+`main@11fbe536`: `8/8` tests passed in `10.07 s`, covering contract, lifecycle,
+idempotency, scopes and reopen behavior. This bounded local evidence does not
+close P11/release.
+
 D399 passes the real HTTP JSON control-plane preview and scope journey on
 `main@4865a48`: `1/1` test passed in `9.58 s` against a paginated loopback
 service. This bounded control-plane evidence does not close P11/release.
