@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D278",
+  "date": "2026-11-18",
+  "status": "pass",
+  "cell": "Current-candidate 600-second sustainable PostgreSQL supervisor soak",
+  "candidate_sha": "0964588e850c9b10f6d01b2b5f9ab6f7ffa65cd9",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-18-D278.md",
+  "execution_scope": "clean-main bounded live supervisor soak for 600 seconds with real PostgreSQL, single-broker Redpanda and sustainable producer load",
+  "result": {
+    "status": "PASS: 1/1 Playwright case",
+    "soak_seconds": 600,
+    "producer_profile": "1 record per 0.5 seconds",
+    "api_audit": "PASS: 605/605 correlated API events, all OK, 0 uncorrelated",
+    "application_logs": "PASS: INFO 607, WARN/ERROR/CRITICAL 0",
+    "cleanup": "PASS: PostgreSQL, broker, network and volume removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "$env:RONIN_LIVE_SUPERVISOR_SOAK_RECORDS_PER_TICK='1'; $env:RONIN_LIVE_SUPERVISOR_SOAK_INTERVAL_SECONDS='0.5'; pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d278-supervisor-soak-600-sustainable-postgres-current-20261118 -StorageBackend postgres -SupervisorSoakSeconds 600 -TestGrep 'supervisor soak' -RequestTimeoutSeconds 60",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d278-supervisor-soak-600-sustainable-postgres-current-20261118",
+    "sha256": {
+      "browser-live.log": "A9AAA1C228FEF449292B5B527F0D93C84FB364752D16F43D4B428D0BA1752182",
+      "browser-live.xml": "8E35988BC998ABFE40B68D23CB44AA2F87DC1423CF66209B7A61182D39154780",
+      "live-api-traffic.json": "63EF637CB96DA00034546668BC32B5768FFF1A9C73CC174214DABC3517BC1889",
+      "live-python-freeze.txt": "2710D3D588B694CCB998C22E2CEBAFDE30388F4EBF51D79EE8E01B267B594287",
+      "live-server.stderr.log": "11D654B15AE2780E2BF304163DE0EDB4ED60F79204ABC904E0F9A3B5257B3795",
+      "qualification-summary.json": "9BA588114AA080F81DCAE3407A066F10B8C0C18A9B422678B36C236BABD0A64E"
+    }
+  },
+  "limitations": [
+    "D278 qualifies 600 seconds only under the explicit sustainable producer profile of one record per 0.5 seconds; it does not qualify default producer load.",
+    "This is bounded operation evidence, not indefinite operation, production SLO, HA/multi-worker, complete P11 or release approval.",
+    "D277 remains separate NOT_PASS evidence under default load; D278 does not reattribute D256, D253, D252, D251 or earlier receipts."
+  ]
+}
