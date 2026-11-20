@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D352 records a current-main sustained-backpressure attempt at `16,384` records:
+the Docker worker diagnostic passes `1/1`, but the live case is **NOT_PASS** (`0/1`)
+after the `240 s` Playwright timeout. The audit correlated `5/5` API events, all OK.
+This does not reattribute D93 or close P11/release.
+
 D351 adds current-main near-record/near-batch byte-boundary evidence: `1/1` with `13/13`
 correlated API events (`11` OK and `2` expected warnings), using real worker/PostgreSQL.
 The worker Docker diagnostic passes `1/1` with 26 deselected. This remains filtered
@@ -351,7 +356,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `6e6e4ae00dcdeb0c6c3b88ccf09e1ef0ec6d7085` (2026-11-20).
+**Observed source baseline:** `9e9355952956d23351b7a1eca593374dd2f655cb` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
