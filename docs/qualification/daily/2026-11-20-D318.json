@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-20",
+  "day": "D318",
+  "status": "PASS",
+  "candidate_sha": "483382bcfd0506208451a4902feeb2cc63ad2610",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "live sustained backpressure reset-safe replay with PostgreSQL-configured Ronin",
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 12, "correlated": 12, "ok": 12, "unexpected": 0},
+  "application_logs": {"info": 14, "warn": 0, "error": 0, "critical": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d318-live-backpressure-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "04FE0DE51D9BA97CAB464463DAA55F18EBCA6CD4532BE88BE9B0E70645EBB624",
+    "browser-live.xml": "94D33CA87B6F81CC8E8D417762D85A1E5D9FA07DFF7071D7093DB29D28B50175",
+    "live-api-traffic.json": "E5092C8170F5F862B08D8B11CAD8E5DF7E14338D5725599B55B43C1DF14ADE41",
+    "qualification-summary.json": "D9CB8B2A0C49846CD37894D80C5CAF913D9AD91FE856D3C60D71EAB5B7A11E0E"
+  },
+  "limitations": ["filtered sustained-backpressure diagnostic only", "does not reattribute D284/D100 or qualify full P11, family, release gates, indefinite operation or HA; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
