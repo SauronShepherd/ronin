@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-20",
+  "day": "D367",
+  "status": "PASS",
+  "candidate_sha": "a06b46849b70f4a2af8ad7af79ac109ae7f7dd36",
+  "production_boundary_sha": "a06b46849b70f4a2af8ad7af79ac109ae7f7dd36",
+  "qualification": "PostgreSQL-configured live event-to-workflow route with PostgreSQL streaming checkpoint and sink tables",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d367-live-postgres-full-stream-runtime-20261120 -StorageBackend postgres -TestGrep 'live streaming event workflow is triggered by a committed record' -RequestTimeoutSeconds 90",
+  "live": {"selected": 1, "passed": 1, "skipped": 0, "failed": 0, "api_events": 9, "correlated": 9, "ok": 9, "unexpected_authorization_gaps": 0, "unexpected_server_network_errors": 0},
+  "services": ["PostgreSQL 16.4", "single Redpanda broker", "Ronin API", "Chromium"],
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d367-live-postgres-full-stream-runtime-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "1CA2A069DB051813662FA52F58E3A36BEB30D9BDFB3308C96BC468AC465E5D39",
+    "browser-live.xml": "3FBB8392D837E897994957A74D4A2BC751F0E08579513F488CE3D691173BBFA6",
+    "live-api-traffic.json": "9311FB2300514AE18FC8F1BC312DB72EE487FCC4C8F60AF759DF4E9DD608A7A0",
+    "live-python-freeze.txt": "38C3A7B7EB24B0540861C15737269E40805202D4902CADB3EF67DCEF67996EA8",
+    "live-server.stderr.log": "770BF9DC0492D664CC6D4DBC8546EB39C2B868472595A137D737D3460ECD96EC",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "6E2CAAEC5006C2E7EF1091B643374B12DF72B0B276B9A7EF502480031177E07A",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["filtered event-to-workflow diagnostic only", "does not prove complete P11, HA/multi-worker, indefinite operation or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
