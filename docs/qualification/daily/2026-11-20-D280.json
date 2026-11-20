@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D280",
+  "date": "2026-11-20",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL live two-partition backlog drain",
+  "candidate_sha": "43193b7954250f9df6030437c474de88a2bf0882",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-20-D280.md",
+  "execution_scope": "clean-main filtered live Streaming Studio journey with real PostgreSQL and single-broker Kafka",
+  "result": {
+    "playwright": "PASS: 1/1 filtered case",
+    "api_audit": "PASS: 36/36 real API events correlated, all OK, 0 unexpected errors",
+    "journey": "PASS: two-partition backlog drains in bounded micro-batches",
+    "cleanup": "PASS: PostgreSQL, broker, network and volume removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d280-live-two-partition-backlog-postgres-current-20261120 -StorageBackend postgres -TestGrep 'live streaming drains a two-partition backlog in bounded micro-batches' -RequestTimeoutSeconds 60",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d280-live-two-partition-backlog-postgres-current-20261120",
+    "sha256": {
+      "browser-live.log": "265C0DE823A9EEA8E67FA6EA7910A0799E75961F9D74C490BB70CB96E80C77C2",
+      "browser-live.xml": "0CE9A1DB6DD6861C96B0093C0B3A1DDCBAF61990D62411596E2DD9CE6A53153B",
+      "live-api-traffic.json": "60E19BBD81DD3BF0CE73DDC10BB13702DCBEA120073FC4CC4F38CFA25DB3E2D5",
+      "live-python-freeze.txt": "5007EE79971F1F866A6839A922654BE95F2738E65BBA3D590094A5D2F258D21B",
+      "live-server.stderr.log": "B17F4757545466A760D2CBEE71088E041EC6C3AD7CE4B60FE5D53350A1169862",
+      "qualification-summary.json": "80C024047D64A4E35F28F368C95A88F2863DB6122E4BE71514D209E750E0CA9F"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded two-partition backlog evidence, not route-wide coverage, indefinite operation, HA/multi-worker, complete P11 or release approval.",
+    "D280 does not reattribute D93, D96, D100, D279, D278 or earlier receipts."
+  ]
+}
