@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-20",
+  "day": "D299",
+  "status": "PASS",
+  "candidate_sha": "1d41bf302aa3cf25880bc202ff81544311b27580",
+  "production_boundary_sha": "7a9e3359f28e15a30ceba73e4a125b58b1996862",
+  "qualification": "real Spark Connect provider integration",
+  "provider": "Spark Connect",
+  "provider_image": "sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "tests": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 2},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d299-spark-provider-current-20261120",
+  "evidence_sha256": {
+    "qualification.json": "68B5DDA5809746AF192327B8A120BFEACA0FEDFB675025CC99CD39867AE20398",
+    "spark-junit.xml": "F697F6840364A6FA2358B38D033FD44CA75BC5EECF224BC7D340FD4A69554191",
+    "qualification.log": "88D1EF06A2C2D267995350541C4B967EB9001F4B4A760E6F9F64D418BD9B10CD",
+    "pytest-timings.json": "3F53C2DF3E3E76CA0477B628AADAD0921A3C9F8B9AD83DE92E9F631555285B2A"
+  },
+  "documentation_commit_sha": null,
+  "limitations": ["bounded local Spark Connect provider diagnostic", "not production Spark SLA, full P11, family, or release qualification; does not reattribute prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
