@@ -77,6 +77,7 @@ class MicroBatchProcessor:
         *,
         limit: int = 1000,
         timeout_seconds: float = 1.0,
+        expected_checkpoint: StreamCheckpoint | None = None,
     ) -> MicroBatchResult:
         if not stream_id or stream_id != stream_id.strip():
             raise ValueError("stream_id must be non-empty and trimmed")
@@ -85,7 +86,11 @@ class MicroBatchProcessor:
         if timeout_seconds < 0 or timeout_seconds > 300:
             raise ValueError("stream timeout_seconds must be in [0, 300]")
 
-        previous = self._checkpoints.get(stream_id)
+        previous = (
+            self._checkpoints.get(stream_id)
+            if expected_checkpoint is None
+            else expected_checkpoint
+        )
         batch = self._source.poll(
             previous,
             limit=limit,
@@ -210,6 +215,7 @@ class MicroBatchProcessor:
                 stream_id,
                 limit=batch_limit,
                 timeout_seconds=timeout_seconds,
+                expected_checkpoint=next_checkpoint,
             )
             if result.records == 0:
                 empty_polls += 1
