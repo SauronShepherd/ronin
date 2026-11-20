@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D328 revalidates the current PostgreSQL runtime integration file at `21/21`
+against PostgreSQL 16.4, including scheduler recovery and durable control-plane
+paths. It is filtered evidence with coverage disabled and does not close P11.
+
 D327 on candidate `cd1290124398f65f22ba726a919adff1ba4fe7c6` is the current
 bounded live qualification: `42/43` browser cases passed, one explicitly
 reserved RF3 skip, `25` routes audited and `473/473` API events correlated.
@@ -280,7 +284,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `c1c07cb07c30a04a528c2f6a19ecf79c29b75a86` (2026-11-20).
+**Observed source baseline:** `fab4af82e875be8d759cca39e67aa2f08c8435d2` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
