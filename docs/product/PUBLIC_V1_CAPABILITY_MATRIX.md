@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D401 passes the CLI operator surface integration on `main@480f76de`: `2/2`
+tests passed in `2.94 s`, covering HTTP-contract reuse, terminal idempotency and
+backend-state reporting. This bounded local evidence does not close P11/release.
+
 D400 passes the HTTP submit/status control-plane regression on
 `main@11fbe536`: `8/8` tests passed in `10.07 s`, covering contract, lifecycle,
 idempotency, scopes and reopen behavior. This bounded local evidence does not

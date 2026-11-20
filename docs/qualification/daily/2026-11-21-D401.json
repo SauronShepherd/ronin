@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D401",
+  "status": "PASS",
+  "candidate_sha": "480f76de1783ee08a95d0b8647519cf9de5525e2",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "CLI operator surface over real HTTP contract",
+  "command": "python -m pytest -q tests/integration/test_cli_operator_surface.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d401-cli-operator-20261121\\cli-operator.xml",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "elapsed_seconds": 2.94},
+  "coverage": ["CLI reuse of real HTTP contract and terminal idempotency", "cancel command exposes backend state without claiming container cleanup"],
+  "evidence_sha256": {"pytest.log": "00300A8FB78A6D4C85B80E6FDC6853D98D5378FAA2A37A8783EB7851C4903F14", "cli-operator.xml": "4B377332C78D9B35BE9DD23D91277CE45AFB6CBE5753E0C79DBCBCC20700BCB2"},
+  "limitations": ["bounded local CLI/HTTP integration", "does not qualify container lifecycle, PostgreSQL runtime, indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

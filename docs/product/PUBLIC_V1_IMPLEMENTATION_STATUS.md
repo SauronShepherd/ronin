@@ -7,6 +7,11 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D401 passes the CLI operator surface integration on `main@480f76de`: `2/2`
+tests passed in `2.94 s`, covering reuse of the real HTTP contract, terminal
+idempotency and backend-state exposure without an unverified container-cleanup
+claim. This is bounded local CLI/HTTP evidence and does not close P11/release.
+
 D400 passes the HTTP submit/status control-plane regression on
 `main@11fbe536`: `8/8` tests passed in `10.07 s`, covering the OpenAPI/SDK
 contract, typed SQL, submit/list/status/events/cancel idempotency, scopes,
