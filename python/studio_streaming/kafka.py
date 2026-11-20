@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import time
+from collections import OrderedDict
 from collections.abc import Mapping
 from importlib import import_module
 from typing import Any
@@ -13,6 +14,41 @@ from .contracts import StreamBatch, StreamCheckpoint, StreamPosition, StreamReco
 MAX_KAFKA_RECORD_BYTES = 1_048_576
 MAX_KAFKA_BATCH_BYTES = 8_388_608
 _KAFKA_PROTOCOL_OVERHEAD_BYTES = 512
+_KAFKA_METADATA_PROBE_TTL_SECONDS = 5.0
+_KAFKA_METADATA_PROBE_CACHE_LIMIT = 256
+_kafka_metadata_probe_cache: OrderedDict[tuple[str, str, tuple[int, ...]], float] = OrderedDict()
+
+
+def _probe_kafka_metadata(
+    consumer: Any,
+    *,
+    bootstrap_servers: str,
+    topic: str,
+    partitions: tuple[int, ...],
+    timeout_seconds: float,
+) -> None:
+    """Probe broker availability, reusing only recent successful metadata probes.
+
+    A fresh source is created for each bounded HTTP cycle. Repeating a metadata
+    round-trip for every cycle can dominate throughput, so successful probes are
+    reused briefly. Failures are never cached, and every cycle still calls
+    ``consume`` so a broker failure remains observable immediately.
+    """
+
+    list_topics = getattr(consumer, "list_topics", None)
+    if not callable(list_topics):
+        return
+    key = (bootstrap_servers, topic, partitions)
+    now = time.monotonic()
+    cached_at = _kafka_metadata_probe_cache.get(key)
+    if cached_at is not None and now - cached_at < _KAFKA_METADATA_PROBE_TTL_SECONDS:
+        _kafka_metadata_probe_cache.move_to_end(key)
+        return
+    list_topics(timeout=max(float(timeout_seconds), 0.1))
+    _kafka_metadata_probe_cache[key] = time.monotonic()
+    _kafka_metadata_probe_cache.move_to_end(key)
+    while len(_kafka_metadata_probe_cache) > _KAFKA_METADATA_PROBE_CACHE_LIMIT:
+        _kafka_metadata_probe_cache.popitem(last=False)
 
 
 class KafkaDependencyError(RuntimeError):
@@ -132,9 +168,13 @@ class KafkaJsonSource:
             # return an empty batch after its timeout instead of surfacing the
             # transport failure. Probe metadata once per consumer session so the
             # runtime reports provider unavailability rather than false idle.
-            list_topics = getattr(consumer, "list_topics", None)
-            if callable(list_topics):
-                list_topics(timeout=max(float(timeout_seconds), 0.1))
+            _probe_kafka_metadata(
+                consumer,
+                bootstrap_servers=self._bootstrap_servers,
+                topic=self._topic,
+                partitions=self._partitions,
+                timeout_seconds=timeout_seconds,
+            )
         except Exception:
             consumer.close()
             raise

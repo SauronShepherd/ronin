@@ -155,6 +155,53 @@ def test_kafka_source_surfaces_broker_metadata_failure_before_idle_result(
     assert consumer.closed
 
 
+def test_kafka_source_reuses_recent_successful_metadata_probe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    consumers: list[_Consumer] = []
+
+    class _MetadataConsumer(_Consumer):
+        def __init__(self) -> None:
+            super().__init__([_Message(b'{"event":"ok"}', 0)])
+            self.metadata_calls = 0
+
+        def list_topics(self, *, timeout: float):
+            del timeout
+            self.metadata_calls += 1
+
+    def consumer_type(settings):
+        consumer = _MetadataConsumer()
+        consumers.append(_capture_config(consumer, settings))
+        return consumer
+
+    fake_kafka = SimpleNamespace(
+        Consumer=consumer_type,
+        TopicPartition=_TopicPartition,
+        KafkaError=SimpleNamespace(_PARTITION_EOF=-191),
+        OFFSET_BEGINNING=-2,
+    )
+    monkeypatch.setattr(kafka_adapter, "import_module", lambda _name: fake_kafka)
+    first = KafkaJsonSource(
+        bootstrap_servers="cache-test:9092",
+        topic="events",
+        partitions=(0,),
+    )
+    second = KafkaJsonSource(
+        bootstrap_servers="cache-test:9092",
+        topic="events",
+        partitions=(0,),
+    )
+
+    try:
+        first.poll(StreamCheckpoint(), limit=1, timeout_seconds=0.0)
+        second.poll(StreamCheckpoint(), limit=1, timeout_seconds=0.0)
+    finally:
+        first.close()
+        second.close()
+
+    assert [consumer.metadata_calls for consumer in consumers] == [1, 0]
+
+
 def test_kafka_source_retries_a_transient_empty_poll_for_a_later_partition(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
