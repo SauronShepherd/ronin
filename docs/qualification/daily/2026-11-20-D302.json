@@ -17,7 +17,7 @@
     "mypy.log": "597FC73E689DC092D3C7485D9EE2B1242E86F43C3975F0A80EEB7CB8ED57D804",
     "qualification.json": "EECE922BCD191FAC6DF24827715EA18F2559D224007FF4F0BF4B5594016AEFFA"
   },
-  "documentation_commit_sha": null,
+  "documentation_commit_sha": "68786a43ccd096ae89d264d9b723afa6eb025edd",
   "limitations": ["focused regression/static qualification only", "does not resolve D300 throughput gap or qualify full P11/family/release; no historical reattribution"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
