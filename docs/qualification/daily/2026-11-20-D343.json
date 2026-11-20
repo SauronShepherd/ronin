@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-20",
+  "day": "D343",
+  "status": "PASS_WITH_RESERVED_SKIP",
+  "candidate_sha": "468432528c7f9bb37003756679c3ce68f534134e",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "full live product qualification with PostgreSQL and real Docker worker",
+  "commands": {
+    "docker": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d343-docker-live-current-20261120 -ImageTag ronin:qualification-d343 -KeepImage",
+    "live": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d343-live-full-current-20261120 -StorageBackend postgres -WorkerImage ronin:qualification-d343 -RequestTimeoutSeconds 90"
+  },
+  "docker": {"integration_selected": 27, "integration_passed": 27, "v01_selected": 15, "v01_passed": 15, "skipped": 0, "failed": 0, "image_sha256": "sha256:f2ca56147a2ed20b783487c328548cd32abc942d16e3d14445d0f08584b4ae51"},
+  "live": {"playwright_executed": 43, "playwright_passed": 42, "playwright_skipped": 1, "playwright_failed": 0, "active_routes": 25, "api_routes": 24, "ui_only_routes": 1, "api_events": 487, "correlated_events": 487, "outcomes": {"OK": 463, "WARN": 21, "ERROR": 3}, "unexpected_authorization_gaps": 0, "unexpected_server_network_errors": 0, "reserved_skip": "one matrix-reserved live case; runner reports strict qualification passed"},
+  "cleanup": "PASS; isolated services removed and exact worker image deleted",
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d343-docker-live-current-20261120", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d343-live-full-current-20261120"],
+  "evidence_sha256": {"live/browser-live.log": "A9BD31FEE91B4AFC79EB8A42C69A3B35C213FE17A4F4409D4329EEF09A0307C5", "live/browser-live.xml": "109BC7D58C73D05247E3879A8B18AB907847AE08115EB366A1458A8A4B033D1A", "live/live-api-traffic.json": "64DC9C2C5BA12A9050A34EC1CA333AA8F8178CADF922B42F3F78929FBC851233", "live/qualification-summary.json": "A5CE9CE4022F6906FFE1D1C91AC5DDDAE87981FF9853A61DEE423C13D0F02CE7", "docker/docker-cleanup.json": "5D99471F30D2F65CBF9087E1C431983B2AD0534A48A0100A6EE8B398E8292B40", "docker/docker-qualification.log": "464BF898A2C2CB965C7A6566794F4EB76941C356882853820C8630335D7B6CF0", "docker/qualification-summary.json": "50C53F6BBDD1CD8BFCA65F5E9CA0E07B60D170A06B5E363E0EB36FBEE0EDBE67", "docker/v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C"},
+  "limitations": ["one reserved live skip remains", "bounded full live qualification only", "does not prove indefinite operation, production SLO, HA/multi-worker, complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

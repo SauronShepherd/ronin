@@ -7,7 +7,9 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
-D342 extends the default-load supervisor soak to `900 s` on candidate
+D343 completes the full live route on candidate `46843252` with a real Docker
+worker and PostgreSQL: `42/43` cases pass, one matrix-reserved skip remains,
+and `487/487` API events correlate. D342 extends the default-load supervisor soak to `900 s` on candidate
 `712f9397`: `1/1`, `999/999` correlated API events all OK, zero unexpected
 errors and cleanup PASS. D341 adds Helm/kind deployment qualification on candidate `d3cc94f4`: lint,
 Secret boundary, install, readiness, upgrade/rollback, health/API, queued-job

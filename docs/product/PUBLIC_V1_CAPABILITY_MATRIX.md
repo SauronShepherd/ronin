@@ -2,7 +2,8 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
-D342 adds bounded default-load supervisor evidence at `900 s`: `1/1`,
+D343 adds full live route evidence with real worker/PostgreSQL: `42/43` cases
+pass with one reserved skip and `487/487` correlated API events. D342 adds bounded default-load supervisor evidence at `900 s`: `1/1`,
 `999/999` correlated API events all OK and cleanup PASS. D341 adds Helm/kind deployment evidence: install, upgrade/rollback,
 readiness, health/API and queued-job persistence across restart all PASS.
 D340 revalidates PostgreSQL scheduler recovery `2/2`. D339 adds full Docker qualification: `27/27` integration tests and `15/15`
