@@ -127,6 +127,7 @@ class PostgresSchedulerSnapshotStore(
     def __init__(self, dsn: str, *, application_name: str = "ronin-scheduler-snapshots") -> None:
         super().__init__(dsn, application_name=application_name)
         self._event_batch_connection: Any | None = None
+        self._event_batch_workspaces: set[str] = set()
         self.migrate_scheduler()
 
     @contextmanager
@@ -137,6 +138,7 @@ class PostgresSchedulerSnapshotStore(
             return
         connection = self._connect()
         self._event_batch_connection = connection
+        self._event_batch_workspaces = set()
         try:
             yield connection
             connection.commit()
@@ -145,6 +147,7 @@ class PostgresSchedulerSnapshotStore(
             raise
         finally:
             self._event_batch_connection = None
+            self._event_batch_workspaces = set()
             connection.close()
 
     def migrate_scheduler(self) -> None:
@@ -2088,8 +2091,17 @@ class PostgresSchedulerSnapshotStore(
         owns_connection = self._event_batch_connection is None
         try:
             with connection.cursor() as cursor:
-                self._require_active_workspace(cursor, event.workspace_id)
-                self._lock_event_workspace(cursor, event.workspace_id)
+                workspace_key = str(event.workspace_id)
+                if (
+                    not owns_connection
+                    and workspace_key not in self._event_batch_workspaces
+                ):
+                    self._require_active_workspace(cursor, event.workspace_id)
+                    self._lock_event_workspace(cursor, event.workspace_id)
+                    self._event_batch_workspaces.add(workspace_key)
+                elif owns_connection:
+                    self._require_active_workspace(cursor, event.workspace_id)
+                    self._lock_event_workspace(cursor, event.workspace_id)
                 cursor.execute(
                     "SELECT * FROM ronin_scheduler_events "
                     "WHERE workspace_id=%s AND event_id=%s FOR UPDATE",
