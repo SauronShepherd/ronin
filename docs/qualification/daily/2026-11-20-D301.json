@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D301",
+  "status": "PASS",
+  "candidate_sha": "71f2dc608903722b5429b93eddca02511fa9f1a3",
+  "production_boundary_sha": "7a9e3359f28e15a30ceba73e4a125b58b1996862",
+  "qualification": "60-second live supervisor soak at controlled sustainable producer load",
+  "worker_image": "sha256:f2466710788039912eb1e938f5ef1cb712e047d22868ab036134828ae32d44db",
+  "producer": {"records_per_tick": 2, "interval_seconds": 0.25, "approximate_rate": "8 records/second"},
+  "supervisor_soak_seconds": 60,
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 37, "correlated": 37, "ok": 37, "unexpected": 0},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d301-live-supervisor-soak-sustainable-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "94C2FCFF2FE488097B2089CFC295D6A371E7F9D0E1EB4042E8A2279F6A8AAFF0",
+    "browser-live.xml": "9A12FBE7B0972CD22C4BF8AA0A8AB853C72DFC93E148D4A54738B98D51636DFE",
+    "live-api-traffic.json": "FF5F1B8F994C7EFE8A90DF8F7115083E5350F29CAF1389ACB9FF60ADD8E743FA",
+    "qualification-summary.json": "14A712855C7EDD7631C41AA3D97B1E295104CC911AD4CFDE6555244123D6BDE3"
+  },
+  "documentation_commit_sha": null,
+  "limitations": ["PASS only at explicitly controlled sustainable load of approximately 8 records/second", "D300 demonstrates the default approximately 16 records/second load still fails to drain; no indefinite, full P11, family, or release qualification; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
