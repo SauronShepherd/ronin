@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-21",
+  "day": "D392",
+  "status": "PASS",
+  "candidate_sha": "ebe042d12a93a20e66103850685e3c86bf080275",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "real PostgreSQL streaming checkpoint and table regression",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://ronin:ronin@127.0.0.1:55435/ronin pytest -q tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "elapsed_seconds": 1.17},
+  "fixture": "PostgreSQL 16.4-alpine, isolated Compose project ronin-stream-regression-d392, host port 55435",
+  "cleanup": "PASS; isolated container, volume and network removed",
+  "evidence_sha256": {
+    "tests/integration/test_postgres_streaming_checkpoint_real.py": "133D0C9AAE365781C07F8CB948B781ED3357E36C1E7E243C4A9B135600C65C57",
+    "compose.yaml": "2FDA87B59FD07DEB895FC9013A55B804E101DF64155B9CC85112897A746B2C0A"
+  },
+  "limitations": ["focused bounded backend regression", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

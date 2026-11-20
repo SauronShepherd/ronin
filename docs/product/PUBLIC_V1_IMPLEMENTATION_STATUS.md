@@ -7,6 +7,11 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
+D392 passes the real PostgreSQL streaming checkpoint/table regression on
+`main@ebe042d1`: `2/2` tests passed in `1.17 s` against PostgreSQL 16.4, with
+isolated fixture cleanup PASS. This is focused bounded backend evidence and
+does not close P11/release.
+
 D391 passes the complete real PostgreSQL scheduler-store regression on
 `main@33cfb2de`: `21/21` tests passed in `15.18 s` against PostgreSQL 16.4,
 with isolated fixture cleanup PASS. This validates the configured PostgreSQL
