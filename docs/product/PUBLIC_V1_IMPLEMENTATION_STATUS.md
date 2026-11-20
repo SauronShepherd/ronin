@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
+D381 tests reuse of one PostgreSQL checkpoint session across the bounded stream
+run at `4,096` records on `main@9b3c8511` and remains **NOT_PASS**: the second
+request ends in `Failed to fetch`/status-0 after `138.57 s`, with `5/5`
+correlated events (`4` OK, `1` error), no server ERROR/CRITICAL logs and
+cleanup PASS. Inbox plus checkpoint session reuse is insufficient; P11/release
+remain open.
+
 D380 tests reuse of one PostgreSQL event session across the bounded stream run
 at `4,096` records on `main@de9b5c46` and remains **NOT_PASS**: the second
 request ends in `Failed to fetch`/status-0 after `135.29 s`, with `5/5`

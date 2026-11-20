@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D381",
+  "status": "NOT_PASS",
+  "candidate_sha": "9b3c8511950aecf857b6dcc83375506b8fc5e115",
+  "production_boundary_sha": "9b3c8511950aecf857b6dcc83375506b8fc5e115",
+  "qualification": "4,096 sustained PostgreSQL-runtime backpressure after checkpoint-session reuse",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d381-live-postgres-checkpoint-session-4096-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 4096 -BackpressureTimeoutSeconds 600 -RequestTimeoutSeconds 90",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "api_events": 5, "correlated": 5, "api_ok": 4, "api_error": 1, "failure": "Failed to fetch during the second backpressure request; status 0 network error", "elapsed_seconds": 138.57},
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d381-live-postgres-checkpoint-session-4096-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "19DA80476CC0202F81514D5E89472DC814BABF926AF302872DED9BE5B7117449",
+    "browser-live.xml": "7AF0378B80D03C05C465D7B460C47FBEBDD42304BC399A46A0811223A5C6311E",
+    "live-api-traffic.json": "547C979E581D4074C42E90B3BFD6B14BDEC29404E215C6AD5E5711A37824396B",
+    "live-python-freeze.txt": "AE6B67518652B55512B6DDF446B2777F8EF048F13B970CA94749BB6CC5704B6D",
+    "live-server.stderr.log": "EF82D91F555EB1771E16B622ECDDDDAE6D6D7DCEA5AA4C3C491501A235D52F10",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "7B33047923346CE27270FD6B656EC122505837A81E4A2C9FDD78C14D26DCB274",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["NOT_PASS bounded diagnostic", "session reuse insufficient", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
