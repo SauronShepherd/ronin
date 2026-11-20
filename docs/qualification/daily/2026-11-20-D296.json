@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-20",
+  "day": "D296",
+  "status": "PASS",
+  "candidate_sha": "4c5b1d3755fff0616704240ff9f99edd32b58108",
+  "production_boundary_sha": "7a9e3359f28e15a30ceba73e4a125b58b1996862",
+  "qualification": "full Python/PostgreSQL integration suite against isolated PostgreSQL 16.4",
+  "backend": "postgres:16.4-alpine",
+  "tests": {"collected": 4787, "passed": 4759, "failed": 0, "skipped": 31, "warnings": 13},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d296-full-postgres-suite-current-20261120",
+  "evidence_sha256": {
+    "pytest-output.log": "AAABE4AC119F585475A4E449557AEAF5CD1F3209898B6ABD7BE0F2C5D50E1554",
+    "pytest-postgres.xml": "EAFF465413037A71A10F730CD2FB0EED9B0BA66C44D65BCDF0627EAF08263586",
+    "runner-timings.json": "84CAE72A8B1D12BA7B0ADDABE47145974DBEDE7D764665E7C7343BE9E078DEFA"
+  },
+  "documentation_commit_sha": null,
+  "limitations": ["31 skips remain explicit opt-in Docker/external/POSIX limitations", "not full P11, family, or release qualification; does not reattribute D100/D295"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
