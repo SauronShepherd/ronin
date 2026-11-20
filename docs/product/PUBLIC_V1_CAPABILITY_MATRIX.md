@@ -2,7 +2,9 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
-D338 extends default-load supervisor evidence to `600 s`: `1/1`,
+D339 adds full Docker qualification: `27/27` integration tests and `15/15`
+strict v0.1 journeys, zero skips/failures, cleanup PASS. D338 extends
+default-load supervisor evidence to `600 s`: `1/1`,
 `673/673` correlated events all OK. It remains bounded and does not close
 P11 or prove indefinite operation.
 
@@ -325,7 +327,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `d5b41baf36682e1755988707f243d2afc5b7ceb3` (2026-11-20).
+**Observed source baseline:** `dbb48fd69797f1a6673e02eafed111fec65b4bf3` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

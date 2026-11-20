@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-20",
+  "day": "D339",
+  "status": "PASS",
+  "candidate_sha": "dbb48fd69797f1a6673e02eafed111fec65b4bf3",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "full Docker qualification on current main",
+  "real_services": ["PostgreSQL", "Docker worker", "Floci/S3-compatible object store", "Azurite/Azure Blob-compatible object store", "Ronin API"],
+  "tests": {"docker_integration_selected": 27, "docker_integration_passed": 27, "docker_integration_failed": 0, "docker_integration_skipped": 0, "v01_selected": 15, "v01_passed": 15, "v01_failed": 0, "v01_skipped": 0},
+  "worker_image_sha256": "sha256:d0d2103116d13a205e89835d51674f8018a22bbc7e81eb6a98ab866858a0bc60",
+  "duration_seconds": 180.40,
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d339-docker-full-current-20261121",
+  "evidence_sha256": {
+    "azurite-qualification.log": "BFA0C30E05547D3E0CBE10B55BD00B57A618A3D16513483A6D11495D65F9DA73",
+    "docker-cleanup.json": "D88DC6F0217F6CEA43DC567A8326ADE8B0F000AA845A4B8F870E6FCE78D964B9",
+    "docker-pytest-output.log": "B31EDB56C82E924B6BFEE0055529BBBA1813D8046FBE515527C539141BC6719E",
+    "docker-qualification.log": "07A41D25CDDB725CC4DD809B8B1900EE973C4BAD2DDED37F910DBFFA8A437B89",
+    "floci-s3-qualification.log": "93F3748F1C59D1E470E232740AF983C034C8E9BB9A1B581C6312BEA86EC36EC3",
+    "postgres-qualification.log": "864F37DF57D8C2D5BA603C8FF523323CF87E32DDF08096EC2AD96FDFD7B47239",
+    "qualification-summary.json": "DEA879B6616E6552DD21B829C3159CC704202610AB54B39AC89C6DDCFDD197CD",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "5D071E4298B57DF08A41EFCE87C9EA9A0B18668D6D9710087BDD2AC6A0771F06"
+  },
+  "limitations": ["bounded Docker qualification only", "does not prove indefinite operation, production SLO, HA/multi-worker, complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
