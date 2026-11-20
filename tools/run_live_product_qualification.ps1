@@ -424,7 +424,10 @@ try {
     } elseif ($syntheticOnlyDiagnostic) {
         & $python -m tools.seed_live_studio --workspace-only
     } elseif ($streamingOnlyDiagnostic) {
-        if ($streamEventWorkflowDiagnostic) {
+        # The streaming suite includes the event-workflow case.  That case
+        # requires the durable live-main workflow, even when the grep selects
+        # the whole streaming group rather than its exact test title.
+        if ($streamEventWorkflowDiagnostic -or $TestGrep -eq "streaming") {
             & $python -m tools.seed_live_studio
         } else {
             & $python -m tools.seed_live_studio --workspace-only
