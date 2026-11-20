@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-20", "day": "D359", "status": "PASS",
+  "candidate_sha": "a26bdbf3d505aa83d5688819f1b8315bbe8a44af",
+  "production_boundary_sha": "794ed70f072a9b34640e5e74c303939dd752f7bb",
+  "qualification": "current-main full Docker provider/object-store qualification",
+  "worker_image_sha256": "sha256:3beff3de34c920e9576f95e3a3e9a2a365b9d48006a98ebd4ab2ebb5833cf5b6",
+  "docker_integration": {"selected": 27, "passed": 27, "failed": 0, "skipped": 0},
+  "v01_strict": {"total": 15, "passed": 15, "failed": 0, "skipped": 0, "strict_success": true},
+  "providers": ["PostgreSQL", "Docker worker", "Floci S3-compatible", "Azurite Azure-compatible"],
+  "cleanup": "PASS; PostgreSQL, Floci, Azurite, networks, volumes and owned image removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d359-docker-provider-current-20261120",
+  "evidence_sha256": {"docker-qualification.log":"3D9A6AE0910F717DBC671E9CB31B849B1185310DA9D3CC78FE9FAA9D60240AB4","docker-pytest-output.log":"8219552100A846A48E00DE11CD5B8D57CD6200F0305E2477DAD2200F405D1846","postgres-qualification.log":"9CAB9F68C129CAB2A10FFAB801F45F8CE924975CC6E47515583ED27D12C9D867","floci-s3-qualification.log":"7DAF760810AD97F69D1DF7C29B3DB698767A3A992CC6FDBE0FA4DDEFD1730BC1","azurite-qualification.log":"1B1DCC1EECCBA8087603EEF46A0907CB81B15D1B51581A0DBA4ADFEB99C0BE78","qualification-summary.json":"95F138F365CCDE9784D3B935032556C58E91D6F1A433CA58E5E770A801992EB9","v01-acceptance-strict.json":"5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C","docker-cleanup.json":"19E8426C2C5791989D0F86BBF9782731592122D16222E2C7ED76F3FD0D9C6930"},
+  "limitations": ["bounded Docker qualification; not external cloud-provider certification", "does not close complete P11 or release"],
+  "state": {"P11":"in_progress","P13":"blocked","release":"NO-GO"}
+}
