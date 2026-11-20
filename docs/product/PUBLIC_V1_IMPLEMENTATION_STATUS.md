@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
+D387 passes the `8,192` PostgreSQL-runtime bounded backpressure cell on
+`main@a90a693c` after replacing the qualification proxy's implicit long-fetch
+limit: `1/1` case passed in `554.43 s`, with `12/12` correlated API events OK,
+no unexpected authorization or server/network errors, and cleanup PASS. This
+is bounded evidence; it does not prove indefinite operation, production SLO,
+HA/multi-worker or close P11/release.
+
 D385 re-tests the `8,192` bounded PostgreSQL-runtime cell after propagating
 `RONIN_HTTP_REQUEST_TIMEOUT_SECONDS` into the control-plane server, on
 `main@1671cc45`, with a configured `600 s` request timeout. It remains
