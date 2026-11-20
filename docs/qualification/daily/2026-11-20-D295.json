@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D295",
+  "status": "PASS",
+  "candidate_sha": "5096771e3f10c2f5bbd925148e512db7a240139a",
+  "production_boundary_sha": "7a9e3359f28e15a30ceba73e4a125b58b1996862",
+  "qualification": "full Docker integration acceptance with real worker, PostgreSQL, S3-compatible provider, Azure-compatible provider and strict v0.1 journey",
+  "worker_image": "sha256:5c19fe1d7809c79ab917fa87b006fc0f8747de765b75de0f6b971174fa099836",
+  "fixtures": ["PostgreSQL 16.4", "Floci S3-compatible", "Azurite Azure Blob", "Docker worker"],
+  "tests": {"selected": 27, "passed": 27, "failed": 0, "skipped": 0},
+  "strict_v01": {"expected": 15, "passed": 15, "failed": 0, "skipped": 0, "strict_success": true},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d295-full-docker-qualification-current-20261120",
+  "evidence_sha256": {
+    "docker-pytest-output.log": "325BD82A7311A904C49CEDF3CA905C36889CA7B1CE2C3E54AB5A2C5C698FA303",
+    "v01-acceptance.xml": "BFB46E05E61DD1C338E86209846D23478597AE7E509E0B8D025638AF3E50ED32",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "docker-cleanup.json": "B37ED0ADB9A002837FC4AAC2AFFCA706893E9528796850F9547CD48BE85D1DAC",
+    "docker-qualification.log": "8A7E379F210110CE9EF6D3C7F9BC44253671F717D2DD7CC6A130946529EC0D8C"
+  },
+  "documentation_commit_sha": null,
+  "limitations": ["full local Docker acceptance is not production deployment or indefinite operation", "does not reattribute D100 or prior provider cells; release matrix remains authoritative"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
