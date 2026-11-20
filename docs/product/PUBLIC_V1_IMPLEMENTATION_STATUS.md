@@ -7,6 +7,16 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D278 on current candidate `0964588e850c9b10f6d01b2b5f9ab6f7ffa65cd9`
+passes a bounded 600-second PostgreSQL supervisor soak under the explicit
+sustainable profile of one record per 0.5 seconds: `1/1`, `605/605` correlated
+API events all `OK`, zero application errors and cleanup PASS. D277 remains
+NOT_PASS under default load (`145` cycles versus the `150` criterion). D278 is
+bounded profile-specific evidence and does not prove indefinite operation,
+production SLO, HA/multi-worker, P11 or release approval. P11 remains
+`in_progress`, P13 remains `blocked`, and release remains **NO-GO** at `1/13`
+families and `0/10` gates.
+
 D276 attempted a new 600-second PostgreSQL supervisor soak on candidate
 `44cb1f05b8dc1f0aa5e0b3f77564000d957677d8` but is **NOT_PASS**: Kafka fixture
 seeding failed before Playwright (`0/0` journeys, `0` API events). Runner
