@@ -51,31 +51,6 @@ def ingest_stream_record(
         Instant(received_at),
     )
     get_event = getattr(store, "get_event", None)
-    if callable(get_event):
-        existing = get_event(workspace_id, event_id)
-        if existing is not None:
-            if (
-                existing.workspace_id,
-                existing.id,
-                existing.event_type,
-                existing.source_ref,
-                existing.subject_ref,
-                existing.payload_digest,
-                existing.occurred_at,
-            ) != (
-                event.workspace_id,
-                event.id,
-                event.event_type,
-                event.source_ref,
-                event.subject_ref,
-                event.payload_digest,
-                event.occurred_at,
-            ):
-                return store.ingest_event(event)
-            # A replay may be observed at a later wall-clock time. Reuse the
-            # first receipt timestamp so the deterministic stream event stays
-            # idempotent without weakening scheduler event conflict checks.
-            return store.ingest_event(existing)
     try:
         return store.ingest_event(event)
     except SchedulerEventConflict:
