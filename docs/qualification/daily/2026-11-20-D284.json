@@ -17,7 +17,7 @@
     "live-api-traffic.json": "83E31B0F802EF052F2AF9A466F94871716AE9F7E554EFB49D316C16E8683A5A5",
     "qualification-summary.json": "4EFEE9D068A022CBD791C629C525441A2D325E52542F2641ECB26379CAE4675D"
   },
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "339b82df8d3809fe4019902a3af898275e0e71bd",
   "limitations": ["filtered bounded single-broker max-record journey", "not route-wide, indefinite, HA, full P11, or release approval"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
