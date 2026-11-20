@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D388 passes the `16,384` PostgreSQL-runtime bounded backpressure cell on
+`main@29868a93` with an explicit `1,200 s` proxy timeout: `1/1` case passed in
+`1,089.14 s`, with `13/13` correlated API events OK and cleanup PASS. This is
+bounded evidence only and does not close P11/release.
+
 D387 passes the `8,192` PostgreSQL-runtime bounded backpressure cell on
 `main@a90a693c` after replacing the qualification proxy's implicit long-fetch
 limit: `1/1` case passed in `554.43 s`, `12/12` correlated API events OK and

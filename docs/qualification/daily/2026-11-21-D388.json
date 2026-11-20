@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-21",
+  "day": "D388",
+  "status": "PASS",
+  "candidate_sha": "29868a939d92565ad0721fecc61f5b22dac0fcdf",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "16,384 bounded PostgreSQL-runtime backpressure with explicit 1,200-second proxy timeout",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d388-live-postgres-bounded-16384-1200s-20261121 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 16384 -BackpressureTimeoutSeconds 1800 -RequestTimeoutSeconds 1200",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "api_events": 13, "correlated": 13, "api_ok": 13, "api_error": 0, "elapsed_seconds": 1089.14},
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d388-live-postgres-bounded-16384-1200s-20261121",
+  "evidence_sha256": {
+    "browser-live.log": "B5F212BDEA17E310F009840EDCD795DA6DFC07FB6D306BF8743770B719EF628B",
+    "browser-live.xml": "21C252DDAF4EC5FF379BD0C7AC1953245F401F26FE5F365731B8B4960CF811CF",
+    "live-api-traffic.json": "35CC3CA90C94092B2ABF44747A1B3ED9623AAEEAE75558AB2DD0790396A317C6",
+    "live-python-freeze.txt": "A238DD06BE7BEACF4BDB934049CE1D232E2A30A3179C2967CDE400054995E193",
+    "live-server.stderr.log": "15A63BF423BE40B1DAE64FA448DA8304718CC246CE38334E679DF1F9A22B0885",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "325E09A4D01A74FDAD3AF9464065A33D54B42B005009DB23027D9BBA0124A414",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["bounded diagnostic", "explicit 1,200-second proxy timeout", "does not prove indefinite operation or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
