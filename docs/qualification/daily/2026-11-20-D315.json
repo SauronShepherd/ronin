@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-20",
+  "day": "D315",
+  "status": "PASS",
+  "candidate_sha": "867aa87db4d8f2625de2478de7b2762ab306a455",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "live Kafka broker restart recovery from durable checkpoint with PostgreSQL-configured Ronin",
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 11, "correlated": 11, "ok": 8, "induced_error": 3, "uncorrelated": 0},
+  "application_logs": {"info": 10, "error": 3, "critical": 0, "errors_expected_from_induced_broker_restart": true},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d315-live-broker-restart-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "1A900566D3C63FCDCE344F48BBE3FB1F4DB90248DE15FE3424D0012D4D2410BF",
+    "browser-live.xml": "E4B41A2B3617A8D869D8D520428E2D52C0E6C271EDD5D6D8D76E399E3C38EB29",
+    "live-api-traffic.json": "856C37A65178E5E886B16C4CA8334E02DFFE901563A60697DB90E4E91498C2C4",
+    "qualification-summary.json": "0F671EBA607FC5D0DFC1BB015A3443A6EBF32F28C72818540BABDE07AA848CA3"
+  },
+  "limitations": ["filtered broker-restart diagnostic only", "does not requalify D257 RF3, full P11, family, release gates, indefinite operation or production HA; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
