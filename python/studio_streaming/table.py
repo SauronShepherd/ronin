@@ -101,4 +101,54 @@ class SqliteStreamTable:
         self._connection.close()
 
 
-__all__ = ["SqliteStreamTable"]
+class _PostgresConnectionAdapter:
+    def __init__(self, connection: object) -> None:
+        self._connection = connection
+
+    @staticmethod
+    def _sql(statement: str) -> str:
+        return statement.replace("?", "%s")
+
+    def execute(self, statement: str, parameters: tuple[object, ...] = ()) -> object:
+        return self._connection.execute(self._sql(statement), parameters)  # type: ignore[attr-defined]
+
+    def executemany(self, statement: str, parameters: list[tuple[object, ...]]) -> object:
+        cursor = self._connection.cursor()  # type: ignore[attr-defined]
+        try:
+            return cursor.executemany(self._sql(statement), parameters)
+        finally:
+            cursor.close()
+
+    def commit(self) -> None:
+        self._connection.commit()  # type: ignore[attr-defined]
+
+    def rollback(self) -> None:
+        self._connection.rollback()  # type: ignore[attr-defined]
+
+    def close(self) -> None:
+        self._connection.close()  # type: ignore[attr-defined]
+
+
+class PostgresStreamTable(SqliteStreamTable):
+    """PostgreSQL-backed durable stream sink table."""
+
+    def __init__(self, dsn: str) -> None:
+        if not dsn or not dsn.strip():
+            raise ValueError("PostgreSQL stream table DSN must be non-empty")
+        self._dsn = dsn
+        try:
+            import psycopg
+        except ImportError as exc:
+            raise RuntimeError("PostgreSQL streaming requires the psycopg package") from exc
+        self._connection = _PostgresConnectionAdapter(psycopg.connect(dsn))
+        self._connection.execute(
+            "CREATE TABLE IF NOT EXISTS stream_table ("
+            "stream_id TEXT NOT NULL, partition_id INTEGER NOT NULL, "
+            "offset_value BIGINT NOT NULL, timestamp_ms BIGINT, "
+            "key_value TEXT, value_json TEXT NOT NULL, "
+            "PRIMARY KEY(stream_id, partition_id, offset_value))"
+        )
+        self._connection.commit()
+
+
+__all__ = ["PostgresStreamTable", "SqliteStreamTable"]

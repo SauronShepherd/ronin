@@ -33,7 +33,7 @@ from .processor import (
     StreamTransform,
 )
 from .runtime import KafkaStreamingRuntime, StreamingInputRejected, StreamingRunUnavailable
-from .table import SqliteStreamTable
+from .table import PostgresStreamTable, SqliteStreamTable
 from .windows import EventTimeWindow, WindowedBatch, window_records
 
 __all__ = (
@@ -45,6 +45,7 @@ __all__ = (
     "KafkaStreamingHealthReader",
     "MicroBatchProcessor",
     "PostgresStreamCheckpointStore",
+    "PostgresStreamTable",
     "MicroBatchResult",
     "StreamSupervisorResult",
     "ParquetMicroBatchSink",

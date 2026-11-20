@@ -23,7 +23,7 @@ from .contracts import StreamBatch, StreamDefinition, StreamSink, StreamSinkComm
 from .kafka import KafkaDependencyError, KafkaInputRejected, KafkaJsonSource
 from .parquet_sink import ParquetMicroBatchSink
 from .processor import MicroBatchProcessor, MicroBatchResult
-from .table import SqliteStreamTable
+from .table import PostgresStreamTable, SqliteStreamTable
 
 
 class StreamingRunUnavailable(RuntimeError):
@@ -35,7 +35,7 @@ class StreamingInputRejected(RuntimeError):
 
 
 class _TableSink:
-    def __init__(self, table: SqliteStreamTable) -> None:
+    def __init__(self, table: SqliteStreamTable | PostgresStreamTable) -> None:
         self._table = table
 
     def write(
@@ -64,6 +64,7 @@ class KafkaStreamingRuntime:
         event_store: Any | None = None,
         event_ingestor: Callable[..., Any] | None = None,
         clock: Callable[[], str] | None = None,
+        table_factory: Callable[[], SqliteStreamTable | PostgresStreamTable] | None = None,
     ) -> None:
         self._checkpoints = checkpoints
         self._resolve_connection = resolve_connection
@@ -73,6 +74,9 @@ class KafkaStreamingRuntime:
         self._event_store = event_store
         self._event_ingestor = event_ingestor
         self._clock = clock or (lambda: datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        self._table_factory = table_factory or (
+            lambda: SqliteStreamTable(self._data_root / "streaming.sqlite3")
+        )
 
     def _ingest_stream_events(
         self,
@@ -174,7 +178,7 @@ class KafkaStreamingRuntime:
 
         sink: StreamSink
         if definition.sink.kind == "table":
-            sink = _TableSink(SqliteStreamTable(self._data_root / "streaming.sqlite3"))
+            sink = _TableSink(self._table_factory())
         else:
             target = hashlib.sha256(
                 f"{workspace}\0{definition.sink.target_ref}".encode()

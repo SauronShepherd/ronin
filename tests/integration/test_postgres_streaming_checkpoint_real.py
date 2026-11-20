@@ -4,7 +4,14 @@ import os
 from uuid import uuid4
 
 import pytest
-from studio_streaming import PostgresStreamCheckpointStore, StreamCheckpoint, StreamPosition
+from studio_streaming import (
+    PostgresStreamCheckpointStore,
+    PostgresStreamTable,
+    StreamBatch,
+    StreamCheckpoint,
+    StreamPosition,
+    StreamRecord,
+)
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
@@ -30,3 +37,22 @@ def test_postgres_stream_checkpoint_bundle_cas_and_reopen() -> None:
         StreamCheckpoint((StreamPosition(0, 40), StreamPosition(1, 17))),
         advanced,
     )
+
+
+def test_postgres_stream_table_append_replay_and_conflict() -> None:
+    table = PostgresStreamTable(os.environ["RONIN_POSTGRES_TEST_DSN"])
+    stream_id = f"table-{uuid4().hex}"
+    batch = StreamBatch(
+        (StreamRecord(0, 7, 123, "key", {"event": "value"}),),
+        StreamCheckpoint((StreamPosition(0, 7),)),
+    )
+    assert table.append(stream_id, batch) == 1
+    assert table.append(stream_id, batch) == 0
+    assert table.read(stream_id) == batch.records
+    conflict = StreamBatch(
+        (StreamRecord(0, 7, 123, "key", {"event": "different"}),),
+        batch.checkpoint,
+    )
+    with pytest.raises(ValueError, match="replay conflicts"):
+        table.append(stream_id, conflict)
+    table.close()

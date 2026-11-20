@@ -121,6 +121,7 @@ from studio_streaming import (
     KafkaStreamingHealthReader,
     KafkaStreamingRuntime,
     PostgresStreamCheckpointStore,
+    PostgresStreamTable,
     SqliteStreamCheckpointStore,
 )
 
@@ -506,6 +507,11 @@ def build_local_composed_from_env() -> LocalServerComposition:
         event_store=cast(SchedulerEventStore, workflow_scheduler),
         event_ingestor=ingest_stream_record,
         clock=scheduler_clock,
+        table_factory=(
+            (lambda: PostgresStreamTable(postgres_dsn))
+            if postgres_dsn is not None
+            else None
+        ),
     )
 
     def resolve_asset(reference: str) -> AssetHandle:
