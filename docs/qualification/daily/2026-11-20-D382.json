@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D382",
+  "status": "NOT_PASS",
+  "candidate_sha": "52a5ff0905907807802e887cb5fd3f81402b56bb",
+  "production_boundary_sha": "52a5ff0905907807802e887cb5fd3f81402b56bb",
+  "qualification": "4,096 sustained PostgreSQL-runtime backpressure after per-microbatch trigger caching",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d382-live-postgres-trigger-cache-4096-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 4096 -BackpressureTimeoutSeconds 600 -RequestTimeoutSeconds 90",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "api_events": 5, "correlated": 5, "api_ok": 4, "api_error": 1, "failure": "Failed to fetch during the second backpressure request; status 0 network error", "elapsed_seconds": 132.04},
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d382-live-postgres-trigger-cache-4096-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "236E235F2BEC2A4F9333FB794FAAB5C83EC18C286E2C41195C2792A6AA3868A0",
+    "browser-live.xml": "326CF77BB7DB9CA35EEDD33A24BEFB89EF3B12B16AD3131330B624F84F4234F9",
+    "live-api-traffic.json": "281143FDB6435B69424959DCC536098474CEE799FB3EE6719523D7B137AE47FD",
+    "live-python-freeze.txt": "E310C088BDF8005A03B6F459AFD0F3142C2E282929E67345ABE6E4B89FF8B253",
+    "live-server.stderr.log": "104D4531D5C7302367058DC7A916465D11F05A2C7C7B634DD44BE49F6EE6DA0E",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "5950187CEF4BA76C17C565AB3F29F65C40C31A8D4C6A4C2E1AD0FE0998034698",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["NOT_PASS bounded diagnostic", "trigger-query caching insufficient", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
+D382 tests caching PostgreSQL event triggers within each microbatch at `4,096`
+records on `main@52a5ff09` and remains **NOT_PASS**: the second request ends in
+`Failed to fetch`/status-0 after `132.04 s`, with `5/5` correlated events (`4`
+OK, `1` error), no server ERROR/CRITICAL logs and cleanup PASS. The bounded
+trigger-query reduction is insufficient; P11/release remain open.
+
 D381 tests reuse of one PostgreSQL checkpoint session across the bounded stream
 run at `4,096` records on `main@9b3c8511` and remains **NOT_PASS**: the second
 request ends in `Failed to fetch`/status-0 after `138.57 s`, with `5/5`
