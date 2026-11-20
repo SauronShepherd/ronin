@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D300",
+  "status": "NOT_PASS",
+  "candidate_sha": "889814bb54b40f1424b7975efcee9a9cdf312033",
+  "production_boundary_sha": "7a9e3359f28e15a30ceba73e4a125b58b1996862",
+  "qualification": "600-second live supervisor soak with real Docker worker, PostgreSQL and Kafka",
+  "worker_image": "sha256:ae722f6e114cf9a8a54912bf291b146151c6cd4f70baacc432fdee2d5d6a99df",
+  "supervisor_soak_seconds": 600,
+  "journeys": {"passed": 0, "failed": 1, "skipped": 0},
+  "api_events": {"total": 441, "correlated": 441, "ok": 441, "unexpected": 0},
+  "failure": "final streaming health total_lag was 616; expected 0",
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d300-live-supervisor-soak-600-worker-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "B97C686FD75F8527D17FFF93A05E8509F397E41774732B047597F2F9E47F76EA",
+    "browser-live.xml": "6E3E62B6F41D4FBFE1CC2330EC9C67BA05A0EFD29A777B60A5D1808AA2453279",
+    "live-api-traffic.json": "353654472CCD29D6D044E2C4376724BF0F0F0FC1CC4FCA1E352E1EA7F238A498",
+    "qualification-summary.json": "9213AAA4FEC3C02FFF4520B96BF6DEB5672F6A90936F352C5920FB868A270B80"
+  },
+  "documentation_commit_sha": null,
+  "limitations": ["NOT_PASS diagnostic; the 600-second drain criterion remains open", "does not reattribute D278/D291/D100 or change P11/P13/release states"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
