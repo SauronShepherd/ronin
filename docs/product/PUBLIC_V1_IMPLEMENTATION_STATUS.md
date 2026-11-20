@@ -7,6 +7,14 @@
 
 ## Current exact-SHA qualification — 18 November 2026
 
+D280 on current candidate `43193b7954250f9df6030437c474de88a2bf0882`
+passes the PostgreSQL/Kafka live two-partition backlog drain in bounded
+micro-batches `1/1`, with `36/36` correlated API events all `OK`, zero
+unexpected errors and cleanup PASS. This is bounded backlog evidence and does
+not prove route-wide coverage, indefinite operation, HA/multi-worker, P11 or
+release approval. P11 remains `in_progress`, P13 remains `blocked`, and release
+remains **NO-GO** at `1/13` families and `0/10` gates.
+
 D279 on current candidate `84f524ea9ba563232a39e281b52ca89bd2d84142`
 passes the PostgreSQL/Kafka live Streaming Studio byte-boundary case `1/1`,
 with `13/13` correlated API events (`11 OK`, `2` expected WARN), zero
