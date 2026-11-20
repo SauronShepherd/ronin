@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D338 extends default-load supervisor evidence to `600 s`: `1/1`,
+`673/673` correlated events all OK. It remains bounded and does not close
+P11 or prove indefinite operation.
+
 D337 adds default-load supervisor evidence at `300 s`: `1/1`,
 `339/339` correlated events all OK. It is bounded evidence and does not
 close P11 or prove indefinite operation.
@@ -321,7 +325,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `172386f6d69a44dd5515757d48a4a381bf30c332` (2026-11-20).
+**Observed source baseline:** `d5b41baf36682e1755988707f243d2afc5b7ceb3` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
