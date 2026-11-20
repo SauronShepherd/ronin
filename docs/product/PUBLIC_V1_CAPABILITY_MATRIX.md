@@ -1,6 +1,14 @@
 # Ronin Public v1 capability matrix
 
-## Current exact-SHA snapshot — 18 November 2026
+## Current exact-SHA snapshot — 20 November 2026
+
+D327 on candidate `cd1290124398f65f22ba726a919adff1ba4fe7c6` is the current
+bounded live qualification: `42/43` browser cases passed, one explicitly
+reserved RF3 skip, `25` routes audited and `473/473` API events correlated.
+D324, D321 and D319 are separate supporting cells. D320/D322 remain NOT_PASS
+diagnostics. This evidence does not change the release decision: P11 remains
+`in_progress`, P13 remains `blocked`, and release remains **NO-GO** at
+`1/13` families and `0/10` gates.
 
 D100 is bound to clean candidate e6f635dfe9159351711f44af9199e573e6e8a5bb.
 The production implementation boundary is the same SHA because the bridge
@@ -272,7 +280,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `90ed32fd7e9e06eb553b505e32d9cf9c691fb0b9` (2026-11-20).
+**Observed source baseline:** `c1c07cb07c30a04a528c2f6a19ecf79c29b75a86` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
