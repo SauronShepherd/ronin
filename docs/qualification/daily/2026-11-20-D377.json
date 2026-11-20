@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D377",
+  "status": "NOT_PASS",
+  "candidate_sha": "df7b48795ff179ad07920b3bfc2d40ccd4009450",
+  "production_boundary_sha": "df7b48795ff179ad07920b3bfc2d40ccd4009450",
+  "qualification": "4,096 sustained PostgreSQL-runtime backpressure",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d377-live-postgres-backpressure-4096-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 4096 -BackpressureTimeoutSeconds 600 -RequestTimeoutSeconds 90",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "api_events": 5, "correlated": 5, "api_ok": 4, "api_error": 1, "failure": "Failed to fetch during the second backpressure request; status 0 network error", "elapsed_seconds": 145.61},
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d377-live-postgres-backpressure-4096-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "AD09681FF18764D489877BEBDEFBB2CB4F38AAAD7307A4E04777F9DC2C9CAF88",
+    "browser-live.xml": "70FB259E9C7F1825D88368FD0D5D73EF7D27BB5370B3470E25F593340D9386A7",
+    "live-api-traffic.json": "601359C149CA72BEDFC3CA76A7584603326ACA9B1A11943ABB3ED208EA899129",
+    "live-python-freeze.txt": "D445FEC53DEBCEFCFA1D3E4EF10FFCC7053317E178624515074BCF273D4E1766",
+    "live-server.stderr.log": "649E49BC2953E90E1358366C57B783F3DE6A39F4950F424961AE27298423E240",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "C64C38B8A80226573AFABC8373B18E644C2FB81F1BAB4B84751C4600EC770311",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["NOT_PASS bounded diagnostic", "does not establish a production limit", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

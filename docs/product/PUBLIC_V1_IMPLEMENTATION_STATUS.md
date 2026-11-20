@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
+D377 re-tests sustained PostgreSQL-runtime backpressure at `4,096` records on
+`main@df7b4879` and remains **NOT_PASS**: the second request ends in `Failed to
+fetch`/status-0 after `145.61 s`, with `5/5` correlated events (`4` OK, `1`
+error), no server ERROR/CRITICAL logs and cleanup PASS. This narrower bounded
+diagnostic confirms the network abort below D375's 8,192-record load; it does
+not establish a production limit or close P11/release.
+
 D376 tests removal of the redundant stream event lookup at `8,192` PostgreSQL-runtime records and remains **NOT_PASS**: the second request ends in `Failed to fetch`/status-0 after `136.21 s`, with `5/5` correlated events (`4` OK, `1` error). The optimization is insufficient; P11/release remain open.
 
 D375 tests `8,192` sustained backpressure with the PostgreSQL streaming runtime and remains **NOT_PASS**: the second request ends in `Failed to fetch`/status-0 after `136.32 s`, with `5/5` correlated events (`4` OK, `1` error). D353 is not reattributed because it did not qualify this PostgreSQL runtime.
