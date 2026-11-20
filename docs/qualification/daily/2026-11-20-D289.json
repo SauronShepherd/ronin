@@ -14,7 +14,7 @@
     "pytest-postgres.xml": "EF123A9E5D9C129EEFFE21054C446B52D4CF89C943345ADB17A97C5C02018D4C",
     "runner-timings.json": "160C87961AAC8ED4015810495A572FB0FA527F3B162DB0D5CE2E02E73458FE20"
   },
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "a9403c5d209e8cb047419df2cf553db65071072c",
   "limitations": ["one filtered PostgreSQL FinOps integration case", "not complete P11, family, or release qualification"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
