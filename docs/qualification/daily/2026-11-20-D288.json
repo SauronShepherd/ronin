@@ -8,7 +8,7 @@
   "implementation": ["typed PostgresFinOpsStore connection and literal contracts", "typed composed EnvironmentStore casts", "format/import consistency in affected runtime, tests and soak producer"],
   "regressions": {"tests": "64 passed", "duration_seconds": 170.58, "ruff_format": "PASS", "ruff_check": "PASS", "mypy_python": "PASS (390 files)"},
   "cleanup": "PASS",
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "141743243164416de4cd8defa4c449679476f241",
   "limitations": ["static/runtime regression qualification, not a complete P11 family qualification", "no release gate or historical evidence reattribution"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
