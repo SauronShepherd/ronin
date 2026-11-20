@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D357 records three production optimizations tested against the same `16,384` case:
+batched table writes (D355), Kafka consumer reuse (D356), and persistent table connection
+(D357). All keep Docker `1/1`, but live remains **NOT_PASS** with `Failed to fetch` during
+the second request (`373.49 s` in D357). Focused regressions pass; the scale gap remains.
+
 D354 confirms the current-main sustained-backpressure limit: `16,384` records remains
 **NOT_PASS** after a `600 s` Playwright timeout (`0/1`), with `5/5` API events correlated
 and all OK. D353 remains a separate `8,192` PASS in `213.91 s`; neither result closes
@@ -366,7 +371,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `5b65a0b0e0c19884e5ddcac343b694f5a37115c7` (2026-11-20).
+**Observed source baseline:** `0fb9615a878855db8be6b2aff74e0f8f88c95572` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

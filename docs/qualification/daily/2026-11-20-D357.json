@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-20", "day": "D357", "status": "NOT_PASS",
+  "candidate_sha": "0fb9615a878855db8be6b2aff74e0f8f88c95572",
+  "production_boundary_sha": "0fb9615a878855db8be6b2aff74e0f8f88c95572",
+  "qualification": "current-main 16,384 sustained backpressure after persistent SQLite stream-table connection",
+  "result": {"docker_selected": 1, "docker_passed": 1, "live_selected": 1, "live_passed": 0, "api_events": 5, "api_correlated": 5, "api_ok": 4, "api_error": 1, "elapsed_seconds": 373.49, "failure": "Failed to fetch during the second backpressure request"},
+  "worker_image_sha256": "sha256:7556775a55aba4619f7e407e09b30f3e8271bb61ff8cdce5ddf8de7396aa9112",
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d357-docker-worker-current-20261120", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d357-live-backpressure-16384-persistent-table-current-20261120"],
+  "evidence_sha256": {"docker/docker-cleanup.json":"4FB36127A311C8683148FEF02D949B8C69D3785B322A6B83D568581C4709AC54","docker/docker-pytest-output.log":"A0A368A11EFC599BBFF6CBAEB7FEA71F3B1F5349BE7F4151FAEF265A6006F123","docker/docker-qualification.log":"78B7C3C4A56C2082F904CC869782C955A4C01CBEADD48F70B67D639C382EF2C3","live/browser-live.log":"BDEAAC32E1D6353AA91BDABAC76C00770293B4B1954809849B26F4CEBF65286F","live/live-api-traffic.json":"231026FDB4DD8059F833838F0C2127CD0140B6BF163BB38D98DDE72A4E098F05","live/qualification-summary.json":"EEE7ACCC31CFE095256C093336A3663833B224F7C5B901CD9396CD82C505F28E"},
+  "cleanup": "PASS; services and exact image deleted", "state": {"P11":"in_progress","P13":"blocked","release":"NO-GO"}
+}

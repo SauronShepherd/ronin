@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-20", "day": "D356", "status": "NOT_PASS",
+  "candidate_sha": "6d5be5620b27644032b405c893bba91b1120ac0e",
+  "production_boundary_sha": "6d5be5620b27644032b405c893bba91b1120ac0e",
+  "qualification": "current-main 16,384 sustained backpressure after Kafka consumer reuse across batches",
+  "result": {"docker_selected": 1, "docker_passed": 1, "live_selected": 1, "live_passed": 0, "api_events": 5, "api_correlated": 5, "api_ok": 4, "api_error": 1, "elapsed_seconds": 411.22, "failure": "Failed to fetch during the second backpressure request"},
+  "worker_image_sha256": "sha256:8bb391c62913161ff58589b3ed8cb560668cad742579f6a61f8558bd0f024904",
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d356-docker-worker-current-20261120", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d356-live-backpressure-16384-consumer-reuse-current-20261120"],
+  "evidence_sha256": {"docker/docker-cleanup.json":"CA91DEEB548F7D068BDFEF67346D7500E897DDCA721969519CFF9CDFE38C0F6A","docker/docker-pytest-output.log":"11CF07817CE4472D8C1729A049FC1F108ED29D470C11CC43A8FEB3FE725A3E8C","docker/docker-qualification.log":"F17C68F12F53939212426379A75BC8A40F5A8559B9CAEAF6D1CEF5FA3782B530","live/browser-live.log":"3B96C95742B2FA0E476C54418637725F4FC5374EFC4E75BA4ED46B68725B654E","live/live-api-traffic.json":"143B9652A1C2139A702DC261331BEAC6FFD30B9EA8F2868BDFD86D275CAF597B","live/qualification-summary.json":"A4DF52EB4976B6185BFE99234B88408097BE5601983EE74E66FC14A1C78C563B"},
+  "cleanup": "PASS; services and exact image deleted", "state": {"P11":"in_progress","P13":"blocked","release":"NO-GO"}
+}

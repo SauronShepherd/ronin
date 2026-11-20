@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-20", "day": "D355", "status": "NOT_PASS",
+  "candidate_sha": "aeef85e26d67e006aa2ff6557afb45696b805e46",
+  "production_boundary_sha": "aeef85e26d67e006aa2ff6557afb45696b805e46",
+  "qualification": "current-main 16,384 sustained backpressure after batched SQLite table writes",
+  "result": {"docker_selected": 1, "docker_passed": 1, "live_selected": 1, "live_passed": 0, "api_events": 5, "api_correlated": 5, "api_ok": 4, "api_error": 1, "elapsed_seconds": 384.11, "failure": "Failed to fetch during the second backpressure request"},
+  "worker_image_sha256": "sha256:c22651aa1d1cfd378962792281bc0b3d83124313b38f3d532fe7ee9c32662503",
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d355-docker-worker-current-20261120", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d355-live-backpressure-16384-batched-table-current-20261120"],
+  "evidence_sha256": {"docker/docker-cleanup.json":"C4A35B43A47F9928184A2EDD4B68B7EA1AC8803D291D4FC380F421E530A88C3B","docker/docker-pytest-output.log":"756AB988D49E4EC68044E539CA6CC1436D7A9207A6F78E662EB718FEE6C42441","docker/docker-qualification.log":"83A022628A8AB43663DB37138F0AB8271FAE2C3BB0D3E6F031378C03ED9D2EEC","live/browser-live.log":"E24AC3D0E276068B9A190925D3BF7FE0B2B409A04DC98582EC2DE0E5FE5A6F87","live/live-api-traffic.json":"594387BA7A2F5DD5E94D5791DD89E85A65F214C4594513CDDD97993F2C286771","live/qualification-summary.json":"20BE37B72393F944E6EF74466319AE8A7FAD1C5FB9C4E19D484B320E37CD5D4F"},
+  "cleanup": "PASS; services and exact image deleted", "state": {"P11":"in_progress","P13":"blocked","release":"NO-GO"}
+}
