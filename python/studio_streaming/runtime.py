@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import tempfile
 from collections.abc import Callable, Mapping
+from contextlib import nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -320,39 +321,44 @@ class KafkaStreamingRuntime:
         records = 0
         rows = 0
         empty_polls = 0
+        event_session = getattr(self._event_store, "event_session", None)
+        session_context = event_session() if callable(event_session) else nullcontext()
         try:
-            while True:
-                if batches >= max_batches:
-                    status = "limit_reached"
-                    stop_reason = "max_batches"
-                    break
-                remaining = None if max_records is None else max_records - records
-                if remaining == 0:
-                    status = "limit_reached"
-                    stop_reason = "max_records"
-                    break
-                current_limit = batch_limit if remaining is None else min(batch_limit, remaining)
-                result = self._run_processor_once(
-                    processor,
-                    runtime_id,
-                    limit=current_limit,
-                    timeout_seconds=timeout,
-                )
-                batch_records = result.records
-                batch_rows = result.rows
-                checkpoint = result.next_checkpoint.digest
-                next_checkpoint = checkpoint
-                if batch_records == 0:
-                    empty_polls += 1
-                    if empty_polls >= idle_polls:
-                        status = "succeeded" if records else "idle"
-                        stop_reason = "idle"
+            with session_context:
+                while True:
+                    if batches >= max_batches:
+                        status = "limit_reached"
+                        stop_reason = "max_batches"
                         break
-                    continue
-                empty_polls = 0
-                batches += 1
-                records += batch_records
-                rows += batch_rows
+                    remaining = None if max_records is None else max_records - records
+                    if remaining == 0:
+                        status = "limit_reached"
+                        stop_reason = "max_records"
+                        break
+                    current_limit = (
+                        batch_limit if remaining is None else min(batch_limit, remaining)
+                    )
+                    result = self._run_processor_once(
+                        processor,
+                        runtime_id,
+                        limit=current_limit,
+                        timeout_seconds=timeout,
+                    )
+                    batch_records = result.records
+                    batch_rows = result.rows
+                    checkpoint = result.next_checkpoint.digest
+                    next_checkpoint = checkpoint
+                    if batch_records == 0:
+                        empty_polls += 1
+                        if empty_polls >= idle_polls:
+                            status = "succeeded" if records else "idle"
+                            stop_reason = "idle"
+                            break
+                        continue
+                    empty_polls = 0
+                    batches += 1
+                    records += batch_records
+                    rows += batch_rows
         finally:
             processor.close()
 

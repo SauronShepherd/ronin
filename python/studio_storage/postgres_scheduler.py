@@ -127,8 +127,23 @@ class PostgresSchedulerSnapshotStore(
     def __init__(self, dsn: str, *, application_name: str = "ronin-scheduler-snapshots") -> None:
         super().__init__(dsn, application_name=application_name)
         self._event_batch_connection: Any | None = None
+        self._event_session_connection: Any | None = None
         self._event_batch_workspaces: set[str] = set()
         self.migrate_scheduler()
+
+    @contextmanager
+    def event_session(self) -> Any:
+        """Reuse one PostgreSQL session across independently committed batches."""
+        if self._event_session_connection is not None:
+            yield self._event_session_connection
+            return
+        connection = self._connect()
+        self._event_session_connection = connection
+        try:
+            yield connection
+        finally:
+            self._event_session_connection = None
+            connection.close()
 
     @contextmanager
     def event_batch(self) -> Any:
@@ -136,7 +151,8 @@ class PostgresSchedulerSnapshotStore(
         if self._event_batch_connection is not None:
             yield self._event_batch_connection
             return
-        connection = self._connect()
+        connection = self._event_session_connection or self._connect()
+        owns_connection = self._event_session_connection is None
         self._event_batch_connection = connection
         self._event_batch_workspaces = set()
         try:
@@ -148,7 +164,8 @@ class PostgresSchedulerSnapshotStore(
         finally:
             self._event_batch_connection = None
             self._event_batch_workspaces = set()
-            connection.close()
+            if owns_connection:
+                connection.close()
 
     def migrate_scheduler(self) -> None:
         connection = self._connect()
