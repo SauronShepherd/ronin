@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D378",
+  "status": "NOT_PASS",
+  "candidate_sha": "eff2419b5be117a10ca11eef6fc4ba6b0fdd44cd",
+  "production_boundary_sha": "eff2419b5be117a10ca11eef6fc4ba6b0fdd44cd",
+  "qualification": "4,096 sustained PostgreSQL-runtime backpressure after event workspace-lock reuse",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d378-live-postgres-lock-reuse-4096-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 4096 -BackpressureTimeoutSeconds 600 -RequestTimeoutSeconds 90",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "api_events": 5, "correlated": 5, "api_ok": 4, "api_error": 1, "failure": "Failed to fetch during the second backpressure request; status 0 network error", "elapsed_seconds": 133.52},
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d378-live-postgres-lock-reuse-4096-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "85D4511744A25610F754A9C00E331EA7FA3CA2807A2642E0070A3DF6B29D1797",
+    "browser-live.xml": "74D9B822D305AF9AB938534519EC266280BC0C87AB3CCD4F8AE0F711143559EA",
+    "live-api-traffic.json": "5BF2A4D9B835B5477B85FDAC58A636E88BFB3E9D0375634CC2F666E3662E166F",
+    "live-python-freeze.txt": "983B66E5D450B4AC4BC0656E2F015DFC01166D708EE272B61713A9891E182A60",
+    "live-server.stderr.log": "E8580A86A66AEE0521832666B83F561D63DD65F44D8B07670CC1AB7C1BE19D90",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "6492158162A37593DD5C0CB408DE1C1362A025D9A8F472CC3A84956E9C882B87",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["NOT_PASS bounded diagnostic", "optimization insufficient", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

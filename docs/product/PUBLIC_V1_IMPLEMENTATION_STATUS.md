@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
+D378 tests PostgreSQL event workspace-lock reuse at `4,096` records on
+`main@eff2419b` and remains **NOT_PASS**: the second request still ends in
+`Failed to fetch`/status-0 after `133.52 s`, with `5/5` correlated events (`4`
+OK, `1` error), no server ERROR/CRITICAL logs and cleanup PASS. The reduction
+in elapsed time is insufficient to close the bounded request or P11/release.
+
 D377 re-tests sustained PostgreSQL-runtime backpressure at `4,096` records on
 `main@df7b4879` and remains **NOT_PASS**: the second request ends in `Failed to
 fetch`/status-0 after `145.61 s`, with `5/5` correlated events (`4` OK, `1`
