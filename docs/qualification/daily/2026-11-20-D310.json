@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D310",
+  "status": "PASS",
+  "candidate_sha": "5343f1f8757bd6cc62faa0d77fb3084bb5058311",
+  "production_boundary_sha": "f05b3de3fa60518df99a059a121be7556fbf6780",
+  "qualification": "120-second live supervisor soak at default producer load with bounded PostgreSQL connection capacity",
+  "worker_image": "sha256:38c062516acd48489dd3e78220d55ffd56ea5700192c8f3e839a904a01094afa",
+  "supervisor_soak_seconds": 120,
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 79, "correlated": 79, "ok": 79, "unexpected": 0},
+  "application_logs": {"error": 0, "critical": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d310-live-postgres-capacity-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "CE8DE76C7314F7C7C36AA84890955F8975C9D1664E04E3ECD56AC44430EDAB73",
+    "browser-live.xml": "10933114F039999772E3A81E9949B5F6C223EA3930287A088E195FE3F64D761E",
+    "live-api-traffic.json": "EE934EF8494CF2A9FE7346EAA3E4E755DCA3F63D2F7D3B2FC4BB195F35BA5C7A",
+    "qualification-summary.json": "0FD7F34AC1759145E535FF64D87F49F9721917EE25E349D88C7DA58B9677B5C1"
+  },
+  "limitations": ["bounded 120-second default-load diagnostic only", "D308's 600-second criterion remains open; no full P11, family, or release qualification; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
