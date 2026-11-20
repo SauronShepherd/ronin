@@ -1,4 +1,6 @@
 import fs from 'node:fs/promises';
+import http from 'node:http';
+import https from 'node:https';
 import path from 'node:path';
 
 const apiBase = process.env.RONIN_LIVE_API_URL;
@@ -12,6 +14,32 @@ const defaultRequestTimeoutMs = Number.isFinite(configuredRequestTimeoutSeconds)
 let traffic = [];
 let trafficReady;
 let trafficWrite = Promise.resolve();
+
+function requestUpstream(url, options, timeoutMs) {
+  const transport = url.protocol === 'https:' ? https : http;
+  return new Promise((resolve, reject) => {
+    const request = transport.request(url, {
+      method: options.method,
+      headers: Object.fromEntries(options.headers.entries()),
+    }, response => {
+      const chunks = [];
+      response.on('data', chunk => chunks.push(chunk));
+      response.on('end', () => {
+        const body = Buffer.concat(chunks).toString('utf8');
+        resolve({
+          status: response.statusCode || 0,
+          headers: { get: name => response.headers[name.toLowerCase()] || null },
+          text: async () => body,
+        });
+      });
+      response.on('error', reject);
+    });
+    request.setTimeout(timeoutMs, () => request.destroy(new Error('upstream request timed out')));
+    request.on('error', reject);
+    if (options.body !== undefined) request.write(options.body);
+    request.end();
+  });
+}
 
 function initializeTraffic() {
   if (!trafficReady) {
@@ -71,12 +99,11 @@ export function installLiveApiProxy(page, expectedToken = token) {
       requestUrl.pathname.endsWith('/search') ? Math.max(90_000, defaultRequestTimeoutMs) : defaultRequestTimeoutMs;
     let upstream;
     try {
-      upstream = await fetch(upstreamUrl, {
+      upstream = await requestUpstream(upstreamUrl, {
         method,
         headers,
         body: ['GET', 'HEAD'].includes(method) ? undefined : await request.postDataBuffer(),
-        signal: AbortSignal.timeout(timeoutMs),
-      });
+      }, timeoutMs);
     } catch (error) {
       const call = {
         method,
