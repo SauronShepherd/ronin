@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-20",
+  "day": "D329",
+  "status": "PASS",
+  "candidate_sha": "4b1f88e022237cead9c30ba06006cb89e2b88662",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "Full non-performance Python/PostgreSQL regression",
+  "backend": "postgres:16.4-alpine",
+  "real_services": ["postgres"],
+  "selection": "all non-performance Python tests, including isolated PostgreSQL tests",
+  "tests": {"collected": 4791, "passed": 4760, "failed": 0, "skipped": 31},
+  "warnings": 13,
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d329-full-postgres-current-20261120",
+  "evidence_sha256": {
+    ".coverage": "E00C7EDC1B6024091FDD9FE171675AF7F6BCC4F4664C87D3403B5E1BC0E4F8FA",
+    "pytest-output.log": "B91267571B4A08EBB838789696B9C96ACBD7CA543D9E9068A2990DB5226F641C",
+    "pytest-postgres.log": "84165D69CBBC6603A1CC269611AE04EE069AAC5B337C21FC0A796C151AC1396A",
+    "pytest-postgres.xml": "EB7EAFF7D7D067BFD713EEA34FF3B2D52B976F0AAC8849628157C280DFDD9291",
+    "pytest-timings.json": "19C54C472E02F88F0DD5DF269B13B62B16DBC83603A9EE18846143C1DE857E1C",
+    "runner-timings.json": "0872844E2B342E984D0168A4CDBF8C47095F87800C55889BF0B0CCC2F8E3F508"
+  },
+  "limitations": ["31 explicit skips for unavailable Docker, external services or Windows symlink capabilities", "13 pytest ResourceWarnings", "does not close P11, external provider certification, indefinite operation, HA/multi-worker or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
