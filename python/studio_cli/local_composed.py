@@ -688,6 +688,9 @@ def build_local_composed_from_env() -> LocalServerComposition:
             plugin_host=plugin_host,
             plugin_routes_enabled=plugin_routes_enabled,
             default_workspace_id=workspace_id,
+            request_timeout_seconds=_seconds(
+                "RONIN_HTTP_REQUEST_TIMEOUT_SECONDS", "15"
+            ),
             audit_reader=audit_store,
             audit_mutation=audit_mutation,
         )
