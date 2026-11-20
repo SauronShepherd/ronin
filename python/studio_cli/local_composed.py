@@ -120,6 +120,7 @@ from studio_storage.scheduler_schedule import SchedulerScheduleStore
 from studio_streaming import (
     KafkaStreamingHealthReader,
     KafkaStreamingRuntime,
+    PostgresStreamCheckpointStore,
     SqliteStreamCheckpointStore,
 )
 
@@ -487,7 +488,11 @@ def build_local_composed_from_env() -> LocalServerComposition:
     def resolve_connection(scoped_workspace_id: str, reference: str) -> ConnectionDefinition:
         return connection_service.get(WorkspaceId(scoped_workspace_id), ConnectionId(reference))
 
-    streaming_checkpoints = SqliteStreamCheckpointStore(database)
+    streaming_checkpoints = (
+        PostgresStreamCheckpointStore(postgres_dsn)
+        if postgres_dsn is not None
+        else SqliteStreamCheckpointStore(database)
+    )
     streaming_health_reader = KafkaStreamingHealthReader(
         streaming_checkpoints,
         resolve_connection,

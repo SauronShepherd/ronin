@@ -1,6 +1,10 @@
 """Streaming and real-time micro-batch runtime for Ronin Public v1."""
 
-from .checkpoint import SqliteStreamCheckpointStore, StreamDefinitionConflict
+from .checkpoint import (
+    PostgresStreamCheckpointStore,
+    SqliteStreamCheckpointStore,
+    StreamDefinitionConflict,
+)
 from .contracts import (
     StreamBatch,
     StreamCheckpoint,
@@ -40,6 +44,7 @@ __all__ = (
     "KafkaStreamingRuntime",
     "KafkaStreamingHealthReader",
     "MicroBatchProcessor",
+    "PostgresStreamCheckpointStore",
     "MicroBatchResult",
     "StreamSupervisorResult",
     "ParquetMicroBatchSink",

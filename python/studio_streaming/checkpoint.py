@@ -271,4 +271,79 @@ class SqliteStreamCheckpointStore:
             return True
 
 
-__all__ = ("SqliteStreamCheckpointStore", "StreamDefinitionConflict")
+class _PostgresConnectionAdapter:
+    """Small DB-API compatibility layer for the provider-neutral store logic."""
+
+    def __init__(self, connection: object) -> None:
+        self._connection = connection
+
+    @staticmethod
+    def _sql(statement: str) -> str:
+        return statement.replace("BEGIN IMMEDIATE", "BEGIN").replace("?", "%s")
+
+    def execute(self, statement: str, parameters: tuple[object, ...] = ()) -> object:
+        return self._connection.execute(self._sql(statement), parameters)  # type: ignore[attr-defined]
+
+    def commit(self) -> None:
+        self._connection.commit()  # type: ignore[attr-defined]
+
+    def rollback(self) -> None:
+        self._connection.rollback()  # type: ignore[attr-defined]
+
+    def close(self) -> None:
+        self._connection.close()  # type: ignore[attr-defined]
+
+    def __enter__(self) -> _PostgresConnectionAdapter:
+        return self
+
+    def __exit__(self, error_type: object, _value: object, _traceback: object) -> None:
+        if error_type is None:
+            self.commit()
+        else:
+            self.rollback()
+
+
+class PostgresStreamCheckpointStore(SqliteStreamCheckpointStore):
+    """PostgreSQL-backed stream definitions and optimistic checkpoints."""
+
+    def __init__(self, dsn: str) -> None:
+        if not dsn or not dsn.strip():
+            raise ValueError("PostgreSQL stream checkpoint DSN must be non-empty")
+        self._dsn = dsn
+        psycopg = self._psycopg()
+        with self._connect() as connection:
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS stream_checkpoints ("
+                "stream_id TEXT PRIMARY KEY, checkpoint_json TEXT NOT NULL, "
+                "checkpoint_digest TEXT NOT NULL, row_version INTEGER NOT NULL DEFAULT 1)"
+            )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS stream_definitions ("
+                "project_id TEXT NOT NULL, stream_id TEXT NOT NULL, definition_json TEXT NOT NULL, "
+                "definition_digest TEXT NOT NULL, PRIMARY KEY(project_id, stream_id))"
+            )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS stream_checkpoint_bindings ("
+                "runtime_stream_id TEXT PRIMARY KEY, definition_digest TEXT NOT NULL)"
+            )
+            connection.commit()
+        del psycopg
+
+    @staticmethod
+    def _psycopg() -> object:
+        try:
+            import psycopg
+        except ImportError as exc:
+            raise RuntimeError("PostgreSQL streaming requires the psycopg package") from exc
+        return psycopg
+
+    def _connect(self) -> _PostgresConnectionAdapter:  # type: ignore[override]
+        psycopg = self._psycopg()
+        return _PostgresConnectionAdapter(psycopg.connect(self._dsn))  # type: ignore[attr-defined]
+
+
+__all__ = (
+    "PostgresStreamCheckpointStore",
+    "SqliteStreamCheckpointStore",
+    "StreamDefinitionConflict",
+)
