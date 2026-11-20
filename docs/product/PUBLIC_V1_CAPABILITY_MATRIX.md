@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D375 tests `8,192` sustained backpressure with the PostgreSQL streaming runtime and remains **NOT_PASS**: the second request ends in `Failed to fetch`/status-0 after `136.32 s`, with `5/5` correlated events (`4` OK, `1` error). D353 is not reattributed.
+
 D374 tests one PostgreSQL transaction per stream microbatch for `16,384` sustained backpressure and remains **NOT_PASS**: the second request ends in `Failed to fetch`/status-0 after `132.63 s`, with `5/5` correlated events (`4` OK, `1` error). P11/release remain open.
 
 D372 tests `16,384` sustained backpressure after PostgreSQL event-connection reuse per microbatch and remains **NOT_PASS**: the second request ends in `Failed to fetch`/status-0 after `137.41 s`, with `5/5` correlated events (`4` OK, `1` error). P11/release remain open.
@@ -406,7 +408,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `bbad42699586cf626b3025cec57a308a47f228a9` (2026-11-20).
+**Observed source baseline:** `330866713f8e88c1b06a82cd1ee065b561ec9b1c` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

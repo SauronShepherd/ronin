@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D375",
+  "status": "NOT_PASS",
+  "candidate_sha": "330866713f8e88c1b06a82cd1ee065b561ec9b1c",
+  "production_boundary_sha": "bbad42699586cf626b3025cec57a308a47f228a9",
+  "qualification": "8,192 sustained backpressure with PostgreSQL streaming runtime",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d375-live-postgres-backpressure-8192-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 8192 -BackpressureTimeoutSeconds 900 -RequestTimeoutSeconds 90",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "api_events": 5, "correlated": 5, "api_ok": 4, "api_error": 1, "failure": "Failed to fetch during the second backpressure request; status 0 network error", "elapsed_seconds": 136.32},
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d375-live-postgres-backpressure-8192-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "7FAC13197FFC7E2740541A89928E113519BD7F2F8D3F57C17F4F560855003EC9",
+    "browser-live.xml": "88742232897B761245F035E1539268A20C750AAEDDA5A5C2CFBC2F42E0C63B0A",
+    "live-api-traffic.json": "8CC8451F874D0D1624676416DFC751C6328FE9DC560E02C2BBC453E0CEA5A024",
+    "live-python-freeze.txt": "54DEB67059D730C0B33355CEE91F987FC1014C2EE71A58F3662328F8587C0C05",
+    "live-server.stderr.log": "5478FE6D9CD1FD43EF00432513D71C062772FB6C7C1342547F200DCD8584F30C",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "721831569CC918DF70A6053076DA1CB85F744EFD2C00BE76880790AFE03CB632",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["NOT_PASS bounded diagnostic", "D353's 8,192 PASS is not reattributed because this cell explicitly uses PostgreSQL streaming runtime", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
