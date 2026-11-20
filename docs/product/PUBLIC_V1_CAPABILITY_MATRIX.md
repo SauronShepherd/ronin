@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D330 adds bounded S3-compatible provider evidence: `2/2` Floci cases pass
+for JSON sink retry/read/discover and ML object-store retention. It does not
+certify AWS/Azure/GCP production services or close P11.
+
 D329 adds full non-performance Python/PostgreSQL regression evidence at
 `4760/4791`, with `31` explicit skips and `0` failures. This broad
 regression does not close P11 or convert unavailable external-provider,
@@ -289,7 +293,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `a059ccd84b1dc0416553960ba0cf60142eb8baa0` (2026-11-20).
+**Observed source baseline:** `cb3a9f0f45bca5b78a4319a15a2f9271ff814399` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
