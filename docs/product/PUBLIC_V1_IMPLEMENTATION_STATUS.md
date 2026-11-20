@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D397 passes the bounded HTTP timeout boundary regression on
+`main@2d392664`: `4/4` tests passed in `1.67 s`, covering slow-body read
+deadlines, service future cancellation, successful calls below the deadline and
+invalid timeout configuration rejection. This is local bounded termination
+evidence and does not close P11/release.
+
 D396 passes the complete bounded HTTP contention budget cell on
 `main@beb5ddd6`: `2/2` tests passed in `4.14 s` with 200 samples per endpoint.
 POST `/v1/jobs` p95 was `16.940 ms` against `<100 ms`; GET `/v1/jobs/{id}`

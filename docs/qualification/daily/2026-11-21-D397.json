@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D397",
+  "status": "PASS",
+  "candidate_sha": "2d3926649c3c42a2e0e2f17589335ec3242aaed4",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "bounded HTTP request and service timeout behavior",
+  "command": "python -m pytest -q tests/integration/test_http_timeouts.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d397-http-timeouts-20261121b\\http-timeouts.xml",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "elapsed_seconds": 1.67},
+  "coverage": ["slow request body hits configured read deadline", "service deadline cancels submitted future", "service call below deadline succeeds", "invalid timeout configuration fails server construction"],
+  "evidence_sha256": {"pytest.log": "3329C90E0ED44854E8C02608B1486CA593D429BCFBC535E435B2929B096505E8", "http-timeouts.xml": "C119861271C927B644BCABE7E015FBB0691480768AE004D255FD1B75F730E7A7"},
+  "limitations": ["bounded local HTTP timeout tests", "does not prove provider/runtime SLO, indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
