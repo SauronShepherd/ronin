@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-20",
+  "day": "D308",
+  "status": "NOT_PASS",
+  "candidate_sha": "c1ab6e4068b7a152c9934db984d3c2f6bb470c92",
+  "production_boundary_sha": "ad17d1827b0978655128d6fd44b6b1373d9e3b8e",
+  "qualification": "600-second live supervisor soak at default producer load after prompt non-empty Kafka batch return",
+  "worker_image": "sha256:b6d6c440e0e9a4206131c1e56d6befd79effce6d883e8e34af2e8f9ff68a8b03",
+  "supervisor_soak_seconds": 600,
+  "journeys": {"passed": 0, "failed": 1, "skipped": 0},
+  "failure": "Playwright global timeout 900000ms; final request failed with browser-side Failed to fetch",
+  "api_events": {"total": 346, "correlated": 346, "ok": 345, "unexpected": 1},
+  "application_logs": {"error": 2, "critical": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d308-live-600-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "6488DEFD8549386CF239D1DAAA61676AAC56C3564D173ABACDE06D79F09BE501",
+    "browser-live.xml": "63FA4914D842E1C6489C48C5839DB659F6A041D68A51747CE552E8A0663509D7",
+    "live-api-traffic.json": "C6A95043ED5266B748A3A5BF88B504D36FC8BBF91000FD6E451D3F80F1F9FC64",
+    "qualification-summary.json": "28A91765B78EB2E135991678A96B1967605AF7F117952B2EDD561B48D81CBBC8"
+  },
+  "limitations": ["NOT_PASS diagnostic; no 600-second drain claim", "does not reattribute D300/D306 or change P11/P13/release states"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
