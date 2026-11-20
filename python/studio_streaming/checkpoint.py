@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from collections.abc import Mapping
-from contextlib import closing
+from contextlib import closing, contextmanager
 from hashlib import sha256
 from pathlib import Path
 
@@ -303,6 +303,13 @@ class _PostgresConnectionAdapter:
             self.rollback()
 
 
+class _PostgresSessionConnectionAdapter(_PostgresConnectionAdapter):
+    """Per-operation transaction wrapper that does not close the session."""
+
+    def close(self) -> None:
+        return
+
+
 class PostgresStreamCheckpointStore(SqliteStreamCheckpointStore):
     """PostgreSQL-backed stream definitions and optimistic checkpoints."""
 
@@ -310,6 +317,7 @@ class PostgresStreamCheckpointStore(SqliteStreamCheckpointStore):
         if not dsn or not dsn.strip():
             raise ValueError("PostgreSQL stream checkpoint DSN must be non-empty")
         self._dsn = dsn
+        self._session_connection: object | None = None
         psycopg = self._psycopg()
         with self._connect() as connection:
             connection.execute(
@@ -338,8 +346,24 @@ class PostgresStreamCheckpointStore(SqliteStreamCheckpointStore):
         return psycopg
 
     def _connect(self) -> _PostgresConnectionAdapter:  # type: ignore[override]
+        if self._session_connection is not None:
+            return _PostgresSessionConnectionAdapter(self._session_connection)
         psycopg = self._psycopg()
         return _PostgresConnectionAdapter(psycopg.connect(self._dsn))  # type: ignore[attr-defined]
+
+    @contextmanager
+    def stream_session(self) -> object:
+        """Reuse one PostgreSQL connection across independently committed CAS calls."""
+        if self._session_connection is not None:
+            yield self._session_connection
+            return
+        connection = self._psycopg().connect(self._dsn)  # type: ignore[attr-defined]
+        self._session_connection = connection
+        try:
+            yield connection
+        finally:
+            self._session_connection = None
+            connection.close()
 
 
 __all__ = (

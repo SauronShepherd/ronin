@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import tempfile
 from collections.abc import Callable, Mapping
-from contextlib import nullcontext
+from contextlib import ExitStack, nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -322,9 +322,17 @@ class KafkaStreamingRuntime:
         rows = 0
         empty_polls = 0
         event_session = getattr(self._event_store, "event_session", None)
-        session_context = event_session() if callable(event_session) else nullcontext()
+        checkpoint_session = getattr(self._checkpoints, "stream_session", None)
         try:
-            with session_context:
+            with ExitStack() as sessions:
+                sessions.enter_context(
+                    event_session() if callable(event_session) else nullcontext()
+                )
+                sessions.enter_context(
+                    checkpoint_session()
+                    if callable(checkpoint_session)
+                    else nullcontext()
+                )
                 while True:
                     if batches >= max_batches:
                         status = "limit_reached"
