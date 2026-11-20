@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-20",
+  "day": "D333",
+  "status": "NOT_PASS",
+  "candidate_sha": "afaf2f3748fc81f1bc05ee893b78dc293dd5668e",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "PostgreSQL live streaming filtered diagnostic",
+  "real_services": ["postgres:16.4-alpine", "single Redpanda broker", "Ronin API", "Chromium"],
+  "tests": {"executed": 11, "passed": 9, "failed": 1, "skipped": 1},
+  "api_events": {"total": 276, "correlated": 276, "ok": 266, "warn": 8, "error": 2, "uncorrelated": 0},
+  "failure": "two-partition backlog case reached 40 run attempts while criterion requires <40",
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d333-live-streaming-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "A843D42D7A2B959C203274DBD769D33E198579D5244B2C80753109C3EA3169FC",
+    "browser-live.xml": "982EC1538FF808BFE58BDD655522180388401DBB401255F311D0EF0110870AEE",
+    "live-api-traffic.json": "F86EA5053CDDA51DB8C3560FC541B664FB09255D6A7221C1A2BD471DEACCECC3",
+    "live-python-freeze.txt": "11A850B8FF52298BC349B768828D122FBA3E25565353C88A88745CD115540B38",
+    "live-server.stderr.log": "9F237ED9B406C3DF3F46EEB501AEE7B6E03370B530CBFF9982138BCD0A918799",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "F88E47869107498CE369518E174B211B18BC4E1A80FEE63133A672FF536BEED7",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["NOT_PASS diagnostic; no evidence is reattributed as PASS", "does not change P11, P13 or release state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
