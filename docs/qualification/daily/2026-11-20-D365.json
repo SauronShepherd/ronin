@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D365",
+  "status": "PASS",
+  "candidate_sha": "60c0dc49073b3d876ec561c07aebb44430e30b5f",
+  "production_boundary_sha": "a63471c25388774069727d75b31a1958f7a7e09b",
+  "qualification": "full non-performance Python/PostgreSQL regression after PostgreSQL streaming checkpoint backend change",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d365-python-postgres-after-stream-backend-20261120",
+  "result": {"collected": 4790, "collection_skipped": 3, "passed": 4762, "skipped": 31, "failed": 0, "warnings": 23, "elapsed_seconds": 702.62},
+  "postgres": "postgres:16.4 isolated loopback",
+  "cleanup": "PASS; isolated PostgreSQL removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d365-python-postgres-after-stream-backend-20261120",
+  "evidence_sha256": {
+    "pytest-output.log": "AD71395BAADF71E7969CD29896FFD21D01D4490192249C4914AEADD1CC3C119E",
+    "pytest-postgres.log": "E3A781BB25AB36F60D6213F757BA30009101A380D1DFBE97E89F9C9C8C6322C6",
+    "pytest-postgres.xml": "E8401A088FE7864CC1493D27BB054243A02F9D5A7654F3D66E23BEE3C4180B26",
+    "pytest-timings.json": "7875FCB7DCF4EACC18BA70CEF76765FAA2586FB6380BE1710FC83CAA0AC86B0F",
+    "runner-timings.json": "6AF40CCDA7ECE208DCDFCEA8E289E1E0F8AE744D556BBB19CF2C70BD5BB6217D",
+    ".coverage": "C77D0F47B3499C8BB69CA7876BF1199D9F174E23650F9559ACCA1BFC7BDD7B1F"
+  },
+  "limitations": ["31 explicit/collection skips and 23 warnings retained", "Docker/external-provider lanes remain separate", "does not close complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
