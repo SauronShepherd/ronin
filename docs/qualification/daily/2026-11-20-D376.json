@@ -2,7 +2,7 @@
   "date": "2026-11-20",
   "day": "D376",
   "status": "NOT_PASS",
-  "candidate_sha": "02b0d9382fefde611821933063934e47e951ff88",
+  "candidate_sha": "33c82a47a54301effb447ef7f65c9c61fecfe374",
   "production_boundary_sha": "33c82a47a54301effb447ef7f65c9c61fecfe374",
   "qualification": "8,192 sustained backpressure after redundant stream event lookup removal",
   "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d376-live-postgres-backpressure-event-lookup-8192-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 8192 -BackpressureTimeoutSeconds 900 -RequestTimeoutSeconds 90",
