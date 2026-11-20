@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D305",
+  "status": "PASS",
+  "candidate_sha": "458687e3aa116949f4d339386add70b62bb07467",
+  "production_boundary_sha": "3ef1a7114bb87b756752189bc9f4977964ba45bf",
+  "qualification": "120-second live supervisor soak at default producer load after Kafka metadata-probe optimization",
+  "worker_image": "sha256:3598fd04bdb385d8bcec1b553cdf3ea48861993fc80c64574e0f811805999bcd",
+  "supervisor_soak_seconds": 120,
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 87, "correlated": 87, "ok": 87, "unexpected": 0},
+  "application_logs": {"error": 0, "critical": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d305-live-default-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "0F9F4CC8819EC43034ADDD6B2CBCDD3CA849ACFCE1E1D2892350A4A5F45A29E6",
+    "browser-live.xml": "3EFC7C8CD7E61576DC8B71947117118048FDFF03785C6D3AEFB857A8C328A4D0",
+    "live-api-traffic.json": "DE7A8EC34694F8C9243BB0043B5CC6438C1B47AC972612EE79E6281EF2C64AB3",
+    "qualification-summary.json": "F41A0E3C2CA35ABA2C89D913EE76FB270A526D5CAD08D19465FA13591D3A1FF3"
+  },
+  "limitations": ["bounded 120-second default-load diagnostic only", "D300's 600-second drain criterion remains open; no indefinite, full P11, family, or release qualification; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
