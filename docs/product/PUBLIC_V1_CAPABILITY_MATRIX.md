@@ -2,6 +2,12 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D390 expands the focused real PostgreSQL scheduler recovery cell on
+`main@1fac8c21`: daemon expired-lease reacquisition, event-inbox replay, and
+process-crash replay pass `3/3` in `5.74 s` against PostgreSQL 16.4, with
+isolated fixture cleanup PASS. This does not reattribute D340/D100 or close
+P11/release.
+
 D389 adds new real PostgreSQL scheduler recovery evidence on `main@3341cd7d`:
 the expired-lease reacquisition and process-crash replay cases pass `2/2` in
 `4.31 s` against an isolated PostgreSQL 16.4 fixture. This focused bounded

@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-21",
+  "day": "D390",
+  "status": "PASS",
+  "candidate_sha": "1fac8c2169b6ba7cc5494898f16b40cb919262ef",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "focused real PostgreSQL scheduler recovery: daemon lease, event replay, and process-crash replay",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://ronin:ronin@127.0.0.1:55433/ronin pytest -q tests/integration/test_postgres_workflow_store_real.py -k \"event or daemon\"",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 18, "elapsed_seconds": 5.74},
+  "fixture": "PostgreSQL 16.4-alpine, isolated Compose project ronin-recovery-d390, host port 55433",
+  "cleanup": "PASS; isolated container, volume and network removed",
+  "evidence_sha256": {
+    "tests/integration/test_postgres_workflow_store_real.py": "9260E6C185CA1B2D7EFAF90B86982F9E5C4CE5E106F3051EAF1A76E1FC90469A",
+    "compose.yaml": "2FDA87B59FD07DEB895FC9013A55B804E101DF64155B9CC85112897A746B2C0A"
+  },
+  "limitations": ["focused bounded recovery cell", "does not reattribute D340/D100", "does not prove HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
