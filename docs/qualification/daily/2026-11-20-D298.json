@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D298",
+  "status": "PASS",
+  "candidate_sha": "9b033b8739c14bd7611c8e6467ffb385299dd66d",
+  "production_boundary_sha": "7a9e3359f28e15a30ceba73e4a125b58b1996862",
+  "qualification": "real OTLP Collector accepts traces, metrics and logs",
+  "provider": "OpenTelemetry Collector Contrib",
+  "provider_image": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621",
+  "protocol": "OTLP/HTTP",
+  "tests": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d298-otlp-provider-current-20261120",
+  "evidence_sha256": {
+    "qualification.json": "1110D8B6175AC2A14C311117BE6EB1996A253F199320740EFC1EB4D0FE276609",
+    "otlp-junit.xml": "4ACC178888516F69E30E26195FC85D2E16B27B5A26B4D67153503C59DC347546",
+    "qualification.log": "F6E8F35E2CD3A80E7F1E640D2BDFB01D15D8C1EC44563F79CF0D2FCFC5D14268",
+    "pytest-timings.json": "1A7BCBB5ADFC9BCC8663064A99A7B17909F7C08B5E7A739A744B3C5508BE9CB5"
+  },
+  "documentation_commit_sha": null,
+  "limitations": ["bounded local OTLP provider diagnostic", "not external production SLA, full P11, family, or release qualification; does not reattribute prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
