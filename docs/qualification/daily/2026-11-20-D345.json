@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-20",
+  "day": "D345",
+  "status": "PASS",
+  "candidate_sha": "553637e546cdb53f264f9e0aa180f02e3eab087c",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "current-main live multi-broker failover with PostgreSQL and real Docker worker",
+  "commands": {"docker": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d345-docker-worker-current-20261120 -ImageTag ronin:qualification-d345 -TestFilter 'test_real_docker_worker_executes_clean_container_demo' -KeepImage", "live": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d345-live-multibroker-current-20261120 -StorageBackend postgres -WorkerImage ronin:qualification-d345 -MultiBroker -TestGrep 'live streaming multi-broker failover' -RequestTimeoutSeconds 90"},
+  "worker_image_sha256": "sha256:3bf2ea1d0e88896957483e48c725c7ed9dc4d55a2ff45efa4379e0a827c6d6b9",
+  "docker_diagnostic": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26},
+  "live": {"brokers": 3, "selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 5, "correlated": 5, "ok": 5, "unexpected_authorization_gaps": 0, "unexpected_server_network_errors": 0},
+  "cleanup": "PASS; isolated services removed and exact worker image deleted",
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d345-docker-worker-current-20261120", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d345-live-multibroker-current-20261120"],
+  "evidence_sha256": {"docker/docker-cleanup.json": "98E193E704BF785304CF8F58F7C6F31DAD30AD7DA76BC5AEA8907C1F2CF14308", "docker/docker-qualification.log": "4F0BB37D6BA1FA68BE07BA6DF550A725C7DD71DC9DDF0B667891B5017A72B5B9", "live/browser-live.log": "BD816FBB395CCB58340CA95B515D8046F163754DBF55A21C1FB6DC7C8E1C80CB", "live/browser-live.xml": "5B4CD852CC85BB6BFE4B30B485EB9DE1BC7E403C6744F5EA44781FC19E736C63", "live/live-api-traffic.json": "FDA6C8E10072DCF4245CBC61CDA5B2DA96982AA301F0181AB713E874241CAA94", "live/qualification-summary.json": "8218B773BCC7796E0EC2142C697B489C4144EF8D4399550E5B1F3529A465C876"},
+  "limitations": ["filtered diagnostic only; 26 Docker tests deselected", "does not prove complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

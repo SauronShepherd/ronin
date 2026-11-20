@@ -7,7 +7,8 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
-D344 completes the non-performance Python/PostgreSQL regression on candidate
+D345 revalidates current-main multi-broker failover with three brokers and a real
+worker: `1/1` and `5/5` correlated API events. D344 completes the non-performance Python/PostgreSQL regression on candidate
 `98003383`: `4760/4791` pass, `31` explicit skips, `0` failures and `13`
 warnings. D343 completes the full live route on candidate `46843252` with a real Docker
 worker and PostgreSQL: `42/43` cases pass, one matrix-reserved skip remains,
