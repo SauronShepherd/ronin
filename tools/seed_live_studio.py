@@ -18,11 +18,11 @@ from studio_core import (
     KnowledgeObjectRef,
     LineageEdge,
     Pipeline,
+    ProjectManifest,
     WorkflowDefinition,
     WorkflowId,
     Workspace,
     WorkspaceId,
-    ProjectManifest,
 )
 from studio_lakehouse import write_parquet_rows
 from studio_semantic import (
@@ -62,7 +62,9 @@ def main() -> int:
     if storage_backend == "sqlite" and not raw_database:
         raise SystemExit("RONIN_DB must identify the isolated live-test SQLite database")
     if storage_backend == "postgres" and not postgres_dsn:
-        raise SystemExit("RONIN_POSTGRES_DSN must identify the isolated live-test PostgreSQL database")
+        raise SystemExit(
+            "RONIN_POSTGRES_DSN must identify the isolated live-test PostgreSQL database"
+        )
     if storage_backend not in {"sqlite", "postgres"}:
         raise SystemExit("RONIN_STORAGE_BACKEND must be sqlite or postgres")
     database = Path(raw_database).expanduser().resolve() if raw_database else None
@@ -167,9 +169,7 @@ def main() -> int:
     store = SqliteKnowledgeGraphStore(database)
     store.put(workspace_id, "graph-1", graph)
     catalog = (
-        PostgresSchedulerSnapshotStore(
-            postgres_dsn, application_name="ronin-live-catalog-seeder"
-        )
+        PostgresSchedulerSnapshotStore(postgres_dsn, application_name="ronin-live-catalog-seeder")
         if storage_backend == "postgres"
         else SqliteCatalogStore(database, migration_now=now)
     )

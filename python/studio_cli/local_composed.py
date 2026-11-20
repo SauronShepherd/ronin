@@ -88,6 +88,7 @@ from studio_sql import ProjectScopedDuckDbSqlEngine, SqlHTTPAdapter
 from studio_storage import (
     CompositeSecretResolver,
     EnvironmentSecretResolver,
+    EnvironmentStore,
     LocalArtifactStore,
     PostgresArtifactReferenceBarrier,
     PostgresAuditStore,
@@ -406,15 +407,15 @@ def build_local_composed_from_env() -> LocalServerComposition:
         retry_seconds=_seconds("RONIN_SCHEDULER_RETRY_SECONDS", "2"),
     )
     environment_store = (
-        SqliteEnvironmentStore(database, migration_now=now)
-        if postgres_dsn is None
-        else scheduler
+        SqliteEnvironmentStore(database, migration_now=now) if postgres_dsn is None else scheduler
     )
     environment_service = (
-        EnvironmentService(scheduler, environment_store) if environment_store is not None else None
+        EnvironmentService(scheduler, cast(EnvironmentStore, environment_store))
+        if environment_store is not None
+        else None
     )
     binding_service = (
-        DeploymentBindingService(scheduler, environment_store)
+        DeploymentBindingService(scheduler, cast(EnvironmentStore, environment_store))
         if environment_store is not None
         else None
     )

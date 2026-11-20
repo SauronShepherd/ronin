@@ -68,9 +68,7 @@ def main() -> int:
     interval_seconds = _bounded_float(
         "RONIN_LIVE_SUPERVISOR_SOAK_INTERVAL_SECONDS", 0.25, 0.05, 5.0
     )
-    replication_factor = _bounded_int(
-        "RONIN_LIVE_STREAMING_REPLICATION_FACTOR", 1, 1, 3
-    )
+    replication_factor = _bounded_int("RONIN_LIVE_STREAMING_REPLICATION_FACTOR", 1, 1, 3)
     _create_topic(bootstrap, topic, replication_factor)
 
     producer = Producer(

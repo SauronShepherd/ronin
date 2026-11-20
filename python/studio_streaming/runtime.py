@@ -69,9 +69,7 @@ class KafkaStreamingRuntime:
         self._source_factory = source_factory
         self._event_store = event_store
         self._event_ingestor = event_ingestor
-        self._clock = clock or (
-            lambda: datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        )
+        self._clock = clock or (lambda: datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
     def _ingest_stream_events(
         self,
@@ -181,6 +179,7 @@ class KafkaStreamingRuntime:
             sink = ParquetMicroBatchSink(self._data_root / "streaming" / target)
         before_checkpoint: Callable[[str, StreamBatch], None] | None = None
         if self._event_store is not None:
+
             def before_checkpoint(
                 _current_stream_id: str,
                 current_batch: StreamBatch,

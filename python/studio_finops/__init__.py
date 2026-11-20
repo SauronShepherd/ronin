@@ -9,6 +9,7 @@ from .contracts import (
     UsageProvenance,
     UsageRecord,
 )
+from .postgres import PostgresFinOpsStore
 from .service import (
     AllocationSlice,
     CostForecast,
@@ -22,7 +23,6 @@ from .service import (
     price_usage,
 )
 from .store import FinOpsConflict, SqliteFinOpsStore
-from .postgres import PostgresFinOpsStore
 
 __all__ = (
     "BudgetAction",

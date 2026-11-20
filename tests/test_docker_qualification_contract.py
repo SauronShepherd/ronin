@@ -353,13 +353,9 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
         in live_suite
     )
     assert (
-        '$streamEventWorkflowDiagnostic = $TestGrep -eq "live streaming event workflow"'
-        in script
+        '$streamEventWorkflowDiagnostic = $TestGrep -eq "live streaming event workflow"' in script
     )
-    assert (
-        "live streaming event workflow is triggered by a committed record"
-        in live_suite
-    )
+    assert "live streaming event workflow is triggered by a committed record" in live_suite
     assert 'event_workflow_topic = "ronin-live-event-workflow-events"' in seed
     assert "(event_workflow_topic, 1, {})" in seed
     assert "resource: 'ronin-live-event-workflow-events'" in live_suite
@@ -394,7 +390,8 @@ def test_semantic_live_diagnostic_skips_unrelated_postgres_and_kafka_containers(
     )
     assert (
         "$sqliteOnlyDiagnostic = $semanticOnlyDiagnostic -or $mlOnlyDiagnostic -or "
-        "$syntheticOnlyDiagnostic -or ($qualityOnlyDiagnostic -and $StorageBackend -eq \"sqlite\")" in script
+        '$syntheticOnlyDiagnostic -or ($qualityOnlyDiagnostic -and $StorageBackend -eq "sqlite")'
+        in script
     )
     assert "$postgresStarted = $postgresRequired" in script
     assert "$kafkaStarted = -not $sqliteOnlyDiagnostic" in script
@@ -420,7 +417,10 @@ def test_quality_live_postgres_diagnostic_keeps_real_postgres_services() -> None
 
     assert '$qualityOnlyDiagnostic = $TestGrep -eq "quality"' in script
     assert '($qualityOnlyDiagnostic -and $StorageBackend -eq "sqlite")' in script
-    assert '$env:RONIN_LIVE_REQUIRE_POSTGRES = if ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)' in script
+    assert (
+        "$env:RONIN_LIVE_REQUIRE_POSTGRES = if ($streamingOnlyDiagnostic -or $sqliteOnlyDiagnostic)"
+        in script
+    )
 
 
 def test_ml_live_diagnostic_skips_unrelated_postgres_and_kafka_containers() -> None:

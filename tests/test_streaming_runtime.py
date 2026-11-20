@@ -12,8 +12,8 @@ from studio_core import (
     WorkspaceId,
 )
 from studio_core.scheduler_events import EventTriggerDefinition, EventTriggerId, SchedulerEventId
-from studio_orchestrator import Instant
 from studio_execution.stream_scheduler import ingest_stream_record
+from studio_orchestrator import Instant
 from studio_storage.scheduler_events import SchedulerEventStore
 from studio_storage.workspaces import SqliteWorkspaceStore
 from studio_streaming import (
@@ -614,9 +614,7 @@ def test_runtime_supervisor_bounded_soak_persists_parquet_and_replays_after_rese
         files = parquet_files()
         assert len(files) == expected_records
         offsets = sorted(
-            int(row["event"].split("-", 1)[1])
-            for path in files
-            for row in read_parquet_rows(path)
+            int(row["event"].split("-", 1)[1]) for path in files for row in read_parquet_rows(path)
         )
         assert offsets == list(range(expected_records))
 
