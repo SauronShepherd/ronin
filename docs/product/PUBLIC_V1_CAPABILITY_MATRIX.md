@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D333 records a NOT_PASS current streaming diagnostic: the two-partition
+backlog case reached `40` attempts against the explicit `<40` criterion.
+It is not reattributed as PASS and does not close P11.
+
 D332 adds a current RF3 multi-broker failover cell: `1/1` passes with
 `5/5` correlated API events and cleanup PASS. It is filtered evidence only
 and does not close P11.
@@ -301,7 +305,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `f0573f994defbc7106661833dc0662e9af90409b` (2026-11-20).
+**Observed source baseline:** `7423d3a3860e38bbe5c190375e884758252a821b` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
