@@ -17,7 +17,7 @@
     "qualification.log": "260B8CCFE31E5A2D5CF117E4DEC723C92C1B4963171621AAB5A8580639D14C35",
     "pytest-timings.json": "BF7E4DE58E75C7B28D50DE93E3682D3EC71057D5A26C7CE12CD331BD79F93F04"
   },
-  "documentation_commit_sha": null,
+  "documentation_commit_sha": "68f031c3d946dc10313317b73cc04ec010b994a8",
   "limitations": ["bounded local Trino provider diagnostic", "not production Trino SLA, full P11, family, or release qualification; does not reattribute earlier provider evidence"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
