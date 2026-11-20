@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D328",
+  "status": "PASS",
+  "candidate_sha": "f73d1b44e875be8d759cca39e67aa2f08c8435d2",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "Current-main PostgreSQL runtime integration file",
+  "backend": "postgres:16.4-alpine",
+  "real_services": ["postgres"],
+  "selection": "test_path=tests/integration/test_postgres_workflow_store_real.py",
+  "tests": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0},
+  "coverage": ["scheduler recovery", "outbox and lease fencing", "migrations and store reopen", "workflow/run/task atomicity and idempotency", "event inbox replay", "cancellation/timeout/dispatch authority", "durable HTTP adapter"],
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d328-postgres-runtime-current-20261120",
+  "evidence_sha256": {
+    "pytest-output.log": "FD817858B5368AF33E754E8CA461BB620A5F0F6DB4C14868C48BFC24CBA10782",
+    "pytest-postgres.log": "9579F69B90A2A5ACF22C0FD9F350DFABE609FCC3C644AEB4CD4E8DCF24C46B6C",
+    "pytest-postgres.xml": "1E2C4E263F9D4530BFFDCE2D95CA6AE94208036278E8B02A357056CFEEE7EBFF",
+    "pytest-timings.json": "36CE158C65DAB5E0476CD8811EDE4FA2B339CE026E9A3DED999EEE5B780227CE",
+    "runner-timings.json": "1CD48310C51F4BD4FD89389B7FE08B3358F1A343F07900D1A5761FD48CE755D8"
+  },
+  "limitations": ["filtered integration-file diagnostic with coverage disabled", "does not qualify complete P11, indefinite operation, HA/multi-worker, external provider breadth or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
