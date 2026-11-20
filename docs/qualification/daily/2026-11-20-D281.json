@@ -17,7 +17,7 @@
     "live-api-traffic.json": "32C0651B50769FE1AD10AF82AC2EC04A87A28EB0F7307447DF4AD257973B60D6",
     "qualification-summary.json": "CF8CE8C9CC58D28228E79E3649A7EC9C517FFD6440D144309F997D525288C543"
   },
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "8537eed9671bfa0ca1a49dee9944c4c7985789e1",
   "limitations": ["filtered single-broker recovery journey", "not route-wide, indefinite, HA, full P11, or release approval"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
