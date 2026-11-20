@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-20",
+  "day": "D321",
+  "status": "PASS",
+  "candidate_sha": "60325317ba2d3b9a6be122ddb818adb46b3a889f",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "isolated live event-workflow continuity with PostgreSQL-configured Ronin",
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 11, "correlated": 11, "ok": 11, "unexpected": 0},
+  "application_logs": {"info": 13, "warn": 0, "warning": 0, "error": 0, "critical": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d321-live-event-workflow-postgres-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "D276154BD8B1924D64ECD10D697FBE6CD1E2F4CA3A8FE2E35FA48C2AF09BD602",
+    "browser-live.xml": "C5E21937FBAF7CA9FEA422EBC4EE5A6D848AAA65E1C6850535870D06F5C633F4",
+    "live-api-traffic.json": "D2DE2377D3F204A7E4574FB74662D16FC870D7B82629D2FC6CDA1E8C67AB86CF",
+    "qualification-summary.json": "DF80C619B441768EB1ABFD6409A0294D3A962F9E0412E223DDBC4812A1D30A94"
+  },
+  "limitations": ["isolated filtered event-workflow cell only", "does not erase or repair D320 suite-order signal, reattribute D316/D100, or qualify full P11, family, release gates, indefinite operation or HA"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
