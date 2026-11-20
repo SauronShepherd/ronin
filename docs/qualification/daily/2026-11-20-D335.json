@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-20",
+  "day": "D335",
+  "status": "PASS",
+  "candidate_sha": "27eea913310549b96cfacafe4ce19f8ee8c050f2",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "Isolated PostgreSQL live event-to-workflow continuity",
+  "real_services": ["postgres:16.4-alpine", "single Redpanda broker", "Ronin API", "Chromium"],
+  "tests": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 12, "correlated": 12, "ok": 12, "unexpected_errors": 0},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d335-live-event-workflow-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "FECB7F25B2AB6FD529CFF6511E1F63A8529CACA79F1D78ED6DD2025C67BEDA7C",
+    "browser-live.xml": "AA89ABBB0CFC53306608BA78BA4314033F36EA3FFD06B47E55CF9FF2EDFB60B4",
+    "live-api-traffic.json": "EECB91837A72E206E0B405C483E5AE8D445A58765619AC1745DCA5AB3F35C3E2",
+    "live-python-freeze.txt": "BB242CCA1542FD1EA10458FBAC96E9226F189369A11017DBF2674C6C3E50ABA6",
+    "live-server.stderr.log": "5AF3EF79CB25764352F843F2A4A78513BDEDB0102DE7F83261B8C3F143FC8F33",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "D43504BC1E9C1FCDC5C5067B80742E824FEA90D885ED6D97139E2CE6205F3201",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["isolated filtered cell only; does not convert D320 or D333 to PASS", "does not close P11, indefinite operation, HA/multi-worker or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
