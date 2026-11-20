@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-20",
+  "day": "D287",
+  "status": "NOT_PASS",
+  "candidate_sha": "8e86ed61bcf6cdba8288ec9483f334e160aaca61",
+  "production_boundary_sha": "8e86ed61bcf6cdba8288ec9483f334e160aaca61",
+  "qualification": "full live route-wide qualification with PostgreSQL and Docker worker",
+  "result": "42/43 Playwright passed, 1 skipped; runner rejected skipped tests",
+  "coverage": {"active_routes": 25, "api_backed": 24, "ui_only": 1, "api_events": 451, "correlated": 451, "unexpected_errors": 0},
+  "real_services": ["postgres", "kafka", "ronin-api", "docker-worker"],
+  "worker_image_sha256": "sha256:6530aa3effea2554b5e01db61e51d6ee22a082d2e08b2abd90621a71640fac0e",
+  "skipped_case": "live streaming multi-broker failover resumes from the durable checkpoint",
+  "skip_reason": "Run via the multi-broker live qualification diagnostic with a three-node Redpanda fixture.",
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d287-live-routewide-postgres-current-20261120",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "limitations": ["route-wide audit is not a strict PASS because multi-broker case was skipped", "not release approval and does not reattribute D100"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
