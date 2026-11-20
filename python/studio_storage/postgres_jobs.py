@@ -44,7 +44,7 @@ from studio_storage.pagination import (
     validate_limit,
 )
 
-from .postgres_core import PostgresDependencyError, _psycopg
+from .postgres_core import PostgresDependencyError, _connect_bounded, _psycopg
 
 
 def _add_seconds(value: Instant | str, seconds: int) -> Instant:
@@ -78,11 +78,11 @@ class PostgresJobReadPort:
 
     def _connect(self) -> Any:
         psycopg, dict_row = _psycopg()
-        return psycopg.connect(
+        return _connect_bounded(
             self._dsn,
-            autocommit=False,
-            row_factory=dict_row,
             application_name=self._application_name,
+            row_factory=dict_row,
+            psycopg_module=psycopg,
         )
 
     def create_job(self, job: Job, run: Run) -> Job:

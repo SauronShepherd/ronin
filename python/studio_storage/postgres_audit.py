@@ -8,7 +8,7 @@ from studio_core import WorkspaceId
 from studio_core.audit import AuditEvent, AuditEventId
 
 from .audit import AuditConflict, AuditIntegrityError, _verified_event
-from .postgres_core import _psycopg
+from .postgres_core import _connect_bounded, _psycopg
 from .workspaces import WorkspaceNotFound
 
 _SCHEMA = """
@@ -48,11 +48,11 @@ class PostgresAuditStore:
 
     def _connect(self) -> Any:
         psycopg, dict_row = _psycopg()
-        return psycopg.connect(
+        return _connect_bounded(
             self._dsn,
-            autocommit=False,
-            row_factory=dict_row,
             application_name=self._application_name,
+            row_factory=dict_row,
+            psycopg_module=psycopg,
         )
 
     def migrate(self) -> None:

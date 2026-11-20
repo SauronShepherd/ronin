@@ -8,6 +8,7 @@ PostgreSQL supplies shared multi-process durability and transactional semantics.
 
 from __future__ import annotations
 
+import threading
 from typing import Any
 
 from studio_core import (
@@ -48,6 +49,68 @@ from .workspaces import (
     WorkspaceConflict,
     WorkspaceNotFound,
 )
+
+_POSTGRES_CONNECTION_LIMIT = 16
+_POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_SECONDS = 5.0
+_postgres_connection_slots = threading.BoundedSemaphore(_POSTGRES_CONNECTION_LIMIT)
+
+
+class _BoundedPostgresConnection:
+    """Return a PostgreSQL connection slot exactly once when closed."""
+
+    def __init__(self, connection: Any) -> None:
+        self._connection = connection
+        self._closed = False
+        self._lock = threading.Lock()
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._connection, name)
+
+    def close(self) -> None:
+        with self._lock:
+            if self._closed:
+                return
+            self._closed = True
+        try:
+            self._connection.close()
+        finally:
+            _postgres_connection_slots.release()
+
+    def __enter__(self) -> _BoundedPostgresConnection:
+        self._connection.__enter__()
+        return self
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
+        try:
+            return self._connection.__exit__(exc_type, exc_value, traceback)
+        finally:
+            self.close()
+
+
+def _connect_bounded(
+    dsn: str,
+    *,
+    application_name: str,
+    row_factory: Any,
+    psycopg_module: Any | None = None,
+) -> Any:
+    if not _postgres_connection_slots.acquire(
+        timeout=_POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_SECONDS
+    ):
+        raise TimeoutError("PostgreSQL connection capacity is temporarily exhausted")
+    try:
+        psycopg = psycopg_module if psycopg_module is not None else _psycopg()[0]
+        return _BoundedPostgresConnection(
+            psycopg.connect(
+                dsn,
+                autocommit=False,
+                row_factory=row_factory,
+                application_name=application_name,
+            )
+        )
+    except Exception:
+        _postgres_connection_slots.release()
+        raise
 
 
 class PostgresDependencyError(RuntimeError):
@@ -340,11 +403,11 @@ class PostgresMetadataStore:
 
     def _connect(self) -> Any:
         psycopg, dict_row = _psycopg()
-        return psycopg.connect(
+        return _connect_bounded(
             self._dsn,
-            autocommit=False,
-            row_factory=dict_row,
             application_name=self._application_name,
+            row_factory=dict_row,
+            psycopg_module=psycopg,
         )
 
     def shares_database_with(self, other: object) -> bool:
