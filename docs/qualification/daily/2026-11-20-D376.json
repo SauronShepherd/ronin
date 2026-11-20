@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D376",
+  "status": "NOT_PASS",
+  "candidate_sha": "02b0d9382fefde611821933063934e47e951ff88",
+  "production_boundary_sha": "33c82a47a54301effb447ef7f65c9c61fecfe374",
+  "qualification": "8,192 sustained backpressure after redundant stream event lookup removal",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d376-live-postgres-backpressure-event-lookup-8192-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 8192 -BackpressureTimeoutSeconds 900 -RequestTimeoutSeconds 90",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "api_events": 5, "correlated": 5, "api_ok": 4, "api_error": 1, "failure": "Failed to fetch during the second backpressure request; status 0 network error", "elapsed_seconds": 136.21},
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d376-live-postgres-backpressure-event-lookup-8192-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "B8F2B861EBD3A98127F8CF7B4F16579CDC5D544C93106E9F907AD76B04AE2E01",
+    "browser-live.xml": "09F6316F179B115A429E677FEC590BBCA188A4D0F1E002357D05EFEA19E5A9F1",
+    "live-api-traffic.json": "0032E39724A3FBA32C9BEB5B82AB8E5FA9F8C1F885E415BA93AF3CB7F1F0B0AC",
+    "live-python-freeze.txt": "7054B58726FC73259B749239946A401F1A6B09148BD5EAD922772A1260D46CAB",
+    "live-server.stderr.log": "1CE9C997E1574EC8DE2D1CBCAA734752E1DC2A5AEA6635D41BCCD81C8143D20E",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "30F39D33FEF433A0A952B149574F879FD205BA77ADB2936981CBB09C74B7B035",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["NOT_PASS bounded diagnostic", "removing the redundant lookup did not change the network abort", "does not reattribute D375 or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
