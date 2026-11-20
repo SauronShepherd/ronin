@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-21",
+  "day": "D391",
+  "status": "PASS",
+  "candidate_sha": "33cfb2de9abb411df4f32fc7b11e259d99f26fda",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "complete real PostgreSQL scheduler-store regression",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://ronin:ronin@127.0.0.1:55434/ronin pytest -q tests/integration/test_postgres_workflow_store_real.py",
+  "result": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0, "elapsed_seconds": 15.18},
+  "fixture": "PostgreSQL 16.4-alpine, isolated Compose project ronin-postgres-regression-d391, host port 55434",
+  "cleanup": "PASS; isolated container, volume and network removed",
+  "evidence_sha256": {
+    "tests/integration/test_postgres_workflow_store_real.py": "9260E6C185CA1B2D7EFAF90B86982F9E5C4CE5E106F3051EAF1A76E1FC90469A",
+    "compose.yaml": "2FDA87B59FD07DEB895FC9013A55B804E101DF64155B9CC85112897A746B2C0A"
+  },
+  "limitations": ["bounded regression", "scheduler-store scope only", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

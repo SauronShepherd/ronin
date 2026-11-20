@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D391 passes the complete real PostgreSQL scheduler-store regression on
+`main@33cfb2de`: `21/21` tests passed in `15.18 s` against PostgreSQL 16.4,
+with isolated fixture cleanup PASS. This is bounded backend evidence and does
+not close P11/release.
+
 D390 expands the focused real PostgreSQL scheduler recovery cell on
 `main@1fac8c21`: daemon expired-lease reacquisition, event-inbox replay, and
 process-crash replay pass `3/3` in `5.74 s` against PostgreSQL 16.4, with
