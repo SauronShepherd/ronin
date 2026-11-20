@@ -2,6 +2,13 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D385 re-tests the `8,192` bounded PostgreSQL-runtime cell after propagating
+`RONIN_HTTP_REQUEST_TIMEOUT_SECONDS` into the control-plane server, on
+`main@1671cc45`, with a configured `600 s` request timeout. It remains
+**NOT_PASS**: the proxy aborts the second request at `303.82 s`, with `5/5`
+correlated events (`4` OK, `1` error), no server ERROR/CRITICAL logs and
+cleanup PASS. The fix is insufficient to close P11/release.
+
 D384 re-tests the larger bounded PostgreSQL-runtime cell at `8,192` records on
 `main@503f6560` with a `600 s` request timeout and remains **NOT_PASS**: the
 second request ends in `Failed to fetch`/status-0 after `359.98 s`, with `5/5`

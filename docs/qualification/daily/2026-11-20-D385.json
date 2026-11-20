@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D385",
+  "status": "NOT_PASS",
+  "candidate_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "8,192 bounded PostgreSQL-runtime backpressure after control-plane timeout propagation",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d385-live-postgres-http-timeout-8192-600s-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 8192 -BackpressureTimeoutSeconds 900 -RequestTimeoutSeconds 600",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "api_events": 5, "correlated": 5, "api_ok": 4, "api_error": 1, "failure": "Failed to fetch during the second backpressure request; status 0 network error", "elapsed_seconds": 352.98, "proxy_abort_seconds": 303.821},
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d385-live-postgres-http-timeout-8192-600s-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "F8239554B96AF75CE45C3729FECD9648732F98ACF7AC7D81535CC977B04A549C",
+    "browser-live.xml": "B506F483B0BC93C175E9570AD8BD2606EB261FEC259101F99D8D2FCAD97414F7",
+    "live-api-traffic.json": "3A9D51C34CC8D358869427730AD84388528D045BDCECE363269DAF8FD4FAF3F4",
+    "live-python-freeze.txt": "320CB21D2DF391FB12D28824701106DCBF134808078ECE483B8FD4690ED0D18F",
+    "live-server.stderr.log": "C41091A03B633CD2C8CE9F195260E0955F12A47CA094B2FDE3BF6022BC532DC9",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "DF32159E6F2E8266967C25BEEE645338EBE7BF4E09BB919BC9F0EF94C5351CCA",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["NOT_PASS bounded diagnostic", "timeout propagation insufficient", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
