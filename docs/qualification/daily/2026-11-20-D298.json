@@ -17,7 +17,7 @@
     "qualification.log": "F6E8F35E2CD3A80E7F1E640D2BDFB01D15D8C1EC44563F79CF0D2FCFC5D14268",
     "pytest-timings.json": "1A7BCBB5ADFC9BCC8663064A99A7B17909F7C08B5E7A739A744B3C5508BE9CB5"
   },
-  "documentation_commit_sha": null,
+  "documentation_commit_sha": "5fa2a9a200325bc4a559554b6335f1c2e083f443",
   "limitations": ["bounded local OTLP provider diagnostic", "not external production SLA, full P11, family, or release qualification; does not reattribute prior evidence"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
