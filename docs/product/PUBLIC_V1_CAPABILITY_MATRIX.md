@@ -2,6 +2,12 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D395 passes the filtered real Azure Blob-compatible provider diagnostic on
+`main@b88e0fde`: `1/1` selected test passed in `2.41 s` against Azurite, with
+fixture and owned image cleanup PASS. This local bounded provider evidence is
+not Azure-cloud or strict v0.1 acceptance evidence and does not close
+P11/release.
+
 D394 passes the filtered real S3-compatible provider/object-store diagnostic on
 `main@2683c463`: `2/2` selected tests passed in `2.64 s` against digest-pinned
 Floci 2.1.0, with fixture and owned image cleanup PASS. This local bounded

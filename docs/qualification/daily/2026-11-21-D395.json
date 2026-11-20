@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-21",
+  "day": "D395",
+  "status": "PASS",
+  "candidate_sha": "b88e0fdee70fb85305730386e31ef2567c300363",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "real Azure Blob-compatible provider qualification against Azurite",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d395-azurite-20261121 -TestFilter 'azure_blob_connector_real'",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 2.41},
+  "tests": ["tests/integration/test_azure_blob_connector_real.py::test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite"],
+  "fixture": "Azurite Azure Blob-compatible service; filtered Docker diagnostic",
+  "cleanup": "PASS; Azurite Compose project, volume, network and owned Ronin qualification image removed",
+  "evidence_sha256": {
+    "docker-pytest-output.log": "FF4E023BDEFD3EA8399328B7561DB40270D6660B832AA250574CB27995FA6468",
+    "docker-cleanup.json": "4CDE871E13309C90C46D445B010CB1BF9C1ED5874DAC80591D9B6C9FD767F496",
+    "azurite-qualification.log": "7E8C7C11CAABF7FAA8BE1A6A413A5BD81BE5C23C0ED5BAFC273910B84C37BB7A"
+  },
+  "limitations": ["local Azurite provider, not Azure cloud", "filtered diagnostic; strict v0.1 acceptance omitted", "does not prove indefinite operation or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
