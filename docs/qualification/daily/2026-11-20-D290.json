@@ -18,7 +18,7 @@
     "live-api-traffic.json": "0EC97F7F979C256080F4E5F6AC61D6695979928B354486578684E36D4EB88D79",
     "qualification-summary.json": "2C5E064F750CE1735B8467377A4DAC82F6E98DD3AC3BCC7CB4206AE594AA0F0E"
   },
-  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "documentation_commit_sha": "950da29142cec4062f03b5dc611b76a135ab7476",
   "limitations": ["filtered bounded Notebook journey", "not full P11, family, or release qualification; does not reattribute D260/D100"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
