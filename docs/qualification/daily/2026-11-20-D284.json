@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D284",
+  "status": "PASS",
+  "candidate_sha": "00ee8360be4764628ada7707aeab4385a93c8c32",
+  "production_boundary_sha": "00ee8360be4764628ada7707aeab4385a93c8c32",
+  "qualification": "live streaming max-record cap resumes the durable checkpoint without replay",
+  "backend": "postgres",
+  "real_services": ["postgres", "kafka", "ronin-api"],
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 8, "correlated": 8, "ok": 7, "expected_warn": 1, "unexpected": 0},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d284-live-max-record-cap-postgres-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "D8421D9FF4134F970D3A1E1A9F279641881CC01A79DE01BA49A7498B889B5D51",
+    "browser-live.xml": "00E2DED3C20203060776B3CA8A5F353BE59E87075CE79411C6699EF3C1FEC787",
+    "live-api-traffic.json": "83E31B0F802EF052F2AF9A466F94871716AE9F7E554EFB49D316C16E8683A5A5",
+    "qualification-summary.json": "4EFEE9D068A022CBD791C629C525441A2D325E52542F2641ECB26379CAE4675D"
+  },
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "limitations": ["filtered bounded single-broker max-record journey", "not route-wide, indefinite, HA, full P11, or release approval"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
