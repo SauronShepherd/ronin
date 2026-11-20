@@ -46,6 +46,9 @@ class _TableSink:
             f"sqlite-batch:{batch.checkpoint.digest}", len(rows), batch.checkpoint.digest
         )
 
+    def close(self) -> None:
+        self._table.close()
+
 
 class KafkaStreamingRuntime:
     """Execute bounded Kafka micro-batches using Ronin's durable checkpoints."""

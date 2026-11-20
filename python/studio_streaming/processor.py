@@ -141,6 +141,9 @@ class MicroBatchProcessor:
         close = getattr(self._source, "close", None)
         if callable(close):
             close()
+        close_sink = getattr(self._sink, "close", None)
+        if callable(close_sink):
+            close_sink()
 
     def run_until_idle(
         self,

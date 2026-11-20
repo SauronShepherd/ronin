@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from contextlib import closing
 from pathlib import Path
 
 from .contracts import StreamBatch, StreamRecord
@@ -14,22 +13,23 @@ class SqliteStreamTable:
     def __init__(self, path: Path) -> None:
         self._path = path
         path.parent.mkdir(parents=True, exist_ok=True)
-        with closing(sqlite3.connect(path)) as connection, connection:
-            connection.execute(
-                "CREATE TABLE IF NOT EXISTS stream_table ("
-                "stream_id TEXT NOT NULL, partition_id INTEGER NOT NULL, "
-                "offset_value INTEGER NOT NULL, timestamp_ms INTEGER, "
-                "key_value TEXT, value_json TEXT NOT NULL, "
-                "PRIMARY KEY(stream_id, partition_id, offset_value))"
-            )
-            connection.commit()
+        self._connection = sqlite3.connect(path)
+        self._connection.execute(
+            "CREATE TABLE IF NOT EXISTS stream_table ("
+            "stream_id TEXT NOT NULL, partition_id INTEGER NOT NULL, "
+            "offset_value INTEGER NOT NULL, timestamp_ms INTEGER, "
+            "key_value TEXT, value_json TEXT NOT NULL, "
+            "PRIMARY KEY(stream_id, partition_id, offset_value))"
+        )
+        self._connection.commit()
 
     def append(self, stream_id: str, batch: StreamBatch) -> int:
         if not stream_id or stream_id != stream_id.strip():
             raise ValueError("stream_id must be non-empty and trimmed")
-        with closing(sqlite3.connect(self._path)) as connection, connection:
-            if not batch.records:
-                return 0
+        connection = self._connection
+        if not batch.records:
+            return 0
+        try:
             encoded = [
                 (
                     record,
@@ -73,17 +73,19 @@ class SqliteStreamTable:
             connection.executemany("INSERT INTO stream_table VALUES (?,?,?,?,?,?)", pending)
             connection.commit()
             return len(pending)
+        except Exception:
+            connection.rollback()
+            raise
 
     def read(self, stream_id: str, *, limit: int = 10_000) -> tuple[StreamRecord, ...]:
         if limit < 1 or limit > 100_000:
             raise ValueError("stream table read limit must be between 1 and 100000")
-        with closing(sqlite3.connect(self._path)) as connection, connection:
-            rows = connection.execute(
-                "SELECT partition_id,offset_value,timestamp_ms,key_value,value_json "
-                "FROM stream_table WHERE stream_id=? "
-                "ORDER BY partition_id,offset_value LIMIT ?",
-                (stream_id, limit),
-            ).fetchall()
+        rows = self._connection.execute(
+            "SELECT partition_id,offset_value,timestamp_ms,key_value,value_json "
+            "FROM stream_table WHERE stream_id=? "
+            "ORDER BY partition_id,offset_value LIMIT ?",
+            (stream_id, limit),
+        ).fetchall()
         return tuple(
             StreamRecord(
                 int(row[0]),
@@ -94,6 +96,9 @@ class SqliteStreamTable:
             )
             for row in rows
         )
+
+    def close(self) -> None:
+        self._connection.close()
 
 
 __all__ = ["SqliteStreamTable"]
