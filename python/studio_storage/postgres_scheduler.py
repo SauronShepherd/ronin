@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from contextlib import contextmanager
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
@@ -125,7 +126,22 @@ class PostgresSchedulerSnapshotStore(
 
     def __init__(self, dsn: str, *, application_name: str = "ronin-scheduler-snapshots") -> None:
         super().__init__(dsn, application_name=application_name)
+        self._event_batch_connection: Any | None = None
         self.migrate_scheduler()
+
+    @contextmanager
+    def event_batch(self) -> Any:
+        """Reuse one PostgreSQL connection while ingesting one stream microbatch."""
+        if self._event_batch_connection is not None:
+            yield self._event_batch_connection
+            return
+        connection = self._connect()
+        self._event_batch_connection = connection
+        try:
+            yield connection
+        finally:
+            self._event_batch_connection = None
+            connection.close()
 
     def migrate_scheduler(self) -> None:
         connection = self._connect()
@@ -2064,7 +2080,8 @@ class PostgresSchedulerSnapshotStore(
 
     def ingest_event(self, event: SchedulerEventRecord) -> tuple[EventDelivery, ...]:
         """Persist an event and freeze matching trigger snapshots exactly once."""
-        connection = self._connect()
+        connection = self._event_batch_connection or self._connect()
+        owns_connection = self._event_batch_connection is None
         try:
             with connection.cursor() as cursor:
                 self._require_active_workspace(cursor, event.workspace_id)
@@ -2139,12 +2156,14 @@ class PostgresSchedulerSnapshotStore(
             connection.rollback()
             raise
         finally:
-            connection.close()
+            if owns_connection:
+                connection.close()
 
     def get_event(
         self, workspace_id: WorkspaceId, event_id: SchedulerEventId
     ) -> SchedulerEventRecord | None:
-        connection = self._connect()
+        connection = self._event_batch_connection or self._connect()
+        owns_connection = self._event_batch_connection is None
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -2155,7 +2174,8 @@ class PostgresSchedulerSnapshotStore(
             connection.commit()
             return None if row is None else _event_from_row(row)
         finally:
-            connection.close()
+            if owns_connection:
+                connection.close()
 
     def list_pending_deliveries(
         self, workspace_id: WorkspaceId, *, limit: int = 100

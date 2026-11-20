@@ -87,14 +87,27 @@ class KafkaStreamingRuntime:
         if self._event_store is None or self._event_ingestor is None:
             return
         received_at = self._clock()
-        for record in batch.records:
-            self._event_ingestor(
-                self._event_store,
-                record,
-                workspace_id=WorkspaceId(workspace_id),
-                stream_id=stream_id,
-                received_at=received_at,
-            )
+        event_batch = getattr(self._event_store, "event_batch", None)
+        context = event_batch() if callable(event_batch) else None
+        if context is None:
+            for record in batch.records:
+                self._event_ingestor(
+                    self._event_store,
+                    record,
+                    workspace_id=WorkspaceId(workspace_id),
+                    stream_id=stream_id,
+                    received_at=received_at,
+                )
+            return
+        with context:
+            for record in batch.records:
+                self._event_ingestor(
+                    self._event_store,
+                    record,
+                    workspace_id=WorkspaceId(workspace_id),
+                    stream_id=stream_id,
+                    received_at=received_at,
+                )
 
     def _resolve_run_options(
         self,
