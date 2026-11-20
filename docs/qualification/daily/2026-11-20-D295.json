@@ -18,7 +18,7 @@
     "docker-cleanup.json": "B37ED0ADB9A002837FC4AAC2AFFCA706893E9528796850F9547CD48BE85D1DAC",
     "docker-qualification.log": "8A7E379F210110CE9EF6D3C7F9BC44253671F717D2DD7CC6A130946529EC0D8C"
   },
-  "documentation_commit_sha": null,
+  "documentation_commit_sha": "1a96ff41c1c09b1560216b05fac3f56ad5fe57be",
   "limitations": ["full local Docker acceptance is not production deployment or indefinite operation", "does not reattribute D100 or prior provider cells; release matrix remains authoritative"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
