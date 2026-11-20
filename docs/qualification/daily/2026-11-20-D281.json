@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D281",
+  "status": "PASS",
+  "candidate_sha": "aeb5d429ef9962d6abb69777bdb5f5b52484c496",
+  "production_boundary_sha": "aeb5d429ef9962d6abb69777bdb5f5b52484c496",
+  "qualification": "live streaming broker restart resumes from the durable checkpoint",
+  "backend": "postgres",
+  "real_services": ["postgres", "kafka", "ronin-api"],
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 11, "correlated": 11, "ok": 8, "expected_error": 3, "unexpected": 0},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d281-live-broker-restart-postgres-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "BB5B032E9F64C84E5E674163D349191F44909A5103178E428F955D5AB90A93B8",
+    "browser-live.xml": "9C32DB361C5A5618E2C90D61640D7E309DA91AB03E45B443250CC8F468685645",
+    "live-api-traffic.json": "32C0651B50769FE1AD10AF82AC2EC04A87A28EB0F7307447DF4AD257973B60D6",
+    "qualification-summary.json": "CF8CE8C9CC58D28228E79E3649A7EC9C517FFD6440D144309F997D525288C543"
+  },
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "limitations": ["filtered single-broker recovery journey", "not route-wide, indefinite, HA, full P11, or release approval"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
