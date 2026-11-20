@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D368 adds the full current-main non-performance Python/PostgreSQL regression after the streaming sink change: `4763` passed, `31` skips, `0` failures and `23` warnings, cleanup PASS. It includes the real PostgreSQL streaming tests and does not close P11/release.
+
 D367 qualifies the PostgreSQL-configured live event-to-workflow route after both streaming checkpoints and table sinks moved to PostgreSQL: `1/1` pass, `9/9` correlated API events all OK and cleanup PASS. It does not close P11/release.
 
 D365 adds the full current-main non-performance Python/PostgreSQL regression after the streaming checkpoint backend change: `4762` passed, `31` skips, `0` failures and `23` warnings, cleanup PASS. It does not close P11 or release.
@@ -396,7 +398,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `a06b46849b70f4a2af8ad7af79ac109ae7f7dd36` (2026-11-20).
+**Observed source baseline:** `7c6f6021e6d95b92bc3805062a54f812c6385b54` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
