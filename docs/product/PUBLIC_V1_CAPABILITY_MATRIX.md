@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D329 adds full non-performance Python/PostgreSQL regression evidence at
+`4760/4791`, with `31` explicit skips and `0` failures. This broad
+regression does not close P11 or convert unavailable external-provider,
+Docker, Trino, symlink or other capability skips into PASS.
+
 D328 revalidates the current PostgreSQL runtime integration file at `21/21`
 against PostgreSQL 16.4, including scheduler recovery and durable control-plane
 paths. It is filtered evidence with coverage disabled and does not close P11.
@@ -284,7 +289,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `bf9a5df0b23afe202fba7f92f481b1aab8a9d8b2` (2026-11-20).
+**Observed source baseline:** `a059ccd84b1dc0416553960ba0cf60142eb8baa0` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
