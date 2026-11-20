@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D374",
+  "status": "NOT_PASS",
+  "candidate_sha": "bbad42699586cf626b3025cec57a308a47f228a9",
+  "production_boundary_sha": "bbad42699586cf626b3025cec57a308a47f228a9",
+  "qualification": "16,384 sustained backpressure after one PostgreSQL event transaction per microbatch",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d374-live-postgres-backpressure-event-transaction-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 16384 -BackpressureTimeoutSeconds 900 -RequestTimeoutSeconds 90",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "api_events": 5, "correlated": 5, "api_ok": 4, "api_error": 1, "failure": "Failed to fetch during the second backpressure request; status 0 network error", "elapsed_seconds": 132.63},
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d374-live-postgres-backpressure-event-transaction-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "CD5AEDCE562A7EEB9D4986B4528ADC5F105B1DDB2E1FD4E1FDFD9B75FBBCF56D",
+    "browser-live.xml": "F6A648628F8409E3E6F37C3465DAA50E3DA8466B5583A09BA534D56761B085D6",
+    "live-api-traffic.json": "59CA701E7CA82765145C03B86B3C26F5F60C0E5A8A99BCE66308B7B1D4584C0E",
+    "live-python-freeze.txt": "E8F8FFD877CCDB6CDEBE557DB12A167D04A8265542116EEE6BA8F12DE2DEDBD5",
+    "live-server.stderr.log": "B20807FADC206B649A1F900C4C42EB08E84D633579DA09CD39F523C2E437B101",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "1ACBB85B1E003F77CFEB077014140B9FC1CB63A4C61AFD0CC19D82215A6B605C",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["NOT_PASS bounded diagnostic", "one transaction per microbatch did not resolve the network abort", "does not reattribute D370/D372 or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
