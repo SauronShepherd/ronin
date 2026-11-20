@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-20", "day": "D360", "status": "PASS",
+  "candidate_sha": "1baee9dd42eadca8278132a2f2e5ee4837e0e4e3",
+  "production_boundary_sha": "794ed70f072a9b34640e5e74c303939dd752f7bb",
+  "qualification": "full non-performance Python/PostgreSQL regression on current main",
+  "result": {"collected": 4789, "collection_skipped": 3, "passed": 4761, "skipped": 31, "failed": 0, "warnings": 23, "elapsed_seconds": 1157.75},
+  "postgres": "postgres:16.4-alpine isolated loopback",
+  "cleanup": "PASS; isolated PostgreSQL removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d360-python-postgres-current-20261120",
+  "evidence_sha256": {"pytest-output.log":"F268054FBB9874CAA919F1AE37D5FE1966EEABB30F8C51BE869C0E8078B44D8B","pytest-postgres.log":"DE7721E740C0F3CE692FF16D507EC3748369658AD3386A253F4447FE6A5E8958","pytest-postgres.xml":"06B344375F73DEEA05B0CD0609AD935210D5268A693C87F8E9EE1CA57045133D","pytest-timings.json":"7FA339D96641D780C27EEE6BA25A30CC38C1CA7363FBFB5482E07143B1EDACC0","runner-timings.json":"F1ED2A7F52F172A519F0F518CC7FB1FE4833C8AF4D53D742001E30E25D6B5552",".coverage":"966F32D97D56DA2F6FD15FD6109E3498B5229966A1193387BA5C425AE5C01581"},
+  "limitations": ["31 explicit/collection skips and 23 warnings are retained", "Docker/external provider lanes are separate", "does not close complete P11 or release"],
+  "state": {"P11":"in_progress","P13":"blocked","release":"NO-GO"}
+}

@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D360 adds the full current-main non-performance Python/PostgreSQL regression: `4761`
+passed, `31` explicit/collection skips, `0` failures and `23` warnings in `1157.75 s`,
+cleanup PASS. D359 remains separate Docker provider/object-store evidence. These bounded
+cells do not close P11 or release.
+
 D359 adds full current-main Docker provider/object-store evidence: PostgreSQL, real
 worker, Floci S3-compatible and Azurite Azure-compatible; `27/27` integration and
 `15/15` strict v0.1 pass, zero skips/failures, cleanup PASS. This is bounded
@@ -381,7 +386,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `a26bdbf3d505aa83d5688819f1b8315bbe8a44af` (2026-11-20).
+**Observed source baseline:** `1baee9dd42eadca8278132a2f2e5ee4837e0e4e3` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
