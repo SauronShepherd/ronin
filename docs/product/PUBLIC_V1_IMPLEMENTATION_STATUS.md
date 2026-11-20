@@ -7,7 +7,9 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
-D341 adds Helm/kind deployment qualification on candidate `d3cc94f4`: lint,
+D342 extends the default-load supervisor soak to `900 s` on candidate
+`712f9397`: `1/1`, `999/999` correlated API events all OK, zero unexpected
+errors and cleanup PASS. D341 adds Helm/kind deployment qualification on candidate `d3cc94f4`: lint,
 Secret boundary, install, readiness, upgrade/rollback, health/API, queued-job
 persistence across deployment restart and cleanup all PASS. Its chained Docker
 qualification passes `27/27` integration and `15/15` strict v0.1 journeys.
