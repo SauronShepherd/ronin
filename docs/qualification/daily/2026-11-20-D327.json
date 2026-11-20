@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-20",
+  "day": "D327",
+  "status": "PASS",
+  "candidate_sha": "cd1290124398f65f22ba726a919adff1ba4fe7c6",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "complete bounded live product qualification with PostgreSQL, Kafka and Docker worker",
+  "worker_image": "sha256:9ad655b267a7614f94e5e666d716e5654b3dbd7f5dd659ff111c4f65647009e9",
+  "journeys": {"passed": 42, "failed": 0, "skipped": 1},
+  "route_coverage": {"active": 25, "api_backed": 24, "ui_only": 1, "audited": true},
+  "api_events": {"total": 473, "correlated": 473, "ok": 449, "unexpected": 0},
+  "application_logs": {"info": 2218, "warn": 0, "warning": 21, "error": 3, "critical": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true, "docker_worker": true},
+  "expected_skip": "live streaming multi-broker failover resumes from the durable checkpoint (reserved for separate -MultiBroker RF3 qualification)",
+  "cleanup": "PASS",
+  "worker_image_removed": true,
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d327-live-full-postgres-worker-skip-policy-fixed-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "4CCF9E5BF50853D309851C6684EADC494569E8CEDBF41B6B3B530ED39FA914A7",
+    "browser-live.xml": "21E8C65B1CAEF53049C5FD126E4468C74B40E036E7FBB553268F0EBDD1566B0F",
+    "live-api-traffic.json": "AB20DC38ACCD4FC98F1DAA02510D896172DA97FC83323A49527E48D088BB7D59",
+    "qualification-summary.json": "EE2F802B2E10B39F37428C95FD9D7C553E8A4D90B82C1EA9CA2CF88C58C9ED13"
+  },
+  "limitations": ["bounded complete live qualification only", "RF3 multi-broker case remains separately covered; does not prove indefinite operation, HA/multi-worker, complete P11 family or release approval; no historical reattribution"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
