@@ -682,7 +682,7 @@ try {
     $unexpectedSkippedCases = @($skippedCases | Where-Object {
         $caseName = [string]$_.GetAttribute("name")
         -not (
-            $TestGrep -eq "streaming" -and
+            ($TestGrep -eq "streaming" -or -not $TestGrep) -and
             -not $MultiBroker.IsPresent -and
             $expectedSingleBrokerStreamingSkip -contains $caseName
         )

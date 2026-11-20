@@ -302,7 +302,7 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert script.index('$skippedCases = @($junit.SelectNodes("//testcase[skipped]"))') > script.index(
         "$publishedRoutes.ToArray()"
     )
-    assert '$TestGrep -eq "streaming" -and' in script
+    assert '($TestGrep -eq "streaming" -or -not $TestGrep) -and' in script
     assert '"live streaming multi-broker failover resumes from the durable checkpoint"' in script
     assert "unexpectedSkippedCases" in script
     assert "[System.Collections.Generic.HashSet[string]]::new" in script
