@@ -136,9 +136,24 @@ class KafkaJsonSource:
         *,
         timeout_seconds: float,
     ) -> tuple[Any, int]:
-        if self._consumer is not None and self._consumer_checkpoint == checkpoint:
+        if self._consumer is not None:
             if self._partition_eof is None:
                 raise RuntimeError("Kafka consumer session lost its partition EOF marker")
+            _Consumer, TopicPartition, _partition_eof, _offset_beginning = _kafka()
+            assignments = []
+            for partition in self._partitions:
+                previous = checkpoint.offset_for(partition)
+                offset = _offset_beginning if previous is None else previous + 1
+                assignments.append(TopicPartition(self._topic, partition, offset))
+            try:
+                # Keep one broker session for the bounded supervisor. Reassigning
+                # explicit Ronin-owned offsets preserves replay safety while
+                # avoiding a metadata handshake and consumer teardown per batch.
+                self._consumer.assign(assignments)
+            except Exception:
+                self.close()
+                raise
+            self._consumer_checkpoint = checkpoint
             return self._consumer, self._partition_eof
 
         self.close()
