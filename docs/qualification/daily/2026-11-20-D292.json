@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-20",
+  "day": "D292",
+  "status": "PASS",
+  "candidate_sha": "b2b57637a0fba9421155ce5148fa7df515866762",
+  "production_boundary_sha": "7a9e3359f28e15a30ceba73e4a125b58b1996862",
+  "qualification": "PostgreSQL scheduler recovery after expired leadership lease and process crash without duplicate fire",
+  "backend": "postgres:16.4-alpine",
+  "real_services": ["postgres"],
+  "selection": "keyword=postgres_scheduler_daemon",
+  "tests": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0},
+  "scenarios": [
+    "reacquires after expired lease without duplicate schedule fire",
+    "replays job after process crash without duplicate execution"
+  ],
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d292-postgres-scheduler-recovery-current-20261120",
+  "evidence_sha256": {
+    "pytest-output.log": "CE3F28E319EE9C4DD8DA85BCFA9CB0F715BE74F649BBF94E9A82C5AF18A27D48",
+    "pytest-postgres.xml": "CAF955474AF729C112D1429841DF6E513D516C0C92E1385EC2C2ACD002CDB647",
+    "pytest-timings.json": "2BF16E3C36802A54A3958FEF1E189720370F7741E6766E35929AEBD67BF8306B",
+    "runner-timings.json": "B232E5E482AA4C922C043B278DCA98FABD9471DA9C418F2C284BF703E0FC35DD"
+  },
+  "documentation_commit_sha": null,
+  "limitations": ["filtered PostgreSQL diagnostic with coverage disabled", "not full P11, family, or release qualification; does not reattribute D278/D291/D100"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
