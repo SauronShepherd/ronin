@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D285",
+  "status": "PASS",
+  "candidate_sha": "0ec260042b353ceb6657a9eb1a7ff8566c809109",
+  "production_boundary_sha": "0ec260042b353ceb6657a9eb1a7ff8566c809109",
+  "qualification": "live streaming sustained backpressure drains configured records with reset-safe replay",
+  "backend": "postgres",
+  "real_services": ["postgres", "kafka", "ronin-api"],
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 12, "correlated": 12, "ok": 12, "unexpected": 0},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d285-live-backpressure-postgres-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "7B83A5085513AAC45B540F28B575A5B4DE937E19BF005792A303AAEC3CA64F9D",
+    "browser-live.xml": "1F6DFD4F9AF59366AF7443A089E4AF663813625D15DFF46F8BC2CD97AA4C1A18",
+    "live-api-traffic.json": "34FC036EB5388140AF1446996C9C3D917362A49B855603718EE0C5542A6A832A",
+    "qualification-summary.json": "7A313D2B982E55DA874FAA266AF0FA90EACD98D19160783BE1A6C93DC77F4C4F"
+  },
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "limitations": ["filtered bounded single-broker backpressure journey", "not route-wide, indefinite, HA, full P11, or release approval"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
