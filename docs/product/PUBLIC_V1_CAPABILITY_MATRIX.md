@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D361 revalidates current-main PostgreSQL scheduler leadership fencing/persistence and execution-outbox reconciliation (`2/2` pass, `19` deselected, cleanup PASS). D263/D264 already cover these properties; this receipt does not reattribute historical evidence and does not close P11 or release.
+
 D360 adds the full current-main non-performance Python/PostgreSQL regression: `4761`
 passed, `31` explicit/collection skips, `0` failures and `23` warnings in `1157.75 s`,
 cleanup PASS. D359 remains separate Docker provider/object-store evidence. These bounded
@@ -386,7 +388,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `1baee9dd42eadca8278132a2f2e5ee4837e0e4e3` (2026-11-20).
+**Observed source baseline:** `892dce50b79b54917b575549b34fa9fc55f113e1` (2026-11-20).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

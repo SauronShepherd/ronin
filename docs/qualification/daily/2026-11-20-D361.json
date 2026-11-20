@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-20",
+  "day": "D361",
+  "status": "PASS",
+  "candidate_sha": "892dce50b79b54917b575549b34fa9fc55f113e1",
+  "production_boundary_sha": "794ed70f072a9b34640e5e74c303939dd752f7bb",
+  "qualification": "current-main PostgreSQL scheduler leadership/outbox revalidation",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d361-scheduler-fencing-outbox-20261120 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'scheduler_leadership_is_generation_fenced_and_persistent or scheduler_execution_outbox_survives_expiry_and_reconciles'",
+  "postgres": "postgres:16.4-alpine isolated loopback",
+  "tests": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 19},
+  "cleanup": "PASS; isolated PostgreSQL removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d361-scheduler-fencing-outbox-20261120",
+  "evidence_sha256": {
+    "pytest-output.log": "301C71D1560F678AD272D88BD4BCEB9CD27D6F03345AB64CA9BD58DF639273E7",
+    "pytest-postgres.log": "13DD2DD0A325685E1DBB435CD368014D618C27AB4181D08791CF3B4B048F41ED",
+    "pytest-postgres.xml": "EE458157FFFC0C553BA87690B943CD130C740979A54E18031FFA2F5689C790FA",
+    "pytest-timings.json": "CFE3962A91EF5741E0DF9A6F0270BF6305CD52EE8E6C16FF7CA4CDB4CB04C24B",
+    "runner-timings.json": "B94026EE98CED8409AC734FCCA593EE4F3B9DF98D0017000EE1E817E9109C076"
+  },
+  "limitations": ["filtered revalidation only; 19 tests deselected and coverage disabled", "same scheduler properties were previously evidenced by D263/D264; no historical evidence is reattributed", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
