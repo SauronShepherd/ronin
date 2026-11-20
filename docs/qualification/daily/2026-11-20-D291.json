@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-20",
+  "day": "D291",
+  "status": "PASS",
+  "candidate_sha": "29b744b34fb72f13bdfe0ba872f374a539db1eb5",
+  "production_boundary_sha": "7a9e3359f28e15a30ceba73e4a125b58b1996862",
+  "qualification": "bounded live supervisor soak with a real Docker worker, PostgreSQL and Kafka",
+  "backend": "postgres",
+  "real_services": ["postgres", "kafka", "ronin-api", "docker-worker"],
+  "worker_image": "sha256:5f96f0699c8304fe10ae147133706e65118c5cdc166ff6d0dfd0b1121d3da629",
+  "supervisor_soak_seconds": 60,
+  "journeys": {"passed": 1, "failed": 0, "skipped": 0},
+  "api_events": {"total": 51, "correlated": 51, "ok": 51, "unexpected": 0},
+  "cleanup": "PASS",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d291-live-supervisor-soak-worker-postgres-current-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "59773607C0E3D7A2BBD4E3ACC07BD2ECB46BF005DA3157D6B13F7B1A51C947B2",
+    "browser-live.xml": "F28F512937DF1CD15998F9A04868830A1EFA7F2D8014ACADBCB946D73AA8778B",
+    "live-api-traffic.json": "892993FF4CFE53B2AD1F9B0307F167BD9B0ADBABC92E198E75E2C27195481B67",
+    "qualification-summary.json": "0BB3A9DEE5F873C952C3209895E254BB7BA46A1F720728FF34C4685472401956"
+  },
+  "documentation_commit_sha": null,
+  "limitations": ["filtered bounded supervisor soak", "not full P11, family, or release qualification; does not reattribute D278/D100"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
