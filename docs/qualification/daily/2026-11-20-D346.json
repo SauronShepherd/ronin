@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-20",
+  "day": "D346",
+  "status": "PASS",
+  "candidate_sha": "1fa9ad266aebdecdb55322bd2b223413ca29fdeb",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "current-main event-to-workflow live route with PostgreSQL and real Docker worker",
+  "commands": {"docker": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d346-docker-worker-current-20261120 -ImageTag ronin:qualification-d346 -TestFilter 'test_real_docker_worker_executes_clean_container_demo' -KeepImage", "live": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d346-live-event-workflow-current-20261120 -StorageBackend postgres -WorkerImage ronin:qualification-d346 -TestGrep 'live streaming event workflow is triggered by a committed record' -RequestTimeoutSeconds 90"},
+  "worker_image_sha256": "sha256:8e581845a12f6982dcf4fc2b6bbfa2e86b5847710449ed8d4778b84e6043b93c",
+  "docker_diagnostic": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26},
+  "live": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 12, "correlated": 12, "ok": 12, "unexpected_authorization_gaps": 0, "unexpected_server_network_errors": 0},
+  "cleanup": "PASS; isolated services removed and exact worker image deleted",
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d346-docker-worker-current-20261120", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d346-live-event-workflow-current-20261120"],
+  "evidence_sha256": {"docker/docker-cleanup.json": "01CB796034B39DDD6C7E288F702B5CA5A5DAF16429AD12AA649C757CA824885F", "docker/docker-qualification.log": "3B614B574185EE13B73B983C03363C53AF9886E0341F3A4E3B68591EBDF199DC", "live/browser-live.log": "56ACAE17780A8E624C2B7AD0CF2B10F1D0C584D271C1695DD8CEBBFAE52B8AEE", "live/browser-live.xml": "C5EBDB7AE45007CEE537E8E35EB8EC31ACDDECCF9805A0994F2AD3D113F9EB9A", "live/live-api-traffic.json": "98DFAB530E55D6A11C1B6B5624BC1DF8904A4E3000A85A22153840B6B6AE5357", "live/qualification-summary.json": "5160EB67613831B5BEB932278D88BEB4C80CCBBE1D124067B3087C06EB7FE271"},
+  "limitations": ["filtered diagnostic only; 26 Docker tests deselected", "does not prove complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
