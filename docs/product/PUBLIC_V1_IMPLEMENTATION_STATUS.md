@@ -7,6 +7,11 @@
 
 ## Current exact-SHA qualification — 20 November 2026
 
+D341 adds Helm/kind deployment qualification on candidate `d3cc94f4`: lint,
+Secret boundary, install, readiness, upgrade/rollback, health/API, queued-job
+persistence across deployment restart and cleanup all PASS. Its chained Docker
+qualification passes `27/27` integration and `15/15` strict v0.1 journeys.
+D340 separately revalidates the two PostgreSQL scheduler recovery paths `2/2`.
 D339 completes the full Docker qualification on candidate `dbb48fd6`: `27/27`
 Docker integration tests and `15/15` strict v0.1 journeys, zero skips/failures,
 and worker image cleanup PASS. D338 extends the default-load supervisor soak to `600 s` on candidate

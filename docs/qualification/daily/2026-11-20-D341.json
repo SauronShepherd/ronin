@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-20",
+  "day": "D341",
+  "status": "PASS",
+  "candidate_sha": "d3cc94f4bcbf0b0afcf281872342e1d763a00fad",
+  "production_boundary_sha": "01e01fde106f1ce720a123a3020e626baf209978",
+  "qualification": "Helm/kind deployment qualification chained to Docker worker qualification",
+  "docker_image_sha256": "sha256:65c0c7a131f155c3afcdb7d77a09b7803a64a5dd99239bb35d40039fb6410c2a",
+  "docker": {"integration_selected": 27, "integration_passed": 27, "v01_selected": 15, "v01_passed": 15, "skipped": 0, "failed": 0},
+  "helm": ["lint", "secret boundary", "kind cluster", "image load", "install", "readiness", "upgrade revision 2", "rollback revision 1", "health endpoint", "Studio/API authorization", "persistent job create", "deployment restart", "persistent queued job after restart"],
+  "helm_status": "PASS",
+  "cleanup": "PASS; kind cluster removed and exact temporary image deleted",
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d341-helm-20261120", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d341-docker-helm-20261120"],
+  "evidence_sha256": {
+    "helm-qualification.json": "1CED58513CCB1C44059A8173736286FDD7889D884B9D5063677D6A46A18C65A1",
+    "helm-qualification.log": "159CBBE0614880BEFC62FE314FA620B49685F77E978F980627402105AE6D47E2",
+    "kubernetes-resources.txt": "2D6DA394474489D5042723F73C2E9839354847F02271227F3105356245B3AC13",
+    "port-forward-restart.log": "EA752204612ACD18173F0B6C7B41ADF3DA658E724F3B9D4E1B55309D1D2740F3",
+    "port-forward.log": "801CD9D89D33F79ECBC17CFCF250B008F871F18FBD11E352F2A035D34447E7C5"
+  },
+  "limitations": ["bounded kind/Helm qualification only", "does not prove indefinite operation, production SLO, HA/multi-worker, complete P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

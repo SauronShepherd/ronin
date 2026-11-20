@@ -2,7 +2,9 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
-D339 adds full Docker qualification: `27/27` integration tests and `15/15`
+D341 adds Helm/kind deployment evidence: install, upgrade/rollback,
+readiness, health/API and queued-job persistence across restart all PASS.
+D340 revalidates PostgreSQL scheduler recovery `2/2`. D339 adds full Docker qualification: `27/27` integration tests and `15/15`
 strict v0.1 journeys, zero skips/failures, cleanup PASS. D338 extends
 default-load supervisor evidence to `600 s`: `1/1`,
 `673/673` correlated events all OK. It remains bounded and does not close
