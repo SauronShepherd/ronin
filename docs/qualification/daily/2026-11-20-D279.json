@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D279",
+  "date": "2026-11-20",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL live streaming byte boundaries",
+  "candidate_sha": "84f524ea9ba563232a39e281b52ca89bd2d84142",
+  "implementation_commit_sha": "59004dae6b483e1629646af3cd28f03e05fa88ad",
+  "documentation_commit_sha": "PENDING_THIS_RECEIPT_COMMIT",
+  "evidence": "docs/qualification/handoffs/2026-11-20-D279.md",
+  "execution_scope": "clean-main filtered live Streaming Studio journey with real PostgreSQL and single-broker Kafka",
+  "result": {
+    "playwright": "PASS: 1/1 filtered case",
+    "api_audit": "PASS: 13/13 real API events correlated, 11 OK and 2 expected WARN, 0 unexpected errors",
+    "journey": "PASS: near-record and near-batch byte boundaries enforced",
+    "cleanup": "PASS: PostgreSQL, broker, network and volume removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d279-live-byte-boundaries-postgres-current-20261120 -StorageBackend postgres -TestGrep 'live streaming enforces near-record and near-batch byte boundaries' -RequestTimeoutSeconds 60",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d279-live-byte-boundaries-postgres-current-20261120",
+    "sha256": {
+      "browser-live.log": "19C378C60419B56524D0B9401BBD0E31051D7A563F9D921D40FDF0E63D695DCC",
+      "browser-live.xml": "997003ED2DCFE0A4B68B6A5C29DA47EC1921857D73B3A340C6C9A61B65B79E5B",
+      "live-api-traffic.json": "881A4A789258AE5C3B5D44DE00A423E146BF157504B29BA185EAA6561129E1C3",
+      "live-python-freeze.txt": "AF5044036657F88C82045B378778F253AB540658553521BED4FD4690253FFD74",
+      "live-server.stderr.log": "10F7E747D54FD93714B9D25887290F6D72007ABAD37D842BEEA47D00CB2A2282",
+      "qualification-summary.json": "AE1EE92C89582FEFAC240FFE693445E73373D09E5E857B2EAC6B57012CA45CA3"
+    }
+  },
+  "limitations": [
+    "This is filtered bounded byte-boundary evidence, not route-wide coverage, indefinite operation, HA/multi-worker, complete P11 or release approval.",
+    "D279 does not reattribute D96, D93, D100, D278 or earlier receipts."
+  ]
+}
