@@ -17,7 +17,7 @@
     "docker-cleanup.json": "5EDE81F6724C321F2D1C6346935BD2F59977B544EF943A02E3A16863209A9815",
     "azurite-qualification.log": "D7B6BBEFB52A19888A9F2BCD87DB41327C4498C6BE14A992291CE0FBEFD4097E"
   },
-  "documentation_commit_sha": null,
+  "documentation_commit_sha": "cc3994a3de55cce461263444d87e34a6a30859bd",
   "limitations": ["filtered Azure Blob-compatible diagnostic using Azurite", "not Azure production, full P11, family, or release qualification; does not reattribute D10/D100"],
   "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
 }
