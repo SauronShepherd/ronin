@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 20 November 2026
 
+D383 passes a bounded PostgreSQL-runtime backpressure cell at `4,096` records
+on `main@87f24a1e` with an explicit `300 s` request timeout: `1/1` case passed
+in `331.07 s`, `12/12` correlated API events OK and cleanup PASS. This does not
+prove indefinite operation or close P11/release.
+
 D382 tests caching PostgreSQL event triggers within each microbatch at `4,096`
 records on `main@52a5ff09` and remains **NOT_PASS**: the second request ends in
 `Failed to fetch`/status-0 after `132.04 s`, with `5/5` correlated events (`4`

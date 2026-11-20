@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "day": "D383",
+  "status": "PASS",
+  "candidate_sha": "87f24a1ef1b6756cf52953e73989085a32c5cc3f",
+  "production_boundary_sha": "87f24a1ef1b6756cf52953e73989085a32c5cc3f",
+  "qualification": "4,096 bounded PostgreSQL-runtime backpressure with explicit 300-second request timeout",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d383-live-postgres-bounded-4096-300s-20261120 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 4096 -BackpressureTimeoutSeconds 600 -RequestTimeoutSeconds 300",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "api_events": 12, "correlated": 12, "api_ok": 12, "api_error": 0, "elapsed_seconds": 331.07},
+  "cleanup": "PASS; isolated services, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d383-live-postgres-bounded-4096-300s-20261120",
+  "evidence_sha256": {
+    "browser-live.log": "BFB017C9726FBE1728A959CB9C276CEF2A345FB6FE1B88DAC02F2212A0D38375",
+    "browser-live.xml": "EC20B2EA3FBC8B1777D8E36BC92B75A1EFE670AE1124E4BE72631A607322A5D6",
+    "live-api-traffic.json": "C9DBD061DAB93FE5DD5E3C85829FFA3CD0A60CF0EE1A0CB0A26B9C60C4D7284D",
+    "live-python-freeze.txt": "32D1FC3E0A6C5E9192C0AF9ED5B130AFA2A5EB8A8561C792EA7AFE6A8EC85126",
+    "live-server.stderr.log": "9B5C6411B451422D8133DB0A8AC20447E425DF7AEFA1D031FA892431D96D2545",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "92C7EA50F897C72D5FE08F78BD6C8950D73F3A7CC4202956C27DF54ABF7A2155",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["bounded diagnostic", "explicit 300-second request timeout", "does not prove indefinite operation or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
