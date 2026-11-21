@@ -1296,6 +1296,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D513.md",
       "candidate_sha": "d3b0e626f3f93405d3e96c5ed69d715a66e0ef41",
       "commit_sha": "d3b0e626f3f93405d3e96c5ed69d715a66e0ef41"
+    },
+    {
+      "id": "D514",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-full-python-suite",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D514.md",
+      "candidate_sha": "7bf0b6e7cef1e86db68d6549f94f5ce710e6ff99",
+      "commit_sha": "7bf0b6e7cef1e86db68d6549f94f5ce710e6ff99"
     }
   ],
   "known_blockers": [

@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-21",
+  "day": "D514",
+  "status": "PASS_POSTGRES_FULL_PYTHON_SUITE",
+  "candidate_sha": "7bf0b6e7cef1e86db68d6549f94f5ce710e6ff99",
+  "qualification": "full non-performance Python/PostgreSQL suite with isolated PostgreSQL 16.4",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d514-postgres-full-current",
+  "result": {"collected": 4794, "passed": 4763, "failed": 0, "skipped": 31, "warnings": 23, "pytest_seconds": 822.86, "process_exit_code": 0},
+  "finding": "The complete non-performance Python suite, including real PostgreSQL-enabled integration cases, passes with zero failures. The 31 skips remain explicit environment/opt-in limits for Docker, external providers, Trino, symlinks and privileges.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "coverage": "enabled; branch coverage artifact retained",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d514-postgres-full-current",
+  "evidence_sha256": {
+    ".coverage": "C72DC9860B9B81731A23CFE209DD6F7EE909322F8F20798A6B8560CCAAEDEC91",
+    "pytest-output.log": "0650184B3E4E6D780EDEA7CD1D21656DBAEA7DBED816078ED855209BDD227547",
+    "pytest-postgres.log": "7D462473C7EB532A95BFFF369DFA12E994842556512061BD98EB6C400FEF2704",
+    "pytest-postgres.xml": "825FC8CCFE97189B51D1A3F60E5FD94076F6687EDF5BDB1ED2F8B301EDB5F917",
+    "pytest-timings.json": "EBE0F5EC9BB1D9BA31434E2C812A1EF0753B6C3019C56ED56783136E84419064",
+    "runner-timings.json": "A1FAAB36720BE4D997D4C5FFCCFFE2BEB85FBE82F6D06046E89FE84ADE4FF63E"
+  },
+  "limitations": ["31 explicit skips are not PASS evidence", "does not close remaining P11 families or release gates", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
