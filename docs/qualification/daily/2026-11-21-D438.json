@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D438",
+  "status": "PASS",
+  "candidate_sha": "496c06ee093944e5d6cf707ef37a8ea3a52335ea",
+  "qualification": "real PostgreSQL audit store integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d438-postgres-audit-9a0885879aef4e81b430f6c56db9512b -TestPath tests/integration/test_postgres_audit_store.py",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 1.52},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "1CC0B1E1C5E96626912E0FBC56CB04C5025D7EB9B16ACB618DCECA890D5AD787",
+    "pytest-postgres.log": "C66E154B794F063BFF1D031782FF8DB52FF15EE1E78CE32CBB5C3C1434AEF7E5",
+    "pytest-postgres.xml": "53A1E1F7F1A18D1E582BC3C44E8AEA4A835D22572E5FED58795BB1417C3C9536",
+    "pytest-timings.json": "B7BB182322EACF522F3338F5E872C70BF84CBC085C69B281464942148F40B3D9",
+    "runner-timings.json": "DFCCEBE7E03435617CA90C98C43AD33F862F6475FA83688D0FA9A7908B41B971"
+  },
+  "coverage": ["audit round-trip/idempotency/conflict", "bounded newest-first resource listing", "workspace listing and tamper detection", "unknown workspace rejection", "invalid outcome rejection"],
+  "limitations": ["focused integration file with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
