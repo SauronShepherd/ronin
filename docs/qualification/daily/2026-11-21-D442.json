@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D442",
+  "status": "PASS",
+  "candidate_sha": "8f48b5f33c89b1b8c4bdb1187b83207dd2b32bc0",
+  "qualification": "real PostgreSQL data-engineering revision inventory",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d442-postgres-revisions-35b9017d6bb744a09f57d7c2cc2ce24d -TestPath tests/integration/test_postgres_data_engineering_revisions_real.py",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 1.33},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "F08ABD072F1343451B523D587C3B2B82ABCA002D6765252386BC1118780EC062",
+    "pytest-postgres.log": "FEAF2B49DE27D02A45476DA0DEF42C1C4566D9732E855E8B76093F7C1FD681BF",
+    "pytest-postgres.xml": "008787AF1A06C20FCCF6CC56292D58E0822CCF4D45656B7E899977F761E1524E",
+    "pytest-timings.json": "C34907AA1B261F8630A72DF957B984BC3A2DED7A77C58B3C04C4FFF160D0EE26",
+    "runner-timings.json": "E54A16B607DA4844AEFD7F468E2EE9AA262162C45E2AFF75308D0538D3FE7C9B"
+  },
+  "coverage": ["revision persistence", "multi-project/pipeline artifact inventory", "data-engineering artifact reference discovery"],
+  "limitations": ["focused integration file with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
