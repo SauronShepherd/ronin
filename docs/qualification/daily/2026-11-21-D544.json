@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D544",
+  "status": "PASS_POSTGRES_ML_FILE",
+  "candidate_sha": "0dc16b31b146ddb79e205afe418b5b39e819dfaa",
+  "qualification": "complete real PostgreSQL ML integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d544-postgres-ml -TestPath tests/integration/test_postgres_ml_real.py",
+  "result": {"selected": 12, "passed": 12, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 5.09, "pytest_wall_seconds": 6.504, "process_exit_code": 0},
+  "finding": "The complete real PostgreSQL ML integration file passes registry round trips and conflict guards, archived-workspace protection, lab round trips, job claim/cancel fencing, node checkpoint reopen, bounded references, and atomic concurrent/replayable registry bundles with rollback cases.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner; no qualification containers or images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d544-postgres-ml",
+  "evidence_sha256": {"pytest-output.log": "AD8BB881501242A562DC6A5BBBC068B476AA493F67FFFE826616B0994D9B835D", "pytest-postgres.log": "9E5CF157F70DE04ACC5FD04F8F49808D74A94D4A8D5558A0D94F416C7E4D4CF6", "pytest-postgres.xml": "8AD6456C8B8C5F0F4183A110473D4A8BE4AEE3450BF09296719D24693BBCD988", "pytest-timings.json": "79D5129285BBC66F62D6595FDFBE68C70FCB7AF492888892D276D215FBA2350A", "runner-timings.json": "BFC63EA4A453BA7602F41F9D3F19A1AB0C188843AFAB7DA38D781DDA4C3772FF"},
+  "limitations": ["single integration file only", "bounded ML/runtime evidence, not complete P11", "does not qualify external providers/object stores or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
