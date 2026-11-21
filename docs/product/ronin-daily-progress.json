@@ -2156,6 +2156,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D601.md",
       "candidate_sha": "47c91c748f4670cdc1b9e0d49670f45fdaca389b",
       "commit_sha": "c3aee1150a9efb14f37d4bea7f996a3f622c48c4"
+    },
+    {
+      "id": "D602",
+      "date": "2026-11-21",
+      "phase": "p11-live-supervisor-soak-600s-multibroker",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D602.md",
+      "candidate_sha": "43b213f08a091588be1678de9aa8b6304463cb6e",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [
