@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D434",
+  "status": "PASS",
+  "candidate_sha": "dc6dffa6774004f1781c68061a41d819af6ad069",
+  "qualification": "complete PostgreSQL workflow and scheduler integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d434-postgres-workflow-full-c231bee16aea48faadc6792063dab177 -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "result": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 12.51},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "B31B0AA6AC436DBCDF4150B6D9FF7076348A264E6949D1EBBEA44173C3FB59FB",
+    "pytest-postgres.log": "A94C3BC35BC1C849DD128DB4B8372ADF8E6C578EE9B1725CD4EFC2C3C4FBE68C",
+    "pytest-postgres.xml": "324C05E003A9F719F58BFB687C506E489E0412F9CCC3F2C313F80C73EC2F1247",
+    "pytest-timings.json": "611227A50097FB2B930318255D0758BD590428AA027C927A9063582CB139864E",
+    "runner-timings.json": "4404488EA70AA9EADEFAD421E9773CF36E2576E3239ED5A70387D7131D82AB70"
+  },
+  "coverage": ["21 workflow/scheduler PostgreSQL integration cases", "scheduler recovery and fencing", "durable HTTP adapter", "backfill/migration and cancellation durability", "atomic/idempotent imports and snapshots"],
+  "limitations": ["bounded integration file with coverage disabled", "does not prove indefinite operation/HA or external provider behavior", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
