@@ -1975,7 +1975,7 @@
       "families": ["P11"],
       "evidence": "docs/qualification/handoffs/2026-11-21-D583.md",
       "candidate_sha": "b46cf9a3a18cef29cf9b9c5eba798090a3058f11",
-      "commit_sha": "pending"
+      "commit_sha": "4f0e0d9cb4ec8f3a50c11bc1d2cd2eb70df56075"
     }
   ],
   "known_blockers": [
@@ -2019,6 +2019,7 @@
     ]
   }
 }
+
 
 
 
