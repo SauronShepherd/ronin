@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D443",
+  "status": "PASS",
+  "candidate_sha": "254503b61361ba2d81deb18d8bcde3c6d5431b2c",
+  "qualification": "real PostgreSQL connector control-plane journey",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d443-postgres-control-plane-4bbc361b1ac344febe1aff4cf91834b0 -TestPath tests/integration/test_postgres_connector_control_plane_real.py",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 9.17},
+  "service_profile": "isolated PostgreSQL 16.4 with real connector control-plane service",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "02F19E6AD34A9A95E466D738BC5AEAA174CF382D543223B6F3F7AE3B67D9513E",
+    "pytest-postgres.log": "EAEBC60EBD242BDA7983F2790F7B34074C1FD190726B8CBE9D8D569C5EA43067",
+    "pytest-postgres.xml": "385A8720CE9B3E8A76E1CA87353FADD455BB8FD36EDC3BD7EF32FC97FD9C1502",
+    "pytest-timings.json": "AD3D828E9DA062F13FF725C3FE476452C840037F50680FB79F93F3EA98C41291",
+    "runner-timings.json": "9FA4F9874EEB03FE3DB6F82FB2CFDD88862BA3B7238D3E04D6DCDC59F9A89BC7"
+  },
+  "coverage": ["connector control-plane discovery", "preview", "service reopen durability"],
+  "limitations": ["focused integration test with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
