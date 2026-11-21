@@ -2205,6 +2205,108 @@ class PostgresSchedulerSnapshotStore(
             if owns_connection:
                 connection.close()
 
+    def ingest_events(
+        self, events: tuple[SchedulerEventRecord, ...]
+    ) -> tuple[tuple[EventDelivery, ...], ...]:
+        """Persist a fresh stream micro-batch with grouped PostgreSQL writes."""
+        if not events:
+            return ()
+        workspace_ids = {str(event.workspace_id) for event in events}
+        if len(workspace_ids) != 1:
+            raise ValueError("bulk scheduler event ingestion requires one workspace")
+        workspace_id = events[0].workspace_id
+        connection = self._event_batch_connection or self._connect()
+        owns_connection = self._event_batch_connection is None
+        try:
+            with connection.cursor() as cursor:
+                workspace_key = str(workspace_id)
+                if not owns_connection and workspace_key not in self._event_batch_workspaces:
+                    self._require_active_workspace(cursor, workspace_id)
+                    self._lock_event_workspace(cursor, workspace_id)
+                    self._event_batch_workspaces.add(workspace_key)
+                elif owns_connection:
+                    self._require_active_workspace(cursor, workspace_id)
+                    self._lock_event_workspace(cursor, workspace_id)
+                event_ids = [str(event.id) for event in events]
+                cursor.execute(
+                    "SELECT event_id FROM ronin_scheduler_events "
+                    "WHERE workspace_id=%s AND event_id = ANY(%s)",
+                    (workspace_key, event_ids),
+                )
+                if cursor.fetchall():
+                    if owns_connection:
+                        connection.rollback()
+                    return tuple(self.ingest_event(event) for event in events)
+                cursor.executemany(
+                    "INSERT INTO ronin_scheduler_events"
+                    "(workspace_id,event_id,event_type,source_ref,subject_ref,payload_digest,"
+                    "occurred_at,received_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                    [
+                        (
+                            workspace_key,
+                            str(event.id),
+                            event.event_type,
+                            event.source_ref,
+                            event.subject_ref,
+                            event.payload_digest,
+                            str(event.occurred_at),
+                            str(event.received_at),
+                        )
+                        for event in events
+                    ],
+                )
+                trigger_rows = self._event_batch_triggers.get(workspace_key)
+                if trigger_rows is None:
+                    cursor.execute(
+                        "SELECT definition_json FROM ronin_event_triggers "
+                        "WHERE workspace_id=%s ORDER BY event_trigger_id",
+                        (workspace_key,),
+                    )
+                    trigger_rows = tuple(cursor.fetchall())
+                    self._event_batch_triggers[workspace_key] = trigger_rows
+                deliveries: list[list[EventDelivery]] = [[] for _event in events]
+                delivery_rows: list[tuple[object, ...]] = []
+                for index, event in enumerate(events):
+                    for row in trigger_rows:
+                        definition = EventTriggerDefinition.from_json(row["definition_json"])
+                        if not definition.matches(
+                            event_type=event.event_type,
+                            source_ref=event.source_ref,
+                            subject_ref=event.subject_ref,
+                        ):
+                            continue
+                        delivery_rows.append(
+                            (
+                                workspace_key,
+                                str(event.id),
+                                str(definition.id),
+                                str(definition.workflow_id),
+                                definition.to_json(),
+                                str(event.received_at),
+                                str(event.received_at),
+                            )
+                        )
+                        deliveries[index].append(
+                            EventDelivery(workspace_id, event.id, definition)
+                        )
+                if delivery_rows:
+                    cursor.executemany(
+                        "INSERT INTO ronin_scheduler_event_deliveries"
+                        "(workspace_id,event_id,event_trigger_id,workflow_id,"
+                        "trigger_snapshot_json,workflow_run_id,state,created_at,updated_at) "
+                        "VALUES (%s,%s,%s,%s,%s,NULL,'pending',%s,%s)",
+                        delivery_rows,
+                    )
+            if owns_connection:
+                connection.commit()
+            return tuple(tuple(item) for item in deliveries)
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            if owns_connection:
+                connection.close()
+
     def get_event(
         self, workspace_id: WorkspaceId, event_id: SchedulerEventId
     ) -> SchedulerEventRecord | None:
