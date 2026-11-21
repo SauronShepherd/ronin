@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-21",
+  "day": "D507",
+  "status": "PASS_DOCKER_FULL_STRICT_CURRENT_KAFKA_BOUNDARY",
+  "candidate_sha": "b3605e10552d08af3734ae911ec9c27a45841b3e",
+  "qualification": "full Docker integrations and strict v0.1 acceptance after Kafka assignment optimization",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d507-docker-b3605e10",
+  "result": {"docker_integrations_passed": 27, "docker_integrations_failed": 0, "docker_integrations_skipped": 0, "strict_passed": 15, "strict_failed": 0, "strict_skipped": 0, "pytest_seconds": 244.38, "process_exit_code": 0},
+  "fixtures": ["PostgreSQL", "Docker worker", "Floci/S3", "Azurite/Azure Blob"],
+  "worker_image_sha256": "sha256:53fe7fa0e9ab102faa032c254663f2f582bd884d083337a0126f22d465f0beb0",
+  "finding": "Docker integrations and strict v0.1 acceptance remain green after the Kafka assignment optimization.",
+  "cleanup": "PASS; owned qualification image, containers, volumes and networks removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d507-docker-b3605e10",
+  "evidence_sha256": {"qualification-summary.json": "302A9690230C7FAC662462C33DC26A4419544EEDAFF368A6C15E1F2F0AC5AB0D", "docker-qualification.log": "1E5FDCC78A98FFB8C6760F152EBB434C0A35813F546DA41D8BC0C20760DD6101", "docker-pytest-output.log": "994DB913071B366745B1637B9A1626BED814D16D724E5780492547B9F73B312A", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "docker-cleanup.json": "09938FF5B907D349698E802F0EDDB263DD6458AB2779610EC0A4CE0ED8D97AF8"},
+  "limitations": ["does not close remaining P11 families or release gates", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
