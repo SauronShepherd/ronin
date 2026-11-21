@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D449",
+  "status": "PASS_WITH_EXPLICIT_SKIPS",
+  "candidate_sha": "0d55f9c51318a8ea8aa17d38630cf15c083a4087",
+  "qualification": "complete Python/PostgreSQL regression",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d449-postgres-suite-full-12c5222af0814452a46366aa2e6b3fa4",
+  "result": {"collected": 4794, "passed": 4763, "failed": 0, "skipped": 31, "warnings": 23, "elapsed_seconds": 676.59},
+  "service_profile": "isolated PostgreSQL 16.4; all non-performance Python tests",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    ".coverage": "FF60A414DD5F2B9F735EFC7E60B8D1969CD55A0336A5C7035AF2A01E4C9D0FB7",
+    "pytest-output.log": "87A73053258F49BA4E78FDCA9CE8E0F2FBF10FB64E7B5851E651B55C87C81E27",
+    "pytest-postgres.log": "4AA6271DC863B88D28652DEC3DFA5442F04363BE20CA9BDB3A5368C88682D931",
+    "pytest-postgres.xml": "1CC63C0015564ED58CE5CA977640CE1072C14A5A290B26D930F2BC7CD86B3C08",
+    "pytest-timings.json": "4495C7C2CFE113A7FDCD8895FF095B03D54680D37A8F29C403B6B1A08402579B",
+    "runner-timings.json": "D57763C6372808BC3F42920B9CA8F770206FE3505716F7E2FE01A15B983CE500"
+  },
+  "explicit_skips": ["Docker opt-in cases", "multi-broker opt-in", "external S3/Azurite/Trino/SDP providers", "symlink privilege/platform cases", "POSIX watcher/mode cases"],
+  "limitations": ["full non-performance regression, but bounded by suite selection and explicit skips", "does not close P11/release; skipped external/provider evidence remains missing"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
