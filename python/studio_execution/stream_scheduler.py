@@ -26,6 +26,47 @@ def ingest_stream_record(
     stream_id: str,
     received_at: Instant | str,
 ) -> tuple[EventDelivery, ...]:
+    event = _stream_event(
+        record,
+        workspace_id=workspace_id,
+        stream_id=stream_id,
+        received_at=received_at,
+    )
+    return _ingest_event(store, event)
+
+
+def ingest_stream_records(
+    store: SchedulerEventStore,
+    records: tuple[StreamRecord, ...],
+    *,
+    workspace_id: WorkspaceId,
+    stream_id: str,
+    received_at: Instant | str,
+) -> tuple[EventDelivery, ...]:
+    """Persist one stream micro-batch through a store's optional bulk API."""
+
+    events = tuple(
+        _stream_event(
+            record,
+            workspace_id=workspace_id,
+            stream_id=stream_id,
+            received_at=received_at,
+        )
+        for record in records
+    )
+    bulk = getattr(store, "ingest_events", None)
+    if callable(bulk):
+        return tuple(delivery for event in bulk(events) for delivery in event)
+    return tuple(delivery for event in events for delivery in _ingest_event(store, event))
+
+
+def _stream_event(
+    record: StreamRecord,
+    *,
+    workspace_id: WorkspaceId,
+    stream_id: str,
+    received_at: Instant | str,
+) -> SchedulerEventRecord:
     if not stream_id or stream_id != stream_id.strip():
         raise ValueError("stream_id must be non-empty and trimmed")
     payload = json.dumps(dict(record.value), sort_keys=True, separators=(",", ":"))
@@ -40,7 +81,7 @@ def ingest_stream_record(
             )
         )
     )
-    event = SchedulerEventRecord(
+    return SchedulerEventRecord(
         workspace_id,
         event_id,
         "stream.record",
@@ -50,13 +91,18 @@ def ingest_stream_record(
         occurred,
         Instant(received_at),
     )
+
+
+def _ingest_event(
+    store: SchedulerEventStore, event: SchedulerEventRecord
+) -> tuple[EventDelivery, ...]:
     get_event = getattr(store, "get_event", None)
     try:
         return store.ingest_event(event)
     except SchedulerEventConflict:
         if not callable(get_event):
             raise
-        existing = get_event(workspace_id, event_id)
+        existing = get_event(event.workspace_id, event.id)
         if existing is None:
             raise
         if (

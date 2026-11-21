@@ -64,6 +64,7 @@ class KafkaStreamingRuntime:
         source_factory: Callable[..., Any] = KafkaJsonSource,
         event_store: Any | None = None,
         event_ingestor: Callable[..., Any] | None = None,
+        event_batch_ingestor: Callable[..., Any] | None = None,
         clock: Callable[[], str] | None = None,
         table_factory: Callable[[], SqliteStreamTable | PostgresStreamTable] | None = None,
     ) -> None:
@@ -74,6 +75,7 @@ class KafkaStreamingRuntime:
         self._source_factory = source_factory
         self._event_store = event_store
         self._event_ingestor = event_ingestor
+        self._event_batch_ingestor = event_batch_ingestor
         self._clock = clock or (lambda: datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
         self._table_factory = table_factory or (
             lambda: SqliteStreamTable(self._data_root / "streaming.sqlite3")
@@ -88,6 +90,15 @@ class KafkaStreamingRuntime:
         if self._event_store is None or self._event_ingestor is None:
             return
         received_at = self._clock()
+        if callable(self._event_batch_ingestor):
+            self._event_batch_ingestor(
+                self._event_store,
+                batch.records,
+                workspace_id=WorkspaceId(workspace_id),
+                stream_id=stream_id,
+                received_at=received_at,
+            )
+            return
         event_batch = getattr(self._event_store, "event_batch", None)
         context = event_batch() if callable(event_batch) else None
         if context is None:
