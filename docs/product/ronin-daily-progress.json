@@ -5,7 +5,7 @@
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "c13af1d4ab576a3134af0140575a44ffcfe63b1e",
+    "base_sha": "09590c57463baf3d11a3634fddc4b342b49e7b96",
     "tracked_candidate": true
   },
   "operating_policy": {
