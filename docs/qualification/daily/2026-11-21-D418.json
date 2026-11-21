@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D418",
+  "status": "PASS",
+  "candidate_sha": "6ce5b05a8b58a277817dff228e87ef28afe2fd78",
+  "production_boundary_sha": "ad1463c6a0c0c90231794a39e027947e30fef044",
+  "qualification": "full live product suite with PostgreSQL-configured runtime after streaming seed fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d418-full-postgres-live-20261121 -WorkerImage ronin:live-d418 -StorageBackend postgres -RequestTimeoutSeconds 180",
+  "result": {"selected": 43, "passed": 42, "failed": 0, "skipped": 1, "elapsed_seconds": 331.75, "api_events": 495, "correlated_http_logs": 495, "api_ok": 471, "api_warnings": 21, "api_errors": 3},
+  "services": {"postgres": true, "kafka": true, "roninApi": true, "worker_image": "sha256:2db394f51873c9a6a9fde258acf46833e1f7b5b40bebaed1fc777954de167f84"},
+  "coverage": {"cases": 43, "active_routes": 25, "api_contract_routes": 24, "ui_only_routes": 1},
+  "cleanup": "PASS; isolated PostgreSQL/Redpanda services and worker image removed",
+  "evidence_sha256": {"browser-live.log": "12CFAEEC002DB16EA71EE137E37024B9F2221E402A322D6D0A9B85C84976F8F1", "browser-live.xml": "E123CFE40C6B9A780EB9EB93E1A8256AEA4092322EA37722A5DB33C3FFC06105", "live-api-traffic.json": "D7F7D344B2D574D1AFF1C0B32AFD6D2F7CC54C6898CA78BA789295AD3B0DBE46", "qualification-summary.json": "D62C9E0304932F68A7A9CE2D254F7E922255E0A3AF86020EABB6A22EF14620AB"},
+  "limitations": ["one explicitly skipped case remains", "expected negative-path API errors are retained in the audit", "full live bounded pass does not prove indefinite operation, HA, P13 or release closure"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
