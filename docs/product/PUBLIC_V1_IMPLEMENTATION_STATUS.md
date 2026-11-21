@@ -7,6 +7,11 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D405 passes the Migration Studio HTTP integration on `main@2e713072`: `2/2`
+tests passed in `2.34 s`, covering real session routes plus discovery and
+workspace/project scope. This is bounded local migration evidence and does not
+close P11/release.
+
 D404 passes the ML Studio HTTP control-plane integration on `main@1858df6`:
 `3/3` tests passed in `4.75 s`, covering lab quality/execution,
 evaluation/review gates with promotion and workspace-scoped feature-definition

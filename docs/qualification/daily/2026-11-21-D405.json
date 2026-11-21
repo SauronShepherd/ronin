@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D405",
+  "status": "PASS",
+  "candidate_sha": "2e7130728f1abc0bec1097c2b5a476334c04372e",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "Migration Studio HTTP control-plane integration",
+  "command": "python -m pytest -q tests/integration/test_migration_studio_http.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d405-migration-http-20261121\\migration-http.xml",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "elapsed_seconds": 2.34},
+  "coverage": ["migration session routes through real HTTP", "migration discovery and workspace/project scope"],
+  "evidence_sha256": {"pytest.log": "BD143132C520BCAF27BCD78556B13E93E31CB4E41DFA1DD6D423A3788B9DEAE5", "migration-http.xml": "77688F98E913C5C4B9F8C9973E4C68A3247EB0A0FDB1AB36426A94EEE35E7081"},
+  "limitations": ["bounded local HTTP migration integration", "does not qualify external migration providers, PostgreSQL runtime, indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

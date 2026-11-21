@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D405 passes the Migration Studio HTTP integration on `main@2e713072`: `2/2`
+tests passed in `2.34 s`, covering session routes, discovery and scope. This
+bounded evidence does not close P11/release.
+
 D404 passes the ML Studio HTTP control-plane integration on `main@1858df6`:
 `3/3` tests passed in `4.75 s`, covering lab execution, promotion gates and
 workspace-scoped feature definitions. This bounded evidence does not close
