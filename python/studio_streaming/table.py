@@ -37,42 +37,45 @@ class SqliteStreamTable:
                 )
                 for record in batch.records
             ]
-            predicates = " OR ".join(
-                "(partition_id=? AND offset_value=?)" for _record, _value in encoded
-            )
-            parameters: list[object] = [stream_id]
-            for record, _value in encoded:
-                parameters.extend((record.partition, record.offset))
-            existing_rows = connection.execute(
-                "SELECT partition_id,offset_value,timestamp_ms,key_value,value_json "
-                "FROM stream_table WHERE stream_id=? AND (" + predicates + ")",
+            parameters = [
+                (
+                    stream_id,
+                    record.partition,
+                    record.offset,
+                    record.timestamp_ms,
+                    record.key,
+                    value_json,
+                )
+                for record, value_json in encoded
+            ]
+            insert_result = connection.executemany(
+                "INSERT INTO stream_table VALUES (?,?,?,?,?,?) "
+                "ON CONFLICT(stream_id,partition_id,offset_value) DO NOTHING",
                 parameters,
-            ).fetchall()
-            existing = {
-                (int(row[0]), int(row[1])): (row[2], row[3], row[4])
-                for row in existing_rows
-            }
-            pending: list[tuple[object, ...]] = []
-            for record, value_json in encoded:
-                key = (record.partition, record.offset)
-                stored = existing.get(key)
-                if stored is not None:
+            )
+            inserted = int(getattr(insert_result, "rowcount", insert_result))
+            if inserted != len(parameters):
+                predicates = " OR ".join(
+                    "(partition_id=? AND offset_value=?)" for _record, _value in encoded
+                )
+                lookup: list[object] = [stream_id]
+                for record, _value in encoded:
+                    lookup.extend((record.partition, record.offset))
+                existing_rows = connection.execute(
+                    "SELECT partition_id,offset_value,timestamp_ms,key_value,value_json "
+                    "FROM stream_table WHERE stream_id=? AND (" + predicates + ")",
+                    lookup,
+                ).fetchall()
+                existing = {
+                    (int(row[0]), int(row[1])): (row[2], row[3], row[4])
+                    for row in existing_rows
+                }
+                for record, value_json in encoded:
+                    stored = existing.get((record.partition, record.offset))
                     if stored != (record.timestamp_ms, record.key, value_json):
                         raise ValueError("stream table replay conflicts with an existing record")
-                    continue
-                pending.append(
-                    (
-                        stream_id,
-                        record.partition,
-                        record.offset,
-                        record.timestamp_ms,
-                        record.key,
-                        value_json,
-                    )
-                )
-            connection.executemany("INSERT INTO stream_table VALUES (?,?,?,?,?,?)", pending)
             connection.commit()
-            return len(pending)
+            return inserted
         except Exception:
             connection.rollback()
             raise
@@ -112,10 +115,11 @@ class _PostgresConnectionAdapter:
     def execute(self, statement: str, parameters: tuple[object, ...] = ()) -> object:
         return self._connection.execute(self._sql(statement), parameters)  # type: ignore[attr-defined]
 
-    def executemany(self, statement: str, parameters: list[tuple[object, ...]]) -> object:
+    def executemany(self, statement: str, parameters: list[tuple[object, ...]]) -> int:
         cursor = self._connection.cursor()  # type: ignore[attr-defined]
         try:
-            return cursor.executemany(self._sql(statement), parameters)
+            cursor.executemany(self._sql(statement), parameters)
+            return int(cursor.rowcount)
         finally:
             cursor.close()
 
