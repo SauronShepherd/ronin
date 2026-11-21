@@ -2222,7 +2222,7 @@ class PostgresSchedulerSnapshotStore(
             with connection.cursor() as probe:
                 probe.execute(
                     "SELECT event_id FROM ronin_scheduler_events "
-                    "WHERE workspace_id=%s AND event_id = ANY(%s)",
+                    "WHERE workspace_id=%s AND event_id = ANY(%s::text[])",
                     (str(workspace_id), event_ids),
                 )
                 has_replay = bool(probe.fetchall())
