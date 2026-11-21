@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D532",
+  "status": "PASS_POSTGRES_TRIGGER_CACHE_REGRESSION",
+  "candidate_sha": "e08dfcaf88c48a719ba478644f1388ed48ee7ca6",
+  "qualification": "real PostgreSQL regression for autonomous ingest trigger-cache invalidation",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d532-postgres-trigger-cache-regression-final -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter postgres_scheduler_event_inbox_freezes_and_replays_deliveries",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 2.98, "process_exit_code": 0},
+  "finding": "The regression now explicitly proves that an autonomous ingest_events() batch with no triggers does not poison a later batch after a trigger is committed on the same PostgreSQL store instance. The existing replay, frozen-delivery, conflict and concurrent-delivery assertions remain green.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d532-postgres-trigger-cache-regression-final",
+  "evidence_sha256": {
+    "pytest-output.log": "034C00751CB0195E3ED32A98AC494223CCB6FB336B6CCBB59B9686657B319530",
+    "pytest-postgres.log": "5A461F3849E1275AC8445681D4A151113C6127B758B24EBD0582E890FE00D002",
+    "pytest-postgres.xml": "84D9A6738DFCD0D82EEA5A08314E8652E893E5D38268C981A36C4CF90FAD7D91",
+    "pytest-timings.json": "3B3B3D22A1D40D24DF813899BB230081236F09103496F801A235461CA5D47E66",
+    "runner-timings.json": "A87784FCBF96BB5FB70430AB56CDF93532C1E639A6CB41D97AF6565E0FBF91A7"
+  },
+  "limitations": ["filtered single-test regression", "does not prove indefinite operation or complete P11", "D530/D531 were failed test-edit attempts and are not PASS evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

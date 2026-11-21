@@ -1456,6 +1456,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D529.md",
       "candidate_sha": "88b642a3755fb7cc9780e84a03f25a2cc41a35f9",
       "commit_sha": "88b642a3755fb7cc9780e84a03f25a2cc41a35f9"
+    },
+    {
+      "id": "D532",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-trigger-cache-regression",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D532.md",
+      "candidate_sha": "e08dfcaf88c48a719ba478644f1388ed48ee7ca6",
+      "commit_sha": "e08dfcaf88c48a719ba478644f1388ed48ee7ca6"
     }
   ],
   "known_blockers": [
