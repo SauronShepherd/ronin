@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-21",
+  "day": "D451",
+  "status": "PASS",
+  "candidate_sha": "17505ce186cc5228d5542210d40c5882e59deaf8",
+  "qualification": "Docker full qualification after explicit runner exit fix",
+  "result": {"docker_tests": 27, "passed": 27, "failed": 0, "skipped": 0, "strict_v01": "15/15", "process_exit_code": 0, "elapsed_seconds": 176.10},
+  "service_profile": "real Docker worker/runtime, PostgreSQL, Floci/S3, Azurite/Azure",
+  "cleanup": "PASS; runner-owned image, containers, networks and volumes removed",
+  "image_digest": "sha256:eb4af7d14622dcfb68f01a3d93f4ecc9af0f7be9ffa25bebee4875ac1d70257c",
+  "evidence_sha256": {
+    "azurite-qualification.log": "5E2E12924217E1118300FD743B0CB2A41834DC1F93315438681F6E86662DD214",
+    "docker-cleanup.json": "73C3EEFE67977F8840512DF8150EBFEEA7DD6CF51401320184349D18FFAED805",
+    "docker-pytest-output.log": "FEC6806632FD461D17FE03E28BAB3A2A190BF75B7D9072F0F3F148C7211A52B0",
+    "docker-qualification.log": "F857C9E87F0A868EAA5ABF56C99B39B78A9755A1248CF3FBC5ACF300983656AB",
+    "floci-s3-qualification.log": "2ADFABE6C9D43ECA4715EF46E0DC89295D1EAA22D62602615153FBC6B2F294CA",
+    "postgres-qualification.log": "693D41108763CA81ABDCAF5CB5FA4F6E1EE6B988777581FDE9E5AB215E2C227C",
+    "qualification-summary.json": "EE23E7D51A7D56348A21A63FD8313ED0FF783BC4ED18E7CE5CD5356B40B9B0A4",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "93171B0F951D178B04B9F97CFD5FDF420284D11D2F1E0A14F8253B5A4A8F80D5"
+  },
+  "coverage": ["Docker worker demos and clean container", "process SIGKILL/reclaim", "PostgreSQL appliance backup/restore", "S3 retry and ML artifact retention", "Azure Blob replay", "strict v0.1 journey"],
+  "limitations": ["bounded Docker qualification", "does not close P11/release by itself"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

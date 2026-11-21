@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-21",
+  "day": "D450",
+  "status": "FAIL_RUNNER_EXIT_CODE",
+  "candidate_sha": "b8fc7b5ef0a0ca7448797052fa236196b62ad3d1",
+  "qualification": "Docker full qualification diagnostic before runner exit fix",
+  "result": {"docker_tests": 27, "passed": 27, "failed": 0, "strict_v01": "15/15", "process_exit_code": 1},
+  "finding": "runner printed cleanup PASS but inherited a non-zero native Docker LASTEXITCODE; qualification_summary timeout_state was failed/unavailable by design of the timeout probe",
+  "cleanup": "PASS; owned image and fixtures removed",
+  "evidence_sha256": {
+    "docker-cleanup.json": "398F4C32ACE7F3FC9CE9E0A9DFF2A9A8D021BF71566773458462091EADF1367D",
+    "docker-pytest-output.log": "09341C7DCE9E75535E1E6CCA200081FD1AB0732383EA4D997ECAB9A6CF5E1331",
+    "docker-qualification.log": "D1BE085F06061F1CF8E73EAB2E9335F1B1B5DF673960CA3CD7582AFD97F5086A",
+    "qualification-summary.json": "528E6945A9C374CFE6F9199589A01127B020D8715C9AD2265E1985F6E88AF88F"
+  },
+  "limitations": ["not release evidence", "superseded by runner fix at 17505ce1"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
