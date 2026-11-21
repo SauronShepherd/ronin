@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D569",
+  "status": "PASS_SCHEDULER_BRANCHING_FILE",
+  "candidate_sha": "23a210a46c894ff5563a851f5c87cdb61838831c",
+  "qualification": "complete scheduler branching unit integration file",
+  "command": "python -m pytest tests/test_scheduler_branching.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d569-scheduler-branching-file\\pytest.xml",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "pytest_seconds": 0.88, "process_exit_code": 0},
+  "finding": "The complete scheduler branching file passes all branching invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d569-scheduler-branching-file",
+  "evidence_sha256": {"pytest.log": "08BEEEABE7A3680A99D98A53A1E9686AA8C5BB0FC598845BE2DF80499D64CEFE", "pytest.xml": "CDA65736F40D2C415406814847E00C4E9B22F113901C270B7BEDEC8C6EE4439E"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
