@@ -3,6 +3,7 @@
   "day": "D560",
   "status": "PASS_SCHEDULER_LEADERSHIP_FILE",
   "candidate_sha": "90fdd2cf647709ff0079b0dbc03e03c7c09b6b83",
+  "commit_sha": "4cb02da9b1f84c0f010ac0fe1b090cad4c652ef7",
   "qualification": "complete scheduler leadership unit integration file",
   "command": "python -m pytest tests/test_scheduler_leadership.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d560-scheduler-leadership-file\\pytest.xml",
   "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "pytest_seconds": 1.05, "process_exit_code": 0},
