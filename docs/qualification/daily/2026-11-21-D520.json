@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D520",
+  "status": "FAIL_MINIMAL_BROKER_RESTART_EVENT_WORKFLOW",
+  "candidate_sha": "b718ff94c10074f982d9a0652756cf7d2e0d2a2c",
+  "qualification": "minimal broker-restart followed immediately by event-workflow with PostgreSQL and a real Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d520-live-broker-event-minimal -WorkerImage ronin:qualification-d520 -TestGrep 'live streaming (broker restart|event workflow)' -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 2, "passed": 1, "failed": 1, "skipped": 0, "api_events": 32, "api_ok": 30, "api_error": 2, "process_exit_code": 1},
+  "finding": "The minimal sequence independently reproduces event-workflow delivery failure immediately after broker restart: broker-restart passes, event-workflow delivery remains not visible within 15 seconds. Server logs show the expected recovery health/run Kafka errors but no scheduler-daemon diagnostic error.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume, network and temporary worker image removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d520-live-broker-event-minimal",
+  "evidence_sha256": {
+    "browser-live.log": "8E05D0BE28944C7E5752CEF778B7ABA38D7179C4E3D6B7B23449E5862A23F515",
+    "browser-live.xml": "3BEAEC82D0670E3F4FDF2F67D48B57FF5BD8823E733615648105A0C60975B320",
+    "live-api-traffic.json": "96F7DE5FA4B03E59ADA44A1DC598BA3BE1561D973EA701C2F8646BE586EF495F",
+    "live-python-freeze.txt": "853CF849026F976FEDB81A9C50E41CC5DEC3B5E24082877BBED3C2F462E874D0",
+    "live-server.stderr.log": "45C4EE2A87CDC463A9D331F4058AB4B9E03A254365FD2BE2B03C04DFB726B14A",
+    "qualification-summary.json": "37B2289DB38B6CA5466931D0822035DA8AAA6CA59075B396EA7182F98E4FA922"
+  },
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
