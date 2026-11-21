@@ -1426,6 +1426,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D526.md",
       "candidate_sha": "a4c9455328d079963be5d17944f34a14ac576865",
       "commit_sha": "a4c9455328d079963be5d17944f34a14ac576865"
+    },
+    {
+      "id": "D527",
+      "date": "2026-11-21",
+      "phase": "p11-full-docker-after-cache-fix",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D527.md",
+      "candidate_sha": "e5b5bbac9766a82455b7384b60e72290a50595aa",
+      "commit_sha": "e5b5bbac9766a82455b7384b60e72290a50595aa"
     }
   ],
   "known_blockers": [

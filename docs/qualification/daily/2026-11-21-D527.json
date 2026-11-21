@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-21",
+  "day": "D527",
+  "status": "PASS_FULL_DOCKER_AFTER_POSTGRES_CACHE_FIX",
+  "candidate_sha": "e5b5bbac9766a82455b7384b60e72290a50595aa",
+  "qualification": "full Docker integration and strict v0.1 acceptance after PostgreSQL event trigger-cache fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d527 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d527-docker-full-cache-fix",
+  "result": {"docker_tests": 27, "docker_passed": 27, "docker_failed": 0, "docker_skipped": 0, "v01_tests": 15, "v01_passed": 15, "v01_failed": 0, "v01_skipped": 0, "pytest_seconds": 174.06, "process_exit_code": 0},
+  "image_digest": "sha256:5fe7c2892128434d988f76f99375212531bf9ddf85034a2c2589c5aa1246b308",
+  "finding": "The full Docker worker/runtime, PostgreSQL-backed journeys, Floci S3-compatible provider, Azurite Azure-compatible provider, appliance backup/restore and strict v0.1 acceptance remain green after the PostgreSQL trigger-cache fix.",
+  "service_profile": "isolated Docker worker, PostgreSQL, Floci/S3-compatible and Azurite/Azure-compatible fixtures",
+  "cleanup": "PASS; Ronin qualification image, containers, networks and volumes removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d527-docker-full-cache-fix",
+  "evidence_sha256": {
+    "azurite-qualification.log": "58388E7EC6AF839D26F50A8FE512100CF3065C64A98B1C1AD7B49FACAAC9EFB3",
+    "docker-cleanup.json": "2548FE6F6C27810D5F1867EDE7EB2F73C5CDAEC0736BCB6D7F4700FD49CA8419",
+    "docker-pytest-output.log": "96FDD82481E4CBDBD338E3BF23BCBCA46EDBDB5DF8176076B9E8CB088995AC53",
+    "docker-qualification.log": "B7C4D22035D0706CB425E32108194F6DDDA9EDE7B67CB6ED6DCB1924838B2335",
+    "floci-s3-qualification.log": "9A1E94AE359AC54C64F6667810F915BE6385A1DE0F449F54CEB8A6346BC7CC48",
+    "postgres-qualification.log": "C5CE3C9789A28C818AF5651B98ADDA1BACFCAFCB2784A8A29AB381ACD6E41FE1",
+    "qualification-summary.json": "2A055F994300D7CAF7EB2B57AE3D08147902ED99B322DB062E8058AB0B5E8963",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "3CAAE381D79ECD9F218D2BF32EAF60129066621E3BB62BC6EBA173DDD07972B7"
+  },
+  "limitations": ["bounded Docker acceptance, not indefinite operation", "Floci and Azurite are compatibility fixtures, not cloud-provider certification", "does not change P13 blocked state or release NO-GO"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
