@@ -1776,6 +1776,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D563.md",
       "candidate_sha": "4e9a048c029d8234d08f0a3672bea14294bd1ef1",
       "commit_sha": "455b80e503826de30f7a4ddbf3def943eba73e26"
+    },
+    {
+      "id": "D564",
+      "date": "2026-11-21",
+      "phase": "p11-scheduler-adapters-file",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D564.md",
+      "candidate_sha": "230d20c5215e0116cbc97f7756f531fd7f21923c",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

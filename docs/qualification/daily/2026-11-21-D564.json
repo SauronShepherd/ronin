@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D564",
+  "status": "PASS_SCHEDULER_ADAPTERS_FILE",
+  "candidate_sha": "230d20c5215e0116cbc97f7756f531fd7f21923c",
+  "qualification": "complete scheduler adapters unit integration file",
+  "command": "python -m pytest tests/test_scheduler_adapters.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d564-scheduler-adapters-file\\pytest.xml",
+  "result": {"selected": 33, "passed": 33, "failed": 0, "skipped": 0, "pytest_seconds": 1.21, "process_exit_code": 0},
+  "finding": "The complete scheduler adapters file passes all adapter invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d564-scheduler-adapters-file",
+  "evidence_sha256": {"pytest.log": "CE3F891DC2FB5904E6298AED786BFF08FE21ADC505BA77D8EE821089EE50DE15", "pytest.xml": "3DF3A7DB97AC98712D8E93A069C814B060DB4A68E5BE22F7D23F02033FC2C463"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
