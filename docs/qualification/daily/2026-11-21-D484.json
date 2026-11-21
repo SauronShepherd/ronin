@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D484",
+  "status": "PASS_LIVE_RF3_POSTGRES_CURRENT",
+  "candidate_sha": "b43867d15c24bef38984a46b684dd95e04cff190",
+  "qualification": "focused live three-broker RF3 failover with explicit PostgreSQL backend",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d484-live-rf3-current-183006be9ae548d6a26c0ec1d7e4815a -TestGrep 'live streaming multi-broker' -MultiBroker -StorageBackend postgres -RequestTimeoutSeconds 15",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 5, "correlated_http_logs": 5, "api_ok": 5, "api_warn": 0, "api_error": 0, "elapsed_seconds": 56.91, "process_exit_code": 0},
+  "criteria": ["three-broker RF3 failover resumes from durable checkpoint", "PostgreSQL backend is explicit", "all filtered API events correlate with structured HTTP logs"],
+  "real_services": {"postgres": true, "redpanda_brokers": 3, "replication_factor": 3, "ronin_api": true},
+  "cleanup": "PASS; PostgreSQL, three Redpanda brokers, volume and network removed",
+  "evidence_sha256": {"browser-live.log": "BCCA795B4F1EE5C2739940502A8D5669E14EE64176F7B141CCD0C70AC5A7E65D", "browser-live.xml": "59D2BBCC8CDF6D8F8FBC22ED9B407D3CABDBD907607C4F13FEDB81B49950F3E4", "live-api-traffic.json": "18AAB4246F4A2A207F74D8907F94BE8EB3A8757A4AD6D50EEEE53F62BFE4C82E", "live-python-freeze.txt": "EB958661B1F8AB9BBB7A9B6D729AB3596901C33D3FD56C0799BBB565C2D9A069", "live-server.stderr.log": "92BD409681C75975909C2C7249F43CEDE69E255EAB0F872FCCC90E2D81391991", "qualification-summary.json": "E73E4B9B0C80241A0030993F82A99040E76FE9B6AB6A2436B5EFAF1787BACB36"},
+  "limitations": ["single focused RF3 case", "bounded failover evidence, not indefinite HA/SLO certification", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
