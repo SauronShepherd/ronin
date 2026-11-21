@@ -946,6 +946,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D467.md",
       "candidate_sha": "3a7e4d88a34a4f1d6a4c945827a42c39db7da43b",
       "commit_sha": "3a7e4d88a34a4f1d6a4c945827a42c39db7da43b"
+    },
+    {
+      "id": "D468",
+      "date": "2026-11-21",
+      "phase": "full-python-postgres-regression-current-candidate",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D468.md",
+      "candidate_sha": "be16929ff4df0ac00cbab2a7baace4cd40c62177",
+      "commit_sha": "be16929ff4df0ac00cbab2a7baace4cd40c62177"
     }
   ],
   "known_blockers": [

@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D468",
+  "status": "PASS_FULL_PYTHON_POSTGRES",
+  "candidate_sha": "be16929ff4df0ac00cbab2a7baace4cd40c62177",
+  "qualification": "full Python/PostgreSQL regression on the current candidate",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d468-python-postgres-full-52c66d323db243c9b18a844b7ae3e0c3",
+  "result": {"collected": 4791, "executed": 4794, "passed": 4763, "skipped": 31, "failed": 0, "warnings": 23, "pytest_seconds": 832.83, "process_exit_code": 0},
+  "real_services": {"postgres": "postgres:16.4-alpine isolated loopback", "qualification_mode": "CLEAN-CANDIDATE QUALIFICATION", "coverage": true},
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner",
+  "skip_boundary": ["external Trino, OTLP, SDP/Spark providers not configured", "Docker opt-in lanes are separately covered by D467", "Windows symlink/permission lanes unavailable on host"],
+  "evidence_sha256": {".coverage": "4969B59ECA8D5E5DEDE8DDEBA32BBFBD0EA19243C5315A45B0C8CE092B92B548", "pytest-output.log": "D250C03D72AACC9C6349B3E296CB090001799E82C08A26692AAA25ECDE6A39EF", "pytest-postgres.log": "F172B87A48EED19C4957133C64EABF2291C6B450D4A7BF71689A948658EEAE53", "pytest-postgres.xml": "2A962116A2A13209B9A58013CE7FA4C179C613D337E44A08FEBD462E6E3ED9A9", "pytest-timings.json": "80D292D6C765F446E46182F47D40321398BD2A3700430D02EB99453B21572B9F", "runner-timings.json": "0F1C2C5C726FE6C05D1AEEB12F7BC2EEC80FCC0DADF6CAF5E6846A7A56302008"},
+  "limitations": ["31 skips remain explicit and are not counted as pass", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
