@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D466",
+  "status": "PASS_S3_RETRY_FLOCI",
+  "candidate_sha": "d5c648a246339743106abca345d2fa40c847c1a2",
+  "qualification": "focused S3 object-store connector retry round trip against real local Floci service",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d466-s3-retry-c9852bb87eb4440cb144b0b214f6aa6c -TestFilter 's3_json_sink_put_read_and_retry_round_trip'",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26, "pytest_seconds": 4.23, "process_exit_code": 0},
+  "real_services": {"provider": "Floci local S3-compatible service", "ronin_image": "sha256:51388628a756b50c970c0cb11257c60395ebe8e8f9fea7ee7bb2a1cdabd2d8f8"},
+  "criteria": ["provider accepts first PUT despite simulated response loss", "retry reads the committed object without duplicate failure"],
+  "cleanup": "PASS; Floci container, volume, network and owned Ronin image removed",
+  "evidence_sha256": {"docker-cleanup.json": "E4826214933AE923D99810AF405D0CEA9E319226A942AE391CF87600A982B137", "docker-pytest-output.log": "138196801988610A23DB1693E2F81C4ED73417394FBB3A4D78BB029DE1E27825", "docker-qualification.log": "D08B086AAB76653F4D85DCC5AB00D4DDB93B30B29B56FDACEC330F6AE2959527", "floci-s3-qualification.log": "FD33C29C5920994550A649F6FB0F02FDE000036F28FE18890B07CF8641A45F9E", "v01-acceptance.xml": "92A3B25DF0B161AF88195551F8C77E0A502BD4E4D9AEEF69EC42F6157DFB45BE"},
+  "limitations": ["Floci local emulator, not AWS/Azure external certification", "focused diagnostic, not full Docker gate", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

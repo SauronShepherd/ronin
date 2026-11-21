@@ -926,6 +926,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D465.md",
       "candidate_sha": "5a0b4d9f29c59dab83980113add6b86677981bbc",
       "commit_sha": "5a0b4d9f29c59dab83980113add6b86677981bbc"
+    },
+    {
+      "id": "D466",
+      "date": "2026-11-21",
+      "phase": "p11-s3-object-store-retry-provider",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D466.md",
+      "candidate_sha": "d5c648a246339743106abca345d2fa40c847c1a2",
+      "commit_sha": "d5c648a246339743106abca345d2fa40c847c1a2"
     }
   ],
   "known_blockers": [
