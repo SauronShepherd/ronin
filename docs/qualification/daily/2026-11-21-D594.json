@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D594",
+  "status": "PASS_POSTGRES_WORKFLOW_STORE_FULL",
+  "candidate_sha": "1b29bf32e00278005aa8038dec08ca8f2869f3ec",
+  "qualification": "complete PostgreSQL workflow-store integration suite against the configured real backend",
+  "command": "python -m pytest -q tests/integration/test_postgres_workflow_store_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d594-postgres-workflow-store-full\\postgres-workflow-store.xml",
+  "result": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0, "postgres": "16.4", "process_exit_code": 0},
+  "finding": "The complete PostgreSQL workflow-store integration suite passed against the real configured PostgreSQL backend, including scheduler persistence, leases, dispatch, cancellation, backfill, events and recovery paths.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d594-postgres-workflow-store-full",
+  "evidence_sha256": {"postgres-workflow-store.log": "AF689A0CC49D595DA95280896B12F08D595D9582F87E9A3AEAB51EE47C25194F", "postgres-workflow-store.xml": "FC03B945E94260CA5D5A8C4D0C84DBCCEF8B440C64F175F47BF3C2F26C11A1CA", "docker-cleanup.log": "400EE8F5BDA3B05CE32B706E3114A514706FD3B02E371EFD03F6F4DC5162F660"},
+  "limitations": ["one integration module", "single PostgreSQL instance", "does not prove indefinite operation, HA, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
