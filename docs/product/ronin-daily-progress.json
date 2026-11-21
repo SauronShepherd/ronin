@@ -2146,6 +2146,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D600.md",
       "candidate_sha": "f1308b09f60352d322cdd88c4ad24cb693041674",
       "commit_sha": "141da0daf24cd3b9acf5c0046d305202e45690e1"
+    },
+    {
+      "id": "D601",
+      "date": "2026-11-21",
+      "phase": "p11-live-supervisor-soak-600s",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D601.md",
+      "candidate_sha": "47c91c748f4670cdc1b9e0d49670f45fdaca389b",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [
