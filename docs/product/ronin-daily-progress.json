@@ -2176,6 +2176,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D603.md",
       "candidate_sha": "ab78e26d42f10159e20a82e10fa5408d11687230",
       "commit_sha": "3c4471bcaf6d4c6846323663e35a95185be3db9a"
+    },
+    {
+      "id": "D604",
+      "date": "2026-11-21",
+      "phase": "full-live-postgres-not-pass",
+      "status": "not_pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D604.md",
+      "candidate_sha": "e43227e0420e256ae3ec00d4a0f5facf0d82a6bb",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

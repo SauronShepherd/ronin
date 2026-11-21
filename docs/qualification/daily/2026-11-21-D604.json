@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D604",
+  "status": "NOT_PASS_LIVE_FULL_POSTGRES",
+  "candidate_sha": "e43227e0420e256ae3ec00d4a0f5facf0d82a6bb",
+  "qualification": "full live product route against PostgreSQL with immutable Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d604-live-full-postgres-r2 -StorageBackend postgres -WorkerImage sha256:764310993f8f4cafd8bb08b7a190323b9c91d9a0aa8e00e1f7ed665373c584c4",
+  "result": {"selected": 43, "passed": 41, "failed": 1, "skipped": 1, "api_events": 528, "correlated_events": 528, "unexpected_errors": 3, "failure": "two-partition backlog reached exactly 40 run attempts while consuming all 64 records; contract requires fewer than 40", "cleanup": "PASS", "process_exit_code": 1},
+  "finding": "Full live coverage ran against real PostgreSQL, Redpanda and an immutable worker; one bounded two-partition backlog criterion failed at its strict attempt cap, so this campaign is not PASS evidence.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d604-live-full-postgres-r2",
+  "evidence_sha256": {"browser-live.log": "A66D8AA336165F2374B7A78FD5A33E3940E5B40B2D160AEA8307A480E4B5815B", "browser-live.xml": "B01A302800B165344A3E9AD9756A7DBB0BE00DB780312C64767C82A70CE537E9", "live-api-traffic.json": "41BCEE302697A744AECD6E280CAC7A1AD4635F439F6BD27B9F956514134CA5BA", "qualification-summary.json": "1DE7512F84435FC19F4940EB6EBD08A02BD300C75B25F615E7863D3B78AA18A6", "live-server.stderr.log": "0DD94C6AB17C9C550B563EFCA80AD74D3980EDCD0AD11ACA9F718B50D33BD63"},
+  "limitations": ["not a release PASS", "one bounded criterion failed", "worker image was caller-built and cleaned", "does not prove complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
