@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D493",
+  "status": "PASS_LIVE_BACKPRESSURE_DIAGNOSTIC_1000_CHECKPOINT_CAS",
+  "candidate_sha": "ba9ad939726290a4318d6a170ea8380d6cc123ed",
+  "qualification": "bounded live 1,000-record PostgreSQL backpressure diagnostic after single-statement checkpoint CAS",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d493-live-backpressure-1k-ba9ad939 -TestGrep 'sustained backpressure' -BackpressureRecords 1000 -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 12, "correlated_http_logs": 12, "api_ok": 12, "api_error": 0, "elapsed_seconds": 105.52, "process_exit_code": 0},
+  "finding": "The checkpoint CAS optimization preserves the 1,000-record live pass and reduces elapsed time from D492's 107.11 seconds to 105.52 seconds, but is not sufficient to qualify 10,000 records.",
+  "change_boundary": {"sha": "ba9ad939726290a4318d6a170ea8380d6cc123ed", "change": "existing-position checkpoint CAS uses one conditional UPDATE instead of SELECT followed by UPDATE", "regression": "43 streaming/scheduler tests passed, compileall and Ruff passed"},
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d493-live-backpressure-1k-ba9ad939",
+  "evidence_sha256": {"browser-live.log": "B985D554B19F463F037C14B8B79BE94CC0781D838BAC2E99C8FD51A70FC8D0A5", "browser-live.xml": "2E312757E60C3AFA7AFD4C732B74A27016C26DB95BB62A4F9B18D162A79A3B7D", "live-api-traffic.json": "2904BAD8D0A2B6A923172583E3C9252C963AF7DCA42F63C572C6C59E09AB1611", "live-python-freeze.txt": "8918B524F8B20A56AF5F2CB0D650B72CAE9C2CCBA745FF59F29C6D57FC6804C6", "live-server.stderr.log": "1684294909C44F60350ADC22B66F330214BCB8097EB8F44095974F89C43A5656", "qualification-summary.json": "B777778841575251D49A72C6808415C1A465A9988A84A0FAEBA998BD5C276C97"},
+  "limitations": ["diagnostic is bounded to 1,000 records and does not qualify 10,000-record sustained backpressure", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

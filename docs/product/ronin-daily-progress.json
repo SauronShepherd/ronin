@@ -1126,6 +1126,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D492.md",
       "candidate_sha": "0e2bd7716dca768c8a01346cc85a3b7601d44d09",
       "commit_sha": "0e2bd7716dca768c8a01346cc85a3b7601d44d09"
+    },
+    {
+      "id": "D493",
+      "date": "2026-11-21",
+      "phase": "p11-current-candidate-live-backpressure-scale-diagnostic-1000-checkpoint-cas",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D493.md",
+      "candidate_sha": "ba9ad939726290a4318d6a170ea8380d6cc123ed",
+      "commit_sha": "ba9ad939726290a4318d6a170ea8380d6cc123ed"
     }
   ],
   "known_blockers": [
