@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D426",
+  "status": "PASS",
+  "candidate_sha": "28ddff03aeabf955c85e66b65212dd2b3eff4228",
+  "qualification": "Helm/kind deployment chained to exact Docker provenance",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d426-helm-kind-current-20261121 -ImageRef ronin:live-d425 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d425-docker-full-current-20261121",
+  "result": "passed",
+  "image": "sha256:5670762683eaff82d483d6b327f6227e3e5c6632dc49770a8e3eddaa11f8e2f6",
+  "helm_version": "v4.3.1+gc0d08d0",
+  "coverage": ["helm lint", "Secret token boundary", "kind install/readiness", "upgrade revision 2", "rollback revision 1", "health and authorized API", "queued job persistence across deployment restart"],
+  "cleanup": "PASS; isolated kind cluster removed; retained Docker image removed after Helm",
+  "evidence_sha256": {"helm-qualification.json": "82EEA64383A38F6CD722A9340510863674C03F8347F8E45928838166ECBB5262", "helm-qualification.log": "0E9A7BCA7C3E1CD472AC56DA08588C7661E6FC96257A7916647427A5C44CCB90", "kubernetes-resources.txt": "4BB9039AA063CD4D3622D7557262169071E07182D30E6F78F71DEF7B350E5D07"},
+  "limitations": ["bounded single-node kind deployment", "does not prove multi-worker HA, external cloud providers, P13 or release closure"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

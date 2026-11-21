@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D425",
+  "status": "PASS",
+  "candidate_sha": "28ddff03aeabf955c85e66b65212dd2b3eff4228",
+  "qualification": "full Docker appliance qualification retained for Helm downstream provenance",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:live-d425 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d425-docker-full-current-20261121 -KeepImage",
+  "result": {"docker_tests": 27, "passed": 27, "failed": 0, "skipped": 0, "strict_v01_passed": 15, "strict_v01_failed": 0, "elapsed_seconds": 181.28},
+  "image": "sha256:5670762683eaff82d483d6b327f6227e3e5c6632dc49770a8e3eddaa11f8e2f6",
+  "cleanup": "PASS; fixtures removed; image intentionally retained only until D426 completed, then removed",
+  "evidence_sha256": {"qualification-summary.json": "715525740995947F8F3C05445181C6360B5323766C78DB5F500AD183819280B6", "docker-pytest-output.log": "7F72FC0D9DD666E7623F27B49A16913E15007AD5700A022C70DBFD406172C81C", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "DA938DF08545CC810CF2AD6BA93565B698E743ADB3448653CCCF286389A802D6"},
+  "limitations": ["bounded local appliance evidence", "does not certify external cloud providers or close P11/P13/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
