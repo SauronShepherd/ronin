@@ -1396,6 +1396,26 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D523.md",
       "candidate_sha": "42a163be04e4c06583b0fae87b5005e74465e069",
       "commit_sha": "42a163be04e4c06583b0fae87b5005e74465e069"
+    },
+    {
+      "id": "D524",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-broker-event-cache-fix",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D524.md",
+      "candidate_sha": "1aa9588914d4262b0a24cbc0412a85f10502d4b8",
+      "commit_sha": "1aa9588914d4262b0a24cbc0412a85f10502d4b8"
+    },
+    {
+      "id": "D525",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-event-regression-after-cache-fix",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D525.md",
+      "candidate_sha": "1aa9588914d4262b0a24cbc0412a85f10502d4b8",
+      "commit_sha": "1aa9588914d4262b0a24cbc0412a85f10502d4b8"
     }
   ],
   "known_blockers": [

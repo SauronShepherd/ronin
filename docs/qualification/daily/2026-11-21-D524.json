@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-21",
+  "day": "D524",
+  "status": "PASS_POSTGRES_BROKER_EVENT_AFTER_CACHE_FIX",
+  "candidate_sha": "1aa9588914d4262b0a24cbc0412a85f10502d4b8",
+  "qualification": "bounded live PostgreSQL broker-restart and event-workflow sequence after scoping trigger snapshots to autonomous ingestion transactions",
+  "command": "$env:RONIN_SCHEDULER_INTERVAL_SECONDS='0.25'; $env:RONIN_SCHEDULER_RETRY_SECONDS='0.25'; pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d524-live-broker-event-minimal-postgres-fixed -WorkerImage ronin:qualification-d524 -TestGrep 'live streaming (broker restart|event workflow)' -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "api_events": 22, "correlated_api_events": 22, "uncorrelated_api_events": 0, "duration_seconds": 75.13},
+  "worker_image_digest": "sha256:f34e87e447b0527bdc93573d8c2589b7c8f673360be13bc64c8137bc71e52feb",
+  "finding": "Scoping the PostgreSQL trigger snapshot cache to autonomous ingestion transactions restores event-workflow delivery after broker recovery. Both broker-restart and event-workflow cases pass in one PostgreSQL-backed live run.",
+  "service_profile": "isolated PostgreSQL 16.4, Kafka, real Ronin API and Docker worker",
+  "cleanup": "PASS; isolated containers, volume, network and temporary worker image removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d524-live-broker-event-minimal-postgres-fixed",
+  "evidence_sha256": {
+    "browser-live.log": "7724248FC1719CD42A91003482223E007F525AC32CFE58C91E255111B62B0BD0",
+    "browser-live.xml": "5328D4258D7A8BF68600752B833AFA2C288C35DAE08114BBB604D0E9A715A0D9",
+    "live-api-traffic.json": "1A473713ED714AB5A4187FE55E5B2DEE170C9588DEF5238588083C67DC551217",
+    "live-python-freeze.txt": "165A835CCCD8A583259131B5245601ECCD125EC6E118366D28B3B9A16671873C",
+    "live-server.stderr.log": "5BEDA096A547929CB61583ED3D7B9C500E03E12333E319AD05D09390F3B63EF1",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "2B53DA8F6C7410A773DA5BDC8ED31E572A0004AE5A1528B2EE9EA46D3C0F517B",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["bounded two-test diagnostic", "does not prove indefinite operation or release approval", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

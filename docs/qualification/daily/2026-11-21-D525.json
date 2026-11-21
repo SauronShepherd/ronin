@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D525",
+  "status": "PASS_POSTGRES_EVENT_REGRESSION_AFTER_CACHE_FIX",
+  "candidate_sha": "1aa9588914d4262b0a24cbc0412a85f10502d4b8",
+  "qualification": "filtered real PostgreSQL scheduler event inbox regression after trigger-cache lifecycle fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d525-postgres-regression-fixed -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter event",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 3.57, "process_exit_code": 0},
+  "finding": "The existing real PostgreSQL event-inbox, frozen-delivery and replay regression remains green after the cache lifecycle fix.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d525-postgres-regression-fixed",
+  "evidence_sha256": {
+    "pytest-output.log": "8ED5747D39F39FCC6D2CA67AE86AB787042BE53FFC0B7832F606F1E78B7CA4F4",
+    "pytest-postgres.log": "D235ECC99E89A68A622B789926BF76FC7A0E3E88CE9E49A681671B175ADE3301",
+    "pytest-postgres.xml": "501AFDC2B5CCB25E1566E1495CA72614590CE8DCA619CCD56F4F3F5D6D98918A",
+    "pytest-timings.json": "5D32DE9B960DA7DF93F65EC8F64F4061C36AF04503296E357A043D67044D56C6",
+    "runner-timings.json": "B794EABAF385E9534E828C944B2A646885FFF07502772AD3EF76F0260F00C33D"
+  },
+  "limitations": ["filtered event regression, not full PostgreSQL suite", "does not prove indefinite operation", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
