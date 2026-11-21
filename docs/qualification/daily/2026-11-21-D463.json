@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D463",
+  "status": "PASS_BOUNDED_SOAK_1800",
+  "candidate_sha": "4a5d6fa9ea7be6266f584c692270d421e0a3e9a5",
+  "qualification": "focused live supervisor soak with explicit PostgreSQL runtime, Redpanda and Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d463-soak-1800-9b718f74076a4149a5ff047b2b1ba6a0 -WorkerImage sha256:b76e71671ec5c15ed0b4fa150bc66578b408a3902ca06b4144990d7805c09395 -StorageBackend postgres -TestGrep 'live streaming supervisor soak drains while records arrive' -SupervisorSoakSeconds 1800",
+  "result": {"executed": 1, "passed": 1, "failed": 0, "skipped": 0, "process_exit_code": 0, "api_events": 2153, "correlated_http_logs": 2153, "api_ok": 2153, "api_warn": 0, "api_error": 0, "elapsed_seconds": 1870.56},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true, "worker_image": "sha256:b76e71671ec5c15ed0b4fa150bc66578b408a3902ca06b4144990d7805c09395"},
+  "bounded_criteria": "Supervisor soak configured for 1800 seconds; this is stronger bounded evidence than D460's 1200-second criterion and does not prove indefinite operation.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume, network and temporary worker image removed",
+  "evidence_sha256": {"qualification-summary.json": "E896D2AED897CE0797A3239A62864E2D5BDB8845F1EE393BC8A666C0FAA3A66C", "browser-live.xml": "C5A37D16377E5AC5FBA64A966BAA093032AED5389FA595D2C04AAD1CDFB076A1", "live-api-traffic.json": "949BF9DF028C5C6D857CD02B645E433759645F1D56D5078739597D02171CE39D", "live-server.stderr.log": "B3F420C2739D0E924DF297B7AFFB2B5AA80C34C6EFA6E7FCBA5E0F0604C3F956", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"},
+  "limitations": ["single focused soak case", "bounded evidence, not indefinite operation", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
