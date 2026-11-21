@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D459",
+  "status": "PASS_FOCUSED_DIAGNOSTIC",
+  "candidate_sha": "f65e7e0a4c95bb384805a1a7ded60cc7409afe24",
+  "qualification": "focused PostgreSQL live Ingestion Studio with explicit postgres runtime",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d459-ingestion-pg-07841c9d25bf41b1a310fe61e3020e7f -WorkerImage sha256:9e16c354f91dc0c6218ae90e79bd7c12a01cbbb25aad10ec2a0229aae4d67b42 -StorageBackend postgres -TestGrep 'Ingestion Studio' -RequestTimeoutSeconds 60",
+  "result": {"executed": 3, "passed": 3, "failed": 0, "skipped": 0, "process_exit_code": 0, "api_events": 32, "correlated_http_logs": 32, "api_ok": 27, "api_warn": 5, "api_errors": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true, "worker_image": "sha256:9e16c354f91dc0c6218ae90e79bd7c12a01cbbb25aad10ec2a0229aae4d67b42"},
+  "cleanup": "PASS; isolated PostgreSQL, Redpanda, volume, network and worker image removed",
+  "evidence_sha256": {"qualification-summary.json": "BDCB59283B90C7DA430C22372E48B67DE791EF9B9E21C0A00B45B5C65275A84E"},
+  "limitations": ["focused Ingestion Studio diagnostic; not full live qualification", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

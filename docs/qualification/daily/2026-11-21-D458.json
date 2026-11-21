@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-21",
+  "day": "D458",
+  "status": "FAIL_DIAGNOSTIC",
+  "candidate_sha": "7c97963e8056923c01d8afc45df2373dc286229b",
+  "qualification": "focused PostgreSQL live Ingestion Studio after runtime DSN experiment",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d458-ingestion-pg-e1d67c60bd404017b9cfb94d065fd89f -WorkerImage sha256:3eab2167114d5e2193a868b0a6ad57e2507131a441915d5689437c5a0cf80495 -StorageBackend postgres -TestGrep 'Ingestion Studio' -RequestTimeoutSeconds 60",
+  "result": {"executed": 3, "passed": 2, "failed": 1, "skipped": 0, "process_exit_code": 1, "api_events": 25, "correlated_http_logs": 25, "api_errors": 0},
+  "failure": "Discovery page 1 returned finops_budgets while the test expected ui_page_accounts; this run used the temporary runtime DSN change later reverted in f65e7e0a.",
+  "cleanup": "PASS; isolated PostgreSQL, Redpanda, volume and network removed; worker image removed after use",
+  "evidence_sha256": {"qualification-summary.json": "E7271A811D664585BCA92A18413401514FFE58C2D7E6A1D1AAAA9690E351F1CB"},
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
