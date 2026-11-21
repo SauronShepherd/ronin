@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D472",
+  "status": "PASS_BOUNDED_SOAK_1800_CURRENT_REVALIDATION",
+  "candidate_sha": "f2e13cd086e5bec28cb421120d75d56be634edae",
+  "qualification": "focused live supervisor soak revalidation with explicit PostgreSQL runtime, Redpanda and rebuilt Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d472-soak-current-71115e6275254291a05babbaf1c81a87 -WorkerImage sha256:8ef6169f49860b0f011831740f1f435ed0c45643d19b8d29bea6adbadcd4966f -StorageBackend postgres -TestGrep 'live streaming supervisor soak drains while records arrive' -SupervisorSoakSeconds 1800",
+  "result": {"executed": 1, "passed": 1, "failed": 0, "skipped": 0, "process_exit_code": 0, "api_events": 2165, "correlated_http_logs": 2165, "api_ok": 2165, "api_warn": 0, "api_error": 0, "elapsed_seconds": 1866.96},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true, "worker_image": "sha256:8ef6169f49860b0f011831740f1f435ed0c45643d19b8d29bea6adbadcd4966f"},
+  "bounded_criteria": "Supervisor soak configured for 1800 seconds; this revalidates the D463 bounded criterion on a newer candidate and does not extend the 1800-second limit or prove indefinite operation.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume, network and rebuilt temporary worker image removed",
+  "evidence_sha256": {"browser-live.log": "5B9784607CBDD13C9EC057570C456D930FA52C6DDD7DB30DB7D6157B29D6C8BE", "browser-live.xml": "E251C7F7387559C12F220FC65C485BE893505881DA41D2190C232B7C9C9902F2", "live-api-traffic.json": "A9E66DB58DAEC1953FC00823344DDB55ED45DD56FFD329A54A039B32E08F0D77", "live-python-freeze.txt": "48AFDF6F1EAF4477259F0C851362B2BF51702BA5815474718958F9F44BE1E976", "live-server.stderr.log": "4F589DC516080233E802D3E2B2F6A6246224566677BE5FE0FC9819EB45B0EA65", "qualification-summary.json": "AE2C1D260FCDCD16137EBCE71E27795C532DD9F67580C133EAB4FAA22E999C7F"},
+  "limitations": ["same bounded 1800-second criterion as D463, revalidated on a newer candidate", "not indefinite operation", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
