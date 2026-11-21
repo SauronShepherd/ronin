@@ -512,3 +512,8 @@ if ($KeepImage -and $imageWasBuiltFromCheckout) {
 } else {
     Write-Output "Docker qualification: PASS; tests and owned resources cleaned."
 }
+
+# Native Docker commands in the cleanup finally block can leave a non-zero
+# LASTEXITCODE even after every owned resource was removed successfully.
+# Make the runner's process result reflect the qualification result explicitly.
+exit 0
