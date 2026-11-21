@@ -3695,6 +3695,21 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             timeout_seconds=payload.get("timeout_seconds"),
                         )
                 except Exception as exc:
+                    _ACCESS_LOGGER.error(
+                        json.dumps(
+                            {
+                                "event": "stream.execution.failure",
+                                "request_id": self._request_id,
+                                "exception": exc.__class__.__name__,
+                                "cause": (
+                                    None
+                                    if exc.__cause__ is None
+                                    else exc.__cause__.__class__.__name__
+                                ),
+                            },
+                            separators=(",", ":"),
+                        )
+                    )
                     if exc.__class__.__name__ == "StreamingInputRejected":
                         self._error(
                             HTTPStatus.UNPROCESSABLE_ENTITY,
