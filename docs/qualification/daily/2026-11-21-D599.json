@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D599",
+  "status": "PASS_POSTGRES_ML_FULL",
+  "candidate_sha": "5b6fe9188d68dad7ab428a8d8b023856275bdfe0",
+  "qualification": "complete PostgreSQL ML integration suite against the configured real backend",
+  "command": "python -m pytest -q tests/integration/test_postgres_ml_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d599-postgres-ml\\postgres-ml.xml",
+  "result": {"selected": 12, "passed": 12, "failed": 0, "skipped": 0, "postgres": "16.4", "process_exit_code": 0},
+  "finding": "The complete PostgreSQL ML integration suite passed against the real backend, covering registry conflicts, archived-workspace guards, Lab round trips, job claims/cancellation, references, checkpoints and atomic bundle rollback paths.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d599-postgres-ml",
+  "evidence_sha256": {"postgres-ml.log": "1D44AFD0A7F7A21E24B6310841D56842993405A934E3F776C9AE73E85859CB45", "postgres-ml.xml": "2AB3181C6B4BD861E747B0C9BDFC088DDEDC402C7B35FD6A20E932BE5186AB5F", "docker-cleanup.log": "56745C167AD1F01483D70496F9CDE3BCF6E79625804210A85127504C0DF1C49D"},
+  "limitations": ["one integration module", "single PostgreSQL instance", "does not prove indefinite operation, HA, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

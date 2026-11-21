@@ -2126,6 +2126,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D598.md",
       "candidate_sha": "536569f2a358914b9b2fbedf25bd157e86d6533b",
       "commit_sha": "eef67a91fe76bbbd659a0f5e43e173da03b92581"
+    },
+    {
+      "id": "D599",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-ml-full",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D599.md",
+      "candidate_sha": "5b6fe9188d68dad7ab428a8d8b023856275bdfe0",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [
