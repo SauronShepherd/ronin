@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D511",
+  "status": "PASS_POSTGRES_SCHEDULER_RECOVERY",
+  "candidate_sha": "a9ed0888bdbb9a5804e3456658b06c8bd9d0d9bc",
+  "qualification": "filtered real PostgreSQL scheduler daemon recovery after expired leadership lease",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d511-postgres-scheduler-recovery-current -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 6.67, "process_exit_code": 0},
+  "finding": "A second SchedulerDaemon reacquires PostgreSQL leadership after the first daemon is dropped and its lease expires; leader generation advances to 2 and the already-fired schedule remains exactly one fire, proving no duplicate fire.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d511-postgres-scheduler-recovery-current",
+  "evidence_sha256": {
+    "pytest-output.log": "49B6ED853D4A266C4F49C9C6DF36465E2B9DE0EBC796B2CD48B8545B730F60CE",
+    "pytest-postgres.log": "89DD2701C4274F22CEC81785A01A91C9C64000A569CB03230F0D804D1934CECA",
+    "pytest-postgres.xml": "C906FD01BC6E188B5A49935542FDBD7ECF922B14C8139840BC95F89B627C92F5",
+    "pytest-timings.json": "F97872E196D1AA4BB5118937BA801A4CB14C3A8D3783B881E1EFEE0B1B5EBF1E",
+    "runner-timings.json": "0E7DD00EABDECAD23EF8B49BFFC49CD46B8F00F5782156D62F0F8778EC6C3DF5"
+  },
+  "limitations": ["filtered diagnostic, not the complete PostgreSQL suite", "does not close remaining P11 families or release gates", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
