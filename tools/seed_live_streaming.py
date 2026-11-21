@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 
 from confluent_kafka import Producer
 from studio_streaming import (
+    PostgresStreamCheckpointStore,
     SqliteStreamCheckpointStore,
     StreamDefinition,
     StreamRuntimeBinding,
@@ -252,7 +253,14 @@ def main() -> int:
         # after the first partition has been drained by the prior micro-batch.
         runtime=StreamRuntimeBinding("local", batch_limit=2, timeout_seconds=2.0),
     )
-    store = SqliteStreamCheckpointStore(database)
+    storage_backend = os.environ.get("RONIN_STORAGE_BACKEND", "sqlite").strip().lower()
+    if storage_backend == "postgres":
+        postgres_dsn = _required("RONIN_POSTGRES_DSN")
+        store = PostgresStreamCheckpointStore(postgres_dsn)
+    elif storage_backend == "sqlite":
+        store = SqliteStreamCheckpointStore(database)
+    else:
+        raise SystemExit("RONIN_STORAGE_BACKEND must be sqlite or postgres")
     store.commit_stream_bundle_import(
         workspace_id,
         (definition, poison_definition, oversized_definition, partitioned_definition),
