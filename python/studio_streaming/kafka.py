@@ -288,12 +288,12 @@ class KafkaJsonSource:
                     offset = int(message.offset())
                     records.append(StreamRecord(partition, offset, timestamp_ms, key, value))
                     latest[partition] = max(latest.get(partition, -1), offset)
-                # A non-empty consume result is already a complete bounded
-                # micro-batch. Waiting for the requested limit here adds up to
-                # another provider timeout when records arrive continuously,
-                # reducing supervisor throughput without improving durability.
-                if records:
-                    break
+                # Keep filling the bounded micro-batch while the provider
+                # deadline permits it. A multi-partition fetch can return only
+                # part of the requested limit even when more records are ready;
+                # stopping after that first non-empty fetch needlessly turns a
+                # limit=4 batch into one- or two-record batches and can starve
+                # bounded supervisors under sustained backlog.
                 if time.monotonic() >= deadline:
                     break
             if not records:
