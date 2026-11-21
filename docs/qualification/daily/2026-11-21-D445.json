@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D445",
+  "status": "PASS",
+  "candidate_sha": "d450ce27832f002ea3e1f44227998dc889ad2ecd",
+  "qualification": "complete PostgreSQL ML integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d445-postgres-ml-a921751477a345ea8c5bd2ea7f01b5e5 -TestPath tests/integration/test_postgres_ml_real.py",
+  "result": {"selected": 12, "passed": 12, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 5.34},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "4F4E3230922945DB7B14D3A1BA0A07657635D8FE508A3AE8DA7FF116C2831C94",
+    "pytest-postgres.log": "61DAD20DCC9D5D2FC05B69EF4DD243595B0DF33F0BB062A301AD02E9313E6235",
+    "pytest-postgres.xml": "7D0002969CBE19813E04ACD66CCD557D2155A9CD6E92B90EBF9BE4E97C8D8508",
+    "pytest-timings.json": "29F316698F5B01808ACE6DCAE241DF0BF98F16E17B064DF8DABE895079EE2988",
+    "runner-timings.json": "A2ACF6C50D14CF300A34A567A2FE94AAD4A6B51BA83BC6D0BAF78A8BDDF32C81"
+  },
+  "coverage": ["ML registry round-trip/conflicts", "atomic concurrent/replayable bundles", "rollback on missing dataset/model/feature/cancel", "shared job claim/cancel fencing and race", "node checkpoint reopen", "archived workspace and fail-closed limits"],
+  "limitations": ["bounded integration file with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
