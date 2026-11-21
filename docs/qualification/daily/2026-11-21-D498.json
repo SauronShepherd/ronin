@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-21",
+  "day": "D498",
+  "status": "FAILED_LIVE_BULK_REPLAY_REGRESSION",
+  "candidate_sha": "0784c3f903dac350ec7bd549cd4f68db8b5a75ad",
+  "qualification": "bounded live 1,000-record PostgreSQL backpressure after bulk scheduler event persistence",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d498-live-backpressure-1k-0784c3f9 -TestGrep 'sustained backpressure' -BackpressureRecords 1000 -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "skipped": 0, "api_events": 10, "correlated_http_logs": 10, "api_ok": 9, "api_error": 1, "elapsed_seconds": 124.15, "process_exit_code": 1},
+  "finding": "Bulk event persistence completes initial drains but the first replay after reset returns 503 streaming_unavailable. D495-D498 reproduced the same regression despite cursor and typed-array probe fixes.",
+  "change_chain": ["f6cecfffc2b4cfe5a6168d6ef835decf66998437", "e50d6bb3f782928ec7f513111d6bcd409fd14c93", "d2b8172611bb4490dce372cfbdfc7176063713fa", "0784c3f903dac350ec7bd549cd4f68db8b5a75ad"],
+  "rollback_boundary": "c7c576082edc9522ea07e91e1d797be760eac292 disables the unverified bulk wiring in the local composed production path; bulk implementation remains isolated for follow-up debugging.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d498-live-backpressure-1k-0784c3f9",
+  "evidence_sha256": {"browser-live.log": "2381CFF7AB3166270168E7DB26EF0E95029599703D5AE9004D419DAD319CADF9", "browser-live.xml": "87849AA8DAB1A7E0598DEB7841A3D7FABA7FAADC71668657A3432BDD94B5B9C9", "live-api-traffic.json": "C8C4E3E76A04E599F204B5C580F71BF487951F4A4360132CE6BF5D03FB73F20D", "live-python-freeze.txt": "DC0C123BF15EE7F941E635B60C448E37C4F028DC5553F5DABE0FDF9A6D9164CA", "live-server.stderr.log": "7CF468EDAA616FEDE820407E91A140A97574A19C827B58C5683177D61C3C2DB6", "qualification-summary.json": "37F00E832A5E58E31A6C5236BE161620C7356562D61A3A782028826D47DFD642"},
+  "limitations": ["bulk path is not enabled in the local composed production wiring after c7c57608", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
