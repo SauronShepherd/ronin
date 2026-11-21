@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D475",
+  "status": "PASS_LIVE_STREAMING_NEGATIVE_CURRENT",
+  "candidate_sha": "573d424a6eab3f671c468e3ec97bb3bad444ade3",
+  "qualification": "focused live streaming route with poison-record rejection and checkpoint non-advancement against explicit PostgreSQL",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d475-streaming-negative-dbb16959965b411490fc45b2bf692727 -WorkerImage sha256:f5b13ca209c1a0994211a775a71001fbdeef21dbd3cf92150511ff8b30543466 -StorageBackend postgres -TestGrep 'route streaming loads and reaches the live API'",
+  "result": {"executed": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 52, "correlated_http_logs": 52, "api_ok": 48, "api_warn": 4, "api_error": 0, "elapsed_seconds": 122.41, "process_exit_code": 0},
+  "negative_criteria": ["poison payload returns 422 stream_input_rejected", "checkpoint is not advanced", "retry remains rejected without leaking invalid payload details"],
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true, "worker_image": "sha256:f5b13ca209c1a0994211a775a71001fbdeef21dbd3cf92150511ff8b30543466"},
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume, network and rebuilt temporary worker image removed",
+  "evidence_sha256": {"browser-live.log": "C426C144A952FB8E5E997328ADA58ED2E80DC04582FD1EC11772A13514AFC5F5", "browser-live.xml": "6A74B61550F1D53B4B55EE6F138BD74315A3BD25394BB3428CBC9A7FCB7474E2", "live-api-traffic.json": "077D36CFD9AF7AAC8AB0A310F76A842B555A137645A443B18360B40F47AF4D00", "live-python-freeze.txt": "3282EB48A6BC4AD1C6D1E121A49691BF84E6139A91B5664A12051E4415F97383", "live-server.stderr.log": "82A93B3211B4A2D9E91F4C0B6FE8EE4920263CCA0028E38EDA7E9E9BC86CB6BE", "qualification-summary.json": "0846AD4CBC6274240ABDDCE007F9949D7E5453FC7BE37ECEC75D589F4EAD93BC"},
+  "selection_note": "The poison assertions are inside the route streaming test; D474's separate nonexistent-title selection executed zero tests and is not evidence.",
+  "limitations": ["focused route test also exercises other streaming route behavior", "bounded negative-path evidence, not indefinite operation", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

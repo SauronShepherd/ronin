@@ -996,6 +996,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D473.md",
       "candidate_sha": "1c5008e2291e0ee5a0aef6615255d84ae1c8d0a7",
       "commit_sha": "1c5008e2291e0ee5a0aef6615255d84ae1c8d0a7"
+    },
+    {
+      "id": "D475",
+      "date": "2026-11-21",
+      "phase": "p11-live-streaming-negative-poison-checkpoint",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D475.md",
+      "candidate_sha": "573d424a6eab3f671c468e3ec97bb3bad444ade3",
+      "commit_sha": "573d424a6eab3f671c468e3ec97bb3bad444ade3"
     }
   ],
   "known_blockers": [
