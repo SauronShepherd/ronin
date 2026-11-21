@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D447",
+  "status": "PASS",
+  "candidate_sha": "799b14d8b9c8d1aa88a43927de76e396d4d9e9e2",
+  "qualification": "real PostgreSQL catalog integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d447-postgres-catalog-0402edc2c89c411dadd6f25f2138e181 -TestPath tests/integration/test_postgres_catalog_store.py",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 1.34},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "9C662BB9781406BD7AE6966239122BF7B6513A896628BBE09BCED407BB7023AE",
+    "pytest-postgres.log": "99F492E7D3A06FE81641CF661659E20B877A881B96C6A4A65EEE9489C51EC349",
+    "pytest-postgres.xml": "00AF4B4633AF667D2C82EBE52533EC179098F16B146E2A25F21587ADF61A7E7B",
+    "pytest-timings.json": "BB2216385F6B0B09AA1A13AD387134B659EA72106038A5E00DE4585EFF8B5FE1",
+    "runner-timings.json": "986EF60E54DDC59A7B965AFBD309043F41CF86588A879FB538A6E2224AFDF6FC"
+  },
+  "coverage": ["catalog asset persistence", "governance metadata", "asset revisions", "lineage and bounded lineage limits"],
+  "limitations": ["focused integration test with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
