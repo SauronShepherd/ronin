@@ -1466,6 +1466,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D532.md",
       "candidate_sha": "e08dfcaf88c48a719ba478644f1388ed48ee7ca6",
       "commit_sha": "e08dfcaf88c48a719ba478644f1388ed48ee7ca6"
+    },
+    {
+      "id": "D533",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-workflow-file-after-cache-regression",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D533.md",
+      "candidate_sha": "c7a4b0c688b354810a671d1041f11392669cccca",
+      "commit_sha": "c7a4b0c688b354810a671d1041f11392669cccca"
     }
   ],
   "known_blockers": [

@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D533",
+  "status": "PASS_POSTGRES_WORKFLOW_FILE_REGRESSION",
+  "candidate_sha": "c7a4b0c688b354810a671d1041f11392669cccca",
+  "qualification": "complete real PostgreSQL integration file after trigger-cache regression test",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d533-postgres-workflow-file-after-cache-test -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "result": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 20.06, "pytest_wall_seconds": 25.41, "process_exit_code": 0},
+  "finding": "The complete PostgreSQL workflow-store integration file remains green after the permanent autonomous ingest_events trigger-cache regression test: replay, frozen delivery, conflicts, concurrent delivery, leases, outbox, daemon crash replay, migrations, HTTP adapters, cancellation, backfill and schema migration all pass.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner; no qualification containers or images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d533-postgres-workflow-file-after-cache-test",
+  "evidence_sha256": {
+    "pytest-output.log": "29BF12F9BDED9689CB261CF319E2883407FA45C561038A902A2107B64AE366EF",
+    "pytest-postgres.log": "58614837C8A00D17B0F88B1B47DDD4D17A01CC4F9532DE81743227C32C5165BC",
+    "pytest-postgres.xml": "D74B14BBE3B4207E2217DC03323A24E784C6898E2190BC5979506FEC1C812B39",
+    "pytest-timings.json": "091BF9FC31FDC2E3C712137349172575F052BF0DBC35F77B47D59405F87F52E1",
+    "runner-timings.json": "0756C02A785C4F0D17E2E31092D51B57A953F06C7F666F485113B0A342903F98"
+  },
+  "limitations": ["single integration file only", "does not prove indefinite operation, external providers/object stores, complete P11 or release gates", "does not reattribute D83-D100 evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
