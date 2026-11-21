@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D414",
+  "status": "PASS",
+  "candidate_sha": "890fa2c2036214bd1ccd29159509da497c0fa7fe",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "live PostgreSQL ingestion discovery and watermark replay",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d414-postgres-ingestion-live-20261121 -WorkerImage ronin:live-d414 -StorageBackend postgres -TestGrep 'Ingestion Studio (discovers real PostgreSQL pages|bootstraps and advances)' -RequestTimeoutSeconds 180",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "elapsed_seconds": 53.52, "api_events": 28, "correlated_http_logs": 28, "api_ok": 28},
+  "services": {"postgres": true, "kafka": true, "roninApi": true},
+  "coverage": ["Ingestion Studio discovers real PostgreSQL pages through live API", "PostgreSQL watermark advances without replay duplication"],
+  "cleanup": "PASS; isolated PostgreSQL/Redpanda services and worker image removed",
+  "evidence_sha256": {"browser-live.log": "4EB6E2F51DD331202DD9771666E13DBA7DBC082A8C4B00B36B0310A344A3A7A2", "browser-live.xml": "39B0043D8A90F9C2BCC91D0F3DED25680972066A6CEF397BDA6E72CEC0AF16EC", "live-api-traffic.json": "A8D7420158960987E4EA4391823B70387F65069897E8744869BA2727E993A58A", "qualification-summary.json": "801413E9556309B126C201EA5D7827AED555D898A3D41AB4FBB322E36673D6C5"},
+  "limitations": ["focused filtered live diagnostic", "two ingestion cases only", "does not prove indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

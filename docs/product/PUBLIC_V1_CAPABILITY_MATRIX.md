@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
+`2/2` cases passed in `53.52 s`, with the server configured against real
+PostgreSQL, 28/28 API events OK and cleanup PASS. This bounded evidence does not
+close P11/release.
+
 D413 passes the focused live `route workflows` diagnostic on `main@e3665b6c`:
 `1/1` case passed in `40.28 s`, with 30 correlated events and zero errors,
 after the qualification proxy empty-body fix. The server was not configured

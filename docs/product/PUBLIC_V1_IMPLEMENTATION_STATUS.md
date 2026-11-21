@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
+`2/2` cases passed in `53.52 s` with `realServices.postgres=true`, covering
+PostgreSQL page discovery and watermark advancement without replay duplication,
+with `28/28` correlated API events OK and cleanup PASS. This is focused bounded
+backend evidence and does not close P11/release.
+
 D413 passes the focused live `route workflows` diagnostic on
 `main@e3665b6c` after fixing the qualification proxy's empty-body handling:
 `1/1` case passed in `40.28 s`, with `30/30` correlated events, 29 OK, one
