@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-21",
+  "day": "D546",
+  "status": "PASS_DOCKER_FULL_CURRENT_REGRESSION",
+  "candidate_sha": "b1aae5902398c10f7158320ada396c9bb76a6f1b",
+  "qualification": "full current Docker integration and strict v0.1 regression after D545",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d546-docker-current -ImageTag ronin:qualification-d546 -KeepImage",
+  "result": {"docker_tests": 27, "docker_passed": 27, "docker_skipped": 0, "docker_failed": 0, "docker_pytest_seconds": 196.46, "v01_tests": 15, "v01_passed": 15, "v01_skipped": 0, "v01_failed": 0, "strict_success": true, "process_exit_code": 0},
+  "worker_image_digest": "sha256:b313e7d5bb27c18ed8ebe216e412357f3cf6e0f3e1f7e2ca3dba59dc86f7239f",
+  "finding": "The complete Docker regression remains green on the current candidate: real Docker workers, PostgreSQL appliance backup/restore, Floci/S3, Azurite/Azure, worker SIGKILL recovery and strict v0.1 journey all pass. D527 remains the prior exact evidence and is not reattributed.",
+  "service_profile": "isolated Docker, PostgreSQL 16.4, Floci S3-compatible fixture and Azurite Azure-compatible fixture",
+  "cleanup": "PASS after explicit image removal; post-run verification found zero containers and zero qualification images",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d546-docker-current",
+  "evidence_sha256": {"azurite-qualification.log": "4009E269348A62001E48398766DA3EC91F2A9D3C671352A7F04A305B416915D6", "docker-cleanup.json": "95DCC7936DFA2C75D03E38361C1677849668853C81CFCDD86FF573049108E230", "docker-pytest-output.log": "AC4DA7F41B343FED0A7362AA41FB86F56E267067887A153DFE7D3B9FC99182C5", "docker-qualification.log": "CCDAA537BDBC3A9D30E0F82E1A4C332509802569B303755461B457B387DC6698", "floci-s3-qualification.log": "22B12B006A3166C8A74423C1061F9E5DEF4CF69A47495C010CD252C10C9BBCEF", "postgres-qualification.log": "E93AD158FDF3EBF78408D6C43BAC75D0FCA4584EAAD9639433FF38D6F1F3C32B", "qualification-summary.json": "CC6CAF3EE01AC696BEDB5A20DBE48BEECF0E682FEE3612C223E04821E4443E7A", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "D45367ED4FD495B1AF11FE862DD8F616F517777227AF34B4661EEA7A5BD7A1A8"},
+  "limitations": ["regression of existing Docker scope, not new provider certification", "Floci and Azurite are compatibility fixtures, not external cloud certification", "resource observation fields include unavailable diagnostics for timeout/cancellation paths and do not alter the 27/27 test result", "does not qualify indefinite operation or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

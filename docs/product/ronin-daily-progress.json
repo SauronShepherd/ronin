@@ -1596,6 +1596,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D545.md",
       "candidate_sha": "0b8f8a4fdecf6525354218425e233dbc4800f613",
       "commit_sha": "57a39519aab20c25094d9031b7c7e2a08e5f4f4d"
+    },
+    {
+      "id": "D546",
+      "date": "2026-11-21",
+      "phase": "p11-docker-full-current-regression",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D546.md",
+      "candidate_sha": "b1aae5902398c10f7158320ada396c9bb76a6f1b",
+      "commit_sha": "b1aae5902398c10f7158320ada396c9bb76a6f1b"
     }
   ],
   "known_blockers": [
