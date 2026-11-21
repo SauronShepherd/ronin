@@ -230,7 +230,7 @@ def test_live_browser_suite_requires_real_services_and_emits_api_evidence() -> N
     assert "UI-only: no API route declared" in live_suite
     assert "route ${route.id} has no published API contract" in live_suite
     assert "authorization: authorization ? 'present' : 'missing'" in helper
-    assert "await fetch(upstreamUrl" in helper
+    assert "upstream = await requestUpstream(upstreamUrl" in helper
     assert "x-ronin-request-id" in helper
     assert "const calls = installLiveApiProxy(page);" in live_suite
     assert "call.status === 503 && call.outcome === 'ERROR'" in live_suite
