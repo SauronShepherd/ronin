@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D478",
+  "status": "PASS_BOUNDED_HTTP_CONTENTION_CURRENT",
+  "candidate_sha": "9fba7e688b2bb6246c8335722d9dd0ea6af1c4c2",
+  "qualification": "bounded HTTP contention latency and fail-fast budget qualification",
+  "command": "python -m pytest tests/perf/test_http_contention_budgets.py -q --junitxml C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d478-http-contention-07da4b822ed54184b805d99a5a7b1b3f\\v01-acceptance.xml",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "elapsed_seconds": 7.32, "process_exit_code": 0},
+  "criteria": ["bounded contention preserves HTTP submit/status p95 budgets", "capacity contention fails fast without unbounded queueing"],
+  "real_services": {"http": true, "sqlite": true, "provider": "local bounded runtime"},
+  "cleanup": "PASS; pytest-owned temporary resources released",
+  "evidence_sha256": {"pytest.log": "0C57A3CF388168779260B4BA4F1D0CD472ACD1916669CF914B38BE8FB49F9F78", "v01-acceptance.xml": "206C033550B30C80E5D5D909ACE1D014E851A5221158C8F28D8CEA4C4A34B097"},
+  "limitations": ["bounded local performance diagnostic, not an indefinite SLO", "does not certify external providers or production topology", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

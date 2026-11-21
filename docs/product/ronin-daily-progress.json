@@ -1016,6 +1016,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D476.md",
       "candidate_sha": "09824e0eaeff48d0fc57353bfdbbb190a31aa13e",
       "commit_sha": "09824e0eaeff48d0fc57353bfdbbb190a31aa13e"
+    },
+    {
+      "id": "D478",
+      "date": "2026-11-21",
+      "phase": "p11-current-candidate-bounded-http-contention",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D478.md",
+      "candidate_sha": "9fba7e688b2bb6246c8335722d9dd0ea6af1c4c2",
+      "commit_sha": "9fba7e688b2bb6246c8335722d9dd0ea6af1c4c2"
     }
   ],
   "known_blockers": [
