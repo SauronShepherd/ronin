@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D534",
+  "status": "PASS_POSTGRES_CHECKPOINT_RESTART",
+  "candidate_sha": "1ad888c5d4a23bcbef954191e13423277a500e87",
+  "qualification": "bounded real PostgreSQL connector checkpoint fencing, persistence, replay and reopen recovery",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d534-postgres-checkpoint-restart -TestPath tests/integration/test_postgres_connector_checkpoint_real.py -TestFilter postgres_connector_checkpoint_fencing_inventory_and_restart",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 2, "pytest_seconds": 2.16, "pytest_wall_seconds": 3.782, "process_exit_code": 0},
+  "finding": "Real PostgreSQL checkpoint qualification passed concurrent fence acquisition, stale-fence rejection, durable output-plus-checkpoint commit, store reopen persistence, idempotent replay, CAS conflict rejection and committed-output inventory bounds.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner; no qualification containers or images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d534-postgres-checkpoint-restart",
+  "evidence_sha256": {
+    "pytest-output.log": "280151436B6CA5C964C01DD44C2E4ED5ED2215F3321F02E7EECDF943A42777B6",
+    "pytest-postgres.log": "2B8E83E9B3D26911CDED578E0A23A4D58184929BD57A74A5EF6E535B7F27806A",
+    "pytest-postgres.xml": "C886DE717073A19B69F4D3815F8E414980F5796F1B2D29739D5D261C55D26E50",
+    "pytest-timings.json": "DEEB8C65CAE21343AE42F3B26496BF8E957A73585DC7F4AC3A3EC10BD6BE7977",
+    "runner-timings.json": "48B2BCB48DF47615E4579693858A79BA09ED85802E546FDE163BF64B8F482FA6"
+  },
+  "limitations": ["filtered single diagnostic", "connector checkpoint recovery, not scheduler recovery or complete P11", "does not qualify external providers/object stores or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
