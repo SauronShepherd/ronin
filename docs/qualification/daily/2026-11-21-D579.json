@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D579",
+  "status": "PASS_WORKER_CONTENTION_INTEGRATION",
+  "candidate_sha": "d7404055ad0d895dc374f87a1269e8f568e9deed",
+  "qualification": "worker runtime contention integration file",
+  "command": "python -m pytest tests/integration/test_worker_runtime_contention.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d579-worker-contention-integration\\pytest.xml",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "pytest_seconds": 2.51, "process_exit_code": 0},
+  "finding": "Worker contention integration passes its bounded claim/reclaim invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d579-worker-contention-integration",
+  "evidence_sha256": {"pytest.log": "9A97CADD53694A827B0552399B993CE4BD7E4089275DF9D2DF7D1B3A9949F314", "pytest.xml": "7D4AADD15B3D3C9B013FA753016A8FE7845521D26AEB4C67FD44BF6356771985"},
+  "limitations": ["bounded worker contention integration", "does not prove PostgreSQL runtime, indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

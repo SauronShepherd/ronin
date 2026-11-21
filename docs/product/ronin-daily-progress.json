@@ -1926,6 +1926,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D578.md",
       "candidate_sha": "9f0705303b4a6ba30967db1119609a53141162a8",
       "commit_sha": "7ba43650006e320308869a1f52bb0acb9f2d10e7"
+    },
+    {
+      "id": "D579",
+      "date": "2026-11-21",
+      "phase": "p11-worker-contention-integration",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D579.md",
+      "candidate_sha": "d7404055ad0d895dc374f87a1269e8f568e9deed",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [
