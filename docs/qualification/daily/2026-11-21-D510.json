@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D510",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_300_CURRENT",
+  "candidate_sha": "2bbfef6a77cb3b7a8d8c97c901dac806a62593bb",
+  "qualification": "bounded 300-second live streaming supervisor soak with PostgreSQL",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d510-live-supervisor-300-current -TestGrep 'supervisor soak' -SupervisorSoakSeconds 300 -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 379, "correlated_http_logs": 379, "api_ok": 379, "api_error": 0, "elapsed_seconds": 354.96, "process_exit_code": 0},
+  "finding": "The current Kafka/PostgreSQL candidate sustains the bounded 300-second supervisor soak while records arrive; all 379 API events correlate and remain OK.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d510-live-supervisor-300-current",
+  "evidence_sha256": {"browser-live.log": "7F8D48388764FA9FE217782C5E1A36A150CD05EB49F5AD047580F793139AFD21", "browser-live.xml": "00BA01CA294263829DF028E784E5994C3D23FFA1B9C5F94F122613FC229C7DF8", "live-api-traffic.json": "60B1DF4CAA9B833090966BEA4CFF043E08A9C23F63A7CCEBA33AAD58EE49B3A7", "live-python-freeze.txt": "52B91D41391DCFC72D0C509679DA1DDF1F23B39119BDB77BB1CC5B4F3C4FEE2E", "live-server.stderr.log": "0836B8AA7C41CA9AC63EA87236F103155432CC9A75B6188C67AE4E0BAB130CFD", "qualification-summary.json": "14310F2B242C3607A13292BA95DEEC8523B27A3778A12CC1B1819C124960EC7E"},
+  "limitations": ["bounded 300-second soak does not close remaining P11 families or release gates", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
