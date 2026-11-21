@@ -1606,6 +1606,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D546.md",
       "candidate_sha": "b1aae5902398c10f7158320ada396c9bb76a6f1b",
       "commit_sha": "d44064557d1197da9a11c8c809f6757c161123d0"
+    },
+    {
+      "id": "D547",
+      "date": "2026-11-21",
+      "phase": "external-provider-availability-audit",
+      "status": "diagnostic",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D547.md",
+      "candidate_sha": "b6a20cd96bb26f4da835a433b24fd6580ff88876",
+      "commit_sha": "b6a20cd96bb26f4da835a433b24fd6580ff88876"
     }
   ],
   "known_blockers": [

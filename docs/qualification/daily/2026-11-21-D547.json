@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D547",
+  "status": "DIAGNOSTIC_EXTERNAL_PROFILES_UNAVAILABLE",
+  "candidate_sha": "b6a20cd96bb26f4da835a433b24fd6580ff88876",
+  "qualification": "external provider availability audit",
+  "command": "python -m pytest tests/e2e/test_data_engineering_external.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-external-provider-availability-20261121\\external.xml",
+  "result": {"selected": 3, "passed": 0, "failed": 0, "skipped": 3, "pytest_seconds": 0.88, "process_exit_code": 0},
+  "finding": "No authorized external profile is configured: Spark Connect skips because SPARK_CONNECT_ENDPOINT is absent; SDP Studio skips because SDP_STUDIO_COMMAND and SDP_PROJECT_ID are absent. These are not PASS evidence and no emulator is substituted.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-external-provider-availability-20261121",
+  "evidence_sha256": {"external.xml": "115E521125B4FD6D7750882F6ABA1F6EFAC9854EB0CD32E86F3F7212FB5BCC47", "pytest.log": "20DB1AD2649FC07AFA88F57CE6AE1F2E966A49CE465FB2F549194FC4310C80D1"},
+  "limitations": ["availability audit only", "no external provider qualification occurred", "does not close P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
