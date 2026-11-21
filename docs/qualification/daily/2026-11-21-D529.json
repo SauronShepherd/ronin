@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D529",
+  "status": "PASS_POSTGRES_SCHEDULER_PROCESS_CRASH_REPLAY",
+  "candidate_sha": "88b642a3755fb7cc9780e84a03f25a2cc41a35f9",
+  "qualification": "filtered real PostgreSQL scheduler replay after process crash without duplicate execution",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d529-postgres-scheduler-process-crash-current -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 4.97, "process_exit_code": 0},
+  "finding": "A PostgreSQL scheduler daemon replays the in-flight job after a simulated process crash and preserves exactly-once task/run outcome without duplicate execution.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d529-postgres-scheduler-process-crash-current",
+  "evidence_sha256": {
+    "pytest-output.log": "C0DB3ABE1A80B3D26CAD2E1A1ED92740F2AF47853A33B95F8440D641C0197347",
+    "pytest-postgres.log": "0707CA65A4626CD82789E8CF5B5D6FAC05F769CB9E8A5ACC8B0918446A2F8A16",
+    "pytest-postgres.xml": "CC8D8E380651F82DD135E5C3DC759274ADA56681C70829A5FE5AC7275F29D811",
+    "pytest-timings.json": "3FA48DA5B709B146715E5F248084FCF73F7D83B7D265CC2F1B4A9639715E3CB3",
+    "runner-timings.json": "919AB833197A23705A7CA5FCED6207A10E6299E7F87537357320883CDB20D459"
+  },
+  "limitations": ["filtered diagnostic, not the complete PostgreSQL suite", "does not prove indefinite operation or HA", "does not change P13 blocked state or release NO-GO"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
