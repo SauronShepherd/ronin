@@ -1326,6 +1326,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D516.md",
       "candidate_sha": "62be662f46186b95f118901ab296ede448b87107",
       "commit_sha": "62be662f46186b95f118901ab296ede448b87107"
+    },
+    {
+      "id": "D517",
+      "date": "2026-11-21",
+      "phase": "p11-live-full-postgres-event-workflow-sequence",
+      "status": "failed",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D517.md",
+      "candidate_sha": "dc91772d8424d3a22e04c309372aa21b3b187219",
+      "commit_sha": "dc91772d8424d3a22e04c309372aa21b3b187219"
     }
   ],
   "known_blockers": [

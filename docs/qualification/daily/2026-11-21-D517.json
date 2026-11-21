@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D517",
+  "status": "FAIL_LIVE_FULL_POSTGRES_EVENT_WORKFLOW_SEQUENCE",
+  "candidate_sha": "dc91772d8424d3a22e04c309372aa21b3b187219",
+  "qualification": "full live route with explicit PostgreSQL backend and real Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d517-live-full-postgres-current -WorkerImage ronin:qualification-d517 -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 43, "passed": 41, "failed": 1, "skipped": 1, "api_events": 498, "api_ok": 474, "api_warn": 21, "api_error": 3, "correlated_http_logs": 498, "process_exit_code": 1},
+  "failure": "The full ordered route failed the event-workflow case: after the preceding broker-restart/failover sequence, the committed record remained not visible as delivered within 15 seconds. Server evidence includes three Kafka/streaming-unavailable 503 errors; the isolated event-workflow D512 remains a separate PASS.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume, network and temporary worker image removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d517-live-full-postgres-current",
+  "evidence_sha256": {
+    "browser-live.log": "D02F94D7F7EB5F04684EAC1B8D19BF2CFB5C758DECF9DF16AB7E4B2F457FF6B9",
+    "browser-live.xml": "F3C860B3C2046C98FCF8E59A154AC27446C08218597694C5D6591BF3DC39DF67",
+    "live-api-traffic.json": "43EFA0CFAF01B044A916FD72D96BA92D65C8ACF3E4A8AD084A23480945E11A91",
+    "live-python-freeze.txt": "7A5EE9CA1838CCF7AA8FD08923C909F10DE57C8081F16D1855E54AB3FCACBEA7",
+    "live-server.stderr.log": "5BAF79A34522EFE24C775FA77ED5222CACF424EFA99A16B0F389172C5C508A45",
+    "qualification-summary.json": "70A94AF7E352CA052E2A92067F717F077B58E4018C130B0BD1F98778E130F248"
+  },
+  "limitations": ["failure is not a release PASS", "root cause requires a focused reproduction after broker restart", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
