@@ -2096,6 +2096,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D595.md",
       "candidate_sha": "072fee64643b3150a9f0ecb845b387dc4ce21521",
       "commit_sha": "5cfbfd9f38c4fdd8b6ad264afa22d80a8c50a319"
+    },
+    {
+      "id": "D596",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-streaming-jobstore-connector",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D596.md",
+      "candidate_sha": "e8372933aeee84c4091e48a9f12bedb5cedd8668",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

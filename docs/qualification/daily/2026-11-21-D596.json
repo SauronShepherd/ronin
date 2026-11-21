@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D596",
+  "status": "PASS_POSTGRES_STREAMING_JOBSTORE_CONNECTOR",
+  "candidate_sha": "e8372933aeee84c4091e48a9f12bedb5cedd8668",
+  "qualification": "PostgreSQL streaming checkpoint, JobStore and connector integration suites against the configured real backend",
+  "command": "python -m pytest -q tests/integration/test_postgres_streaming_checkpoint_real.py tests/integration/test_postgres_jobstore_real.py tests/integration/test_postgres_connector_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d596-postgres-streaming-jobstore-r2\\postgres-streaming-jobstore.xml",
+  "result": {"selected": 6, "passed": 6, "failed": 0, "skipped": 0, "postgres": "16.4", "process_exit_code": 0},
+  "finding": "The real PostgreSQL streaming checkpoint, JobStore and connector integration suites all passed with RONIN_POSTGRES_TEST_DSN, RONIN_TEST_POSTGRES_DSN and RONIN_CONNECTOR_POSTGRES_DSN explicitly configured.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d596-postgres-streaming-jobstore-r2",
+  "evidence_sha256": {"postgres-streaming-jobstore.log": "7591BB29FDAC86BE9ABAEF01173900B5FB9538F457161978B8142E3A41908DFC", "postgres-streaming-jobstore.xml": "92D0CDD1C87B3DBC3CD323EF1CE1CB3FF280EE6D07500FDDA9CCEA6208CFFAD4", "docker-cleanup.log": "DADF098468D290294D284E524D2E4625C10D05738239C91D8BF84F2390B23286"},
+  "limitations": ["three integration modules", "single PostgreSQL instance", "does not prove indefinite operation, HA, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
