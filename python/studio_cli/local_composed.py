@@ -55,7 +55,7 @@ from studio_execution.scheduler_daemon import (
     SchedulerDaemonService,
     SchedulerDaemonWork,
 )
-from studio_execution.stream_scheduler import ingest_stream_record, ingest_stream_records
+from studio_execution.stream_scheduler import ingest_stream_record
 from studio_finops import PostgresFinOpsStore, SqliteFinOpsStore
 from studio_migration import (
     MigrationAPIRouter,
@@ -506,7 +506,6 @@ def build_local_composed_from_env() -> LocalServerComposition:
         database.parent,
         event_store=cast(SchedulerEventStore, workflow_scheduler),
         event_ingestor=ingest_stream_record,
-        event_batch_ingestor=ingest_stream_records,
         clock=scheduler_clock,
         table_factory=(
             (lambda: PostgresStreamTable(postgres_dsn))
