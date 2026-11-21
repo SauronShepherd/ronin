@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D563",
+  "status": "PASS_SCHEDULER_POOLS_FILE",
+  "candidate_sha": "4e9a048c029d8234d08f0a3672bea14294bd1ef1",
+  "qualification": "complete scheduler pools unit integration file",
+  "command": "python -m pytest tests/test_scheduler_pools.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d563-scheduler-pools-file\\pytest.xml",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "pytest_seconds": 2.21, "process_exit_code": 0},
+  "finding": "The complete scheduler pools file passes its pool allocation and lifecycle invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d563-scheduler-pools-file",
+  "evidence_sha256": {"pytest.log": "9EBE831F1C7F795F7F227EE11F58BC2D8481BEA99F7B59A221EF395F4DAE52D3", "pytest.xml": "CC85389C552610975F942C7E839FB7FC4CC8258E9C6A9B542821596224C81E13"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
