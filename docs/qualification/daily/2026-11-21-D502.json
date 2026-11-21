@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D502",
+  "status": "FAILED_LIVE_BULK_BACKPRESSURE_10000",
+  "candidate_sha": "166f1bdc6922f9811f5d0f0982a4fd700d1047d0",
+  "qualification": "PostgreSQL bulk scheduler event persistence sustained backpressure at 10,000 records",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d502-live-bulk-10k-166f1bdc -TestGrep 'sustained backpressure' -BackpressureRecords 10000 -StorageBackend postgres -RequestTimeoutSeconds 300",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "skipped": 0, "api_events": 4, "correlated_http_logs": 4, "api_ok": 4, "api_error": 0, "elapsed_seconds": 281.12, "process_exit_code": 1},
+  "finding": "The bulk path removes the replay regression but does not remove the 10,000-record latency boundary: the second drain request exceeds Playwright's fixed 240-second timeout.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d502-live-bulk-10k-166f1bdc",
+  "evidence_sha256": {"browser-live.log": "52B0F3890148B3F1B3C526A150FB48F7B8C93880A0B64E674EAC26F7CC6782F4", "browser-live.xml": "7905E3BCB8CF1EEF57FC6C445AA31E9D3CF0FE0B63E52189C4B60F18722EB669", "live-api-traffic.json": "E9609C773AD6AAF54F54E3E876DCAD501779AC599C4E46399CD0316FF1BEBF37", "live-python-freeze.txt": "A9665B981CF2AB3C93AAFD226DD2022531464704E1449871FB66C8401B1D202C", "live-server.stderr.log": "B94612F7B52DD6D6E0928DE5AE806AFF282D31FC6449E0A52C88517804851675", "qualification-summary.json": "6362175EE93F64DFB170B0D4444EC3D40D4062F1ACD3EF5E19393ABC65E292DC"},
+  "limitations": ["10,000-record lane remains open", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

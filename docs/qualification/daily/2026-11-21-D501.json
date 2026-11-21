@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D501",
+  "status": "PASS_LIVE_BULK_REPLAY_1000",
+  "candidate_sha": "166f1bdc6922f9811f5d0f0982a4fd700d1047d0",
+  "qualification": "PostgreSQL bulk scheduler event persistence with reset-safe replay at 1,000 records",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d501-live-bulk-replay-1k-166f1bdc -TestGrep 'sustained backpressure' -BackpressureRecords 1000 -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 12, "correlated_http_logs": 12, "api_ok": 12, "api_error": 0, "elapsed_seconds": 114.81, "process_exit_code": 0},
+  "finding": "Bulk event persistence now preserves reset-safe replay by falling back to the established stream bridge comparison that excludes received_at.",
+  "change_boundary": {"sha": "166f1bdc6922f9811f5d0f0982a4fd700d1047d0", "change": "bulk replay fallback preserves stream.record idempotency semantics", "regression": "26 focused tests passed, compileall and Ruff passed"},
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d501-live-bulk-replay-1k-166f1bdc",
+  "evidence_sha256": {"browser-live.log": "B985D554B19F463F037C14B8B79BE94CC0781D838BAC2E99C8FD51A70FC8D0A5", "browser-live.xml": "5B1912C9203BFB24F9F4FFB644D916D9754BC0B980D0585B956C98E1B034DEA0", "live-api-traffic.json": "1DEB0741E68E34FDB2F61DA1928FD0CE50BD0E9BF4A7EC5632CC7DE41D918CDF", "live-python-freeze.txt": "A9665B981CF2AB3C93AAFD226DD2022531464704E1449871FB66C8401B1D202C", "live-server.stderr.log": "0CE5DF2D7E04E0A0271C56B33CA0DD07C5E4D62366AA925DCF3206D2AA90F2F6", "qualification-summary.json": "A2460BB1ECBC8A8EFD28BB7AE5E6C7D960C2132346859E00D51108774CDE6522"},
+  "limitations": ["1,000-record bounded pass does not qualify 10,000-record sustained backpressure", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
