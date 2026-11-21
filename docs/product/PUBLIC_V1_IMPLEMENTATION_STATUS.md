@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D408 passes the full unfiltered Docker qualification on `main@fdd10299`:
+`27/27` Docker integration tests and `15/15` strict v0.1 journeys passed with
+zero skips/failures, exercising PostgreSQL 16.4, the real Docker worker,
+Floci/S3-compatible and Azurite/Azure-compatible fixtures. Cleanup PASS. The
+run remains bounded and its summary records unavailable final resource
+measurements for cancel/timeout paths; it does not close P11/release.
+
 D407 passes the real PostgreSQL appliance backup/restore diagnostic on
 `main@37a10e92`: `1/1` test passed in `22.554 s` against PostgreSQL 16.4,
 restoring PostgreSQL and local data volume with cleanup PASS. This is bounded

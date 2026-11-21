@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D408",
+  "status": "PASS",
+  "candidate_sha": "fdd10299e90bfd74733a6d308f47e481ca6be006",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "full Docker integration and strict v0.1 acceptance",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d408-docker-full-20261121",
+  "result": {"docker_selected": 27, "docker_passed": 27, "docker_failed": 0, "docker_skipped": 0, "docker_elapsed_seconds": 178.89, "v01_expected": 15, "v01_passed": 15, "v01_failed": 0, "v01_skipped": 0, "strict_success": true},
+  "fixtures": ["PostgreSQL 16.4-alpine", "real Docker worker", "Floci/S3-compatible", "Azurite/Azure-compatible"],
+  "cleanup": "PASS; PostgreSQL, Floci, Azurite projects/volumes and owned Ronin qualification image removed",
+  "evidence_sha256": {"azurite-qualification.log": "571496E71A42F20CC84B7C9316354704CB8C73034273A718673C0E41B9A097C4", "docker-cleanup.json": "1F9AA366EBD8927E9703ABB8CAEB2C9D720B4FC054CFD099AFE0025875667098", "docker-pytest-output.log": "C73B748122A3CD1F78BEB35E40CA217F2CE1F5CDC26A00F175DD32CA73F62F05", "docker-qualification.log": "D1E13DE66403E0D96300A1EE2D64D823E8068EFA14F1B69DFD84427447BA389D", "floci-s3-qualification.log": "487651B60A9A0635349BCF8B5D76A259D6105A3333E44B2B1357ECC87695949F", "postgres-qualification.log": "4AA46EA084FB2930EAF52B737ACA37B6F8FA139CA4B17AF716061B505996D84E", "qualification-summary.json": "57F088746EA697809EA59197FC8E96448019E27F463A921DBD8AE26535EAC555", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "A99496D46C5F12424FD6D02A3FD1095E10F053832A4513B43DFA5C91F48604D7"},
+  "limitations": ["full local Docker qualification is bounded", "qualification summary reports resource observations unavailable for cancellation/timeout final measurements", "does not prove indefinite operation, HA or complete release matrix", "does not close P11/release by itself"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

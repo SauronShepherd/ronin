@@ -2,6 +2,12 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D408 passes the full unfiltered Docker qualification on `main@fdd10299`:
+`27/27` integration tests and `15/15` strict v0.1 journeys passed with zero
+skips/failures and cleanup PASS across PostgreSQL, Docker worker, Floci/S3 and
+Azurite/Azure fixtures. This remains bounded evidence and does not close
+P11/release.
+
 D407 passes the real PostgreSQL appliance backup/restore diagnostic on
 `main@37a10e92`: `1/1` test passed in `22.554 s`, with PostgreSQL/local-volume
 restore and cleanup PASS. This bounded backend evidence does not close
