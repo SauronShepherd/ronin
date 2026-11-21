@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D456",
+  "status": "PASS",
+  "candidate_sha": "bc640978afa97925ef8d25bf2394671517a0b77b",
+  "qualification": "POSIX/Linux container contract qualification",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_posix_contract_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d456-posix-998ee8b8ebb943be9e8c8a6fa9a5cd58 -ImageRef sha256:6f03ce3bc6a71de03597add0f37bd428aa2ee0b0e4d7c75895ff01cd1696528e",
+  "result": {"selected": 8, "passed": 8, "failed": 0, "skipped": 0, "process_exit_code": 0},
+  "service_profile": "Linux container from current Ronin qualification image",
+  "cleanup": "PASS; isolated container and image removed",
+  "evidence_sha256": {
+    "git-version.txt": "0EFF67955296E123526D7F9B9146FFF8D8DC8D6DBF4F49BA5F838923D2B4AF71",
+    "posix-junit.xml": "048ECC062B7A3A2943F8AE878AC204E45CC962CFA47F050B003A88BD71189035",
+    "pytest-timings.json": "2BEA3449DEAE12B914FB4D6C19103F95CFD7D49273E4E087195CB8C243E0D082",
+    "qualification.json": "6F754015EC1B9CAD81A6F4C81A99A45D6CB8F0EA44FFA0622CE06A3A9AB94D3B",
+    "qualification.log": "E991E94DCEF91B44737026C8398D786AD6A1E9BF32C112CC720F47111DC42724"
+  },
+  "coverage": ["POSIX executable-mode identity", "symlink-safe checkout and ingestion", "mounted-secret permissions", "native process return-code fallback", "NUL/symlink fail-closed boundaries"],
+  "limitations": ["Linux container evidence, not native Windows POSIX behavior", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
