@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D576",
+  "status": "PASS_SCHEDULER_AGGREGATE",
+  "candidate_sha": "aba789842bf3c1eae310cd01e84c2c0c4dfcdf77",
+  "qualification": "bounded aggregate regression for all scheduler test files",
+  "command": "python -m pytest <explicit sorted list of tests/test_scheduler*.py> -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d576-scheduler-aggregate\\pytest.xml",
+  "result": {"selected": 165, "passed": 165, "failed": 0, "skipped": 0, "pytest_seconds": 28.64, "process_exit_code": 0},
+  "finding": "The aggregate scheduler regression passes all 165 collected tests with zero failures.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d576-scheduler-aggregate",
+  "evidence_sha256": {"pytest.log": "C2CBA7FFB4D76C3415347C58091B20DA5EFE3086AA0AA40E337721E15D94F559", "pytest.xml": "4E6D19770D8974B8D43C106120FC60D13358C07C7484C77756B3E6ECD1823382"},
+  "limitations": ["bounded aggregate regression", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
