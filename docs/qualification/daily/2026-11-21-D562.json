@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D562",
+  "status": "PASS_SCHEDULER_NOTIFICATIONS_FILE",
+  "candidate_sha": "8441dda8b936d730cda2f78901c71f2f95f897b5",
+  "qualification": "complete scheduler notifications unit integration file",
+  "command": "python -m pytest tests/test_scheduler_notifications.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d562-scheduler-notifications-file\\pytest.xml",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "pytest_seconds": 1.14, "process_exit_code": 0},
+  "finding": "The complete scheduler notifications file passes its notification invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d562-scheduler-notifications-file",
+  "evidence_sha256": {"pytest.log": "7E9AB0216140BBED7F1132BF782674AF9BC15D57C972D38E1B9141C42DD0E805", "pytest.xml": "0F68454E492E43CFC9626683DEA9DDC187CB106A20588ACC2018D419F2BF89C8"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

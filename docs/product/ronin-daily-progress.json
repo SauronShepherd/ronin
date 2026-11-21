@@ -159,6 +159,15 @@
       "qualification": "in_progress",
       "receipt": "docs/qualification/candidates/candidate-2ab7fc51-d37.json",
       "candidate_sha": "2ab7fc51508a410b7724f08ce8b8b6a0ff7b6b89"
+    },
+    {
+      "id": "D562",
+      "date": "2026-11-21",
+      "phase": "p11-scheduler-notifications-file",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D562.md",
+      "candidate_sha": "8441dda8b936d730cda2f78901c71f2f95f897b5"
     }
   ],
   "release_gates": [
