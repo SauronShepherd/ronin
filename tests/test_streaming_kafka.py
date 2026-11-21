@@ -46,6 +46,26 @@ class _Message:
         return self._offset
 
 
+class _Error:
+    def __init__(self, code: int = 1) -> None:
+        self._code = code
+
+    def code(self) -> int:
+        return self._code
+
+    def __str__(self) -> str:
+        return "broker transport unavailable"
+
+
+class _ErrorMessage(_Message):
+    def __init__(self, error: _Error) -> None:
+        super().__init__(b"", 0)
+        self._error = error
+
+    def error(self):
+        return self._error
+
+
 class _Consumer:
     def __init__(self, messages: list[_Message]) -> None:
         self.messages = messages
@@ -299,6 +319,43 @@ def test_kafka_source_reuses_consumer_until_source_is_closed(
         source.close()
 
     assert consumers[0].closed
+
+
+def test_kafka_source_recreates_consumer_once_after_transport_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    consumers: list[_Consumer] = []
+
+    def consumer_type(settings):
+        consumer = _Consumer(
+            [_ErrorMessage(_Error())]
+            if not consumers
+            else [_Message(b'{"event":"recovered"}', 0)]
+        )
+        consumers.append(_capture_config(consumer, settings))
+        return consumer
+
+    fake_kafka = SimpleNamespace(
+        Consumer=consumer_type,
+        TopicPartition=_TopicPartition,
+        KafkaError=SimpleNamespace(_PARTITION_EOF=-191),
+        OFFSET_BEGINNING=-2,
+    )
+    monkeypatch.setattr(kafka_adapter, "import_module", lambda _name: fake_kafka)
+    source = KafkaJsonSource(
+        bootstrap_servers="localhost:9092",
+        topic="events",
+        partitions=(0,),
+    )
+
+    try:
+        batch = source.poll(StreamCheckpoint(), limit=1, timeout_seconds=0.1)
+        assert [record.value for record in batch.records] == [{"event": "recovered"}]
+        assert len(consumers) == 2
+        assert consumers[0].closed
+        assert not consumers[1].closed
+    finally:
+        source.close()
 
 
 @pytest.mark.parametrize(
