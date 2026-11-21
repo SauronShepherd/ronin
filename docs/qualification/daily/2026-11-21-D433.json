@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D433",
+  "status": "PASS",
+  "candidate_sha": "a62660507077752649779946aee0adc2d558e9b8",
+  "qualification": "focused PostgreSQL scheduler recovery expansion",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d433-scheduler-recovery-65bcb5e29ff44d33a891cb3a58b51be0 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'scheduler_attempt_leases_fence_workers_and_reclaim_expiry or scheduler_execution_outbox_survives_expiry_and_reconciles or scheduler_event_inbox_freezes_and_replays_deliveries or scheduler_leadership_is_generation_fenced_and_persistent'",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "deselected": 17, "elapsed_seconds": 5.28},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "645DA955C078A601D6F0AD629877FE99B470931BCC0C8B159D2A0AE74B5F96E0",
+    "pytest-postgres.log": "D66F46B7AAAD5F78C1AFD45A96EB3A3A7821AC05A8CE6572006906D4392E8FDB",
+    "pytest-postgres.xml": "FE9811423D25E0C62988BB3044F00277993948C426BA847943DCB210AA7993DB",
+    "pytest-timings.json": "AEB71E3D4694EC58AC3962D7FD987832A27AF83ECB22A83640A6BFC42D81FB3E",
+    "runner-timings.json": "BA031069935BEC0C3273C57F33FB6185A2D541EFDF5B72C157A2ECF9232A8EA1"
+  },
+  "coverage": ["generation-fenced scheduler leadership", "execution outbox expiry and reconciliation", "attempt lease fencing and reclaim", "event inbox freeze and replay"],
+  "limitations": ["focused diagnostic with coverage disabled", "17 sibling tests deselected", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
