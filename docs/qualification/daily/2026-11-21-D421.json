@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-21",
+  "day": "D421",
+  "status": "FAIL",
+  "candidate_sha": "27bd495fba6c2c10fa6410767c8b9b651ceffdd0",
+  "qualification": "full Docker appliance qualification before PostgreSQL readiness fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:live-d421 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d421-docker-full-current-20261121",
+  "result": {"docker_tests": 27, "passed": 26, "failed": 1, "skipped": 0, "strict_v01_passed": 15, "strict_v01_failed": 0},
+  "failure": "test_appliance_backup_restores_postgres_and_local_data_volume failed at the first psql command after pg_isready; fixture readiness was insufficient",
+  "cleanup": "PASS; owned image and Docker fixtures removed",
+  "limitations": ["historical fixture failure; not attributed to Ronin runtime", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D422",
+  "status": "PASS",
+  "candidate_sha": "2df9deaff0bdfb2ff71ae01c82c6dc5ecd65b0a7",
+  "production_boundary_sha": "ad1463c6a0c0c90231794a39e027947e30fef044",
+  "qualification": "full Docker appliance qualification after queryable PostgreSQL readiness fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:live-d422 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d422-docker-full-current-20261121",
+  "result": {"docker_tests": 27, "passed": 27, "failed": 0, "skipped": 0, "strict_v01_passed": 15, "strict_v01_failed": 0, "elapsed_seconds": 177.12},
+  "services": ["PostgreSQL", "Docker worker", "Floci/S3-compatible", "Azurite/Azure-compatible"],
+  "image": "sha256:d60863fbb2ea5bccd80dab0bd1269d5f81e871b6aad19118c831167ed7976457",
+  "cleanup": "PASS; owned image and all Docker fixtures removed",
+  "evidence_sha256": {"qualification-summary.json": "412F2BDC049A92CB8A6A1591E09BF4B23C1C6C91301F15B0829782EC505C4567", "docker-pytest-output.log": "6AA325A0017BA467ADAB556A1E85EEAD33366F3D9E63F329B4E8ED08C8719F12", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "C8EF23BACD923543A4D90102F2BEF89FFE8906591B90394EBBFC2FD31E94FA7E"},
+  "limitations": ["bounded local appliance qualification", "does not prove indefinite operation, HA, external-cloud provider certification, P13 or release closure"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
