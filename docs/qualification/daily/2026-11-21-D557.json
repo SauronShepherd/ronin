@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D557",
+  "status": "PASS_SCHEDULER_CANCELLATION_FILE",
+  "candidate_sha": "24062d629135ccf79f7c415b42ad32c0186deaa2",
+  "qualification": "complete scheduler cancellation unit integration file",
+  "command": "python -m pytest tests/test_scheduler_cancellation.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d557-scheduler-cancellation-file\\pytest.xml",
+  "result": {"selected": 8, "passed": 8, "failed": 0, "skipped": 0, "pytest_seconds": 1.87, "process_exit_code": 0},
+  "finding": "The complete scheduler cancellation file passes authority ordering, cancellation outbox, fencing and terminal-state invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d557-scheduler-cancellation-file",
+  "evidence_sha256": {"pytest.log": "987833CD3AA148C1609AE01CD78CCECEB4A40A232712F0688C59C2F3BEF292A4", "pytest.xml": "F1BDFA789BB34507D5925705FCD70CAF55B9C64D84608F782A444D603938F6CA"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

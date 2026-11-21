@@ -1706,6 +1706,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D556.md",
       "candidate_sha": "e4e7700763be7263623613ba808ec8b92f3caa73",
       "commit_sha": "5cdf9357d5e01aecf924cce307be363891fbf8db"
+    },
+    {
+      "id": "D557",
+      "date": "2026-11-21",
+      "phase": "p11-scheduler-cancellation-file",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D557.md",
+      "candidate_sha": "24062d629135ccf79f7c415b42ad32c0186deaa2",
+      "commit_sha": "24062d629135ccf79f7c415b42ad32c0186deaa2"
     }
   ],
   "known_blockers": [
