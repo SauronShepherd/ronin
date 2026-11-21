@@ -1,0 +1,10 @@
+{
+  "date": "2026-11-21",
+  "day": "D427",
+  "status": "NOT_PASS",
+  "candidate_sha": "7cbd22431c92ce19e76578a8850bce0f4fa7c4ef",
+  "qualification": "attempted new bounded 1200-second supervisor soak",
+  "failure": "runner parameter validation rejected 1200 because the harness maximum was 900",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d427-supervisor-soak-1200-postgres-20261121",
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

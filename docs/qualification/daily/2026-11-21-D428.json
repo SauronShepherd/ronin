@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-21",
+  "day": "D428",
+  "status": "NOT_PASS",
+  "candidate_sha": "7cbd22431c92ce19e76578a8850bce0f4fa7c4ef",
+  "qualification": "attempted 1200-second supervisor soak after runner bound extension",
+  "result": {"selected": 1, "passed": 0, "failed": 1},
+  "failure": "Playwright contract still rejected soakSeconds above 900",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d428-supervisor-soak-1200-postgres-20261121",
+  "cleanup": "PASS; isolated services removed",
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

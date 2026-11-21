@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D430",
+  "status": "PASS",
+  "candidate_sha": "48cc8fe2286597a8e2b9537a8f88915bcdda77b1",
+  "qualification": "new bounded 1200-second PostgreSQL supervisor soak",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d430-supervisor-soak-1200-postgres-20261121 -WorkerImage ronin:live-d430 -StorageBackend postgres -TestGrep 'supervisor soak' -SupervisorSoakSeconds 1200 -RequestTimeoutSeconds 180",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 1239.68, "supervisor_soak_seconds": 1200, "api_events": 1507, "correlated_http_logs": 1507, "api_ok": 1507},
+  "services": {"postgres": true, "kafka": true, "roninApi": true, "worker_image": "sha256:c800ef6c0d364853f712bb04a0c844ed6972fb3ad4aa2d26933fa56412998b99"},
+  "cleanup": "PASS; isolated PostgreSQL/Redpanda services and worker image removed",
+  "evidence_sha256": {"browser-live.log": "713489490070AD3A0CA6BACF92E97469347B763EBF86150A8FDA604ED6D24BBE", "browser-live.xml": "6A1777EADB7851C20AD124D67539A10D4BF494D26B11653D73E0F5BB0014C7D2", "live-api-traffic.json": "31B01BC70E9235CFEC3B1AACFDB27E20EF3D32098E6FA2493F1E47F9C3BA73AB", "qualification-summary.json": "613E47E1FA732EDCBA399209C79F07D48C57F5E7E021C2F771E04D1E03814039"},
+  "limitations": ["bounded 1200-second soak is not indefinite operation or a production SLO", "single broker and single worker cell; does not close HA/P11/P13/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
