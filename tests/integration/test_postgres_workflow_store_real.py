@@ -1889,6 +1889,20 @@ def test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries(
     store.create_workspace(Workspace(workspace_id, "Scheduler events"), now=NOW)
     workflow = _workflow(f"scheduler-events-workflow-{uuid4().hex}")
     store.put_workflow(workspace_id, workflow, now=NOW)
+    pretrigger_event = SchedulerEventRecord(
+        workspace_id,
+        SchedulerEventId(f"pretrigger-event-{uuid4().hex}"),
+        "asset.updated",
+        "catalog",
+        "asset-1",
+        "c" * 64,
+        NOW,
+        NOW,
+    )
+    # The streaming bridge calls ingest_events() without event_batch().  A
+    # prior batch with no triggers must not poison the next batch after a
+    # trigger is committed on the same store instance.
+    assert store.ingest_events((pretrigger_event,)) == ((),)
     definition = EventTriggerDefinition(
         EventTriggerId(f"trigger-{uuid4().hex}"),
         workflow.id,
@@ -1899,6 +1913,14 @@ def test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries(
     assert store.put_event_trigger(workspace_id, definition, now=NOW) == definition
     assert store.put_event_trigger(workspace_id, definition, now=NOW) == definition
     assert store.list_event_triggers(workspace_id) == (definition,)
+
+    posttrigger_event = replace(
+        pretrigger_event,
+        id=SchedulerEventId(f"posttrigger-event-{uuid4().hex}"),
+    )
+    assert store.ingest_events((posttrigger_event,)) == (
+        (EventDelivery(workspace_id, posttrigger_event.id, definition),),
+    )
 
     event = SchedulerEventRecord(
         workspace_id,
