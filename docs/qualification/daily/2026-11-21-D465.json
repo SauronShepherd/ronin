@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D465",
+  "status": "PASS_SCHEDULER_RECOVERY_POSTGRES",
+  "candidate_sha": "5a0b4d9f29c59dab83980113add6b86677981bbc",
+  "qualification": "focused real PostgreSQL scheduler lease/process recovery diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d465-scheduler-recovery-0424ae0ae9ba44c68820851cbd1c7415 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate'",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 19, "pytest_seconds": 7.01, "process_exit_code": 0},
+  "real_services": {"postgres": "postgres:16.4-alpine isolated loopback", "qualification_mode": "CLEAN-CANDIDATE QUALIFICATION", "coverage": false},
+  "criteria": ["reacquires after expired lease without duplicate fire", "replays job after process crash without duplicate"],
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner",
+  "evidence_sha256": {"pytest-output.log": "8AAAB28B9D2B1DEC507AF1253997AF898F27E8A87FCD413307F64D781E7C4565", "pytest-postgres.log": "BE0BE381619CB85098F95ED12B57863B66C2D3D96EA4AE880857DFBCCC10DAB6", "pytest-postgres.xml": "31928F4FDF2B663FA9DF112458AD854048BF3DD92C0127F1661BCDE0A315FA9E", "pytest-timings.json": "C782CB6BC824E7425E8BA57AE0F8DC45F7D77A27CC432851B06E61B27889D6BC", "runner-timings.json": "2A8F393330EB9B2DDC27F32211C7DFDEDE8CD462A28B6FABAA12F4495EB5A137"},
+  "limitations": ["focused diagnostic, not full PostgreSQL suite", "does not close P11 or release", "does not prove indefinite scheduler operation"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
