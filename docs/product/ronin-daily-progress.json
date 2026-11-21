@@ -2006,6 +2006,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D586.md",
       "candidate_sha": "5b96c78a95340d72944bb896a94ffc4d1ba5f384",
       "commit_sha": "db86477c941f0e21ae3cf1c27af6bc6df99cc591"
+    },
+    {
+      "id": "D587",
+      "date": "2026-11-21",
+      "phase": "p11-live-sustained-backpressure-postgres",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D587.md",
+      "candidate_sha": "0656af56faad7a00cc4902c4629c5d09d3c313c2",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

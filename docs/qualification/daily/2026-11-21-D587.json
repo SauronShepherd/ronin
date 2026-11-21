@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D587",
+  "status": "PASS_LIVE_SUSTAINED_BACKPRESSURE_POSTGRES",
+  "candidate_sha": "0656af56faad7a00cc4902c4629c5d09d3c313c2",
+  "qualification": "bounded sustained backpressure with real PostgreSQL and Redpanda",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d587-live-sustained-backpressure-postgres -TestGrep \"sustained backpressure\" -StorageBackend postgres -BackpressureRecords 256 -BackpressureTimeoutSeconds 240",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "backpressure_records": 256, "api_events": 12, "correlated_events": 12, "unexpected_errors": 0, "elapsed_seconds": 95.57, "process_exit_code": 0},
+  "finding": "The real PostgreSQL/Redpanda sustained-backpressure case drained the configured bounded workload with all API events correlated and no unexpected errors; cleanup succeeded.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d587-live-sustained-backpressure-postgres",
+  "evidence_sha256": {"browser-live.log": "64BFD09AA42C95844E163B6F940052DF0A24C2A725B6B8DEC34A02E74B5F47E5", "browser-live.xml": "0DE1D256AF236867FB33E4C5EA2B66064E49FF74CA82FBF78852300F09C36E2B", "live-api-traffic.json": "B15C8F6D5E9599FE8CD8DBC12671ABBC5D3B940A26ACE601835B9F17AD9E992C", "qualification-summary.json": "21BA3B51180FE718486D7B4F3644FC80E94C4CF4B8BAEEC90FE260E4FAFA4CFF", "live-server.stderr.log": "27283B21714670347AAE868048967F4443DBC0C6BD0EBB5963D640CE2A6B93CF"},
+  "limitations": ["one filtered live case", "bounded 256-record workload and 240-second timeout", "does not prove indefinite operation, HA, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
