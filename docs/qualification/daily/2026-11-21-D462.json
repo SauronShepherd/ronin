@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D462",
+  "status": "PASS_DOCKER_BOUNDED",
+  "candidate_sha": "a469728a5aadd3e99cda203fbaaa8addec3ee1c8",
+  "qualification": "full Docker qualification with real worker, PostgreSQL, Floci/S3, Azurite/Azure and strict v0.1 journey",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d462-docker-60525ae72e7a40fcaf99e55ffa35f407",
+  "result": {"docker_tests": 27, "docker_passed": 27, "docker_skipped": 0, "docker_failed": 0, "strict_tests": 15, "strict_passed": 15, "strict_skipped": 0, "strict_failed": 0, "process_exit_code": 0},
+  "services": ["PostgreSQL", "Docker worker", "Floci/S3-compatible", "Azurite/Azure-compatible"],
+  "image_digest": "sha256:8031db1f46c680dddefbf2cd586868077722a92c8dd5eccc1b6e9644e371ffed",
+  "cleanup": "PASS; owned containers, volumes, networks, temporary image and provider fixtures removed",
+  "observability_limitation": "The qualification summary records unavailable final resource measurements for cancellation and timeout observations; functional tests still passed and no resources remained.",
+  "evidence_sha256": {"qualification-summary.json": "2D2B1E04986277CDB5FFB6A932A59702844AE7B85D208F4CF0360E7FB94FB03B", "docker-pytest-output.log": "29C810174ED8BAC33211B5721B1821D698493614493B7DFF599246A028F9F2D5", "v01-acceptance.xml": "7C4BF2714FD9654A1F5FA8B41167AB877AB0030EC7858853A411AD835AC29858", "docker-cleanup.json": "CC43E28EA39B8B567DB4357CC2CD25DFB637928B42EB99A01459867DC616548B"},
+  "limitations": ["bounded Docker qualification, not indefinite operation", "resource observations unavailable for two negative-path timeout/cancellation windows", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
