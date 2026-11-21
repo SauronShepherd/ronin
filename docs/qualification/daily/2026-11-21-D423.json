@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D423",
+  "status": "PASS",
+  "candidate_sha": "930deedda4c0eb5d6dc6c136e0f6c79cb08db1f8",
+  "qualification": "complete non-performance Python/PostgreSQL regression",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d423-postgres-full-current-20261121",
+  "result": {"collected": 4794, "passed": 4763, "skipped": 31, "failed": 0, "elapsed_seconds": 616.88, "coverage": "enabled"},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no ronin-pytest-pg containers remain",
+  "evidence_sha256": {"pytest-postgres.xml": "2F2AB2E0CBA982143866A25C2ADBAC4970E87EBB6B48A66F6E9F4037907767D6", "pytest-output.log": "58EAE69203B1AAE0346858743AF1D96093612034F7CB4BF1C0CFF6C3519550CC", "pytest-postgres.log": "72E3044DFDCD59A691E37EA86175382D82069F4C1CD6B00AC16CC4D176AD58B6", "runner-timings.json": "4D352C32955769973F8F22A867644C23EFBBA6B1F0EB9B5DB607E983876A0B5E"},
+  "limitations": ["31 explicit environment/platform skips remain", "non-performance regression is bounded evidence and does not close P11/P13 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
