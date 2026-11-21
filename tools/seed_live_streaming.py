@@ -5,6 +5,7 @@ from __future__ import annotations
 import http.client
 import json
 import os
+import time
 from importlib import import_module
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -38,6 +39,31 @@ def _positive_int(name: str, default: int) -> int:
     if value < 1:
         raise SystemExit(f"{name} must be at least 1")
     return value
+
+
+class _BoundedProducer:
+    """Drain the local producer queue while seeding large bounded fixtures."""
+
+    def __init__(self, producer: Producer, *, enqueue_timeout_seconds: float = 30.0) -> None:
+        self._producer = producer
+        self._enqueue_timeout_seconds = enqueue_timeout_seconds
+
+    def produce(self, *args: object, **kwargs: object) -> None:
+        deadline = time.monotonic() + self._enqueue_timeout_seconds
+        while True:
+            try:
+                self._producer.produce(*args, **kwargs)
+                self._producer.poll(0)
+                return
+            except BufferError as exc:
+                if time.monotonic() >= deadline:
+                    raise SystemExit(
+                        "Kafka producer queue did not drain within the bounded fixture timeout"
+                    ) from exc
+                self._producer.poll(0.05)
+
+    def flush(self, timeout: float) -> int:
+        return self._producer.flush(timeout)
 
 
 def main() -> int:
@@ -103,12 +129,12 @@ def main() -> int:
             if "TOPIC_ALREADY_EXISTS" not in str(exc):
                 raise SystemExit("Could not create the live Kafka qualification topic") from exc
 
-    producer = Producer(
+    producer = _BoundedProducer(Producer(
         {
             "bootstrap.servers": bootstrap,
             "message.max.bytes": MAX_KAFKA_RECORD_BYTES * 2,
         }
-    )
+    ))
     for index in range(5):
         producer.produce(
             topic,
