@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D432",
+  "status": "PASS",
+  "candidate_sha": "28a262cce269ba71b908759d748074ca1d153506",
+  "qualification": "focused real OTLP collector qualification",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_otlp_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-otlp-D432-60a42c3757a74403859a28db122a18ff",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 5.362},
+  "service_profile": "OpenTelemetry Collector Contrib OTLP/HTTP, digest 45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621",
+  "cleanup": "PASS; collector container removed and no Ronin OTLP qualification container remains",
+  "evidence_sha256": {
+    "collector-config.yaml": "6D631511413384DE11D3AED2AA852697EF9C696B5B2BB9B3AEFA3464EE89F07F",
+    "collector-container.log": "AF8323FC73B89A6BA4940D04BA3853ABE0C4DEA002F06488190F34B7A3B35C1D",
+    "otlp-junit.xml": "47A0938C70307E149FBD7673A748B25483031CA3F14E2767647E7C04873416AB",
+    "pytest-timings.json": "435042B739CCFE8FCDC203C94A967C04F412834B7A1EA622E73C2206B47A763C",
+    "qualification.json": "21C818C0AE12407992B79AA68FBEDC99C9AB749A5EFB6C08ABAC60A7A11E4E53",
+    "qualification.log": "831DC17F8DBD2E6778146483F40E6A0B163087CA50514FC4187A956CAD528F74"
+  },
+  "coverage": ["OTLP metrics acceptance", "OTLP logs/events acceptance", "OTLP traces acceptance", "exporter flush and counters"],
+  "limitations": ["focused diagnostic with coverage disabled", "local collector only; does not qualify an external provider", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
