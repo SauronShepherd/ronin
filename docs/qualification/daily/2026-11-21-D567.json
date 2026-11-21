@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D567",
+  "status": "PASS_SCHEDULER_DAEMON_FILE",
+  "candidate_sha": "f8dda916212a46f361c74829c5ec6efd3aee5ef4",
+  "qualification": "complete scheduler daemon unit integration file",
+  "command": "python -m pytest tests/test_scheduler_daemon.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d567-scheduler-daemon-file\\pytest.xml",
+  "result": {"selected": 12, "passed": 12, "failed": 0, "skipped": 0, "pytest_seconds": 5.53, "process_exit_code": 0},
+  "finding": "The complete scheduler daemon file passes all daemon invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d567-scheduler-daemon-file",
+  "evidence_sha256": {"pytest.log": "DA5F493C4247E8AA59900E356124C76E2AE36BBD82B34E467F36283A88EF6C08", "pytest.xml": "658E8DC6F3B61E6A1413522B5D543DF397590CB65C1648159F51FC03D71EE9B8"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

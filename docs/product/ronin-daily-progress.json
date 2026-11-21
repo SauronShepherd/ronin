@@ -1806,6 +1806,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D566.md",
       "candidate_sha": "fbd03a3e605d9cfaf196aaeee0a189fe4421118c",
       "commit_sha": "c5da7c8f216fd0c40d2d5e650d6847a83302c221"
+    },
+    {
+      "id": "D567",
+      "date": "2026-11-21",
+      "phase": "p11-scheduler-daemon-file",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D567.md",
+      "candidate_sha": "f8dda916212a46f361c74829c5ec6efd3aee5ef4",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [
