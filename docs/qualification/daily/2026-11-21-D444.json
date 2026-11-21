@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D444",
+  "status": "PASS",
+  "candidate_sha": "1936f1f097f653baf1d0ebcd14dc8498f44e203b",
+  "qualification": "real PostgreSQL FinOps integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d444-postgres-finops-70be70d91f5f4b03923e397afc6d4d8 -TestPath tests/integration/test_postgres_finops_real.py",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 1.32},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "C25C499A825308D981564BFC3AA62D873D90143134E3D2B31ECAB0A83BF8086E",
+    "pytest-postgres.log": "C041325CE41B196DC3E5914C2994712753E266E5A03848D03F15260982CA3085",
+    "pytest-postgres.xml": "DBAA09768B858CCFBDAEFCE0328119F3266D805403A471C57998BFC15FACE780",
+    "pytest-timings.json": "1EC1445E24ECB8E747D7F09422AD812565238004BD0B72AD7C8F4302664430EF",
+    "runner-timings.json": "4101472A6CC9161D86FF93FAB31006E55F8A4A43D5CE2D3BBDD0F4D0464C18E3"
+  },
+  "coverage": ["FinOps write idempotency", "usage pricing", "budget persistence"],
+  "limitations": ["focused integration test with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
