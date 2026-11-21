@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D419",
+  "status": "PASS",
+  "candidate_sha": "8d06fb36345ec9bb68da6f12fc9de3c3e3c0ce83",
+  "production_boundary_sha": "ad1463c6a0c0c90231794a39e027947e30fef044",
+  "qualification": "three-broker live streaming failover with PostgreSQL-configured runtime",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d419-multibroker-postgres-live-20261121 -WorkerImage ronin:live-d419 -StorageBackend postgres -MultiBroker -TestGrep 'live streaming multi-broker failover' -RequestTimeoutSeconds 180",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 55.32, "api_events": 5, "correlated_http_logs": 5, "api_ok": 5},
+  "services": {"postgres": true, "kafka": true, "roninApi": true, "multi_broker": true, "worker_image": "sha256:f90682842937cdf2ce73dd518d54b472a93ab373fed895e7203dc54fc41d37a1"},
+  "coverage": ["live streaming multi-broker failover resumes from the durable checkpoint"],
+  "cleanup": "PASS; isolated PostgreSQL/three-broker Redpanda services and worker image removed",
+  "evidence_sha256": {"browser-live.log": "0A19D7A7B6870713ADFDCD3293E038F255186610B9EE124FAEBBB2E882D378B8", "browser-live.xml": "8A980D11A5716CC11DEB1B0F17D6B3560FDD9C7439E060574B34979B4A628334", "live-api-traffic.json": "9D8B9D2FF2166362CBB1F4A82FC95591CDDB1768577D8EC1903CDE29F0E4AAC9", "qualification-summary.json": "72515E12AF4F0BA0D83E397A1A3FBDC4562EE3B931BE79CCECE938DB45224CE4"},
+  "limitations": ["focused filtered live diagnostic", "does not prove indefinite operation, HA beyond this bounded failover cell, or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
