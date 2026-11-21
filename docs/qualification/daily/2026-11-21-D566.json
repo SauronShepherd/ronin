@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D566",
+  "status": "PASS_SCHEDULER_FENCING_FILE",
+  "candidate_sha": "fbd03a3e605d9cfaf196aaeee0a189fe4421118c",
+  "qualification": "complete scheduler fencing unit integration file",
+  "command": "python -m pytest tests/test_scheduler_fencing.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d566-scheduler-fencing-file\\pytest.xml",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "pytest_seconds": 1.33, "process_exit_code": 0},
+  "finding": "The complete scheduler fencing file passes all fencing invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d566-scheduler-fencing-file",
+  "evidence_sha256": {"pytest.log": "0FECFFBDA436B1539EBBB431CFA8DFA893DEF7EEFC2280107DF1B8053987B94C", "pytest.xml": "4D406B4E11FE757D8D1C3968F5236ED0AF0DE1EDA279E182C79A92EAD729DFFF"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
