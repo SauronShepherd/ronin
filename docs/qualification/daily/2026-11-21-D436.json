@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D436",
+  "status": "PASS",
+  "candidate_sha": "9d2a69c653640f196c9501e3f073761ced6bb53b",
+  "qualification": "real PostgreSQL connector integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d436-postgres-connector-d0ea58dfd97c4252adf62d231cb88182 -TestPath tests/integration/test_postgres_connector_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 1.36},
+  "service_profile": "isolated PostgreSQL 16.4 with RONIN_CONNECTOR_POSTGRES_DSN",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "E5710B98CED616B1C0025100759C721D8B19C760583EBC2CDBE32902049B71ED",
+    "pytest-postgres.log": "AF19BCC57D7DD3042B6748344850AE70828E57F91B534E4785C0D1D1D68F49AC",
+    "pytest-postgres.xml": "D9B878209B249465430857544702C2DE70BE40F42DC086AE33638AAD175F1679",
+    "pytest-timings.json": "94CE26047D801C19ED57D249F78DA695D79FA94147F9FEA91D8F8EEE4F60BA83",
+    "runner-timings.json": "BCCE35C684C91F2B31983C93F4FC4FEEA978421A4490CD57909C0D94CCAFD5D1"
+  },
+  "coverage": ["nullable/timezone/large numeric PostgreSQL read", "watermark pagination with equal timestamps and tie-breaker", "checkpoint no-loss behavior"],
+  "limitations": ["focused integration file with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
