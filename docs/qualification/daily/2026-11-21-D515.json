@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-21",
+  "day": "D515",
+  "status": "PASS_DOCKER_FULL_AND_V01_STRICT_CURRENT",
+  "candidate_sha": "1d956496e243a48ddd01dd410c64c4afba1deada",
+  "qualification": "full Docker integration and strict v0.1 acceptance with PostgreSQL, worker, Floci/S3-compatible and Azurite/Azure-compatible fixtures",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d515-docker-full-current",
+  "result": {"docker_integration_selected": 27, "docker_integration_passed": 27, "docker_integration_failed": 0, "docker_integration_skipped": 0, "v01_selected": 15, "v01_passed": 15, "v01_failed": 0, "v01_skipped": 0, "pytest_seconds": 239.33, "process_exit_code": 0},
+  "fixtures": {"postgres": true, "docker_worker": true, "floci_s3_compatible": true, "azurite_azure_compatible": true},
+  "finding": "The current clean candidate passes the complete Docker integration scope and strict v0.1 journey. Floci and Azurite provide local S3/Azure-compatible emulator evidence only; no external cloud provider certification is claimed.",
+  "image_digest": "sha256:4f1a1ed7aaee98ea4017750871e874e5da11f501e709b02d45b4d84ea13fc35f",
+  "cleanup": "PASS; qualification image, containers, volumes and networks removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d515-docker-full-current",
+  "evidence_sha256": {
+    "azurite-qualification.log": "F0B90D4FD34967995AAD722CE1DB1C15D0BA908DB42E03C82DFD89EF3130A502",
+    "docker-cleanup.json": "FDAC1169159B85365886DFBFA5F47F462A6528E5ADCE01CCC79BDFC05A31784F",
+    "docker-pytest-output.log": "E372218DE8EAF8306D5F9A364E4510DA31020CE4EC99C86F8D48BBE09D9067EC",
+    "docker-qualification.log": "4E6DD95100A70F545FFA29E75D08E5C7097D371C8365950024B38FF51A360C29",
+    "floci-s3-qualification.log": "90068BD359800451F1E4EE1446691983ECEB9B4C1CF3E0AA96576916870CFA53",
+    "postgres-qualification.log": "0A5E5F875575335BE45CFDA516DB7D9045F925CA05143BCCF47BA070DD18142E",
+    "qualification-summary.json": "97CCFB2E4DCFA8BA5F60D1064DA3EE8749F6531DD19904A835D531D3777FCF27",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "730A33F67FD21BA4F438A2108F5824BEA757CE912C2EA3DB5985669121B4A1A2"
+  },
+  "limitations": ["Floci/Azurite are emulators and do not certify AWS/Azure cloud providers", "does not close remaining P11 families or release gates", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
