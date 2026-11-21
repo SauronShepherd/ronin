@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D573",
+  "status": "PASS_SCHEDULER_BACKFILL_RUNTIME_FILE",
+  "candidate_sha": "e2a20e114f49180be4e461c0aeb8d69c7592cdee",
+  "qualification": "complete scheduler backfill runtime unit integration file",
+  "command": "python -m pytest tests/test_scheduler_backfill_runtime.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d573-scheduler-backfill-runtime-file\\pytest.xml",
+  "result": {"selected": 11, "passed": 11, "failed": 0, "skipped": 0, "pytest_seconds": 1.94, "process_exit_code": 0},
+  "finding": "The complete scheduler backfill runtime file passes all bounded execution invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d573-scheduler-backfill-runtime-file",
+  "evidence_sha256": {"pytest.log": "6B170271EA361EC508CC62B8FE198A61C9C9571BA3ADF6E33E7671ACCA390AF0", "pytest.xml": "693EDA1C2555518ABF744CDD2B6923BB749AB29609E838045FBD011CE62CDE11"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
