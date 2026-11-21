@@ -2106,6 +2106,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D596.md",
       "candidate_sha": "e8372933aeee84c4091e48a9f12bedb5cedd8668",
       "commit_sha": "d22b787e0fb9233191ae0d8907bdd5d14393e9b8"
+    },
+    {
+      "id": "D597",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-governance-retention",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D597.md",
+      "candidate_sha": "966dee51edfe9f3f8ea5246851fef628d800a699",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D597",
+  "status": "PASS_POSTGRES_GOVERNANCE_RETENTION",
+  "candidate_sha": "966dee51edfe9f3f8ea5246851fef628d800a699",
+  "qualification": "PostgreSQL audit, quality, catalog and artifact-retention integration suites against the configured real backend",
+  "command": "python -m pytest -q tests/integration/test_postgres_audit_store.py tests/integration/test_postgres_quality_store.py tests/integration/test_postgres_catalog_store.py tests/integration/test_postgres_artifact_retention_barrier.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d597-postgres-governance-retention\\postgres-governance-retention.xml",
+  "result": {"selected": 10, "passed": 10, "failed": 0, "skipped": 0, "postgres": "16.4", "process_exit_code": 0},
+  "finding": "The real PostgreSQL audit, quality, catalog and artifact-retention barrier suites passed completely, including scope, idempotency/conflict, durability, governance and writer fencing behavior.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d597-postgres-governance-retention",
+  "evidence_sha256": {"postgres-governance-retention.log": "DA83139CA969300E62F2918424ED5C259BB03C0D358D1DC7C9E9291CFADF63DB", "postgres-governance-retention.xml": "750848B209D7707D6CB76C6B97B03AA90217F739C43D2BA4BD4C03C1BBD2A532", "docker-cleanup.log": "FBF216ED0750ACB192CB6903016822A28141FA96215E102742099D35317A8F19"},
+  "limitations": ["four integration modules", "single PostgreSQL instance", "does not prove indefinite operation, HA, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
