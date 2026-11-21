@@ -1106,6 +1106,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D490.md",
       "candidate_sha": "d3bb5869cdb3715728c4381752adec296bd8e35e",
       "commit_sha": "d3bb5869cdb3715728c4381752adec296bd8e35e"
+    },
+    {
+      "id": "D491",
+      "date": "2026-11-21",
+      "phase": "p11-current-candidate-live-backpressure-boundary-optimized-sink",
+      "status": "failed",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D491.md",
+      "candidate_sha": "ef472a906cc771e17df6c6f4f1296ad9be841114",
+      "commit_sha": "ef472a906cc771e17df6c6f4f1296ad9be841114"
     }
   ],
   "known_blockers": [

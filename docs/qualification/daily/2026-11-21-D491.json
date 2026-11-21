@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D491",
+  "status": "FAILED_LIVE_BACKPRESSURE_BOUNDARY_OPTIMIZED_SINK",
+  "candidate_sha": "ef472a906cc771e17df6c6f4f1296ad9be841114",
+  "qualification": "bounded live sustained-backpressure diagnostic after replay-safe insert optimization",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d491-live-backpressure-10k-ef472a90 -TestGrep 'sustained backpressure' -BackpressureRecords 10000 -StorageBackend postgres -RequestTimeoutSeconds 300",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "skipped": 0, "api_events": 4, "correlated_http_logs": 4, "api_ok": 4, "api_error": 0, "elapsed_seconds": 273.44, "process_exit_code": 1},
+  "finding": "The optimized replay-safe table insert path did not remove the bounded 10,000-record PostgreSQL drain limit: the second drain request still exceeded Playwright's fixed 240-second test timeout.",
+  "change_boundary": {"sha": "ef472a906cc771e17df6c6f4f1296ad9be841114", "change": "normal stream-table inserts use ON CONFLICT DO NOTHING and perform conflict lookup only when rowcount indicates a collision", "regression": "32 streaming tests passed, compileall and Ruff passed"},
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d491-live-backpressure-10k-ef472a90",
+  "evidence_sha256": {"browser-live.log": "D460594261AA9CEE9FFF389AA87A264269900D5C01834DD7D5399A51EB22296E", "browser-live.xml": "6EECAE09DBE2A19A2A6B424141CCE024F61F4980D5C963C76D377CD0B9153010", "live-api-traffic.json": "655637C71A4A8714DF42F993371675D15680B939474CD08F9E9AD62313E1D1C8", "live-python-freeze.txt": "74A0E479476BDF9D495A5B3466C61B73B03AB28DB7BBD795E79F2DDDF8F31578", "live-server.stderr.log": "FA13E9A099A7F3D4BDB9DD18BA205EA8E040AE88D813D03397ED65ACB888BE01", "qualification-summary.json": "B0C4724BF7E78B686FB1B7FEBBF912878868FB4C1409134D9CA6A2C9B286E14C"},
+  "limitations": ["failure is bounded to the sustained-backpressure route and does not invalidate prior passing lanes", "the sink optimization is not evidence of a passing runtime drain", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
