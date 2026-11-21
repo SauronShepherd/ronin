@@ -2234,6 +2234,7 @@ class PostgresSchedulerSnapshotStore(
                     (workspace_key, event_ids),
                 )
                 if cursor.fetchall():
+                    cursor.close()
                     if owns_connection:
                         connection.rollback()
                     return tuple(self.ingest_event(event) for event in events)
