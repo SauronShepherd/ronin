@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D460",
+  "status": "PASS_BOUNDED_DIAGNOSTIC",
+  "candidate_sha": "6d8c03e02354fe1851bec15baaf33c5238ab2fed",
+  "qualification": "full bounded live product qualification with explicit PostgreSQL runtime, Redpanda and Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d460-live-postgres-soak-fc61b4c05e2c49e7b0d0571e056975a7 -WorkerImage sha256:cc4998e824da2995acb6794b5da7d0477f7a383fac7a65379af7cd6c3eb6cc1d -StorageBackend postgres -SupervisorSoakSeconds 1200",
+  "result": {"executed": 43, "passed": 42, "failed": 0, "skipped": 1, "process_exit_code": 0, "duration_seconds": 1509.33, "active_routes": 25, "api_contract_routes": 24, "ui_only_routes": 1, "api_events": 1896, "correlated_http_logs": 1896, "api_ok": 1872, "api_warn": 21, "api_error": 3},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true, "worker_image": "sha256:cc4998e824da2995acb6794b5da7d0477f7a383fac7a65379af7cd6c3eb6cc1d"},
+  "bounded_criteria": "Supervisor soak configured for 1200 seconds; this is bounded evidence and does not prove indefinite operation.",
+  "error_interpretation": "The three ERROR outcomes are expected authorization/error-path observations covered by the live suite; no unexpected authorization gap or server/network error was reported.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume, network and temporary worker image removed",
+  "evidence_sha256": {"qualification-summary.json": "E63FE391E400F6BB1CCDF5F10FBD2B0EB2B5763F3641BC91821378E318569987", "browser-live.xml": "D840EDFCAA94C3967E45F15BC251C55997C887E560ACD17D1F73C601BEFA5123", "live-api-traffic.json": "F86EFCD147601434B1E9C5D84CB375DD17E48DA52A3ED350D7A211A7C50D6C5D", "live-server.stderr.log": "2CD7B01F77768C7B948F3D70F90EE49F429FBEAA886B2340BFB6486F596E9136", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"},
+  "limitations": ["bounded qualification, not indefinite operation", "one reserved skipped case remains", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
