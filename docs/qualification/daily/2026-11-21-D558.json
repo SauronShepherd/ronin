@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D558",
+  "status": "PASS_SCHEDULER_TIMEOUTS_FILE",
+  "candidate_sha": "c608c7a019326efd68bb43e32380695a8fdf9824",
+  "qualification": "complete scheduler timeout unit integration file",
+  "command": "python -m pytest tests/test_scheduler_timeouts.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d558-scheduler-timeouts-file\\pytest.xml",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "pytest_seconds": 1.68, "process_exit_code": 0},
+  "finding": "The complete scheduler timeout file passes timeout enforcement, durable request listing and dispatch-authority handling.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d558-scheduler-timeouts-file",
+  "evidence_sha256": {"pytest.log": "54D81306A6140289A446F54C348B3FF93656C54C2C1E3B2BAD89EEE64610D110", "pytest.xml": "DB782DBD3A0C65CA5D3C45B4EB0842F4FECF34CF2C388CF6862F85825D445D73"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
