@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D518",
+  "status": "FAIL_LIVE_STREAMING_SEQUENCE_REPRODUCED",
+  "candidate_sha": "7c83ae90d08cbf15a5470b08900a13e982f00c83",
+  "qualification": "focused streaming sequence with broker restart followed by event workflow on PostgreSQL",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d518-live-streaming-postgres-sequence-current -TestGrep streaming -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 11, "passed": 9, "failed": 1, "skipped": 1, "api_events": 241, "api_ok": 230, "api_warn": 8, "api_error": 3, "process_exit_code": 1},
+  "finding": "The reduced streaming sequence independently reproduces the event-workflow failure after broker restart: delivery remains not visible within 15 seconds and the server records three Kafka/streaming-unavailable errors.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d518-live-streaming-postgres-sequence-current",
+  "evidence_sha256": {
+    "browser-live.log": "0F42DA5F659210DC43FEF9DD6D3FF8D4B1B35576017A3A3D1489F4C99755431B",
+    "browser-live.xml": "CDA5276B06EED5B8BE126DA8E4B505FDD5363D67F368B8EF51D069CC3E1B0C94",
+    "live-api-traffic.json": "C7EA9C3B26E8E2584A45080E788967E61BF36801AA2656A4B0FF63AF4E2F6CD2",
+    "live-python-freeze.txt": "126403A2254AA14A1BA9B5E0E226C6B977303AF88BF1230937980471C99C33DB",
+    "live-server.stderr.log": "D006DC0EC0FBE2509F304304AD5C7A78BE4B690CC9B088B207A39D2559DF1539",
+    "qualification-summary.json": "F8BC021600B3A2706E557D2D8218B25C0659959A20F8A9E83ACF55E455A8104F"
+  },
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

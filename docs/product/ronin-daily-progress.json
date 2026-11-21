@@ -1336,6 +1336,26 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D517.md",
       "candidate_sha": "dc91772d8424d3a22e04c309372aa21b3b187219",
       "commit_sha": "dc91772d8424d3a22e04c309372aa21b3b187219"
+    },
+    {
+      "id": "D518",
+      "date": "2026-11-21",
+      "phase": "p11-live-streaming-sequence-reproduction",
+      "status": "failed",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D518.md",
+      "candidate_sha": "7c83ae90d08cbf15a5470b08900a13e982f00c83",
+      "commit_sha": "7c83ae90d08cbf15a5470b08900a13e982f00c83"
+    },
+    {
+      "id": "D519",
+      "date": "2026-11-21",
+      "phase": "p11-kafka-recovery-fix-attempt-rejected",
+      "status": "failed",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D519.md",
+      "candidate_sha": "09ae539d2ae005f01c50c117f90f0a06c7e3bd47",
+      "commit_sha": "09ae539d2ae005f01c50c117f90f0a06c7e3bd47"
     }
   ],
   "known_blockers": [

@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D519",
+  "status": "FAIL_FIX_ATTEMPT_REJECTED",
+  "candidate_sha": "09ae539d2ae005f01c50c117f90f0a06c7e3bd47",
+  "qualification": "attempted Kafka consumer recreation after transport error",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d519-live-streaming-postgres-fixed -TestGrep streaming -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 11, "passed": 8, "failed": 2, "skipped": 1, "api_events": 279, "api_ok": 268, "api_warn": 8, "api_error": 3, "process_exit_code": 1},
+  "finding": "The attempted consumer-recreation fix did not resolve event-workflow and also regressed the two-partition backlog criterion (40 attempts, required less than 40). The production change was reverted; no evidence from this candidate is promoted.",
+  "reverted_by": "4c67efb3363f5bb7f1f324e6e1691cd1081b9b54",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d519-live-streaming-postgres-fixed",
+  "evidence_sha256": {
+    "browser-live.log": "A876665683E3B63CB0651DA3F882E60EA900C4754B658F49227073DAF4C62FB0",
+    "browser-live.xml": "C88A5AC8AC5A57273D5660F6D4FF2617B415A5BF67C162E2359BC656827AAA23",
+    "live-api-traffic.json": "0863A8E743960D28BC5AEB9C06C86002CA752E64AB7D14CB27B574CE4930AD0A",
+    "live-python-freeze.txt": "09A1E27E33A3C51E3105090AABDB476F3339A3A60E64F1F6B31D36B548159241",
+    "live-server.stderr.log": "957D946EE0E1E769DF7FBBEDDCC1B1DE5326B65BFD0E188138BE6940370DFEB5",
+    "qualification-summary.json": "651921C06880BDA4A048D66CD8635DC191D28DCB9CD7101101D98C33884AA159"
+  },
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
