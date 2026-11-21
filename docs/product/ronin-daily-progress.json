@@ -1676,6 +1676,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D553.md",
       "candidate_sha": "67d1ea25d3b921eecfe6b297c4187bb37e6bd367",
       "commit_sha": "cef69f014551408577d848e8a8fb240a7064c069"
+    },
+    {
+      "id": "D554",
+      "date": "2026-11-21",
+      "phase": "p11-scheduler-events-file",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D554.md",
+      "candidate_sha": "323f47bb4481c19f12b474ea122176d5a14148fd",
+      "commit_sha": "323f47bb4481c19f12b474ea122176d5a14148fd"
     }
   ],
   "known_blockers": [
