@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D482",
+  "status": "PASS_DOCKER_FULL_CURRENT",
+  "candidate_sha": "fd83c0e6901e189a8a47148a5892d2c7601cd29b",
+  "qualification": "full Docker integration and strict v0.1 acceptance on current candidate",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d482-docker-full-e35a587c7cb242a9a8e244881e81de38",
+  "result": {"integration_tests": 27, "integration_passed": 27, "integration_skipped": 0, "integration_failed": 0, "strict_tests": 15, "strict_passed": 15, "strict_skipped": 0, "strict_failed": 0, "pytest_seconds": 163.23, "process_exit_code": 0},
+  "criteria": ["real Docker worker/runtime passes integration matrix", "PostgreSQL-backed journeys and appliance backup pass", "Floci S3 and Azurite Azure lanes pass", "strict v0.1 acceptance is 15/15"],
+  "real_services": {"postgres": true, "docker_worker": true, "floci_s3": true, "azurite_azure": true, "qualification_image": "sha256:831b55844a2d90953685a835e2e2a64cd66657f9789a73723f8135e996a8747e"},
+  "cleanup": "PASS; PostgreSQL, Floci, Azurite, volumes, networks and owned Ronin image removed",
+  "evidence_sha256": {"azurite-qualification.log": "07EA9D0F1561FE83E2AA68DFAC17B6761874476C6E20E2ECB235956AE081FF8F", "docker-cleanup.json": "01991F2239C6D6E99F2C5D770A5E978712026B4EE7BAC84E21EC3C47304FFDCE", "docker-pytest-output.log": "03ADA66AC9EE35B122FAFB25DCBC2294E54AE941332B8240862FFF98A9E46EC3", "docker-qualification.log": "DBDD20E2829AEB0877C7900D3325F3B9A095E225A72E7875596F4F4CE6B20EAA", "floci-s3-qualification.log": "D2D5EB208AB2E0531444DA9E65AA833361443FD3B36A4B4AD369FC12CCC82738", "postgres-qualification.log": "DBA8B4CC04313A197D1331405E8D8CFC66B094498346690176029CA91DEE5D2E", "qualification-summary.json": "E9045E66649619ABF33519A8C30AD6D9EF244EAF9B0317C0C513169D295C80C1", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "636DD422AD2C7F7E742A340DB814CF072EAD170821C272003935A3C612914E17"},
+  "limitations": ["local Floci/Azurite fixtures, not external cloud certification", "bounded Docker run, not indefinite SLO/HA", "does not close all family/release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

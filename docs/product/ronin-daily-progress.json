@@ -1056,6 +1056,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D481.md",
       "candidate_sha": "a4bd793a2e12a58bcd47432bde3273652bfd1aca",
       "commit_sha": "a4bd793a2e12a58bcd47432bde3273652bfd1aca"
+    },
+    {
+      "id": "D482",
+      "date": "2026-11-21",
+      "phase": "p11-current-candidate-docker-full-strict",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D482.md",
+      "candidate_sha": "fd83c0e6901e189a8a47148a5892d2c7601cd29b",
+      "commit_sha": "fd83c0e6901e189a8a47148a5892d2c7601cd29b"
     }
   ],
   "known_blockers": [
