@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D494",
+  "status": "PASS_BATCH_INGESTION_BOUNDARY_UNIT",
+  "candidate_sha": "8d4eab45ba9effbfca56f7cb308c10b6bc37a485",
+  "qualification": "stream event batch-ingestion contract and fallback regression",
+  "command": "python -m pytest tests/test_streaming_runtime.py tests/test_stream_scheduler_bridge.py tests/test_scheduler_events.py -q; python -m compileall -q python; ruff check python/studio_execution/stream_scheduler.py python/studio_streaming/runtime.py python/studio_cli/local_composed.py",
+  "result": {"tests_passed": 26, "tests_failed": 0, "compileall": "pass", "ruff": "pass"},
+  "finding": "The runtime now exposes an explicit per-micro-batch event-ingestion boundary with a conservative one-by-one fallback; existing SQLite, replay, conflict, and failure-boundary behavior remains green. PostgreSQL executemany optimization is not yet claimed.",
+  "change_boundary": {"sha": "8d4eab45ba9effbfca56f7cb308c10b6bc37a485", "change": "added event_batch_ingestor wiring and stream event batch construction", "regression": "26 focused tests passed"},
+  "cleanup": "PASS; no live services started",
+  "limitations": ["no live PostgreSQL qualification was run for this boundary", "batch API currently falls back to existing per-event persistence until PostgreSQL bulk persistence is implemented", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

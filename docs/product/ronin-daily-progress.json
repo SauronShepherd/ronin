@@ -1136,6 +1136,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D493.md",
       "candidate_sha": "ba9ad939726290a4318d6a170ea8380d6cc123ed",
       "commit_sha": "ba9ad939726290a4318d6a170ea8380d6cc123ed"
+    },
+    {
+      "id": "D494",
+      "date": "2026-11-21",
+      "phase": "p11-stream-event-batch-ingestion-contract",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D494.md",
+      "candidate_sha": "8d4eab45ba9effbfca56f7cb308c10b6bc37a485",
+      "commit_sha": "8d4eab45ba9effbfca56f7cb308c10b6bc37a485"
     }
   ],
   "known_blockers": [
