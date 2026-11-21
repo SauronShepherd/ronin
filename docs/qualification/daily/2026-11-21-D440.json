@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D440",
+  "status": "PASS",
+  "candidate_sha": "6c6952ee2d05362b3e4ec8c795984efd8c24bf17",
+  "qualification": "real PostgreSQL multi-object bundle integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d440-postgres-bundle-5565e0491baf4d3ab5b5a75c58a5d5a9 -TestPath tests/integration/test_postgres_bundle_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 1.20},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "21758685BEDEC841214F44FF32CA00759EBED507D2CF88874AA0458528B36CD7",
+    "pytest-postgres.log": "EBE531D3D893AAA5DBC8061943D66C6CCC5A59771CA179336C3F4984BD1E4946",
+    "pytest-postgres.xml": "D059C84EB3B86688DAEB005A36896732E6E1C88AF51F8D76102560BB5DA82BFD",
+    "pytest-timings.json": "C8DA0A53B2E07356B11F113F25D0429C7F58092D2C98ED033E92269FDE168F79",
+    "runner-timings.json": "CC7F88E76F5A15D3B08616E6D018909C754D778F9EF09BE1A14A3A409DA0CC7A"
+  },
+  "coverage": ["multi-object atomic/idempotent commit", "late-binding conflict rollback of earlier insert"],
+  "limitations": ["focused integration file with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
