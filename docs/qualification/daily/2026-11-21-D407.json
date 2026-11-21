@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D407",
+  "status": "PASS",
+  "candidate_sha": "37a10e92270f6a7f3237ca5ae1a290defbb50c8e",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "real PostgreSQL appliance backup and restore",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d407-postgres-backup-20261121 -TestFilter 'appliance_backup'",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 22.554},
+  "fixture": "PostgreSQL 16.4-alpine plus isolated Docker qualification image",
+  "coverage": ["PostgreSQL backup", "restore of PostgreSQL and local data volume"],
+  "cleanup": "PASS; PostgreSQL container/volume and owned Ronin qualification image removed",
+  "evidence_sha256": {"docker-cleanup.json": "2685418C9674F8AAA38F72A026FDE2D34E5ECFBFD03AD62358DE7659C2BB2834", "docker-pytest-output.log": "B2F50B2E0C273EB4AE5A01419C4D45FEDE99012FD6D12837D2CB299DAE750E04", "docker-qualification.log": "EE44DFB5CFD2631CBBC7DEF7C5DCEF4C0F866373C4D1C962DD827842BF0CC775", "postgres-qualification.log": "3891D016CD6532DE39EF367801FA02BA95CFA0DEDE9F66E84E1210DD086F516D", "v01-acceptance.xml": "06C8B8EEACAD9F769EE84EB2FC8629C7EA657C61F7B17EDD51807AF3D9BE45DF"},
+  "limitations": ["filtered Docker diagnostic; strict v0.1 acceptance omitted", "bounded backup/restore cell", "does not prove indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

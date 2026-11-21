@@ -7,6 +7,11 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D407 passes the real PostgreSQL appliance backup/restore diagnostic on
+`main@37a10e92`: `1/1` test passed in `22.554 s` against PostgreSQL 16.4,
+restoring PostgreSQL and local data volume with cleanup PASS. This is bounded
+backend evidence; strict v0.1 acceptance and P11/release remain open.
+
 D406 passes the real OTLP collector qualification on `main@c95c939b`: `1/1`
 test passed in `24.439 s` against a digest-pinned OpenTelemetry Collector,
 accepting traces, metrics and logs, with collector cleanup PASS. This is bounded

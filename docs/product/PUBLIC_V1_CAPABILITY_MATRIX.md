@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D407 passes the real PostgreSQL appliance backup/restore diagnostic on
+`main@37a10e92`: `1/1` test passed in `22.554 s`, with PostgreSQL/local-volume
+restore and cleanup PASS. This bounded backend evidence does not close
+P11/release.
+
 D406 passes the real OTLP collector qualification on `main@c95c939b`: `1/1`
 test passed in `24.439 s`, accepting traces, metrics and logs with cleanup PASS.
 This bounded local telemetry evidence does not close P11/release.
