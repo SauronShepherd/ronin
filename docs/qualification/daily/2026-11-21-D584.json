@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D584",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_POSTGRES_120S",
+  "candidate_sha": "9fd5681e85f775e363b2db3b27887a1295f1f9c9",
+  "qualification": "120-second live supervisor soak with real PostgreSQL and Redpanda",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d584-live-supervisor-soak-postgres-120 -TestGrep supervisor soak -StorageBackend postgres -SupervisorSoakSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 135, "correlated_events": 135, "unexpected_errors": 0, "elapsed_seconds": 173.75, "supervisor_soak_seconds": 120, "process_exit_code": 0},
+  "finding": "The real PostgreSQL/Redpanda live supervisor soak passed for 120 seconds with all API events correlated and no error/critical logs; cleanup succeeded.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d584-live-supervisor-soak-postgres-120",
+  "evidence_sha256": {"browser-live.log": "FC8B96445636E7C78B6D0A0D2B15B814DA02041FF3812BA4B1581C9C606CF408", "browser-live.xml": "123A2ECCA9C0C61D3454CFC992FFE33B166764B736F0ED228C24C4659888AF9C", "live-api-traffic.json": "5C3E3AFA321B581A10C1C17BAAE2723BD81F4D11F4BB94DB7E18573809FB48E1", "qualification-summary.json": "17FAC88A2EB596DA90B562E34A1F02E769E2A72A7A8D107F6E3D76EC3892985B", "live-server.stderr.log": "03A7692490A723879C30E3262C9B2B6E6E9480E07DA2ECD4D40974F978FCB307"},
+  "limitations": ["one filtered live case", "single broker and no worker image", "does not prove indefinite operation, HA, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
