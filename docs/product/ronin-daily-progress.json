@@ -1916,6 +1916,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D577.md",
       "candidate_sha": "b2a1fcf57e5bc3e255bb1fb2696d4bc268d4a7af",
       "commit_sha": "bdd393acda43aced1088cc3274b1e71abab12321"
+    },
+    {
+      "id": "D578",
+      "date": "2026-11-21",
+      "phase": "p11-backend-configuration",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D578.md",
+      "candidate_sha": "9f0705303b4a6ba30967db1119609a53141162a8",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [
