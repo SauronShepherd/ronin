@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D467",
+  "status": "PASS_DOCKER_FULL",
+  "candidate_sha": "3a7e4d88a34a4f1d6a4c945827a42c39db7da43b",
+  "qualification": "full Docker integration and strict v0.1 acceptance with PostgreSQL, real worker, Floci/S3 and Azurite/Azure fixtures",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d467-docker-full-aa24080cd972481885f3c8f52831256b",
+  "result": {"integration_tests": 27, "integration_passed": 27, "integration_skipped": 0, "integration_failed": 0, "strict_tests": 15, "strict_passed": 15, "strict_skipped": 0, "strict_failed": 0, "pytest_seconds": 220.1, "process_exit_code": 0},
+  "real_services": {"postgres": true, "docker_worker": true, "floci_s3": true, "azurite_azure": true, "qualification_image": "sha256:9b06443fa7101c2592d4671b7bcf292d08138bb4acc785b0bb73486adcc43fad"},
+  "cleanup": "PASS; PostgreSQL, Floci, Azurite, volumes, networks and owned Ronin image removed",
+  "evidence_sha256": {"azurite-qualification.log": "6C36E6F89299A59A817C7436E44F5823DA9A5B8B78698030AFFDF6FC351DEE4E", "docker-cleanup.json": "EE33E96D6614A4AB313A03069526A104254704EF132F6FC82B485466249C7E92", "docker-pytest-output.log": "4B385C2D200BDBEB542D2A209F69CEDA29D8E6EB8BB65B9861F358597F5C7438", "docker-qualification.log": "FF58E0A66BC6123B359D1A62CFA07F7C705948677F54CF66638A86ADCD2BBC74", "floci-s3-qualification.log": "9F5903BA77C6701BFAA7547377C5B1179775FD10E928AD3C0FD790CFA98722AE", "postgres-qualification.log": "68D524F45612324EDE69CB7E9B94FE038F822B4A461308A1E6DE5A5777E6F848", "qualification-summary.json": "6CCD439FB8A0FA138F926B359A203DDFA97A93F0BDA6F8BDE05806EBE92CF353", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "7CB7D5987468B5C392B986037CE7E75FD82A8C94E29DF551176F8FA84EC2849D"},
+  "limitations": ["local Floci/Azurite fixtures, not external cloud provider certification", "full Docker gate is evidence for this candidate but does not close all family/release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
