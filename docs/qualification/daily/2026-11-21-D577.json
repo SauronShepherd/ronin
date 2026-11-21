@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D577",
+  "status": "PASS_SCHEDULER_RECOVERY_FOCUSED",
+  "candidate_sha": "b2a1fcf57e5bc3e255bb1fb2696d4bc268d4a7af",
+  "qualification": "bounded scheduler recovery campaign",
+  "command": "python -m pytest tests/test_scheduler_daemon.py tests/test_scheduler_execution_outbox.py tests/test_scheduler_branch_state.py -q -k \"daemon_leadership_is_exclusive_and_takeover_increments_generation or daemon_loop_renews_leadership_and_releases_on_shutdown or immediate_release_remains_readable_and_next_acquire_increments_generation or execution_outbox_recovers_after_dispatcher_process_termination or branch_decision_store_is_idempotent_and_restart_stable\" --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d577-scheduler-recovery-focused\\pytest.xml",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "deselected": 15, "pytest_seconds": 4.69, "process_exit_code": 0},
+  "finding": "Focused scheduler recovery tests pass takeover, generation fencing, shutdown release, dispatcher-process recovery and restart-stable branch decisions.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d577-scheduler-recovery-focused",
+  "evidence_sha256": {"pytest.log": "383B7297191252CBB93F5CC3E328A7C9E5EB48911B6E657E2662BC88ED5EA4CA", "pytest.xml": "01C00FA73F810F3C4A4F1B6C10AA3E2B0A25D4CD186B8598E62E2D84712166F6"},
+  "limitations": ["bounded focused tests", "does not prove indefinite operation, HA or production PostgreSQL scheduler runtime", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
