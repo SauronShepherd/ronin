@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D499",
+  "status": "PASS_STREAM_FAILURE_OBSERVABILITY_REGRESSION",
+  "candidate_sha": "8110d64b74facf6ecba11a752c33af6d35051ff4",
+  "qualification": "sanitized streaming execution failure logging",
+  "command": "python -m pytest tests/test_streaming_runtime.py -q; python -m compileall -q python; ruff check python/studio_server/control_plane.py",
+  "result": {"tests_passed": 14, "tests_failed": 0, "compileall": "pass", "ruff": "pass"},
+  "finding": "Streaming execution failures now emit request-correlated exception and cause class names to the structured access logger while retaining the generic public 503 response.",
+  "change_boundary": {"sha": "8110d64b74facf6ecba11a752c33af6d35051ff4", "change": "sanitized stream.execution.failure log event", "regression": "14 streaming tests passed"},
+  "cleanup": "PASS; no live services started",
+  "limitations": ["bulk PostgreSQL wiring remains disabled after D498 replay regression", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

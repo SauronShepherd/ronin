@@ -1156,6 +1156,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D498.md",
       "candidate_sha": "0784c3f903dac350ec7bd549cd4f68db8b5a75ad",
       "commit_sha": "0784c3f903dac350ec7bd549cd4f68db8b5a75ad"
+    },
+    {
+      "id": "D499",
+      "date": "2026-11-21",
+      "phase": "p11-stream-failure-observability",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D499.md",
+      "candidate_sha": "8110d64b74facf6ecba11a752c33af6d35051ff4",
+      "commit_sha": "8110d64b74facf6ecba11a752c33af6d35051ff4"
     }
   ],
   "known_blockers": [
