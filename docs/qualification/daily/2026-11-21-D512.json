@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-21",
+  "day": "D512",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_POSTGRES_CURRENT",
+  "candidate_sha": "d6368ec19277ac165e22365c72798dc5ec95c408",
+  "qualification": "bounded live stream event-to-workflow journey with explicit PostgreSQL server backend",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d512-live-event-workflow-postgres-current -TestGrep 'live streaming event workflow' -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 11, "correlated_http_logs": 11, "api_ok": 11, "api_error": 0, "elapsed_seconds": 88.57, "process_exit_code": 0},
+  "finding": "The live runner configured RONIN_STORAGE_BACKEND=postgres and RONIN_POSTGRES_DSN for the Ronin server; a committed stream record triggered the durable workflow, with all 11 API events correlated and OK.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d512-live-event-workflow-postgres-current",
+  "evidence_sha256": {
+    "browser-live.log": "5168BE5C4A16322C214C1E7EDD3173F254B3D83254FB3FDA590930C188279800",
+    "browser-live.xml": "F69612D31553E18D8049B5297ED4E3B33E965B952C1BB44E5EA3241356A89CD3",
+    "live-api-traffic.json": "D6511A1E1BA2544A288FE75E6478840E29F4BBC8F6531971AB1B0BDDBFCF3036",
+    "live-python-freeze.txt": "0E180635F628E6FED5C9F470C65F511117E28E8CBA2C6507E0F94DD574E2F7DE",
+    "live-server.stderr.log": "2F5C28BF2F869CDC70FEF18DACCECC91338CFB8A0AA74689A2DEC8F803771855",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "F3D234562DBF50B44B9E0D52611083842FB5660F3D3B6421E6BFDAC1D01175A6",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["bounded filtered journey, not complete PostgreSQL/runtime qualification", "does not close remaining P11 families or release gates", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
