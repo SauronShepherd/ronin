@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D448",
+  "status": "PASS",
+  "candidate_sha": "64d2be489faae9b20f25ba8082ac455fc4466fb0",
+  "qualification": "real PostgreSQL local-composed catalog HTTP journey",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d448-postgres-catalog-http-58ad232453a0461dbd439bdb999d3d2f -TestPath tests/integration/test_postgres_local_composed_catalog_http.py",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 6.21},
+  "service_profile": "isolated PostgreSQL 16.4 with local-composed HTTP service",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "E5CDDFB947DCDAF3AF1B0CC4618B1332B2049ED1BAE5FF70F721D89C928B1029",
+    "pytest-postgres.log": "27069ED80FE26FA9910A5E4F501A27243557846D76A949CFA8E78F33B7AA0276",
+    "pytest-postgres.xml": "F79758545D41B2CC32393D669A5883E59E565D4649B43B9BDDB32C25DFAA4031",
+    "pytest-timings.json": "71FED638F930512F486223CC031869AED418FE2F75E0315AE5189E9DD671A841",
+    "runner-timings.json": "1D5F1DC82523E9DC5F784FE35489E2029C7FB5E2936B39508CA7766C4C5FA6F8"
+  },
+  "coverage": ["catalog HTTP service route", "governance over real HTTP", "local-composed PostgreSQL runtime"],
+  "limitations": ["focused integration test with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
