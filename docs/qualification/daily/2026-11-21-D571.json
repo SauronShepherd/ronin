@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D571",
+  "status": "PASS_SCHEDULER_BACKFILL_STORE_FILE",
+  "candidate_sha": "ba795dd9d0ae3726638716574e1e4f21fdda9bb6",
+  "qualification": "complete scheduler backfill store unit integration file",
+  "command": "python -m pytest tests/test_scheduler_backfill_store.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d571-scheduler-backfill-store-file\\pytest.xml",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "pytest_seconds": 0.95, "process_exit_code": 0},
+  "finding": "The complete scheduler backfill store file passes all persistence invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d571-scheduler-backfill-store-file",
+  "evidence_sha256": {"pytest.log": "D5F50A73C9A27A41BFF4A2D95C97514F790E5CDB1A0CA2A0049AC9FE0102B8E7", "pytest.xml": "15A82B3D83CE554CC25D5338A69DF4EB9DA2C3D4E1B4D7F06E6394511FAB6EAC"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

@@ -1846,6 +1846,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D570.md",
       "candidate_sha": "f3a00c4b76d3def856f1e7c867c95773598774e5",
       "commit_sha": "211aa56189d7f7728d77acdfe9dd8ef29fc781e6"
+    },
+    {
+      "id": "D571",
+      "date": "2026-11-21",
+      "phase": "p11-scheduler-backfill-store-file",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D571.md",
+      "candidate_sha": "ba795dd9d0ae3726638716574e1e4f21fdda9bb6",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [
