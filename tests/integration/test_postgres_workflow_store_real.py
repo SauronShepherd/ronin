@@ -1918,9 +1918,9 @@ def test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries(
         pretrigger_event,
         id=SchedulerEventId(f"posttrigger-event-{uuid4().hex}"),
     )
-    assert store.ingest_events((posttrigger_event,)) == (
-        (EventDelivery(workspace_id, posttrigger_event.id, definition),),
-    )
+    posttrigger_delivery = EventDelivery(workspace_id, posttrigger_event.id, definition)
+    assert store.ingest_events((posttrigger_event,)) == ((posttrigger_delivery,),)
+    assert store.deliver_event(posttrigger_delivery, now=NOW).state == "delivered"
 
     event = SchedulerEventRecord(
         workspace_id,
