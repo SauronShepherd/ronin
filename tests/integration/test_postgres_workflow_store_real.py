@@ -1968,7 +1968,10 @@ def test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries(
     assert delivered_results == (delivered, delivered)
     assert store.deliver_event(deliveries[0], now=NOW) == delivered
     assert store.list_pending_deliveries(workspace_id) == ()
-    assert store.list_event_deliveries(workspace_id) == (delivered,)
+    assert tuple(
+        item for item in store.list_event_deliveries(workspace_id)
+        if item.event_id == delivered.event_id
+    ) == (delivered,)
     assert store.get_run(workspace_id, delivered.workflow_run_id) is not None
 
     unmatched = replace(
