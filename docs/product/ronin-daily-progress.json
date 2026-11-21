@@ -2036,6 +2036,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D589.md",
       "candidate_sha": "c15507aa151d0652c6dcd0b88331350bcdc065dc",
       "commit_sha": "dc5d08fb51c5bd2ffa5269385b093b1b29c79357"
+    },
+    {
+      "id": "D590",
+      "date": "2026-11-21",
+      "phase": "p11-live-multibroker-failover",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D590.md",
+      "candidate_sha": "c0f6308ecc626c47ef00885475403065d0f49421",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

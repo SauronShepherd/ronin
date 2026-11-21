@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D590",
+  "status": "PASS_LIVE_MULTIBROKER_FAILOVER",
+  "candidate_sha": "c0f6308ecc626c47ef00885475403065d0f49421",
+  "qualification": "live Redpanda RF3 broker failover resumes streaming from the durable checkpoint",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d590-live-multibroker-failover -TestGrep 'live streaming multi-broker failover' -StorageBackend postgres -MultiBroker",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 5, "correlated_events": 5, "unexpected_errors": 0, "elapsed_seconds": 73.97, "replication_factor": 3, "process_exit_code": 0},
+  "finding": "The live RF3 failover case resumed from the durable checkpoint after broker failure, drained the remaining workload, correlated every API event and completed cleanup.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d590-live-multibroker-failover",
+  "evidence_sha256": {"browser-live.log": "EA71606E221F6BAEAFB5B4ED03D6A5C8429D4D49ACC4409B2732C55695FB7288", "browser-live.xml": "074AD3E55E3A34788BEC15488DBC370169AF4437667093941739E63359B83DCB", "live-api-traffic.json": "F295D78113C455E283FB0A76B1135E13C5F430370CA1B1D09C4F6AEF30B8BEEB", "qualification-summary.json": "1A63780E3C0EEB261600A2D6123894FDCC4034140A8CDCDD8A59AAFCCE4B3500", "live-server.stderr.log": "B8945AD3D2A3F5048226BA70AD5B40953A29051805D7E196304F134998453540"},
+  "limitations": ["one filtered live case", "bounded failover workload", "does not prove indefinite operation, HA beyond this RF3 scenario, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
