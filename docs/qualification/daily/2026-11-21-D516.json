@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-21",
+  "day": "D516",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_600_POSTGRES_CURRENT",
+  "candidate_sha": "62be662f46186b95f118901ab296ede448b87107",
+  "qualification": "bounded 600-second live supervisor soak with explicit PostgreSQL backend",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d516-live-supervisor-600-postgres-current -TestGrep 'supervisor soak' -SupervisorSoakSeconds 600 -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 683, "correlated_http_logs": 683, "api_ok": 683, "api_error": 0, "elapsed_seconds": 658.13, "process_exit_code": 0},
+  "finding": "The current candidate sustains the live supervisor soak for the explicit 600-second window with PostgreSQL configured for the Ronin server; every 683 API event correlates with structured HTTP logs and remains OK, with zero error or critical logs.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d516-live-supervisor-600-postgres-current",
+  "evidence_sha256": {
+    "browser-live.log": "8B9B6EE7F3FA3ECED63506457693F11AE4B8E9B61E1A56588EAD04672038DFE4",
+    "browser-live.xml": "740DC46CFE9B18D95E45602C16DC1CE4700849061720A01D741E76E04D29AA0C",
+    "live-api-traffic.json": "227592ED210E77413984C4CC0B868C272C07FCB699C81AC5AF0ABC5ECF5144DA",
+    "live-python-freeze.txt": "1D586B0F8178FE29EB81F816540428CB8EB805B4B77687672CBF9B24CC755001",
+    "live-server.stderr.log": "93001F596C089E268A293E90907E2C21B73684959F255264F809B541ADADE506",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "3C44DF3917569C655D8372F33A103E3CEE2301107C78A6D0E3C368F8008722B9",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["bounded 600-second soak does not prove indefinite operation or production SLO", "filtered diagnostic does not audit the complete route surface", "does not change P13 blocked state or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

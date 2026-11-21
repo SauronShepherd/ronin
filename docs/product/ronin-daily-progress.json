@@ -1316,6 +1316,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D515.md",
       "candidate_sha": "1d956496e243a48ddd01dd410c64c4afba1deada",
       "commit_sha": "1d956496e243a48ddd01dd410c64c4afba1deada"
+    },
+    {
+      "id": "D516",
+      "date": "2026-11-21",
+      "phase": "p11-live-supervisor-soak-600-postgres-current",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D516.md",
+      "candidate_sha": "62be662f46186b95f118901ab296ede448b87107",
+      "commit_sha": "62be662f46186b95f118901ab296ede448b87107"
     }
   ],
   "known_blockers": [
