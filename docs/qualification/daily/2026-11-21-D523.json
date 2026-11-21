@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-21",
+  "day": "D523",
+  "status": "NOT_PASS_POSTGRES_FAST_SCHEDULER_DIAGNOSTIC",
+  "candidate_sha": "42a163be04e4c06583b0fae87b5005e74465e069",
+  "qualification": "bounded live PostgreSQL broker-restart and event-workflow sequence with explicit fast scheduler interval/retry",
+  "command": "$env:RONIN_SCHEDULER_INTERVAL_SECONDS='0.25'; $env:RONIN_SCHEDULER_RETRY_SECONDS='0.25'; pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d523-live-broker-event-minimal-postgres-fast-scheduler -WorkerImage ronin:qualification-d523 -TestGrep 'live streaming (broker restart|event workflow)' -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 2, "passed": 1, "failed": 1, "skipped": 0, "api_events": 33, "correlated_api_events": 33, "uncorrelated_api_events": 0, "duration_seconds": 65.14},
+  "worker_image_digest": "sha256:f20a0e13c1ea6ace4156a65690da2dc2ea9ae8b7401ad52a9486b6487be9a8a8",
+  "finding": "The broker-restart case passes, but event-workflow remains not visible after the restart despite scheduler interval and retry both set to 0.25 seconds. This rules out the observed default backoff as a sufficient explanation; it does not identify the PostgreSQL composition root cause.",
+  "service_profile": "isolated PostgreSQL 16.4, Kafka, real Ronin API and Docker worker",
+  "cleanup": "PASS; isolated containers, volume, network and temporary worker image removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d523-live-broker-event-minimal-postgres-fast-scheduler",
+  "evidence_sha256": {
+    "browser-live.log": "67D137FBACFB3025A1D0D896C7CA339C8869739035C70CB4AE1373A81684594C",
+    "browser-live.xml": "A6523946FD7A661FC45D4C662D0C09D16D3A848E2C601AC7F2095EF668A2E286",
+    "live-api-traffic.json": "8E3E7C42CFA4D7DF84EECF9997CDF2BB1F26E26F69C27EFE9CF5579EA2CBB238",
+    "live-python-freeze.txt": "3B22E1985B49473D55A0910375D5E746A0ED7177D0F3531BF9804833F86FBAAA",
+    "live-server.stderr.log": "AE6B17F1D3E66450838E02CF23C15A9B3307098A8FBF39D17DF33D1EE856E51A",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "1899C36DE3D93B7845476BD7CEF5184900D2F6EFA072CF8F5F56E842E618CC65",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["bounded two-test diagnostic", "no production code change", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
