@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D535",
+  "status": "PASS_POSTGRES_CHECKPOINT_FILE",
+  "candidate_sha": "570964895ce9390f0e3c60dfaeb92ddd325a02a6",
+  "qualification": "complete real PostgreSQL connector checkpoint integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d535-postgres-checkpoint-file -TestPath tests/integration/test_postgres_connector_checkpoint_real.py",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 6.23, "pytest_wall_seconds": 7.807, "process_exit_code": 0},
+  "finding": "The complete PostgreSQL connector checkpoint integration file passes sync-worker checkpoint advancement, checkpoint fencing/reopen/replay/inventory recovery, and local PostgreSQL composition mounting shared connector ingestion.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner; no qualification containers or images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d535-postgres-checkpoint-file",
+  "evidence_sha256": {"pytest-output.log": "6B60304AF6F7B91F3C6FD8028F5EE2D6996E29509E685B31B86A17C3D8C6C1D6", "pytest-postgres.log": "86A7AF367FDAE8201FAE1A5A2680CE34CAF70EFB9CC2E5E0A83383AC410F1C9C", "pytest-postgres.xml": "F7E13DA963477D97D4E95FF26C51239F4F3A4D8874DA3B99DFE51AAC1DFB7B3C", "pytest-timings.json": "D17D3A1E8A0924C692E83098FF360EC72403F4A7D51B60EB47961CE30424CE92", "runner-timings.json": "E8E8360CDAA8941A47C9E5A0B939E98DE8B569F002560954EF2CB033380F115A"},
+  "limitations": ["single integration file only", "bounded connector checkpoint evidence, not complete P11 or indefinite operation", "does not qualify external providers/object stores or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
