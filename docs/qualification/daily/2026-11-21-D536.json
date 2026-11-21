@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D536",
+  "status": "PASS_POSTGRES_CONNECTOR_CONTROL_PLANE",
+  "candidate_sha": "2e0e1005802115362ce7ac168a2341ac5c66e17d",
+  "qualification": "bounded real PostgreSQL connector control-plane discovery and preview reopen recovery",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d536-postgres-connector-control-plane -TestPath tests/integration/test_postgres_connector_control_plane_real.py",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 9.61, "pytest_wall_seconds": 11.114, "process_exit_code": 0},
+  "finding": "Real PostgreSQL connector control-plane discovery and preview survive store reopen with the expected durable control-plane behavior.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner; no qualification containers or images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d536-postgres-connector-control-plane",
+  "evidence_sha256": {"pytest-output.log": "EE8CB709585E833727560C618D53240906C2626BC4EF61FEE725E6F469F35B1F", "pytest-postgres.log": "E8662E4616B1B6027D6FF1330D987DEEEBCF671167FBC8C98EDF297FBD38FBED", "pytest-postgres.xml": "7C8EB19883A614D20EF6ABD8E2FA81FD9B11575261E30BF57435802D11A193CB", "pytest-timings.json": "DD5327B08071D951143F1C7114C970974D7B629B0814C7EB2DCE0BB2087B2B87", "runner-timings.json": "5BA5C6261162910FB1A712A542C74BDD507ADB5564CE38CC00E51B5A83AF78FA"},
+  "limitations": ["single integration test", "bounded connector control-plane evidence, not complete P11", "does not qualify external providers/object stores or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
