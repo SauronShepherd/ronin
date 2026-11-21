@@ -1376,6 +1376,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D521.md",
       "candidate_sha": "b61aa49aa0da16dd0f05f0945f4824ae4e2818cb",
       "commit_sha": "b61aa49aa0da16dd0f05f0945f4824ae4e2818cb"
+    },
+    {
+      "id": "D522",
+      "date": "2026-11-21",
+      "phase": "p11-sqlite-control-after-broker-restart",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D522.md",
+      "candidate_sha": "81bc2d2fcd8b010952dcc82be73798e8d13b9522",
+      "commit_sha": "81bc2d2fcd8b010952dcc82be73798e8d13b9522"
     }
   ],
   "known_blockers": [

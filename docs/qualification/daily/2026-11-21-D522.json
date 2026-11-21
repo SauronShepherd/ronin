@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-21",
+  "day": "D522",
+  "status": "PASS_SQLITE_CONTROL_COMPARISON",
+  "candidate_sha": "81bc2d2fcd8b010952dcc82be73798e8d13b9522",
+  "qualification": "bounded live broker-restart then event-workflow control sequence with SQLite runtime",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d522-live-broker-event-minimal-sqlite -WorkerImage ronin:qualification-d522 -TestGrep 'live streaming (broker restart|event workflow)' -StorageBackend sqlite -RequestTimeoutSeconds 120",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "api_events": 23, "correlated_api_events": 23, "uncorrelated_api_events": 0, "duration_seconds": 39.22},
+  "finding": "The exact minimal broker-restart then event-workflow sequence passes with SQLite (2/2), while its PostgreSQL counterpart D520 fails the event-workflow case (1/2). This isolates the current divergence to PostgreSQL live composition after broker recovery; it does not prove a root cause or a fix.",
+  "service_profile": "isolated Kafka, real Ronin API and Docker worker; SQLite runtime; PostgreSQL not used",
+  "cleanup": "PASS; no containers or temporary qualification images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d522-live-broker-event-minimal-sqlite",
+  "evidence_sha256": {
+    "browser-live.log": "A7D3E6C46AE6ADCB1FAB8C4336824480D8BCC54188015BE859C6B0ADCEB50FBB",
+    "browser-live.xml": "43409B6CA9291010EBEC160406CFB08662B309AD8EB1575A63BD9EFD0414D1B2",
+    "live-api-traffic.json": "9ADB7EB4A1AF966049F7904B883435738801F81678B5A9D645628EFB27EDB71F",
+    "live-python-freeze.txt": "1D2A2225CDEF22694237DE504A310555B00F38BF6D6F4D2E64C58BBA28DAA438",
+    "live-server.stderr.log": "4A8E9CC283B421D8A1BE7B01DCC4B375445DFAB9E1886F9459A53019C8",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "3BB1CB5AE8F19145567AE60DBFCCBC9F9C28ECC140BE587905BFAC6CCDBE89AE",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["SQLite control only; not PostgreSQL qualification", "bounded two-test diagnostic", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
