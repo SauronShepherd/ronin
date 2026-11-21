@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D506",
+  "status": "PASS_FULL_PYTHON_REGRESSION_CURRENT_KAFKA_BOUNDARY",
+  "candidate_sha": "b3605e10552d08af3734ae911ec9c27a45841b3e",
+  "qualification": "full Python regression after Kafka assignment optimization",
+  "command": "python -m pytest -q",
+  "result": {"tests_passed": 4710, "tests_skipped": 85, "tests_failed": 0, "elapsed_seconds": 867.81, "process_exit_code": 0},
+  "finding": "The complete Python suite remains green on the Kafka assignment optimization boundary. Skips are pre-existing opt-in external-provider, Docker, privilege, and environment lanes; they are not reattributed as PASS.",
+  "change_boundary": {"sha": "b3605e10552d08af3734ae911ec9c27a45841b3e", "change": "avoid redundant Kafka checkpoint assignments", "focused_regression": "28 streaming tests passed"},
+  "cleanup": "PASS; no live services started",
+  "limitations": ["full suite skips remain explicitly environment-gated", "does not close P11 families outside the tested streaming lane", "does not close P13 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
