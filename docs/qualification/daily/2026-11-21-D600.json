@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D600",
+  "status": "PASS_DOCKER_APPLIANCE_BACKUP_OPTIN",
+  "candidate_sha": "f1308b09f60352d322cdd88c4ad24cb693041674",
+  "qualification": "filtered opt-in Docker appliance backup/restore with real PostgreSQL and local data volume",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d600-appliance-backup-optin -TestFilter appliance_backup_restores_postgres_and_local_data_volume",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26, "postgres": "16.4-alpine", "ronin_image": "sha256:3210e605b41daf67d464d2245a6c48765b94a5a4958c425a9abd8f32fae82aff", "process_exit_code": 0, "cleanup": "PASS"},
+  "finding": "The opt-in Docker appliance backup/restore case passed against real PostgreSQL and a local data volume; the owned Ronin image and temporary Docker resources were removed successfully.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d600-appliance-backup-optin",
+  "evidence_sha256": {"docker-cleanup.json": "44D9467D5C34A29143781F0568B347CCF65F0DD5958A650F1BC0550DB9436B73", "docker-pytest-output.log": "ED6FA2D3794E1BD1286F8187029B280A8EEADB2E39C83DE6D99EE6A8DD078961", "docker-qualification.log": "796D989DE802C890942B5AA9EC8AEB80E0090B3E9E38C8F1A6EC5FA0129A443C", "postgres-qualification.log": "B568E1A24A6886FE03BD465B23CCADEB1306F3CC203C9C39DA40C45E2C4388D3", "v01-acceptance.xml": "E49E316E664A54FFD8AFDE444E20A71628D6F0FB6BD161D5D942B78BCBDDB3FE"},
+  "limitations": ["one filtered Docker case", "strict v0.1 acceptance was not evaluated", "single-host bounded backup/restore", "does not prove complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
