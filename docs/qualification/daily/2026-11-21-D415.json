@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D415",
+  "status": "PASS",
+  "candidate_sha": "d14d23324556c38b300986bfa24ef63e6946fda5",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "focused Notebook Studio execution against PostgreSQL runtime",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d415-notebook-postgres-live-20261121 -WorkerImage ronin:live-d415 -StorageBackend postgres -TestGrep 'Notebook Studio creates, versions and executes' -RequestTimeoutSeconds 180",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 40.56, "api_events": 18, "correlated_http_logs": 18, "api_ok": 18},
+  "services": {"postgres": true, "kafka": true, "roninApi": true, "worker_image": "sha256:96698643a452ef355cb5a509a705fc5c9cdeb57eb1aa9c12f5ad9067bc59cb5e"},
+  "coverage": ["Notebook Studio creates, versions and executes a notebook on a Docker worker"],
+  "cleanup": "PASS; isolated PostgreSQL/Redpanda services and worker image removed",
+  "evidence_sha256": {"browser-live.log": "E5D05B40EE37F558F5EA581AF3CAA6D948AEC75B6C192CCAD3228BEED517C10F", "browser-live.xml": "77647FF39EFD8985AE44F3AEF70B755A48E06E4DDDB6F3654A72F6D84D76B051", "live-api-traffic.json": "B26FFAB0A4867213EA06CA9B9509EB9202DA5EC8D78CA8AED3D858D871896FF4", "qualification-summary.json": "43C9CF524CBCF5DA7B58FC6F67CDDB1C84BB3244D3CEDDBDD7F910F8B17EF2E7"},
+  "limitations": ["focused filtered live diagnostic", "single Notebook journey; does not prove full live suite, indefinite operation, HA or close P11/release", "does not reattribute D412 timeout result; this run is a new PostgreSQL-configured candidate"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
