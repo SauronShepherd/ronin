@@ -1006,6 +1006,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D475.md",
       "candidate_sha": "573d424a6eab3f671c468e3ec97bb3bad444ade3",
       "commit_sha": "573d424a6eab3f671c468e3ec97bb3bad444ade3"
+    },
+    {
+      "id": "D476",
+      "date": "2026-11-21",
+      "phase": "p11-live-byte-boundaries-current",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D476.md",
+      "candidate_sha": "09824e0eaeff48d0fc57353bfdbbb190a31aa13e",
+      "commit_sha": "09824e0eaeff48d0fc57353bfdbbb190a31aa13e"
     }
   ],
   "known_blockers": [

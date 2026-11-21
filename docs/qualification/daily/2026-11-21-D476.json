@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D476",
+  "status": "PASS_LIVE_BYTE_BOUNDARIES_CURRENT",
+  "candidate_sha": "09824e0eaeff48d0fc57353bfdbbb190a31aa13e",
+  "qualification": "focused live near-record and near-batch byte boundary enforcement with explicit PostgreSQL and Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d476-byte-boundaries-17b301a2da5647c797edff3b47387ce4 -WorkerImage sha256:7ebbdd2aacdce529c7702700f117db9e7125e7f04fd542d730a1a7d90073336f -StorageBackend postgres -TestGrep 'live streaming enforces near-record and near-batch byte boundaries'",
+  "result": {"executed": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 13, "correlated_http_logs": 13, "api_ok": 11, "api_warn": 2, "api_error": 0, "elapsed_seconds": 85.89, "process_exit_code": 0},
+  "criteria": ["near-record byte boundary accepted", "near-batch byte boundary accepted", "over-budget batch rejected with bounded error"],
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true, "worker_image": "sha256:7ebbdd2aacdce529c7702700f117db9e7125e7f04fd542d730a1a7d90073336f"},
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume, network and rebuilt temporary worker image removed",
+  "evidence_sha256": {"browser-live.log": "E02D746F1315BD45FAD09CD75D5A464751CD1E5D6EBE4E286E5D12581840D7C0", "browser-live.xml": "A5F5E4580A9003D2DE1C8BDD323EB4A49453E67713B528C1BDC64CC8EB41EC9B", "live-api-traffic.json": "E3DB614B0C2C6BEF268313A16B51A60589A0649D25D70454D9C2F458B67D74BE", "live-python-freeze.txt": "6AE21361025B33CF466BE2318364C89C72EADE5B697FFFF1633963164742139C", "live-server.stderr.log": "4F46B70D65AFEF9E5E95409299E40C698D3FAB8A7634E281AD38379EEE0616D7", "qualification-summary.json": "C519DC4C534D6390C1D188CEF14F1F4B4CE453812004F3A415DA36C96739DE83"},
+  "limitations": ["focused bounded diagnostic", "does not prove indefinite operation", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
