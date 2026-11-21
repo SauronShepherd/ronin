@@ -10,7 +10,7 @@ param(
     [int]$BackpressureRecords = 256,
     [ValidateRange(240, 1800)]
     [int]$BackpressureTimeoutSeconds = 240,
-    [ValidateRange(60, 900)]
+    [ValidateRange(60, 1800)]
     [int]$SupervisorSoakSeconds = 60,
     [ValidateRange(15, 3600)]
     [int]$RequestTimeoutSeconds = 15
