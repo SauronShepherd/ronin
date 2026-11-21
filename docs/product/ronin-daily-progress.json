@@ -1836,6 +1836,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D569.md",
       "candidate_sha": "23a210a46c894ff5563a851f5c87cdb61838831c",
       "commit_sha": "587c7b4c96347a763aa3a07d521d99732e413bdc"
+    },
+    {
+      "id": "D570",
+      "date": "2026-11-21",
+      "phase": "p11-scheduler-store-branch-decisions-file",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D570.md",
+      "candidate_sha": "f3a00c4b76d3def856f1e7c867c95773598774e5",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

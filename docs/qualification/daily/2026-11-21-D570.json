@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D570",
+  "status": "PASS_SCHEDULER_STORE_BRANCH_DECISIONS_FILE",
+  "candidate_sha": "f3a00c4b76d3def856f1e7c867c95773598774e5",
+  "qualification": "complete scheduler store branch decisions unit integration file",
+  "command": "python -m pytest tests/test_scheduler_store_branch_decisions.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d570-scheduler-store-branch-decisions-file\\pytest.xml",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "pytest_seconds": 0.78, "process_exit_code": 0},
+  "finding": "The complete scheduler store branch decisions file passes all persistence invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d570-scheduler-store-branch-decisions-file",
+  "evidence_sha256": {"pytest.log": "3678E3BF9AC07DD376902B2FECC70931A1C95FB41198F0339C64F4AEFD5CAADD", "pytest.xml": "1A8E4310318095DECFC286D41C17E80601CEF2CC1F6A42882B9D67C5B20831B5"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
