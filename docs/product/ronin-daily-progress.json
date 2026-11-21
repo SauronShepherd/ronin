@@ -2016,6 +2016,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D587.md",
       "candidate_sha": "0656af56faad7a00cc4902c4629c5d09d3c313c2",
       "commit_sha": "6bdcccb68cdbdc0f98190d1486fd2dcbfc708fa3"
+    },
+    {
+      "id": "D588",
+      "date": "2026-11-21",
+      "phase": "p11-live-sustained-backpressure-multibroker",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D588.md",
+      "candidate_sha": "7303be9c7ec9b6f9a06a75e081b7607fff99e949",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

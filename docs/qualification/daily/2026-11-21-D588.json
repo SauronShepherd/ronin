@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D588",
+  "status": "PASS_LIVE_SUSTAINED_BACKPRESSURE_MULTIBROKER",
+  "candidate_sha": "7303be9c7ec9b6f9a06a75e081b7607fff99e949",
+  "qualification": "bounded sustained backpressure with real PostgreSQL and RF3 Redpanda",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d588-live-sustained-backpressure-multibroker -TestGrep \"streaming sustained backpressure\" -StorageBackend postgres -BackpressureRecords 256 -BackpressureTimeoutSeconds 240 -MultiBroker",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "backpressure_records": 256, "api_events": 12, "correlated_events": 12, "unexpected_errors": 0, "elapsed_seconds": 70.3, "replication_factor": 3, "process_exit_code": 0},
+  "finding": "The real PostgreSQL/RF3 sustained-backpressure case drained the bounded workload with all API events correlated and no unexpected errors; three-broker cleanup succeeded.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d588-live-sustained-backpressure-multibroker",
+  "evidence_sha256": {"browser-live.log": "226BB78908E2648742AC0BD97469BEDE3BCBFD0ABE062ECA997F5F96D80CD235", "browser-live.xml": "A14293D2E59E2D7BBA239910C7E4B76819315F703AF1DEF87540D4E6B06D181A", "live-api-traffic.json": "3A08201F7746C044B0876AA868435126E843497F2321830129CF218098E14C1A", "qualification-summary.json": "9448AEC2559FAB675A3563410EB50143787C840A685B197EF6A26D2A317F9146", "live-server.stderr.log": "AB465937BAD02FC5320A299275EC8B15ABFD53ADD8442CCA3143F9E1470FC54F"},
+  "limitations": ["one filtered live case", "bounded 256-record workload and 240-second timeout", "does not prove indefinite operation, HA, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
