@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D591",
+  "status": "PASS_LIVE_BROKER_RESTART_SINGLE",
+  "candidate_sha": "4acb678b1385f4bf7ac148654e12669c4d78b823",
+  "qualification": "single-broker live restart resumes streaming from the durable checkpoint",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d591-live-broker-restart-single -TestGrep 'live streaming broker restart' -StorageBackend postgres",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 10, "correlated_events": 10, "expected_unavailable_events": 2, "unexpected_errors": 0, "elapsed_seconds": 85.07, "replication_factor": 1, "process_exit_code": 0},
+  "finding": "The induced single-broker outage produced the two expected 503 streaming_unavailable responses; after restart the health endpoint returned 200, durable lag drained to zero and all four records resumed successfully.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d591-live-broker-restart-single",
+  "evidence_sha256": {"browser-live.log": "B934D58EA7076976FAE7972CA6A94F58AFA2CEECE47D550F16DE8DBB6EBDFAEA", "browser-live.xml": "EE8144AAF96019BBBAA35A681518E284F1C511D490DAA627B31AF3B5DDFB5467", "live-api-traffic.json": "1CF9028534A0D9C8DD4D3C241D1BAC086890B85E9EB868302C388774B6309157", "qualification-summary.json": "2F2242A9BBC774C5AD5F338BAC95D82C2B41076B58481A1501A13F3C2EAAC860", "live-server.stderr.log": "6ED1B7D53A9F12E0467A8D6B65B8A7C84A8C9C19D4CCB0BE7490E3E585FE9B39"},
+  "limitations": ["one filtered live case", "single-broker bounded restart workload", "does not prove indefinite operation, HA, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
