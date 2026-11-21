@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D603",
+  "status": "PASS_DOCKER_FULL_STRICT",
+  "candidate_sha": "ab78e26d42f10159e20a82e10fa5408d11687230",
+  "qualification": "full Docker integration and strict v0.1 acceptance against the current clean candidate",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d603-docker-full",
+  "result": {"docker_integration_selected": 27, "docker_integration_passed": 27, "docker_integration_failed": 0, "docker_integration_skipped": 0, "strict_v01_selected": 15, "strict_v01_passed": 15, "strict_v01_failed": 0, "strict_v01_skipped": 0, "postgres": "16.4", "providers": ["Floci S3-compatible", "Azurite Azure-compatible"], "ronin_image": "sha256:0af3a52a1a331b76e0536c74f18c709ab2a58489d3d18c50dd1eed8079c804b8", "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The full Docker qualification passed real worker/runtime, PostgreSQL, backup/restore, Floci/S3-compatible, Azurite/Azure-compatible and strict v0.1 journeys; all owned Docker resources were cleaned.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d603-docker-full",
+  "evidence_sha256": {"docker-qualification.log": "20590DCC4E5F799BC71F2B367F10B04A0D1DCB3143489691C12B68193B9E47B9", "docker-pytest-output.log": "455818A13098644AB7722BF6C8220559B30C52491BEBFB31D477B5692D293101", "v01-acceptance.xml": "0603F2F574C9469B06CD4B01DFC531FC109621630F76DE6B214D7CC9EA732A17", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "postgres-qualification.log": "69E3AAF52266B1A5459D4BBEDC308DD951FB5A610905372C8FB5CD4306FCD423", "floci-s3-qualification.log": "C842104996DF58F6A479EBDFD23C8908B002575163C5539FAE9DC4A9CC6A4667", "azurite-qualification.log": "1ED5D304151D119362195CD38F31D0A0020C52BE3CD9151364DC22FD193C13F5", "docker-cleanup.json": "BBB56B02A96725E585205C4810045FBEC5C68F1AAA179D7205D3C7D0ED68F6A9"},
+  "limitations": ["bounded Docker acceptance", "local S3/Azure-compatible emulators, not cloud provider certification", "does not prove indefinite operation, complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
