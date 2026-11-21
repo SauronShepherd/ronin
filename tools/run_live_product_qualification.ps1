@@ -342,7 +342,10 @@ try {
     $env:RONIN_SERVER_PROFILE = "local-composed"
     $env:RONIN_STORAGE_BACKEND = $StorageBackend
     $env:RONIN_POSTGRES_DSN = if ($StorageBackend -eq "postgres") {
-        "postgresql://$($env:POSTGRES_USER):$($env:POSTGRES_PASSWORD)@127.0.0.1:$postgresPort/ronin"
+        # The live fixture creates and seeds the isolated qualification database
+        # below; point the Ronin runtime at that same database, not the compose
+        # bootstrap database.
+        "postgresql://$($env:POSTGRES_USER):$($env:POSTGRES_PASSWORD)@127.0.0.1:$postgresPort/ronin_test"
     } else { $null }
     $env:RONIN_HOST = "127.0.0.1"
     $env:RONIN_DB = Join-Path $liveDataDir "ronin.sqlite3"
