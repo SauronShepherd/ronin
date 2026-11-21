@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D575",
+  "status": "PASS_STREAM_SCHEDULER_BRIDGE_FILE",
+  "candidate_sha": "fc1147d8af32cb6e2c47b5242511f0c30fdf2d7a",
+  "qualification": "complete stream scheduler bridge unit integration file",
+  "command": "python -m pytest tests/test_stream_scheduler_bridge.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d575-stream-scheduler-bridge-file\\pytest.xml",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "pytest_seconds": 0.76, "process_exit_code": 0},
+  "finding": "The complete stream scheduler bridge file passes its bridge invariant.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d575-stream-scheduler-bridge-file",
+  "evidence_sha256": {"pytest.log": "7871DA2DCF0D650EE1B945C9A665D4E92F9DE77E641DB7924CAF0DD5475FF9A0", "pytest.xml": "92DB0FF7E2150EB499EE3ECB462AFB4FE49FC5F68299EE70A5C7489730B0DDA5"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
