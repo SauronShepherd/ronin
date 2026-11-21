@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D543",
+  "status": "PASS_POSTGRES_STREAMING_CHECKPOINT",
+  "candidate_sha": "143184715655ad4f80806b7a01b22ade37c6884a",
+  "qualification": "complete real PostgreSQL streaming checkpoint integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d543-postgres-streaming-checkpoint -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 1.24, "pytest_wall_seconds": 2.727, "process_exit_code": 0},
+  "finding": "The complete real PostgreSQL streaming checkpoint file passes checkpoint-bundle CAS and reopen behavior, plus table append/replay/conflict behavior.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner; no qualification containers or images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d543-postgres-streaming-checkpoint",
+  "evidence_sha256": {"pytest-output.log": "90ADBF1C80E6B96B7E937E87177081A87D569D2A974B1FB79AE4207DB1461317", "pytest-postgres.log": "2C69858111F67FE8A58BBB2CBE08B319FF603BF9C84643D448154ACE3B0B5BD2", "pytest-postgres.xml": "494B870F802F06C62D28AECB27C550C55521A191667B8A60CB4CE5512944971A", "pytest-timings.json": "32974CC755261CBABA4CA62C1D47F31DA9C87C149D368492209A6C209926B93D", "runner-timings.json": "3F8430F1ACBB4C9C9A41D3E2CA3AB98F7AC58217E16160A6AB61F9B18758C092"},
+  "limitations": ["single integration file only", "bounded streaming checkpoint evidence, not complete P11", "does not qualify external providers/object stores or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

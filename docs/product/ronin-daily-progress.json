@@ -1566,6 +1566,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D542.md",
       "candidate_sha": "2ea8308571d1c8477f14be1d88ddf2952318f035",
       "commit_sha": "3f33f8d736f263813ce6ce1f6e4b5de79ae11472"
+    },
+    {
+      "id": "D543",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-streaming-checkpoint",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D543.md",
+      "candidate_sha": "143184715655ad4f80806b7a01b22ade37c6884a",
+      "commit_sha": "143184715655ad4f80806b7a01b22ade37c6884a"
     }
   ],
   "known_blockers": [
