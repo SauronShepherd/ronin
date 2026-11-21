@@ -1835,7 +1835,7 @@
       "families": ["P11"],
       "evidence": "docs/qualification/handoffs/2026-11-21-D569.md",
       "candidate_sha": "23a210a46c894ff5563a851f5c87cdb61838831c",
-      "commit_sha": "pending"
+      "commit_sha": "587c7b4c96347a763aa3a07d521d99732e413bdc"
     }
   ],
   "known_blockers": [
@@ -1879,6 +1879,7 @@
     ]
   }
 }
+
 
 
 
