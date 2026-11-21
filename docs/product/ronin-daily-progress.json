@@ -1236,6 +1236,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D507.md",
       "candidate_sha": "b3605e10552d08af3734ae911ec9c27a45841b3e",
       "commit_sha": "b3605e10552d08af3734ae911ec9c27a45841b3e"
+    },
+    {
+      "id": "D508",
+      "date": "2026-11-21",
+      "phase": "p11-current-candidate-live-rf3-failover",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D508.md",
+      "candidate_sha": "52f86ce914b5f9336ed605a0d8f9ae53eca0b25e",
+      "commit_sha": "52f86ce914b5f9336ed605a0d8f9ae53eca0b25e"
     }
   ],
   "known_blockers": [

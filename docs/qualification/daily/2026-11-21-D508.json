@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D508",
+  "status": "PASS_LIVE_RF3_CURRENT_KAFKA_BOUNDARY",
+  "candidate_sha": "52f86ce914b5f9336ed605a0d8f9ae53eca0b25e",
+  "qualification": "current-candidate three-broker RF3 streaming failover with PostgreSQL",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d508-live-rf3-current -TestGrep 'live streaming multi-broker' -MultiBroker -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 5, "correlated_http_logs": 5, "api_ok": 5, "api_error": 0, "elapsed_seconds": 102.47, "process_exit_code": 0},
+  "topology": {"brokers": 3, "replication_factor": 3, "postgres": true},
+  "finding": "Kafka assignment optimization preserves RF3 multi-broker failover and durable-checkpoint recovery on the current candidate.",
+  "cleanup": "PASS; PostgreSQL, three Redpanda brokers, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d508-live-rf3-current",
+  "evidence_sha256": {"browser-live.log": "D53CDD03CD7694E3FFC4C9FE54E2E7466FA40B5D9862EC3CABD035C22C31C85A", "browser-live.xml": "0D90E86BFEF109738EA18932B1B02BBA64991830DDF420A451E79E43412EBEF7", "live-api-traffic.json": "166536AE3B52EDBFDD7CB115C3E4E081373C12028DCB73D0A3E2B83C684762ED", "live-python-freeze.txt": "BDC31720175B11B493A9A92AAB4301A933AD7B4D403F6BC2EF69B32DD4C673FF", "live-server.stderr.log": "DD3E292D5867DBE8B44987688FD70491255E95175CAD71022357495823DE51FB", "qualification-summary.json": "E090F86492FD8B1BB613DC544B70A7DBB93998364EE2634432F43766293B6A4F"},
+  "limitations": ["RF3 lane only; remaining P11 families and release gates stay open", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
