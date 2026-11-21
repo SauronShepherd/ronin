@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D411",
+  "status": "PASS",
+  "candidate_sha": "cb6715f3a93c0ef8fdf1bd3bec6b858f24d3951d",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "full Docker evidence for Helm handoff",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d411-docker-for-helm-20261121 -KeepImage",
+  "result": {"docker_selected": 27, "docker_passed": 27, "docker_failed": 0, "docker_skipped": 0, "docker_elapsed_seconds": 177.13, "v01_expected": 15, "v01_passed": 15, "v01_failed": 0, "v01_skipped": 0, "strict_success": true},
+  "image": "sha256:da87270d97e5a4cc663e881b0402e9cdc01e41ebf5d51e486370282ff499fd4f",
+  "fixtures": ["PostgreSQL 16.4-alpine", "real Docker worker", "Floci/S3-compatible", "Azurite/Azure-compatible"],
+  "cleanup": "PASS; temporary services cleaned; image intentionally retained only for dependent Helm lane and removed after D409",
+  "evidence_sha256": {"azurite-qualification.log": "4A4347103B053360E2081F62300CBB9401F1D635CB4EE6641BC9486B352B33B3", "docker-cleanup.json": "1C0D01DB35529F87B345B6C4C1F451BB0FF5070409C36FEA0B52621FDAB84158", "docker-pytest-output.log": "07BA28E742A705F65B6B36C2B3D11F8570A6E747352DBE691E77801DC418EBE1", "docker-qualification.log": "C83C30EC89FEE2CD95E1EBFF3874C775915AEC5D55DD7DA93402E256BECC9B4F", "floci-s3-qualification.log": "7C67EC8E1174429FC70847467E95901D88985DBB8B0FD42CB7FB4F719AD6D881", "postgres-qualification.log": "A6B6A8D6C8CAA4A9DA219505C5864E233CFF62310DCEA7EDF6F3A8DA0C1F5111", "qualification-summary.json": "A7AE54901C4493E60E452D4866A8E10FFA311874082FD76800FB302057754678", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "A7619C8C4BC0D233BB7AC98E54CA129A737F7F9282AA2BCA9368F55DA0295924"},
+  "limitations": ["full local Docker profile is bounded", "does not prove indefinite operation, HA or complete release matrix", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

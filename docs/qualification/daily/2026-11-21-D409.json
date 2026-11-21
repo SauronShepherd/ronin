@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D409",
+  "status": "PASS",
+  "candidate_sha": "cb6715f3a93c0ef8fdf1bd3bec6b858f24d3951d",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "Helm/kind deployment qualification chained to exact Docker evidence D411",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d409-helm-20261121b -ImageRef ronin:qualification -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d411-docker-for-helm-20261121",
+  "result": {"status": "passed", "helm_lint": "passed", "secret_boundary": "passed", "kind_cluster": "passed", "install": "passed", "readiness": "passed", "upgrade": "passed", "rollback": "passed", "health": 200, "studio": 200, "authorized_jobs": 200, "persistent_job_create": "passed", "deployment_restart": "passed", "persistent_job_after_restart": "passed"},
+  "image": "sha256:da87270d97e5a4cc663e881b0402e9cdc01e41ebf5d51e486370282ff499fd4f",
+  "cleanup": "PASS; isolated kind cluster removed; temporary images ronin:qualification and ronin:helm-d409 removed; no kind clusters remain",
+  "evidence_sha256": {"helm-qualification.json": "47C3106E5E0222E0BD4EEE503E76CEB6E344D6960B3F59A54FF26443B0295ADE", "helm-qualification.log": "ACDADDD14F5C5C5D67872B48B9BAAD08E3D7FC88E97C500F7A71E58FE286D48D", "kubernetes-resources.txt": "7B597D2E97158F44EF334F2D3FFC2E0EA988EAAC5C0F43D5547C660F237018F2", "port-forward-error.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "port-forward-restart-error.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "port-forward-restart.log": "5DF49CC2F3FE0829A1EEBAEE1200DB125066986941AF8BE463BB4C75D27582CE", "port-forward.log": "63ECCA7C933F3F1699368DD61BEF5A98D80334054E4F5B59EA55FC8BE8F19B7E"},
+  "limitations": ["bounded local kind deployment", "insecure plaintext bind policy in qualification", "does not prove production HA, indefinite operation or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D409 passes the Helm/kind deployment qualification chained to D411 on
+`main@cb6715f3`, including install/readiness, upgrade/rollback, health/API and
+queued-job persistence across restart, with cleanup PASS. This bounded local
+deployment evidence does not close P11/release.
+
 D408 passes the full unfiltered Docker qualification on `main@fdd10299`:
 `27/27` integration tests and `15/15` strict v0.1 journeys passed with zero
 skips/failures and cleanup PASS across PostgreSQL, Docker worker, Floci/S3 and

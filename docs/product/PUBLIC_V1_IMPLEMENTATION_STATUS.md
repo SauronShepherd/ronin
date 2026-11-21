@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D409 passes the Helm/kind deployment qualification chained to exact Docker
+evidence D411 on `main@cb6715f3`: lint, Secret boundary, kind install/readiness,
+upgrade/rollback, health/API, persistent job creation and survival across
+deployment restart all passed. Cleanup PASS. This is bounded local deployment
+evidence and does not close P11/release.
+
 D408 passes the full unfiltered Docker qualification on `main@fdd10299`:
 `27/27` Docker integration tests and `15/15` strict v0.1 journeys passed with
 zero skips/failures, exercising PostgreSQL 16.4, the real Docker worker,
