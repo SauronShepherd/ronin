@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D403 passes the data-engineering HTTP control-plane integration on
+`main@c3ffb608`: `5/5` tests passed in `3.85 s`, covering scoped QueryFlux,
+fail-closed authorization and pipeline revision fencing. This bounded evidence
+does not close P11/release.
+
 D402 passes the complete workspace/project HTTP control-plane integration on
 `main@95604bc4`: `61/61` tests passed in `37.09 s`, covering authorization,
 audit, streams, bundles, plugins, catalog, scheduler and project lifecycle.
