@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-21",
+  "day": "D548",
+  "status": "PASS_POSTGRES_SUPERVISOR_SOAK_1500S",
+  "candidate_sha": "48c831b5e9993f9be5297735aa7d6d28d14f5e43",
+  "qualification": "bounded 1500-second live streaming supervisor soak with PostgreSQL, Kafka and Docker worker",
+  "command": "docker build --label org.ronin.qualification.run=d548 -t ronin:qualification-d548 -f docker/Dockerfile .; pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d548-supervisor-soak-1500-postgres-current -WorkerImage ronin:qualification-d548 -TestGrep 'live streaming supervisor soak' -SupervisorSoakSeconds 1500 -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "duration_seconds": 1567.4, "soak_seconds": 1500, "api_events": 1949, "correlated_api_events": 1949, "uncorrelated_api_events": 0, "unexpected_errors": 0, "application_errors": 0, "application_warnings": 0},
+  "worker_image_digest": "sha256:2a8d4c9bd542e363ced13c0cf5ed374c961178b5a6a086a32118b3789c9cb2b1",
+  "finding": "The explicit 1500-second supervisor soak passes with 1949/1949 API events correlated, all outcomes OK, zero unexpected errors, zero application warnings/errors and successful isolated-service cleanup.",
+  "service_profile": "isolated PostgreSQL 16.4, Kafka, real Ronin API and Docker worker",
+  "cleanup": "PASS; isolated containers, volume, network and temporary worker image removed; post-run verification found zero containers and zero qualification images",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d548-supervisor-soak-1500-postgres-current",
+  "evidence_sha256": {"browser-live.log": "03D3EBA061C7F30F861A2C1B9E2CA0FD9F13B3F626AA628E2F82FECA74D1CEF3", "browser-live.xml": "005A66C44E58BFDEB8DDF65118189CA2079D1F07684B84AC03FC9E5C4B1B8FEA", "live-api-traffic.json": "87674D41C9CEA3D20AFCB9490F1985B322D9CFA0F7A3B26645E2C32004EC7790", "live-python-freeze.txt": "E88B3EEBECED9DF9FB98833D9152FCF240F567F94660B8B95229E26CB8E13698", "live-server.stderr.log": "1EF7894C2CB005C0831E34AC9E0541EFED11A5DBA77021C8FF52A1E11C9575C0", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "F7E08039598844C0D15F89F30B32DF53A6051B38E8C416DD41AFB24F8F2E5E4C", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "limitations": ["bounded 1500-second soak, not indefinite operation or production SLO", "single worker and single broker profile", "does not qualify external providers/object stores or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
