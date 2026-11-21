@@ -2110,18 +2110,6 @@ class PostgresSchedulerSnapshotStore(
         connection = self._event_batch_connection or self._connect()
         owns_connection = self._event_batch_connection is None
         try:
-            event_ids = [str(event.id) for event in events]
-            with connection.cursor() as probe:
-                probe.execute(
-                    "SELECT event_id FROM ronin_scheduler_events "
-                    "WHERE workspace_id=%s AND event_id = ANY(%s)",
-                    (str(workspace_id), event_ids),
-                )
-                has_replay = bool(probe.fetchall())
-            if has_replay:
-                if owns_connection:
-                    connection.rollback()
-                return tuple(self.ingest_event(event) for event in events)
             with connection.cursor() as cursor:
                 workspace_key = str(event.workspace_id)
                 if (
@@ -2230,6 +2218,18 @@ class PostgresSchedulerSnapshotStore(
         connection = self._event_batch_connection or self._connect()
         owns_connection = self._event_batch_connection is None
         try:
+            event_ids = [str(event.id) for event in events]
+            with connection.cursor() as probe:
+                probe.execute(
+                    "SELECT event_id FROM ronin_scheduler_events "
+                    "WHERE workspace_id=%s AND event_id = ANY(%s)",
+                    (str(workspace_id), event_ids),
+                )
+                has_replay = bool(probe.fetchall())
+            if has_replay:
+                if owns_connection:
+                    connection.rollback()
+                return tuple(self.ingest_event(event) for event in events)
             with connection.cursor() as cursor:
                 workspace_key = str(workspace_id)
                 if not owns_connection and workspace_key not in self._event_batch_workspaces:
