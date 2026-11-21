@@ -2116,6 +2116,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D597.md",
       "candidate_sha": "966dee51edfe9f3f8ea5246851fef628d800a699",
       "commit_sha": "fcce533ed97a54c7c92427933b270e1b5cf06e0e"
+    },
+    {
+      "id": "D598",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-finops-bundle-revisions",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D598.md",
+      "candidate_sha": "536569f2a358914b9b2fbedf25bd157e86d6533b",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [
