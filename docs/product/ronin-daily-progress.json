@@ -1546,6 +1546,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D540.md",
       "candidate_sha": "b203dd625534e6bce31d8cec6645d58f0bf0be9d",
       "commit_sha": "c7a80287d1b77fd5bf4f013d2362aa8abfff90d4"
+    },
+    {
+      "id": "D541",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-connector-file",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D541.md",
+      "candidate_sha": "1acc10338fcf7517e19fcb4395855340dae4ae94",
+      "commit_sha": "1acc10338fcf7517e19fcb4395855340dae4ae94"
     }
   ],
   "known_blockers": [

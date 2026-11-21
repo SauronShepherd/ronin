@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D541",
+  "status": "PASS_POSTGRES_CONNECTOR_FILE",
+  "candidate_sha": "1acc10338fcf7517e19fcb4395855340dae4ae94",
+  "qualification": "complete real PostgreSQL connector integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d541-postgres-connector-file -TestPath tests/integration/test_postgres_connector_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 1.50, "pytest_wall_seconds": 2.914, "process_exit_code": 0},
+  "finding": "The complete real PostgreSQL connector integration file passes schema handling for null/timezone/large values and same-timestamp watermark pagination without loss.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner; no qualification containers or images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d541-postgres-connector-file",
+  "evidence_sha256": {"pytest-output.log": "8A4070AF40C46F369C6713B061C48A913EE8D80FEB93AD3FF1AF6E8F4BA5959B", "pytest-postgres.log": "444FB932F9C632A6B15C1D483F7562362C7588254E9AADBF632B4ED43775D634", "pytest-postgres.xml": "FDACB400E8790D23E56892FE32CAE9BF8901922072622DC22950873EFC83CC7C", "pytest-timings.json": "D3813E793A5621CDBADCDA896750F1280A47ADAD28D14CA85888DD2057917FC1", "runner-timings.json": "BB204E74EC03C9B567BD68B0F4B732BB1334A0341334BAB3873BE3BE2140F525"},
+  "limitations": ["single integration file only", "bounded connector evidence, not complete P11", "does not qualify external providers/object stores or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
