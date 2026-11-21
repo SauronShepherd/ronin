@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D572",
+  "status": "PASS_SCHEDULER_BACKFILL_CANCELLATION_FILE",
+  "candidate_sha": "dbc44a3d77f19987f59bfb5d24c80f29f75754a9",
+  "qualification": "complete scheduler backfill cancellation unit integration file",
+  "command": "python -m pytest tests/test_scheduler_backfill_cancellation.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d572-scheduler-backfill-cancellation-file\\pytest.xml",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "pytest_seconds": 1.03, "process_exit_code": 0},
+  "finding": "The complete scheduler backfill cancellation file passes its cancellation invariant.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d572-scheduler-backfill-cancellation-file",
+  "evidence_sha256": {"pytest.log": "63AB5516464144A51359FE269D895344A528143D4C9859BBF6EB500352CFDF6F", "pytest.xml": "C5D9FFCD503D8B8E811E8546DE86228A7038464DAEC35E4D67F670B25ACAFFFD"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
