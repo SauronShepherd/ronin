@@ -1936,6 +1936,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D579.md",
       "candidate_sha": "d7404055ad0d895dc374f87a1269e8f568e9deed",
       "commit_sha": "41965b4cc26411b3841940e4a8083aad50fd35fe"
+    },
+    {
+      "id": "D580",
+      "date": "2026-11-21",
+      "phase": "full-test-regression",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D580.md",
+      "candidate_sha": "811906de50a3b9640935b863ec80e7a32dd01721",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

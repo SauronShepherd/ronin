@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D580",
+  "status": "PASS_FULL_TEST_REGRESSION",
+  "candidate_sha": "811906de50a3b9640935b863ec80e7a32dd01721",
+  "qualification": "full tests regression",
+  "command": "python -m pytest tests -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d580-full-tests\\pytest.xml",
+  "result": {"selected": 4703, "passed": 4618, "failed": 0, "skipped": 85, "pytest_seconds": 711.40, "process_exit_code": 0},
+  "finding": "The full tests regression passes 4618 tests with zero failures; 85 external-profile cases are explicitly skipped.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d580-full-tests",
+  "evidence_sha256": {"pytest.log": "C24BAA96D773DBDFBDC19401DD0E5769A6C8A3AC6C465813A50B5F58D01056D8", "pytest.xml": "3312978EB1086A585633834D9A9A129F1B74D5AAE0C97219207CFE4C4083D08A"},
+  "limitations": ["85 skipped external-profile/integration cases remain open", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
