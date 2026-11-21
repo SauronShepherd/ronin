@@ -1903,7 +1903,7 @@ test('live streaming supervisor soak drains while records arrive for a bounded d
   const soakSeconds = Number.parseInt(process.env.RONIN_LIVE_SUPERVISOR_SOAK_SECONDS || '60', 10);
   expect(Number.isInteger(soakSeconds)).toBe(true);
   expect(soakSeconds).toBeGreaterThanOrEqual(60);
-  expect(soakSeconds).toBeLessThanOrEqual(900);
+  expect(soakSeconds).toBeLessThanOrEqual(1800);
   // The bounded window is followed by producer completion, final lag drain,
   // and bounded HTTP waits. Reserve a separate tail budget so longer,
   // explicitly requested soak criteria do not self-fail at the test harness
