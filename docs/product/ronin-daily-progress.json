@@ -1745,7 +1745,7 @@
       "families": ["P11"],
       "evidence": "docs/qualification/handoffs/2026-11-21-D560.md",
       "candidate_sha": "90fdd2cf647709ff0079b0dbc03e03c7c09b6b83",
-      "commit_sha": "72575b62b4b8ed9f6ddf5b3f16c1b0cb0d3b4e5b"
+      "commit_sha": "72575b62c95273fecca7e699d0a153b178ec5887"
     },
     {
       "id": "D561",
@@ -1755,6 +1755,7 @@
       "families": ["P11"],
       "evidence": "docs/qualification/handoffs/2026-11-21-D561.md",
       "candidate_sha": "88438d1d5d5044f03c79ebecc12f4b11424124b6"
+      ,"commit_sha": "b00ea604ef1193f5f976828d1a2a348819c39f8c"
     }
   ],
   "known_blockers": [
