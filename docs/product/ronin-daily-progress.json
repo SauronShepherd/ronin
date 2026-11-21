@@ -1286,6 +1286,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D512.md",
       "candidate_sha": "d6368ec19277ac165e22365c72798dc5ec95c408",
       "commit_sha": "d6368ec19277ac165e22365c72798dc5ec95c408"
+    },
+    {
+      "id": "D513",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-scheduler-workflow-suite",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D513.md",
+      "candidate_sha": "d3b0e626f3f93405d3e96c5ed69d715a66e0ef41",
+      "commit_sha": "d3b0e626f3f93405d3e96c5ed69d715a66e0ef41"
     }
   ],
   "known_blockers": [

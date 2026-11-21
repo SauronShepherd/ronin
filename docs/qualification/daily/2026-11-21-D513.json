@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-21",
+  "day": "D513",
+  "status": "PASS_POSTGRES_SCHEDULER_SUITE",
+  "candidate_sha": "d3b0e626f3f93405d3e96c5ed69d715a66e0ef41",
+  "qualification": "filtered real PostgreSQL scheduler/workflow-store suite",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d513-postgres-scheduler-suite-current -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter scheduler",
+  "result": {"selected": 15, "passed": 15, "failed": 0, "skipped": 0, "deselected": 6, "pytest_seconds": 14.89, "process_exit_code": 0},
+  "coverage": "disabled filtered diagnostic",
+  "finding": "The isolated PostgreSQL scheduler suite passes leadership generation fencing, expired-lease reclaim, scheduler event inbox/outbox durability, schema migrations, atomic/idempotent snapshots, HTTP durable adapter, and daemon replay after process crash without duplicate effects.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d513-postgres-scheduler-suite-current",
+  "evidence_sha256": {
+    "pytest-output.log": "E32FC6A18999963CD4C3DD9D48B181BBD13023E9A92FE666CBFE9EF8C23612AA",
+    "pytest-postgres.log": "ADBBBF0F6E0FF7D0872D8A242A6D4080AFF0D0C7C650792CBB186CD6912CF168",
+    "pytest-postgres.xml": "70B1618A76D40EE9BCB0DB461040DCFCEBA8AAB0D127B9ABF3B3D3500635E723",
+    "pytest-timings.json": "065924CEC71615BC8D77E38AD75B08450AF3E3DE389B2BF17EB41232F3F97AC8",
+    "runner-timings.json": "F50404A9FEEDFFC43612FF8DDA1C3A2BB14A006B8A05F4EC4D54FAEF8ABDD8C3"
+  },
+  "limitations": ["filtered scheduler diagnostic, not the complete PostgreSQL suite", "does not close remaining P11 families or release gates", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
