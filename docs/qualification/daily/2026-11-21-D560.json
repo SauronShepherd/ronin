@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D560",
+  "status": "PASS_SCHEDULER_LEADERSHIP_FILE",
+  "candidate_sha": "90fdd2cf647709ff0079b0dbc03e03c7c09b6b83",
+  "qualification": "complete scheduler leadership unit integration file",
+  "command": "python -m pytest tests/test_scheduler_leadership.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d560-scheduler-leadership-file\\pytest.xml",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "pytest_seconds": 1.05, "process_exit_code": 0},
+  "finding": "The complete scheduler leadership file passes fencing, generation handling and persistence invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d560-scheduler-leadership-file",
+  "evidence_sha256": {"pytest.log": "DA44B662AD353821CF9EE3C396DFF6412C96D23126F35D7CD8132306DE55E18D", "pytest.xml": "EEE01C1F8621C615B268E09C5DAE293AE6190882E51EFD76AD48883F7EE1751B"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
