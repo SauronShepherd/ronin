@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D492",
+  "status": "PASS_LIVE_BACKPRESSURE_DIAGNOSTIC_1000",
+  "candidate_sha": "0e2bd7716dca768c8a01346cc85a3b7601d44d09",
+  "qualification": "bounded live sustained-backpressure diagnostic at 1,000 records for latency scaling",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d492-live-backpressure-1k-ef472a90 -TestGrep 'sustained backpressure' -BackpressureRecords 1000 -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 12, "correlated_http_logs": 12, "api_ok": 12, "api_error": 0, "elapsed_seconds": 107.11, "process_exit_code": 0},
+  "finding": "The 1,000-record PostgreSQL route passes but takes 107.11 seconds. Together with D490/D491 at 10,000 records, this establishes a severe near-linear micro-batch cost and motivates batched event ingestion before another 10,000-record attempt.",
+  "candidate_note": "The runner reported source HEAD 0e2bd7716dca768c8a01346cc85a3b7601d44d09; this evidence is not attributed to the later ef472a90 sink optimization.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d492-live-backpressure-1k-ef472a90",
+  "evidence_sha256": {"browser-live.log": "B985D554B19F463F037C14B8B79BE94CC0781D838BAC2E99C8FD51A70FC8D0A5", "browser-live.xml": "0AF924CA3BBC2AA8388782AD95A262117B204B92EAE30C485581049340B0359E", "live-api-traffic.json": "3531ED9F6AA6E7713B274486670F5D1D14CE604DA1235A16911EA203B9B8C5AC", "live-python-freeze.txt": "2FA1D95052A1BB6B885CB540CFC2F8A93EBF1DDC4E79566E5840C66EF82448EF", "live-server.stderr.log": "062DEF9F49A8890CAD2588780FF8753C4418527C49B016C1BEC105F53442AFEC", "qualification-summary.json": "94C9BABFBB88D0A2B7F22267EC301BF5D77DADA1E61C1D7DE705889E2578E321"},
+  "limitations": ["diagnostic is bounded to 1,000 records and does not qualify 10,000-record sustained backpressure", "candidate predates ef472a90 and is not evidence for that later change", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
