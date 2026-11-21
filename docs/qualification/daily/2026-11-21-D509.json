@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D509",
+  "status": "PASS_LIVE_STREAM_EVENT_WORKFLOW_CURRENT",
+  "candidate_sha": "89c8111f4fa3a1aced861bddae843a650945548b",
+  "qualification": "current-candidate PostgreSQL stream record to workflow trigger journey",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d509-live-event-workflow-current -TestGrep 'live streaming event workflow' -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 9, "correlated_http_logs": 9, "api_ok": 9, "api_error": 0, "elapsed_seconds": 50.7, "process_exit_code": 0},
+  "finding": "A committed streaming record triggers the durable workflow on the current Kafka/PostgreSQL candidate; all API traffic correlates without errors.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d509-live-event-workflow-current",
+  "evidence_sha256": {"browser-live.log": "06F8622742B316ED497175B012DAD4A160FE53BECA06E41946687CDB893DFCF5", "browser-live.xml": "068B3E0FCE97997953E04F73D87727BC87F932E2CC1E06DA14D67D80DAB34C4E", "live-api-traffic.json": "8D113E6792EC1AFCCEA8554DC0A15C2E9FA72BDE2EA330C1CA444C87064D7A4C", "live-python-freeze.txt": "142C504C4E9849F6E7C714CE0507D1F59D389FDD20613A83A891CE45456CC224", "live-server.stderr.log": "81439B0794A7C21CA4C6D7E9FAB9E6BD0C7ACDA5C983F445D367C2E075A9C5D5", "qualification-summary.json": "2A7650DB0CE218533C2D407659A226CC391A5F7362D7BA01FBD3DAF9BA44916D"},
+  "limitations": ["event-workflow lane only; remaining P11 families and release gates stay open", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
