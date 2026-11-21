@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "plan_id": "RONIN-DAILY-BUILD-TEST-2026-11-14",
-  "updated_on": "2026-11-18",
+  "updated_on": "2026-11-21",
   "repository": {
     "remote": "https://github.com/SauronShepherd/ronin.git",
     "branch": "main",
-    "base_sha": "0a0cd36d47e403808db519f62eefd726f95637a4",
+    "base_sha": "f3646a32c91c6d2676f327dfefeeca190948ac86",
     "tracked_candidate": true
   },
   "operating_policy": {
