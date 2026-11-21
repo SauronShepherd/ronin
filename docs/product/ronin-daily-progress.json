@@ -1026,6 +1026,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D478.md",
       "candidate_sha": "9fba7e688b2bb6246c8335722d9dd0ea6af1c4c2",
       "commit_sha": "9fba7e688b2bb6246c8335722d9dd0ea6af1c4c2"
+    },
+    {
+      "id": "D479",
+      "date": "2026-11-21",
+      "phase": "p11-current-candidate-s3-ml-durable-roundtrip-floci",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D479.md",
+      "candidate_sha": "8b529c90a7c4edd8bddcdb3565305251286cb172",
+      "commit_sha": "8b529c90a7c4edd8bddcdb3565305251286cb172"
     }
   ],
   "known_blockers": [

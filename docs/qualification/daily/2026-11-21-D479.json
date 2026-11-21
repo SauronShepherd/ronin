@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D479",
+  "status": "PASS_S3_ML_ROUNDTRIP_FLOCI_CURRENT",
+  "candidate_sha": "8b529c90a7c4edd8bddcdb3565305251286cb172",
+  "qualification": "durable ML input/output and retention round-trip against real local Floci S3-compatible service",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d479-s3-ml-roundtrip-5f6ad9b7583c4f35a469694049b5cc25 -TestFilter 'ml_s3_artifact'",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26, "pytest_seconds": 13.95, "process_exit_code": 0},
+  "criteria": ["durable input and model artifacts round-trip through S3", "content digest and storage reference are verified", "unreferenced artifact is collected while referenced artifacts remain readable", "temporary resources are cleaned"],
+  "real_services": {"provider": "Floci local S3-compatible service", "qualification_image": "sha256:91b432fda3434f072ea95db5f3d66f3edfbeb181e3ddd4bffb4eee3560deab19"},
+  "cleanup": "PASS; Floci container, volume, network and owned Ronin image removed",
+  "evidence_sha256": {"docker-cleanup.json": "036836AA3FB2A92E26E7B7F3C928F5AE9B1B7ECCF0F342947F9B6D55E5AF14CC", "docker-pytest-output.log": "B4500A91D6421A3C1B981DF60707F81508FE61D340DB405482DB6038A1166BF5", "docker-qualification.log": "894E9B07235D5DE75E4D4870C24C925820E9C8B7C4AF1D7A7BF75AC821348E93", "floci-s3-qualification.log": "5C00C9CDF1645C4B94FC28BC0848996A574838FEBC9FE67A50098A681BEFD30B", "v01-acceptance.xml": "F64626E7AF745491B938B7BAFAD7B05E533C2313D9DA0C707CF141514B3FE16B"},
+  "limitations": ["Floci local emulator, not AWS/Azure external certification", "focused filtered Docker diagnostic; strict v0.1 gate was not evaluated", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
