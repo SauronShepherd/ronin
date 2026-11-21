@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D420",
+  "status": "PASS",
+  "candidate_sha": "30222b35cb899bcb822c2e65f560783b91680bb4",
+  "production_boundary_sha": "ad1463c6a0c0c90231794a39e027947e30fef044",
+  "qualification": "streaming and live-qualification contract regression after proxy assertion alignment",
+  "command": "python -m pytest tests/test_streaming_runtime.py tests/test_streaming_kafka.py tests/test_streaming_bundle.py tests/test_streaming_contracts.py tests/test_stream_scheduler_bridge.py tests/test_docker_qualification_contract.py -q",
+  "result": {"passed": 66, "failed": 0, "skipped": 0, "elapsed_seconds": 21.94},
+  "change": "Updated the stale contract assertion from the removed fetch proxy implementation to the current requestUpstream implementation; no runtime behavior changed.",
+  "cleanup": "PASS; no live services or temporary images created",
+  "limitations": ["regression-only evidence, not a release gate", "does not close P11/P13 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
