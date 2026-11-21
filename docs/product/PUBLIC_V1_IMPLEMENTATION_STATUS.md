@@ -7,6 +7,13 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D413 passes the focused live `route workflows` diagnostic on
+`main@e3665b6c` after fixing the qualification proxy's empty-body handling:
+`1/1` case passed in `40.28 s`, with `30/30` correlated events, 29 OK, one
+warning and zero errors. The server was not configured with PostgreSQL in this
+cell, so this is not PostgreSQL scheduler/runtime evidence and does not close
+P11/release. D412 remains a separately recorded full-live FAIL.
+
 D409 passes the Helm/kind deployment qualification chained to exact Docker
 evidence D411 on `main@cb6715f3`: lint, Secret boundary, kind install/readiness,
 upgrade/rollback, health/API, persistent job creation and survival across

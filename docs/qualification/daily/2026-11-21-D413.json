@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D413",
+  "status": "PASS",
+  "candidate_sha": "e3665b6ca16dd88fdd8c0a821788973419b3208d",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "focused live workflow route after empty-body proxy fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d413-workflows-live-20261121 -WorkerImage ronin:live-e413 -TestGrep 'route workflows' -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 40.28, "api_events": 30, "correlated_http_logs": 30, "api_ok": 29, "api_warnings": 1, "api_errors": 0},
+  "services": {"postgres": false, "kafka": true, "roninApi": true},
+  "cleanup": "PASS; isolated PostgreSQL/Redpanda services removed; worker image removed",
+  "evidence_sha256": {"browser-live.log": "19404503872CC83C8FBDE9C371EBBE8262DE76D65C776635056A4D5991593792", "browser-live.xml": "9551AA72D463FA2D3A543663905A0EBA0B6969EC3823FAA9E125DCFF08EA9C28", "live-api-traffic.json": "36478DB8C9E138E483EEFEF29CB06BE31F2E5D9223E2CD422CB5F3C45175EDD0", "qualification-summary.json": "69A60515B9E3804D579953D6BFF48590B2B59DB9D63D9870D33C98B2B0E43DB7"},
+  "limitations": ["focused filtered diagnostic", "server did not use PostgreSQL; not scheduler/runtime PostgreSQL qualification", "single workflow route; does not prove full live suite, indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

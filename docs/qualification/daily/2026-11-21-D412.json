@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D412",
+  "status": "FAIL",
+  "candidate_sha": "e7c1d8ae0dc784d713c8aa8692b2ef0ab604fd46",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "full live product diagnostic before empty-body proxy fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d412-live-full-20261121 -WorkerImage ronin:live-d412 -RequestTimeoutSeconds 1200",
+  "result": {"executed": 43, "passed": 38, "failed": 4, "skipped": 1, "elapsed_seconds": 522.22, "api_events": 546, "api_ok": 522, "api_errors": 4, "api_warnings": 20},
+  "failures": ["ingestion discovery request failed unexpectedly", "ingestion sync scheduler.connector.error", "workflows route proxy attempted byteLength on null request body", "notebook worker execution did not reach succeeded"],
+  "services": {"postgres": false, "kafka": true, "roninApi": true},
+  "cleanup": "PASS; isolated PostgreSQL/Redpanda services removed; worker image removed",
+  "evidence_sha256": {"browser-live.log": "E4E5564DEB08094D42E4825DD30063AC6D509D7C61D56B714E9B7BBAB2B1189D", "browser-live.xml": "CA23D8DA3AE53D5CA496AD3D83423437E1A70F7E1ADBE8C6C41E54641B1BCEE1", "live-api-traffic.json": "EFA74B6F885748CEB5A6F686483E1EA5258101F7CB43B39E57485A6F812080D9", "live-server.stderr.log": "5A5C279E68732E2F5F4F6EED38352D3A07B50421D1EAE7679BF1521E1F7840F2", "qualification-summary.json": "C0FA9B8CDB3A6371798989760B734993D3FEF95FDE844CF83A5469BC61B69A6C"},
+  "limitations": ["FAIL diagnostic, not release evidence", "server did not use PostgreSQL; do not present as PostgreSQL scheduler/runtime qualification", "pre-fix proxy failure is superseded only for that test-harness defect", "does not change P11/P13/release state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

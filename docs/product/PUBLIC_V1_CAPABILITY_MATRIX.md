@@ -2,6 +2,12 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D413 passes the focused live `route workflows` diagnostic on `main@e3665b6c`:
+`1/1` case passed in `40.28 s`, with 30 correlated events and zero errors,
+after the qualification proxy empty-body fix. The server was not configured
+with PostgreSQL; this does not close P11/release. D412 remains separately
+recorded as a full-live FAIL.
+
 D409 passes the Helm/kind deployment qualification chained to D411 on
 `main@cb6715f3`, including install/readiness, upgrade/rollback, health/API and
 queued-job persistence across restart, with cleanup PASS. This bounded local
