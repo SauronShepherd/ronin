@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D454",
+  "status": "PASS",
+  "candidate_sha": "433078b4af19d9b7a8aa4553a7f41e3a506e989a",
+  "qualification": "real local Trino provider/query-engine integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_trino_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d454-trino-577e6eb644544ca29119dd91fd0f2b25",
+  "result": {"service_version": "484", "selected": 4, "passed": 4, "failed": 0, "skipped": 0, "process_exit_code": 0},
+  "service_profile": "local Trino 484 container, digest trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f",
+  "cleanup": "PASS; Trino container and image removed",
+  "evidence_sha256": {
+    "pytest-timings.json": "23CACF2F6B45011070E925D0C01F6366883502D9B1554CA14A176DD71AD0C82D",
+    "qualification.json": "6C0018A322E4C3A29B3836C9DE05D1D49C5DB685FB19A3BEBE78AAFD2C7343BC",
+    "qualification.log": "E8FFEB722FB4949DBFEEDDD81766A41165B14929308C9E7E6E2317A12C755030",
+    "trino-container.log": "D576AB0B15F9584EF7B36A2521DEDAE8700FBED461AFD424C4F250958C215B18",
+    "trino-junit.xml": "EFA8B3A4B13AC9CB74DCDCD95E2608CCE04FDE0A6AA3340EA4FB5E2125B98ADB"
+  },
+  "coverage": ["real Trino service readiness", "query-engine binding", "prepared scalar bindings", "worker process SIGKILL/reclaim and terminal evidence"],
+  "limitations": ["local provider/container only; not cloud Trino certification", "bounded diagnostic does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
