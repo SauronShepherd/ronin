@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D521",
+  "status": "PASS_POSTGRES_EVENT_STORE_REPLAY",
+  "candidate_sha": "b61aa49aa0da16dd0f05f0945f4824ae4e2818cb",
+  "qualification": "filtered real PostgreSQL scheduler event inbox, trigger matching, replay and concurrent delivery",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d521-postgres-event-store-current -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter event",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 6.75, "process_exit_code": 0},
+  "finding": "The real PostgreSQL event store passes trigger matching, frozen delivery snapshots, idempotent replay, conflicting-content rejection and concurrent delivery without duplicate workflow effects.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d521-postgres-event-store-current",
+  "evidence_sha256": {
+    "pytest-output.log": "AA95E616EF07798F59F668021EAB296B03F5D9653FA0FEC4BC35002F28A35FB7",
+    "pytest-postgres.log": "AFB0ABD2CEB5C76535024B467E8A6CDF981020DF37BFA34C6F91C2B28096C5C5",
+    "pytest-postgres.xml": "C564756DB3284DC753173602DE5F2F3276DEE96B9E5F78144AC84AA439776314",
+    "pytest-timings.json": "CB6489A213AE3E8D05BAF267838ED9116DBF402FAFCC5AA54080201444B17191",
+    "runner-timings.json": "BC8F3B1232F8E64E2144DBE4E9F6BC6AA226414517FBF316A8229ADEB403241A"
+  },
+  "limitations": ["filtered store diagnostic, not full PostgreSQL suite", "does not prove live recovery after broker restart", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
