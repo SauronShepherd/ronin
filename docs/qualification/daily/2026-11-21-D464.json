@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D464",
+  "status": "PASS_EVENT_WORKFLOW",
+  "candidate_sha": "43316f65058be87950ed87aa3c73d1cb1891b467",
+  "qualification": "focused live event-to-workflow journey with explicit PostgreSQL runtime, Redpanda and Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d464-event-workflow-11f12091bac6469bba0b87153fc7f18d -WorkerImage sha256:aa62f813a52873d89371530611793900290fea69177fb9ee36632379269c89bd -StorageBackend postgres -TestGrep 'live streaming event workflow is triggered by a committed record' -RequestTimeoutSeconds 60",
+  "result": {"executed": 1, "passed": 1, "failed": 0, "skipped": 0, "process_exit_code": 0, "api_events": 12, "correlated_http_logs": 12, "api_ok": 12, "api_warn": 0, "api_error": 0, "elapsed_seconds": 49.61},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true, "worker_image": "sha256:aa62f813a52873d89371530611793900290fea69177fb9ee36632379269c89bd"},
+  "bounded_criteria": "One focused committed-record event-to-workflow journey with explicit PostgreSQL runtime; this is bounded evidence and does not prove the full workflow matrix or indefinite operation.",
+  "cleanup": "PASS; isolated services and temporary worker image cleaned up by runner",
+  "evidence_sha256": {"qualification-summary.json": "F54EAD990C56BD4410DB3EABE8769FC01EAC4611B8A34C670C2769743C7EE592", "browser-live.xml": "F75949188D214D3AAADFD0B2EA1E344391D8370963943E0B03B264B631BD1899", "live-api-traffic.json": "F4EAF017143B7543B41E40F0A06CE077FE0A9FFBCE4A06D26D9BBE74B0586555", "live-server.stderr.log": "CD5960D6DA4360D6D9836A0AE54549CF4B2B7C23C4FA692C0535060357EEB3C2", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"},
+  "limitations": ["single focused event-to-workflow case", "bounded evidence", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

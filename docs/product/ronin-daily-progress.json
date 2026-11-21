@@ -906,6 +906,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-18-D100.md",
       "candidate_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb",
       "commit_sha": "e6f635dfe9159351711f44af9199e573e6e8a5bb"
+    },
+    {
+      "id": "D464",
+      "date": "2026-11-21",
+      "phase": "p11-live-event-workflow-postgres-runtime",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D464.md",
+      "candidate_sha": "43316f65058be87950ed87aa3c73d1cb1891b467",
+      "commit_sha": "43316f65058be87950ed87aa3c73d1cb1891b467"
     }
   ],
   "known_blockers": [
