@@ -1036,6 +1036,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D479.md",
       "candidate_sha": "8b529c90a7c4edd8bddcdb3565305251286cb172",
       "commit_sha": "8b529c90a7c4edd8bddcdb3565305251286cb172"
+    },
+    {
+      "id": "D480",
+      "date": "2026-11-21",
+      "phase": "p11-current-candidate-postgres-workflow-store-module",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D480.md",
+      "candidate_sha": "9c069f1a0ac3d007ccd333dc48cf0a96be2eb456",
+      "commit_sha": "9c069f1a0ac3d007ccd333dc48cf0a96be2eb456"
     }
   ],
   "known_blockers": [

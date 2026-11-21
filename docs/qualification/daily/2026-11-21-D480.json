@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D480",
+  "status": "PASS_POSTGRES_WORKFLOW_STORE_CURRENT",
+  "candidate_sha": "9c069f1a0ac3d007ccd333dc48cf0a96be2eb456",
+  "qualification": "complete real PostgreSQL workflow-store integration module on current candidate",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d480-postgres-workflow-store-ecacddaecb304d628d8e609b2ab26846 -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "result": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 16.73, "process_exit_code": 0},
+  "criteria": ["real PostgreSQL workflow-store module passes without skips", "scheduler leases, fencing, recovery, outbox/inbox, migrations, cancellation and HTTP adapter remain durable", "isolated PostgreSQL resources are cleaned"],
+  "real_services": {"postgres": "postgres:16.4-alpine", "runtime": "isolated real PostgreSQL test fixture"},
+  "cleanup": "PASS; isolated PostgreSQL container, volume and network removed by runner",
+  "evidence_sha256": {"pytest-output.log": "E85A85434BE551E997D9B1683F7E4A8C7819FF56C460FE305E7E8FFFB8A940EE", "pytest-postgres.log": "1F95A52ADAB2FD9BECB83A55D69F1E6D4A5171607D0F3FA8297696F92358D7E2", "pytest-postgres.xml": "E3D8C46B009D6FC6DA2EB946A0E481E137C141163918F375753D51371559483C", "pytest-timings.json": "234341927A29248C225252975DB97D2CBB5EF7DD9C7841F29B42A3105797546B", "runner-timings.json": "E1A97075B0B80AE87C181E626E74FD75CB58D18E8005ED9F5ADBE959A71F4758"},
+  "limitations": ["filtered module diagnostic, not the complete Python/PostgreSQL suite", "bounded qualification, not indefinite SLO or HA certification", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
