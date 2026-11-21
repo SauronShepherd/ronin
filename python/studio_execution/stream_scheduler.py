@@ -56,7 +56,12 @@ def ingest_stream_records(
     )
     bulk = getattr(store, "ingest_events", None)
     if callable(bulk):
-        return tuple(delivery for event in bulk(events) for delivery in event)
+        try:
+            return tuple(delivery for event in bulk(events) for delivery in event)
+        except SchedulerEventConflict:
+            # The legacy bridge deliberately ignores received_at during replay
+            # comparison; preserve that contract when a bulk store delegates.
+            pass
     return tuple(delivery for event in events for delivery in _ingest_event(store, event))
 
 
