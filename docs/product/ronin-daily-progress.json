@@ -1196,6 +1196,26 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D503.md",
       "candidate_sha": "2b87bd7ddd7da2ba2daca7c307cdd4c1ca7f74c1",
       "commit_sha": "2b87bd7ddd7da2ba2daca7c307cdd4c1ca7f74c1"
+    },
+    {
+      "id": "D504",
+      "date": "2026-11-21",
+      "phase": "p11-kafka-assignment-reduction-1000",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D505.md",
+      "candidate_sha": "b3605e10552d08af3734ae911ec9c27a45841b3e",
+      "commit_sha": "b3605e10552d08af3734ae911ec9c27a45841b3e"
+    },
+    {
+      "id": "D505",
+      "date": "2026-11-21",
+      "phase": "p11-kafka-bulk-backpressure-10000-timeout300",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D505.md",
+      "candidate_sha": "b3605e10552d08af3734ae911ec9c27a45841b3e",
+      "commit_sha": "b3605e10552d08af3734ae911ec9c27a45841b3e"
     }
   ],
   "known_blockers": [

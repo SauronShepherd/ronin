@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D504",
+  "status": "PASS_LIVE_KAFKA_ASSIGNMENT_1000",
+  "candidate_sha": "b3605e10552d08af3734ae911ec9c27a45841b3e",
+  "qualification": "bounded 1,000-record PostgreSQL backpressure after eliminating redundant Kafka assignments",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d504-live-kafka-1k -TestGrep 'sustained backpressure' -BackpressureRecords 1000 -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 12, "correlated_http_logs": 12, "api_ok": 12, "api_error": 0, "elapsed_seconds": 53.12, "process_exit_code": 0},
+  "finding": "Skipping redundant consumer.assign calls reduced the 1,000-record live diagnostic from 114.81 seconds to 53.12 seconds while preserving replay and all API contracts.",
+  "change_boundary": {"sha": "b3605e10552d08af3734ae911ec9c27a45841b3e", "change": "Kafka source reassigns only when the requested durable checkpoint differs from the active session checkpoint", "regression": "28 streaming tests passed, compileall and Ruff passed"},
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d504-live-kafka-1k",
+  "evidence_sha256": {"browser-live.log": "10DB91C171F23007032BBBA65236D4E989A552C18D645D42E1FF80122EB8B84C", "browser-live.xml": "4E36078403BD36AF9C0FDFE5F26B1BC4F9A747CED5512D36ABC22B71955BD969", "live-api-traffic.json": "95DEE7656089368A540FCCD62C45C1A5C0C897773554F919D4708F886B5AEF1F", "live-python-freeze.txt": "BFE74803E48BDF484BBC746AAE6A451B9DA9650652E371E8A4668FB779A62824", "live-server.stderr.log": "1327ACBAF5F8310DAECED44FD8B137ABF33C0C2908468B0F0D9CA9B9501266CF", "qualification-summary.json": "D886F7BF9A701BF86B1638214C5A3163CEB6A1D6A897BD606473FD7BA07EC47B"},
+  "limitations": ["1,000-record diagnostic only; D505 is the 10,000-record evidence", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

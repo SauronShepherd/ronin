@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D505",
+  "status": "PASS_LIVE_KAFKA_BULK_BACKPRESSURE_10000_TIMEOUT300",
+  "candidate_sha": "b3605e10552d08af3734ae911ec9c27a45841b3e",
+  "qualification": "bounded 10,000-record PostgreSQL backpressure with explicit 300-second bound",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d505-live-kafka-10k-timeout300 -TestGrep 'sustained backpressure' -BackpressureRecords 10000 -BackpressureTimeoutSeconds 300 -StorageBackend postgres -RequestTimeoutSeconds 360",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 13, "correlated_http_logs": 13, "api_ok": 13, "api_error": 0, "elapsed_seconds": 97.36, "process_exit_code": 0},
+  "finding": "The 10,000-record PostgreSQL bulk-backpressure route passes within the explicit 300-second bound after removing redundant Kafka assignments; no server errors or authorization gaps were observed.",
+  "change_boundary": {"sha": "b3605e10552d08af3734ae911ec9c27a45841b3e", "change": "Kafka source reassigns only when the requested durable checkpoint differs from the active session checkpoint", "regression": "D504 1,000-record pass plus 28 streaming tests passed"},
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d505-live-kafka-10k-timeout300",
+  "evidence_sha256": {"browser-live.log": "B8B9C4E6AC5F5E9C447CD88AC489C9D513B0ACF5E2EDC292EF181769C8A1B3BD", "browser-live.xml": "5D083172479AEA958F51FEF70FC430DE619B67814A50DDFC5C73E1B83F437770", "live-api-traffic.json": "D45FD20505E1AA74D8C5CE33BC7358601DB52C6B213D6EC1E5D915F5CE45C5FE", "live-python-freeze.txt": "BFE74803E48BDF484BBC746AAE6A451B9DA9650652E371E8A4668FB779A62824", "live-server.stderr.log": "D6AD8F850F0B1B2E10783C743DE77C4081FA2B02079008199454A7321D428EEB", "qualification-summary.json": "A61E26B8D62B6D6087D55E0BA64CBBA003E36E126D92DB6375FCE3B14A0A0C54"},
+  "limitations": ["bounded route qualification does not close the remaining P11 families or release gates", "does not change P13 blocked state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
