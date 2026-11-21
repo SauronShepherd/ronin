@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-21",
+  "day": "D452",
+  "status": "PASS",
+  "candidate_sha": "b0ec937b5475475a179d41cff1320d96827af729",
+  "qualification": "Docker full qualification with image retained for Helm handoff",
+  "result": {"docker_tests": 27, "passed": 27, "failed": 0, "skipped": 0, "strict_v01": "15/15", "process_exit_code": 0, "elapsed_seconds": 183.53},
+  "service_profile": "real Docker worker/runtime, PostgreSQL, Floci/S3, Azurite/Azure",
+  "cleanup": "PASS; containers/networks/volumes removed; image intentionally retained until D453",
+  "image_digest": "sha256:bded918a7cd5fb2783b8bf874e6b67a3e9aec8a9bd2211f86daa8a4e950a1905",
+  "evidence_sha256": {
+    "azurite-qualification.log": "D96144FE4AE2E6FC087E8DF1A11474B8E092F83E91EA8EE1A9440C0F728DBF6F",
+    "docker-cleanup.json": "816F43996BC537AB847E7667E71B44FA70B6475DC06984A500AC9720EC03823F",
+    "docker-pytest-output.log": "C7DF50B8C03C7C608548CAEDC409231B71F3DC1B0E6EC32EF17F4EA06E1F5FC7",
+    "docker-qualification.log": "418D42104435325F2423F554364F694A94A5C2BAECFAC8DF08B05A251076E11B",
+    "floci-s3-qualification.log": "545AB30F80EBA1D46A82C87F8658B4C8686DEF0AA122CA182F24F65D84361714",
+    "postgres-qualification.log": "109D8FE157A657AF478D3D00FF8A6B7752FBA6FD105BBAFB294AF73DFE414907",
+    "qualification-summary.json": "549C417166B16F03D510EDCD9BEB46CB3D3236583A78E350EC0610F1FBFDF6CA",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "9699CE22D3E7034F1E5693A2493339655CF1C86ED429F6E50C486E71D04CD795"
+  },
+  "limitations": ["image retained only for immediate D453 Helm handoff and removed afterward", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

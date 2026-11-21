@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D453",
+  "status": "PASS",
+  "candidate_sha": "b0ec937b5475475a179d41cff1320d96827af729",
+  "qualification": "Helm/kind deployment, upgrade, rollback and restart persistence",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d453-helm-34732e44605741679bfbd4de3742fe61 -ImageRef ronin:qualification -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d452-docker-for-helm-cccbedadcefe477ea7e27add110b3392",
+  "result": {"helm": "v4.3.1", "lint": "pass", "secret_boundary": "pass", "kind": "ready", "upgrade_revision": 2, "rollback_revision": 1, "health_api": "pass", "persistent_job_after_restart": "pass", "process_exit_code": 0},
+  "service_profile": "kind v1.37.0 isolated cluster with Ronin image sha256:bded918a7cd5fb2783b8bf874e6b67a3e9aec8a9bd2211f86daa8a4e950a1905",
+  "cleanup": "PASS; isolated kind cluster removed; image and auxiliary images removed after handoff",
+  "evidence_sha256": {
+    "helm-qualification.json": "C6BA344D72DA87F79826459D412434AD57C8D07E7A187035FA51098635D57E95",
+    "helm-qualification.log": "D6E40E023C997BC9EFDF9D57C5D14A258E20251AC540FC678642637507DFC9BA",
+    "kubernetes-resources.txt": "510E2368022AEDA89FBB522EF08802AE282BC54D9246BB3B07DB1E63A479DA8A",
+    "port-forward.log": "4D14D7058E752180C1B6C2E491E7108D01C7A4A5FEE17CC094F61FD9C0D4EB359",
+    "port-forward-restart.log": "FE070E24C9C1378F0B4F89215C07CAF88B6F35B8AFCE15BA0524852EA4071840"
+  },
+  "coverage": ["Helm lint and Secret boundary", "kind readiness", "install/upgrade/rollback", "health and authorized API", "queued job persistence after pod restart"],
+  "limitations": ["bounded local kind qualification", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
