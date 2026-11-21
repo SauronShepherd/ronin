@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D417",
+  "status": "PASS",
+  "candidate_sha": "ad1463c6a0c0c90231794a39e027947e30fef044",
+  "production_boundary_sha": "ad1463c6a0c0c90231794a39e027947e30fef044",
+  "qualification": "focused live Streaming route after configured-backend seed fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d417-streaming-postgres-live-20261121 -WorkerImage ronin:live-d417 -StorageBackend postgres -TestGrep 'route streaming' -RequestTimeoutSeconds 180",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 57.34, "api_events": 52, "correlated_http_logs": 52, "api_ok": 48, "api_warnings": 4, "api_errors": 0},
+  "services": {"postgres": true, "kafka": true, "roninApi": true, "worker_image": "sha256:a356b24a207e708ccb123053d705ccee375aec0632438a5f8bce9784354e8c5e"},
+  "coverage": ["route streaming loads and reaches the live API"],
+  "cleanup": "PASS; isolated PostgreSQL/Redpanda services and worker image removed",
+  "evidence_sha256": {"browser-live.log": "7578B7C4CA316ABCFB6555B463EDEA5234808DA3B71DEFB6708B19BC42E595CC", "browser-live.xml": "4088CF594C833FFB22CCF42ADB0E39DD986B07DFD8FE569DC14F33194652DCC8", "live-api-traffic.json": "1B1290915BFD52D1FF58AD928DCACEB250BC6DF0EB20CCB72203D7CF20A3D524", "qualification-summary.json": "C97021D9441DC08AC7440D194DAB697881112DF775801E998206852D53DF610D"},
+  "limitations": ["focused filtered live diagnostic", "does not prove the full suite, indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

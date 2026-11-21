@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D416",
+  "status": "FAIL",
+  "candidate_sha": "37d6b2c5fd2e981fd45f0ed350ceb2cbbf9a4c10",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "full live product suite with PostgreSQL-configured runtime",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d416-full-postgres-live-20261121 -WorkerImage ronin:live-d416 -StorageBackend postgres -RequestTimeoutSeconds 180",
+  "result": {"selected": 43, "passed": 41, "failed": 1, "skipped": 1, "elapsed_seconds": 346.0, "api_events": 437, "correlated_http_logs": 437, "api_ok": 417, "api_warnings": 17, "api_errors": 3},
+  "services": {"postgres": true, "kafka": true, "roninApi": true},
+  "failure": "route streaming loads and reaches the live API: PostgreSQL-backed stream list omitted events/main because the live seed always wrote definitions to SQLite",
+  "cleanup": "PASS; isolated PostgreSQL/Redpanda services and worker image removed",
+  "evidence_sha256": {"browser-live.log": "2641A2C810558CB4038E7E80AE1EB9E386CC51B4FF71B92C1A4BC6DCF1A308E8", "browser-live.xml": "D91E13589F5DE77908CA492DB6030DEAA6D03DA177A920B81ABBD97F98957E94", "live-api-traffic.json": "6CA6AE2A0AA6A2F59F77967DA22FAFAEE4F8550EE633EAC91CEEAE28543673D8", "qualification-summary.json": "9599F814ED15F1230CAE2F9D78D509CAC7F1C7566CB3C60123AA1338605D3498"},
+  "limitations": ["full live suite remains not pass", "does not reattribute D412; D416 used PostgreSQL=true and is a new failure boundary", "P11/release remain open"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
