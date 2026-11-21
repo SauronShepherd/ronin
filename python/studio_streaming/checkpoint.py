@@ -240,6 +240,18 @@ class SqliteStreamCheckpointStore:
             raise ValueError("stream checkpoint offsets must not move backwards")
         with closing(self._connect()) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
+            if expected.positions:
+                cursor = connection.execute(
+                    "UPDATE stream_checkpoints SET checkpoint_json=?,checkpoint_digest=?,"
+                    "row_version=row_version+1 WHERE stream_id=? AND checkpoint_digest=?",
+                    (
+                        self._json(next_checkpoint),
+                        next_checkpoint.digest,
+                        stream_id,
+                        expected.digest,
+                    ),
+                )
+                return cursor.rowcount == 1
             row = connection.execute(
                 "SELECT checkpoint_digest FROM stream_checkpoints WHERE stream_id=?",
                 (stream_id,),
