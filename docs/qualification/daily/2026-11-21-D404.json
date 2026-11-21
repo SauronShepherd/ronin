@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D404",
+  "status": "PASS",
+  "candidate_sha": "1858df6bb0658e75b6f0b5e3204fee9ad3e3aa64",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "ML Studio HTTP control-plane integration",
+  "command": "python -m pytest -q tests/integration/test_ml_studio_http.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d404-ml-studio-http-20261121\\ml-studio-http.xml",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "elapsed_seconds": 4.75},
+  "coverage": ["ML lab quality and execution flow", "model evaluation/review gates and promotion", "workspace-scoped feature definition lifecycle"],
+  "evidence_sha256": {"pytest.log": "E441737073C0AB4934970E883391BEDFA57C1E01964601FC5CC809E48712D4D3", "ml-studio-http.xml": "4132C067A69AC6E17F4EB4BC3A233215669BEE626AA675ED67EDBFC48DB3B69C"},
+  "limitations": ["bounded local HTTP ML control-plane integration", "does not qualify external model providers, PostgreSQL runtime, indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

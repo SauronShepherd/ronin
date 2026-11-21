@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 21 November 2026
 
+D404 passes the ML Studio HTTP control-plane integration on `main@1858df6`:
+`3/3` tests passed in `4.75 s`, covering lab quality/execution,
+evaluation/review gates with promotion and workspace-scoped feature-definition
+lifecycle. This is bounded local ML control-plane evidence and does not close
+P11/release.
+
 D403 passes the data-engineering HTTP control-plane integration on
 `main@c3ffb608`: `5/5` tests passed in `3.85 s`, covering real control-plane
 routes, fail-closed workspace scope, project-scoped bounded QueryFlux and
