@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D559",
+  "status": "PASS_SCHEDULER_SQL_FILE",
+  "candidate_sha": "d732b1f9b2c6c8660652e5fd6fbbda6013a2f6b5",
+  "qualification": "complete scheduler SQL unit integration file",
+  "command": "python -m pytest tests/test_scheduler_sql.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d559-scheduler-sql-file\\pytest.xml",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "pytest_seconds": 2.94, "process_exit_code": 0},
+  "finding": "The complete scheduler SQL file passes fail-closed timeout handling, transaction behavior and query-bound invariants.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d559-scheduler-sql-file",
+  "evidence_sha256": {"pytest.log": "37D5DCCE988E8B5B76DB126EE16F12373F3209F858C9C969BE52B093BF64AB70", "pytest.xml": "AA27545EFFD81F292473520E486C2A25A3F40CA751C636589B76E38C3F322355"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
