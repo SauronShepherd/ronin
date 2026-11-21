@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D473",
+  "status": "PASS_LIVE_RF3_CURRENT",
+  "candidate_sha": "1c5008e2291e0ee5a0aef6615255d84ae1c8d0a7",
+  "qualification": "focused live three-broker RF3 failover with explicit PostgreSQL runtime and Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d473-rf3-current-334118c96de440519f99ceef68217009 -WorkerImage sha256:b49595c6b3b48f98f1b883a7d32064c30d5f5f974a294010946fc6596927b411 -StorageBackend postgres -MultiBroker -TestGrep 'live streaming multi-broker failover resumes from the durable checkpoint'",
+  "result": {"executed": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 5, "correlated_http_logs": 5, "api_ok": 5, "api_warn": 0, "api_error": 0, "elapsed_seconds": 91.28, "process_exit_code": 0},
+  "real_services": {"postgres": true, "redpanda_brokers": 3, "replication_factor": 3, "ronin_api": true, "worker_image": "sha256:b49595c6b3b48f98f1b883a7d32064c30d5f5f974a294010946fc6596927b411"},
+  "criteria": ["three-broker Redpanda RF3 fixture", "broker failover resumes from durable checkpoint", "no duplicate/unexpected API errors"],
+  "cleanup": "PASS; PostgreSQL, three Redpanda brokers, volume, network and rebuilt temporary worker image removed",
+  "evidence_sha256": {"browser-live.log": "4F10062180B310A8AEFF2D78AA246042D4C97D5A7981769C14FEB01AE20088E5", "browser-live.xml": "0B8459B9CA90B7D577028FBCA78A8931652A9B9B8E9D3E95BE22D47D0E41A61E", "live-api-traffic.json": "8AEA0A03C7E880589965E0123438DC6EDC26D1D3C38D884C08700B84437F5931", "live-python-freeze.txt": "0B863F76BB9EA23B4B0BDF6A580E82AF01E40ACDCE03D23D7C286BEC8F1A23C1", "live-server.stderr.log": "02E346CAAD005A8E032C978D027587B9833AB237D239174A9F1AAD6DE4462CC1", "qualification-summary.json": "84459AD35E9B7A7089BDAC8543BFF4EB89275344EC9FBC47A3748B3AE066437A"},
+  "limitations": ["single focused RF3 case", "bounded failover evidence, not indefinite operation", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
