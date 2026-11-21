@@ -2203,6 +2203,12 @@ class PostgresSchedulerSnapshotStore(
             raise
         finally:
             if owns_connection:
+                # Direct event ingestion is the path used by the streaming
+                # adapter.  It does not enter event_batch(), so do not let a
+                # trigger snapshot leak into a later independently committed
+                # batch (for example after a broker recovery).
+                self._event_batch_workspaces = set()
+                self._event_batch_triggers = {}
                 connection.close()
 
     def ingest_events(
@@ -2307,6 +2313,10 @@ class PostgresSchedulerSnapshotStore(
             raise
         finally:
             if owns_connection:
+                # ingest_events() is also callable without event_batch().
+                # Its trigger snapshot is valid only for this transaction.
+                self._event_batch_workspaces = set()
+                self._event_batch_triggers = {}
                 connection.close()
 
     def get_event(
