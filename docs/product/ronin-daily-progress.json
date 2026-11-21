@@ -2186,6 +2186,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D604.md",
       "candidate_sha": "e43227e0420e256ae3ec00d4a0f5facf0d82a6bb",
       "commit_sha": "fa2d183ac6d9ff8f5359461c98d3a337b16114d0"
+    },
+    {
+      "id": "D605",
+      "date": "2026-11-21",
+      "phase": "p11-kafka-microbatch-two-partition-recovery",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D605.md",
+      "candidate_sha": "a114febf8656c132bd729daf7b90728e8d36e491",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

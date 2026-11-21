@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-21",
+  "day": "D605",
+  "status": "PASS_LIVE_TWO_PARTITION_AFTER_FIX",
+  "candidate_sha": "a114febf8656c132bd729daf7b90728e8d36e491",
+  "qualification": "Kafka micro-batch accumulation fix plus live two-partition bounded backlog recovery",
+  "implementation": "KafkaJsonSource now continues fetching within the bounded timeout until the requested micro-batch limit is filled or the deadline expires, avoiding premature one/two-record batches under multi-partition backlog.",
+  "regression_command": "python -m pytest -q tests/test_streaming_kafka.py tests/test_streaming_runtime.py tests/test_streaming_health.py tests/test_streaming_contracts.py tests/test_streaming_windows.py",
+  "regression_result": {"selected": 41, "passed": 41, "failed": 0, "skipped": 0, "process_exit_code": 0},
+  "live_command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d605-live-two-partition-fixed -TestGrep 'two-partition backlog' -StorageBackend postgres -WorkerImage sha256:af3896dd5ede37ff898156193e614a33881101557fd0444add1ba6218fc413b8",
+  "live_result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 36, "correlated_events": 36, "unexpected_errors": 0, "elapsed_seconds": 55.11, "worker_image": "sha256:af3896dd5ede37ff898156193e614a33881101557fd0444add1ba6218fc413b8", "process_exit_code": 0, "cleanup": "PASS"},
+  "finding": "The previously deterministic 40-attempt boundary now drains the two-partition 64-record backlog within the strict fewer-than-40-attempt criterion on the clean candidate.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d605-live-two-partition-fixed",
+  "evidence_sha256": {"browser-live.log": "75D15C91FBD0E09758C1294CCBD6BECB564E9C3B9F000CA7AA23EAAFA5766EE6", "browser-live.xml": "BEE32F094E3A914FF73DE914C73199DE5BACDEB3465951D22B55B7D11F18139B", "live-api-traffic.json": "A044B76EDE03E30F096918C7833561F087BCA03FCF756D038E8F04C8F12AF384", "qualification-summary.json": "0A73D276BEAD2799E0A132BB5B6277689646034AA3551C4AB860655F17635178", "live-server.stderr.log": "972992CDADC03F6B1808972A258DC68CE144475ABC174BD93E8E0683D19CB812"},
+  "limitations": ["one filtered live case", "bounded two-partition workload", "does not prove indefinite operation, HA, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
