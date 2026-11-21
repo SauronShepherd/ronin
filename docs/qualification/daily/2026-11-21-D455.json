@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D455",
+  "status": "PASS",
+  "candidate_sha": "e9c581ab1a0d3580445f2aa60420de6b88b56593",
+  "qualification": "real local Spark Connect provider integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d455-spark-connect-5069b57db6ea4d798c040e161ed5d4d7",
+  "result": {"spark_version": "4.2.0", "pyspark_client_version": "4.2.0", "selected": 1, "passed": 1, "deselected": 2, "failed": 0, "skipped": 0, "process_exit_code": 0},
+  "service_profile": "local Apache Spark Connect container, digest sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "cleanup": "PASS; Spark container and image removed",
+  "evidence_sha256": {
+    "pyspark-client-install.json": "04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97",
+    "pytest-timings.json": "6AD12DB24466D2A526A70A92DE2A7D070E8CC1CF9D9C546E9A6F1586E77788A9",
+    "qualification.json": "C6BD6E86F7E62588D0C9CF8944F363ECE39519AF54B7BB4790752A64BD1863F6",
+    "qualification.log": "223A936AABF832DD3AAD386AFDFBCC8FF5BB525A47FC3F9990F97BEBF6AFDEA8",
+    "spark-container.log": "539240C3B822DD23DB6352FCFC1AA8B515F0C87DAD3ADFFF16DE56A8F78842E7",
+    "spark-junit.xml": "863025F942420BE0FA6B0943E652AF4B623182886B0B146F3D95980A1112C729"
+  },
+  "coverage": ["Spark Connect readiness", "real Spark Connect external smoke", "client/server version alignment"],
+  "limitations": ["local provider/container only; not cloud Spark certification", "2 sibling tests deselected by explicit runner selection", "does not close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
