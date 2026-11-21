@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D437",
+  "status": "PASS",
+  "candidate_sha": "dd56cddb5d1531e693dc2376a101e31be9d68346",
+  "qualification": "real PostgreSQL job store integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d437-postgres-jobstore-912186ee2e404eb7b9df4d30386422b9 -TestPath tests/integration/test_postgres_jobstore_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 1.26},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "F130025AD8A0ECA1C1DB451FC848355A18B5D2E7E9D21993B8ACE772DE04F1EE",
+    "pytest-postgres.log": "CC9AA981AAF6DBD86BD0CCE970CA15DB00E4FB1FC9A1DC9F0D69EA7F53F5C73C",
+    "pytest-postgres.xml": "411ECFBB41A76A10E4659D056C17CD2B0E615A1FECDDB494183D08F32576464F",
+    "pytest-timings.json": "5544AB093D432E3B2DB21C7F19F11FB1987CD611C7042FE786EE2FEE5178AE5C",
+    "runner-timings.json": "5B647FEAC3518633902D3D0C0148B750E82F3FF51C47D3330BE19EB0E9674602"
+  },
+  "coverage": ["durable job lifecycle", "artifact/evidence references", "filtered job listing and keyset pagination"],
+  "limitations": ["focused integration file with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
