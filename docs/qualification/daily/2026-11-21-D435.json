@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D435",
+  "status": "PASS",
+  "candidate_sha": "8d45426dd57ee2ccf338c9e69a281f6ce6c8da14",
+  "qualification": "PostgreSQL streaming checkpoint and table integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d435-postgres-streaming-fe64c7eb54a74034b36f92167c9278b3 -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 1.27},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "40593AF8C5B385311FB1831F660BF617E3EEF9792E3B9090995DBCAC30F051E9",
+    "pytest-postgres.log": "9937D40FF607A34303D00886274D53E991EEC3F6DA8F9005B04C8D16F96B6741",
+    "pytest-postgres.xml": "016E5686BB1DEC867A7E5F3C1A31ABD688628953CDE7C8869A38BECCDA45E1DC",
+    "pytest-timings.json": "5B24648EEFC472FB8BA5D80D7B0D329880022643776CC6E1A8FAF168D7D8B890",
+    "runner-timings.json": "53795A6DEB23EB768017628B3E3DD06E824620441095F46C8DE001E1A9A65425"
+  },
+  "coverage": ["checkpoint bundle compare-and-set and reopen", "stream table append/replay", "conflicting replay rejection"],
+  "limitations": ["focused integration file with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
