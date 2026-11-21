@@ -1876,6 +1876,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D573.md",
       "candidate_sha": "e2a20e114f49180be4e461c0aeb8d69c7592cdee",
       "commit_sha": "45e97ba250a50b55c6c86b0b1ea92fdfafec7712"
+    },
+    {
+      "id": "D574",
+      "date": "2026-11-21",
+      "phase": "p11-scheduler-execution-bridge-file",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D574.md",
+      "candidate_sha": "999d51839db187ae3229e843c2d3430b9857924a",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [
