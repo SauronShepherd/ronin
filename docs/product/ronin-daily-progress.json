@@ -1186,6 +1186,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D502.md",
       "candidate_sha": "166f1bdc6922f9811f5d0f0982a4fd700d1047d0",
       "commit_sha": "166f1bdc6922f9811f5d0f0982a4fd700d1047d0"
+    },
+    {
+      "id": "D503",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-bulk-backpressure-10000-timeout300",
+      "status": "failed",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D503.md",
+      "candidate_sha": "2b87bd7ddd7da2ba2daca7c307cdd4c1ca7f74c1",
+      "commit_sha": "2b87bd7ddd7da2ba2daca7c307cdd4c1ca7f74c1"
     }
   ],
   "known_blockers": [

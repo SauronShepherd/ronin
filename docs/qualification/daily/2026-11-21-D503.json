@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D503",
+  "status": "FAILED_LIVE_BULK_BACKPRESSURE_10000_TIMEOUT300",
+  "candidate_sha": "2b87bd7ddd7da2ba2daca7c307cdd4c1ca7f74c1",
+  "qualification": "bounded 10,000-record PostgreSQL bulk backpressure with explicit 300-second Playwright bound",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d503-live-bulk-10k-timeout300-166f1bdc -TestGrep 'sustained backpressure' -BackpressureRecords 10000 -BackpressureTimeoutSeconds 300 -StorageBackend postgres -RequestTimeoutSeconds 360",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "skipped": 0, "api_events": 4, "correlated_http_logs": 4, "api_ok": 4, "api_error": 0, "elapsed_seconds": 340.58, "process_exit_code": 1},
+  "finding": "Raising the explicit bounded Playwright budget from 240 to 300 seconds still does not complete the 10,000-record drain; the test times out at 300 seconds with no server errors.",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d503-live-bulk-10k-timeout300-166f1bdc",
+  "evidence_sha256": {"browser-live.log": "D2CA6D6FAB4C7470C499C83217C15635986B5B3D16C99D20C5BE4FA9E64585DB", "browser-live.xml": "2D31C4E9B0B9EA028F588FD22B558F5950493F5911F018A78D91691EC928B76A", "live-api-traffic.json": "A100B0346806AEADD2EBA70A9C4C01559A9926F2B5DE555AF48BBFD129B19CA5", "live-python-freeze.txt": "C2CF628188B828EB59295B045A835BDC6364240361BCE7BCDD037D0EC547B137", "live-server.stderr.log": "65E7398C9CA1B947F03D4259E9B6A8EAFD56625FECFF34B6A81ED672464B4F8B", "qualification-summary.json": "F31062006A070388BE45B03AB40C230731101D4063B5A30CAD9EE351BB1CECF5"},
+  "limitations": ["does not close P11 or release", "timeout extension is diagnostic evidence only, not a release relaxation"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
