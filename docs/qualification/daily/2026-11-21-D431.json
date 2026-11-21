@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D431",
+  "status": "PASS",
+  "candidate_sha": "d56218ceabcf2ab9ecfa770d50df71b932914016",
+  "qualification": "focused PostgreSQL scheduler recovery recertification",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d431-scheduler-recovery-postgres-20261121 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate'",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 19, "elapsed_seconds": 9.21},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {"pytest-postgres.xml": "C61770CF600AF9B3527FB97F30571BBC7F07FC0A6F2099E97CF3A13A2419D289", "pytest-output.log": "B5314D0BF4E8E79137911D12E31BF005E31F1ACE34CD6FD722B79844B79E7849", "pytest-postgres.log": "3857EE14C3DF0CE869E5AB8A5AE5A2DD220C1C89FBE91D26FDD7950A77803D7C", "runner-timings.json": "589549CE9610276868C61DCE80831388701AC990AA371F2C1321FD183A492027"},
+  "coverage": ["expired-lease reacquisition without duplicate fire", "process-crash job replay without duplicate"],
+  "limitations": ["focused diagnostic with coverage disabled", "does not reattribute D340, prove indefinite operation/HA, or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
