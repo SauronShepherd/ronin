@@ -1066,6 +1066,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D482.md",
       "candidate_sha": "fd83c0e6901e189a8a47148a5892d2c7601cd29b",
       "commit_sha": "fd83c0e6901e189a8a47148a5892d2c7601cd29b"
+    },
+    {
+      "id": "D483",
+      "date": "2026-11-21",
+      "phase": "p11-current-candidate-live-full-postgres-runtime",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D483.md",
+      "candidate_sha": "fd83c0e6901e189a8a47148a5892d2c7601cd29b",
+      "commit_sha": "fd83c0e6901e189a8a47148a5892d2c7601cd29b"
     }
   ],
   "known_blockers": [

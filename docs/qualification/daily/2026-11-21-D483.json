@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D483",
+  "status": "PASS_LIVE_FULL_POSTGRES_CURRENT",
+  "candidate_sha": "fd83c0e6901e189a8a47148a5892d2c7601cd29b",
+  "qualification": "full live product qualification with explicit PostgreSQL server runtime and rebuilt Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d483-live-postgres-full-bdbad8b348924ee6911e433380f5061e -WorkerImage sha256:d283b152edbe6fa8d94ae14fa2de5f36bbf6976818eb38a1447f656bb69785fb -StorageBackend postgres",
+  "result": {"playwright_cases": 43, "passed": 42, "skipped": 1, "failed": 0, "active_routes": 25, "api_events": 488, "correlated_http_logs": 488, "api_ok": 464, "api_warn": 21, "api_error": 3, "elapsed_seconds": 317.04, "process_exit_code": 0},
+  "skip_boundary": ["one deliberate multi-broker case remains reserved for the separate RF3 fixture"],
+  "criteria": ["live server is explicitly configured against PostgreSQL", "full live route matrix has no case failures", "all API traffic correlates with structured HTTP logs", "real Docker worker executes notebook journey"],
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true, "worker_image": "sha256:d283b152edbe6fa8d94ae14fa2de5f36bbf6976818eb38a1447f656bb69785fb"},
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume, network and temporary worker image removed",
+  "evidence_sha256": {"browser-live.log": "CEDB1B7FABFA513761D10B214947047C05A47A38E27EF3B4F42019087057AFAB", "browser-live.xml": "C140CF95CA05BCFB34A1CDBC480F95829ADB208E1CBFFDF2C30F640192F0E673", "live-api-traffic.json": "7A31719BC2DF0779B62EC4970FCB44D752A93FC353DFB7823EFB8214F5B80090", "live-python-freeze.txt": "6F007385C8E57F79C37241608B80BBB20273B8F4F33A0D86EC7FEEA69F39F203", "live-server.stderr.log": "AE2DD0A2E1D3DA709C4D6114AE35A4E968706E4119F066A16230824CBD9C8649", "qualification-summary.json": "7ADF447E8251BD692128FC7AEA2E5C2BBC5533CC7E8765BCB30D6E96E639FFAD"},
+  "limitations": ["one deliberate multi-broker skip is covered separately by RF3 evidence", "bounded live run, not indefinite operation or SLO/HA certification", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
