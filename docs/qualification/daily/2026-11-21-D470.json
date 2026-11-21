@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D470",
+  "status": "PASS_SCHEDULER_CALENDAR_POSTGRES",
+  "candidate_sha": "ffd3e19c384239394e34dc867944a1dba636f40d",
+  "qualification": "focused PostgreSQL scheduler calendar cursor/fire and HTTP adapter diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d470-scheduler-calendar-0ceaea5b12764e5daf35a69ae65e67a9 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'postgres_scheduler_schedule_cursor_fire_and_http_adapter'",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 3.97, "process_exit_code": 0},
+  "real_services": {"postgres": "postgres:16.4-alpine isolated loopback", "qualification_mode": "CLEAN-CANDIDATE QUALIFICATION", "coverage": false},
+  "criteria": ["schedule cursor preview and advancement", "idempotent schedule fire", "PostgreSQL HTTP adapter schedule surface"],
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner",
+  "evidence_sha256": {"pytest-output.log": "A53374B2EA7DD6FDCC83F79B87AEB1BE88C7BE72FF0D0A10501C77768CCE6591", "pytest-postgres.log": "1B4C8A08FE897BB4B812FC833FF6E6CE8166D8396ADDECB8D4D50F8CACEE47BA", "pytest-postgres.xml": "3319A2BEAC3783DAD8D75E10E85F55F003E12C8ECE61943A1A56FB4E920DF21F", "pytest-timings.json": "A8F06B21D78ABED1248ADD960EEF67825C245A2C0E6402EB128AFAD4685D4D53", "runner-timings.json": "4275D0562E9331336ADFA989E3D6D71F90C39383762B8C5AB7A032916993F4EA"},
+  "limitations": ["focused diagnostic, not full PostgreSQL suite", "does not prove live scheduler HTTP operation", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

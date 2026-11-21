@@ -966,6 +966,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D469.md",
       "candidate_sha": "08167753e49bfecd5fbf84aeb386f13d33b0f35c",
       "commit_sha": "08167753e49bfecd5fbf84aeb386f13d33b0f35c"
+    },
+    {
+      "id": "D470",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-scheduler-calendar-fire-http",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D470.md",
+      "candidate_sha": "ffd3e19c384239394e34dc867944a1dba636f40d",
+      "commit_sha": "ffd3e19c384239394e34dc867944a1dba636f40d"
     }
   ],
   "known_blockers": [
