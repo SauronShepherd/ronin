@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-21",
+  "day": "D457",
+  "status": "FAIL_DIAGNOSTIC",
+  "candidate_sha": "6f5a8b78a50b2c1799859a6673b76fc4373ee9b1",
+  "qualification": "bounded live product qualification with PostgreSQL, Redpanda and real Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d457-live-soak-d65c121e98dd4b5598e44688da3158ff -WorkerImage sha256:685c1644a187bd41e3061243d43f471c57af067d31cbd4e147d619fc14479f8c -SupervisorSoakSeconds 1200",
+  "result": {"executed": 43, "passed": 37, "failed": 5, "skipped": 1, "process_exit_code": 1, "duration_seconds": 1670.55, "api_events": 1702, "correlated_http_logs": 1702, "api_ok": 1676, "api_error": 5, "api_warn": 21},
+  "failures": [
+    "PostgreSQL discovery: request failed unexpectedly",
+    "PostgreSQL watermark sync: scheduler.connector.error; database ronin_test does not exist",
+    "sustained backpressure: browser request Failed to fetch",
+    "Docker worker notebook execution did not reach succeeded within 90 seconds",
+    "API traffic assertion: one event lacked requestId"
+  ],
+  "root_cause_observed": "live server PostgreSQL connector attempted 127.0.0.1:58191 database ronin_test, which was not created by the fixture; see live-server.stderr.log",
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed; worker image retained for explicit follow-up cleanup",
+  "worker_image": "sha256:685c1644a187bd41e3061243d43f471c57af067d31cbd4e147d619fc14479f8c",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d457-live-soak-d65c121e98dd4b5598e44688da3158ff",
+  "evidence_sha256": {"qualification-summary.json": "283F6B954F3529DB33FDDEA3FF4671657BACFC069EF9097DAA1437061B687BF5", "browser-live.xml": "C9BA71B05F16A1491B6CBC24F089DF464F89F9DDD3B67EDC6D1ECDD8C914F3A3", "live-api-traffic.json": "127DC5FBC30A3D8138D0A725609EDDD6D7A1AF99C52F781BB9219999E5DA1B03", "live-server.stderr.log": "6BDCAD8074746B175116C9DA5B6DAE703C8ED72F9BD1D9304458D1539CABF6CA", "live-worker.stderr.log": "38FCB6278BFAFD3CA2F0B3C83AA5CB1F927E8042FF8CD6540E731A2FCD7AC9F6"},
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
