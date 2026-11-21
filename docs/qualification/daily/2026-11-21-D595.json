@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D595",
+  "status": "PASS_POSTGRES_CONNECTOR_RUNTIME",
+  "candidate_sha": "072fee64643b3150a9f0ecb845b387dc4ce21521",
+  "qualification": "PostgreSQL connector checkpoint, control-plane and composed HTTP runtime suites against the configured real backend",
+  "command": "python -m pytest -q tests/integration/test_postgres_connector_checkpoint_real.py tests/integration/test_postgres_connector_control_plane_real.py tests/integration/test_postgres_local_composed_catalog_http.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d595-postgres-connector-runtime-r2\\postgres-connector-runtime.xml",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "postgres": "16.4", "process_exit_code": 0},
+  "finding": "The real PostgreSQL connector checkpoint/reopen, sync worker, control-plane preview/reopen and composed catalog/governance HTTP journeys all passed with both required DSN variables configured.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d595-postgres-connector-runtime-r2",
+  "evidence_sha256": {"postgres-connector-runtime.log": "724E4DA4F58BF9B7B0602639D9C601972AA80DE1D454EC0AF080A208E653F65C", "postgres-connector-runtime.xml": "BEA07EAA6F8C50B7D55D2B5A6C9BB78570A7383C0987EFE8BD1DBD9398F581AB", "docker-cleanup.log": "221D9035833E1EB3CDB38740BBF092214A79CFA836A47386934C45D67FBCB790"},
+  "limitations": ["three integration modules", "single PostgreSQL instance", "does not prove indefinite operation, HA, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
