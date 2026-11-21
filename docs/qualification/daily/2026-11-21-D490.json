@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-21",
+  "day": "D490",
+  "status": "FAILED_LIVE_BACKPRESSURE_BOUNDARY_CURRENT",
+  "candidate_sha": "d3bb5869cdb3715728c4381752adec296bd8e35e",
+  "qualification": "bounded live sustained-backpressure diagnostic after 300-second request budget",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d490-live-backpressure-10k-timeout300-04e78842c76a4a25b28680eecc3c0cc7 -TestGrep 'sustained backpressure' -BackpressureRecords 10000 -StorageBackend postgres -RequestTimeoutSeconds 300",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "skipped": 0, "api_events": 4, "correlated_http_logs": 4, "api_ok": 4, "api_error": 0, "elapsed_seconds": 274.73, "process_exit_code": 1},
+  "finding": "The 10,000-record PostgreSQL backpressure route still exceeded Playwright's fixed 240-second test timeout during the second drain request, despite the 300-second request budget; no PASS is claimed.",
+  "preceding_diagnostics": ["D485-D489 established the same bounded drain-latency boundary from the producer queue through 10,000 records", "D489 reached the same route with a 60-second request budget and failed at the fifth API call"],
+  "change_boundary": {"sha": "65e393757106768aba8076b8ac6bd242c66ebbe9", "change": "bounded Kafka fixture producer queue draining with timeout", "regression": "ruff check, compileall and streaming regression tests passed before D490"},
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d490-live-backpressure-10k-timeout300-04e78842c76a4a25b28680eecc3c0cc7",
+  "evidence_sha256": {"browser-live.log": "419C65813E9DD87115E7366AA4319B9A8CAC758C6971C1D39ABB0FC80E5FC823", "browser-live.xml": "C43056C0B286A7C1F48F10EF2DD14F9595D137492FE3A532FC44DBF615513D89", "live-api-traffic.json": "7A88E70A9AFECE6D8353085BD748E2E80FEE6271D66DD32199EE3CBEE84F5EE2", "live-python-freeze.txt": "8D9ED23E4610A182CE297D096E8DD6923E769DBCEE8CEEA081957212F1D43289", "live-server.stderr.log": "BEA09A2C59284F1AC7673EA6AF2168C2BE22D3FAFACBCBB76AA6F6E2FB613287", "qualification-summary.json": "D3D6C1D69A1785879B1CA52637F8572F869DC1A24F2479CB9B0D5D6E3882B6A1"},
+  "limitations": ["failure is bounded to the sustained-backpressure route and does not invalidate prior passing lanes", "no production runtime change was made in D490", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

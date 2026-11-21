@@ -1096,6 +1096,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D489.md",
       "candidate_sha": "65e393757106768aba8076b8ac6bd242c66ebbe9",
       "commit_sha": "65e393757106768aba8076b8ac6bd242c66ebbe9"
+    },
+    {
+      "id": "D490",
+      "date": "2026-11-21",
+      "phase": "p11-current-candidate-live-backpressure-boundary-timeout300",
+      "status": "failed",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D490.md",
+      "candidate_sha": "d3bb5869cdb3715728c4381752adec296bd8e35e",
+      "commit_sha": "d3bb5869cdb3715728c4381752adec296bd8e35e"
     }
   ],
   "known_blockers": [
