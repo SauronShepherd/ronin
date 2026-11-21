@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D537",
+  "status": "PASS_POSTGRES_BUNDLE_FILE",
+  "candidate_sha": "e5d1d2bcf6a100d4dae01402553b2d6b6dc729d0",
+  "qualification": "complete real PostgreSQL bundle transaction integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d537-postgres-bundle-file -TestPath tests/integration/test_postgres_bundle_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 2.60, "pytest_wall_seconds": 4.475, "process_exit_code": 0},
+  "finding": "The complete PostgreSQL bundle integration file passes atomic/idempotent multi-object commit and rollback of an earlier connection insert when a later binding conflict is detected.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner; no qualification containers or images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d537-postgres-bundle-file",
+  "evidence_sha256": {"pytest-output.log": "BB57FD96488276D98677C5B1467FE6EE7338252A73B8BF77D6557231E2F28B12", "pytest-postgres.log": "23B5C4FC3B1407F9E70A0AB12BF78EBFBF7E4F53E252CAC8C20C925B8B32DF0F", "pytest-postgres.xml": "A50A18EBB9B22D6B7CFC4DE8E5514646372384A7403E5FBD779C140D0A6B6963", "pytest-timings.json": "DA1C50E6CAF44791610C066EEF9463F13D96AB46535AED22BA85D15FF533DD28", "runner-timings.json": "93DF26C3F4FB844BDBEBDF2A9582C663B03F75148F586E4D319B879314F496AF"},
+  "limitations": ["single integration file only", "bounded bundle transaction evidence, not complete P11", "does not qualify external providers/object stores or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

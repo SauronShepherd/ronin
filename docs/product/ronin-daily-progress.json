@@ -1506,6 +1506,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D536.md",
       "candidate_sha": "2e0e1005802115362ce7ac168a2341ac5c66e17d",
       "commit_sha": "f000dc9ee29891dd1c50be33980b3a98d584b198"
+    },
+    {
+      "id": "D537",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-bundle-file",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D537.md",
+      "candidate_sha": "e5d1d2bcf6a100d4dae01402553b2d6b6dc729d0",
+      "commit_sha": "e5d1d2bcf6a100d4dae01402553b2d6b6dc729d0"
     }
   ],
   "known_blockers": [
