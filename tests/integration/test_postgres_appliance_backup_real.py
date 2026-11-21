@@ -78,6 +78,34 @@ def test_appliance_backup_restores_postgres_and_local_data_volume(tmp_path: Path
                 raise AssertionError(f"isolated PostgreSQL did not become ready: {ready.stderr}")
             time.sleep(0.25)
 
+            database_deadline = time.monotonic() + 60
+            while True:
+                database_ready = subprocess.run(  # noqa: S603
+                    compose
+                    + [
+                        "exec",
+                        "-T",
+                        "postgres",
+                        "psql",
+                        "-U",
+                        "ronin",
+                        "-d",
+                        "ronin",
+                        "-tAc",
+                        "SELECT 1",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    env=env,
+                )
+                if database_ready.returncode == 0:
+                    break
+                if time.monotonic() >= database_deadline:
+                    raise AssertionError(
+                        f"isolated PostgreSQL database was not queryable: {database_ready.stderr}"
+                    )
+                time.sleep(0.25)
+
         _run(
             compose
             + [
