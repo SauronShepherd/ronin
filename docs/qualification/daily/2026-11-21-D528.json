@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-21",
+  "day": "D528",
+  "status": "PASS_POSTGRES_SUPERVISOR_SOAK_900S",
+  "candidate_sha": "eff2c551abfb726e4a80e2bb62898f1a5403699e",
+  "qualification": "bounded 900-second live streaming supervisor soak with PostgreSQL, Kafka and Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d528-supervisor-soak-900-postgres-current -WorkerImage ronin:qualification-d528 -TestGrep 'live streaming supervisor soak' -SupervisorSoakSeconds 900 -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "duration_seconds": 955.63, "soak_seconds": 900, "api_events": 1171, "correlated_api_events": 1171, "uncorrelated_api_events": 0, "unexpected_errors": 0},
+  "worker_image_digest": "sha256:445ca9946ca5d36d55aa36209b02361c70bba2f1ef2244ef412ec4a20cf703ed",
+  "finding": "The explicit 900-second supervisor soak passes with 1171/1171 API events correlated, all outcomes OK, zero unexpected errors and zero critical/error application logs.",
+  "service_profile": "isolated PostgreSQL 16.4, Kafka, real Ronin API and Docker worker",
+  "cleanup": "PASS; isolated containers, volume, network and temporary worker image removed",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d528-supervisor-soak-900-postgres-current",
+  "evidence_sha256": {
+    "browser-live.log": "73094BC23BE05B7936201166234948C6844AC1AC491406AB8242FDC16E27ED50",
+    "browser-live.xml": "37F4751E1BCB4F3205F1E661BEE6D1D91E0D06D6183FBEDB3C57A2C897826077",
+    "live-api-traffic.json": "677A8D95164FA9416319AAA634803D323569A998D2CCE1F277C540BB772A839D",
+    "live-python-freeze.txt": "48F4F55930B11BB347B73EE5CE60338DE8356242BB576D9C2DB60E0A58866849",
+    "live-server.stderr.log": "A2FE2B5388274B9208C03CE30C573CC2E4D84689098EB1B57D3B56F87AF9BA82",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "A598804811FB535A57434AA96A46489ECC2964BFF365682672299B90E1742244",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["bounded 900-second soak, not indefinite operation or production SLO", "single worker and single broker profile", "does not change P13 blocked state or release NO-GO"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

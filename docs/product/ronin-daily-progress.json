@@ -1436,6 +1436,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D527.md",
       "candidate_sha": "e5b5bbac9766a82455b7384b60e72290a50595aa",
       "commit_sha": "e5b5bbac9766a82455b7384b60e72290a50595aa"
+    },
+    {
+      "id": "D528",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-supervisor-soak-900s",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D528.md",
+      "candidate_sha": "eff2c551abfb726e4a80e2bb62898f1a5403699e",
+      "commit_sha": "eff2c551abfb726e4a80e2bb62898f1a5403699e"
     }
   ],
   "known_blockers": [
