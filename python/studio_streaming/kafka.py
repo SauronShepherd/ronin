@@ -229,7 +229,6 @@ class KafkaJsonSource:
             latest = {item.partition: item.offset for item in checkpoint.positions}
             deadline = time.monotonic() + timeout_seconds
             first_poll = True
-            recovery_attempted = False
             while len(records) < limit:
                 remaining = timeout_seconds if first_poll else max(0.0, deadline - time.monotonic())
                 first_poll = False
@@ -242,20 +241,6 @@ class KafkaJsonSource:
                     if error is not None:
                         if error.code() == partition_eof:
                             continue
-                        if not records and not recovery_attempted:
-                            # A broker restart can leave a newly-created
-                            # librdkafka consumer with a stale transport
-                            # connection even after metadata becomes
-                            # available. Recreate it once within this bounded
-                            # poll window; no durable checkpoint has advanced
-                            # and no partially received batch is retried.
-                            recovery_attempted = True
-                            self.close()
-                            consumer, partition_eof = self._ensure_consumer(
-                                checkpoint,
-                                timeout_seconds=timeout_seconds,
-                            )
-                            break
                         raise RuntimeError(f"Kafka consume error: {error}")
                     raw = message.value()
                     if raw is None:
@@ -303,8 +288,6 @@ class KafkaJsonSource:
                     offset = int(message.offset())
                     records.append(StreamRecord(partition, offset, timestamp_ms, key, value))
                     latest[partition] = max(latest.get(partition, -1), offset)
-                if recovery_attempted and not records:
-                    continue
                 # A non-empty consume result is already a complete bounded
                 # micro-batch. Waiting for the requested limit here adds up to
                 # another provider timeout when records arrive continuously,
