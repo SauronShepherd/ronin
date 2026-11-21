@@ -1996,6 +1996,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D585.md",
       "candidate_sha": "8556731d2c2f96a2481c32492c5973a089271aea",
       "commit_sha": "f18c7ec337bfc9944c997129401d8357803d3b12"
+    },
+    {
+      "id": "D586",
+      "date": "2026-11-21",
+      "phase": "p11-live-supervisor-soak-multibroker-120s",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D586.md",
+      "candidate_sha": "5b96c78a95340d72944bb896a94ffc4d1ba5f384",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [
