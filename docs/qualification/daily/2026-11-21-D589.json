@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D589",
+  "status": "PASS_POSTGRES_SCHEDULER_RECOVERY",
+  "candidate_sha": "c15507aa151d0652c6dcd0b88331350bcdc065dc",
+  "qualification": "scheduler lease reacquire and crash replay recovery against real PostgreSQL",
+  "command": "python -m pytest -q tests/integration/test_postgres_workflow_store_real.py -k 'scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate' --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d589-scheduler-recovery-postgres-r2\\scheduler-recovery.xml",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 19, "postgres": "16.4", "process_exit_code": 0},
+  "finding": "A fresh scheduler process reacquired an expired PostgreSQL leadership lease without a duplicate schedule fire, and a restarted process replayed the durable job without a duplicate execution.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d589-scheduler-recovery-postgres-r2",
+  "evidence_sha256": {"scheduler-recovery.log": "B09AD0F4AC7FE0B1F61233641A301F3490E61461BDE3B4313DBC9D033EFB35E0", "scheduler-recovery.xml": "5C912AB1E68AD3AE47959EC334DBF7C4987ADD57D58DF53FAFBFE7773FCA800F", "docker-cleanup.log": "503C8CAAB7E11126275CC72DD820281CA65C1018AD4F113EDDDDE4C422AA5AEB"},
+  "limitations": ["two filtered integration cases", "single PostgreSQL instance", "does not prove HA, indefinite operation, complete P11 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
