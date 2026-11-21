@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D481",
+  "status": "PASS_POSTGRES_FULL_CURRENT",
+  "candidate_sha": "a4bd793a2e12a58bcd47432bde3273652bfd1aca",
+  "qualification": "full Python/PostgreSQL suite on current candidate with isolated PostgreSQL runtime",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d481-postgres-full-7c422b94bef14eada145bfcec81b7ae5",
+  "result": {"collected": 4791, "executed": 4794, "passed": 4763, "failed": 0, "skipped": 31, "warnings": 23, "pytest_seconds": 801.58, "process_exit_code": 0},
+  "skip_boundary": ["real Docker worker/multi-broker lanes are opt-in", "S3/Azure provider lanes require their external/local provider fixtures", "OTLP, Trino, Spark/SDP and symlink/privilege lanes are unavailable or opt-in on this host"],
+  "real_services": {"postgres": "postgres:16.4-alpine", "runtime": "isolated PostgreSQL-backed full suite"},
+  "cleanup": "PASS; isolated PostgreSQL resources removed by runner",
+  "evidence_sha256": {"pytest-output.log": "339D002A53592D71287FC20C5012378BB6814726FC0E4E60D211FDDC62DC2A75", "pytest-postgres.log": "79186079F34FF61F3FBF9880D7B1BF5B266B5C72D54088FDA708C0372E372989", "pytest-postgres.xml": "422CDE9BFB79C02364FE2AAB9DC914703439A1979E6ADB163F1084BF3C2183C3", "pytest-timings.json": "22C57E2043ED9F22A2C299A8CF3236E73D23E85361E0E38872F187752EF7CD01", "runner-timings.json": "EA3E0DF442D6524D1D8568DACD6FC58E0FA6566ECF34491384522835A3EC584B", "coverage": "D7C1736140349F8F97DBACA3D85DB6435BF9BECBFF91CDAFED40AEB6A76D42DE"},
+  "limitations": ["31 explicit skips remain and are not counted as pass", "Docker/provider/OTLP/Trino/external CLI lanes require their separate fixtures", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
