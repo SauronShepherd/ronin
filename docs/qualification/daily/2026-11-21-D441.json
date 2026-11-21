@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D441",
+  "status": "PASS",
+  "candidate_sha": "2482ae017d7a73c43047e54acab41d9084bc50a8",
+  "qualification": "real PostgreSQL artifact retention barrier integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d441-postgres-retention-f2d456bb2a8743498aaa9ffc8e957481 -TestPath tests/integration/test_postgres_artifact_retention_barrier.py",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 2.24},
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "F2303ADC080EC545586A3A0AB821F39C352E5A050A7470AB2532C98C1E4C8272",
+    "pytest-postgres.log": "A4DBDCB30414BF9A584D3B76ED50C661E47EBF73D4E1DD683DFDAF5A04333E58",
+    "pytest-postgres.xml": "00DBCB55BB89F8C1C5702C831EBE906704FFD4CE746DFD1BFDA615193AA70739",
+    "pytest-timings.json": "B9BFBE34EB4F5CB4D1B3297A5641CE4855124A824D1492BA5F10043B82583AF8",
+    "runner-timings.json": "B29DB661CD6B9E994AEC96BB26F4A1AC06E55FBE72E70F318DE88CA6C7B607DC"
+  },
+  "coverage": ["collector waits for writers", "new-writer fencing", "async worker writer blocking", "bounded real PostgreSQL collector lease"],
+  "limitations": ["focused integration file with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
