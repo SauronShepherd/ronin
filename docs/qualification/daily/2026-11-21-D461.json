@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D461",
+  "status": "PASS_FULL_PYTHON_POSTGRES",
+  "candidate_sha": "ea020b332228046c3027f313f46e4952c86f3e1a",
+  "qualification": "full non-performance Python regression with isolated PostgreSQL 16.4",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d461-python-postgres-d522747c6c704833a7e654ae8720afba",
+  "result": {"collected": 4791, "passed": 4763, "skipped": 31, "failed": 0, "warnings": 23, "process_exit_code": 0, "pytest_seconds": 831.73, "total_seconds": 852.7},
+  "service_profile": "isolated-postgres-16.4",
+  "cleanup": "PASS; isolated PostgreSQL container and temporary data removed",
+  "evidence_sha256": {"runner-timings.json": "E928BAC51EACE180A87D2B193024BE68C04D843BE2083BCF96EC85D06137CD5B", "pytest-postgres.xml": "40DBA289D77B1C62E10698C6EBE131E771D55FEE496B1D6169AAE2DF7A029256", "pytest-timings.json": "D3B3BE53FFECBD95C7401836336A2EAF2B431A1723ED18B3B6060FAD970E17F8", "pytest-output.log": "B8B4353E402E2A59698D75939ED12C3DC7C9720B38ED95014A83B2B605D83477"},
+  "limitations": ["31 explicit skips remain for external providers, OTLP, Docker worker and privilege-gated symlink cases", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
