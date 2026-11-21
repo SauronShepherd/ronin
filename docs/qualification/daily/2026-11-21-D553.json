@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D553",
+  "status": "PASS_SCHEDULER_BACKFILL_HTTP_FILE",
+  "candidate_sha": "67d1ea25d3b921eecfe6b297c4187bb37e6bd367",
+  "qualification": "complete scheduler backfill and HTTP unit integration file",
+  "command": "python -m pytest tests/test_scheduler_backfill_http.py -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d553-scheduler-backfill-file\\pytest.xml",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "pytest_seconds": 1.01, "process_exit_code": 0},
+  "finding": "The scheduler backfill HTTP regression remains green, including bounded backfill behavior and HTTP adapter semantics.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d553-scheduler-backfill-file",
+  "evidence_sha256": {"pytest.log": "B966CF4A360784BB7630C4949D55125394C0DD51F5DF2C4913A4314B6AB40B50", "pytest.xml": "A80B7FFCC72D871CF77C5EF59697FF91C7362935CC11F83D9189E3773635A6F5"},
+  "limitations": ["unit/runtime test file only", "does not prove indefinite operation, HA or complete P11", "does not close release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
