@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D489",
+  "status": "FAILED_LIVE_BACKPRESSURE_BOUNDARY_CURRENT",
+  "candidate_sha": "65e393757106768aba8076b8ac6bd242c66ebbe9",
+  "qualification": "bounded live sustained-backpressure diagnostic after producer-queue hardening",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d489-live-backpressure-10k-7348159906fc4a5da6aa4585a5439fef -TestGrep 'sustained backpressure' -BackpressureRecords 10000 -StorageBackend postgres -RequestTimeoutSeconds 60",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "skipped": 0, "api_events": 5, "correlated_http_logs": 5, "api_ok": 4, "api_error": 1, "elapsed_seconds": 135.52, "process_exit_code": 1},
+  "finding": "The first bounded run window completed, but the next drain request exceeded the 60-second browser/request timeout and failed with Failed to fetch; no PASS is claimed for 10,000 records.",
+  "preceding_diagnostics": ["D485 seeder failed before Playwright with Kafka BufferError at 1,000,000 records", "D486 1,000,000 records reached Playwright but failed at request timeout 15 seconds", "D487 100,000 records failed at request timeout 15 seconds", "D488 100,000 records failed at request timeout 60 seconds"],
+  "change_boundary": {"sha": "65e393757106768aba8076b8ac6bd242c66ebbe9", "change": "bounded Kafka fixture producer queue draining with timeout", "regression": "ruff check and compileall pass"},
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume and network removed",
+  "evidence_sha256": {"browser-live.log": "71DCB831F7C2F8CCBB7148638B5B5921DF1CD99814B713245B93D87772700FAF", "browser-live.xml": "6BDC3484DF37881C87A76A7FA9B8B1501B627B82F20FF757863E0AD13CBCAE46", "live-api-traffic.json": "23A298FCD8A040BDCA088849B7A64391DA460BEF4DE874D5F10D4D27635DA714", "live-python-freeze.txt": "F48321E3DB3975440241C3B12EFB0761E287A23D903CF8887EBC7509E8C485B7", "live-server.stderr.log": "E1AD8FA7E24EF49E9D984926915D02444E493AAF5D62EE6D5AA6CF7B461C3BF0", "qualification-summary.json": "3B14651D5AD3FA3678B6694D97A9A7CCB0CA4EE32198AD623867211EF1D46F04"},
+  "limitations": ["failure is bounded to the sustained-backpressure route and does not invalidate prior passing lanes", "the producer harness fix is not evidence that runtime draining succeeds", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
