@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-21",
+  "day": "D446",
+  "status": "PASS",
+  "candidate_sha": "f53f9cebfb67b986d614543f4dd2bc768fd174c6",
+  "qualification": "real PostgreSQL connector checkpoint integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d446-postgres-connector-checkpoint-65be54878e4542b6a3c8d94fd8213bae -TestPath tests/integration/test_postgres_connector_checkpoint_real.py",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 0, "elapsed_seconds": 6.58},
+  "service_profile": "isolated PostgreSQL 16.4 with connector sync/control-plane services",
+  "cleanup": "PASS; runner cleanup succeeded and no PostgreSQL qualification containers remain",
+  "evidence_sha256": {
+    "pytest-output.log": "341B185315A97DFC22A8AC2CECD5F60089698B4BCB8A72AFEA647FA746704799",
+    "pytest-postgres.log": "3FB6AB140E6F1AF507647AB6A9A815C029366E38D0C7618261298C5CE2200792",
+    "pytest-postgres.xml": "3DB3581B729D3FA5F289D8F3DB13A966D863F9DDE1201B2DEF13216B6E635FF9",
+    "pytest-timings.json": "3A466B30C855B9096CC72C250B1D16829EE69ED582998240A84D873461A77C02",
+    "runner-timings.json": "A4C19310C368C9F3CCB8049FCE892EFF324D04A3B4BF562EDA6A506FBF267966"
+  },
+  "coverage": ["checkpoint fencing/inventory/restart", "sync worker scoped checkpoint advancement", "shared local connector ingestion composition"],
+  "limitations": ["focused integration file with coverage disabled", "does not prove indefinite operation/HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
