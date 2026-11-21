@@ -1946,6 +1946,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D580.md",
       "candidate_sha": "811906de50a3b9640935b863ec80e7a32dd01721",
       "commit_sha": "bc19ba7d7428fc939bb5cd559f69dc1caeac9e18"
+    },
+    {
+      "id": "D581",
+      "date": "2026-11-21",
+      "phase": "p11-postgres-runtime-docker-filtered",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D581.md",
+      "candidate_sha": "e98de7102e26ebdc23ba601ccc087fbf7c354378",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

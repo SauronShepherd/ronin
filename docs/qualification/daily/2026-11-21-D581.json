@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D581",
+  "status": "PASS_POSTGRES_RUNTIME_DOCKER_FILTERED",
+  "candidate_sha": "e98de7102e26ebdc23ba601ccc087fbf7c354378",
+  "qualification": "filtered Docker PostgreSQL runtime diagnostic from clean checkout",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d581-docker-postgres-runtime-r2 -TestFilter postgres",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 24, "pytest_seconds": 104.66, "process_exit_code": 0},
+  "finding": "Real PostgreSQL 16.4 plus the Docker worker passed worker execution, SIGKILL reclaim/reuse and appliance backup/restore; cleanup passed.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d581-docker-postgres-runtime-r2",
+  "image_sha256": "sha256:0d5b0b9d45f3040d15695b119c67cda8e852dda86a53b59dedf47c5d556940db",
+  "evidence_sha256": {"v01-acceptance.xml": "EC6834B6AF70A288EAD41D35DC9C75B442F650099C669304D7D0C4221B0391A8", "docker-pytest-output.log": "91EC9B65ACC3F3150C4661BAA13E50BEEECCFC88B1910F69F9275DAA01E7A238", "docker-cleanup.json": "135FBBCE675074AB2DEF1AD99D43205A155C370A7960B2289EF92CAF260B5101", "docker-qualification.log": "6CA7B622BA20C68C0475825E21E100261FD2436DE749D96FBF65F3C99FA516A8", "postgres-qualification.log": "508E375AFE63C25E5CDE91BCF82E5921D767BF1587BC87D707DA5A4706556FBA"},
+  "limitations": ["filtered diagnostic; 24 tests deselected", "does not prove scheduler PostgreSQL runtime, HA, indefinite operation or complete P11", "strict v0.1 acceptance and release gates were not evaluated"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
