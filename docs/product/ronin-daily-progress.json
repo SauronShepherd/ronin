@@ -1816,6 +1816,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D567.md",
       "candidate_sha": "f8dda916212a46f361c74829c5ec6efd3aee5ef4",
       "commit_sha": "1ea37d926ed9371bb40df926850ea7267edd3c79"
+    },
+    {
+      "id": "D568",
+      "date": "2026-11-21",
+      "phase": "p11-scheduler-branch-state-file",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D568.md",
+      "candidate_sha": "8840ff7a38688a08f6c4aee446bf1d18f3e5eadf",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [
