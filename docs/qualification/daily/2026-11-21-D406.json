@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D406",
+  "status": "PASS",
+  "candidate_sha": "c95c939b2509d11ff9d5c64b502d18b13276b113",
+  "production_boundary_sha": "1671cc454dc81c521fe225f5f8c71c268b1e6a1e",
+  "qualification": "real OTLP collector telemetry integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_otlp_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d406-otlp-20261121",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 24.439},
+  "fixture": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621, OTLP/HTTP loopback",
+  "coverage": ["OTLP traces", "OTLP metrics", "OTLP logs"],
+  "cleanup": "PASS; collector container removed",
+  "evidence_sha256": {"collector-config.yaml": "6D631511413384DE11D3AED2AA852697EF9C696B5B2BB9B3AEFA3464EE89F07F", "collector-container.log": "8530D9B92886508E02B47A2B94E67471C0DE7A1C05909F1DDCA16F45ADD906CE", "otlp-junit.xml": "F1190DEA11368E92A79B49197C492956B1DF08E309893D471DA4BE996427DCCB", "pytest-timings.json": "C8D542C6AB252B074989D7910BE7CE8B5F9FCCAC8B4BFA3FD5644B52494386D8", "qualification.json": "73022DA55D71D0B514E90B971857B8747AB9C707C32B759EAE415B35E8AF2863", "qualification.log": "54E8109C25B45A0BD27152288D6003FCD420441FFBFCDABFFCD1679BC28B9EB4"},
+  "limitations": ["bounded local OTLP collector qualification", "does not prove observability backend durability, indefinite operation, HA or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

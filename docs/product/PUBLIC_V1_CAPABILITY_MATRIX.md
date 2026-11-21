@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 21 November 2026
 
+D406 passes the real OTLP collector qualification on `main@c95c939b`: `1/1`
+test passed in `24.439 s`, accepting traces, metrics and logs with cleanup PASS.
+This bounded local telemetry evidence does not close P11/release.
+
 D405 passes the Migration Studio HTTP integration on `main@2e713072`: `2/2`
 tests passed in `2.34 s`, covering session routes, discovery and scope. This
 bounded evidence does not close P11/release.
