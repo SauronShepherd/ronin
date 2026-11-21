@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D542",
+  "status": "PASS_POSTGRES_CATALOG_HTTP",
+  "candidate_sha": "2ea8308571d1c8477f14be1d88ddf2952318f035",
+  "qualification": "bounded real PostgreSQL composed catalog and governance HTTP integration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d542-postgres-catalog-http -TestPath tests/integration/test_postgres_local_composed_catalog_http.py",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 10.70, "pytest_wall_seconds": 15.786, "process_exit_code": 0},
+  "finding": "The real PostgreSQL composed application serves catalog and governance behavior over HTTP successfully.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner; no qualification containers or images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d542-postgres-catalog-http",
+  "evidence_sha256": {"pytest-output.log": "18F37CB5921AD4C054360AE6A3825D319F5599840C931A67019CD2813A1B5D88", "pytest-postgres.log": "08B79F1E12548721FFF92FC24550563991D2E7F03394D183C617DA1B46B8D7EB", "pytest-postgres.xml": "59EF6A0D99DC0DF01CCA458F8DED20998270FAF2F282D00A99F01AD6C24FE718", "pytest-timings.json": "51B8CF166927331E2C1098CFA7A16AE1798CB8AC44CE715DF61A029865D0E4F6", "runner-timings.json": "53DBEA04F2700AF93E4B0D8444BBD614DD5B1998B216793E38C06A51586666D7"},
+  "limitations": ["single integration test", "bounded composed HTTP evidence, not complete P11", "does not qualify external providers/object stores or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
