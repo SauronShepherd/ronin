@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D469",
+  "status": "PASS_LIVE_FULL_POSTGRES_CURRENT",
+  "candidate_sha": "08167753e49bfecd5fbf84aeb386f13d33b0f35c",
+  "qualification": "full live product route qualification with explicit PostgreSQL runtime, Redpanda and rebuilt Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d469-live-full-current-209f6a79ed2c42d99ecad40eb9969d64 -StorageBackend postgres -WorkerImage sha256:cc49e4ac1791470e76250ea5e7b1dd84bac174cb531fda7d776ef000c6a7c58e",
+  "result": {"playwright_executed": 43, "playwright_passed": 42, "playwright_skipped": 1, "playwright_failed": 0, "active_routes": 25, "api_backed_routes": 24, "ui_only_routes": 1, "api_events": 511, "correlated_http_logs": 511, "api_ok": 487, "api_warn": 21, "api_error": 3, "elapsed_seconds": 408.37, "process_exit_code": 0},
+  "real_services": {"postgres": true, "kafka": true, "ronin_api": true, "worker_image": "sha256:cc49e4ac1791470e76250ea5e7b1dd84bac174cb531fda7d776ef000c6a7c58e"},
+  "cleanup": "PASS; PostgreSQL, Redpanda, volume, network and rebuilt temporary worker image removed",
+  "evidence_sha256": {"browser-live.log": "53CA48E1DE4A32115B6EA47C9241270C85E21C17599B631268947F1FAE582ECC", "browser-live.xml": "E0BD76CA645E12CD0ACBC064D1A93300035504D89BFF4ABB986436952FA8DC21", "live-api-traffic.json": "63A7CC6A4E305FC500BC067496CD136D63CBDDBDC7EAF239426755B0DF0198D4", "live-python-freeze.txt": "E36D724E573D8B36E02B3E36246756EEB5457756E6CC59209F80E6E81484C0F2", "live-server.stderr.log": "3E58D3A6E41A9D620464E67371214F79E09952F607FCA2611D192322EF886B72", "qualification-summary.json": "DBF155FB8A289C39F523AC642BC534C011AF4B63068F5022667F95DCCC05F367"},
+  "limitations": ["one deliberate skip remains in the full live matrix", "bounded live qualification, not indefinite operation", "does not close P11 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
