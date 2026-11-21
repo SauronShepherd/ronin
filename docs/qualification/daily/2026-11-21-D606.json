@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-21",
+  "day": "D606",
+  "status": "PASS_LIVE_FULL_POSTGRES_AFTER_FIX",
+  "candidate_sha": "57080f12c2fe56f420bae1a970747e8b7c121ea5",
+  "qualification": "full live product route against PostgreSQL with immutable Docker worker after Kafka micro-batch fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d606-live-full-postgres -StorageBackend postgres -WorkerImage sha256:eecf9c1a9676e213c3d591d342f93a4964b2f21c64e7b40cec2726f5aee4b0e1",
+  "result": {"selected": 43, "passed": 42, "failed": 0, "skipped": 1, "active_routes": 25, "api_backed_routes": 24, "api_events": 501, "correlated_events": 501, "unexpected_errors": 0, "expected_skip": "multi-broker case reserved for explicit RF3 fixture", "worker_image": "sha256:eecf9c1a9676e213c3d591d342f93a4964b2f21c64e7b40cec2726f5aee4b0e1", "process_exit_code": 0, "cleanup": "PASS"},
+  "finding": "The full live route passes after the Kafka micro-batch fix; all 501 API events correlate, 24 API-backed routes are exercised and the single reserved multi-broker case remains explicitly skipped.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d606-live-full-postgres",
+  "evidence_sha256": {"browser-live.log": "3EF945106BD36D2B77243E083E236A238C44D68E1BF0F221B976C40B9472F64F", "browser-live.xml": "2018DC461F4DE7C86424E072D392949592DFE947725E3CF64FA467C4490FBF97", "live-api-traffic.json": "728E9B63242775AE7F7F45847D941095B61088D61BAF124474C3AAB716BDE64E", "qualification-summary.json": "2316C1790121FCA55F0C6757E0068757E72A0A51372B17A7124EC0E749B67DCA", "live-server.stderr.log": "893735BAECF26568EBE503746C414BA286160AB6727BA2A1AEADAFCD2142E3D1"},
+  "limitations": ["one reserved multi-broker skip", "bounded live route", "local single-broker topology", "does not prove indefinite operation, complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
