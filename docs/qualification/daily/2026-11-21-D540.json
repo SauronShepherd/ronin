@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-21",
+  "day": "D540",
+  "status": "PASS_POSTGRES_JOBSTORE",
+  "candidate_sha": "b203dd625534e6bce31d8cec6645d58f0bf0be9d",
+  "qualification": "complete real PostgreSQL job-store integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d540-postgres-jobstore -TestPath tests/integration/test_postgres_jobstore_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 1.63, "pytest_wall_seconds": 3.251, "process_exit_code": 0},
+  "finding": "The complete real PostgreSQL job-store integration file passes the complete job lifecycle and filtered/keyset-paginated listing behavior.",
+  "service_profile": "isolated PostgreSQL 16.4",
+  "cleanup": "PASS; isolated PostgreSQL container removed by runner; no qualification containers or images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d540-postgres-jobstore",
+  "evidence_sha256": {"pytest-output.log": "B0EB0975B81943A239406B9EC69E36DC9B84BD19A967E365090077845478BCBE", "pytest-postgres.log": "4D2211B63D727CCFF47A5FF51F534E5AF353E49FEE90A8AE2F0D58ED884C7F72", "pytest-postgres.xml": "0CEBD830879E1C2761B886A2E79587A4244058E965AB1F2840A073F26E0BAFF0", "pytest-timings.json": "80249B6E34C0D4633441B3DFF8042259A8747E6C2037D5E8C9DE0422B05B7ED4", "runner-timings.json": "FAAE676623AF3C1FA3636A68A755727C864A7F539031D6C20A1ACDA82567AEA3"},
+  "limitations": ["single integration file only", "bounded job-store evidence, not complete P11", "does not qualify external providers/object stores or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
