@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-21",
+  "day": "D526",
+  "status": "PASS_FULL_NONPERFORMANCE_PYTHON_POSTGRES_AFTER_CACHE_FIX",
+  "candidate_sha": "a4c9455328d079963be5d17944f34a14ac576865",
+  "qualification": "full non-performance Python and real PostgreSQL regression after scheduler event trigger-cache fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d526-python-postgres-full-cache-fix",
+  "result": {"collected": 4791, "passed": 4763, "failed": 0, "skipped": 31, "warnings": 23, "pytest_seconds": 647.76, "process_exit_code": 0},
+  "finding": "The full non-performance Python/PostgreSQL regression remains green after the production cache-lifecycle fix. The 31 skips are explicit environment or external-provider qualifications and are not promoted to PASS.",
+  "service_profile": "isolated PostgreSQL 16.4 with the complete non-performance Python test surface",
+  "cleanup": "PASS; isolated PostgreSQL container and resources removed by runner; no Docker containers or qualification images remain",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d526-python-postgres-full-cache-fix",
+  "evidence_sha256": {
+    ".coverage": "9BAE0025EE264B393F38A4AA4EBB1C5E9D04CB9824AE30C180EFCA2DA55BB530",
+    "pytest-output.log": "73375E570D44645B6011BCDF09E60199BB52076928AB049D841CBAC808D8073E",
+    "pytest-postgres.log": "CEFBCD63FF63F313E89BB1BDDF60F65DFAF7BF8D1F1261CAE35AA9A9CEF8466E",
+    "pytest-postgres.xml": "D859ACD624953AF269871B279B51699523B138E2F2F4CDF35A68625F02882A7A",
+    "pytest-timings.json": "CD0F4009C5F40C74DB14AC1960C55AD464DE1F8721CDFD430072FABBB6F2A48A",
+    "runner-timings.json": "E461E9B8657984403AEBE57466752B2A63B01BC35FFD5853DE605A0EFD994E87"
+  },
+  "limitations": ["non-performance scope excludes performance tests", "31 explicit skips remain open qualifications", "does not change P13 blocked state or release NO-GO"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

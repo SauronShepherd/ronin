@@ -1416,6 +1416,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D525.md",
       "candidate_sha": "1aa9588914d4262b0a24cbc0412a85f10502d4b8",
       "commit_sha": "1aa9588914d4262b0a24cbc0412a85f10502d4b8"
+    },
+    {
+      "id": "D526",
+      "date": "2026-11-21",
+      "phase": "p11-full-python-postgres-regression-after-cache-fix",
+      "status": "pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-21-D526.md",
+      "candidate_sha": "a4c9455328d079963be5d17944f34a14ac576865",
+      "commit_sha": "a4c9455328d079963be5d17944f34a14ac576865"
     }
   ],
   "known_blockers": [
