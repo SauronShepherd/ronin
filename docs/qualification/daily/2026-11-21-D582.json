@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-21",
+  "day": "D582",
+  "status": "PASS_DOCKER_FULL_V01",
+  "candidate_sha": "de1fe5288255421c7fc7aa9a11542cadb3f29aa9",
+  "qualification": "full Docker qualification from clean checkout",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d582-docker-full",
+  "result": {"v01_selected": 15, "v01_passed": 15, "v01_failed": 0, "v01_skipped": 0, "integration_selected": 27, "integration_passed": 27, "integration_failed": 0, "integration_skipped": 0, "pytest_seconds": 213.69, "process_exit_code": 0, "strict_success": true},
+  "finding": "Strict v0.1 acceptance and the Docker integration campaign pass with real PostgreSQL 16.4, Docker worker, Floci/S3 and Azurite/Azure fixtures.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d582-docker-full",
+  "image_sha256": "sha256:a2169bde5e5b432e4cb5c400ed65a3cf8e65f0ca47505537ef32aa30fbe98fd2",
+  "evidence_sha256": {"v01-acceptance.xml": "5B2A4E6C8219E6CFE199C0A024EFE74D3B6DD45690881D209280C1DA4A4F3EFF", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "docker-pytest-output.log": "95D32787C9FB2000E2AAA6C5DE578E7EC4000461DC1FC1E0FD50947897DCD4D6", "docker-cleanup.json": "F712E0C4216ABA5F0504B4CE24FA8DE4647A909EDE96E7834DA038678FEEE7CB", "docker-qualification.log": "9D9C12A874C40394AE04FBD9F2066836CA6A5779716DBF24CD21FD7949A049B8", "postgres-qualification.log": "A3922F8A36800F390EB0FB50631BBE7821735C809566C855933ECB8D08AF8FCF", "floci-s3-qualification.log": "370D865F83EFBA9BFD30F7F7DFF81DD57F7F191EFED33DDC5D194215FA15E0EA", "azurite-qualification.log": "AB5CF7FFA34908F72C600DFFBCD6A13158E6EFB29A98FC4B79815B1AE08AC4CB"},
+  "limitations": ["bounded Docker qualification campaign", "does not prove indefinite operation, HA, complete P11 or all 13 families", "release status remains NO-GO by policy"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
