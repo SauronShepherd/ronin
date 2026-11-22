@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D688",
+  "status": "PASS_STREAMING_HTTP_BOUNDED_LOCAL",
+  "candidate_sha": "6ccb76a2fb26108548d3ef23989013b4c599406e",
+  "qualification": "streaming HTTP bounded drain, bundle reset/resume and fail-closed error paths",
+  "command": "python -m pytest -q tests/integration/test_workspace_project_http_api.py -k \"stream_run_accepts_a_bounded_supervised_drain or stream_bundle_api_export_plan_import_reset_and_resume_are_audited or stream_health_translates_broker_timeout_to_redacted_service_unavailable or stream_run_redacts_broker_failure_and_returns_service_unavailable or stream_run_reports_poison_input_without_exposing_record_content\"",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "deselected": 56, "duration_seconds": 4.78, "process_exit_code": 0},
+  "finding": "The streaming HTTP bounded drain, audited bundle reset/resume, broker failure redaction and poison-input handling selections passed.",
+  "limitations": ["local API selection", "does not qualify live Kafka, indefinite operation, external providers, release, or P11 completion"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
