@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D613",
+  "status": "PASS_LIVE_RF3_SUPERVISOR_SOAK_300",
+  "candidate_sha": "c6f35e74dd5dfcb7be9c23c728789ca8f2ce0086",
+  "qualification": "bounded three-broker RF3 supervisor soak for 300 seconds",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d613-live-supervisor-soak-300-rf3 -TestGrep 'streaming supervisor soak' -StorageBackend postgres -SupervisorSoakSeconds 300 -MultiBroker",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "supervisor_soak_seconds": 300, "api_events": 397, "correlated_events": 397, "unexpected_errors": 0, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The RF3 supervisor drains while records arrive for the explicit 300-second bounded duration; all 397 API events are OK and correlated, with zero log errors or critical events.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d613-live-supervisor-soak-300-rf3",
+  "evidence_sha256": {"browser-live.log": "AE00D2ACE5D2192FEBF3C5D53EB9830099AF60B547495514F604F2E3486DC8EA", "browser-live.xml": "95B1388E19068AE122359ABB5E5521C09DB6FFBD3B039873E6FE4D03822D801A", "live-api-traffic.json": "6A73411A251702C7CE30D57E2CEBFA1FA0E5786B8F7F864EEC7332EBA32926D9", "qualification-summary.json": "94550089302729411A58FDE69EDE1E4EE2CC8F51C3B86CB2D0B7D35EC426331A", "live-server.stderr.log": "30C3F45716EC7ED02DEBFBDA3BA3C96A76AFED97ACB0797106DE411E4D5850E5"},
+  "limitations": ["bounded 300-second soak", "local Redpanda RF3 topology", "does not prove indefinite operation, complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
