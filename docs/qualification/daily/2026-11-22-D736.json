@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D736",
+  "status": "PASS_STREAMING_BUNDLE_LOCAL",
+  "candidate_sha": "fdd7cecd04f097654029430e0d4c1347d71bba0b",
+  "qualification": "complete local streaming bundle regression",
+  "command": "python -m pytest -q tests/test_streaming_bundle.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 7, "passed": 7, "failed": 0, "skipped": 0, "duration_seconds": 4.23, "process_exit_code": 0},
+  "finding": "Streaming bundle contracts passed completely.",
+  "limitations": ["local streaming bundle regression", "does not qualify official external brokers/providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
