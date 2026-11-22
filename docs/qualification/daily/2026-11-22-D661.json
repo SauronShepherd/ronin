@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D661",
+  "status": "PASS_LIVE_POSTGRES_SUPERVISOR_SOAK",
+  "candidate_sha": "3664204ec601921d81ba6c12f8cd48dbb0aceeeb",
+  "qualification": "live PostgreSQL/Kafka/Ronin supervisor soak while records arrive for a bounded duration",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d661-live-supervisor-soak-typefix -TestGrep 'live streaming supervisor soak drains while records arrive for a bounded duration' -StorageBackend postgres -RequestTimeoutSeconds 180",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 71, "correlated_events": 71, "outcomes": {"OK": 71, "WARN": 0}, "application_errors": 0, "duration_seconds": 112.61, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The bounded live supervisor soak drained while records arrived for approximately 1.2 minutes against real PostgreSQL, Kafka and Ronin APIs; all 71 API events correlated and were OK.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d661-live-supervisor-soak-typefix",
+  "evidence_sha256": {"browser-live.log": "94C2FCFF2FE488097B2089CFC295D6A371E7F9D0E1EB4042E8A2279F6A8AAFF0", "browser-live.xml": "B0F9E6294C072D939F8AB914200E9408C384EA91624F1F52AA83CEAB060A91B3", "live-api-traffic.json": "7AB86380E6DA31373CCC96B1889CF2AFF8B5112F9B83FB65340B1DC47D39E990", "live-python-freeze.txt": "23A3D280CC1A5D4D674A9AA8C17153B8E24E0B92F952B491AEDB981A55C9BD83", "live-server.stderr.log": "DC31F183641697FA764721E943BAB61B025DDB70F120F693CFE6E101B7E8A38F", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "702A0196C377BA8B5BE7FA1C0681D4F383B1CF614EA4CAF736329D8B6760B2D8", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "limitations": ["single bounded soak of approximately 1.2 minutes", "does not qualify indefinite operation, SLO, HA, multi-worker, external cloud providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
