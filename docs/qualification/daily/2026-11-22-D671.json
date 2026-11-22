@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D671",
+  "status": "PASS_LOCAL_STREAMING_FOCUSED",
+  "candidate_sha": "bf854d9e670cb5abf5d4c6f5de032ba8c95cac81",
+  "qualification": "focused local streaming runtime, bundle, contract and health regression",
+  "command": "python -m pytest -q tests/test_streaming_runtime.py tests/test_streaming_bundle.py tests/test_streaming_contracts.py tests/test_streaming_health.py",
+  "result": {"passed": 32, "failed": 0, "skipped": 0, "duration_seconds": 44.53, "process_exit_code": 0},
+  "finding": "The focused local streaming runtime, bundle, contract and health selections all passed.",
+  "limitations": ["local-only test selection", "does not qualify PostgreSQL/Kafka live services, external providers, indefinite operation or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
