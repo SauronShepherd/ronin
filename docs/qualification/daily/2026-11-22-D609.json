@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D609",
+  "status": "PASS_LIVE_RF3_BOUNDED_BACKPRESSURE",
+  "candidate_sha": "5d2731a57bbc91716117f65cf25032db87c1da74",
+  "qualification": "bounded RF3 sustained backpressure with 256 records and reset-safe replay",
+  "command": "docker build --label org.ronin.qualification.run=d609 -t ronin:qualification-d609 -f docker/Dockerfile .; pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d609-live-sustained-backpressure-rf3 -TestGrep 'streaming sustained backpressure' -StorageBackend postgres -BackpressureRecords 256 -BackpressureTimeoutSeconds 240 -MultiBroker",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 12, "correlated_events": 12, "unexpected_errors": 0, "backpressure_records": 256, "cleanup": "PASS", "worker_image": "sha256:596cd71d98654e46e9470c15a901ec482b500a4e340f7373c58266a9b26d8c98", "process_exit_code": 0},
+  "finding": "The bounded RF3 backpressure case drains the configured 256 records with reset-safe replay and all API traffic correlated; this closes the D607 fetch-failure observation for the focused case without promoting the full matrix.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d609-live-sustained-backpressure-rf3",
+  "evidence_sha256": {"browser-live.log": "2994BC37356A53E9101D749F928DDA812D7D708C82D4BF025DF86CA4B8F46E20", "browser-live.xml": "7871E1DF71BD865C85235B0629EC3A2F2506B0F19AF07C8AD57DAD5FDFB83B6C", "live-api-traffic.json": "74AC34F946964CDFA80463F41BE29534525320E9257BC7BE87C05AA72CAC3525", "qualification-summary.json": "BBB0A83D83E5DB10994FDF3360CF1A1CC7D575DC4F52E89B882E68477E61843E", "live-server.stderr.log": "A6E05CF9FD9EE903846770A4CC284578FFD1ED02735A00ADB44B8F07E0766250"},
+  "limitations": ["bounded 256-record diagnostic", "does not prove indefinite operation or complete RF3 matrix", "does not prove complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
