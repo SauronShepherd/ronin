@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D788",
+  "status": "PASS_BOUNDED_HTTP_TIMEOUTS_CURRENT_CANDIDATE",
+  "candidate_sha": "8a80e1453018a2cbecbe774a1a05d361ba7b6cdd",
+  "qualification": "current-candidate bounded HTTP timeout and deadline qualification",
+  "command": "python -m pytest -q tests/integration/test_http_timeouts.py --junitxml=pytest.xml",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "duration_seconds": 1.39, "process_exit_code": 0},
+  "finding": "HTTP timeout and deadline cases passed, including bounded service interruption and cleanup/release behavior.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d788-http-timeouts-20261122", "status": "PASS"},
+  "limitations": ["bounded local timeout qualification, not an indefinite production SLO", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775-D787 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
