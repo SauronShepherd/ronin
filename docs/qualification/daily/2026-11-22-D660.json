@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D660",
+  "status": "PASS_LIVE_POSTGRES_TWO_PARTITION_BACKLOG",
+  "candidate_sha": "a554d97399af1f29742009abd646fe86ef57145f",
+  "qualification": "live PostgreSQL/Kafka/Ronin two-partition backlog drained in bounded micro-batches",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d660-live-two-partition-backlog-typefix -TestGrep 'live streaming drains a two-partition backlog in bounded micro-batches' -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 68, "correlated_events": 68, "outcomes": {"OK": 68, "WARN": 0}, "application_errors": 0, "duration_seconds": 85.64, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The two-partition bounded micro-batch backlog drained successfully against real PostgreSQL, Kafka and Ronin APIs; all 68 API events correlated and were OK.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d660-live-two-partition-backlog-typefix",
+  "evidence_sha256": {"browser-live.log": "0E17A618C3BD4415F594B17CFB4E509AA50D8E0A1CDD4EDE472ACB354FAF327C", "browser-live.xml": "41FC7AC822C630B10C45A3A47D0D0CA7B1662B77AA9057FE71B33DE069416A0D", "live-api-traffic.json": "76B461188C257B3CDD70401F524C7DBEDBE6B9D24606EC21119CD68FCE816169", "live-python-freeze.txt": "2D445538B47754B4DEEABC1C0E7C637D0D09E0042A82BE589E03C06CD1FF40F1", "live-server.stderr.log": "E3E47067384D1919D3117BC3D54A712ADDA552080C64828597B973FAB626C44E", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "69FAEA8A69543AD4F5A3BA5EC09869ABD862C3BE80938B0330517F9FA3887043", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "limitations": ["single bounded two-partition journey", "does not qualify indefinite operation, HA, multi-worker, external cloud providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
