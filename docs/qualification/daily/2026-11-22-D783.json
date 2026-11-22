@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-22",
+  "day": "D783",
+  "status": "PASS_POSTGRES_BUNDLE_APPLIANCE_CURRENT_CANDIDATE",
+  "candidate_sha": "2cda991a1e4410a79b6af5383c044d0a0d8a96b9",
+  "qualification": "current-candidate PostgreSQL bundle and Docker appliance backup/restore qualification",
+  "commands": [
+    "RONIN_POSTGRES_TEST_DSN=postgresql://ronin:***@127.0.0.1:55446/ronin_test python -m pytest -q tests/integration/test_postgres_bundle_real.py --junitxml=pytest.xml",
+    "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d783-appliance-current-20261122 -ImageTag ronin:qualification-d783-appliance -TestFilter test_appliance_backup_restores_postgres_and_local_data_volume"
+  ],
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "bundle_duration_seconds": 2.82, "appliance_duration_seconds": 44.83, "process_exit_code": 0},
+  "finding": "The real PostgreSQL bundle case passed, and the Docker-gated appliance backup/restore case passed with an immutable Ronin image built from the current checkout, restoring PostgreSQL and local data volume state.",
+  "cleanup": {"postgres_container_removed": true, "postgres_volume_removed": true, "ronin_qualification_image_removed": true, "appliance_compose_removed": true, "temporary_resources_status": "PASS"},
+  "limitations": ["temporary local PostgreSQL 16.4 and Docker appliance", "filtered Docker diagnostic; strict v0.1 gate was not evaluated", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775-D782 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
