@@ -299,9 +299,9 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert "[System.Collections.Generic.Queue[object]]::new()" in script
     assert "$routeQueue.Enqueue($nestedRouteEntry)" in script
     assert "$publishedRoutes.ToArray()" in script
-    assert script.index('$skippedCases = @($junit.SelectNodes("//testcase[skipped]"))') > script.index(
-        "$publishedRoutes.ToArray()"
-    )
+    assert script.index(
+        '$skippedCases = @($junit.SelectNodes("//testcase[skipped]"))'
+    ) > script.index("$publishedRoutes.ToArray()")
     assert '($TestGrep -eq "streaming" -or -not $TestGrep) -and' in script
     assert '"live streaming multi-broker failover resumes from the durable checkpoint"' in script
     assert "unexpectedSkippedCases" in script
@@ -364,8 +364,8 @@ def test_live_product_runner_isolated_and_reports_all_active_routes() -> None:
     assert "resource: 'ronin-live-event-workflow-events'" in live_suite
     assert "resource: 'ronin-live-fault-events'" in live_suite
     assert (
-        "if ($streamEventWorkflowDiagnostic -or $TestGrep -eq \"streaming\") {\n            & $python -m tools.seed_live_studio"
-        in script
+        'if ($streamEventWorkflowDiagnostic -or $TestGrep -eq "streaming") {'
+        "\n            & $python -m tools.seed_live_studio" in script
     )
     assert '$TestGrep -eq "live streaming broker restart"' in script
     assert (

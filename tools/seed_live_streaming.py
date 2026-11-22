@@ -129,12 +129,14 @@ def main() -> int:
             if "TOPIC_ALREADY_EXISTS" not in str(exc):
                 raise SystemExit("Could not create the live Kafka qualification topic") from exc
 
-    producer = _BoundedProducer(Producer(
-        {
-            "bootstrap.servers": bootstrap,
-            "message.max.bytes": MAX_KAFKA_RECORD_BYTES * 2,
-        }
-    ))
+    producer = _BoundedProducer(
+        Producer(
+            {
+                "bootstrap.servers": bootstrap,
+                "message.max.bytes": MAX_KAFKA_RECORD_BYTES * 2,
+            }
+        )
+    )
     for index in range(5):
         producer.produce(
             topic,

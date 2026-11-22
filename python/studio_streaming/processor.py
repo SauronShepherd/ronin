@@ -87,9 +87,7 @@ class MicroBatchProcessor:
             raise ValueError("stream timeout_seconds must be in [0, 300]")
 
         previous = (
-            self._checkpoints.get(stream_id)
-            if expected_checkpoint is None
-            else expected_checkpoint
+            self._checkpoints.get(stream_id) if expected_checkpoint is None else expected_checkpoint
         )
         batch = self._source.poll(
             previous,

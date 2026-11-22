@@ -68,8 +68,7 @@ class SqliteStreamTable:
                     lookup,
                 ).fetchall()
                 existing = {
-                    (int(row[0]), int(row[1])): (row[2], row[3], row[4])
-                    for row in existing_rows
+                    (int(row[0]), int(row[1])): (row[2], row[3], row[4]) for row in existing_rows
                 }
                 for record, value_json in encoded:
                     stored = existing.get((record.partition, record.offset))

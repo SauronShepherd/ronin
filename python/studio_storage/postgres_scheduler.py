@@ -2112,10 +2112,7 @@ class PostgresSchedulerSnapshotStore(
         try:
             with connection.cursor() as cursor:
                 workspace_key = str(event.workspace_id)
-                if (
-                    not owns_connection
-                    and workspace_key not in self._event_batch_workspaces
-                ):
+                if not owns_connection and workspace_key not in self._event_batch_workspaces:
                     self._require_active_workspace(cursor, event.workspace_id)
                     self._lock_event_workspace(cursor, event.workspace_id)
                     self._event_batch_workspaces.add(workspace_key)
@@ -2294,9 +2291,7 @@ class PostgresSchedulerSnapshotStore(
                                 str(event.received_at),
                             )
                         )
-                        deliveries[index].append(
-                            EventDelivery(workspace_id, event.id, definition)
-                        )
+                        deliveries[index].append(EventDelivery(workspace_id, event.id, definition))
                 if delivery_rows:
                     cursor.executemany(
                         "INSERT INTO ronin_scheduler_event_deliveries"

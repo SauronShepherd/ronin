@@ -340,9 +340,7 @@ class KafkaStreamingRuntime:
                     event_session() if callable(event_session) else nullcontext()
                 )
                 sessions.enter_context(
-                    checkpoint_session()
-                    if callable(checkpoint_session)
-                    else nullcontext()
+                    checkpoint_session() if callable(checkpoint_session) else nullcontext()
                 )
                 while True:
                     if batches >= max_batches:

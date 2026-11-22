@@ -509,9 +509,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         event_batch_ingestor=ingest_stream_records,
         clock=scheduler_clock,
         table_factory=(
-            (lambda: PostgresStreamTable(postgres_dsn))
-            if postgres_dsn is not None
-            else None
+            (lambda: PostgresStreamTable(postgres_dsn)) if postgres_dsn is not None else None
         ),
     )
 
@@ -689,9 +687,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
             plugin_host=plugin_host,
             plugin_routes_enabled=plugin_routes_enabled,
             default_workspace_id=workspace_id,
-            request_timeout_seconds=_seconds(
-                "RONIN_HTTP_REQUEST_TIMEOUT_SECONDS", "15"
-            ),
+            request_timeout_seconds=_seconds("RONIN_HTTP_REQUEST_TIMEOUT_SECONDS", "15"),
             audit_reader=audit_store,
             audit_mutation=audit_mutation,
         )
