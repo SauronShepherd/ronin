@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D795",
+  "status": "PASS_QUALITY_FAMILY_CURRENT_CANDIDATE",
+  "candidate_sha": "006f01c46bf2d93f8930f4f5a251de42952f8e0b",
+  "qualification": "current-candidate local quality runtime/http/observability/sandbox regression",
+  "command": "python -m pytest -q tests/test_quality_runtime.py tests/test_quality_http.py tests/test_quality_observability.py tests/test_quality_sandbox.py tests/test_quality_alert_signals.py --junitxml=pytest.xml",
+  "result": {"selected": 56, "passed": 56, "failed": 0, "skipped": 0, "duration_seconds": 5.39, "process_exit_code": 0},
+  "finding": "Quality runtime, HTTP, observability, sandbox and alert-signal tests passed without skips or failures.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d795-quality-family-20261122", "status": "PASS"},
+  "limitations": ["local quality regression; external provider capabilities remain unconfigured", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D794"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
