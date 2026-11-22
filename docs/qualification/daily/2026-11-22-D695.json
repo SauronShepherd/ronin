@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D695",
+  "status": "PASS_LICENSE_SUPPLY_CHAIN_CONTRACTS",
+  "candidate_sha": "aa78977a5784e364b175b7ef66b46171495b9906",
+  "qualification": "license qualification, declared coverage and release supply-chain evidence regression",
+  "command": "python -m pytest -q tests/test_license_qualification.py tests/test_license_qualification_coverage.py tests/test_supply_chain_evidence.py tests/test_release_supply_chain_generators.py",
+  "result": {"selected": 178, "passed": 178, "failed": 0, "skipped": 0, "duration_seconds": 11.71, "process_exit_code": 0},
+  "finding": "License qualification, declared-file coverage, supply-chain evidence and release generator contracts passed completely.",
+  "limitations": ["local contract regression", "does not constitute a release approval or complete P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
