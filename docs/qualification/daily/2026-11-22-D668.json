@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D668",
+  "status": "PASS_DOCKER_S3_JSON_PROVIDER",
+  "candidate_sha": "f1cfced5b179d69df023f7546155f461fbb1a105",
+  "qualification": "S3-compatible external provider JSON sink put/read/retry round-trip",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d668-docker-s3-json-provider -TestFilter 'test_s3_json_sink_put_read_and_retry_round_trip'",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26, "duration_seconds": 4.68, "cleanup": "PASS", "process_exit_code": 0, "image_digest": "sha256:1605e1bea597af7e04be13f623b4348263d6b1e50ec51079b22f673be3ea8bbb"},
+  "finding": "The real S3-compatible Floci provider completed the JSON sink put/read/retry round-trip; the qualification image, Floci fixture and owned resources were cleaned successfully.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d668-docker-s3-json-provider",
+  "evidence_sha256": {"docker-cleanup.json": "520F0F0232178212343F368DA4F8FBA436790B467166287CF19D77B1B11B30F4", "docker-pytest-output.log": "22E74D3A926045DA8A3C8E33DB1097583BA83C12376F55C2B7C78B7DF2D5918F", "docker-qualification.log": "BF855A9391DDFA28A6C736AB19548455AC4AB8F24BA4498DF0947E3C7BB02543", "floci-s3-qualification.log": "044753792B346496776F79AF9F960F2B037E1EA60A2CE38603D9C6269117E6C6", "v01-acceptance.xml": "2073086E68CF0E5F942DB9436FA27346AD7EE4DBAFCCC24CCF3AECE6DC411585"},
+  "limitations": ["filtered provider diagnostic only; strict v0.1 gate was not evaluated", "Floci is S3-compatible provider evidence, not production vendor certification", "does not qualify P11 streaming or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
