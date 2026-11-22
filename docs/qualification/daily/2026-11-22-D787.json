@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D787",
+  "status": "PASS_HTTP_SUBMIT_STATUS_CURRENT_CANDIDATE",
+  "candidate_sha": "6f85ee06e5099b2df8914a9d0351ceffc74660f1",
+  "qualification": "current-candidate HTTP submit/status contract qualification",
+  "command": "python -m pytest -q tests/integration/test_http_submit_status.py --junitxml=pytest.xml",
+  "result": {"selected": 8, "passed": 8, "failed": 0, "skipped": 0, "duration_seconds": 8.43, "process_exit_code": 0},
+  "finding": "HTTP submit/status integration cases passed, covering bounded request handling, authentication/authorization, typed errors and bounded SQL result behavior.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d787-http-submit-status-20261122", "status": "PASS"},
+  "limitations": ["bounded local HTTP integration qualification", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775-D786 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
