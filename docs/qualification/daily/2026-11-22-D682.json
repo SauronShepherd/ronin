@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-22",
+  "day": "D682",
+  "status": "PASS_DOCKER_FULL_STRICT_CURRENT",
+  "candidate_sha": "2d366f2057482c161b474b504303b8424d29ca0d",
+  "qualification": "full Docker integration acceptance and strict v0.1 current candidate",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d682-docker-full-current",
+  "result": {"integration_selected": 27, "integration_passed": 27, "integration_failed": 0, "integration_skipped": 0, "strict_selected": 15, "strict_passed": 15, "strict_failed": 0, "strict_skipped": 0, "pytest_seconds": 181.55, "process_exit_code": 0},
+  "service": {"fixtures": ["PostgreSQL", "Docker worker", "Floci/S3", "Azurite/Azure"], "ronin_image_digest": "sha256:a3535a4bc587203f6b57567eebb0f0b8b39700ac2d5468b4877852569ac19826"},
+  "evidence": {
+    "directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d682-docker-full-current",
+    "files": {
+      "azurite-qualification.log": "F4B2B77B2724CFA6D5AD024310DFAB54DA906869D900810BA16CCCF166977157",
+      "docker-cleanup.json": "D9FE475BBE03A568C863BB67E0F09FAD0BD7433A209FACF3D91701AEB519E51B",
+      "docker-pytest-output.log": "8B0377034944A6DB064BDCC8A5BFDA1FE0F3DEF800F2C1B5A2132F5D4AE2A835",
+      "docker-qualification.log": "09FEC71AABC79DF9C24EC80F11FF3ABBDB790B877B429277068DAE0939F47C4C",
+      "floci-s3-qualification.log": "A43022EF016E6B6B39BB978FF64FDC0A6BDD57E9D71681292D2F4294C05CFC22",
+      "postgres-qualification.log": "A4E557276E86928AC918EF8032E19CC5D8726D03FDF467BF6F101FE8560B8AA2",
+      "qualification-summary.json": "036D8F0EB4CDDCA406831821C4E82495580082EF504F2D8C438C4498282000A1",
+      "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+      "v01-acceptance.xml": "A98623058F9B41313A4C3957EB8D31C45EE82FFA54E1F9918062E8C689B6DE20"
+    },
+    "cleanup": "PASS: owned Ronin image removed; no containers or Ronin/qualification images remain"
+  },
+  "finding": "The complete current Docker integration acceptance and strict v0.1 acceptance passed with all selected real fixtures.",
+  "limitations": ["Docker-local qualification only", "does not qualify indefinite operation, SDP Studio CLI, P11 completion, P13, or release-wide gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
