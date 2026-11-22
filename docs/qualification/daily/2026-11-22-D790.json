@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D790",
+  "status": "PASS_AZURE_BLOB_CONTRACT_CURRENT_CANDIDATE",
+  "candidate_sha": "1682fb716b25257046e99087bd0476c32d875611",
+  "qualification": "current-candidate Azure Blob JSON connector contract regression",
+  "command": "python -m pytest -q tests/test_azure_blob_json_connector.py --junitxml=pytest.xml",
+  "result": {"selected": 14, "passed": 14, "failed": 0, "skipped": 0, "duration_seconds": 0.84, "process_exit_code": 0},
+  "finding": "Azure Blob JSON connector contract tests passed, including bounded discovery, snapshot checkpoints, replay semantics, invalid checkpoint rejection and oversized-page handling.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d790-azure-contracts-20261122", "status": "PASS"},
+  "limitations": ["local contract regression; external Azure provider remains unclaimed", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775-D789 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
