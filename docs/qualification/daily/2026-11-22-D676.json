@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D676",
+  "status": "BLOCKED_SDP_CLI_ENVIRONMENT",
+  "candidate_sha": "7a6b9db041da823f108f0f9940e6496f32fb6a61",
+  "qualification": "SDP Studio official CLI external provider qualification",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_sdp_cli_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d676-sdp-cli-current",
+  "result": {"selected": 0, "passed": 0, "failed": 0, "skipped": 0, "process_exit_code": 1},
+  "environment": {"cli_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\sdpstudio.exe", "failure": "ModuleNotFoundError: No module named 'sdpstudio_cli'"},
+  "evidence": {"directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d676-sdp-cli-current", "files": {"qualification.json": "8CBB3799168FD305683D24F5F80DE27B507696EFA09D98D9B88E72AA22FC44CC", "qualification.log": "41CD42C3FDACB30EB35AECD211C9F2D9B6394336FF87BF76CDD832085042B055"}, "cleanup": "PASS: no project was created; isolated data root remains external evidence only"},
+  "finding": "The installed sdpstudio wrapper is present but unusable because its sdpstudio_cli module is missing. No test or provider result is claimed.",
+  "limitations": ["environment blocked before CLI version/project creation", "requires a complete official SDP Studio CLI installation", "does not qualify release or P11 completion"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
