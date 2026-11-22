@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D637",
+  "status": "PASS_STREAM_TABLE_RUNTIME",
+  "candidate_sha": "0bac12dcda8a3c9876ebe32aa0f9f0ad109a1a78",
+  "qualification": "local stream-table sink and streaming runtime regression",
+  "command": "python -m pytest -q tests/test_stream_table.py tests/test_streaming_runtime.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d637-stream-table\\pytest.xml",
+  "result": {"selected": 16, "passed": 16, "failed": 0, "skipped": 0, "duration_seconds": 14.80, "process_exit_code": 0},
+  "finding": "Stream-table sink and streaming runtime tests passed locally with no skips, including replay/idempotency behavior covered by the selected suite.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d637-stream-table",
+  "evidence_sha256": {"pytest.log": "5383E4666F0C1058817D94D5833B28DDC70F4D560D85C25F71D8F969CAB8E334", "pytest.xml": "688C4F870B918D4C719F74D6F9AC1FD3125AFD2AE29391DCAFD85567EA99EF50"},
+  "limitations": ["local provider-neutral regression", "does not qualify live Kafka/PostgreSQL route, indefinite operation, external providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
