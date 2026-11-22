@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D725",
+  "status": "PASS_BUNDLE_MULTI_OBJECT_IMPORT_LOCAL",
+  "candidate_sha": "cbca737457ffcb80cc193ac053deaaf4d6f3354e",
+  "qualification": "complete local multi-object bundle import regression",
+  "command": "python -m pytest -q tests/test_bundle_multi_object_import.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "duration_seconds": 4.43, "process_exit_code": 0},
+  "finding": "Multi-object bundle import contracts passed completely.",
+  "limitations": ["local bundle import regression", "does not qualify official external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
