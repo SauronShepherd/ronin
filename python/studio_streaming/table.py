@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 from .contracts import StreamBatch, StreamRecord
 
@@ -13,7 +14,7 @@ class SqliteStreamTable:
     def __init__(self, path: Path) -> None:
         self._path = path
         path.parent.mkdir(parents=True, exist_ok=True)
-        self._connection = sqlite3.connect(path)
+        self._connection: Any = sqlite3.connect(path)
         self._connection.execute(
             "CREATE TABLE IF NOT EXISTS stream_table ("
             "stream_id TEXT NOT NULL, partition_id INTEGER NOT NULL, "
@@ -53,7 +54,7 @@ class SqliteStreamTable:
                 "ON CONFLICT(stream_id,partition_id,offset_value) DO NOTHING",
                 parameters,
             )
-            inserted = int(getattr(insert_result, "rowcount", insert_result))
+            inserted = int(insert_result.rowcount)
             if inserted != len(parameters):
                 predicates = " OR ".join(
                     "(partition_id=? AND offset_value=?)" for _record, _value in encoded
@@ -144,7 +145,9 @@ class PostgresStreamTable(SqliteStreamTable):
             import psycopg
         except ImportError as exc:
             raise RuntimeError("PostgreSQL streaming requires the psycopg package") from exc
-        self._connection = _PostgresConnectionAdapter(psycopg.connect(dsn))
+        self._connection: _PostgresConnectionAdapter = _PostgresConnectionAdapter(
+            psycopg.connect(dsn)
+        )
         self._connection.execute(
             "CREATE TABLE IF NOT EXISTS stream_table ("
             "stream_id TEXT NOT NULL, partition_id INTEGER NOT NULL, "

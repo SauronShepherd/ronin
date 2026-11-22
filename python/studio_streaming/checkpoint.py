@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from contextlib import closing, contextmanager
 from hashlib import sha256
 from pathlib import Path
@@ -364,7 +364,7 @@ class PostgresStreamCheckpointStore(SqliteStreamCheckpointStore):
         return _PostgresConnectionAdapter(psycopg.connect(self._dsn))  # type: ignore[attr-defined]
 
     @contextmanager
-    def stream_session(self) -> object:
+    def stream_session(self) -> Iterator[object]:
         """Reuse one PostgreSQL connection across independently committed CAS calls."""
         if self._session_connection is not None:
             yield self._session_connection
