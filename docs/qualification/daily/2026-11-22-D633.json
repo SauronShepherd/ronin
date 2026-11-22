@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D633",
+  "status": "PASS_POSTGRES_COMPOSED_CATALOG_HTTP",
+  "candidate_sha": "d1c165b3ef598d075c50e7a8b3ec1fb7fb11eff4",
+  "qualification": "PostgreSQL-backed local composition catalog and governance over real HTTP",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d633-postgres-composed-catalog-http -TestPath tests/integration/test_postgres_local_composed_catalog_http.py",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "pytest_seconds": 5.67, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "The PostgreSQL-backed local composition served catalog and governance contracts over real HTTP successfully.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d633-postgres-composed-catalog-http",
+  "evidence_sha256": {"pytest-output.log": "E6783AB437E7F6C2CF4FCF6E7A19A20BCE6546EF1B55F491133F25EDB0F645D8", "pytest-postgres.log": "B9E97903A7214A2A0F6BD038AC09335B3FB169F79E7C1086057D8B3D5AD240B9", "pytest-postgres.xml": "4948EA5BA6816ABA04857F9EB016537464B2A7A7D6E5E79AE6A7DEEB6B6B67FD", "pytest-timings.json": "F26D0E4F77097DB05644DA70BC8704B7958B40D203E51248F683F998975C84F8", "runner-timings.json": "8B7F9BA39F025A127F589BD48D58A29F9BAF9833869F574ED4FBE343AA3331CE"},
+  "limitations": ["single bounded HTTP composition scenario", "does not qualify external providers, indefinite operation or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
