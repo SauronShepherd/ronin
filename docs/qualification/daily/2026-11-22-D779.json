@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D779",
+  "status": "PASS_POSTGRES_CONNECTOR_CHECKPOINT_CURRENT_CANDIDATE",
+  "candidate_sha": "720d69733d37ac6c582474dd65ab5bdf1dd713d1",
+  "qualification": "current-candidate PostgreSQL connector and connector-checkpoint qualification",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://ronin:***@127.0.0.1:55441/ronin_test RONIN_CONNECTOR_POSTGRES_DSN=postgresql://ronin:***@127.0.0.1:55441/ronin_test python -m pytest -q tests/integration/test_postgres_connector_real.py tests/integration/test_postgres_connector_checkpoint_real.py --junitxml=pytest.xml",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "duration_seconds": 13.04, "process_exit_code": 0},
+  "finding": "Real PostgreSQL connector and connector-checkpoint tests passed, covering typed/null/timestamp/large-value reads, watermark pagination without loss, durable checkpoint state, fencing and sync control-plane behavior.",
+  "cleanup": {"container": "ronin-d779-postgres-rerun", "container_removed": true, "temporary_postgres_volume_removed": true, "postgres_image_removed": false, "reason": "pre-existing shared postgres:16.4-alpine image preserved"},
+  "limitations": ["temporary local PostgreSQL 16.4 instance", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775, D778 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
