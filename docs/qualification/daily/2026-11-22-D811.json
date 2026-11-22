@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D811",
+  "status": "PASS_FINOPS_PERFORMANCE_GOVERNANCE_CURRENT_CANDIDATE",
+  "candidate_sha": "cce043a38a0ba2e91d25ae929eb139621b0b9bc0",
+  "qualification": "current-candidate local FinOps, performance and governance regression",
+  "command": "python -m pytest -q tests/test_govern_studio_formats.py tests/test_govern_studio_application.py tests/test_finops_forecast.py tests/test_finops_allocation.py tests/test_observability_finops.py tests/test_performance_web.py tests/test_performance_service.py tests/test_performance_runtime_integration.py tests/test_performance_resources.py tests/test_performance_renderer.py tests/test_performance_policy.py tests/test_performance_plugin.py tests/test_performance_correlation.py tests/test_performance_cli.py tests/test_performance_assets.py tests/test_performance_artifact.py tests/test_performance_adapters.py --junitxml=pytest.xml",
+  "result": {"selected": 65, "passed": 65, "failed": 0, "skipped": 0, "duration_seconds": 104.96, "process_exit_code": 0},
+  "finding": "Local governance formats/application, FinOps allocation/forecast/observability and performance service/runtime/web/resource/plugin/policy/asset/artifact contracts passed without skips or failures.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d811-finops-performance-governance-20261122", "status": "PASS"},
+  "limitations": ["local regression; PostgreSQL FinOps provider cell is tracked separately", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D810"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
