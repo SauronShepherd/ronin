@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D774",
+  "status": "BLOCKED_POSTGRES_DSN_MISSING",
+  "candidate_sha": "26fd13a2e32dafe925885ee1beaa620305414532",
+  "qualification": "attempt real PostgreSQL scheduler/runtime qualification",
+  "command": "python -m pytest -q tests/integration/test_postgres_workflow_store_real.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 21, "passed": 0, "failed": 0, "skipped": 21, "duration_seconds": 4.46, "process_exit_code": 0},
+  "finding": "All real PostgreSQL scheduler/runtime tests fail closed as skipped because RONIN_POSTGRES_TEST_DSN is not configured.",
+  "limitations": ["no PostgreSQL runtime evidence gathered", "does not qualify scheduler/runtime on PostgreSQL", "does not change P11/P13/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
