@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D755",
+  "status": "PASS_WORKER_PORTABLE_EVIDENCE_LOCAL",
+  "candidate_sha": "1351a37412284ac24af71894240b564932d0dc0f",
+  "qualification": "complete local worker portable evidence regression",
+  "command": "python -m pytest -q tests/test_worker_portable_evidence.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "duration_seconds": 4.39, "process_exit_code": 0},
+  "finding": "Worker portable evidence contracts passed completely.",
+  "limitations": ["local worker evidence regression", "does not qualify productive worker recovery, external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
