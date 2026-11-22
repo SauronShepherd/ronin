@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D629",
+  "status": "PASS_POSTGRES_SCHEDULER_FENCING",
+  "candidate_sha": "fa40ec6702049819b9ce595924b945709b4a62da",
+  "qualification": "bounded PostgreSQL scheduler fencing and cancellation durability",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d629-postgres-scheduler-fencing -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_rejects_late_branch_decision_without_mutating_terminal_task or test_postgres_scheduler_attempt_leases_fence_workers_and_reclaim_expiry or test_postgres_scheduler_leadership_is_generation_fenced_and_persistent or test_postgres_scheduler_timeout_requests_and_dispatch_authority_are_durable'",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "deselected": 17, "pytest_seconds": 2.28, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "The candidate passed late-branch fencing, persistent generation fencing, durable timeout/dispatch authority, and worker lease fencing/reclaim against isolated PostgreSQL 16.4.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d629-postgres-scheduler-fencing",
+  "evidence_sha256": {"pytest-output.log": "9BB1FC4B969C2F265D78714E7C8D73E69AA4E9C568A5DB8D2E6F9C4233C454B7", "pytest-postgres.log": "3F985C10648206201D68D12D583902DBD3EF3BD03BF805DE8E8CD033C6016B10", "pytest-postgres.xml": "B1CBAC0D4F8EF50D38DD49CAEF113815741A420AAAEFD214EB9E0B7F8FC2BCF6", "pytest-timings.json": "122568CAD206BF926C4CAFA4C64028AD36E2D460622C0C9193B216AC58D614AD", "runner-timings.json": "F6969C66609DE7C34661FF21F5580B31E16A21A22ECA0CA21124645ED4DAD6B9"},
+  "limitations": ["four bounded fencing scenarios", "does not qualify indefinite operation, external providers, worker HA, live worker Docker execution or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
