@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D683",
+  "status": "PASS_CLI_OPERATOR_SURFACE_LOCAL",
+  "candidate_sha": "4bca1c0f7e796a7c1fe29b98bd64e6a6929b7050",
+  "qualification": "local CLI/operator surface regression",
+  "command": "python -m pytest -q tests/integration/test_cli_operator_surface.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "duration_seconds": 2.28, "process_exit_code": 0},
+  "finding": "The local operator CLI surface tests covering lease and execution controls passed completely.",
+  "limitations": ["local-only tests", "does not qualify real external providers, Docker, release, or P11 completion"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
