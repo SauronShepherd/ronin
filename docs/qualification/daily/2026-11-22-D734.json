@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D734",
+  "status": "PASS_STREAMING_RUNTIME_LOCAL",
+  "candidate_sha": "af038c9cbeb517f06430840eed540b6c0b2a49e2",
+  "qualification": "complete local streaming runtime regression",
+  "command": "python -m pytest -q tests/test_streaming_runtime.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 14, "passed": 14, "failed": 0, "skipped": 0, "duration_seconds": 46.69, "process_exit_code": 0},
+  "finding": "Streaming runtime contracts passed completely.",
+  "limitations": ["local streaming runtime regression", "does not qualify official external brokers/providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
