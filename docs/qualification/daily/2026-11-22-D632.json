@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D632",
+  "status": "PASS_POSTGRES_CONNECTOR_CONTROL_PLANE",
+  "candidate_sha": "f5808ec65d7c663904188e1f9ccdb2d966b588bd",
+  "qualification": "PostgreSQL connector control-plane discover/preview survives reopen",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d632-postgres-connector-control-plane -TestPath tests/integration/test_postgres_connector_control_plane_real.py",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "pytest_seconds": 6.14, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "The PostgreSQL connector control-plane discover/preview contract survived reopen against isolated PostgreSQL 16.4.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d632-postgres-connector-control-plane",
+  "evidence_sha256": {"pytest-output.log": "6A277323583C3E32A6023C972BCCF5D33FFFC03CE03D5F49C67D0C843B7DCBAA", "pytest-postgres.log": "2231F9B8D03ACEF5CDBCDD8B7768B09FDA359B58F4E0F5EA4E586584A728911A", "pytest-postgres.xml": "9CBDA3381B525F0F30EE73A1913F712B07363A85FF5D094F6F76A9D94AA99D14", "pytest-timings.json": "CE68492F97903EC4FFB71C9EC6798EFEA3E8ADBC304D83E8E7103912FB9A6D3D", "runner-timings.json": "598129B7ED3149201ABE5F36F1756C481598DDD3D4EB42FF3F67B1638FAD67D1"},
+  "limitations": ["single bounded control-plane scenario", "does not qualify external providers, indefinite operation or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

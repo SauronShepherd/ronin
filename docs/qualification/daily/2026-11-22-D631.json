@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D631",
+  "status": "PASS_POSTGRES_CONNECTOR_CHECKPOINTS",
+  "candidate_sha": "f5808ec65d7c663904188e1f9ccdb2d966b588bd",
+  "qualification": "PostgreSQL connector checkpoint fencing, restart and scoped ingestion",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d631-postgres-connectors-control -TestPath tests/integration/test_postgres_connector_checkpoint_real.py",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "pytest_seconds": 5.60, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "PostgreSQL connector checkpoint fencing/restart, shared local composition ingestion, and scoped sync-worker checkpoint advancement all passed against isolated PostgreSQL 16.4.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d631-postgres-connectors-control",
+  "evidence_sha256": {"pytest-output.log": "1E084256F7D57EEFCFC2A03344A31A5BFA0C13CA8871C8051C3D4D71037B733F", "pytest-postgres.log": "BFF2830BA9FD301F966BE9C50D6B6044ACC6EEC8551348FB4CBCA0465F9F8FE3", "pytest-postgres.xml": "0EE287DCCFD56CE0FA0D6AA200EE2E99E0BA2AFBB03C371ACF206933F6B49449", "pytest-timings.json": "8D45B8C4858DA5451F3557F6FA9CDB15BD3A3F81A23DDEF520B87AF1D44271B8", "runner-timings.json": "E8DDFC29675F8FF466DF51107129F43A64968513100B2B6EA0A356B62372B6BB"},
+  "limitations": ["three bounded connector scenarios", "does not qualify external providers, indefinite operation or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
