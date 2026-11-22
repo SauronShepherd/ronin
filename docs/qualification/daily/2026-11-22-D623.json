@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-22",
+  "day": "D623",
+  "status": "PASS_DOCKER_OBJECT_STORE_PROVIDERS",
+  "candidate_sha": "05c16b13cea797b808836cc3e3bd563e71bcb2bc",
+  "qualification": "candidate-bound real local S3-compatible and Azure Blob provider contracts",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d623-object-store-providers -TestFilter 'test_s3_json_connector_real or test_ml_s3_artifact_store_real or test_azure_blob_connector_real'",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 24, "providers": ["Floci S3-compatible", "Azurite Azure Blob"], "cleanup": "PASS", "process_exit_code": 0},
+  "tests": ["test_s3_json_sink_put_read_and_retry_round_trip", "test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite", "test_ml_durable_input_output_and_retention_round_trip_through_s3"],
+  "finding": "The current candidate passed the focused real-provider object-store contracts against isolated Floci and Azurite services, including S3 retry/idempotency, Azure snapshot replay, and ML artifact round-trip/retention.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d623-object-store-providers",
+  "evidence_sha256": {"docker-qualification.log": "8D1B330ABB9535BF2D008A4802F372A8DDEC63F97322572BD83CFCE2C97583F5", "docker-pytest-output.log": "27BF3A88674DB0DD8F13534EA1C0ADA3B8747F9F7718EBD34B59FA153DCF66C0", "v01-acceptance.xml": "72D4E006DBDB147674B0919DF8FFDE4668AFDA9575F52285FDEDEE333013D01C", "floci-s3-qualification.log": "C6F32DA262F2758098440B0A4342BD348B60B5AAB83A53893F51BE5F1C76D768", "azurite-qualification.log": "D1193DEA7F1010B17DD537AB2453271615ACFD29B634BFAB5F9309907CF48FF3", "docker-cleanup.json": "247ACAD3F730461020B6C4C00640ACAF905AA0225D55CFA7A7D587C64CD2FED2"},
+  "limitations": ["local emulators only, not AWS/Azure cloud certification", "filtered diagnostic, not the full Docker release gate", "does not close P13 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
