@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-22",
+  "day": "D685",
+  "status": "PASS_PYTHON_POSTGRES_FULL_CURRENT",
+  "candidate_sha": "0a64177baa49c2a93fa0a86cb6ccf737d7552b59",
+  "qualification": "full non-performance Python/PostgreSQL current-candidate suite",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d685-python-postgres-full-current",
+  "result": {"collected": 4794, "passed": 4763, "failed": 0, "skipped": 31, "pytest_seconds": 536.02, "process_exit_code": 0},
+  "skip_policy": "31 explicit skips for dedicated Docker/live-provider profiles and host restrictions; no skip was reclassified as PASS",
+  "evidence": {
+    "directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d685-python-postgres-full-current",
+    "files": {
+      ".coverage": "A8395671CB30B55AAB30CD9D6DB8E9FD565525AD0B778952BFF49731EF5C6AE4",
+      "pytest-output.log": "8DE6581465C28FE25C4D2CF4FD790731BFEB8558FAD95E6A47F987E7AE887484",
+      "pytest-postgres.log": "AC3D30E9E77D178508A6D010123840F559B54D6768D7ECD341EAEDBD6B69294F",
+      "pytest-postgres.xml": "249CF82F0562650762CC6F323F53841C96D0E1DB7F4AECBCE1278C85624A0D6E",
+      "pytest-timings.json": "6685C50DDF204478CE90A09EC6DD8E3404476F5EEF2EAE9C893A6C0F3262C838",
+      "runner-timings.json": "B60B12C2B3582A07A29DFFB611F451DCBC913FCAA62BCA0C8234A4B73B3530DE"
+    },
+    "cleanup": "PASS: isolated PostgreSQL removed; no containers or Ronin/qualification images remain"
+  },
+  "finding": "The complete non-performance Python/PostgreSQL suite passed with zero failures on the current candidate; dedicated external profiles remain separately evidenced.",
+  "limitations": ["non-performance suite", "does not by itself close provider-specific or release gates", "does not complete P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
