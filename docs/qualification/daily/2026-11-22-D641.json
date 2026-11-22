@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D641",
+  "status": "PASS_WEB_STATIC_CHROMIUM_CURRENT",
+  "candidate_sha": "1aeaa87143d5385eba4ccfa2dbc20abe26c1ba64",
+  "qualification": "complete static Playwright/Chromium web regression",
+  "command": "npm test --prefix web-tests -- --workers=2",
+  "result": {"selected": 182, "passed": 182, "failed": 0, "skipped": 0, "duration": "3.8m", "process_exit_code": 0},
+  "finding": "All 182 static Chromium web tests passed on the current candidate, including accessibility, responsive surfaces, route traversal and Studio journeys.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\Documents\\ChatGPT\\ronin\\.build-plan-implementation\\web-tests\\test-results-html",
+  "evidence_sha256": {"index.html": "19C1B5F436DAF23CA7D9EE8B893BE7270C39668BA25542EE82D7E00A879028E8"},
+  "limitations": ["static provider-neutral Playwright suite with live tests excluded by project command", "a transient static-server ConnectionAbortedError was logged without a test failure", "does not qualify live backend, external providers, indefinite operation or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
