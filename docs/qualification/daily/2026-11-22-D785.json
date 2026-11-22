@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D785",
+  "status": "PASS_BOUNDED_HTTP_CONTENTION_CURRENT_CANDIDATE",
+  "candidate_sha": "a6569dee4cc13ab6962c7a2f10fa7dd3412e586b",
+  "qualification": "current-candidate bounded HTTP contention budgets",
+  "command": "python -m pytest -q tests/perf/test_http_contention_budgets.py --junitxml=pytest.xml",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "duration_seconds": 10.18, "process_exit_code": 0},
+  "finding": "Both bounded HTTP contention budget cases passed, including fail-fast behavior while one bounded store worker is occupied and the real submit/status p95 budget under bounded contention.",
+  "cleanup": {"temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d785-http-contention-20261122", "temporary_services": "none", "status": "PASS"},
+  "limitations": ["bounded local performance qualification, not an indefinite production SLO", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775-D784 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
