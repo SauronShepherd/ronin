@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D648",
+  "status": "PASS_LIVE_POSTGRES_MAX_RECORD_RESUME_TYPEFIX",
+  "candidate_sha": "315176b9177ec03fd534c94c25dacba5a55df5d2",
+  "qualification": "live PostgreSQL max-record cap resumes the durable checkpoint without replay",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d648-live-max-record-typefix -TestGrep 'live streaming max-record cap resumes the durable checkpoint without replay' -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 8, "correlated_events": 8, "outcomes": {"OK": 7, "WARN": 1}, "application_errors": 0, "duration_seconds": 41.46, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The live PostgreSQL streaming run enforced the max-record bound, resumed from the durable checkpoint, and completed without replay; 1/1 browser test passed, with 8/8 API events correlated and no application/server errors.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d648-live-max-record-typefix",
+  "evidence_sha256": {"browser-live.log": "FA00EB5F41C56071B46238EFE4547EEFF16C65A97BD6CCA3FE8A6D01D55B7F44", "browser-live.xml": "DBF81F844F97821F061A2CE57772CCE362A96C1A64EB37FD8246CA1BE4219B40", "live-api-traffic.json": "EB65E792676B2DFB7EFA2A9E939B4C5A4C3C07A3D7A299300F3225E53E016CF7", "live-python-freeze.txt": "0155EBFFF144866534E74AD305B4B9FB3FB5C6F31EFF0541E8E85E460222F83B", "live-server.stderr.log": "6F10E749B82411A6E09C8F1723E28ECF27D27242DA9089C270C75E0DDD46D15A", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "0714EF1F2CF25C6659B94F33F9D524A32341B0B0FEB79CB5A0C0C6458ABF9460", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "limitations": ["single bounded max-record/resume scenario", "one expected WARN is retained", "does not qualify indefinite operation, HA, external cloud providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
