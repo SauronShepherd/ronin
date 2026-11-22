@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D644",
+  "status": "PASS_PYTHON_FULL_POSTGRES_TYPEFIX",
+  "candidate_sha": "e448f0e346ba95cb8940c26ea604e220030fde38",
+  "qualification": "full non-performance Python suite after PostgreSQL streaming adapter type fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d644-python-full-typefix",
+  "result": {"collected": 4794, "passed": 4763, "failed": 0, "skipped": 31, "warnings": 23, "pytest_seconds": 631.23, "total_seconds": 639.817, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "The complete non-performance Python/PostgreSQL suite passed after the SQLite/PostgreSQL streaming adapter type fix, including the PostgreSQL streaming checkpoint/table tests.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d644-python-full-typefix",
+  "evidence_sha256": {".coverage": "D2926E6A003A24C9C907795AEF89614B5F2217C674D91380E1B9CB890B7E462E", "pytest-output.log": "81A67D32BDEBB759CA3C7AB4650F66C471B08C71D6D9C78DFCB2D98AB1D3DA5C", "pytest-postgres.log": "A96EFBB22AE37566209BCC3C4697B92250BD8F9475D1C08F4DD4EC86D69832B4", "pytest-postgres.xml": "05BC1B0803B4779A2DF84A541634A784183FE8DEF5D9D8156C30F62A7D1FA705", "pytest-timings.json": "01B7ECBE46133B38617111F8E6D5A566073A164E86D0662EB72C76AFDA756289", "runner-timings.json": "C9DA5A78B2E0F43DB705A18719B1C0A35BCD65A361E8253A6B890BBBAAC54D8F"},
+  "limitations": ["31 explicit environment/provider/host skips remain", "does not qualify external cloud providers, indefinite operation, worker HA or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
