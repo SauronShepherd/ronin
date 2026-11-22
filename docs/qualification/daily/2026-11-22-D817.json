@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D817",
+  "status": "PASS_S3_FLOCI_CURRENT_CANDIDATE",
+  "candidate_sha": "6119f491d7ce2d90e24daea407151fc5886e0728",
+  "qualification": "current-candidate S3-compatible provider qualification against real Floci",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d817-s3-current-20261122 -ImageTag ronin:qualification-d817-s3 -TestFilter 's3_json or ml_s3_artifact'",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 25, "pytest_duration_seconds": 4.6, "process_exit_code": 0},
+  "finding": "The current candidate passed real Floci S3-compatible JSON put/read/retry and ML artifact input/output/retention round trips.",
+  "provider": {"kind": "S3-compatible", "service": "Floci", "endpoint": "temporary loopback", "ronin_image_digest": "sha256:611391983dc61b76468a6d28437407e8c0a1f2244008648c099f99348a0ee3ea"},
+  "cleanup": {"floci_compose_removed": true, "floci_volume_removed": true, "floci_network_removed": true, "ronin_qualification_image_removed": true, "status": "PASS"},
+  "limitations": ["bounded Floci S3-compatible evidence, not AWS/Azure/GCP vendor certification", "filtered Docker diagnostic; strict v0.1 gate was not evaluated", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D816"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
