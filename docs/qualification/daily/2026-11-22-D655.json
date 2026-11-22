@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D655",
+  "status": "PASS_POSTGRES_WORKFLOW_STORE_COMPLETE",
+  "candidate_sha": "7998458a5ad66ee597e3f158b373f846e04af049",
+  "qualification": "complete PostgreSQL workflow-store integration file covering scheduler durability, recovery, migration, cancellation and HTTP adapter",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d655-postgres-workflow-store-complete -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "result": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0, "deselected": 0, "duration_seconds": 19.93, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The complete PostgreSQL workflow-store integration file passed with all 21 tests, including scheduler recovery, fencing, outbox/inbox durability, migration, cancellation, backfill, HTTP adapter and workspace isolation scenarios.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d655-postgres-workflow-store-complete",
+  "evidence_sha256": {"pytest-output.log": "6DA3A9E6220853BB1AE02E64CEA41C62DB448D8363669E6A4B20C2515EA746B2", "pytest-postgres.log": "BBFF64E15BC16D6C763A2073C80AB3B8ECF1C38152A08318303A110BE98846C2", "pytest-postgres.xml": "10FFC3867A37DABF8EAEDA744229D1D544255EAAF7E57EC161510F0AA30DB1A1", "pytest-timings.json": "28334F420B96DE69F48BD2A5CE265D58FB9ECB76DE02BD7E47E6407D465BB659", "runner-timings.json": "D25FDEFDA717446B7B9B6B258E7CD154EA84B70BFE2FD567AD58F835C5040599"},
+  "limitations": ["this is one complete integration file, not the complete Python/PostgreSQL suite", "bounded integration evidence does not qualify indefinite operation, HA, external providers, object stores or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
