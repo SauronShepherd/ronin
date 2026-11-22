@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D611",
+  "status": "PASS_STREAMING_UNIT_REGRESSION",
+  "candidate_sha": "d410ec0bb5a4dd2c1194a443647486f4a47c7938",
+  "qualification": "affected streaming regression after Kafka micro-batch and RF3 diagnostic tooling work",
+  "command": "python -m pytest -q tests/test_streaming_kafka.py tests/test_streaming_runtime.py tests/test_streaming_health.py tests/test_streaming_contracts.py tests/test_streaming_windows.py",
+  "result": {"passed": 41, "failed": 0, "skipped": 0, "duration_seconds": 36.03, "cleanup": "NOT_APPLICABLE"},
+  "finding": "All affected streaming unit and contract regressions pass on the current published main candidate.",
+  "limitations": ["local unit/contract scope only", "Docker daemon unavailable for this turn", "does not prove live PostgreSQL, worker, RF3 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
