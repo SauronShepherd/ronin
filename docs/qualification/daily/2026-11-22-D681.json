@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D681",
+  "status": "PASS_QUALIFICATION_RELEASE_CONTRACTS",
+  "candidate_sha": "1253e2681be50122e9ef7005608a7befa7f7adb4",
+  "qualification": "Docker qualification, release-evidence and capability-status contract regression",
+  "command": "python -m pytest -q tests/test_docker_qualification_contract.py tests/test_release_evidence.py tests/test_capability_status.py",
+  "result": {"selected": 64, "passed": 64, "failed": 0, "skipped": 0, "duration_seconds": 3.33, "process_exit_code": 0},
+  "finding": "Qualification cleanup, release evidence validation, and capability status contract tests pass after the new D672-D680 receipts; fail-closed release semantics remain intact.",
+  "limitations": ["contract regression only", "does not qualify release gates or change the NO-GO decision", "does not complete P11 or P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
