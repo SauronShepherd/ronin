@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-22",
+  "day": "D689",
+  "status": "PASS_HELM_KIND_UPGRADE_ROLLBACK",
+  "candidate_sha": "ba38feda720e094d2ca74360d95955ad74c67279",
+  "qualification": "Helm chart lint, kind deployment, upgrade/rollback, readiness and persistence",
+  "commands": {
+    "docker_prerequisite": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d689-docker-helm-full -ImageTag ronin:qualification-d689-helm -KeepImage",
+    "helm": "pwsh -NoLogo -NoProfile -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d689-helm-retry -ImageRef ronin:qualification-d689-helm -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d689-docker-helm-full"
+  },
+  "result": {"docker_integration_passed": 27, "docker_strict_passed": 15, "helm_lint": "passed", "kind": "passed", "helm_install": "passed", "helm_upgrade": "passed", "helm_rollback": "passed", "deployment_readiness": "passed", "health_endpoint": "passed", "studio_and_authorized_api": "passed", "persistent_job_create": "passed", "deployment_restart": "passed", "persistent_job_after_restart": "passed", "process_exit_code": 0},
+  "service": {"helm": "v4.3.1+gc0d08d0", "image_digest": "sha256:ab687a16101777152ed91a79653e7d16d4deeb23d18eae24d0ee6d2ef4d14643", "kind_node": "kindest/node:v1.37.0"},
+  "evidence": {
+    "helm_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d689-helm-retry",
+    "helm_files": {
+      "helm-qualification.json": "A2F8C39625E4180B4474C67214BBD024658258FE1611109E55BF601F4368C8D8",
+      "helm-qualification.log": "970EDC8AE62EB32F44AC0D2DD59032881C82F907B5787030B51E25710D92E824",
+      "kubernetes-resources.txt": "9CE0EEF1F62F4B151F593A05D6EC4C2A5D423959C04EBE79EF364ED99CC3D1FE",
+      "port-forward-error.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "port-forward-restart-error.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "port-forward-restart.log": "920279407373B5EEA62F6099DD7D930493EE5808837B119A6B9E65B82B2F396F",
+      "port-forward.log": "753E9BD79E9D4F4CF620B87CF40436FCB5D9FA936A058608A288078D3229BED4"
+    },
+    "docker_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d689-docker-helm-full",
+    "docker_files": {
+      "docker-cleanup.json": "BE2BDAA08A4A67F2DC9A8E0FA13993091F3D8CF49E7FDAC9D214919B319CDE8E",
+      "docker-pytest-output.log": "AAAE36964DE7EC29E27215CB586EFFF66AA4A7895755C383F3B8D69F685DECF0",
+      "docker-qualification.log": "7E07878652FD13302D7511BDF1BAB583C01313C79D8020F8CA891675BE9BD8C8",
+      "qualification-summary.json": "EE7E3F43B1EE1F167FDB49F6F6AD191654A06005BFF2DA24BA8E7CC4295F2A0A",
+      "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+      "v01-acceptance.xml": "40BF7E2C9151F3AECDE4F48495DC18288C856C506FF065959D70B88AC33A04A9"
+    },
+    "cleanup": "PASS: kind cluster deleted, qualification image removed, no containers/images remain"
+  },
+  "finding": "The Helm chart passes the real single-node kind operational rehearsal, including upgrade, rollback and queued-job persistence across deployment restart.",
+  "limitations": ["single-node kind profile", "does not qualify multi-node HA, indefinite operation, external cloud provider, release, or P11 completion"],
+  "notes": ["A preliminary filtered Docker attempt was rejected with zero selected tests and is not included as evidence; the prerequisite was rerun fully before Helm."],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
