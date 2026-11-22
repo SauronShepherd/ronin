@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-22",
+  "day": "D675",
+  "status": "PASS_POSTGRES_RETENTION_BARRIER",
+  "candidate_sha": "ac24731d4a85b720318f40e3876ea68b9fba2c7e",
+  "qualification": "real PostgreSQL artifact-retention barrier and bounded collector",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d675-postgres-retention-current -TestPath tests/integration/test_postgres_artifact_retention_barrier.py",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 0, "unrelated_collection_skips": 0, "pytest_seconds": 3.64, "process_exit_code": 0},
+  "service": {"image": "postgres:16.4-alpine", "port": "isolated loopback", "coverage": "disabled for filtered diagnostic"},
+  "evidence": {
+    "directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d675-postgres-retention-current",
+    "files": {
+      "pytest-output.log": "7A7DBEF80F0985E2D9C39D2820ACFAF86087458064A1965AD0363443FED0F3A2",
+      "pytest-postgres.log": "BDF1EE3996536459CB44153AFE0C5F28E7090EA4345071223AA4EC86BE580B95",
+      "pytest-postgres.xml": "AF262D6D499ED92F0EF0D2ED5465254E3FB62EE909DD546E77E6A3CF164D4998",
+      "pytest-timings.json": "F42B85F49D705E6FF5725F57596DFF211899370B62AFBB3C1BFDF3839E22710D",
+      "runner-timings.json": "79704729DA650F5123E6B6F6758E131E56F600BC1306310CD2DCA4FAB52C3FF0"
+    },
+    "cleanup": "PASS: PostgreSQL qualification container removed; no Ronin/qualification images"
+  },
+  "finding": "Real PostgreSQL verified writer/collector ordering, async writer coordination, fencing of new writers, and bounded reference collection through a durable collector lease.",
+  "limitations": ["filtered diagnostic selection, not full Python/PostgreSQL suite", "does not qualify indefinite operation, external providers, P11 completion, or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
