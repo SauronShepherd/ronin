@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-22",
+  "day": "D819",
+  "status": "PASS_DOCKER_FULL_CURRENT_CANDIDATE",
+  "candidate_sha": "71a19c9e77f4bac1e8f6500fbe853928392f01d1",
+  "qualification": "full Docker qualification of the current candidate",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d819-docker-full-current-20261122 -ImageTag ronin:qualification-d819-full",
+  "result": {"selected": 27, "passed": 27, "failed": 0, "skipped": 0, "pytest_duration_seconds": 171.8, "process_exit_code": 0},
+  "strict_v01": {"expected": 15, "passed": 15, "failed": 0, "skipped": 0, "strict_success": true},
+  "scope": ["PostgreSQL appliance and runtime", "Docker worker and SIGKILL reclaim", "Floci S3-compatible object store", "Azurite Azure Blob-compatible store", "strict v0.1 journey"],
+  "image": {"digest": "sha256:8f070d1cc74c8d2c8e1d8d046e2d81fc2d36caa8ec4e8e0b47eb15afcbcc20c0", "built_from_checkout": true},
+  "cleanup": {"status": "PASS", "postgres_compose_removed": true, "floci_compose_removed": true, "azurite_compose_removed": true, "qualification_image_removed": true, "remaining_containers": [], "remaining_qualification_images": []},
+  "limitations": ["bounded local Docker qualification using PostgreSQL, Floci and Azurite; not remote cloud-provider evidence", "does not qualify indefinite operation, HA, SLO or the dedicated multi-broker RF3 fixture", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100-D818"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
