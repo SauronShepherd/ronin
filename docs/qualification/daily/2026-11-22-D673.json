@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-22",
+  "day": "D673",
+  "status": "PASS_SPARK_CONNECT_EXTERNAL_PROVIDER",
+  "candidate_sha": "8778d0ddef233130040f9a5f05d6249a1fcbefd4",
+  "qualification": "Apache Spark 4.2.0 Connect real external provider qualification",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d673-spark-provider-current-retry",
+  "result": {"selected": 1, "passed": 1, "deselected": 2, "failed": 0, "skipped": 0, "duration_seconds": 13.13, "process_exit_code": 0},
+  "service": {"image": "apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59", "spark_version": "4.2.0", "pyspark_client_version": "4.2.0"},
+  "evidence": {
+    "directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d673-spark-provider-current-retry",
+    "files": {
+      "pyspark-client-install.json": "04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97",
+      "pytest-timings.json": "020A1D5C4714550DA08ABE3F8B09A9A212EEE9549F3C2BD09BCD24A074F7DEAC",
+      "qualification.json": "990F5E65F8C75229FA5EEB9E1D044E3B521722BC96DADCF020DD936472D0DC44",
+      "qualification.log": "D7411A3950C5DF0F0274053E4CA25FE2797E9F3E3EA9EB1319E54D2A90A6F5F9",
+      "spark-container.log": "DFCB94AD072148F8E0DE87D51FA369BECA72BA37C13F23EA1B3EA73CB0FA8763",
+      "spark-junit.xml": "BDBA3306560AE6FA2FCAD62C0BE8EB9A54FE2687E645CDE3EC5388BA55DCA5B9"
+    },
+    "cleanup": "PASS: qualification container removed; no Ronin/qualification temporary images"
+  },
+  "finding": "The real Spark Connect smoke executed through the external provider and passed; the client dependency and service were both version 4.2.0.",
+  "limitations": ["single Spark Connect smoke selection", "provider diagnostic evidence only", "does not qualify release, P11 completion, indefinite operation, or other data-engineering paths"],
+  "notes": ["The first clean attempt recorded a missing local digest-only image; the retry pulled apache/spark@digest explicitly and completed PASS. Both evidence directories are preserved externally."],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
