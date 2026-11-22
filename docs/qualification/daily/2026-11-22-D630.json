@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D630",
+  "status": "PASS_POSTGRES_WORKFLOW_INTEGRATION",
+  "candidate_sha": "5be95b14da5d7a583ac61b07d08435e012490e0d",
+  "qualification": "complete PostgreSQL-backed scheduler/workflow integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d630-postgres-workflow-integration -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "result": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 13.19, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "All 21 PostgreSQL scheduler/workflow integration tests passed together in one isolated PostgreSQL 16.4 run, including cancellation, migration, HTTP, leadership, recovery, outbox, inbox, backfill and idempotency scenarios.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d630-postgres-workflow-integration",
+  "evidence_sha256": {"pytest-output.log": "8FB8EEDB07EB0347816051746F1465F0AB2D5A4D8C030224E80ABF9E53A17084", "pytest-postgres.log": "44C816B2830FE711C343B7C4CF8DD717ABE0E761249ABF72A8CE33131684E968", "pytest-postgres.xml": "3C6893E498928616DBDE1E7091504D5027D2941F529D55344685092F34C0565E", "pytest-timings.json": "234247A52AEF948C19BAC573EDB83CF786F464BFE2302882BB5F3BBFF3E694A8", "runner-timings.json": "92DC44E6EF372270F0EF83F53DF619D031D4FC3042B78D5AC15E5A872A41A79E"},
+  "limitations": ["integration file scope, not complete product qualification", "does not qualify external providers, indefinite operation, worker HA, live worker Docker execution or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
