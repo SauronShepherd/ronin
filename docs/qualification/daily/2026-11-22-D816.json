@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D816",
+  "status": "PASS_WORKSPACE_PROJECT_HTTP_CURRENT_CANDIDATE",
+  "candidate_sha": "5b96c96d8023686d2b7ec645e1e9454e6509a530",
+  "qualification": "current-candidate workspace/project HTTP API and authorized pagination integration",
+  "command": "python -m pytest -q tests/integration/test_workspace_project_http_api.py tests/integration/test_http_authorized_pagination.py --junitxml=pytest.xml",
+  "result": {"selected": 64, "passed": 64, "failed": 0, "skipped": 0, "duration_seconds": 45.77, "process_exit_code": 0},
+  "finding": "Workspace/project HTTP API and authorized pagination integration cases passed without skips or failures.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d816-workspace-project-http-20261122", "status": "PASS"},
+  "limitations": ["bounded local HTTP integration", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D815"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
