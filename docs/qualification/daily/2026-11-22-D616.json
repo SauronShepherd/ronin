@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D616",
+  "status": "PASS_POSTGRES_FULL_NONPERFORMANCE_CURRENT",
+  "candidate_sha": "e12060e709b65d344b91f8458e3330d79b0c8310",
+  "qualification": "full non-performance Python/PostgreSQL regression on current main",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d616-postgres-full",
+  "result": {"selected": 4794, "passed": 4763, "failed": 0, "skipped": 31, "warnings": 23, "coverage_enabled": true, "postgres": "16.4-alpine", "pytest_wall_seconds": 691.052, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The complete non-performance Python suite passes against isolated PostgreSQL with 4763 passes, 31 explicit platform/opt-in skips and zero failures; runner cleanup succeeded.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d616-postgres-full",
+  "evidence_sha256": {"pytest-output.log": "517B9189F1C742FB0E18802ABAE0EDF4C99BB6093C0AE6346A79E6B1F082C85E", "pytest-postgres.log": "D5E0048191BF9B0E002C23C2C4DEEBD0719D4CBB4ED08FCE274CCBD5DBF72ABA", "pytest-postgres.xml": "AF64C683C90D5A89ECFA253FB8BA28F6AB7747D03F5BC1A50D0FF0265E2CEBA9", "pytest-timings.json": "D40651FA9AD08457A84228F571FCF65D4B2EE804897751D513852C61D3EDC643", "runner-timings.json": "9790DEB80EB8AD3E89A3796DE5ABE9ABDCBE98A0BD7023A02507ED9DAB7C0208"},
+  "limitations": ["31 explicit skips remain for platform privileges, external services or Docker opt-in", "non-performance scope", "does not prove indefinite operation, complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
