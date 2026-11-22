@@ -2206,6 +2206,16 @@
       "evidence": "docs/qualification/handoffs/2026-11-21-D606.md",
       "candidate_sha": "57080f12c2fe56f420bae1a970747e8b7c121ea5",
       "commit_sha": "1f63a595d9536b1e939efb5ec1e3a0a130b9f933"
+    },
+    {
+      "id": "D607",
+      "date": "2026-11-22",
+      "phase": "live-streaming-rf3-broad-filter-not-pass",
+      "status": "not_pass",
+      "families": ["P11"],
+      "evidence": "docs/qualification/handoffs/2026-11-22-D607.md",
+      "candidate_sha": "ff930240c37c97746eb9fc852570467bb9acd248",
+      "commit_sha": "pending"
     }
   ],
   "known_blockers": [

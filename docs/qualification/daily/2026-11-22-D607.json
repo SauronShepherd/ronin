@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D607",
+  "status": "NOT_PASS_LIVE_STREAMING_RF3_BROAD_FILTER",
+  "candidate_sha": "ff930240c37c97746eb9fc852570467bb9acd248",
+  "qualification": "broad filtered live streaming diagnostic with RF3 and immutable worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d607-live-streaming-rf3 -TestGrep streaming -StorageBackend postgres -WorkerImage sha256:aa11a4f1529de0a1d6f9cfb2c9243fbd15e94bd48742b02aa2885cdf3935f403 -MultiBroker",
+  "result": {"selected": 11, "passed": 9, "failed": 2, "skipped": 0, "api_events": 260, "correlated_events": 260, "failures": ["single-broker broker restart test expects exactly one container under RF3", "sustained backpressure test encountered page.evaluate fetch failure"], "cleanup": "PASS", "process_exit_code": 1},
+  "finding": "This broad filter is not valid RF3 qualification because it includes an incompatible single-broker test; the separate D590 focused RF3 failover receipt remains the authoritative multi-broker evidence.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d607-live-streaming-rf3",
+  "evidence_sha256": {"browser-live.log": "0E91E6D2097A7D1D4ACD28B2A83EAB4EE82324A2D763AE721654507A3BED764C", "browser-live.xml": "B0F5477DD6FE1C5ED7B6DF8FA9B9F0D4F5B7985FD9529983123F6672BE0E4DE9", "live-api-traffic.json": "757D154A2A67762FAF5D56C6617071EFB90753C14EDBDDB5593C1EBDCDA6ED6B", "qualification-summary.json": "0E2DD4BDBE0D6B60C094150B838BDE2A83F4FFC7245F92E2748B72F9CAE6E7CC", "live-server.stderr.log": "572CE8EB1295F37A08BEF3D59D52E2FA3FD1289A4A9CC2F4C453EABD8907079D"},
+  "limitations": ["not a release PASS", "broad filter mixes incompatible topology assumptions", "does not change D590 focused RF3 evidence or release state"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
