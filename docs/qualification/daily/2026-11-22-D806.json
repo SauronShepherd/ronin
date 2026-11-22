@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D806",
+  "status": "PASS_PLUGIN_WORKSPACE_CURRENT_CANDIDATE",
+  "candidate_sha": "8c1ad9c68e280ddf000f19789f2339663bf330b0",
+  "qualification": "current-candidate plugin runtime/events/workers and workspace boundary regression",
+  "command": "python -m pytest -q tests/test_plugin_runtime.py tests/test_plugin_router.py tests/test_plugin_registries.py tests/test_plugin_events.py tests/test_plugin_event_dispatcher.py tests/test_plugin_contribution_registries.py tests/test_plugin_lifecycle_rollback.py tests/test_plugin_survivor_boundaries.py tests/test_plugin_workers.py tests/test_workspace_plugin_ports.py tests/test_workspace_plugin_events.py tests/test_workspace_project_services.py tests/test_catalog_plugin_event_boundaries.py --junitxml=pytest.xml",
+  "result": {"selected": 122, "passed": 122, "failed": 0, "skipped": 0, "duration_seconds": 1.96, "process_exit_code": 0},
+  "finding": "Plugin runtime/router/registries/events/workers and workspace/catalog event-boundary contracts passed without skips or failures.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d806-plugin-workspace-20261122", "status": "PASS"},
+  "limitations": ["local boundary regression; does not claim external provider behavior", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D805"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
