@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D796",
+  "status": "PASS_POSTGRES_CATALOG_QUALITY_CURRENT_CANDIDATE",
+  "candidate_sha": "f3b392f8db0a9d9d4f5352dc101ac96ca9ebae2f",
+  "qualification": "current-candidate PostgreSQL catalog, quality and local-composed catalog HTTP qualification",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://ronin:***@127.0.0.1:55449/ronin_test RONIN_TEST_POSTGRES_DSN=postgresql://ronin:***@127.0.0.1:55449/ronin_test python -m pytest -q tests/integration/test_postgres_catalog_store.py tests/integration/test_postgres_quality_store.py tests/integration/test_postgres_local_composed_catalog_http.py --junitxml=pytest.xml",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "duration_seconds": 9.36, "process_exit_code": 0},
+  "finding": "Real PostgreSQL catalog-store, quality-store and local-composed catalog HTTP integration cases passed with explicit DSNs configured.",
+  "cleanup": {"container": "ronin-d796-postgres", "container_removed": true, "temporary_postgres_volume_removed": true, "postgres_image_removed": false, "reason": "pre-existing shared postgres:16.4-alpine image preserved"},
+  "limitations": ["temporary local PostgreSQL 16.4 instance", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775-D795 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
