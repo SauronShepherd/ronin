@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D612",
+  "status": "PASS_DOCKER_FULL_STRICT_CURRENT",
+  "candidate_sha": "31fc2a6191bfb7e5fffe0ae9f779f274e6245045",
+  "qualification": "full Docker integration and strict v0.1 acceptance on the current clean candidate",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d612-docker-full",
+  "result": {"docker_integration_selected": 27, "docker_integration_passed": 27, "docker_integration_failed": 0, "docker_integration_skipped": 0, "strict_v01_selected": 15, "strict_v01_passed": 15, "strict_v01_failed": 0, "strict_v01_skipped": 0, "postgres": "16.4", "providers": ["Floci S3-compatible", "Azurite Azure-compatible"], "ronin_image": "sha256:0af49ecaff594dd23563f3c73b781fdb4227cd4761443b7bff106940a28f9a87", "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "Current Docker integration and strict v0.1 acceptance pass with real worker/runtime, PostgreSQL, backup/restore, Floci, Azurite and cleanup.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d612-docker-full",
+  "evidence_sha256": {"docker-qualification.log": "671A1D6D1AF5B7DE33F2FD8D6F501B052719E5DEE2DA7D6CBEAC15512D121B3A", "docker-pytest-output.log": "7ED9F0FAE2DAE7F5104A7C0C49BC540B1DE6D0CEDAE1D5D171C8E2366D779B", "v01-acceptance.xml": "FD36BFEF94370BB484A2B934660C82D386077595BEC742B214DD881840CC81CC", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "postgres-qualification.log": "C1A562865C8EEA7E583936F5612B3D5C953944F2B4F03866F270C38CA9241697", "floci-s3-qualification.log": "3AA89FC755D0BD595A690DD0B30397111CCA1D03E1E6892A873DF283D091433B", "azurite-qualification.log": "9F6121AE31AC12DE7FDCB78F129FE6856614CD0A9B7E475D38A1A66487A6649A", "docker-cleanup.json": "296D13FF19DC8D89CDFBA28EF7CE7678C48D81840F5590CF914B1EF7DCA3F911"},
+  "limitations": ["bounded Docker acceptance", "local S3/Azure-compatible emulators, not cloud provider certification", "does not prove indefinite operation, complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
