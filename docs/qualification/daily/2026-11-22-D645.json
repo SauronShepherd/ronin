@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D645",
+  "status": "PASS_DOCKER_TYPEFIX_CURRENT",
+  "candidate_sha": "a20b1fa64218ef37fb5223ee8d4dee863d914c7d",
+  "qualification": "full Docker integration and strict v0.1 acceptance after streaming adapter type fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d645-docker-typefix",
+  "result": {"docker_integration_selected": 27, "docker_integration_passed": 27, "docker_integration_failed": 0, "docker_integration_skipped": 0, "strict_v01_selected": 15, "strict_v01_passed": 15, "strict_v01_failed": 0, "strict_v01_skipped": 0, "postgres": "16.4", "providers": ["Floci S3-compatible", "Azurite Azure-compatible"], "ronin_image": "sha256:792a3b2562ce4c1f0bfd384e3ea17c93b872c0b9cdbb04ee2165d67bd154de23", "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The exact current candidate passed full Docker integration and strict v0.1 acceptance after the streaming adapter type fix, with real worker/runtime, PostgreSQL, compatibility fixtures and cleanup.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d645-docker-typefix",
+  "evidence_sha256": {"azurite-qualification.log": "E1CF371A92467B5C94B447809BB062DC497A411BFBE0F3D4D1CB93AAC15418E7", "docker-cleanup.json": "A9608BE1F9829F1B04EDECA882AAD317D00EBEEFEFA855234D89A5668177AD97", "docker-pytest-output.log": "56BC36A4F4D593911E9660E2106AB44F93B28AEBE086EF936905B236CE69A4AE", "docker-qualification.log": "237343CCE6C29C69D0E64F51D871DDED90D279681FD29292E96CDCDECB8169B9", "floci-s3-qualification.log": "FCC13351F7D62EEEF84C2A335E2A100F1AE14991CEA125E1F43978E8D0B14BBC", "postgres-qualification.log": "67A368C205F62935E5C0876005C82513E355DEF2D6FC869757A79B3F7E755BB6", "qualification-summary.json": "36D1686A8CD1289BC883DC4D7AC63394BD7356692B8430C329F51DBD96EF3D1B", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "97D8E83A1607B8A4DE433B5E7FCFAF932DBF30AC20101820794426D1B0F5DC86"},
+  "limitations": ["bounded Docker acceptance", "Floci and Azurite are compatibility fixtures, not cloud-provider certification", "does not prove indefinite operation, complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
