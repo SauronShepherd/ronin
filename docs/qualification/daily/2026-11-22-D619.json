@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D619",
+  "status": "NOT_PASS_LIVE_RF3_BACKPRESSURE_16384",
+  "candidate_sha": "1cfd8ee0c15cd146deb1eba9c30334f9bbd4d585",
+  "qualification": "bounded three-broker RF3 sustained backpressure attempt at 16,384 records",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d619-live-backpressure-16384-rf3 -TestGrep 'streaming sustained backpressure' -StorageBackend postgres -BackpressureRecords 16384 -BackpressureTimeoutSeconds 600 -MultiBroker",
+  "result": {"selected": 1, "passed": 0, "failed": 1, "skipped": 0, "backpressure_records": 16384, "api_events": 5, "correlated_events": 5, "outcomes": {"OK": 4, "ERROR": 1}, "failure": "page.evaluate TypeError: Failed to fetch", "unexpected_errors": 0, "cleanup": "PASS", "process_exit_code": 1},
+  "finding": "The current RF3 route still fails at 16,384 records with a browser fetch failure; this preserves the scale boundary as NOT_PASS and does not reattribute earlier attempts.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d619-live-backpressure-16384-rf3",
+  "evidence_sha256": {"browser-live.log": "D5F0D5FACC2EA8BC705B978AB2BF3894E7D36BB5C78D2BD58E2D51B7EA5CD7CC", "browser-live.xml": "5B0D2922E971EB6CC5D75832B87CADE1F4A4064BC86B8B919B0B9DD6AC40A1DF", "live-api-traffic.json": "9D899073718ECDB5372D806A9B1A890B6D33A894120017F1469F9359774F006B", "qualification-summary.json": "5114C309D28E260735E9E80B9A07E95A72DFE359ADE283883EB301A96D15CA9F", "live-server.stderr.log": "8ABCF2CF1CA2E7CE6339340173B587D3F033F50E23A3EE9293941A3F78E7C2F2"},
+  "limitations": ["single failing bounded scale case", "does not qualify indefinite operation or release", "server logs had no error/critical entries despite browser fetch failure"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
