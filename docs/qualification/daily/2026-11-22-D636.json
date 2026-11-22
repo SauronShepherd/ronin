@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D636",
+  "status": "PASS_STREAMING_WINDOWS_CONTRACTS",
+  "candidate_sha": "fb5f036ba5ebe2f66f0c159a126f69dd02d24a3e",
+  "qualification": "local streaming windows, Kafka contracts, streaming contracts and bundle regression",
+  "command": "python -m pytest -q tests/test_streaming_windows.py tests/test_streaming_kafka.py tests/test_streaming_contracts.py tests/test_streaming_bundle.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d636-streaming-windows-contracts\\pytest.xml",
+  "result": {"selected": 27, "passed": 27, "failed": 0, "skipped": 0, "duration_seconds": 1.43, "process_exit_code": 0},
+  "finding": "Window/event-time, Kafka contract, streaming contract and streaming bundle regressions passed locally with no skips.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d636-streaming-windows-contracts",
+  "evidence_sha256": {"pytest.log": "2D8C44D360AFFF69EF0BEEA1E8FDC17C43934E1553CAE6CD8199C91A1893EFB3", "pytest.xml": "02166F2880710DAA66AAE247DDBDBAA3393D99895B06C39665568585C45ABBF7"},
+  "limitations": ["local provider-neutral regression", "does not qualify live Kafka, PostgreSQL runtime, indefinite operation, external providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
