@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-22",
+  "day": "D674",
+  "status": "PASS_OTLP_EXTERNAL_PROVIDER",
+  "candidate_sha": "07fdc5019073f1a4ed5ccbec39db8a09080820e2",
+  "qualification": "OpenTelemetry Collector real external provider qualification",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_otlp_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d674-otlp-provider-current",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "duration_seconds": 1.18, "process_exit_code": 0},
+  "service": {"image": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621"},
+  "evidence": {
+    "directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d674-otlp-provider-current",
+    "files": {
+      "collector-config.yaml": "6D631511413384DE11D3AED2AA852697EF9C696B5B2BB9B3AEFA3464EE89F07F",
+      "collector-container.log": "466D5FCC50FBC80B6C9500A50EF6717F4A5AE6F69B58627E92224FD388D00627",
+      "otlp-junit.xml": "3AE11DAE98BA860DD48AC348CFE7B9B523C5FFD3A47479B5C1D88CBF9A5BEA0F",
+      "pytest-timings.json": "E948917C9313857DEE47D654A11CCCA2C328EB638F133151B1EA81717E892F66",
+      "qualification.json": "43860F1A388A231ADDD1967CA6C29FD751E7510F2E05DCF7ADE1696E59E684AE",
+      "qualification.log": "BD52C0FC3509855CBFC45CE89262397742EC5615650CB363EEBF7FA872C23DB5"
+    },
+    "cleanup": "PASS: qualification container removed; no Ronin/qualification temporary images"
+  },
+  "finding": "The real OpenTelemetry Collector accepted the Ronin traces, metrics and logs integration smoke.",
+  "limitations": ["single collector integration smoke", "provider diagnostic evidence only", "does not qualify release, P11 completion, indefinite operation, or other telemetry deployments"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
