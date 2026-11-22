@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D747",
+  "status": "PASS_SURVIVOR_VALIDATION_CONTRACTS_LOCAL",
+  "candidate_sha": "5315ef90c83b89e862f5415f7497bf4d26a4ec5c",
+  "qualification": "complete local survivor validation contract regression",
+  "command": "python -m pytest -q tests/test_survivor_validation_contracts.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 36, "passed": 36, "failed": 0, "skipped": 0, "duration_seconds": 2.18, "process_exit_code": 0},
+  "finding": "Survivor validation contracts passed completely.",
+  "limitations": ["local survivor validation regression", "does not qualify productive external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
