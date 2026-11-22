@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D635",
+  "status": "PASS_STREAMING_LOCAL_RUNTIME_HEALTH",
+  "candidate_sha": "cacebef5325ee6132077c33fb3fdf3ea44dd8414",
+  "qualification": "local streaming runtime, health and scheduler bridge regression",
+  "command": "python -m pytest -q tests/test_streaming_health.py tests/test_streaming_runtime.py tests/test_stream_scheduler_bridge.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d635-streaming-local\\pytest.xml",
+  "result": {"selected": 22, "passed": 22, "failed": 0, "skipped": 0, "duration_seconds": 20.22, "process_exit_code": 0},
+  "finding": "The local streaming runtime, health/lag and scheduler-bridge regressions all passed. This is provider-neutral local evidence and is not promoted to live Kafka/PostgreSQL evidence.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d635-streaming-local",
+  "evidence_sha256": {"pytest.log": "8F2E00F023F343540B6E03714398E1A3C693622A0904BC649A94468C5DEC2386", "pytest.xml": "A8837DAC60ABF6852D4F20014F7221BF28B9A2BB5A0F81D946BC43E7C02AAC1C"},
+  "limitations": ["local provider-neutral regression", "does not qualify live Kafka, PostgreSQL runtime, indefinite operation, external providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
