@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D687",
+  "status": "PASS_BOUNDED_PERFORMANCE_BUDGETS",
+  "candidate_sha": "0f9caa3301770bfe3ed7f8a21cfc2cdfc1fb9a84",
+  "qualification": "bounded performance budgets, correlation and policy regression",
+  "command": "python -m pytest -q tests/perf/test_budgets.py tests/test_performance_correlation.py tests/test_performance_policy.py",
+  "result": {"selected": 7, "passed": 7, "failed": 0, "skipped": 0, "duration_seconds": 0.53, "process_exit_code": 0},
+  "finding": "Performance budgets, correlation evidence and policy checks passed with explicit bounded criteria.",
+  "limitations": ["local bounded performance tests", "not an indefinite soak or release gate", "does not complete P11 or P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
