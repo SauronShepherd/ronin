@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D647",
+  "status": "PASS_LIVE_POSTGRES_SUPERVISED_IDLE_TYPEFIX",
+  "candidate_sha": "7cb097c163184a22b30495a57220ab571f71fbe3",
+  "qualification": "live PostgreSQL supervised streaming drain to idle with durable checkpoint progress",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d647-live-supervised-idle-typefix -TestGrep 'live streaming supervised drain stops at idle with durable checkpoint progress' -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 5, "correlated_events": 5, "outcomes": {"OK": 4, "WARN": 1}, "application_errors": 0, "duration_seconds": 36.91, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The supervised PostgreSQL live drain reached idle with durable checkpoint progress; 5/5 API events correlated, four OK and one expected WARN, with no application/server errors.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d647-live-supervised-idle-typefix",
+  "evidence_sha256": {"browser-live.log": "44BCF81948146CAE0A1EA6A69AF6EA0434AB9EE287256BC595137767190723E7", "browser-live.xml": "EA12E8741EF0441D74908B317FBCD8E183BDFC583215C44844ED46210DC83B5D", "live-api-traffic.json": "6A514A8787A11846AC6BD5ABE536EA2F44787504DDFCA8D963DACAE3C8BFB7D1", "live-python-freeze.txt": "3EA99137688EA9BC5B3B865523A4DC76943332A039026AA2FBE5F90ACCF2BDDE", "live-server.stderr.log": "1FC312A9D27A07CCA2773911D7803F6260CD0C8B35A5CF2DB4D4077C160B5263", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "38336350EE396AE92880FAAD52F61DE15EA90CCC8CB2653BBD70830E6AEE46A3", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "limitations": ["single bounded supervised drain scenario", "one expected WARN is retained", "does not qualify indefinite operation, HA, external cloud providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
