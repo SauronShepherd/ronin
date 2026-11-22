@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D692",
+  "status": "PASS_BACKUP_RESTORE_RUNBOOK_CONTRACTS",
+  "candidate_sha": "b121e9e946026c432da0e8a8bb20f3f7aa3d10aa",
+  "qualification": "backup/restore, manifest and operations runbook regression",
+  "command": "python -m pytest -q tests/test_ronin_appliance_backup.py tests/test_sqlite_backup.py tests/test_postgres_backup.py tests/test_backup_manifest.py tests/test_operations_runbooks.py",
+  "result": {"selected": 15, "passed": 15, "failed": 0, "skipped": 0, "duration_seconds": 2.24, "process_exit_code": 0},
+  "finding": "Backup/restore behavior, SQLite/PostgreSQL backup contracts, manifest integrity and operations runbook checks passed completely.",
+  "limitations": ["local contract/unit regression", "real appliance execution remains evidenced separately by D680/D689", "does not complete P11/P13 or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
