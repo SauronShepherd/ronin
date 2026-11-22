@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D727",
+  "status": "PASS_STORAGE_PORTS_LOCAL",
+  "candidate_sha": "9446c7151a35727cea004016fdc4fb51d07ce23d",
+  "qualification": "complete local storage ports regression",
+  "command": "python -m pytest -q tests/test_storage_ports.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 8, "passed": 8, "failed": 0, "skipped": 0, "duration_seconds": 4.02, "process_exit_code": 0},
+  "finding": "Storage port contracts passed completely.",
+  "limitations": ["local storage ports regression", "does not qualify official external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
