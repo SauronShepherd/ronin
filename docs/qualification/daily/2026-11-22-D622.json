@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D622",
+  "status": "PASS_LIVE_WORKFLOWS_POSTGRES",
+  "candidate_sha": "b4c0f7bf552ef4faf3370de15eb80b072abb99bb",
+  "qualification": "live Workflows/scheduler route with explicitly configured PostgreSQL runtime",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d622-live-workflows-postgres -TestGrep 'route workflows loads and reaches the live API' -StorageBackend postgres -RequestTimeoutSeconds 60",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 29, "correlated_events": 29, "outcomes": {"OK": 28, "WARN": 1}, "application_errors": 0, "duration_seconds": 50.34, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The live Workflows route passed against the real PostgreSQL-backed Ronin runtime and Kafka fixture; all API traffic correlated with structured logs and no application errors occurred.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d622-live-workflows-postgres",
+  "evidence_sha256": {"browser-live.log": "3ED51770035E293B1AAE12C7465E2592762EB28D8B3352A094BB0720C938B4FE", "browser-live.xml": "0BE3BA62A855CF5D6ACDD17840F186B1035C4E6D1831A15BF3AD6DC7FA67A39B", "live-api-traffic.json": "F965D57184A2D2E1D0DDB315D9A56FD1711222592A0C7181963692B5598A1CBE", "qualification-summary.json": "AE9B2448FAE958641199F757503DC4D0B4D76231084751996BAEEDEBB1E1ECDF", "live-server.stderr.log": "A2B9A4DEA55E24C753C1C8961F3E719DE03C9594D6BA691C66DEA97F87058D9C"},
+  "limitations": ["single filtered route case", "one expected WARN recorded by the route contract", "does not qualify the complete scheduler family, indefinite operation or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
