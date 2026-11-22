@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D691",
+  "status": "PASS_PERFORMANCE_BOUNDED_FULL",
+  "candidate_sha": "3e54fa4995f0cb34eda9f0797a8e599ec8b4de9a",
+  "qualification": "complete local performance test package",
+  "command": "python -m pytest -q tests/perf",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "duration_seconds": 6.25, "process_exit_code": 0},
+  "finding": "The complete local performance package passed all bounded budget and contention tests.",
+  "limitations": ["bounded local performance package", "does not establish indefinite operation or release SLO", "does not complete P11 or P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
