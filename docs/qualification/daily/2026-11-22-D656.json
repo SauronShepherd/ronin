@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D656",
+  "status": "PASS_POSTGRES_STREAMING_CHECKPOINT_COMPLETE",
+  "candidate_sha": "b34e9353b609f243df5fcfb2abb6153b0cd68848",
+  "qualification": "complete PostgreSQL streaming checkpoint integration file: table append replay/conflict and checkpoint bundle CAS/reopen",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d656-postgres-streaming-checkpoint-complete -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 0, "duration_seconds": 1.61, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The complete PostgreSQL streaming checkpoint integration file passed: table append replay/conflict handling and checkpoint bundle CAS/reopen both succeeded.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d656-postgres-streaming-checkpoint-complete",
+  "evidence_sha256": {"pytest-output.log": "5A2D4A07BCC8B45C7083E0BB2948E7954569724515A68FF123262054ACABBBDC", "pytest-postgres.log": "D34F1355451CCF3939A97DA83A0B1C7B0D727DCCA935F534A2088E790479E3C1", "pytest-postgres.xml": "6F3AABF1CA6B5521666CAAA37156B0B05F7FE6FE2BBD957129A4CA1F963F8697", "pytest-timings.json": "1759D0E013393F96B331E5164729EA1A310BC6184E78C019BB51E5E4A0C62373", "runner-timings.json": "14C2ED2D61640D22F7333C96D093CDA9570D58764EC702F8B048D65BA25CB67D"},
+  "limitations": ["two-test integration file only, not the complete Python/PostgreSQL suite", "does not qualify indefinite operation, HA, external providers, external object stores or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
