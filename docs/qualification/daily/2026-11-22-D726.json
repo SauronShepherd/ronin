@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D726",
+  "status": "PASS_STORAGE_FENCED_LEGACY_LOCAL",
+  "candidate_sha": "b567103113875dd9e0f46587cb3443af8d2f459f",
+  "qualification": "complete local fenced legacy storage-call regression",
+  "command": "python -m pytest -q tests/test_storage_fenced_legacy_calls.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "duration_seconds": 2.94, "process_exit_code": 0},
+  "finding": "Fenced legacy storage-call contracts passed completely.",
+  "limitations": ["local storage contract regression", "does not qualify official external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
