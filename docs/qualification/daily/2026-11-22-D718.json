@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D718",
+  "status": "PASS_MIGRATION_STUDIO_RUNTIME_LOCAL",
+  "candidate_sha": "043abd0f33b88541630623938f9c2cb049882338",
+  "qualification": "complete local migration studio runtime regression",
+  "command": "python -m pytest -q tests/test_migration_studio_runtime.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "duration_seconds": 2.20, "process_exit_code": 0},
+  "finding": "Migration studio runtime contracts passed completely.",
+  "limitations": ["local migration studio runtime regression", "does not qualify official external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
