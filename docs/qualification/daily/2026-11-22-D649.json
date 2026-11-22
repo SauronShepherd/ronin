@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D649",
+  "status": "PASS_POSTGRES_SCHEDULER_RECOVERY",
+  "candidate_sha": "c473535e40d9695669e2a206e879b3255c811db9",
+  "qualification": "PostgreSQL scheduler recovery: process-crash replay, expired-lease reacquisition and durable HTTP adapter",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d649-postgres-scheduler-recovery -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate or workflow_http_routes_use_durable_scheduler_adapter'",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 18, "duration_seconds": 9.73, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "PostgreSQL scheduler recovery passed for process-crash replay without duplicate execution, expired-leader-lease reacquisition without duplicate schedule fire, and HTTP routes backed by the durable scheduler adapter.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d649-postgres-scheduler-recovery",
+  "evidence_sha256": {"pytest-output.log": "D8D2BB0AA3C809D03AF9C4572108843E064A755B3312EF269AB40F8DC0C0E974", "pytest-postgres.log": "97552B074580B9568FA39C25522C99E7EDCDE65ED24221C30C744D24E5A11025", "pytest-postgres.xml": "FC6714717BC6DEFE09A8F7B7463C0663D359F7038A593E5BBE7A9A58F1AEBB9E", "pytest-timings.json": "6057A7C06B5E68DF86A155CB2C9D15D78BBC64CAD8EF86958800F0FEB222F311", "runner-timings.json": "1771A7CEDA233F2EB4B115AA5401C0C537BEFEF039AF2E72B95BF2CB1B0BA844"},
+  "limitations": ["filtered diagnostic selection, not the complete PostgreSQL suite", "does not qualify indefinite operation, HA, notification providers, external object stores or release", "worker execution was not part of this selection"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
