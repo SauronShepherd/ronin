@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D792",
+  "status": "PASS_WORKER_CONTENTION_CURRENT_CANDIDATE",
+  "candidate_sha": "c04721cb2cdf7ffbf16cb1bb41eaae5f832612d1",
+  "qualification": "current-candidate bounded worker runtime contention regression",
+  "command": "python -m pytest -q tests/integration/test_worker_runtime_contention.py --junitxml=pytest.xml",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "duration_seconds": 2.88, "process_exit_code": 0},
+  "finding": "Worker runtime contention cases passed, covering bounded startup/queue behavior and contention handling without unbounded accumulation.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d792-worker-contention-20261122", "status": "PASS"},
+  "limitations": ["bounded local worker regression, not full Docker worker acceptance", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D791"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
