@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D620",
+  "status": "PASS_LIVE_RF3_BACKPRESSURE_16384",
+  "candidate_sha": "e0e7bd22d8c21a02f5528020d7b3a421879eeaa9",
+  "qualification": "bounded three-broker RF3 sustained backpressure at 16,384 records with explicit request timeout",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d620-live-backpressure-16384-rf3 -TestGrep 'streaming sustained backpressure' -StorageBackend postgres -BackpressureRecords 16384 -BackpressureTimeoutSeconds 600 -RequestTimeoutSeconds 600 -MultiBroker",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "backpressure_records": 16384, "request_timeout_seconds": 600, "api_events": 13, "correlated_events": 13, "outcomes": {"OK": 13}, "duration_seconds": 152.61, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The D619 browser fetch failure was caused by the qualification server's default 15-second request timeout. With the explicit 600-second request timeout required by this bounded scale, the current RF3 route passes 1/1 with all API traffic correlated and no application errors.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d620-live-backpressure-16384-rf3",
+  "evidence_sha256": {"browser-live.log": "3C67EFDD8FC38AA955F9BDF2BD6B7880F884402ACD8161EF068039FFEC84CA52", "browser-live.xml": "8A7A636E6320A126C3A2BA83CFC3D8CEAE6E18846850DC3B84A39ED9E3A94EED", "live-api-traffic.json": "662A56ED5267AB35A500C2DE2A5B560F5E99EA21A3C976BD015B64FB4D6D9C08", "qualification-summary.json": "A8DBBD54A37D54E00F23143E61053524AD51FDE9AC22C76C0158F9DB0E076DA6", "live-server.stderr.log": "CEBE8A8245CF12FEAE61C2BE09B51BA0D8B454A1DB657E6C92EFDF8948FF05A2"},
+  "limitations": ["single bounded scale case", "does not qualify indefinite operation or release", "request timeout is explicit qualification configuration"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
