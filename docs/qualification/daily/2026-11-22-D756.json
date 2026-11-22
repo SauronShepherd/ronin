@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D756",
+  "status": "PASS_WORKER_EXECUTION_LOCAL",
+  "candidate_sha": "e10de2d5ef8aecdf2672d5e10c1dd85e7c8fa904",
+  "qualification": "complete local worker execution regression",
+  "command": "python -m pytest -q tests/test_worker_execution.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 11, "passed": 11, "failed": 0, "skipped": 0, "duration_seconds": 4.50, "process_exit_code": 0},
+  "finding": "Worker execution contracts passed completely.",
+  "limitations": ["local worker execution regression", "does not qualify productive worker recovery, external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
