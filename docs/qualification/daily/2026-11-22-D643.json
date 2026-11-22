@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D643",
+  "status": "PASS_POSTGRES_STREAMING_TYPEFIX",
+  "candidate_sha": "1d844904563f52c46034a1a5350c40bd0d816e9f",
+  "qualification": "PostgreSQL streaming checkpoint and table regression after SQLite/PostgreSQL rowcount type fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d643-postgres-streaming-typefix -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "pytest_seconds": 2.14, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "After the corrected adapter rowcount fallback, both PostgreSQL streaming checkpoint CAS/reopen and stream-table append/replay/conflict tests passed.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d643-postgres-streaming-typefix",
+  "evidence_sha256": {"pytest-output.log": "C8C29BC551D5F0C005408C15E96DC12BC29D96186CADC8F802D758F29CFBD9F2", "pytest-postgres.log": "2EA0781AA15C0781F00F460C52797D255E32BE3960F12C0E209FD1A8865DA07C", "pytest-postgres.xml": "FCABA88B892635DF4C2F242F6C30801FFC5BA0A7C60135CC8EC4CCDB4F8C39D9", "pytest-timings.json": "DC51EADB70590AB00485B866F5EE9EF2FFC57045AF58FCFFAB203163D6FE5579", "runner-timings.json": "81412CC40FE859B4EA86C9E7F412E6A34011AE54499C38031DC914C2940D38C8"},
+  "limitations": ["two bounded PostgreSQL streaming scenarios", "does not qualify full live P11 route, indefinite operation, external providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

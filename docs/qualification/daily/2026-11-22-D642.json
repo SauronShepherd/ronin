@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D642",
+  "status": "NOT_PASS_POSTGRES_STREAMING_TYPEFIX_FIRST_ATTEMPT",
+  "candidate_sha": "68dd79e0968718ab440b2686c575a3e7bb190b26",
+  "qualification": "first regression attempt after PostgreSQL streaming adapter typing fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d642-postgres-streaming-typefix -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {"selected": 2, "passed": 1, "failed": 1, "skipped": 0, "process_exit_code": 1, "cleanup": "succeeded"},
+  "finding": "The checkpoint CAS/reopen test passed, but the PostgreSQL stream-table test exposed that the adapter returns an int while the first type fix assumed a cursor rowcount. This attempt is not PASS evidence.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d642-postgres-streaming-typefix",
+  "evidence_sha256": {"pytest-output.log": "7A306D20445A79CB4A5353AAFB760BFB6DA7C4FCC6C13A099478B9D2447B059F", "pytest-postgres.log": "39370B668FCAB1FC05CB9677235AA55840985BB63DB1C5AD8C11D4E15073B7A3", "pytest-postgres.xml": "6CFA15CCACCD9736576898E3CB82F11743303057C65E0B3E1C52CC7B370BC169", "pytest-timings.json": "E980B685A77C5D8992B416F54247209300A70EEFB4DDAEDD56AFF0244424D5EA", "runner-timings.json": "94E91BB03F09046C39D46FE0DC4AE5BE40348EFABFD721789B305B748791279A"},
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
