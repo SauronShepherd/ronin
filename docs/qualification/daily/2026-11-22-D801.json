@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D801",
+  "status": "PASS_ARCHITECTURE_DOCKER_CONTRACTS_CURRENT_CANDIDATE",
+  "candidate_sha": "563c1ecff9f99b96d8fad212632dfca50cafeb59",
+  "qualification": "current-candidate architecture, Docker qualification and resource-observation contract regression",
+  "command": "python -m pytest -q tests/test_architecture_contracts.py tests/test_docker_qualification_contract.py tests/test_container_resource_observation.py --junitxml=pytest.xml",
+  "result": {"selected": 56, "passed": 55, "failed": 0, "skipped": 1, "duration_seconds": 4.66, "process_exit_code": 0},
+  "finding": "Architecture and Docker qualification contracts passed; the sole skip is the explicit POSIX child-watcher case unavailable on Windows.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d801-architecture-docker-contracts-20261122", "status": "PASS"},
+  "limitations": ["one POSIX-specific contract remains skipped on Windows", "contract regression does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D800"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
