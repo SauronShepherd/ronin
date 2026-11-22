@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D749",
+  "status": "PASS_WORKSPACE_PLUGIN_PORTS_LOCAL",
+  "candidate_sha": "74adf7ecc0f9f38085bd7b36bbe0102e6c3ad22c",
+  "qualification": "complete local workspace plugin ports regression",
+  "command": "python -m pytest -q tests/test_workspace_plugin_ports.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "duration_seconds": 1.56, "process_exit_code": 0},
+  "finding": "Workspace plugin port contracts passed completely.",
+  "limitations": ["local workspace plugin ports regression", "does not qualify external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
