@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-22",
+  "day": "D672",
+  "status": "PASS_TRINO_EXTERNAL_PROVIDER",
+  "candidate_sha": "ea60e6f1c6f7260b8032de40bc3e52442951a795",
+  "qualification": "Trino 484 real external query provider qualification",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_trino_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d672-trino-provider-current",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "duration_seconds": 11.80, "process_exit_code": 0},
+  "service": {"image": "trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f", "version": "484"},
+  "evidence": {
+    "directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d672-trino-provider-current",
+    "files": {
+      "pytest-timings.json": "F1A6594C5FD144A7D1E4F02B827A2849B716C42CE22C356F9D8DF7D616930CEE",
+      "qualification.json": "A6BE5DB79728E29BB1D718E4AF0671F2B769805D5945EFB9ADF29BE938FFE52B",
+      "qualification.log": "8405A5C654F948922CCEACB1826227694F41A642DFB465B549590CDA1A93BC5B",
+      "trino-container.log": "ABA5A54F7F0A694B461C8027BF9751CAB9605BBCFDAC4B056D0E55F8C1DA0922",
+      "trino-junit.xml": "7467580DBE2C651B0DBD76B62EF6BA0140CF22CDDDFC6D8192C964E53A37705A"
+    },
+    "cleanup": "PASS: docker ps -aq empty; ronin/qualification images empty"
+  },
+  "finding": "The real Trino provider tests passed prepared scalar bindings, exact result byte-budget behavior, terminal worker evidence persistence, and SIGKILL recovery without duplicate processing.",
+  "limitations": ["single pinned Trino service qualification", "provider diagnostic evidence only", "does not qualify release, P11 completion, indefinite operation, or other external providers"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
