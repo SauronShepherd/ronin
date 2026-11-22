@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D663",
+  "status": "PASS_LIVE_POSTGRES_PARQUET_SINK_REPLAY",
+  "candidate_sha": "a9fdfc887995569217afbb974e9cda1d1ce349bf",
+  "qualification": "live PostgreSQL/Kafka/Ronin Parquet sink reset/replay across bounded runs",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d663-live-parquet-sink-typefix -TestGrep 'live streaming parquet sink preserves reset replay across bounded runs' -StorageBackend postgres -RequestTimeoutSeconds 300",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 11, "correlated_events": 11, "outcomes": {"OK": 11, "WARN": 0}, "application_errors": 0, "duration_seconds": 64.52, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The bounded live Parquet sink reset/replay journey passed against real PostgreSQL, Kafka and Ronin APIs; all 11 API events correlated and were OK.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d663-live-parquet-sink-typefix",
+  "evidence_sha256": {"browser-live.log": "A299D30AAB58C85AF09BBE9540B3F8004D28D9645C22D58351FC9BFEB7F53DED", "browser-live.xml": "BBE37E8753166898BC69A2D30481D72BA59071C0173C44568A9379DBA8CB01FC", "live-api-traffic.json": "FF08860512F97949ECA1A4F1C713B279499E9680054A76A38680ECEC8877DD14", "live-python-freeze.txt": "B2CCE96E85614A767FD5B1C8D749665AA4370C8256DF0F8A63FD0D233042D6CD", "live-server.stderr.log": "BA22EA35165484A8FD84C81C3A5D0A68117CEFDCA848626CED11646EDC233463", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "14D144E5177C9C1DEF9FF7F0D001517CB78472AF5BF1790BF6B9DBB21C51F1B8", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "limitations": ["single bounded Parquet sink reset/replay journey", "does not qualify indefinite operation, HA, external cloud providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
