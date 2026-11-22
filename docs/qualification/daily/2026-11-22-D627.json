@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D627",
+  "status": "PASS_POSTGRES_SCHEDULER_DURABILITY",
+  "candidate_sha": "4b9a029cda5f8eb8b8e7d807db4161718be028fa",
+  "qualification": "bounded PostgreSQL scheduler durability: timeout authority, task lease fencing/reclaim, outbox reconciliation, event inbox replay and backfill reopen",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d627-postgres-scheduler-durability -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_timeout_requests_and_dispatch_authority_are_durable or test_postgres_scheduler_attempt_leases_fence_workers_and_reclaim_expiry or test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles or test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries or test_postgres_scheduler_backfill_runs_through_the_service_and_survives_reopen'",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "deselected": 16, "pytest_seconds": 6.24, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "The candidate passed five PostgreSQL scheduler durability scenarios: durable timeout/dispatch authority, fenced and reclaimed task leases, expired execution outbox reconciliation, frozen/replayed event inbox deliveries, and backfill surviving reopen.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d627-postgres-scheduler-durability",
+  "evidence_sha256": {"pytest-output.log": "93FD7804BDCC0B1726C0ED8ED15CF9A8D944E4178DFCAC909C0C8817A6DFC206", "pytest-postgres.log": "F68C319586BB7F27C962640641039B215ACC1023BA4AC4FC0DEF00F4F6F2DC37", "pytest-postgres.xml": "EA82569446C79EE212DBD8DF12EDA6D6B51C1080C6D5FEC848EB1838D456F556", "pytest-timings.json": "3044C501C86839620B8644F899A17EDABBDB6CE2E73991B2904865871D7D77E2", "runner-timings.json": "231FC02F950606DF608A2AA1EB3EC36A8C7327708140F831C17AA359E4038289"},
+  "limitations": ["five bounded scheduler durability scenarios only", "does not qualify indefinite operation, multi-scheduler HA, external providers, live worker Docker execution or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
