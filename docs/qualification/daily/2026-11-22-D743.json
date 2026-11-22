@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D743",
+  "status": "PASS_SYNTHETIC_DATA_PUBLICATION_LOCAL",
+  "candidate_sha": "a176b097efa82007f3be1bb885b2a63fd9b4f012",
+  "qualification": "complete local synthetic-data publication regression",
+  "command": "python -m pytest -q tests/test_synthetic_data_publication.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "duration_seconds": 2.31, "process_exit_code": 0},
+  "finding": "Synthetic-data publication contracts passed completely.",
+  "limitations": ["local publication regression", "does not qualify external providers/object stores, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
