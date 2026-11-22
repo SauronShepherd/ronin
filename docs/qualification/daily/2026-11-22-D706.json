@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D706",
+  "status": "PASS_SECURITY_POLICY_LOCAL",
+  "candidate_sha": "51a407c426d83ffcc9934009e51e861ae0ff6342",
+  "qualification": "security, transport policy and fail-closed authorization regression",
+  "command": "python -m pytest -q tests/test_security*.py tests/test_transport_policy.py tests/test_policy_actions.py tests/test_security_policy.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 35, "passed": 35, "failed": 0, "skipped": 0, "duration_seconds": 6.18, "process_exit_code": 0},
+  "finding": "Security redaction, secret boundaries, transport policy and fail-closed policy actions passed completely.",
+  "limitations": ["local security/policy regression", "does not qualify external security gates or release/P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
