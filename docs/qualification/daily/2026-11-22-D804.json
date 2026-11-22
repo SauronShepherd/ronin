@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D804",
+  "status": "PASS_DATA_ENGINEERING_QUERYFLUX_LOCAL_CURRENT_CANDIDATE",
+  "candidate_sha": "2646b0a10cc9f74a98e371057b9c3da097287674",
+  "qualification": "current-candidate local Data Engineering and QueryFlux regression",
+  "command": "python -m pytest -q tests/test_data_engineering_worker.py tests/test_data_engineering_ui.py tests/test_data_engineering_sqlite.py tests/test_data_engineering_runtimes.py tests/test_data_engineering_revisions.py tests/test_data_engineering_query_execution.py tests/test_data_engineering_query_engine_runtime.py tests/test_data_engineering_query_engine_evidence.py tests/test_data_engineering_qualification.py tests/test_data_engineering_plugin.py tests/test_data_engineering_lineage.py tests/test_data_engineering_execution.py tests/test_data_engineering_evidence.py tests/test_data_engineering_compilations.py tests/test_queryflux_result_paging.py tests/test_queryflux_lifecycle.py tests/test_queryflux_execution.py --junitxml=pytest.xml",
+  "result": {"selected": 101, "passed": 101, "failed": 0, "skipped": 0, "duration_seconds": 6.01, "process_exit_code": 0},
+  "finding": "Local Data Engineering and QueryFlux worker/UI/SQLite/runtime/query/evidence/plugin/lineage/compilation/lifecycle contracts passed without skips or failures.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d804-data-engineering-local-20261122", "status": "PASS"},
+  "limitations": ["Spark/SDP and external-provider tests were not selected", "local regression does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D803"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
