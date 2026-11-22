@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D662",
+  "status": "PASS_LIVE_POSTGRES_SUSTAINED_BACKPRESSURE",
+  "candidate_sha": "71a4b249e189980e0cffd84a6ad0ab6d57e540d2",
+  "qualification": "live PostgreSQL/Kafka/Ronin sustained backpressure with reset-safe replay",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d662-live-sustained-backpressure-typefix -TestGrep 'live streaming sustained backpressure drains configured records with reset-safe replay' -StorageBackend postgres -RequestTimeoutSeconds 300",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 12, "correlated_events": 12, "outcomes": {"OK": 12, "WARN": 0}, "application_errors": 0, "duration_seconds": 63.10, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The bounded sustained-backpressure journey drained configured records with reset-safe replay against real PostgreSQL, Kafka and Ronin APIs; all 12 API events correlated and were OK.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d662-live-sustained-backpressure-typefix",
+  "evidence_sha256": {"browser-live.log": "9C4164F47CA5C6A1E00A905D471E8CDB2D342FC2F36BCF7B2F253D82C669B4FA", "browser-live.xml": "1B1A60B79321536C0D0B526E50515EC2C9C12F1A0DFB2E3582DDFFB5AE2F25ED", "live-api-traffic.json": "CC3E2DF627084FCA10D814B2534BE950256EA0023A1646AE1014B11766A239D4", "live-python-freeze.txt": "63EE013A02B5A606AF22972FF959F26A73973B68351027BB951F9D05AED03DBF", "live-server.stderr.log": "18BD5FAECDDA779A3F267D2FC5DB60DEC2908540EDD93447F7B00C1948D2B89E", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "F61337A3349C77F80028B9245287BFCD945DC42AF6005157EDB78778044B23FF", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "limitations": ["single bounded backpressure/replay journey", "does not qualify indefinite operation, SLO, HA, multi-worker, external cloud providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
