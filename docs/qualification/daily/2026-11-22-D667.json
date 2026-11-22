@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D667",
+  "status": "PASS_DOCKER_AZURE_COMPATIBLE_PROVIDER",
+  "candidate_sha": "3aa84d69a8015fac2812cc57a5e64e703c899adf",
+  "qualification": "Azure-compatible external provider discover/read/replay snapshot against Azurite",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d667-docker-azure-provider -TestFilter 'test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite'",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26, "duration_seconds": 5.51, "cleanup": "PASS", "process_exit_code": 0, "image_digest": "sha256:1145aa11405e709470510f570dc4b8ab51dcdeb0b925fb3e7c6d3f1816e574dc"},
+  "finding": "The real Azure-compatible Azurite provider completed discover/read/replay snapshot successfully; the qualification image, Azurite fixture and owned resources were cleaned.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d667-docker-azure-provider",
+  "evidence_sha256": {"azurite-qualification.log": "EA67A65D98CAC6C3E530C0CEE1EC855C43E8503B18CE5A40A36B541020F1448F", "docker-cleanup.json": "5C528E27662DFB666680027A1CAB9AAB9DB84718A15D6B6D6F72C52AB8E874A6", "docker-pytest-output.log": "F8F13AD6C47186AF03309B50D17C982612285079D2FD6392864A3378E6202724", "docker-qualification.log": "F2B69D13975C56FF72391615AB43396D49E332F7D04D187C92CA767B0E2F5144", "v01-acceptance.xml": "FEBB11C4D3C221861E8189354EEB930C7829C260DB5AE76CA410B1B259AAFDD6"},
+  "limitations": ["filtered provider diagnostic only; strict v0.1 gate was not evaluated", "Azurite is Azure-compatible provider evidence, not production vendor certification", "does not qualify P11 streaming or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
