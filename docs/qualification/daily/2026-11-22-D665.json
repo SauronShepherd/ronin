@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D665",
+  "status": "PASS_DOCKER_S3_EXTERNAL_PROVIDER",
+  "candidate_sha": "61289bd138021199d93cc7f53f62ced3d5a567e9",
+  "qualification": "S3-compatible external provider round-trip for durable ML input/output and retention",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d665-docker-s3-artifact-provider -TestFilter 'ml_s3_artifact_store_real'",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26, "duration_seconds": 5.80, "cleanup": "PASS", "process_exit_code": 0, "image_digest": "sha256:08f0414d6445c7e4fd038a6a8026e74b39d970b612fcbde5835be2f555fc9cb1"},
+  "finding": "The real S3-compatible Floci provider completed the durable ML input/output and retention round-trip; the digest-pinned qualification image, Floci fixture and owned resources were cleaned successfully.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d665-docker-s3-artifact-provider",
+  "evidence_sha256": {"docker-cleanup.json": "F4AB19B9BC43D149264A1F46553553A02109403C3CB20F5741FB41BAFEA321A9", "docker-pytest-output.log": "902141004ABDC9F11F3A31721FB37538CEE0355BBE37255AFB322F8CCB296C95", "docker-qualification.log": "40B33CE80D6C0E1562F1BE085560FFBF92E95626AC4919F832476AEDF7B0F174", "floci-s3-qualification.log": "C0D8831370821B2EDAA4AAB96BD808F315187F22339776DBD172A61FE5A2991E", "v01-acceptance.xml": "83FFA8580494542DF825E71B9BEF203BD6D7F2314449B9F961675CABB040D3E5"},
+  "limitations": ["filtered provider diagnostic only; strict v0.1 gate was not evaluated", "Floci is S3-compatible provider evidence, not production vendor certification", "does not qualify P11 streaming or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
