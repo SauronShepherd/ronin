@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D781",
+  "status": "PASS_POSTGRES_DATA_ENGINEERING_FINOPS_CURRENT_CANDIDATE",
+  "candidate_sha": "8561d6e5cc532efcaf7a5bc204294422ba5bffb9",
+  "qualification": "current-candidate PostgreSQL data-engineering revisions and FinOps qualification",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://ronin:***@127.0.0.1:55444/ronin_test RONIN_TEST_POSTGRES_DSN=postgresql://ronin:***@127.0.0.1:55444/ronin_test python -m pytest -q tests/integration/test_postgres_data_engineering_revisions_real.py tests/integration/test_postgres_finops_real.py --junitxml=pytest.xml",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "duration_seconds": 5.59, "process_exit_code": 0},
+  "finding": "The real PostgreSQL data-engineering revision and FinOps integration cases passed with their explicit DSNs configured.",
+  "cleanup": {"container": "ronin-d781-postgres-rerun", "container_removed": true, "temporary_postgres_volume_removed": true, "postgres_image_removed": false, "reason": "pre-existing shared postgres:16.4-alpine image preserved"},
+  "limitations": ["temporary local PostgreSQL 16.4 instance", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775, D778, D779, D780 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
