@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D742",
+  "status": "PASS_SYNTHETIC_DATA_PUBLIC_SURFACE_LOCAL",
+  "candidate_sha": "ba68bc03350b5df232a09f718f181afc8b6063f8",
+  "qualification": "complete local synthetic-data public-surface regression",
+  "command": "python -m pytest -q tests/test_synthetic_data_public_surface.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "duration_seconds": 0.88, "process_exit_code": 0},
+  "finding": "Synthetic-data public surface contracts passed completely.",
+  "limitations": ["local public-surface regression", "does not qualify external providers/object stores, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
