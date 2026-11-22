@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D698",
+  "status": "PASS_WORKFLOW_HTTP_FAIL_CLOSED",
+  "candidate_sha": "5e77ef3659c4c73fe4e04bf40b7dd510cd90e4b1",
+  "qualification": "workflow and pipeline HTTP route regression",
+  "command": "python -m pytest -q tests/integration/test_workspace_project_http_api.py -k \"workflow or pipeline_run_materializes\"",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 58, "duration_seconds": 5.55, "process_exit_code": 0},
+  "finding": "Workflow route fail-closed behavior and pipeline materialization/validation passed completely.",
+  "limitations": ["local HTTP selection", "does not qualify PostgreSQL scheduler runtime, live Kafka, external providers, release or P11 completion"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
