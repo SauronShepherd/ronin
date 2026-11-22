@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D793",
+  "status": "PASS_WORKER_LOCAL_CURRENT_CANDIDATE",
+  "candidate_sha": "d94d29c6049978533eaffd47b31ba26a79a92592",
+  "qualification": "current-candidate local worker runtime and execution regression",
+  "command": "python -m pytest -q tests/test_worker_runtime.py tests/test_worker_execution.py --junitxml=pytest.xml",
+  "result": {"selected": 27, "passed": 27, "failed": 0, "skipped": 0, "duration_seconds": 5.37, "process_exit_code": 0},
+  "finding": "Local worker runtime and execution regressions passed, covering preparation, checkpointing, cancellation, lease boundaries and execution outcomes.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d793-worker-local-20261122", "status": "PASS"},
+  "limitations": ["local regression; does not claim Docker worker acceptance or indefinite operation", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D792"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
