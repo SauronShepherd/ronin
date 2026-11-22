@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D657",
+  "status": "PASS_FULL_PYTHON_POSTGRES_CURRENT",
+  "candidate_sha": "50e8716565b9ed78a99e5e5ed9fe8b441e9cc555",
+  "qualification": "complete non-performance Python/PostgreSQL regression on current main candidate",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d657-python-postgres-current-complete",
+  "result": {"collected": 4791, "passed": 4763, "failed": 0, "skipped": 31, "collection_skipped": 3, "warnings": 23, "duration_seconds": 1263.53, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The complete non-performance Python/PostgreSQL regression passed 4763 tests with 31 explicit dependency/platform skips and no failures. PostgreSQL-backed integration tests ran in the isolated real service.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d657-python-postgres-current-complete",
+  "evidence_sha256": {".coverage": "CAC299F394F99BD5C39BE20C4C541965E6AB28A5954089E090CD9E76C5E00475", "pytest-output.log": "3D3F668C8A91D1C874CC842D035C1DB184DD8E7931339E9B464330E947CB7CD8", "pytest-postgres.log": "7A1960A127C14A382818224ECBE4A687D93751C819A63312999DD24515E3480F", "pytest-postgres.xml": "ABFF4A6A8604B59AA2AD7323686B7FFF9CED78E0F766791C4F8AB359F1752B36", "pytest-timings.json": "3A1A5EB77DE0268268779B8D82337FD527949264924EC2058E02B1AC65EB94C1", "runner-timings.json": "45A347F926E40A6B331B58744DAA3E3730F5319306EF9BFDBF8A447647A6DC65"},
+  "limitations": ["31 skips remain explicit for opt-in Docker, multi-broker, external S3/Azure/Trino/OTLP/Spark, symlink or platform privileges", "23 ResourceWarnings are retained in the runner output", "does not qualify indefinite operation, HA, external provider certification or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
