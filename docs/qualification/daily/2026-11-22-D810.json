@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D810",
+  "status": "PASS_CLOUD_STUDIO_LOCAL_CURRENT_CANDIDATE",
+  "candidate_sha": "95fa16591c6603bdf4146736026e818c64a55e10",
+  "qualification": "current-candidate Cloud Studio local and Floci qualification-contract regression",
+  "command": "python -m pytest -q tests/test_cloud_studio.py tests/test_cloud_studio_floci_qualification.py --junitxml=pytest.xml",
+  "result": {"selected": 42, "passed": 42, "failed": 0, "skipped": 0, "duration_seconds": 10.48, "process_exit_code": 0},
+  "finding": "Cloud Studio local behavior and Floci qualification-contract tests passed without skips or failures; this is contract evidence, not a live Floci provider run.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d810-cloud-studio-local-20261122", "status": "PASS"},
+  "limitations": ["does not claim live external Floci/provider qualification", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D809"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
