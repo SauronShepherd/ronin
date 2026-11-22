@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D759",
+  "status": "PASS_VCS_GIT_WINDOWS_LOCAL",
+  "candidate_sha": "5c028841e3ebe078c5e1bdb850badf1ba732d658",
+  "qualification": "complete local VCS git regression on Windows",
+  "command": "python -m pytest -q tests/test_vcs_git.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 12, "passed": 11, "failed": 0, "skipped": 1, "duration_seconds": 18.73, "process_exit_code": 0},
+  "finding": "VCS git contracts passed on Windows; the POSIX executable-mode assertion was explicitly skipped by the test.",
+  "limitations": ["Windows-local VCS regression", "POSIX executable mode not exercised on this host", "does not qualify external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
