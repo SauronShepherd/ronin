@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D614",
+  "status": "PASS_POSTGRES_SCHEDULER_RECOVERY_CURRENT",
+  "candidate_sha": "2275e15212d112fd4a0320b276d02cb0ac4b4677",
+  "qualification": "focused scheduler lease reacquisition and process-crash replay against isolated PostgreSQL 16.4",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d614-scheduler-recovery-postgres -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate\"",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 19, "postgres": "16.4-alpine", "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The scheduler reacquired expired PostgreSQL leadership without duplicate firing, and process-crash replay completed without duplicate execution.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d614-scheduler-recovery-postgres",
+  "evidence_sha256": {"pytest-output.log": "446BB511A3BC34757C068AD47A7E7A1FA1D687FB3166127651333DF669955EA6", "pytest-postgres.log": "8C104E06D78481157E099CF14B3B35A616E005CC9824E07B316AAB391C5080E9", "pytest-postgres.xml": "801DF60379FCC7728E13E68394A36749C3286874CC11B7F3F4AC4E48B08060BB", "pytest-timings.json": "7A86AE50154401EBA2D8A632498A8EABD991F7A2CFEF07871A13EDBCBAB78CE6", "runner-timings.json": "2B8921A27C7CFE54B68A942DE91EC2ACC8AE14F3940B074BD944A8F2C94ABC84"},
+  "limitations": ["two filtered integration cases", "single PostgreSQL instance", "does not prove HA, indefinite operation, complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
