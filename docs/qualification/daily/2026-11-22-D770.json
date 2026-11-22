@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D770",
+  "status": "PASS_TABLE_METADATA_LOCAL",
+  "candidate_sha": "2d1e7c41545693834881f5ff9892b5a256320b61",
+  "qualification": "complete local table metadata regression",
+  "command": "python -m pytest -q tests/test_table_metadata.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "duration_seconds": 3.51, "process_exit_code": 0},
+  "finding": "Table metadata contracts passed completely.",
+  "limitations": ["local table metadata regression", "does not qualify external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
