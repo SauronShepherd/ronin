@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D782",
+  "status": "PASS_POSTGRES_CONNECTOR_CONTROL_PLANE_CURRENT_CANDIDATE",
+  "candidate_sha": "e0a4830b0beab28027f22a7f9828a3f6ae1bc883",
+  "qualification": "current-candidate PostgreSQL connector control-plane qualification",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://ronin:***@127.0.0.1:55445/ronin_test python -m pytest -q tests/integration/test_postgres_connector_control_plane_real.py --junitxml=pytest.xml",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "duration_seconds": 17.89, "process_exit_code": 0},
+  "finding": "The real PostgreSQL connector control-plane journey passed against the temporary PostgreSQL service, including checkpoint preview/reopen behavior and authorization-bound HTTP control-plane assertions.",
+  "cleanup": {"container": "ronin-d782-postgres", "container_removed": true, "temporary_postgres_volume_removed": true, "postgres_image_removed": false, "reason": "pre-existing shared postgres:16.4-alpine image preserved"},
+  "limitations": ["temporary local PostgreSQL 16.4 instance", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775, D778, D779, D780, D781 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
