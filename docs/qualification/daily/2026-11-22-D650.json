@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D650",
+  "status": "PASS_POSTGRES_SCHEDULER_BACKFILL_OUTBOX_INBOX",
+  "candidate_sha": "cdecacc76a09d9d11aa0cbd6564b0a7ff816bc36",
+  "qualification": "PostgreSQL scheduler backfill reopen, execution outbox expiry/reconcile and event inbox freeze/replay",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d650-postgres-scheduler-backfill-outbox -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'postgres_scheduler_backfill_runs_through_the_service_and_survives_reopen or postgres_scheduler_execution_outbox_survives_expiry_and_reconciles or postgres_scheduler_event_inbox_freezes_and_replays_deliveries'",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 18, "duration_seconds": 20.90, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "PostgreSQL scheduler backfill survived reopen, the execution outbox survived expiry and reconciled, and the event inbox froze and replayed deliveries; all selected scenarios passed.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d650-postgres-scheduler-backfill-outbox",
+  "evidence_sha256": {"pytest-output.log": "D82A805E8B9D224CB1262C6FA973FAFF49BD6D63A231E259EDF23908CF7ABC55", "pytest-postgres.log": "79F674B71913D1C399E30BE04B5060C9D9D321F707595F02112B92B98A81AA97", "pytest-postgres.xml": "CAB78BF2776083FDF4A79FDE41CD168FB19E7B7D3F147BA1D76751F913E8ABBB", "pytest-timings.json": "BEC8B8D3599EA5E15843656C90017180179ECB3E12A1FADF373862DD0842E8B5", "runner-timings.json": "58BFD5AAE3348BB7D041D34993FCCD183205110F48A36AC28761EEDC13A08521"},
+  "limitations": ["filtered diagnostic selection, not the complete PostgreSQL suite", "does not qualify indefinite operation, HA, external providers, object stores or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
