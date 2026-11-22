@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D803",
+  "status": "PASS_SECURITY_SQL_CURRENT_CANDIDATE",
+  "candidate_sha": "bdfce1450f3b8e5889d3092bac9030b00044ffaa",
+  "qualification": "current-candidate security, secret handling and SQL/open-data-plane regression",
+  "command": "python -m pytest -q tests/integration/test_http_authorized_pagination.py tests/test_ml_canonical_artifact_security.py tests/test_mounted_file_secrets.py tests/test_open_data_plane.py tests/test_sql_http.py tests/test_security_redaction.py tests/test_security_policy.py tests/test_secret_resolvers.py tests/test_runner_broker_security.py --junitxml=pytest.xml",
+  "result": {"selected": 119, "passed": 117, "failed": 0, "skipped": 2, "duration_seconds": 13.46, "process_exit_code": 0},
+  "finding": "Security, secret-redaction, SQL HTTP, open-data-plane, authorized pagination and runner-broker security tests passed. The two skips are explicit Windows symlink/POSIX capability skips.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d803-security-sql-20261122", "status": "PASS"},
+  "limitations": ["two host-capability skips remain unclaimed", "local security regression does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D802"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
