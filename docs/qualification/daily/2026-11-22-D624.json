@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D624",
+  "status": "PASS_LIVE_RF3_SUPERVISOR_SOAK_3600",
+  "candidate_sha": "9af8d9dd97a17aa83e881c926816011aae29de9f",
+  "qualification": "bounded three-broker RF3 supervisor soak for 3,600 seconds with real PostgreSQL",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d624-live-supervisor-soak-3600-rf3 -TestGrep 'streaming supervisor soak drains while records arrive' -StorageBackend postgres -SupervisorSoakSeconds 3600 -RequestTimeoutSeconds 60 -MultiBroker",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "supervisor_soak_seconds": 3600, "api_events": 4427, "correlated_events": 4427, "outcomes": {"OK": 4427}, "application_errors": 0, "duration_seconds": 3650.37, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The candidate-bound one-hour RF3 supervisor soak sustained operation with PostgreSQL active, 4,427/4,427 API events correlated, no application errors and no broker or server failure reported.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d624-live-supervisor-soak-3600-rf3",
+  "evidence_sha256": {"browser-live.log": "394298317AC05D81DC4D1368E51B8E08DB898D3949653A953B418A84F748B09D", "browser-live.xml": "903E152B60D62B7F057B101136A323C8456185EF761E02ADAAAEC3E646F1E967", "live-api-traffic.json": "639CFCC869E3A6EA23C2BDB1E6252D39FBA2627BF92C0B34BC1F62B538ABF46D", "qualification-summary.json": "F469F5A67B26663CA9563F2BA619F6BECE4F388B32D293973387E50235D25F09", "live-server.stderr.log": "2B08CF7300F32C931605AF7A18D959391739218EC9B7191DE58E29E28FC56E37"},
+  "limitations": ["single bounded one-hour soak", "does not qualify indefinite operation, worker HA, external cloud provider or release", "tooling ceiling was extended from 1800 to 3600 seconds for this criterion"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
