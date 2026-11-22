@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D651",
+  "status": "PASS_POSTGRES_SCHEDULER_CANCELLATION_FENCING",
+  "candidate_sha": "b070b1f6315454a751512b1dde42bdf3e5d88fa3",
+  "qualification": "PostgreSQL workflow cancellation reconciliation/fencing and scheduler attempt-lease fencing",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d651-postgres-scheduler-cancellation-fencing -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'postgres_workflow_cancellation_reconciles_durable_job_and_outbox or postgres_workflow_cancellation_fences_claim_before_intent or postgres_scheduler_attempt_leases_fence_workers_and_reclaim_expiry'",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 18, "duration_seconds": 4.48, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "PostgreSQL cancellation reconciled durable jobs/outbox, fenced a claim before intent creation, and scheduler attempt leases fenced workers and reclaimed expiry; all selected scenarios passed.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d651-postgres-scheduler-cancellation-fencing",
+  "evidence_sha256": {"pytest-output.log": "B5E804FE4162D49077865FF9DE35E9F23C169BB91E86A721D3CE0E77F87F0D85", "pytest-postgres.log": "C99A4020983B1819F1EA797D31E73F73777E1F1996EED8F6BA9C7A55365B3D1A", "pytest-postgres.xml": "914D9F36FF08426A8C014B15B2E5EC5454E4BFDFAB4929BC472A1A7FF74CAC2A", "pytest-timings.json": "3617D6B9E51EA2DDBD5E64BDBD381BD829ADCE60DE185D93C96AE89A80B0D1FE", "runner-timings.json": "ED117AACAE618D516DA74B091A7A518D4B5B3717A1EB45FC55C19AA324A510D9"},
+  "limitations": ["filtered diagnostic selection, not the complete PostgreSQL suite", "does not qualify indefinite operation, HA, external providers, object stores or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
