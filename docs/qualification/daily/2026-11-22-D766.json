@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D766",
+  "status": "PASS_RELEASE_ARTIFACTS_WINDOWS_LOCAL",
+  "candidate_sha": "c496cbc4a46a7531b944b60dccaf0b4241b5b9e7",
+  "qualification": "complete local release-artifact verification on Windows",
+  "command": "python -m pytest -q tests/test_verify_release_artifacts.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 7, "passed": 6, "failed": 0, "skipped": 1, "duration_seconds": 1.30, "process_exit_code": 0},
+  "finding": "Release artifact verification passed on Windows; the symlink-specific assertion was explicitly skipped because symlinks are unavailable.",
+  "limitations": ["Windows-local release artifact verification", "symlink path not exercised", "does not complete external release gates or change NO-GO/P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
