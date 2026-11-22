@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D652",
+  "status": "PASS_POSTGRES_SCHEDULER_CURSOR_TIMEOUT_SNAPSHOT",
+  "candidate_sha": "20d07bc31a4664cb19897697b3b0157f9d4491f5",
+  "qualification": "PostgreSQL scheduler schedule cursor/fire HTTP adapter, timeout/dispatch authority and atomic idempotent snapshots",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d652-postgres-scheduler-cursor-timeout-snapshot -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'postgres_scheduler_schedule_cursor_fire_and_http_adapter or postgres_scheduler_timeout_requests_and_dispatch_authority_are_durable or postgres_scheduler_run_and_task_snapshots_are_atomic_and_idempotent'",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 18, "duration_seconds": 7.48, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "PostgreSQL schedule cursor/fire HTTP behavior, timeout and dispatch authority, and atomic idempotent run/task snapshots all passed.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d652-postgres-scheduler-cursor-timeout-snapshot",
+  "evidence_sha256": {"pytest-output.log": "3732E2EB1BBDD6E9AE26578FC07EEB5F1271B02CC84495385C16D1E8800904DA", "pytest-postgres.log": "8FCC97F5A14C38E0D6F166C31944C1FA6BEC5AB77C7C83EEE837F648869C1E72", "pytest-postgres.xml": "337D53780930C8CCBC2AA016684AB10EA30B797914F83C562D25F9B5E060A494", "pytest-timings.json": "B86E34B7CCFC542A2DDF831DA62F7D0E5CE7561DA6E6F45ECFCBAEBF6297FFF8", "runner-timings.json": "AB9A221B632B42363E43BB8704493F9C830FCE1101600FA9D6351C1BE8339899"},
+  "limitations": ["filtered diagnostic selection, not the complete PostgreSQL suite", "does not qualify indefinite operation, HA, external providers, object stores or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
