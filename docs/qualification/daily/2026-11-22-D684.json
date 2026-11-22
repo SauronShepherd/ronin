@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D684",
+  "status": "PASS_HTTP_CONTROL_PLANE_LOCAL",
+  "candidate_sha": "c3b79a93d42ac893e1528dd8a1cc330e53b7e6c1",
+  "qualification": "HTTP JSON control plane and submit/status integration regression",
+  "command": "python -m pytest -q tests/integration/test_http_json_control_plane_real.py tests/integration/test_http_submit_status.py",
+  "result": {"selected": 9, "passed": 9, "failed": 0, "skipped": 0, "duration_seconds": 21.30, "process_exit_code": 0},
+  "finding": "The HTTP JSON control plane authorization and submit/status integration selection passed completely.",
+  "limitations": ["local integration tests", "does not qualify external providers, live Kafka, release, or P11 completion"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
