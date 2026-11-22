@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D677",
+  "status": "PASS_SDP_FAIL_CLOSED_CONTRACTS",
+  "candidate_sha": "77d18625c72dd9c01cf402b1475fedc97bd1a5e2",
+  "qualification": "SDP/Spark external qualification contract and adapter regression",
+  "command": "python -m pytest -q tests/test_spark_connect_qualification_contract.py tests/test_data_engineering_sdp_adapter.py tests/test_sdp_cli_qualification_contract.py",
+  "result": {"selected": 10, "passed": 10, "failed": 0, "skipped": 0, "duration_seconds": 2.00, "process_exit_code": 0},
+  "finding": "The qualification contracts and SDP adapter regression pass, including digest pinning and fail-closed behavior when the official external CLI is unavailable. This does not substitute for the missing official CLI provider qualification.",
+  "limitations": ["local contract/adapter tests only", "does not qualify an installed SDP Studio CLI or external provider", "does not qualify release or P11 completion"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
