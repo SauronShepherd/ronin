@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-22",
+  "day": "D776",
+  "status": "BLOCKED_EXTERNAL_OBJECT_STORE_IMAGE_PULL",
+  "candidate_sha": "94b69e131a53746f5a2398a201de1606d8662cac",
+  "qualification": "attempt external S3-compatible object-store qualification",
+  "commands": [
+    "docker run -d --name ronin-d776-minio -e MINIO_ROOT_USER=test -e MINIO_ROOT_PASSWORD=testtest -p 59000:9000 -p 59001:9001 minio/minio:latest server /data --console-address :9001",
+    "docker run -d --name ronin-d776-minio -e MINIO_ROOT_USER=test -e MINIO_ROOT_PASSWORD=testtest -p 59000:9000 -p 59001:9001 quay.io/minio/minio:latest server /data --console-address :9001"
+  ],
+  "result": {"object_store_started": false, "qualification_tests_executed": 0, "process_exit_code": 1},
+  "finding": "Docker Hub rejected minio/minio:latest with pull access denied and the Quay mirror returned 401 Unauthorized; no external object store was available.",
+  "cleanup": {"containers": 0, "minio_images": 0, "ronin_temp_images": 0},
+  "limitations": ["external S3 qualification not executed", "no mock or SQLite substitution used", "does not change P11/P13/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
