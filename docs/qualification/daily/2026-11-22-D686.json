@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D686",
+  "status": "PASS_BOUNDED_HTTP_CONTENTION",
+  "candidate_sha": "e22295e45937f5eecd610f791d42bb7883b5302c",
+  "qualification": "bounded HTTP contention and p95 budget regression",
+  "command": "python -m pytest -q tests/perf/test_http_contention_budgets.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "duration_seconds": 5.43, "process_exit_code": 0},
+  "finding": "The bounded HTTP contention scenario and latency-budget failure-shape contract passed; the bounded p95 criterion remains enforced.",
+  "limitations": ["bounded local performance selection", "not an indefinite soak or release gate", "does not complete P11 or P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
