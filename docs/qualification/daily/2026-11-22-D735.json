@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D735",
+  "status": "PASS_STREAM_SCHEDULER_BRIDGE_LOCAL",
+  "candidate_sha": "83e215961a1d39f382b2da8ad2f063228dbef018",
+  "qualification": "complete local stream scheduler bridge regression",
+  "command": "python -m pytest -q tests/test_stream_scheduler_bridge.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "duration_seconds": 3.35, "process_exit_code": 0},
+  "finding": "Stream scheduler bridge contract passed.",
+  "limitations": ["local scheduler/stream bridge regression", "does not qualify official external brokers/providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
