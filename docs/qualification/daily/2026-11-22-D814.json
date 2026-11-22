@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D814",
+  "status": "PASS_INGESTION_STORAGE_LOCAL_CURRENT_CANDIDATE",
+  "candidate_sha": "c03d486fbd6ddfb9998d3ebbf554a562761d2e2e",
+  "qualification": "current-candidate local ingestion, artifact and storage contract regression",
+  "command": "python -m pytest -q tests/test_artifact_writer_inventory.py tests/test_artifact_store.py tests/test_async_artifact_store.py tests/test_local_file_ingestion.py tests/test_storage_sqlite_internalization.py tests/test_storage_ports.py tests/test_storage_pagination_module.py tests/test_storage_pagination_contracts.py tests/test_storage_fenced_legacy_calls.py --junitxml=pytest.xml",
+  "result": {"selected": 62, "passed": 61, "failed": 0, "skipped": 1, "duration_seconds": 5.19, "process_exit_code": 0},
+  "finding": "Local file ingestion, artifact writer/store, async artifact store, SQLite internalization, storage ports/pagination and fenced legacy-call contracts passed. The sole skip is explicit Windows symlink unavailability.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d814-ingestion-storage-local-20261122", "status": "PASS"},
+  "limitations": ["one symlink capability remains skipped on Windows", "S3 artifact-store integration was not selected", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D813"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
