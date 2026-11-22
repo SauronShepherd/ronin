@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D815",
+  "status": "PASS_MIGRATION_ACCEPTANCE_CURRENT_CANDIDATE",
+  "candidate_sha": "5bca481b142a7066ac6eb69274e577cf3a3f1e60",
+  "qualification": "current-candidate Migration Studio acceptance integration",
+  "command": "python -m pytest -q tests/integration/test_migration_studio_acceptance.py --junitxml=pytest.xml",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "duration_seconds": 2.33, "process_exit_code": 0},
+  "finding": "Migration Studio acceptance integration passed without skips or failures.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d815-migration-acceptance-20261122", "status": "PASS"},
+  "limitations": ["bounded local acceptance integration", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D814"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
