@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D664",
+  "status": "PASS_LIVE_POSTGRES_BROKER_RESTART_EXPECTED_UNAVAILABLE",
+  "candidate_sha": "3d27daab092dafb0085166ab125bef6b7838899e",
+  "qualification": "live PostgreSQL/Kafka/Ronin broker restart resumes from durable checkpoint",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d664-live-broker-restart-typefix -TestGrep 'live streaming broker restart resumes from the durable checkpoint' -StorageBackend postgres -RequestTimeoutSeconds 300",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 11, "correlated_events": 11, "outcomes": {"OK": 8, "ERROR": 3}, "expected_fault_errors": 3, "application_errors": 3, "duration_seconds": 99.18, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The broker-restart journey passed and resumed from the durable checkpoint. During the intentional broker-down window, health/run returned the expected 503 streaming_unavailable responses; after restart, health and runs returned 200. All 11 events correlated with structured logs.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d664-live-broker-restart-typefix",
+  "evidence_sha256": {"browser-live.log": "F74ADA9901C16E6D1F58E1BEC0281C85F5CE717B02D9FC540DBC7D43FB99ADA9", "browser-live.xml": "74AE35E552BDAE1A6B5F9588085094391034E61320C9DC29F7C3D8856573EF84", "live-api-traffic.json": "79176160E452573C845D01784E2A826F2E6C0EE49AFF7F8C9E506CB7256842B6", "live-python-freeze.txt": "5E7214B8C1E2D70A29DCD66DCCE8E273CFABB2648F038DD6E690F00CCCBD1064", "live-server.stderr.log": "A779C3117FD1FD4F654EF0025A7E8EE91CF0045C5904AFE02CE77918A0FF9739", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "067D79E0F3F0031EDDD330E33972C0D2C7EAE36D8D2E33B66023783FE1A5E4C8", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "limitations": ["3 expected fault-path ERROR responses are retained and not counted as clean OK traffic", "single bounded broker restart and single-broker topology", "does not qualify HA, indefinite operation, multi-worker, external cloud providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
