@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D669",
+  "status": "PASS_LIVE_POSTGRES_EVENT_WORKFLOW_CURRENT",
+  "candidate_sha": "d2dc006da4cde242fd66a82a75e6aed27964ead4",
+  "qualification": "current-candidate live committed streaming record triggers workflow",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d669-live-event-workflow-current -TestGrep 'live streaming event workflow is triggered by a committed record' -StorageBackend postgres -RequestTimeoutSeconds 180",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 11, "correlated_events": 11, "outcomes": {"OK": 11, "WARN": 0}, "application_errors": 0, "duration_seconds": 51.70, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The current-candidate live committed streaming record triggered the workflow successfully against real PostgreSQL, Kafka and Ronin APIs; all 11 API events correlated and were OK.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d669-live-event-workflow-current",
+  "evidence_sha256": {"browser-live.log": "5D3612E25BD5E75FF0AE84911816522981EB1D207D8AC4C81D44884CC9F166F8", "browser-live.xml": "37608227BF23BBC19B3997646F80EB3E5CFCFC7F7C6889B9E9DA93537E6763C5", "live-api-traffic.json": "E9C2DAF3DB317FA859381044047D4281F42157D342B6A3D8BAD29DE4F382C134", "live-python-freeze.txt": "6C6F46892A1B0C7C4D54D9EE88EDEB61A3F421A06BD5336797A3C186F70FF5D1", "live-server.stderr.log": "555F23DC4BFB33AFFC918ED61793B5CB384F3E6D982B31E50375DED8C7CCD639", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "34232324A6DB1894B403E0970A34EE16913EE68B3EC8368DEC9EAE50E0791AE3", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "limitations": ["single bounded live event-workflow journey", "recualification only, does not reattribute prior D646/D100 evidence", "does not qualify indefinite operation, HA, external cloud providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
