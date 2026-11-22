@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D808",
+  "status": "PASS_ML_STUDIO_HTTP_CURRENT_CANDIDATE",
+  "candidate_sha": "f38ad69ad8c610a2e81f12d021a65904656268a8",
+  "qualification": "current-candidate ML Studio HTTP integration qualification",
+  "command": "python -m pytest -q tests/integration/test_ml_studio_http.py --junitxml=pytest.xml",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "duration_seconds": 3.48, "process_exit_code": 0},
+  "finding": "ML Studio HTTP integration cases passed without skips or failures, covering the bounded ML control-plane journey.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d808-ml-studio-http-20261122", "status": "PASS"},
+  "limitations": ["bounded local HTTP integration; does not claim external ML provider behavior", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D807"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
