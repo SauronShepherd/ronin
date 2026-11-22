@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D710",
+  "status": "PASS_HTTP_CONTRACTS_LOCAL",
+  "candidate_sha": "e3fd6906ba43dbd329b8948df1593012ad9e5590",
+  "qualification": "complete local HTTP contract regression",
+  "command": "python -m pytest -q tests/test_http_*.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 13, "passed": 13, "failed": 0, "skipped": 0, "duration_seconds": 6.27, "process_exit_code": 0},
+  "finding": "HTTP access logging, length boundaries and service timeout contracts passed completely.",
+  "limitations": ["local HTTP contract regression", "does not qualify official external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
