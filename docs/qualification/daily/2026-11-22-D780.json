@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D780",
+  "status": "PASS_POSTGRES_ML_RUNTIME_CURRENT_CANDIDATE",
+  "candidate_sha": "d50ae758d5bc7056b4f50825eb113e226aefeef8",
+  "qualification": "current-candidate PostgreSQL-backed ML runtime qualification",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://ronin:***@127.0.0.1:55442/ronin_test python -m pytest -q tests/integration/test_postgres_ml_real.py --junitxml=pytest.xml",
+  "result": {"selected": 12, "passed": 12, "failed": 0, "skipped": 0, "duration_seconds": 14.75, "process_exit_code": 0},
+  "finding": "All selected real PostgreSQL ML runtime tests passed, including durable metadata, claim lifecycle, node checkpoints, reopen behavior and bounded artifact/reference semantics.",
+  "cleanup": {"container": "ronin-d780-postgres", "container_removed": true, "temporary_postgres_volume_removed": true, "postgres_image_removed": false, "reason": "pre-existing shared postgres:16.4-alpine image preserved"},
+  "limitations": ["temporary local PostgreSQL 16.4 instance", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775, D778, D779 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
