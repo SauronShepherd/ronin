@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D786",
+  "status": "PASS_HTTP_JSON_REAL_CONTROL_PLANE_CURRENT_CANDIDATE",
+  "candidate_sha": "a6b0a9331ed1d7a5f495a7b82e117f113cf88405",
+  "qualification": "current-candidate HTTP JSON connector and control-plane integration qualification",
+  "command": "python -m pytest -q tests/integration/test_http_json_connector_real.py tests/integration/test_http_json_control_plane_real.py --junitxml=pytest.xml",
+  "result": {"selected": 9, "passed": 9, "failed": 0, "skipped": 0, "duration_seconds": 30.66, "process_exit_code": 0},
+  "finding": "HTTP JSON connector and control-plane integration cases passed, including bounded reads/checkpoints and authorized preview/control-plane behavior.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d786-http-json-real-20261122", "status": "PASS"},
+  "limitations": ["bounded local integration qualification", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775-D785 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
