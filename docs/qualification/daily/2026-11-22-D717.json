@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D717",
+  "status": "PASS_SEMANTIC_RUNTIME_LOCAL",
+  "candidate_sha": "c32ff3812d4508159ad6c903860423198de1a397",
+  "qualification": "complete local semantic runtime regression",
+  "command": "python -m pytest -q tests/test_semantic_runtime.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0, "duration_seconds": 10.85, "process_exit_code": 0},
+  "finding": "Semantic runtime contracts passed completely.",
+  "limitations": ["local semantic runtime regression", "does not qualify official external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
