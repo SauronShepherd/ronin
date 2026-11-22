@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D805",
+  "status": "PASS_SYNTHETIC_DATA_CURRENT_CANDIDATE",
+  "candidate_sha": "318598485a68c3fa8cf14610504a66162d8ea727",
+  "qualification": "current-candidate Synthetic Data public surface, persistence, async, plugin and publication regression",
+  "command": "python -m pytest -q tests/test_synthetic_data_public_surface.py tests/test_synthetic_data_publication.py tests/test_synthetic_data_plugin.py tests/test_synthetic_data_persistence.py tests/test_synthetic_data_async.py tests/test_synthetic_data.py --junitxml=pytest.xml",
+  "result": {"selected": 40, "passed": 40, "failed": 0, "skipped": 0, "duration_seconds": 1.57, "process_exit_code": 0},
+  "finding": "Synthetic Data public surface, publication, plugin, persistence, async and core contract tests passed without skips or failures.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d805-synthetic-data-20261122-rerun", "status": "PASS"},
+  "limitations": ["local Synthetic Data regression; does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D804"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
