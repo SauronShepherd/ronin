@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D659",
+  "status": "PASS_LIVE_POSTGRES_STREAM_BYTE_BOUNDARIES",
+  "candidate_sha": "ed437e676e0fd56500d33f73f72095f3cf4747b7",
+  "qualification": "live PostgreSQL/Kafka/Ronin near-record and near-batch streaming byte boundaries",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d659-live-byte-boundaries-typefix -TestGrep 'live streaming enforces near-record and near-batch byte boundaries' -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 13, "correlated_events": 13, "outcomes": {"OK": 11, "WARN": 2}, "application_errors": 0, "duration_seconds": 69.25, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The live byte-boundary journey passed against real PostgreSQL, Kafka and Ronin APIs; all 13 API events correlated, with no unexpected server/network errors.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d659-live-byte-boundaries-typefix",
+  "evidence_sha256": {"browser-live.log": "B1668E753ABDDCFF42944F61D2D0F10DB40B877D5FA31113CAAB2A1D87252271", "browser-live.xml": "6ECBE2DED4EAFEFD352572B7A932EDE247C4BEFA35F2BCFC66D80EDDA34D4143", "live-api-traffic.json": "C4D06F30F0317463827EB3E6F9182DF4909666F00AEE72AB5D7B81B04A703EE8", "live-python-freeze.txt": "B40ACF96404ACC40BEFE1BCBF2B523B2D285223E1C4BA7DCAE06CC1FFCCC6357", "live-server.stderr.log": "FD2D62C84C111A4718F25FF325A5EF0707E263035DDD14AB4F68DF2CE294F09D", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "3B2BCF28523300708F52D3AF2A1C37E29F3EFFAC1E397D2C294BC76B40158F01", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "limitations": ["single bounded byte-boundary journey", "two expected WARN outcomes are retained", "does not qualify indefinite operation, HA, external cloud providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
