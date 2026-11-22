@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D775",
+  "status": "PASS_POSTGRES_REAL_SCHEDULER_RUNTIME",
+  "candidate_sha": "0a3954aa5f9ec109b0b352fe524ba7f3e2b38f42",
+  "qualification": "real PostgreSQL scheduler/runtime qualification",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://ronin:***@127.0.0.1:55432/ronin python -m pytest -q tests/integration/test_postgres_workflow_store_real.py (temporary Docker postgres:16-alpine)",
+  "result": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0, "duration_seconds": 26.62, "process_exit_code": 0},
+  "finding": "All real PostgreSQL scheduler/runtime integration tests passed against a temporary PostgreSQL 16 instance, including daemon lease reacquisition and process-crash recovery paths.",
+  "cleanup": {"container": "ronin-d775-postgres", "container_removed": true, "image": "postgres:16-alpine", "image_removed": true},
+  "limitations": ["temporary local PostgreSQL instance", "does not by itself complete all P11 evidence or release/P13 gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
