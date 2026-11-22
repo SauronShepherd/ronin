@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D697",
+  "status": "PASS_HTTP_OPENAPI_ROUTE_CONTRACTS",
+  "candidate_sha": "602316fd83b75dfbbb63c597e031cb3bc4074632",
+  "qualification": "OpenAPI snapshot, route consistency, static studio and web document contract regression",
+  "command": "python -m pytest -q tests/test_openapi_snapshot.py tests/test_route_consistency.py tests/test_studio_static.py tests/test_web_document_structure.py",
+  "result": {"selected": 25, "passed": 25, "failed": 0, "skipped": 0, "duration_seconds": 7.50, "process_exit_code": 0},
+  "finding": "OpenAPI, route, static studio and web document contracts passed completely.",
+  "limitations": ["local contract regression", "does not qualify browser live workflows, external providers, release, or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
