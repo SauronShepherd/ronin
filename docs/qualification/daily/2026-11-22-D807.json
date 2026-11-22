@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D807",
+  "status": "PASS_MIGRATION_STUDIO_LOCAL_CURRENT_CANDIDATE",
+  "candidate_sha": "555c9e93c112591181c09fc122a36978d87e9f30",
+  "qualification": "current-candidate local Migration Studio contracts",
+  "command": "python -m pytest -q tests/test_migration_studio_validation.py tests/test_migration_studio_session_store.py tests/test_migration_studio_session.py tests/test_migration_studio_runtime.py tests/test_migration_studio_openapi.py tests/test_migration_studio_iics.py tests/test_migration_studio_evidence.py tests/test_migration_studio_codegen.py tests/test_migration_studio_benchmark.py tests/test_migration_studio_api.py tests/test_migration_studio_analysis.py --junitxml=pytest.xml",
+  "result": {"selected": 49, "passed": 49, "failed": 0, "skipped": 0, "duration_seconds": 1.26, "process_exit_code": 0},
+  "finding": "Migration Studio validation/session/runtime/OpenAPI/IICS/evidence/codegen/benchmark/API/analysis contracts passed without skips or failures.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d807-migration-local-20261122", "status": "PASS"},
+  "limitations": ["Spark adapter tests were excluded", "local regression does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D806"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
