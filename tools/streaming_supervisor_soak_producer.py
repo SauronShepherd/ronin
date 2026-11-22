@@ -63,7 +63,7 @@ def _create_topic(bootstrap: str, topic: str, replication_factor: int) -> None:
 def main() -> int:
     bootstrap = _required("RONIN_LIVE_STREAMING_BOOTSTRAP")
     topic = os.environ.get("RONIN_LIVE_SUPERVISOR_SOAK_TOPIC", "ronin-live-supervisor-soak-events")
-    duration_seconds = _bounded_int("RONIN_LIVE_SUPERVISOR_SOAK_SECONDS", 60, 60, 1800)
+    duration_seconds = _bounded_int("RONIN_LIVE_SUPERVISOR_SOAK_SECONDS", 60, 60, 3600)
     records_per_tick = _bounded_int("RONIN_LIVE_SUPERVISOR_SOAK_RECORDS_PER_TICK", 4, 1, 32)
     interval_seconds = _bounded_float(
         "RONIN_LIVE_SUPERVISOR_SOAK_INTERVAL_SECONDS", 0.25, 0.05, 5.0
