@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D608",
+  "status": "PASS_LIVE_RF3_FAILOVER_TOOLING_FIX",
+  "candidate_sha": "5e4c47610eb466766d62a115166dad150770b589",
+  "qualification": "focused multi-broker RF3 failover after excluding incompatible single-broker case from diagnostic tooling",
+  "command": "docker build --label org.ronin.qualification.run=d608 -t ronin:qualification-d608 -f docker/Dockerfile .; pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d608-live-multibroker-failover -TestGrep 'live streaming multi-broker failover' -StorageBackend postgres -MultiBroker",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 5, "correlated_events": 5, "unexpected_errors": 0, "cleanup": "PASS", "worker_image": "sha256:e840ea48b6baea73c7390ea4974be16a67f6bd1982356b28f617f49b08502746", "process_exit_code": 0},
+  "finding": "The focused RF3 failover case passes on the tooling-fix boundary; the multi-broker diagnostic now excludes the single-broker restart assertion that caused D607's false topology failure.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d608-live-multibroker-failover",
+  "evidence_sha256": {"browser-live.log": "E03D9A2046AB66065D736616C4A391431AA5CAB1C553AA1C26E134156FF5E900", "browser-live.xml": "DC6B8F9F2E8CCBE776023500CF09AD159B11C603BCE91928CF758DCC79642A2C", "live-api-traffic.json": "D35694F082E3806A8C7B43E022961735F1B8770B43FE0E2D105A4B051C292454", "qualification-summary.json": "3AD153671E40893E88EBB362D084E95DD6D7233B40349A4D8057CA1EA972CE89", "live-server.stderr.log": "E0426D66F42DF621700A37C4DC0C52A098903416CD25D1BF1CDEB5FE91D2D085"},
+  "limitations": ["focused diagnostic only", "does not qualify sustained backpressure or full RF3 matrix", "does not prove complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
