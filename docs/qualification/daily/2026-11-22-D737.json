@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D737",
+  "status": "PASS_STREAMING_KAFKA_LOCAL",
+  "candidate_sha": "f4c15deb20a6f4a6cdffff1d7767cd3de869d1e1",
+  "qualification": "complete local Kafka streaming contract regression",
+  "command": "python -m pytest -q tests/test_streaming_kafka.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 14, "passed": 14, "failed": 0, "skipped": 0, "duration_seconds": 1.62, "process_exit_code": 0},
+  "finding": "Kafka streaming contracts passed locally.",
+  "limitations": ["local Kafka contract regression", "does not qualify an external Kafka broker/provider, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
