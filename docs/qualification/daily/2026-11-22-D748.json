@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D748",
+  "status": "PASS_WORKSPACE_PLUGIN_EVENTS_LOCAL",
+  "candidate_sha": "a68a4372d5395e046d76d6308787ad8622d01967",
+  "qualification": "complete local workspace plugin events regression",
+  "command": "python -m pytest -q tests/test_workspace_plugin_events.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "duration_seconds": 2.79, "process_exit_code": 0},
+  "finding": "Workspace plugin event contracts passed completely.",
+  "limitations": ["local workspace plugin events regression", "does not qualify external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
