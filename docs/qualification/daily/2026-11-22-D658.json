@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D658",
+  "status": "PASS_POSTGRES_WORKFLOW_AFTER_FORMAT_BOUNDARY",
+  "candidate_sha": "37ce10127540fc7170b39b5535ee09a448fd54f3",
+  "qualification": "complete PostgreSQL workflow-store integration regression after source-format/lint boundary",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d658-postgres-workflow-after-format -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "result": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0, "deselected": 0, "duration_seconds": 20.51, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The complete PostgreSQL workflow-store integration file remained green after the format/lint source boundary: all 21 scheduler, recovery, cancellation, migration, outbox/inbox and HTTP adapter scenarios passed.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d658-postgres-workflow-after-format",
+  "evidence_sha256": {"pytest-output.log": "A566D3E61F1010AB3DD8118D91435C54BC66BBDCA8C3E7A4881B513C61F4AE53", "pytest-postgres.log": "E3CDE14701851F005A85F5661D11C37DEA1918A509EF24760F839BB63A5EA5A8", "pytest-postgres.xml": "44057A6ED5FFF2497814972B3EAF72654ECC2F562E6B8D13C29CA772179729C9", "pytest-timings.json": "23B83959BB24824766565B31312FD0B295A78179B287A27CF623E935359C19C3", "runner-timings.json": "B97B3C84764DA0270766AE4C7D3CF061C3ED93BFAED143D7D766A44CA2FDC388"},
+  "limitations": ["mypy still reports pre-existing errors in package tests/tools when excluding generated build directories", "bounded integration evidence does not qualify indefinite operation, HA, external providers, external object stores or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
