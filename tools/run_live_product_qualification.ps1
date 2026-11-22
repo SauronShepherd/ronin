@@ -507,9 +507,20 @@ try {
         try {
             node tests/live-preflight.mjs 2>&1 | Tee-Object -FilePath $evidenceFiles.BrowserLog
             if ($LASTEXITCODE -ne 0) { throw "Live UI preflight failed with exit code $LASTEXITCODE." }
-            npm exec -- playwright test `
-                tests/live-runs.spec.mjs tests/ingestion-live.spec.mjs tests/product-live.spec.mjs `
-                --workers=1 "--grep=$TestGrep" 2>&1 |
+            $playwrightArguments = @(
+                "tests/live-runs.spec.mjs",
+                "tests/ingestion-live.spec.mjs",
+                "tests/product-live.spec.mjs",
+                "--workers=1",
+                "--grep=$TestGrep"
+            )
+            if ($multiBrokerDiagnostic) {
+                # The single-broker restart case intentionally asserts exactly
+                # one broker; exclude it from RF3 diagnostics so topology
+                # selection cannot create a false multi-broker failure.
+                $playwrightArguments += "--grep-invert=live streaming broker restart"
+            }
+            npm exec -- playwright test @playwrightArguments 2>&1 |
                 Tee-Object -FilePath $evidenceFiles.BrowserLog -Append
         } finally {
             Pop-Location
