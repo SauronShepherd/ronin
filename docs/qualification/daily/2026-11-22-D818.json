@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D818",
+  "status": "PASS_AZURITE_CURRENT_CANDIDATE",
+  "candidate_sha": "d23377bdccd62adf6a38ec8eae8672a27d16e41d",
+  "qualification": "current-candidate Azure Blob-compatible connector qualification against isolated Azurite",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d818-azure-current-20261122 -ImageTag ronin:qualification-d818-azure -TestFilter test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26, "pytest_duration_seconds": 2.51, "process_exit_code": 0},
+  "finding": "The current candidate passed Azure Blob-compatible discovery, JSONL read, snapshot checkpoint replay and secret-redaction assertions against isolated Azurite.",
+  "provider": {"kind": "Azure Blob-compatible", "service": "Azurite", "endpoint": "temporary loopback", "ronin_image_digest": "sha256:cff87d03ab31c73788735976532c1d585373b7a04c7a84076385dffae0aa3f3e"},
+  "cleanup": {"azurite_compose_removed": true, "azurite_volume_removed": true, "azurite_network_removed": true, "ronin_qualification_image_removed": true, "status": "PASS"},
+  "limitations": ["Azurite emulator evidence, not a remote Azure production account", "filtered Docker diagnostic; strict v0.1 gate was not evaluated", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D777 or D100-D817"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
