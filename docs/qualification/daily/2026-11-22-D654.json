@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D654",
+  "status": "PASS_POSTGRES_SCHEDULER_MIGRATION_DEPLOYMENT",
+  "candidate_sha": "3d93fe4344d13afaf20a1e88a6713322974d8cd2",
+  "qualification": "PostgreSQL scheduler schema migrations, workspace-scoped deployment binding and runnable schedule",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d654-postgres-scheduler-migration-deployment -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'postgres_scheduler_deployment_binding_is_workspace_scoped_and_runnable or postgres_scheduler_migrates_schema_six_to_ten or postgres_scheduler_backfill_migrates_schema_five_to_six'",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 18, "duration_seconds": 4.81, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "PostgreSQL scheduler schema migrations, workspace-scoped deployment binding and runnable scheduling all passed.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d654-postgres-scheduler-migration-deployment",
+  "evidence_sha256": {"pytest-output.log": "3C7F0639A366D4D6817AC66626CCB19130B14398ED014F4F27E6CDD6070A6CA9", "pytest-postgres.log": "389FAE0422EFBFA80C5AB0D09CAD4409AE95D74FFB524CC97E2BD047EF5F89AB", "pytest-postgres.xml": "8FB91A0BABF6F03003DBC2F956F37D85D5408C0DD767B9CCDB033E2C1FD03422", "pytest-timings.json": "99D423BEA5DE4146D065C141D00F92BBE0BC9F772C6591AF271DB42245D8F14C", "runner-timings.json": "2E4D808A5AC1E4E6F5002CC9DDDD14472C603D9962CA6B96F620F1B0CE4C8DEA"},
+  "limitations": ["filtered diagnostic selection, not the complete PostgreSQL suite", "does not qualify indefinite operation, HA, external providers, object stores or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
