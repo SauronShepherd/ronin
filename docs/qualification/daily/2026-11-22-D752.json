@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D752",
+  "status": "PASS_STUDIO_STATIC_LOCAL",
+  "candidate_sha": "e76160099c55432f4c6c994e4c6eb950f04c643b",
+  "qualification": "complete local Studio static regression",
+  "command": "python -m pytest -q tests/test_studio_static.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 10, "passed": 10, "failed": 0, "skipped": 0, "duration_seconds": 4.11, "process_exit_code": 0},
+  "finding": "Studio static contracts passed completely.",
+  "limitations": ["local Studio static regression", "does not qualify external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
