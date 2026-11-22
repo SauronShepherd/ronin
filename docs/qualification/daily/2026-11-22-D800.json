@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D800",
+  "status": "PASS_WEB_NONLIVE_CURRENT_CANDIDATE",
+  "candidate_sha": "4407d2d8d1ec4d5be36192f55a5736580b4d0dc5",
+  "qualification": "current-candidate Playwright web regression excluding explicitly live tests",
+  "command": "cd web-tests && npm test",
+  "result": {"selected": 182, "passed": 182, "failed": 0, "skipped": 0, "duration_seconds": 276.0, "process_exit_code": 0},
+  "finding": "All non-live Playwright web tests passed, including accessibility, responsive matrix, route traversal, keyboard navigation and Studio workbench journeys.",
+  "cleanup": {"docker_containers": 0, "docker_qualification_images": 0, "playwright_test_results": "web-tests/test-results", "status": "PASS"},
+  "limitations": ["live-tagged web tests were excluded by the npm test script", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D799"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
