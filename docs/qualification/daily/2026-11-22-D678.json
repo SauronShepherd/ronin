@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D678",
+  "status": "PASS_DATA_ENGINEERING_HTTP_LOCAL",
+  "candidate_sha": "1758f1bfb1489a96c7d772adf8fe0332a096fe05",
+  "qualification": "local data-engineering HTTP surface and SDP adapter regression",
+  "command": "python -m pytest -q tests/integration/test_data_engineering_http.py tests/test_data_engineering_sdp_adapter.py",
+  "result": {"selected": 9, "passed": 9, "failed": 0, "skipped": 0, "duration_seconds": 3.58, "process_exit_code": 0},
+  "finding": "The local data-engineering HTTP integration surface and SDP adapter tests passed completely.",
+  "limitations": ["local-only surface", "does not qualify official SDP Studio, Spark Connect, PostgreSQL runtime, external providers, release, or P11 completion"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
