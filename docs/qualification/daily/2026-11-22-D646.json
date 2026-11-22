@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D646",
+  "status": "PASS_LIVE_POSTGRES_EVENT_WORKFLOW_TYPEFIX",
+  "candidate_sha": "64d4cf7d21b532a56327145af241282946b38f0c",
+  "qualification": "live PostgreSQL streaming event-to-workflow route after streaming adapter type fix",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d646-live-event-workflow-typefix -TestGrep 'live streaming event workflow is triggered by a committed record' -StorageBackend postgres -RequestTimeoutSeconds 120",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "api_events": 11, "correlated_events": 11, "outcomes": {"OK": 11}, "application_errors": 0, "duration_seconds": 50.52, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The current type-fixed candidate triggered the event workflow from a committed streaming record with PostgreSQL configured, 11/11 API events correlated and no server/network errors.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d646-live-event-workflow-typefix",
+  "evidence_sha256": {"browser-live.log": "68423386EFC732BD1E54F89BD270E5897F9F82244EE990E4EB0CAAB1D4F7AF0F", "browser-live.xml": "5646EEB92D16CE552740FEA0F25DAE846E806A53A05325D540B20DDF32A734AD", "live-api-traffic.json": "1444E196EC150044B4C08A2CC95E2C67B9A1C07D709CFCA96B3124E4B71BD1E0", "live-python-freeze.txt": "CC87A864D776B949D2CA864040237C657130CA86CCB931D07D72E15EE84BD475", "live-server.stderr.log": "49BC2CB7A28E1F38462AD86CA633D9C294B15375EFB223495B4F7B3B4D3BF703", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "C83F5A3DB8A71286894343212CE386733CBAB65A03D1DA0E4A2E8C8DF19628D0", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "limitations": ["single bounded live event-to-workflow scenario", "does not qualify indefinite operation, HA, external cloud providers or release", "does not reattribute earlier candidate evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
