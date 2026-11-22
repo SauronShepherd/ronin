@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D777",
+  "status": "PASS_AZURITE_AZURE_BLOB_CURRENT_CANDIDATE",
+  "candidate_sha": "1ffc5fd6f2a02ea9c5fd685289f1a72d65d456c0",
+  "qualification": "current-candidate Azure Blob connector qualification against isolated Azurite",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d777-azure-provider-current-20261122 -ImageTag ronin:qualification-d777-azure -TestFilter test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26, "duration_seconds": 7.62, "process_exit_code": 0},
+  "finding": "The current candidate passed Azure Blob JSON connector discovery, JSONL read, snapshot checkpoint replay, and secret redaction assertions against an isolated Azurite service.",
+  "cleanup": {"azurite_project_removed": true, "temporary_volumes_removed": true, "temporary_network_removed": true, "ronin_qualification_image_removed": true, "cleanup_status": "PASS"},
+  "limitations": ["Azurite Azure-compatible emulator, not a remote Azure production account", "filtered diagnostic; strict v0.1 gate was not evaluated", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or prior provider evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
