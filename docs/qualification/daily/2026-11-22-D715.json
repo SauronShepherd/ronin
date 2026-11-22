@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D715",
+  "status": "PASS_QUALITY_RUNTIME_LOCAL",
+  "candidate_sha": "d82dcf87036515f5b2c00b27bfdc6357f4e25355",
+  "qualification": "complete local quality runtime regression",
+  "command": "python -m pytest -q tests/test_quality_runtime.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 34, "passed": 34, "failed": 0, "skipped": 0, "duration_seconds": 4.92, "process_exit_code": 0},
+  "finding": "Quality runtime contracts passed completely.",
+  "limitations": ["local quality runtime regression", "does not qualify official external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
