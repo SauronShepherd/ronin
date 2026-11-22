@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D628",
+  "status": "PASS_POSTGRES_SCHEDULER_RUNTIME",
+  "candidate_sha": "9734e29a442b454107fd1b8f5c3f6eb0641b5558",
+  "qualification": "bounded PostgreSQL scheduler/runtime persistence, migration, deployment binding, HTTP adapter and schedule cursor contracts",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d628-postgres-scheduler-runtime -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_deployment_binding_is_workspace_scoped_and_runnable or test_postgres_scheduler_migrates_schema_six_to_ten or test_postgres_workflow_http_routes_use_durable_scheduler_adapter or test_postgres_scheduler_run_and_task_snapshots_are_atomic_and_idempotent or test_postgres_scheduler_schedule_cursor_fire_and_http_adapter'",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "deselected": 16, "pytest_seconds": 4.53, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "The candidate passed PostgreSQL scheduler/runtime contracts for workspace-scoped runnable deployments, schema migration six-to-ten, durable HTTP routes, atomic idempotent run/task snapshots, and schedule cursor/fire behavior.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d628-postgres-scheduler-runtime",
+  "evidence_sha256": {"pytest-output.log": "A5A8B9B3F67DD499A742F2320BB59E2431748D918D8C4D82C08D0C7AA0DE3551", "pytest-postgres.log": "725FBF178DD9DCE78D1129F0D8A7E3D0528A25D40FB11BBCA4A5E8A5674387ED", "pytest-postgres.xml": "EE4CF9D05852242418D72280D54060C46504FEBE2C42C5A37AF9C03B6CC3F620", "pytest-timings.json": "0F094B0C45D703047C84D5CCDC74D88D23D9C6E11963A7C6AC1D7A69157632CF", "runner-timings.json": "DF59FFA4D71468EA746B82B3CE7D2BF3576B7066201841D1A790D80B62E4347F"},
+  "limitations": ["five bounded runtime scenarios only", "does not qualify indefinite operation, external providers, worker HA, live worker Docker execution or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
