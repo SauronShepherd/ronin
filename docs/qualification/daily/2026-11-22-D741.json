@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D741",
+  "status": "PASS_SYNTHETIC_DATA_PLUGIN_LOCAL",
+  "candidate_sha": "3d5007fc87f343a8f80b9ddea583c55bb37078ec",
+  "qualification": "complete local synthetic-data plugin regression",
+  "command": "python -m pytest -q tests/test_synthetic_data_plugin.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 22, "passed": 22, "failed": 0, "skipped": 0, "duration_seconds": 3.40, "process_exit_code": 0},
+  "finding": "Synthetic-data plugin contracts passed completely.",
+  "limitations": ["local synthetic-data plugin regression", "does not qualify external providers/object stores, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
