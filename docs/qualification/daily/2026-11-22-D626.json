@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D626",
+  "status": "PASS_POSTGRES_SCHEDULER_RECOVERY",
+  "candidate_sha": "7576a2a0be0c41a2463dc968196a8d5f6825799c",
+  "qualification": "bounded PostgreSQL scheduler recovery: expired lease reacquisition and process-crash job replay without duplicate fire/job",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d626-postgres-scheduler-recovery -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or test_postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate'",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 19, "pytest_seconds": 6.12, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "With isolated PostgreSQL 16.4, a restarted scheduler reacquired an expired leadership lease without a duplicate schedule fire, and a process-crash replay redispatched the durable job while preserving one execution intent and one idempotency-key row.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d626-postgres-scheduler-recovery",
+  "evidence_sha256": {"pytest-output.log": "BCCE2158A64433A2D939EB473875F320B9C96B64B9FD1D9D48461B38D6B265E0", "pytest-postgres.log": "9B95530D0910BEF32B2D4724F018FB801B0D4DBA05B0D77CC831369A1A8E2EA7", "pytest-postgres.xml": "5269EDBD7BEF167EFC9062D093834F731DFF7F70038CD83E97ADFEC75738F440", "pytest-timings.json": "D210757876735F0D9F9F7AB9803DF06E5BE45A38028DA7A0AC8AB5C9AC3209F8", "runner-timings.json": "C747E69E8D27FD63170DA7EB815F066FB77CED043503C16B85EFAD30DC2528F7"},
+  "limitations": ["two bounded recovery scenarios only", "does not qualify indefinite operation, multi-scheduler HA, live worker Docker execution or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
