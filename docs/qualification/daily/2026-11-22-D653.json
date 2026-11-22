@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D653",
+  "status": "PASS_POSTGRES_SCHEDULER_BRANCH_LEADERSHIP_BUNDLE",
+  "candidate_sha": "af004ca07840df0a6fa0f2138bea1ca088ded350",
+  "qualification": "PostgreSQL scheduler late branch fencing, persistent generation-fenced leadership and atomic idempotent workflow/schedule Bundle import",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d653-postgres-scheduler-branch-leadership-bundle -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'postgres_scheduler_rejects_late_branch_decision_without_mutating_terminal_task or postgres_scheduler_leadership_is_generation_fenced_and_persistent or postgres_workflow_and_schedule_bundle_import_is_atomic_and_idempotent'",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "deselected": 18, "duration_seconds": 4.29, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "PostgreSQL rejected late branch decisions without mutating terminal tasks, persisted generation-fenced scheduler leadership, and kept workflow/schedule Bundle import atomic and idempotent.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d653-postgres-scheduler-branch-leadership-bundle",
+  "evidence_sha256": {"pytest-output.log": "44B64160F8E5461A6E6F0CA036AEA1129E731DD28E8D0A22906F251B13872B5B", "pytest-postgres.log": "518A46C180D22464A6FD22B079F2A900BB11A83F703D47B74683A0E01C4A4AB1", "pytest-postgres.xml": "8FD4FA64142008F38B1A6ABA192AC9FD2F8D82B1460161D8E4AC2902DB898D02", "pytest-timings.json": "48E14B1DDF57B8E37417FFDF17AE65DB218B519A89C8C352A5912489330D3225", "runner-timings.json": "436935DF2AB545920132E35C5F881F850A270D32AA03F94F683BDB7E1DA93A14"},
+  "limitations": ["filtered diagnostic selection, not the complete PostgreSQL suite", "does not qualify indefinite operation, HA, external providers, object stores or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
