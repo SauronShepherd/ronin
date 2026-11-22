@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D791",
+  "status": "PASS_STREAM_SCHEDULER_CURRENT_CANDIDATE",
+  "candidate_sha": "0d062ab958f6fc60816dad6f5e6cffd60bc1849c",
+  "qualification": "current-candidate streaming runtime and stream-to-scheduler bridge regression",
+  "command": "python -m pytest -q tests/test_streaming_runtime.py tests/test_stream_scheduler_bridge.py --junitxml=pytest.xml",
+  "result": {"selected": 15, "passed": 15, "failed": 0, "skipped": 0, "duration_seconds": 29.28, "process_exit_code": 0},
+  "finding": "The current candidate passed streaming runtime and stream-to-scheduler bridge regressions, including checkpoint/replay and deterministic event-bridge behavior.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d791-stream-scheduler-current-20261122", "status": "PASS"},
+  "limitations": ["local regression; does not claim a new live multi-broker or indefinite-operation result", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D790"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
