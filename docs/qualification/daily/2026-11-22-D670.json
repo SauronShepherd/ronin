@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D670",
+  "status": "PASS_STATIC_WEB_CURRENT",
+  "candidate_sha": "d2dc006da4cde242fd66a82a75e6aed27964ead4",
+  "qualification": "current-candidate static Chromium/Web suite excluding live tests",
+  "command": "npm test -- --reporter=line",
+  "working_directory": "web-tests",
+  "result": {"selected": 182, "passed": 182, "failed": 0, "skipped": 0, "duration_minutes": 5.6, "process_exit_code": 0},
+  "finding": "The complete non-live static Chromium suite passed 182/182. A fixture-server 404/connection-abort trace appeared during a quality test but did not produce a Playwright failure; live/provider evidence remains separate.",
+  "limitations": ["static UI suite excludes all tests tagged live", "does not qualify real services, streaming, providers, indefinite operation, security or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
