@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D615",
+  "status": "PASS_POSTGRES_WORKFLOW_STORE_FULL_CURRENT",
+  "candidate_sha": "ff008682212c51a46ea099adc960c6658909d074",
+  "qualification": "complete PostgreSQL-backed workflow store integration file on current main",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d615-postgres-workflow-store-full -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "result": {"selected": 21, "passed": 21, "failed": 0, "skipped": 0, "deselected": 0, "postgres": "16.4-alpine", "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The full PostgreSQL workflow-store integration file passes, covering scheduler leadership, leases, recovery, outbox/inbox, cancellation, backfill, migrations, snapshots and durable HTTP adapters.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d615-postgres-workflow-store-full",
+  "evidence_sha256": {"pytest-output.log": "4527383C24599AA7AF18EB5778015EA0EB7F8DA210581853CDEB9CD0E9CB41EC", "pytest-postgres.log": "A401CDB75E936E9B6040D9BF88F6DD40E70591CDF2949CDB36F9EB637CB9011A", "pytest-postgres.xml": "0A68909F9C3A2E7FA8CEAB38EDE2407C7762B283C77899CDCB1C1DDC0B8CDD0D", "pytest-timings.json": "199FA0A43D0B46BD0B3E1DCC3A348A3E9FA34DA6C6D266A284022D6C4A8BF557", "runner-timings.json": "92D06DA3A2AD1112165D7CC841ABF8E7F2D5DCC16902C7A89B535C8C8857B1A6"},
+  "limitations": ["single PostgreSQL instance", "bounded integration file scope", "does not prove HA, indefinite operation, complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
