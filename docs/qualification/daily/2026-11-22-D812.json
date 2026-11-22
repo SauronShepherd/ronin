@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D812",
+  "status": "PASS_STUDIO_STATIC_AUDIT_CURRENT_CANDIDATE",
+  "candidate_sha": "7646a301bfd022c8f4beecd88d2067d873d02358",
+  "qualification": "current-candidate Studio surface/static and browser-audit contract regression",
+  "command": "python -m pytest -q tests/test_studio_surface.py tests/test_studio_static.py tests/test_studio_web_audit.py tests/test_browser_audit_routes.py --junitxml=pytest.xml",
+  "result": {"selected": 16, "passed": 16, "failed": 0, "skipped": 0, "duration_seconds": 1.83, "process_exit_code": 0},
+  "finding": "Studio surface/static, web-audit and browser-route audit contracts passed without skips or failures.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d812-studio-static-audit-20261122", "status": "PASS"},
+  "limitations": ["static/Python audit does not replace the live web qualification", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D811"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
