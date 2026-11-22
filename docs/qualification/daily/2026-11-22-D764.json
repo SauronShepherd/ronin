@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D764",
+  "status": "PASS_V01_ACCEPTANCE_GATE_LOCAL",
+  "candidate_sha": "80ea2c526a858707b927af50273bde51477ea0b2",
+  "qualification": "complete local v0.1 acceptance gate regression",
+  "command": "python -m pytest -q tests/test_v01_acceptance_gate.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 17, "passed": 17, "failed": 0, "skipped": 0, "duration_seconds": 3.45, "process_exit_code": 0},
+  "finding": "The local v0.1 acceptance-gate contracts passed completely.",
+  "limitations": ["local acceptance gate regression", "does not complete external qualification gates or change release NO-GO/P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
