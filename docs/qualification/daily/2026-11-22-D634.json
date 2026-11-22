@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D634",
+  "status": "PASS_POSTGRES_STREAMING_CHECKPOINT",
+  "candidate_sha": "930001d631430ca06b9709c96125ddcd7622dbfc",
+  "qualification": "PostgreSQL streaming checkpoint CAS/reopen and table append replay/conflict contracts",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d634-postgres-streaming-checkpoint -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "pytest_seconds": 1.64, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "PostgreSQL streaming checkpoint bundle CAS/reopen and stream-table append replay/conflict contracts both passed against isolated PostgreSQL 16.4.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d634-postgres-streaming-checkpoint",
+  "evidence_sha256": {"pytest-output.log": "8B392ADEF55ADCC1D25FB9ED7386889A8F96DDC082DC20FC6FB0E4A38B8DC8F0", "pytest-postgres.log": "A10B819A1E8CE6624ED0B33F8AD04C741AE61CCE13FD16AEC4849EF11278A473", "pytest-postgres.xml": "6A29FFDB0389648B352AC46C5315346E136411EC6C51F8DDBABCB906638A2C80", "pytest-timings.json": "335FFB0072F504B20BE480B1628015569AB8CA2F4CE4E5484D75045B8800D2A1", "runner-timings.json": "C6B6F3FE6EE5B7C407D2F45C54AD147ECD384759B546FBAD7B85F0969B78C7C6"},
+  "limitations": ["two bounded PostgreSQL streaming contracts", "does not qualify full live P11 route, indefinite operation, external providers or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
