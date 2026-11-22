@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D733",
+  "status": "PASS_STREAMING_WINDOWS_LOCAL",
+  "candidate_sha": "bb0782de66618968870829ee142e49769ecb73e1",
+  "qualification": "complete local streaming windows regression",
+  "command": "python -m pytest -q tests/test_streaming_windows.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "duration_seconds": 2.72, "process_exit_code": 0},
+  "finding": "Streaming window contracts passed completely.",
+  "limitations": ["local streaming windows regression", "does not qualify official external brokers/providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
