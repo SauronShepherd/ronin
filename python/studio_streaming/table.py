@@ -54,7 +54,7 @@ class SqliteStreamTable:
                 "ON CONFLICT(stream_id,partition_id,offset_value) DO NOTHING",
                 parameters,
             )
-            inserted = int(insert_result.rowcount)
+            inserted = int(getattr(insert_result, "rowcount", insert_result))
             if inserted != len(parameters):
                 predicates = " OR ".join(
                     "(partition_id=? AND offset_value=?)" for _record, _value in encoded
