@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D784",
+  "status": "PASS_POSTGRES_AUDIT_RETENTION_CURRENT_CANDIDATE",
+  "candidate_sha": "dc704f583e644ed3065ba72b9bebea73458ef5e5",
+  "qualification": "current-candidate PostgreSQL audit store and artifact-retention barrier qualification",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://ronin:***@127.0.0.1:55448/ronin_test RONIN_TEST_POSTGRES_DSN=postgresql://ronin:***@127.0.0.1:55448/ronin_test python -m pytest -q tests/integration/test_postgres_audit_store.py tests/integration/test_postgres_artifact_retention_barrier.py --junitxml=pytest.xml",
+  "result": {"selected": 8, "passed": 8, "failed": 0, "skipped": 0, "duration_seconds": 6.25, "process_exit_code": 0},
+  "finding": "Real PostgreSQL audit-store and artifact-retention barrier tests passed, including bounded newest-first audit listing and durable reference/retention lease behavior.",
+  "cleanup": {"container": "ronin-d784-postgres-rerun", "container_removed": true, "temporary_postgres_volume_removed": true, "postgres_image_removed": false, "reason": "pre-existing shared postgres:16.4-alpine image preserved"},
+  "limitations": ["temporary local PostgreSQL 16.4 instance", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D775-D783 or prior evidence"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
