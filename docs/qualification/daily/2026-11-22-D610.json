@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D610",
+  "status": "PASS_LIVE_FULL_POSTGRES_CURRENT",
+  "candidate_sha": "400599fcffce0ee17aad685bb2144a1a43a4ebf8",
+  "qualification": "full live product qualification against PostgreSQL with immutable Docker worker after RF3 diagnostic tooling fix",
+  "command": "docker build --label org.ronin.qualification.run=d610 -t ronin:qualification-d610 -f docker/Dockerfile .; pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d610-live-full-postgres -StorageBackend postgres -WorkerImage sha256:5284e570e473bb5094314df44c4c4be249505470ee2670fdb5760924aee1c50b -RequestTimeoutSeconds 120",
+  "result": {"selected": 43, "passed": 42, "failed": 0, "skipped": 1, "active_routes": 25, "api_backed_routes": 24, "api_events": 482, "correlated_events": 482, "unexpected_errors": 0, "expected_errors": 2, "expected_error_code": "streaming_unavailable", "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The full live route passes on the current candidate with real PostgreSQL, Kafka and Docker worker. The one skip remains the reserved RF3 case; the two 503 streaming_unavailable responses are expected broker-recovery observations and are not unexpected errors.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d610-live-full-postgres",
+  "evidence_sha256": {"browser-live.log": "02A87B083E2D1BC09B85611D8B81E52A6D762E1AEA0B50113BDE49B6B75A8AF0", "browser-live.xml": "0392DE4EBC03218E1417DCDECCA06DAF3EA68F2DE73E5EFC7DB09C15E1D81EF4", "live-api-traffic.json": "7A3B5FED23679A0FE518B9DED23CE456F319D3CF7B7AEF828CCEA31E6523CCAA", "qualification-summary.json": "251A07BAF5267534D7910CC376131F6D75A6FD79EBF09E039FCD855B5335244D", "live-server.stderr.log": "2E1F2BDF59099F0D22678F03ED8862AC1F1FA5FC5A089E77B2FE303D40A5A136"},
+  "limitations": ["one explicitly reserved RF3 skip", "bounded live route", "expected broker-recovery 503 responses", "does not prove indefinite operation, complete P11, P13 or release gates"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
