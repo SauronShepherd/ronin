@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D738",
+  "status": "PASS_KERNEL_EVENT_LEDGER_RECOVERY_LOCAL",
+  "candidate_sha": "321ee1af85b654e1f79d89e3be2fdc3d196e718b",
+  "qualification": "complete local kernel event-ledger recovery regression",
+  "command": "python -m pytest -q tests/test_kernel_event_ledger_recovery.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 17, "passed": 17, "failed": 0, "skipped": 0, "duration_seconds": 3.57, "process_exit_code": 0},
+  "finding": "Kernel event-ledger recovery contracts passed completely in local execution.",
+  "limitations": ["local recovery regression", "does not qualify productive scheduler recovery, official external providers, release or P11/P13 closure"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
