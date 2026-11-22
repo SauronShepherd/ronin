@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D757",
+  "status": "PASS_WORKER_INFLIGHT_CANCELLATION_LOCAL",
+  "candidate_sha": "d32c2abad98e4e7e2d48ea2422d42c3a5c148528",
+  "qualification": "complete local worker in-flight cancellation regression",
+  "command": "python -m pytest -q tests/test_worker_inflight_cancellation.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "duration_seconds": 3.26, "process_exit_code": 0},
+  "finding": "Worker in-flight cancellation contract passed.",
+  "limitations": ["local worker cancellation regression", "does not qualify productive worker recovery, external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
