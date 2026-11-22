@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D638",
+  "status": "PASS_STREAMING_LOCAL_AGGREGATE",
+  "candidate_sha": "48a8165f0f3cba0144d1160ed0bcd592bc01cd11",
+  "qualification": "aggregate local streaming test family regression",
+  "command": "python -m pytest -q tests/integration/test_streaming_multi_broker_real.py tests/test_stream_table.py tests/test_stream_scheduler_bridge.py tests/test_streaming_windows.py tests/test_streaming_runtime.py tests/test_streaming_kafka.py tests/test_streaming_health.py tests/test_streaming_contracts.py tests/test_streaming_bundle.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d638-all-streaming-local\\pytest.xml",
+  "result": {"selected": 52, "passed": 51, "failed": 0, "skipped": 1, "process_exit_code": 0, "duration_seconds": 20.25},
+  "finding": "The aggregate local streaming family passed 51/51 executed tests. One explicit multi-broker real-service case remained skipped because its broker environment was not configured; it is not counted as pass.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d638-all-streaming-local",
+  "evidence_sha256": {"pytest.log": "56C581365D835709B92F9AC85FC95CC7905CA30482FC416DA9EDF29866213AA2", "pytest.xml": "E786D2B2B2F52C40AE865551A4D45EFD7AD3DD52B0EEA84DD531C0E60AB72604"},
+  "limitations": ["one real multi-broker case skipped because required environment was unset", "local aggregate regression, not complete live P11 or release evidence", "does not qualify external providers or indefinite operation"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
