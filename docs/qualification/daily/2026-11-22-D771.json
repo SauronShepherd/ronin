@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D771",
+  "status": "PASS_TRINO_QUALIFICATION_CONTRACT_LOCAL",
+  "candidate_sha": "3b8d1a7ebeef1889473cea0bab63c62ad9b50ce8",
+  "qualification": "complete local Trino qualification contract regression",
+  "command": "python -m pytest -q tests/test_trino_qualification_contract.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 3, "passed": 3, "failed": 0, "skipped": 0, "duration_seconds": 0.70, "process_exit_code": 0},
+  "finding": "Trino qualification contracts passed locally.",
+  "limitations": ["local Trino qualification contract regression", "does not reattribute D672 external Trino evidence, qualify an external provider, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
