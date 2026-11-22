@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D640",
+  "status": "PASS_PYTHON_FULL_POSTGRES_CURRENT",
+  "candidate_sha": "143366c98bbe85b8c917f94e1590de9c0ef974c4",
+  "qualification": "full non-performance Python suite against isolated PostgreSQL 16.4 on current candidate",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d640-python-full-current",
+  "result": {"collected": 4794, "passed": 4763, "failed": 0, "skipped": 31, "warnings": 23, "pytest_seconds": 625.99, "total_seconds": 634.326, "process_exit_code": 0, "cleanup": "succeeded"},
+  "finding": "The exact current candidate passed the complete non-performance Python suite with isolated PostgreSQL 16.4. The 31 skips remain explicit environment, provider, Docker opt-in or host-capability limits and are not promoted to PASS.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d640-python-full-current",
+  "evidence_sha256": {".coverage": "97042E32A5ADAB217A452986CDD14D4C66642E219BF5BEC8F9771A0049EC2635", "pytest-output.log": "9CDD3844FC28B495073C70CA987157D2B7123B22C73D0F366389BA69C5775EAE", "pytest-postgres.log": "76BB89AA3AB684B7740EDDA522A9650ED0BF8389A726536266D04C162FF85B8E", "pytest-postgres.xml": "0CA4B7DBA864BD8EDE24FE16825EED73DF206B138C2B0FFA4B7632344FB1BA71", "pytest-timings.json": "D16C6D9466FDA1169A4603274F1288632205A09678563B1BACFB4049184A80AF", "runner-timings.json": "3370E3548CEDF950A2F545A88CAF871EB4DB3CBF84C0CDD15216DC5040DFDF6E"},
+  "limitations": ["full suite is not a release gate", "31 explicit skips remain", "does not qualify external cloud providers, indefinite operation, worker HA or release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
