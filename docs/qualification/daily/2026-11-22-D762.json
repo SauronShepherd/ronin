@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D762",
+  "status": "PASS_T1_PROPERTIES_LOCAL",
+  "candidate_sha": "7ea26e6b48d3fe4d864f3d82aad4cf95e2ef5a4f",
+  "qualification": "complete local T1 property regression",
+  "command": "python -m pytest -q tests/test_t1_properties.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "duration_seconds": 7.11, "process_exit_code": 0},
+  "finding": "T1 property contracts passed completely.",
+  "limitations": ["local T1 property regression", "does not qualify external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
