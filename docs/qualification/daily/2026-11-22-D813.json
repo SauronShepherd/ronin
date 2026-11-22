@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-22",
+  "day": "D813",
+  "status": "PASS_NOTEBOOK_SEMANTIC_CURRENT_CANDIDATE",
+  "candidate_sha": "fcffe0c5c42101b0c19f79db55a2eb4a4e2e73a6",
+  "qualification": "current-candidate Notebook and Semantic Studio local regression",
+  "command": "python -m pytest -q tests/test_notebook_revisions.py tests/test_notebook_portability.py tests/test_notebook_dependencies.py tests/test_semantic_runtime.py tests/test_semantic_joins.py tests/test_semantic_store.py --junitxml=pytest.xml",
+  "result": {"selected": 64, "passed": 64, "failed": 0, "skipped": 0, "duration_seconds": 1.71, "process_exit_code": 0},
+  "finding": "Notebook revisions/portability/dependencies and Semantic runtime/joins/store contracts passed without skips or failures.",
+  "cleanup": {"temporary_services": "none", "temporary_evidence_directory": "C:\\Users\\ANGEL~1.ALV\\AppData\\Local\\Temp\\ronin-d813-notebook-semantic-20261122", "status": "PASS"},
+  "limitations": ["local regression; does not claim external provider behavior", "does not by itself complete all P11 evidence or release/P13 gates", "does not reattribute D100 or D775-D812"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
