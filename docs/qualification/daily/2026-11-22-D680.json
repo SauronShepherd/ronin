@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-22",
+  "day": "D680",
+  "status": "PASS_DOCKER_APPLIANCE_BACKUP",
+  "candidate_sha": "59b49e00c3273051fddda6a831e571bfe832a568",
+  "qualification": "real Docker appliance backup and restore with PostgreSQL and local data volume",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d680-docker-appliance-backup-retry -TestFilter 'appliance and backup'",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 26, "pytest_seconds": 18.47, "process_exit_code": 0},
+  "service": {"fixtures": ["PostgreSQL", "Docker worker"], "ronin_image_digest": "sha256:8abaa90f52c59126e3acc19802d481855a8ceac1f32b4c237b7e28d8d8ecb6c0"},
+  "evidence": {
+    "directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d680-docker-appliance-backup-retry",
+    "files": {
+      "docker-cleanup.json": "80ADFF19C7A5816A85905C085D742FB3742C0A84068000E33EF118F9FF0C7E1D",
+      "docker-pytest-output.log": "15B2529794FF7E0C6067228F4260E4DC6A30B28CD917B5C2304B504FBBB8A621",
+      "docker-qualification.log": "A5E778A0C9834F17A8B64D2EB21ABA4C609676F512127C6C9A65AD5BABE2F9CE",
+      "postgres-qualification.log": "BD0663B82E85BB3DF0421E7E7588CDF87D7FDA481F8F80EE5CB040A6B3AAB0C9",
+      "v01-acceptance.xml": "16A678DE2C7D97CF8453A61799A23BD78AFEC7AFEAF57B120C40DA292C2704AA"
+    },
+    "cleanup": "PASS: Docker qualification and owned Ronin image cleanup; no containers or temporary Ronin/qualification images remain"
+  },
+  "finding": "The real appliance backup/restore flow passed with PostgreSQL and Ronin's local data volume.",
+  "limitations": ["filtered Docker diagnostic; strict v0.1 acceptance gate was not evaluated", "does not qualify release or P11 completion"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
