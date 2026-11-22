@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-22",
+  "day": "D704",
+  "status": "PASS_CATALOG_LINEAGE_LOCAL",
+  "candidate_sha": "a5138c930a9be4d35c841bd248b3a74770994c72",
+  "qualification": "catalog, lineage, search, semantic and ontology local regression",
+  "command": "python -m pytest -q tests/test_catalog*.py tests/test_catalog_search.py tests/test_semantic_store.py tests/test_ontology_graph_store.py (PowerShell-expanded explicit file list)",
+  "result": {"selected": 111, "passed": 111, "failed": 0, "skipped": 0, "duration_seconds": 11.67, "process_exit_code": 0},
+  "finding": "Catalog, lineage/search, semantic store and ontology graph contracts passed completely.",
+  "limitations": ["local provider-neutral regression", "does not qualify external providers, release or P11/P13"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
