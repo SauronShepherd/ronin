@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-22",
+  "day": "D618",
+  "status": "PASS_LIVE_STREAMING_RF3_BROAD_FIXED_FILTER",
+  "candidate_sha": "72456268c26b45e0d86487194fb1190a473a7449",
+  "qualification": "broad filtered live streaming diagnostic with RF3 after excluding incompatible single-broker case",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d618-live-streaming-rf3-fixed-filter -TestGrep streaming -StorageBackend postgres -MultiBroker",
+  "result": {"selected": 10, "passed": 10, "failed": 0, "skipped": 0, "api_events": 236, "correlated_events": 236, "unexpected_errors": 0, "outcomes": {"OK": 228, "WARN": 8}, "cleanup": "PASS", "process_exit_code": 0},
+  "finding": "The corrected broad RF3 streaming filter passes all 10 selected cases; D607's incompatible single-broker selection and fetch failure are absent, with zero log errors or critical events.",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d618-live-streaming-rf3-fixed-filter",
+  "evidence_sha256": {"browser-live.log": "011DBB9A9AD81D3672BA2710031B4265B6ED11A3F29782222CA75E109D29D54D", "browser-live.xml": "09B1F9DFAB1A9100EF4413ECB57DCD17D002DACBDC4222B2528435AE617A7350", "live-api-traffic.json": "F1ACE0733F5D92455C681A98D225E18519B0F337EA4BBC16DED0F3AE09B59737", "qualification-summary.json": "FB5A099F26E2899F11DD11C154DE43F17BEA6AD92AE92643854CA8107912964A", "live-server.stderr.log": "2EC2A3FBADAE7D5A71611D7145E85F16B25C0DE9A9F9CA9ED0919307010BFD46"},
+  "limitations": ["filtered streaming scope", "local Redpanda RF3 and PostgreSQL", "bounded diagnostic, not indefinite operation or release approval", "does not qualify external cloud provider production"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
