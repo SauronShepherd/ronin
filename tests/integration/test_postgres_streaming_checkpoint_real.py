@@ -56,3 +56,24 @@ def test_postgres_stream_table_append_replay_and_conflict() -> None:
     with pytest.raises(ValueError, match="replay conflicts"):
         table.append(stream_id, conflict)
     table.close()
+
+
+def test_postgres_stream_table_reopen_replays_without_duplicate_rows() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    stream_id = f"reopen-table-{uuid4().hex}"
+    batch = StreamBatch(
+        (StreamRecord(1, 13, 456, "reopen-key", {"event": "durable"}),),
+        StreamCheckpoint((StreamPosition(1, 13),)),
+    )
+    first = PostgresStreamTable(dsn)
+    try:
+        assert first.append(stream_id, batch) == 1
+    finally:
+        first.close()
+
+    reopened = PostgresStreamTable(dsn)
+    try:
+        assert reopened.append(stream_id, batch) == 0
+        assert reopened.read(stream_id) == batch.records
+    finally:
+        reopened.close()
