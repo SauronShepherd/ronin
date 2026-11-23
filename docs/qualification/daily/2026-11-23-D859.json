@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D859",
+  "status": "PASS_LOCAL_COMPOSED_CURRENT_CANDIDATE",
+  "candidate_sha": "3eefc909c9071bb9328464bd56b206be69ac70d3",
+  "qualification": "bounded local-composed integration cell",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -LocalOnly -TestPath tests/test_local_composed.py -EvidenceDirectory %TEMP%\\ronin-d859-local-composed-20261123",
+  "result": {"selected": 30, "passed": 30, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 555.91, "process_exit_code": 0},
+  "criterion": "local-composed scheduler, workspace, semantic, catalog, ML, migration, FinOps and recovery journeys pass together",
+  "evidence": {"root": "%TEMP%\\ronin-d859-local-composed-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_services": "none", "postgres_evidence": false},
+  "limitations": ["local-only diagnostic; it is not PostgreSQL or external-provider evidence", "does not qualify indefinite operation, production HA or release", "does not reattribute D100-D858"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
