@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D842",
+  "status": "PASS_POSTGRES_SCHEDULER_BACKFILL_REOPEN_CURRENT_CANDIDATE",
+  "candidate_sha": "cbfaafb54fe51032bc8a74fb9d0217289b63423e",
+  "qualification": "isolated PostgreSQL scheduler backfill and reopen diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"scheduler_backfill_runs_through_the_service_and_survives_reopen\" -EvidenceDirectory %TEMP%\\ronin-d842-backfill-reopen-20261123",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 3.0, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "scheduler backfill runs through the service and durable state survives storage reopen",
+  "evidence": {"root": "%TEMP%\\ronin-d842-backfill-reopen-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["filtered diagnostic only; not the complete Python/PostgreSQL suite", "does not qualify indefinite operation or the complete P11 family journey", "does not reattribute D100-D841"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
