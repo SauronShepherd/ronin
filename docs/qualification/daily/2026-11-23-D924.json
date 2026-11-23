@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D924",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Serial streaming Kafka/runtime regression",
+  "candidate_sha": "79bd4719e8a6e79ba7f9ab0ec194c0685e458e25",
+  "implementation_commit_sha": "79bd4719e8a6e79ba7f9ab0ec194c0685e458e25",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D924.md",
+  "execution_scope": "clean-main-serial-streaming-kafka-runtime-contracts-bridge-no-randomly",
+  "result": {
+    "qualification": "PASS: 33/33 selected streaming tests passed in 28.71s",
+    "cleanup": "PASS: pytest-only run created no containers or images",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "tests": [
+      "tests/test_streaming_kafka.py",
+      "tests/test_streaming_runtime.py",
+      "tests/test_streaming_contracts.py",
+      "tests/test_stream_scheduler_bridge.py"
+    ],
+    "randomly_plugin": "disabled",
+    "log_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d924-evidence\\pytest-output.log"
+  },
+  "hashes": { "pytest_log_sha256": "d31318db749f96d654388264a19d82ac130c07df505b87131ea15569afd6e724" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local serial regression only; it does not qualify live RF3 or override D921/D922/D923 intermittency evidence.",
+    "No production source was changed and no release qualification is claimed.",
+    "D924 is bound to candidate 79bd4719e8a6e79ba7f9ab0ec194c0685e458e25; earlier evidence is not reattributed."
+  ]
+}
