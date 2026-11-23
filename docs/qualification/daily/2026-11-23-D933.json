@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D933",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate composed HTTP catalog/governance runtime on PostgreSQL",
+  "candidate_sha": "f0ff1d21f141321fde963398ed98d3737deaea02",
+  "implementation_commit_sha": "f0ff1d21f141321fde963398ed98d3737deaea02",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D933.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-composed-http-runtime",
+  "result": {
+    "qualification": "PASS: 1/1 selected HTTP integration test, 0 skips/failures",
+    "cleanup": "PASS: isolated PostgreSQL fixture removed by runner",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_postgres_test_suite.ps1",
+    "test_path": "tests/integration/test_postgres_local_composed_catalog_http.py",
+    "test_filter": "postgres_composition_serves_catalog_and_governance_over_real_http",
+    "postgres_image": "postgres:16.4-alpine",
+    "storage_backend": "postgres",
+    "selected_tests": 1,
+    "duration_seconds": 3.28,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d933-postgres-runtime-exact"
+  },
+  "hashes": {
+    "pytest_output_sha256": "52e2a0cd6558daa6a7d3e55e7810f9f48fd3e490ff0d2022fe8111a095545d18",
+    "pytest_postgres_log_sha256": "168b3b13910a1012f7b1f42038525b116257edd7e7834ea24c93afc8bbffb5bc",
+    "pytest_xml_sha256": "88b1ad182c3e6072f19f1d2bee2f3427cd75f49ee2df8285a1890d03618ee7e5"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Filtered bounded HTTP runtime diagnostic only; no complete P11, HA, indefinite operation or release evidence.",
+    "D933 is bound to candidate f0ff1d21f141321fde963398ed98d3737deaea02; earlier evidence is not reattributed."
+  ]
+}
