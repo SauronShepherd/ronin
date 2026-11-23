@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1119",
+  "date": "2026-11-23",
+  "status": "pass_data_engineering_queryflux_local_regression",
+  "candidate_sha": "561f478e0e6334944483a09bd7ad46ee14474bec",
+  "implementation_commit_sha": "561f478e0e6334944483a09bd7ad46ee14474bec",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1119.md",
+  "command": "python -m pytest -q <all tests/test_data_engineering_*.py> tests/integration/test_data_engineering_http.py <all tests/test_query_engine_*.py>",
+  "result": {
+    "qualification": "PASS: 167 passed in 27.32s.",
+    "scope": "Local Data Engineering and QueryFlux coverage: compilation, execution, evidence, lineage, revisions, runtimes, plugins, UI/contracts, worker bridges, local query engine policy and HTTP integration.",
+    "production_change": "None.",
+    "cleanup": "PASS: local tests completed without external containers or persistent services.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "A123F40286A38C3170CA97E622C609954AA91B0A0E486C895E95D9510D447EC4"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local regression only; optional Trino/PostgreSQL/SDP/cloud endpoints are not reclassified from their separate qualification boundaries.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
