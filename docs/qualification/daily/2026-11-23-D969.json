@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D969",
+  "date": "2026-11-23",
+  "status": "pass_live_bounded_expected_error_traffic",
+  "candidate_sha": "2525b511ce5f8fc10fae8b8a5c9735c9d9d3ac66",
+  "implementation_commit_sha": "2525b511ce5f8fc10fae8b8a5c9735c9d9d3ac66",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D969.md",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d969-live-full-current -StorageBackend postgres -RequestTimeoutSeconds 90 -WorkerImage <image>",
+  "result": { "playwright": "42/43 passed, 1 deliberate skip, 0 case failures", "api": "502/502 correlated; 478 OK, 21 expected WARN, 3 expected 503 ERROR", "cleanup": "PASS", "release_effect": "No family or gate changes; P11 in_progress, P13 blocked, NO-GO" },
+  "parameters": { "storage_backend": "postgres", "active_routes": 25, "api_routes": 24, "worker_image_digest": "sha256:7b2b8dd46072b18e563513d4e40d2e59d0214f20e3049708a5ac59f7af51f2eb", "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d969-live-full-current" },
+  "hashes": { "qualification_summary_sha256": "8c2656aedd3137abd257d1e860f4707cc56e734cf0578b3380a32a34328ce09a", "live_api_traffic_sha256": "488cd9489db8a62099769d3b428a8cbc19ccb31e7819ce664e4eac2cd5ef20fa", "browser_live_xml_sha256": "31b7c11ff5df3541afe2b9242e9b211d81b70b073c9043d90b1562ab00a8db94" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": ["Bounded route evidence with one reserved skip and expected fault-recovery 503s; no indefinite, HA, external provider, complete P11 or release claim."]
+}
