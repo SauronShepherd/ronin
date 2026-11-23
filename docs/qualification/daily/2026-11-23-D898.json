@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D898",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL live supervisor bounded soak 120 seconds",
+  "candidate_sha": "c025ddf9ac1962eaa95c7106c05e8536ffbff5f9",
+  "implementation_commit_sha": "c025ddf9ac1962eaa95c7106c05e8536ffbff5f9",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D898.md",
+  "execution_scope": "clean-main-live-diagnostic-postgresql-redpanda-real-worker-supervisor-120s",
+  "result": {
+    "qualification": "PASS: 1/1 filtered Playwright case passed in 2.1 minutes",
+    "api_traffic": "PASS: 161/161 API events correlated with structured logs; 161 OK, 0 uncorrelated, 0 ERROR/CRITICAL",
+    "services": "PASS: PostgreSQL, Redpanda, Ronin API and exact-candidate Docker worker were active",
+    "cleanup": "PASS: live services/network/volume and qualification image were removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "docker build -f docker/Dockerfile -t ronin:qualification-d898-20261123 .; pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d898-evidence -TestGrep 'supervisor soak' -WorkerImage ronin:qualification-d898-20261123 -StorageBackend postgres -SupervisorSoakSeconds 120",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d898-evidence",
+    "worker_image_digest": "sha256:de5bd4a2824204039e43287afa5248fe2cca0fa11ff5893b8afcad81b9211d63",
+    "supervisor_soak_seconds": 120,
+    "api_events": 161,
+    "elapsed_seconds": 164.91
+  },
+  "hashes": {
+    "browser_live_log": "8fb98076fd70605236b1ec93da380f48005c6450e9c84bbb3144175d14ed30df",
+    "browser_live_xml": "af85f99cd98ccdfaea991628e3ce04790e582cd1d4aac7c878a9652a262fd2e0",
+    "live_api_traffic": "a0b1cea02f70c088f5401ea0c64aed03e43e22915fe78577bb427c0551d868c8",
+    "qualification_summary": "58e0574a7072021d9ed54c2c4a5a618d090611d6ae04183714686109dab12d0f"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered bounded diagnostic, not an indefinite SLO/HA qualification or the full live route.",
+    "The 120-second criterion is new relative to D878's 60-second cell, but remains finite and does not close the full P11 family.",
+    "D898 is bound to candidate c025ddf9ac1962eaa95c7106c05e8536ffbff5f9; earlier evidence is not reattributed."
+  ]
+}
