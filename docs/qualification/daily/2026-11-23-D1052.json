@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1052",
+  "date": "2026-11-23",
+  "status": "pass_observability_contracts",
+  "candidate_sha": "9001e0fb1dc63ce27214deda91cec91459af7a9d",
+  "implementation_commit_sha": "9001e0fb1dc63ce27214deda91cec91459af7a9d",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1052.md",
+  "command": "python -m pytest -q tests/test_otlp_exporter.py tests/test_otlp_qualification_contract.py tests/test_observability_instrumentation.py tests/test_local_observability_plugins.py",
+  "result": {
+    "qualification": "PASS: 12/12 local OTLP exporter, qualification-wiring, instrumentation and observability-plugin contract tests",
+    "scope": "Observability export semantics, OTLP qualification wiring, instrumentation and local observability plugins",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "add4f0e04262d6202218950f3f45a7d639eda6414adfc47b43df680b3644209c" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process observability evidence only; the real OTLP collector integration remains unqualified in this receipt.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
