@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1019",
+  "date": "2026-11-23",
+  "status": "pass_ml_foundation_feature_contracts",
+  "candidate_sha": "2856c11f66e9d8170a2b740c523d1a1942e9d587",
+  "implementation_commit_sha": "2856c11f66e9d8170a2b740c523d1a1942e9d587",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1019.md",
+  "command": "python -m pytest -q tests/test_ml_foundation.py tests/test_ml_feature_definitions.py",
+  "result": {
+    "qualification": "PASS: 22/22 local ML foundation and feature-definition contract tests",
+    "scope": "ML foundation primitives and feature-definition behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "8d37cc82c7de408960cc7cb5aac7f2c666f9157ffec53cddecf6d171d4cdd16" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process contract evidence only; this cell does not qualify external providers, PostgreSQL runtime or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
