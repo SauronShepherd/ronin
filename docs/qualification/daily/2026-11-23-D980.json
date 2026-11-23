@@ -1,0 +1,23 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D980",
+  "date": "2026-11-23",
+  "status": "pass_local_backup_contract_regression",
+  "candidate_sha": "1885c1e7d780415ba659ee419cca10d80e705b71",
+  "implementation_commit_sha": "1885c1e7d780415ba659ee419cca10d80e705b71",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D980.md",
+  "command": "python -m pytest -q tests/test_ronin_appliance_backup.py tests/test_postgres_backup.py",
+  "result": {
+    "qualification": "PASS: 8/8 local appliance/PostgreSQL backup contract tests",
+    "external_provider": "NOT QUALIFIED: no external object-store provider was contacted",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "fd7865c058f3a0e22681789c645cc6f7d6fe2d9d3852a145eccef89e41fb2d43" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local contract coverage only; D980 does not certify external object-store backup/recovery or P14.",
+    "D974 remains the bounded Docker/emulator evidence for appliance backup/restore."
+  ]
+}
