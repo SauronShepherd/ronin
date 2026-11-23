@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D977",
+  "date": "2026-11-23",
+  "status": "pass_bounded_rf3_supervisor_1800s_postgresql",
+  "candidate_sha": "639bbb0d3863542259ffa7dcf84219ab32ecaca8",
+  "implementation_commit_sha": "639bbb0d3863542259ffa7dcf84219ab32ecaca8",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D977.md",
+  "command": "docker build --label org.ronin.qualification.run=d977 -t ronin:qualification-d977-live -f docker/Dockerfile .; pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d977-rf3-supervisor-1800 -WorkerImage ronin:qualification-d977-live -StorageBackend postgres -TestGrep 'streaming supervisor soak drains while records arrive' -SupervisorSoakSeconds 1800 -RequestTimeoutSeconds 90 -MultiBroker",
+  "result": {
+    "qualification": "PASS: 1/1 filtered Playwright case, 0 skipped, 0 failed",
+    "criterion": "bounded three-broker RF3 supervisor soak for exactly 1,800 seconds",
+    "topology": "PASS: three-broker Redpanda RF3 plus PostgreSQL backend and Docker worker",
+    "api_correlation": "PASS: 2,153/2,153 API events correlated, all OK; 0 log errors/critical events",
+    "worker_image_digest": "sha256:f06406dc4cdfa0d4f132fba1c2115315d20323b08891c39a3eddf04a5a418580",
+    "cleanup": "PASS: brokers, PostgreSQL, network, volume and owned worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "browser_log_sha256": "3da7ce65b49a79d1ba176bbd41f997c1dd2f2427ba362ae245cccb3a31c1b277",
+    "browser_junit_sha256": "38f76de04d77a8e0ac0fefdcc1c6201f958379b1afbccba80016b9eab991143b",
+    "live_api_traffic_sha256": "301b6b54c933d3fb81d3c62253854a27294652f6f115ed04e3d98aa1ee641759",
+    "server_stderr_sha256": "01bd13be415aaba14860d78fb8c14a4570592c0b07ff34eedd7f99b5db846ae1",
+    "qualification_summary_sha256": "9f41408906248f6f0e1b3c94b2b222a53d70f7fe24944e5e0d55c79c069e4c8d"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a single finite 1,800-second soak and does not prove indefinite operation, production SLO or HA/multi-worker behavior.",
+    "The RF3 brokers and PostgreSQL are local qualification fixtures; this does not certify an external provider or production deployment.",
+    "D977 does not close complete P11, P13 or release approval; historical receipts remain bound to exact candidates."
+  ]
+}
