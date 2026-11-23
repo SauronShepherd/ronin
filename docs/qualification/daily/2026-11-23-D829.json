@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-23",
+  "day": "D829",
+  "status": "NOT_PASS_LIVE_POSTGRES_FULL_CURRENT_CANDIDATE",
+  "candidate_sha": "5466761c45f813a26314f6058a1fc046179e3cf3",
+  "qualification": "full live route with explicit PostgreSQL backend and real Docker worker",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d829-live-postgres-current-20261123 -StorageBackend postgres -WorkerImage ronin:qualification-d829-live -RequestTimeoutSeconds 30",
+  "result": {"executed": 43, "passed": 41, "failed": 1, "skipped": 1, "duration_seconds": 349.77, "process_exit_code": 1},
+  "traffic": {"api_events": 534, "correlated_http_logs": 534, "uncorrelated": 0, "outcomes": {"OK": 510, "WARN": 21, "ERROR": 3}},
+  "failure": "two-partition backlog bounded micro-batch case required runAttempts < 40 and observed 40",
+  "services": {"postgres": true, "kafka": true, "ronin_api": true, "real_worker_image": true},
+  "cleanup": {"status": "PASS", "postgres_removed": true, "broker_removed": true, "volume_removed": true, "network_removed": true, "worker_image_removed": true, "remaining_containers": [], "remaining_qualification_images": []},
+  "limitations": ["full live route NOT_PASS", "PostgreSQL backend is explicitly configured, but the single backlog failure prevents PASS qualification", "does not reattribute D100-D828 or close P11/release"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
