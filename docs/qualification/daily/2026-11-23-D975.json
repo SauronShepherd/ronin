@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D975",
+  "date": "2026-11-23",
+  "status": "pass_live_full_postgresql_backend",
+  "candidate_sha": "0702324cf2eb353c363873ffc849e93cbe90061f",
+  "implementation_commit_sha": "0702324cf2eb353c363873ffc849e93cbe90061f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D975.md",
+  "command": "docker build --label org.ronin.qualification.run=d975 -t ronin:qualification-d975-live -f docker/Dockerfile .; pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d975-live-full-postgres -WorkerImage ronin:qualification-d975-live -StorageBackend postgres -RequestTimeoutSeconds 90",
+  "result": {
+    "qualification": "PASS: 42/43 Playwright cases passed, 1 deliberate skip, 0 case failures",
+    "route_audit": "25 active routes audited: 24 API-backed and 1 UI-only",
+    "api_correlation": "PASS: 483/483 events correlated with structured logs; 459 OK, 21 expected WARN, 3 expected fault-recovery 503 ERRORs",
+    "postgresql_runtime": "PASS: live Ronin server explicitly used PostgreSQL backend; isolated PostgreSQL fixture and runtime were active",
+    "worker_image_digest": "sha256:f727e651264278c523d3c447a3f9345bff26bcda1977d6f16d487c2206db48c2",
+    "cleanup": "PASS: Compose PostgreSQL/Redpanda resources and owned worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "browser_log_sha256": "4dba6245f7ebbe948d76fec93045db16df219f361f42850cedbe088950339e2",
+    "browser_junit_sha256": "c42569990f0c23b47009fda566b85d2c247dfe01e823b5eb42a8dccb0f86fff7",
+    "live_api_traffic_sha256": "4e5ecab6da6de8a1414454ceb8ae48e7dedbac1f8f245985ea08bb4cf05d95e0",
+    "server_stderr_sha256": "a2b6ba92337f9151973bb734603de3783fb66bda197df89e78022c2d373c1652",
+    "server_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification_summary_sha256": "dd4c2e3a5e08bb5918c4d8c9282a1cf12a9986e881007fdcd503c77e86272ff"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "The default runner still records one deliberate single-broker skip for the separate multi-broker case; that case is not converted into 43/43 by D975.",
+    "The three 503 events are retained as expected fault-recovery behavior, not reclassified as OK; no unexpected authorization/server/network errors were reported.",
+    "This is bounded PostgreSQL live-route evidence and does not prove indefinite operation, HA/multi-worker, external provider certification, complete P11, P13 or release approval.",
+    "Historical receipts remain bound to exact candidates; D975 does not reattribute D969 or earlier evidence."
+  ]
+}
