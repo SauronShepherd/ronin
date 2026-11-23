@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1137",
+  "date": "2026-11-23",
+  "status": "pass_postgres_runner_compatibility_regression",
+  "candidate_sha": "809bf5e4ca20afc27b8850cb0cf372e099c24023",
+  "implementation_commit_sha": "809bf5e4ca20afc27b8850cb0cf372e099c24023",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1137.md",
+  "command": "python -m pytest -q tests/test_docker_qualification_contract.py -k 'postgres or hash_locked'",
+  "result": {"qualification": "PASS: 6 passed, 20 deselected in 1.58s.", "scope": "PostgreSQL qualification runner and hash-locked environment contract after Windows PowerShell 5 compatibility fix.", "production_change": "Runner/tooling change only.", "cleanup": "PASS.", "release_effect": "No state changes; P11 in_progress, P13 blocked, release NO-GO at 1/13 and 0/10."},
+  "hashes": {"pytest_output_sha256": "9C6EB215B4F642040516644F1C171CA3601D4AA236B6ECEA09C99D5DA0A8DA54"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Contract regression only; real PostgreSQL evidence is recorded separately in D1138.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1138",
+  "date": "2026-11-23",
+  "status": "pass_real_postgres_scheduler_workflow",
+  "candidate_sha": "809bf5e4ca20afc27b8850cb0cf372e099c24023",
+  "implementation_commit_sha": "809bf5e4ca20afc27b8850cb0cf372e099c24023",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1138.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory <external-temp-dir> -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "result": {
+    "qualification": "PASS: 21 passed in 24.22s, 0 selected skipped/failed.",
+    "scope": "Real PostgreSQL 16.4-alpine workflow/scheduler store: durable cancellation, fencing, leases/reclaim, backfill/reopen, event inbox replay, snapshots/idempotency, deployment binding, schema migrations, schedule cursor/fire, leadership and execution outbox/process-crash reconciliation.",
+    "service": "postgres:16.4-alpine isolated loopback container",
+    "production_change": "Runner compatibility fix only; no Ronin runtime production code changed.",
+    "cleanup": "PASS: runner removed the isolated PostgreSQL container and volumes; no ronin-pytest-pg container remains.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "7736A2A6F7646CA740CE46189030DA68A4D5567177DF889B044E921DF8E9B181",
+    "postgres_log_sha256": "04042268F0A66FE8B67DB2FBB639F51A84B061A4FF24EA9EA2F7C10EA85996CD",
+    "junit_sha256": "F6B27FA0CFCE93FBFB2634F9D003A321AAD98F2733CB25BDEACD6DF61A354AC1",
+    "timings_sha256": "2450B9FEA68B843D6CCA3362F62FC6D30AC87E43CBD881A7D3CFA56534B4D219",
+    "runner_timings_sha256": "EFDB791389AD6130A55B88BA77E76F35F3C9C9A35A9839A32FBEDD75B8289879",
+    "runner_output_sha256": "7198A4A3B5F8745708DBA3D9330FFC42B2E3A24C1547A95C39238422A5B7CE5A"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered real PostgreSQL scheduler/workflow evidence only; not the full PostgreSQL suite, full live product journey, HA or indefinite operation.", "This is distinct PostgreSQL runtime evidence and does not reattribute D100's SQLite live route.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
