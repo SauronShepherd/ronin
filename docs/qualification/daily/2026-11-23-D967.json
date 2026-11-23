@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D967",
+  "date": "2026-11-23",
+  "status": "pass_full_postgres_regression_after_runner_fix",
+  "candidate_sha": "ee01748beca0b3c31c652d05921beda9fce54916",
+  "implementation_commit_sha": "ee01748beca0b3c31c652d05921beda9fce54916",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D967.md",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory %TEMP%\\ronin-d967-full-postgres-after-git-isolation",
+  "result": { "tests": 4794, "passed": 4794, "failures": 0, "skips": 31, "cleanup": "PASS", "release_effect": "No family or gate changes; P11 in_progress, P13 blocked, NO-GO" },
+  "hashes": { "pytest_output_sha256": "ab6d8cea328628f6067d0a987c70f3fb2f5cbddb678022e4240225ae7c195d26", "junit_sha256": "f73a8d8942acefa34a94244c6a1b6ea9be3ac974f64d21fc32ea3aff89cc7046", "runner_timings_sha256": "5f8b628ef50a01f3ba5b54eaaf295d1cf35e9f7f8d0017691379c3e12ed69030" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": ["Full bounded Python/PostgreSQL regression; no indefinite, HA, external provider, complete P11 or release claim."]
+}

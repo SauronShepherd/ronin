@@ -1,0 +1,13 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D966",
+  "date": "2026-11-23",
+  "status": "pass_runner_git_isolation_focused",
+  "candidate_sha": "ee01748beca0b3c31c652d05921beda9fce54916",
+  "implementation_commit_sha": "ee01748beca0b3c31c652d05921beda9fce54916",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D966.md",
+  "result": "19/20 passed, 1 skipped, 0 failed in test_git_source.py",
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": ["Focused runner validation only; complete suite is D967."]
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D965",
+  "date": "2026-11-23",
+  "status": "not_pass_environment_git_config_contamination",
+  "candidate_sha": "ef3dc9eb31bbfff78c56a06caf7eaf460238cdd3",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D965.md",
+  "result": { "tests": 4794, "failures": 30, "skips": 31, "release_effect": "No release change; P11 in_progress, P13 blocked, NO-GO" },
+  "cause_observed": "Temporary Git repository tests inherited host GIT_CONFIG_COUNT/GIT_CONFIG_KEY_*/GIT_CONFIG_VALUE_* and returned git init exit 128",
+  "hashes": { "pytest_output_sha256": "7687ecf4e7983791091461a094ff49ece633d5172306766373d44833d1da4575", "junit_sha256": "bbb6c32f16bda3b15e896627129aa456762538774c0b131473743cc7f5f167db" },
+  "limitations": ["D965 is not qualification PASS and is retained as failure evidence."]
+}
