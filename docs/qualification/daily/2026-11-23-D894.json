@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D894",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL connector checkpoint integration",
+  "candidate_sha": "b6368d11e6481a47c39c6f04e306459cf2aa86b5",
+  "implementation_commit_sha": "b6368d11e6481a47c39c6f04e306459cf2aa86b5",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D894.md",
+  "execution_scope": "clean-main-real-postgresql-complete-test-postgres-connector-checkpoint-real-file",
+  "result": {
+    "qualification": "PASS: 3/3 tests passed, 0 skipped, 0 failed, 0 deselected and 0 unrelated collection skips",
+    "checkpoints": "PASS: fencing/inventory/restart, shared ingestion composition, and sync worker scoped checkpoint advancement",
+    "cleanup": "PASS: isolated PostgreSQL runner completed without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d894-evidence -TestPath tests/integration/test_postgres_connector_checkpoint_real.py",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d894-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 6.78,
+    "test_file": "tests/integration/test_postgres_connector_checkpoint_real.py",
+    "collected": 3
+  },
+  "hashes": {
+    "pytest_output": "04cc7f4ecd8b307c08d14b9d89df6ca60ef90f2ca6da262e0914851b04513e02",
+    "pytest_postgres_log": "1da58edc25d85b437b63e2d4a8bc8325921b1e78d9808e5457f0204a12a89051",
+    "junit": "a069fb5184b68c05ac75eecb51da1181cf30bc5911700d43e7cc59e8854318ca",
+    "runner_timings": "a1cffc7c962001316ea83bc43b1672aa021583bbcce4ec04327c1de7acc19f61"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This file-scoped diagnostic disables coverage and is not the complete Python/PostgreSQL suite or a release gate.",
+    "D894 does not establish HA, indefinite operation, external providers or release approval.",
+    "D894 is bound to candidate b6368d11e6481a47c39c6f04e306459cf2aa86b5; earlier evidence is not reattributed."
+  ]
+}
