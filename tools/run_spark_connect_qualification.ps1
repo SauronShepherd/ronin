@@ -243,7 +243,15 @@ try {
 } finally {
     $cleanupClock = [Diagnostics.Stopwatch]::StartNew()
     if ($serviceStarted) {
-        docker logs $containerName 2>&1 | Set-Content -LiteralPath $sparkLogPath -Encoding utf8
+        # Spark writes its normal startup command to stderr. Capture both streams
+        # without turning that diagnostic output into a cleanup failure.
+        $previousCleanupErrorActionPreference = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = "Continue"
+            docker logs $containerName 2>&1 | Set-Content -LiteralPath $sparkLogPath -Encoding utf8
+        } finally {
+            $ErrorActionPreference = $previousCleanupErrorActionPreference
+        }
         docker rm --force --volumes $containerName | Out-Null
         if ($LASTEXITCODE -ne 0) {
             $cleanupStatus = "failed"
