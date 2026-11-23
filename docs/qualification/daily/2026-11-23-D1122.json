@@ -1,0 +1,22 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1122",
+  "date": "2026-11-23",
+  "status": "not_pass_sdp_cli_unavailable",
+  "candidate_sha": "914adf5c90e00c7ec40c6d87dc589c0ad3f86b14",
+  "implementation_commit_sha": "914adf5c90e00c7ec40c6d87dc589c0ad3f86b14",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1122.md",
+  "command": "SDP_STUDIO_COMMAND=sdpstudio python -m pytest -q tests/e2e/test_data_engineering_external.py -k sdp_studio_external_smoke",
+  "result": {
+    "qualification": "NOT_PASS: 1 failed, 2 deselected in 3.33s.",
+    "scope": "Configured SDP Studio provider smoke using the PATH executable; the executable starts but fails before provider protocol handling.",
+    "failure": "ModuleNotFoundError: No module named 'sdpstudio_cli'",
+    "production_change": "None.",
+    "cleanup": "PASS: no external service or container was started.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "E837BFD22EFE9B8D8B9FB64540211C74C0CBC203338ED5D513FEE1A8898621FB"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["SDP Studio remains unqualified until a working provider CLI/runtime is installed and the same smoke passes.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
