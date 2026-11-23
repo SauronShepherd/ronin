@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D960",
+  "date": "2026-11-23",
+  "status": "pass_contract_only_external_provider_unqualified",
+  "candidate_sha": "676e56d7ed8d3a1032c3e95105012979113183ad",
+  "implementation_commit_sha": "676e56d7ed8d3a1032c3e95105012979113183ad",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D960.md",
+  "commands": [
+    "python -m pytest -q tests/test_data_engineering_qualification.py tests/test_query_engine_qualification.py",
+    "python -m tools.data_engineering_qualification"
+  ],
+  "result": {
+    "qualification": "PASS: 7/7 contract tests",
+    "external_provider": "NOT QUALIFIED: Spark Connect and SDP Studio are not configured",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "probe": {
+    "docker_cli": true,
+    "spark_connect": "not_configured",
+    "sdp_studio": "not_configured",
+    "ready_for_external_e2e": false
+  },
+  "hashes": {
+    "pytest_output_sha256": "9271963c48e1c086a7668fb13e40050b4abab292d642ed400189c2390b1b6b5a",
+    "external_probe_sha256": "3e7bca576d2210dc8c43ce24e562fad90c3a8987ea41675aea3c6b34eb4b75e5"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Contract evidence does not qualify Spark Connect, SDP Studio, QueryFlux or another external provider.",
+    "D960 is bound to candidate 676e56d7ed8d3a1032c3e95105012979113183ad; historical evidence is not reattributed."
+  ]
+}
