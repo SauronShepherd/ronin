@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D868",
+  "status": "PASS_POSTGRES_DATA_ENGINEERING_HTTP_CURRENT_CANDIDATE",
+  "candidate_sha": "67c1f9cd23ea253f276c9ffabd334fa6d0da984b",
+  "qualification": "real PostgreSQL Data Engineering HTTP integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_data_engineering_http.py -EvidenceDirectory %TEMP%\\ronin-d868-data-engineering-http-20261123",
+  "result": {"selected": 5, "passed": 5, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 5.53, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "Data Engineering HTTP routes, revision fencing, project scope and QueryFlux bounds pass through the real control plane",
+  "evidence": {"root": "%TEMP%\\ronin-d868-data-engineering-http-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["integration file only; not complete Data Engineering family qualification", "does not qualify indefinite operation or release", "does not reattribute D100-D867"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
