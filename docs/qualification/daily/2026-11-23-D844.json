@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D844",
+  "status": "PASS_POSTGRES_SCHEDULER_EVENT_INBOX_REPLAY_CURRENT_CANDIDATE",
+  "candidate_sha": "cee5cc78c4ad2d9beeffcb4108b4217bcf562e33",
+  "qualification": "isolated PostgreSQL scheduler event inbox freeze and delivery replay diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"scheduler_event_inbox_freezes_and_replays_deliveries\" -EvidenceDirectory %TEMP%\\ronin-d844-event-inbox-20261123",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 1.66, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "event inbox freezes invalid delivery state and supports durable replay of deliveries",
+  "evidence": {"root": "%TEMP%\\ronin-d844-event-inbox-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["filtered diagnostic only; not the complete Python/PostgreSQL suite", "does not qualify external provider breadth or release gates", "does not reattribute D100-D843"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
