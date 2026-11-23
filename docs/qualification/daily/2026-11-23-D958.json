@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D958",
+  "date": "2026-11-23",
+  "status": "pass_bounded_stability_criterion",
+  "cell": "Current-candidate second consecutive full Docker acceptance",
+  "candidate_sha": "92019a3b770f582946c4aebd7181405f6bb6df70",
+  "implementation_commit_sha": "92019a3b770f582946c4aebd7181405f6bb6df70",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D958.md",
+  "execution_scope": "clean-main-same-candidate-consecutive-docker-acceptance-2",
+  "result": {
+    "qualification": "PASS: 27/27 Docker integrations, 0 skipped, 0 failed; strict v0.1 15/15",
+    "cleanup": "PASS: no containers, qualification images or Docker volumes remained",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates",
+    "stability": "Second consecutive full Docker acceptance on the same candidate after D957"
+  },
+  "parameters": {
+    "runner": "tools/run_docker_qualification.ps1",
+    "integration_tests": 27,
+    "strict_v01_tests": 15,
+    "image_digest": "sha256:8fbebff5fa94b03ce2d90718e865403898f559da9d584c2d0c49fb228ad5b5dd",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d958-docker-repeat-same-candidate",
+    "criterion": "two consecutive full Docker acceptances on one exact candidate"
+  },
+  "hashes": {
+    "qualification_summary_sha256": "4b39c2c052f61b91bfb227ab932f232c8b8b2f0f01450c7c15a4c146908cca8a",
+    "strict_json_sha256": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c",
+    "junit_sha256": "01c259d0528252ad4653642306d3462ea5afd8c2e223d6f0d6fc1e255f9241e1",
+    "cleanup_sha256": "cd9fed6a1a3c6e962d335b1887b9f4c29caf8268907a811c8d53943ea725accc"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Bounded local repeatability only; no indefinite operation, HA, external provider or release claim.",
+    "D958 is bound to candidate 92019a3b770f582946c4aebd7181405f6bb6df70; earlier evidence is not reattributed."
+  ]
+}
