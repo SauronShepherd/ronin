@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1078",
+  "date": "2026-11-23",
+  "status": "pass_bounded_worker_consumers",
+  "candidate_sha": "6d486e369c9743416d0229ac69832aef661111a4",
+  "implementation_commit_sha": "6d486e369c9743416d0229ac69832aef661111a4",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1078.md",
+  "command": "python -m pytest -q tests/test_data_engineering_worker.py tests/test_plugin_worker.py tests/test_plugin_workers.py",
+  "result": {
+    "qualification": "PASS: 16 passed in 0.89s",
+    "scope": "Bounded Data Engineering worker and plugin worker consumer regression, including validation, failure taxonomy, timeout/cancel behavior, and evidence persistence.",
+    "external_services": "NOT USED: local bounded tests only.",
+    "production_change": "None.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "14F771BFA6129C7FC0D69EF72B74070523D7401BB59A9622E927F55E998011BA"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded local evidence only; Spark Connect, PostgreSQL scheduler/runtime, external providers and object stores are not qualified by this receipt.",
+    "Historical D83-D100 and D100 evidence is not reattributed."
+  ]
+}
