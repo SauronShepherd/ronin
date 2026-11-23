@@ -10,6 +10,11 @@ record on partition `0`; `4/4` API events correlated as `OK`, with cleanup
 PASS. This bounded evidence does not close P11 or release, and does not
 reattribute D83-D1165.
 
+D1167 passes a focused real PostgreSQL streaming sink recovery cell on
+`main@58fb8255`: `3/3` selected integration cases passed, including sink
+reopen/replay with zero duplicate rows, with isolated-service cleanup PASS.
+This bounded persistence evidence does not close P11 or release.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s`, with the server configured against real
 PostgreSQL, 28/28 API events OK and cleanup PASS. This bounded evidence does not
@@ -598,7 +603,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `7a1270d92cd7b56d386ad6ea991fd744a361dc4c` (2026-11-23).
+**Observed source baseline:** `58fb82554deffeb0b7c22097817d47a4fb400d22` (2026-11-23).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

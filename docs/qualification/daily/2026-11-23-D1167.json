@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1167",
+  "date": "2026-11-23",
+  "status": "pass_bounded_postgres_stream_sink_reopen_replay",
+  "candidate_sha": "58fb82554deffeb0b7c22097817d47a4fb400d22",
+  "implementation_commit_sha": "58fb82554deffeb0b7c22097817d47a4fb400d22",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1167.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory <external-temp-dir> -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py -TestFilter 'reopen or append_replay'",
+  "result": {
+    "qualification": "PASS: 3/3 selected PostgreSQL integration cases, 0 skipped, 0 failed in 1.14s",
+    "criterion": "PASS: a real PostgreSQL streaming sink reopened after commit replayed the same batch with zero duplicate rows and preserved the record",
+    "runtime": "PASS: isolated PostgreSQL 16.4 real service; checkpoint CAS/reopen and existing append replay/conflict cases also passed",
+    "cleanup": "PASS: runner removed the isolated PostgreSQL container and volumes",
+    "production_change": "None; integration qualification test only",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1167-postgres-stream-reopen-20261123",
+  "hashes": {
+    "pytest-output.log": "AB86D7A3095A2CDA506E97958D1D2C8A54A7FA5332430CBC43A81C5A52FBF658",
+    "pytest-postgres.log": "1178FD4B72A973EF8817329B223ADEF1B7F4781AB3328B176F0E5432832C26A6",
+    "pytest-postgres.xml": "20D395DEA7A837159BCF79EE78FA43888AF796A6549D1CC0333DD5A291F9F852",
+    "pytest-timings.json": "9053D3610DDD0D4C86D57C6751EC22E4B7BF7B755F881B2EF763E71E189B6B0A",
+    "runner-timings.json": "6C5BBA4CE99248EFA63715E7C6EA11A8DC8E339CA1442C8D46C51A3BDACF61A8"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused bounded integration diagnostic; not indefinite operation, production SLO, HA, multi-worker or external-provider qualification.",
+    "The test proves sink durability/replay across a PostgresStreamTable reopen, not complete P11 or any release gate. D83-D1166 evidence remains bound to exact candidates."
+  ]
+}
