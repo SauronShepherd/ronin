@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D976",
+  "date": "2026-11-23",
+  "status": "pass_live_postgresql_rf3_companion",
+  "candidate_sha": "cdec411709a0d814f3b1abea5a8175f2b00f01d7",
+  "implementation_commit_sha": "cdec411709a0d814f3b1abea5a8175f2b00f01d7",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D976.md",
+  "command": "docker build --label org.ronin.qualification.run=d976 -t ronin:qualification-d976-live -f docker/Dockerfile .; pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d976-live-multibroker-postgres -WorkerImage ronin:qualification-d976-live -StorageBackend postgres -TestGrep 'live streaming multi-broker' -MultiBroker -RequestTimeoutSeconds 90",
+  "result": {
+    "qualification": "PASS: 1/1 filtered Playwright case, 0 skipped, 0 failed",
+    "topology": "PASS: three-broker Redpanda RF3 plus PostgreSQL runtime",
+    "api_correlation": "PASS: 5/5 API events correlated, all OK; 0 unexpected authorization/server/network errors",
+    "worker_image_digest": "sha256:741401f10f871adcb6666eb92edc470b69125e40dfbaeaa06c3f7c80cd629da3",
+    "cleanup": "PASS: three brokers, PostgreSQL, network, volume and owned worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "browser_log_sha256": "593dfddb8ea6fbc83ac764006ad92ef306d9339f4ee77c2042c89273d5863604",
+    "browser_junit_sha256": "4aaafb8a4b0b8d20aa390302d08d24258ff8b5b7899b73fb0b00b2f584d29a32",
+    "live_api_traffic_sha256": "d1afea2236eaebba5a7459700249b6802eaa9338e1fa73d658a478fcb0926806",
+    "server_stderr_sha256": "a1d003395e7ba741055c344c8d5abec507d2c2cd9ceb59b5bba7914684572ee4",
+    "qualification_summary_sha256": "54347b916263306bf013ed5aced441b9e58359aed7264c9bd60dc22c13d55df3"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is the separate filtered RF3 companion for the D975 full route; it does not replace the deliberate skip in that route or claim route-wide coverage.",
+    "The local RF3 and PostgreSQL services are bounded qualification fixtures, not external provider production certification or HA/multi-worker proof.",
+    "D976 does not close complete P11, P13 or release approval; historical receipts remain bound to exact candidates."
+  ]
+}
