@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1002",
+  "date": "2026-11-23",
+  "status": "pass_scheduler_cancellation_contracts",
+  "candidate_sha": "41cf5b42417dfa2ca2289c1148201e68c83ae7aa",
+  "implementation_commit_sha": "41cf5b42417dfa2ca2289c1148201e68c83ae7aa",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1002.md",
+  "command": "python -m pytest -q tests/test_scheduler_cancellation.py tests/test_scheduler_backfill_cancellation.py",
+  "result": {
+    "qualification": "PASS: 9/9 local scheduler and backfill cancellation contract tests",
+    "scope": "Cancellation semantics for scheduler execution and backfill operations",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "2e2686d68eeabdcf9797b5adab671b1bd3b62d18fbebe62a1c2ce691f73350a9" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process contract evidence only; this cell does not qualify external providers, PostgreSQL runtime or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
