@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1090",
+  "date": "2026-11-23",
+  "status": "pass_real_postgres_scheduler_leadership_inbox",
+  "candidate_sha": "9cedff5c3555d031c8c32a492c321dd3418512ad",
+  "implementation_commit_sha": "9cedff5c3555d031c8c32a492c321dd3418512ad",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1090.md",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://... python -m pytest -q tests/integration/test_postgres_workflow_store_real.py -k \"test_postgres_scheduler_leadership_is_generation_fenced_and_persistent or test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries\"",
+  "result": {
+    "qualification": "PASS: 2 passed, 19 deselected in 1.98s.",
+    "scope": "Real PostgreSQL scheduler leadership generation fencing/persistence and event-inbox freeze/replay delivery behavior.",
+    "external_services": "Temporary PostgreSQL 16.4-alpine Docker container at a loopback DSN; no remote provider used.",
+    "production_change": "None.",
+    "cleanup": "PASS: temporary PostgreSQL container removed with volumes and process DSN cleared.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "1FB5701981C7EE44E99D4E6E6BC52955459C368D6C77303059EEABB4BAA8CA29",
+    "postgres_log_sha256": "4F2DCD18B23CC42999461F0BCDD2A17266F90C1FA92D5AB0F5418A69E2CFC3CE",
+    "cleanup_sha256": "7C2AA81A1966EF012287965C8F6F14375AFA734A888DF7CA70128D405E476340"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is bounded PostgreSQL integration evidence, not the full release gate or full scheduler/runtime suite.",
+    "Historical D83-D100 and D100 evidence is not reattributed."
+  ]
+}
