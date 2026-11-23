@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D828",
+  "status": "PASS_DOCKER_HELM_CURRENT_CANDIDATE",
+  "candidate_sha": "900763a54a14d1adc0f0833558dbb73ba6b87161",
+  "qualification": "current-candidate Docker plus Helm/kind deployment chain",
+  "docker": {"selected": 27, "passed": 27, "failed": 0, "skipped": 0, "strict_v01": "15/15", "image_digest": "sha256:06835239aa175fbd6dd0ec03cfbfe3acfd49084239080288df497d8d91ae8a7f"},
+  "helm": {"helm_version": "v4.3.1+gc0d08d0", "helm_lint": "passed", "secret_boundary": "passed; token confined to Secret", "kind_install_readiness": "passed", "upgrade": "passed revision 2", "rollback": "passed restored revision 1", "health": "HTTP 200", "studio_authorized_api": "HTTP 200", "persistent_job": "created and survived deployment restart", "cleanup": "passed; isolated kind cluster removed"},
+  "docker_command": "pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d828-docker-20261123 -ImageTag ronin:qualification-d828 -KeepImage",
+  "helm_command": "pwsh -NoLogo -NoProfile -File tools/run_helm_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d828-helm-20261123 -ImageRef ronin:qualification-d828 -DockerEvidenceDirectory %TEMP%\\ronin-d828-docker-20261123",
+  "cleanup": {"status": "PASS", "kind_cluster_removed": true, "qualification_image_removed": true, "remaining_containers": [], "remaining_qualification_images": []},
+  "limitations": ["bounded local kind deployment and local Docker fixtures, not production cluster or HA evidence", "does not close P11/P13 or release gates", "does not reattribute D100-D827"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
