@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D878",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL live supervisor bounded soak",
+  "candidate_sha": "660e73c89911d8bbc85e1d7315071111c10fab5d",
+  "implementation_commit_sha": "660e73c89911d8bbc85e1d7315071111c10fab5d",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D878.md",
+  "execution_scope": "clean-main-live-diagnostic-postgresql-redpanda-real-worker-bounded-supervisor-soak",
+  "result": {
+    "qualification": "PASS: 1/1 Playwright case passed in 105.69s; bounded supervisor soak was explicitly 60 seconds",
+    "api_traffic": "PASS: 83/83 API events correlated with structured logs; 83 OK, 0 uncorrelated, 0 ERROR/CRITICAL",
+    "services": "PASS: PostgreSQL, Redpanda, Ronin API and exact-candidate Docker worker were active",
+    "cleanup": "PASS: live services, network and PostgreSQL volume were removed; qualification image sha256:e2572c530b8594026d17b0c72dc145112e2002818818d7d63085d140b614cbe3 removed afterward; no temporary containers or qualification images remain",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d878-evidence -TestGrep 'supervisor soak' -WorkerImage ronin:qualification-d878-20261123 -StorageBackend postgres -SupervisorSoakSeconds 60",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d878-evidence",
+    "worker_image_digest": "sha256:e2572c530b8594026d17b0c72dc145112e2002818818d7d63085d140b614cbe3",
+    "supervisor_soak_seconds": 60,
+    "api_events": 83
+  },
+  "hashes": {
+    "browser_live_log": "eed47c9d6396a28c8fb415ba08885fe56810e6cc3a0881a1925e3cc7e298cdf9",
+    "browser_live_xml": "0ea29d56c2fc291beeec957f9d70106f3597793ff313cdd8e9b83fc00f4df423",
+    "live_api_traffic": "d747b3adf9516c2267b1eb1f4c5eb8eac01c19e03e647582ab3be798da1b498c",
+    "qualification_summary": "66ad5eba42a813d8374bc7d4fbbd9c793bf2faa491803cf787ce3d0408341e17"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered bounded diagnostic, not the full live route or an indefinite SLO/HA qualification.",
+    "The live Ronin server configuration is explicitly PostgreSQL for this cell; this evidence qualifies the selected supervisor route only and does not close the full P11 family.",
+    "D878 is bound to candidate 660e73c89911d8bbc85e1d7315071111c10fab5d; earlier evidence is not reattributed."
+  ]
+}
