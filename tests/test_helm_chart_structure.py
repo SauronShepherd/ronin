@@ -77,3 +77,6 @@ def test_helm_qualification_runner_isolated_and_checks_restart_persistence() -> 
     assert "passed -ne 15" in script
     assert "Supplied Ronin image ID does not match the full Docker acceptance evidence." in script
     assert "docker_evidence_directory = $dockerEvidenceRoot" in script
+    assert '[ValidateSet("sqlite", "postgres")]' in script
+    assert "Postgres qualification requires -PostgresDsn" in script
+    assert "storageBackend: $StorageBackend" in script

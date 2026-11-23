@@ -8,6 +8,9 @@ param(
     [string]$HelmPath = "helm",
     [string]$KindPath = "kind",
     [string]$KubectlPath = "kubectl",
+    [ValidateSet("sqlite", "postgres")]
+    [string]$StorageBackend = "sqlite",
+    [string]$PostgresDsn = "",
     [switch]$AllowDirtyWorktree
 )
 
@@ -79,6 +82,12 @@ $workingTreeStatus = @(git -C $repoRoot status --porcelain --untracked-files=all
 if ($LASTEXITCODE -ne 0) { throw "Could not determine worktree status." }
 if ($workingTreeStatus.Count -gt 0 -and -not $AllowDirtyWorktree) {
     throw "Refusing release qualification with a dirty worktree. Use -AllowDirtyWorktree only for diagnostics."
+}
+if ($StorageBackend -eq "postgres" -and [string]::IsNullOrWhiteSpace($PostgresDsn)) {
+    throw "Postgres qualification requires -PostgresDsn."
+}
+if ($StorageBackend -eq "sqlite" -and -not [string]::IsNullOrWhiteSpace($PostgresDsn)) {
+    throw "-PostgresDsn is only valid with -StorageBackend postgres."
 }
 $qualificationMode = if ($workingTreeStatus.Count -gt 0) { "DIRTY-WORKTREE DIAGNOSTIC" } else { "CLEAN-CANDIDATE QUALIFICATION" }
 $dockerEvidenceRoot = [IO.Path]::GetFullPath($DockerEvidenceDirectory)
@@ -161,6 +170,7 @@ try {
     Write-Output "Source: $candidateSha ($qualificationMode)"
     Write-Output "Helm: $(& $helm version --short)"
     Write-Output "Ronin image: $imageId"
+    Write-Output "Storage backend: $StorageBackend"
     Write-Output "Docker acceptance receipt: $dockerEvidenceRoot (strict 15/15)"
 
     $existingClusters = @(& $kind get clusters)
@@ -176,6 +186,8 @@ server:
   replicas: 1
   token: $token
   tokenScopes: '$tokenScopes'
+  storageBackend: $StorageBackend
+  postgresDsn: '$PostgresDsn'
   bindPolicy: insecure-plaintext-network
 "@ | Set-Content -LiteralPath $valuesPath -Encoding utf8
 
@@ -367,6 +379,7 @@ server:
         docker_evidence_directory = $dockerEvidenceRoot
         docker_candidate_sha = $candidateSha
         docker_strict_acceptance = "15/15"
+        storage_backend = $StorageBackend
         bind_policy = "insecure-plaintext-network"
         helm_version = (& $helm version --short | Out-String).Trim()
         cluster = $clusterName
