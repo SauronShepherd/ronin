@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1154",
+  "date": "2026-11-23",
+  "status": "pass_bounded_live_postgres_full_with_expected_recovery_errors",
+  "candidate_sha": "cddb4f9f9cfadd1cd05e68b615e0a6ab2a0a74a1",
+  "implementation_commit_sha": "cddb4f9f9cfadd1cd05e68b615e0a6ab2a0a74a1",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1154.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -WorkerImage sha256:91b0bfaf7c0e79f1154f4c69361275cdcfe94ccd7cd387f432c664b4042a85a9 -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS bounded: 42/43 Playwright cases passed, 1 deliberate skip, 0 failures; 25 active routes (24 API-backed and 1 UI-only)",
+    "runtime": "PASS: real PostgreSQL backend, Redpanda and Ronin API/worker exercised; 478/478 API events correlated with structured HTTP logs",
+    "api_outcomes": "454 OK, 21 expected WARN negative/validation outcomes, 3 expected ERROR outcomes from the controlled fault-recovery Kafka interruption (503 StreamingRunUnavailable/KafkaException)",
+    "application_logs": "INFO 2223, WARNING 21, ERROR 3, CRITICAL 0; the three ERROR entries are the same controlled fault-recovery interruption, not unclassified failures",
+    "worker_image": "PASS: caller-supplied image digest sha256:91b0bfaf7c0e79f1154f4c69361275cdcfe94ccd7cd387f432c664b4042a85a9",
+    "cleanup": "PASS: live PostgreSQL/Redpanda/Ronin services, volume and network cleaned; caller-supplied Ronin image removed after evidence capture",
+    "production_change": "None in D1154",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "browser-live.log": "A2C1879A02CBA13990CCE19BDB14236E2949B4F1BABD436700A478A21667C7CC",
+    "browser-live.xml": "13B0B57E3162E97E7F1160F7938EC95B431C26D221B410E106351D9BE2759DEB",
+    "live-api-traffic.json": "529E404B731C671C35BE9A94B68BA9D679379DC1508FA47B1F8733CF6746ED8C",
+    "live-server.stderr.log": "06E7B04F5FAECF59A29724D8D70FD0C7CFA6DD310D82EA7D1AE455846279FC00",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "2C37E11F623D0143C4BD480614356118DE91EA59B8771D6228FB72C2D16ACD1A",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Bounded full-route qualification; it does not certify indefinite soak, HA, multi-worker concurrency or an external provider.",
+    "The three ERROR outcomes are expected controlled recovery evidence, but are retained explicitly rather than counted as zero errors.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
