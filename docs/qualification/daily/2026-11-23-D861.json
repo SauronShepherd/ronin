@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D861",
+  "status": "PASS_HTTP_SUBMIT_STATUS_CURRENT_CANDIDATE",
+  "candidate_sha": "20d37fca82de112a1f19e66cd5544791b515779c",
+  "qualification": "HTTP submit/status, SQL scope and idempotent cancellation integration cell",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_http_submit_status.py -EvidenceDirectory %TEMP%\\ronin-d861-http-submit-status-20261123",
+  "result": {"selected": 8, "passed": 8, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 43.28, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "HTTP auth/health, project-scoped SQL, typed bindings, grants, OpenAPI contract and real submit/status/events/cancel idempotency pass together",
+  "evidence": {"root": "%TEMP%\\ronin-d861-http-submit-status-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["filtered diagnostic only; the product route used by the real journey is SQLite in this cell", "does not qualify PostgreSQL scheduler/runtime globally or release", "does not reattribute D100-D860"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
