@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D901",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate live multi-broker RF3 checkpoint failover",
+  "candidate_sha": "6be9069ebf54d85e3d60334182767e9340f450f1",
+  "implementation_commit_sha": "6be9069ebf54d85e3d60334182767e9340f450f1",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D901.md",
+  "execution_scope": "clean-main-live-diagnostic-postgresql-three-broker-rf3-real-worker",
+  "result": {
+    "qualification": "PASS: 1/1 filtered Playwright case passed in 24.8s",
+    "failover": "PASS: multi-broker RF3 failover resumed from durable checkpoint",
+    "api_traffic": "PASS: 5/5 API events correlated with structured logs; 5 OK, 0 uncorrelated, 0 ERROR/CRITICAL",
+    "cleanup": "PASS: PostgreSQL, three brokers, network/volume and qualification image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "docker build -f docker/Dockerfile -t ronin:qualification-d901-20261123 .; pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d901-evidence -TestGrep 'live streaming multi-broker' -WorkerImage ronin:qualification-d901-20261123 -StorageBackend postgres -MultiBroker",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d901-evidence",
+    "worker_image_digest": "sha256:04c5d41554dfe2ba892727d4c60840cd9724a8fa80134f65ae92fbc01d818c38",
+    "broker_count": 3,
+    "replication_factor": 3,
+    "api_events": 5,
+    "elapsed_seconds": 52.3
+  },
+  "hashes": {
+    "browser_live_log": "0f24da39ca579b8a4403d987c95cac13d65d41411c8b4c8a9d4605cbf13e6d3a",
+    "browser_live_xml": "311f1ae360e0723edac94cf9e16b52c4a69b8c4df1c6f19b55c6945e72fba4bf",
+    "live_api_traffic": "104b3fca43d79a459b108ce2b5dddc7a07eb97fbcb89aa3ab27c25adc4df6cbf",
+    "qualification_summary": "30280bee9377a54bc331d9148f01e36b634a4733610e74d91a40a8c01467b622"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered bounded live diagnostic, not the full live route, indefinite SLO/HA qualification or release gate.",
+    "D901 is bound to candidate 6be9069ebf54d85e3d60334182767e9340f450f1; earlier D831 evidence is not reattributed."
+  ]
+}
