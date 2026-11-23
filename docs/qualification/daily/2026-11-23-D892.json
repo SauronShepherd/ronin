@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D892",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL artifact retention barrier",
+  "candidate_sha": "76d8d8108f8f42efe1304b6f110f3844f0c1c9cf",
+  "implementation_commit_sha": "76d8d8108f8f42efe1304b6f110f3844f0c1c9cf",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D892.md",
+  "execution_scope": "clean-main-real-postgresql-artifact-retention-barrier-file",
+  "result": {
+    "qualification": "PASS: 3/3 tests passed, 0 skipped, 0 failed, 0 deselected and 0 unrelated collection skips",
+    "retention": "PASS: bounded collector lease, writer fencing/waiting and async writer reference commit barrier",
+    "cleanup": "PASS: isolated PostgreSQL runner completed without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d892-evidence -TestPath tests/integration/test_postgres_artifact_retention_barrier.py",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d892-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 1.75,
+    "test_file": "tests/integration/test_postgres_artifact_retention_barrier.py",
+    "collected": 3
+  },
+  "hashes": {
+    "pytest_output": "60bef50f2d20c31d4b65bb5a004caafde1887ab8d6976577c12ec66518e44a21",
+    "pytest_postgres_log": "6854ad2eaf85915f66fa2aa606ae723642e524900b14822ce51280f7ce9cbc91",
+    "junit": "84e56d641f7f8e2f00a44acff679d8209c3a8c95a43ef7921c4365ae9269d72e",
+    "runner_timings": "bfeae2ac7857798fb9a0c194e318bafcc0ecad9106458623daa25af68e58ffa1"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This file-scoped diagnostic disables coverage and is not the complete Python/PostgreSQL suite or a release gate.",
+    "D892 does not establish HA, indefinite operation, external providers or release approval.",
+    "D892 is bound to candidate 76d8d8108f8f42efe1304b6f110f3844f0c1c9cf; earlier evidence is not reattributed."
+  ]
+}
