@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D962",
+  "date": "2026-11-23",
+  "status": "pass_bounded_filtered_supervisor_900s",
+  "cell": "Current-candidate live supervisor soak filtered 900 seconds",
+  "candidate_sha": "18f63f6e7f8444f8d48ed548b0651eb0c87cec1e",
+  "implementation_commit_sha": "18f63f6e7f8444f8d48ed548b0651eb0c87cec1e",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D962.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-supervisor-900s-filtered",
+  "result": {
+    "qualification": "PASS: 1/1 filtered Playwright, 1191/1191 correlated API events, 1191 OK, 0 WARN/ERROR/CRITICAL",
+    "cleanup": "PASS: live services/network/volume and worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_live_product_qualification.ps1",
+    "test_grep": "supervisor soak",
+    "storage_backend": "postgres",
+    "supervisor_soak_seconds": 900,
+    "request_timeout_seconds": 90,
+    "api_events": 1191,
+    "worker_image_digest": "sha256:52d4460ae3ee7403367177570636a70aec644f075e21c412d7a688912e97dfb4",
+    "duration_seconds": 955.24,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d962-supervisor-900"
+  },
+  "hashes": {
+    "qualification_summary_sha256": "4fb4c22115d31b0f3aba4a85bac74f30fa9c5a8d8644cee9c4d2c09e302c571b",
+    "live_api_traffic_sha256": "4702b4ca2965900dafb525dc04271c7e21106493e849721eb23365a61bcc668c",
+    "browser_live_xml_sha256": "19b2097cae5fa49aef44018f2b63ae0aa40851caf2a2d3f1484ff49250f451cf"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Filtered single-broker supervisor cell only; route-wide audit and multi-broker recovery are not claimed by D962.",
+    "Finite 900-second evidence does not prove indefinite operation, HA, external provider, complete P11 or release; historical evidence is not reattributed."
+  ]
+}
