@@ -1,0 +1,42 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D879",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate Docker provider/object-store contract diagnostic",
+  "candidate_sha": "124fde5296ec143947d1d0458c1bf14ff51d2290",
+  "implementation_commit_sha": "124fde5296ec143947d1d0458c1bf14ff51d2290",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D879.md",
+  "execution_scope": "clean-main-docker-filtered-real-floci-s3-and-azurite-azure-blob",
+  "result": {
+    "qualification": "PASS: 2/2 real integration tests passed, 25 deselected, 0 skipped and 0 failed",
+    "providers": "PASS: S3 JSON sink/read/retry round trip against isolated Floci and Azure Blob discovery/read/replay snapshot against isolated Azurite",
+    "cleanup": "PASS: owned Floci/Azurite resources and qualification image were removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d879-20261123 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d879-evidence-valid -TestFilter 's3_json or azure_blob'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d879-evidence-valid",
+    "worker_image_digest": "sha256:88a077eff366a783ff5acc56050842155b92b44b58c5e5b24af8bf1f08c9f55d",
+    "selected_tests": [
+      "tests/integration/test_s3_json_connector_real.py::test_s3_json_sink_put_read_and_retry_round_trip",
+      "tests/integration/test_azure_blob_connector_real.py::test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite"
+    ]
+  },
+  "hashes": {
+    "docker_qualification_log": "5856baf0599895e2201e62701c9648d1135641fba54931dbc6121d2a1fbd150a",
+    "docker_pytest_output": "f3ea33e180a8bb2ec56379290a7eb9d57e13368aa6c3160900a6a1aa05bdc198",
+    "floci_log": "4d7959b294cb3a7ee21a2bcac411ad6599569251ede49f87def02c3e2d1e16f2",
+    "azurite_log": "e599183817866b3cac36112ae24ebe778e7a43ca24695a67e2d6bef62a694145",
+    "junit": "9cbc7cda7fbd1cae2869b64d9d5f1155a64241ee5334c72a474e06026fea330f",
+    "cleanup": "c7e349a7be940fbc0ce690d79271b639eddb8663918175bc5c1833dd4dafbd7a"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Floci and Azurite are local emulators; this does not certify AWS/Azure production services or external-cloud credentials.",
+    "This is a filtered Docker diagnostic, not the strict v0.1 acceptance gate and not full provider failure/recovery breadth.",
+    "An earlier attempt with the invalid pytest -k expression 's3_json|azure_blob' ran zero tests and was cleaned up; it is not attributed to this PASS.",
+    "D879 is bound to candidate 124fde5296ec143947d1d0458c1bf14ff51d2290; earlier evidence is not reattributed."
+  ]
+}
