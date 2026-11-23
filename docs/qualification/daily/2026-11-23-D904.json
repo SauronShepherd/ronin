@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D904",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate Docker Scout image vulnerability scan",
+  "candidate_sha": "1d490302aaad3b3a6a0d96e62dccb812ab97dac4",
+  "implementation_commit_sha": "1d490302aaad3b3a6a0d96e62dccb812ab97dac4",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D904.md",
+  "execution_scope": "clean-main-build-current-runtime-docker-scout-cves",
+  "result": {
+    "qualification": "PASS: Docker Scout 1.28.0 indexed 93 packages and detected no vulnerable package; exit 0",
+    "cleanup": "PASS: qualification image was removed after scan and no runtime resources were created",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "build_command": "docker build -f docker/Dockerfile -t ronin:qualification-d904-20261123 .",
+    "scan_command": "docker scout cves ronin:qualification-d904-20261123 --format sarif --output C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d904-scout.sarif",
+    "tool_version": "1.28.0",
+    "image_digest": "sha256:82988bbf4aea43cd54bf2ee6adaa21638c50be67631a0268ee4afcef5a58422f",
+    "report_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d904-scout.sarif"
+  },
+  "hashes": { "sarif": "44448ee6a8d53b6423d67ed2244d9b4b7719a48dca3dfed41193599fecf458ad" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This image scan is supply-chain evidence only; it does not qualify runtime, external providers, HA or release approval.",
+    "D904 is bound to candidate 1d490302aaad3b3a6a0d96e62dccb812ab97dac4; earlier evidence is not reattributed."
+  ]
+}
