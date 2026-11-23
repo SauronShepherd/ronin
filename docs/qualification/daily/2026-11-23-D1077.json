@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1077",
+  "date": "2026-11-23",
+  "status": "pass_bounded_worker_runtime",
+  "candidate_sha": "71f0ede661f67de6fabe41feaafc9f5a1c56acb8",
+  "implementation_commit_sha": "71f0ede661f67de6fabe41feaafc9f5a1c56acb8",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1077.md",
+  "command": "python -m pytest -q tests/test_worker_execution.py tests/test_worker_inflight_cancellation.py tests/test_worker_preparation.py tests/test_worker_runtime.py tests/test_worker_portable_evidence.py",
+  "result": {
+    "qualification": "PASS: 48 passed in 49.24s",
+    "scope": "Bounded worker execution, in-flight cancellation, preparation, runtime and portable-evidence regression.",
+    "external_services": "NOT USED: local bounded tests only.",
+    "production_change": "None.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "FC0FF42227291A193690707ABA0D7786E0DD57A563DE7ED6C97A9D0E44FEEA56"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded local evidence only; this does not qualify PostgreSQL scheduler/runtime, external provider or object-store integrations, or a release gate.",
+    "Historical D83-D100 and D100 evidence is not reattributed."
+  ]
+}
