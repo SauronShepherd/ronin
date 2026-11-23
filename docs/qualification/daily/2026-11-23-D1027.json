@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1027",
+  "date": "2026-11-23",
+  "status": "pass_bundle_io_roundtrip_contracts",
+  "candidate_sha": "87e70000b39d9150402a7bb5c1d3f5441393bde4",
+  "implementation_commit_sha": "87e70000b39d9150402a7bb5c1d3f5441393bde4",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1027.md",
+  "command": "python -m pytest -q tests/test_bundle_io.py tests/test_bundle_connection_roundtrip.py",
+  "result": {
+    "qualification": "PASS: 19/19 local bundle I/O and connection-roundtrip contract tests",
+    "scope": "Bundle I/O serialization and connection roundtrip behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "921f6d36cd8ad06bd49efa5d980aedc1cdaa881252662c04e76d692092f3d75b" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process bundle evidence only; this cell does not qualify external providers, PostgreSQL runtime or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
