@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1135",
+  "date": "2026-11-23",
+  "status": "pass_full_stream_worker_http_composition_revalidation",
+  "candidate_sha": "3655b6e41b905f767493fb0029c6825874c12741",
+  "implementation_commit_sha": "3655b6e41b905f767493fb0029c6825874c12741",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1135.md",
+  "command": "python -m pytest -q <D1126 streaming+worker selection> tests/integration/test_http_submit_status.py",
+  "result": {
+    "qualification": "PASS: 122 passed in 120.40s.",
+    "scope": "Full local composition of streaming runtime/checkpoints/sinks, worker execution/contention and HTTP control-plane integration on the current candidate.",
+    "production_change": "None.",
+    "cleanup": "PASS: pytest reached terminal state; no external service or Ronin container remained.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "080CBF861BCC95D085128437A2BC677835B7A94446CFA76CFF96B0B0F2FC9D77"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["D1127's earlier one-off NOT_PASS remains historical evidence; D1135 is a separate current-candidate revalidation and does not erase it.", "Local composition only; it does not replace real broker, Docker worker, PostgreSQL runtime, external provider, HA or indefinite-operation evidence.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
