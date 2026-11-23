@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-23",
+  "day": "D834",
+  "status": "PASS_STATIC_PLAYWRIGHT_CURRENT_CANDIDATE",
+  "candidate_sha": "459ec82dc256b3e6399ac34c599dd01b6f2e97b5",
+  "qualification": "current-candidate non-live Playwright web regression",
+  "command": "npm test",
+  "working_directory": "web-tests",
+  "result": {"selected": 182, "passed": 182, "failed": 0, "skipped": 0, "duration_minutes": 4.7, "process_exit_code": 0},
+  "cleanup": {"status": "PASS", "temporary_services": "none"},
+  "limitations": ["static/non-live browser evidence; does not replace manual visual review or live API qualification", "does not close P11/P13 or release gates", "does not reattribute D100-D833"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
