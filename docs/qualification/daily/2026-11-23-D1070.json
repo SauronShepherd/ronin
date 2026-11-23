@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1070",
+  "date": "2026-11-23",
+  "status": "pass_performance_artifact_bounds",
+  "candidate_sha": "b061d400ccd487c1512c1c04587010c0a8d25520",
+  "implementation_commit_sha": "b061d400ccd487c1512c1c04587010c0a8d25520",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1070.md",
+  "command": "python -m pytest -q tests/test_performance_artifact.py tests/test_pytest_timing_report.py tests/test_artifact_paging_contract.py tests/test_artifact_qualification.py",
+  "result": {
+    "qualification": "PASS: 27/27 performance, artifact paging, artifact qualification and timing-report contract tests",
+    "scope": "Artifact byte/memory bounds, paging cursors, qualification reporting and timing evidence",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "0fecf439d3c8edbaaf1cb2f8b7dabd1a5eab986cd4761a2d96849a1daacc8476" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process bounded artifact evidence only; this does not qualify indefinite production load or full release acceptance.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
