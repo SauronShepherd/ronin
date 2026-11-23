@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-23",
+  "day": "D836",
+  "status": "PASS_PIP_AUDIT_CURRENT_CANDIDATE",
+  "candidate_sha": "9dda76e9330cad5148f5b87299ac798e12178bac",
+  "qualification": "current hash-pinned test dependency vulnerability audit",
+  "command": "python -m pip_audit --requirement requirements-test.lock --no-deps --format json --output %TEMP%\\ronin-d836-pip-audit-current-20261123\\pip-audit.json",
+  "tool": {"name": "pip-audit", "version": "2.10.1"},
+  "result": {"known_vulnerabilities": 0, "exit_code": 0},
+  "cleanup": {"status": "PASS", "temporary_services": "none"},
+  "limitations": ["audit covers the pinned test dependency lock; does not replace runtime/image/history scans or human review", "does not close P13 or release gates", "does not reattribute D100-D835"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
