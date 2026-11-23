@@ -42,6 +42,8 @@
           "not": {"const": "{}"},
           "pattern": "^\\s*\\{\\s*\\\"version\\\"\\s*:\\s*1\\s*,\\s*\\\"grants\\\"\\s*:"
         },
+        "storageBackend": {"type": "string", "enum": ["sqlite", "postgres"]},
+        "postgresDsn": {"type": "string"},
         "bindPolicy": {"type": "string", "enum": ["insecure-plaintext-network"]}
       }
     }

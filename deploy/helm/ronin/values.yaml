@@ -12,5 +12,7 @@ server:
   replicas: 1
   token: ""
   tokenScopes: '{}'
+  storageBackend: sqlite
+  postgresDsn: ""
   # Required explicit acknowledgement for this private, single-operator chart.
   bindPolicy: ""

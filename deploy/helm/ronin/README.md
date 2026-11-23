@@ -19,6 +19,13 @@ project-scoped token grants. The token is rendered only into a Kubernetes
 Secret. Protect the cluster's Secret storage and kubeconfig with the same care
 as other credentials.
 
+The chart defaults to SQLite for the local single-node profile. For an
+operator-managed PostgreSQL service, set `server.storageBackend: postgres` and
+provide `server.postgresDsn`; the DSN is rendered only into the Kubernetes
+Secret and injected through `RONIN_POSTGRES_DSN`. The chart does not deploy
+PostgreSQL itself, and a PostgreSQL-backed installation requires a reachable
+external service and a separate live qualification.
+
 Example values for a local cluster:
 
 ```yaml
@@ -30,5 +37,7 @@ server:
   replicas: 1
   token: REPLACE_WITH_A_RANDOM_LOCAL_TOKEN
   tokenScopes: '{"version":1,"grants":[{"version":1,"actions":["read","list"],"resource":{"kind":"project","identifier":"examples/demo"},"constraints":{}}]}'
+  storageBackend: sqlite
+  postgresDsn: ""
   bindPolicy: insecure-plaintext-network
 ```

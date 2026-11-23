@@ -7,6 +7,7 @@ def test_reference_helm_chart_has_safe_single_replica_baseline() -> None:
     assert (root / "Chart.yaml").is_file()
     assert (root / "values.yaml").is_file()
     deployment = (root / "templates/deployment.yaml").read_text(encoding="utf-8")
+    secret = (root / "templates/secret.yaml").read_text(encoding="utf-8")
     assert "replicas: {{ .Values.server.replicas }}" in deployment
     assert "RONIN_DB" in deployment
     assert "persistentVolumeClaim:" in deployment
@@ -36,8 +37,16 @@ def test_reference_helm_chart_has_safe_single_replica_baseline() -> None:
     assert "RONIN_BIND_POLICY" in deployment
     assert "multiUser" not in values + deployment
     assert "multi-user" not in values + deployment
-    assert "RONIN_STORAGE_BACKEND" not in deployment
-    assert "RONIN_POSTGRES_DSN" not in deployment
+    assert "RONIN_STORAGE_BACKEND" in deployment
+    assert "RONIN_POSTGRES_DSN" in deployment
+    assert "postgres-dsn" in deployment
+    assert "server.postgresDsn must be set" in secret
+    assert 'storageBackend: sqlite' in values
+    assert 'postgresDsn: ""' in values
+    assert schema["properties"]["server"]["properties"]["storageBackend"]["enum"] == [
+        "sqlite",
+        "postgres",
+    ]
     assert "multiUser" not in json.dumps(schema)
 
 

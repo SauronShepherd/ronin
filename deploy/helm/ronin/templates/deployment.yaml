@@ -30,8 +30,17 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["ronin", "serve"]
           env:
+            - name: RONIN_STORAGE_BACKEND
+              value: {{ .Values.server.storageBackend | quote }}
             - name: RONIN_DB
               value: /var/lib/ronin/ronin.sqlite3
+            {{- if eq .Values.server.storageBackend "postgres" }}
+            - name: RONIN_POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ronin.fullname" . }}
+                  key: postgres-dsn
+            {{- end }}
             - name: RONIN_DATA_DIR
               value: /var/lib/ronin
             - name: RONIN_HOST
