@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D914",
+  "date": "2026-11-23",
+  "status": "not_pass",
+  "cell": "Git source clean-basetemp reproduction",
+  "candidate_sha": "112c358e52b4dabec05a2b3c0231c4145cbd5c55",
+  "implementation_commit_sha": "112c358e52b4dabec05a2b3c0231c4145cbd5c55",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D914.md",
+  "execution_scope": "clean-main-focused-git-source-clean-basetemp",
+  "result": {
+    "qualification": "NOT_PASS: 16 passed, 3 failed, 1 skipped in 15.86s",
+    "cleanup": "PASS: no containers or images created; pytest evidence is outside checkout",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "python -m pytest -q tests/test_git_source.py --basetemp C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-git-pytest-d914 --disable-warnings --no-header",
+    "log_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d914-evidence\\pytest-output.log"
+  },
+  "hashes": { "pytest_log_sha256": "a5d6cbe0619e208d426fd6d8acb377d3882fee3a319421f1f179fe2413642740" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Three init failures remain unexplained; manual init afterward passes, so no product root cause is claimed.",
+    "D914 is diagnostic evidence only and does not qualify Git source operations or release.",
+    "D914 is bound to candidate 112c358e52b4dabec05a2b3c0231c4145cbd5c55; earlier evidence is not reattributed."
+  ]
+}
