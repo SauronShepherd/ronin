@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D934",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL connector control-plane reopen",
+  "candidate_sha": "203ec605830e3db6b1cde89682fc55261631aa70",
+  "implementation_commit_sha": "203ec605830e3db6b1cde89682fc55261631aa70",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D934.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-connector-control-plane",
+  "result": {
+    "qualification": "PASS: 1/1 selected PostgreSQL connector control-plane test, 0 skips/failures",
+    "cleanup": "PASS: isolated PostgreSQL fixture removed by runner",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_postgres_test_suite.ps1",
+    "test_path": "tests/integration/test_postgres_connector_control_plane_real.py",
+    "test_filter": "postgres_connector_control_plane_discover_preview_survives_reopen",
+    "postgres_image": "postgres:16.4-alpine",
+    "storage_backend": "postgres",
+    "selected_tests": 1,
+    "duration_seconds": 6.01,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d934-postgres-connector-runtime"
+  },
+  "hashes": {
+    "pytest_output_sha256": "ef4f820fc175cb64ef8069bd60f97b7e034a75ce194ba1323c5e44dbb57f2b65",
+    "pytest_postgres_log_sha256": "8a324c4dfe0660fcb15de9dd0327927598c0a293be8ebcf5205b7c172d909226",
+    "pytest_xml_sha256": "9dbea2110030f829f1540d47f7d615d3b4abce1c6a1d22b6790c91f9ddb60074"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Filtered bounded control-plane diagnostic only; no complete P11, HA, indefinite operation or release evidence.",
+    "D934 is bound to candidate 203ec605830e3db6b1cde89682fc55261631aa70; earlier evidence is not reattributed."
+  ]
+}
