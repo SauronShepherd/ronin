@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D835",
+  "status": "PASS_GITLEAKS_CURRENT_TREE",
+  "candidate_sha": "4a02b73f3709fb87e8407f6d2ea44aa8f7a56e25",
+  "qualification": "current-tree secret scan",
+  "command": "gitleaks dir . --redact --report-format sarif --report-path %TEMP%\\ronin-d835-gitleaks-current-20261123\\worktree.sarif --exit-code 1",
+  "tool": {"name": "gitleaks", "version": "8.30.1"},
+  "result": {"bytes_scanned": 180316452, "megabytes_scanned": 180.32, "leaks": 0, "exit_code": 0, "elapsed_seconds": 64.1},
+  "evidence": "%TEMP%\\ronin-d835-gitleaks-current-20261123\\worktree.sarif",
+  "cleanup": {"status": "PASS", "temporary_services": "none"},
+  "limitations": ["current-tree scan only; does not replace history scan or human security/legal review", "does not close P13 or release gates", "does not reattribute D100-D834"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
