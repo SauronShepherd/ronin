@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1163",
+  "date": "2026-11-23",
+  "status": "pass_bounded_live_byte_boundaries_postgres",
+  "candidate_sha": "3a8a6ecb9f8e9d05e0b8ce483fd625dd0db4cb49",
+  "implementation_commit_sha": "3a8a6ecb9f8e9d05e0b8ce483fd625dd0db4cb49",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1163.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -WorkerImage ronin:qualification-d1163 -StorageBackend postgres -TestGrep 'live streaming enforces near-record and near-batch byte boundaries' -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS: 1/1 selected Playwright case, 0 skipped, 0 failed in 38.63s",
+    "criterion": "PASS: near-record and near-batch byte boundaries accepted valid payloads and rejected/handled over-limit payloads as specified",
+    "runtime": "PASS: real PostgreSQL backend, Kafka broker and Ronin API/worker image",
+    "api_traffic": "13/13 events correlated, 11 OK and 2 expected WARN boundary-validation outcomes; 0 unexpected server/network errors",
+    "cleanup": "PASS: live PostgreSQL/Kafka/Ronin services, volume/network and temporary image cleaned",
+    "production_change": "None in D1163",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "browser-live.log": "258866E15FAC4341D9D6626E0D4AB37AE9A4AFCB3B627EAC9FF59CF654FCBA28",
+    "browser-live.xml": "90EF043A567BAE17E4FCA2BBA0835A89D83C604A5FD63A5C4A604F73BA3D73F0",
+    "live-api-traffic.json": "2BC6A4D11B5124F38F8DCA858566670D0B3FFE3C7BFECF0518055430EF5B4E78",
+    "qualification-summary.json": "E4494F6EDBD22826A33BE3210545401F0E02A0A5B0F20385866CE24062AEAA17",
+    "live-server.stderr.log": "A1E1F158CAE6AA7B56D9156EE6848762DE3E06527F66AB1093758C1FECF0394C"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused bounded diagnostic, not full route coverage, indefinite soak, HA or multi-worker qualification.",
+    "The two WARN outcomes are retained and classified as expected boundary validation; they are not hidden.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
