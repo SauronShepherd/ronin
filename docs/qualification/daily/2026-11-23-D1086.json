@@ -1,0 +1,20 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1086",
+  "date": "2026-11-23",
+  "status": "diagnostic_zero_selected",
+  "candidate_sha": "cf91fe46c123171b4c8e1fbb5075a346a9528e53",
+  "implementation_commit_sha": "cf91fe46c123171b4c8e1fbb5075a346a9528e53",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1086.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageId sha256:80d13bba7116d7efe6becbce9e1d785b04d292eda17e517fa354d8301240a867 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1086-postgres-scheduler-recovery -TestFilter \"test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or test_postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate\"",
+  "result": {
+    "qualification": "NOT QUALIFIED: official runner fixed suite does not include test_postgres_workflow_store_real.py; 0 selected, 27 deselected, exit code 5.",
+    "scope": "Attempted real PostgreSQL scheduler recovery qualification.",
+    "external_services": "Docker image built and removed; no selected test or PostgreSQL assertion executed.",
+    "cleanup": "PASS: caller-supplied image removed by exact digest and runner cleanup completed.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No test ran; this diagnostic is not evidence.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}

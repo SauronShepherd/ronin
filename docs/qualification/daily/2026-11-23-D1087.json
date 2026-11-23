@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1087",
+  "date": "2026-11-23",
+  "status": "pass_real_postgres_scheduler_recovery",
+  "candidate_sha": "cf91fe46c123171b4c8e1fbb5075a346a9528e53",
+  "implementation_commit_sha": "cf91fe46c123171b4c8e1fbb5075a346a9528e53",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1087.md",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://... python -m pytest -q tests/integration/test_postgres_workflow_store_real.py -k \"test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or test_postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate\"",
+  "result": {
+    "qualification": "PASS: 2 passed, 19 deselected in 3.80s.",
+    "scope": "Real PostgreSQL scheduler daemon recovery: reacquire after expired lease without duplicate fire and replay after process crash without duplicate.",
+    "external_services": "Temporary PostgreSQL 16.4-alpine Docker container at a loopback DSN; no remote provider used.",
+    "production_change": "None.",
+    "cleanup": "PASS: temporary PostgreSQL container removed with volumes and process DSN cleared.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "D3C2B5C143070DA4274B0D3C1D72E2DA90EA657B303DF6128675AF508DF9FF51",
+    "postgres_log_sha256": "741ACEC0B17C32E60DD5DA1B975F19A314F967104617DF86042544341207A49C",
+    "cleanup_sha256": "B47A2606C42BA5AD11A337C080D68DB35DA43E327B88BF54D92B976E3C49EFEC"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is a bounded direct integration run, not the full release gate or full PostgreSQL scheduler/runtime suite.",
+    "Historical D83-D100 and D100 evidence is not reattributed."
+  ]
+}
