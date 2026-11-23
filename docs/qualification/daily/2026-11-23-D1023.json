@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1023",
+  "date": "2026-11-23",
+  "status": "pass_ml_registry_contracts",
+  "candidate_sha": "064242bbaff68bd07e26edc0531ba8f731fd0667",
+  "implementation_commit_sha": "064242bbaff68bd07e26edc0531ba8f731fd0667",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1023.md",
+  "command": "python -m pytest -q tests/test_ml_backend_registry.py tests/test_ml_end_to_end_registry.py",
+  "result": {
+    "qualification": "PASS: 2/2 local ML backend registry and end-to-end registry contract tests",
+    "scope": "ML backend registry discovery and end-to-end registry behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "0cf6e109aafacb0bb3e5818233ff6ace28530f97937b5333a40c8304ecabb1cb" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process registry evidence only; this cell does not certify an external provider, credentials or production topology.",
+    "The initial selector included a nonexistent path and ran zero tests; the valid existing tests were then executed and only that PASS is evidence.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
