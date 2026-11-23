@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1113",
+  "date": "2026-11-23",
+  "status": "pass_real_trino_provider",
+  "candidate_sha": "e2ed54284d38ab758befbfb48e473fb10974a010",
+  "implementation_commit_sha": "e2ed54284d38ab758befbfb48e473fb10974a010",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1113.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_trino_qualification.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {
+    "qualification": "PASS: 4/4 real Trino tests passed, 0 skipped/failed.",
+    "scope": "Digest-pinned Trino version 484 provider/runtime qualification: prepared scalar bindings, exact result-byte limit and rejection below limit, QueryFlux terminal evidence persistence, and SIGKILL reclaim without duplicate execution.",
+    "production_change": "None.",
+    "cleanup": "PASS: runner removed the temporary Trino container and volumes; no ronin-trino container remains.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "service": {"image": "trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f", "version": "484"},
+  "hashes": {
+    "qualification_json_sha256": "3E6DB5D315CACAC8547C264F442D1CA441A8E8508DD9082C39851E4611AFFF0C",
+    "qualification_log_sha256": "07D95029B5B16C898FD3A1AE6074C4241AA786E45C0128CBFE51AAC31C3196E4",
+    "trino_container_log_sha256": "061CFDEB87360A93DEF7C9C0AC3D97A6F054D2B1E0FD5AF7D5E4943554A55393",
+    "junit_sha256": "2A98BECDD028001D0EC35709B75DB229A3581995C7EC46DFA452393B948015D5",
+    "timings_sha256": "5985FAAFA4B34655BC7C1A93CBEC142D5084B7A659C965CFC3E9FB094E7D6490",
+    "runner_output_sha256": "83D37F5425EABB2AA94C1A629E821F11742A5F462AD4B2D09287B7B9200CCC14"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Provider is a local digest-pinned Trino service, not an external production deployment.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
