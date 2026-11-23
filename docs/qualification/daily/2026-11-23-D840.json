@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-23",
+  "day": "D840",
+  "status": "PASS_POSTGRES_SCHEDULER_RECOVERY_CURRENT_CANDIDATE",
+  "candidate_sha": "a78bc33b17cb300f9d220671cdeb8623e3292785",
+  "qualification": "isolated PostgreSQL scheduler daemon recovery diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate\" -EvidenceDirectory %TEMP%\\ronin-d840-scheduler-recovery-20261123",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 19, "pytest_seconds": 9.47, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "scenarios": [
+    "expired scheduler lease is reacquired after restart without duplicate schedule fire",
+    "queued job is replayed after scheduler process crash without duplicate execution"
+  ],
+  "evidence": {"root": "%TEMP%\\ronin-d840-scheduler-recovery-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["filtered diagnostic only; not the complete Python/PostgreSQL suite", "does not qualify PostgreSQL as the live product runtime globally", "does not reattribute D100-D839"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
