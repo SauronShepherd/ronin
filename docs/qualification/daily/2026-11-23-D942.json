@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D942",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL FinOps idempotency pricing and budget",
+  "candidate_sha": "67597c57d4e71febb68039eda80ccffa78ec47c1",
+  "implementation_commit_sha": "67597c57d4e71febb68039eda80ccffa78ec47c1",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D942.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-finops",
+  "result": { "qualification": "PASS: 1/1 selected test, 0 skips/failures", "cleanup": "PASS: isolated PostgreSQL fixture removed by runner", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates" },
+  "parameters": { "runner": "tools/run_postgres_test_suite.ps1", "test_path": "tests/integration/test_postgres_finops_real.py", "postgres_image": "postgres:16.4-alpine", "storage_backend": "postgres", "selected_tests": 1, "duration_seconds": 0.96, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d942-postgres-finops" },
+  "hashes": { "pytest_output_sha256": "1d6c07f334aadc247aad69757785dcd86c096cd48012731d9e8b1ea38567ec2f", "pytest_postgres_log_sha256": "ac1b701a80b08a268c85f76561b945df701d7be5d6bad277902595dd5e9b7685", "pytest_xml_sha256": "133c545e52b1febd4f300605c81892ebb105fc66d093e7578ad36bb3e7beaf38" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Filtered bounded FinOps diagnostic only; no complete P11, HA, indefinite operation or release evidence.", "D942 is bound to candidate 67597c57d4e71febb68039eda80ccffa78ec47c1; earlier evidence is not reattributed." ]
+}
