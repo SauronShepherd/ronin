@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D935",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL connector checkpoint fencing and restart",
+  "candidate_sha": "debaa6df46e627d16d86a39f2b3ca5d20e315ecb",
+  "implementation_commit_sha": "debaa6df46e627d16d86a39f2b3ca5d20e315ecb",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D935.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-connector-checkpoint-restart",
+  "result": {
+    "qualification": "PASS: 2/2 selected tests, 1 deselected, 0 skips/failures",
+    "cleanup": "PASS: isolated PostgreSQL fixture removed by runner",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_postgres_test_suite.ps1",
+    "test_path": "tests/integration/test_postgres_connector_checkpoint_real.py",
+    "storage_backend": "postgres",
+    "selected_tests": 2,
+    "duration_seconds": 2.3,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d935-postgres-checkpoint"
+  },
+  "hashes": {
+    "pytest_output_sha256": "8c794e8a92e1789765af3388c18d03592c701b12d6b4ab0ce663546efdd6c6fc",
+    "pytest_postgres_log_sha256": "452a5cc3ea78b3171a9f682add428bf7c4690947d7d608b652042f70174865d6",
+    "pytest_xml_sha256": "6db72cc620104e4133865303bd1565215e4897235427343f80e39b0fabde850a"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Filtered bounded checkpoint diagnostic only; no complete P11, HA, indefinite operation or release evidence.",
+    "D935 is bound to candidate debaa6df46e627d16d86a39f2b3ca5d20e315ecb; earlier evidence is not reattributed."
+  ]
+}
