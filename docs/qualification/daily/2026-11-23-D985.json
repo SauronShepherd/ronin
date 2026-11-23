@@ -1,0 +1,23 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D985",
+  "date": "2026-11-23",
+  "status": "pass_local_object_store_contracts",
+  "candidate_sha": "93d3833743709ee05a01e1c6dd833e7ca30cf852",
+  "implementation_commit_sha": "93d3833743709ee05a01e1c6dd833e7ca30cf852",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D985.md",
+  "command": "python -m pytest -q tests/test_s3_artifacts.py tests/test_artifact_store.py tests/test_artifact_identity.py",
+  "result": {
+    "qualification": "PASS: 31/31 local object-store/artifact contract tests",
+    "external_provider": "NOT QUALIFIED: no external object-store provider was contacted",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "14b151558ccb0f23c25070d6322472ccf14d621b0de278969560837b07a4f4c6" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local artifact and S3-compatible contract coverage only; it does not certify AWS, Azure, MinIO or another production provider.",
+    "D974/D981 remain the current Docker/emulator and external-image availability evidence."
+  ]
+}
