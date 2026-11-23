@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D915",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Serial worker/runtime regression without randomization",
+  "candidate_sha": "91e56c745c0c44e8a441bbf3c9c22c24033b3fa1",
+  "implementation_commit_sha": "91e56c745c0c44e8a441bbf3c9c22c24033b3fa1",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D915.md",
+  "execution_scope": "clean-main-serial-worker-runtime-contention-no-randomly",
+  "result": {
+    "qualification": "PASS: 18/18 selected tests passed in 9.01s",
+    "cleanup": "PASS: pytest-only run created no containers or images",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "python -m pytest -q tests/test_worker_runtime.py tests/integration/test_worker_runtime_contention.py -p no:randomly --disable-warnings --no-header",
+    "selected_tests": 18,
+    "log_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d915-evidence\\pytest-output.log"
+  },
+  "hashes": { "pytest_log_sha256": "256f73f7af0124b48bf6092365766817ecf90d9266f70d920493057deb59a188" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Serial focused evidence only; it does not override D912 full-suite NOT_PASS.",
+    "No production source was changed and no release qualification is claimed.",
+    "D915 is bound to candidate 91e56c745c0c44e8a441bbf3c9c22c24033b3fa1; earlier evidence is not reattributed."
+  ]
+}
