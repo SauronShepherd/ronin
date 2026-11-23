@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1129",
+  "date": "2026-11-23",
+  "status": "pass_worker_contention_file_isolation",
+  "candidate_sha": "9e0a9f98678ea36e400e88672a6ec22454e42510",
+  "implementation_commit_sha": "9e0a9f98678ea36e400e88672a6ec22454e42510",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1129.md",
+  "command": "python -m pytest -q tests/integration/test_worker_runtime_contention.py",
+  "result": {
+    "qualification": "PASS: 2 passed in 8.51s.",
+    "scope": "Worker SQLite/artifact contention file executed as its own pytest selection after the D1127 composed interaction.",
+    "production_change": "None.",
+    "cleanup": "PASS: worker contention tests completed their temporary state and thread cleanup.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "409595AF146C14E14DB6DF3D03D433C41DE1044A3E9C70123E198676BA77403E"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Isolation PASS does not resolve D1127's composed order-dependent NOT_PASS.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
