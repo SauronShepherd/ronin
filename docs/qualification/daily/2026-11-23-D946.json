@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D946",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate Docker appliance backup and restore",
+  "candidate_sha": "af7c4cb873a99cf33a70c51c8ac79ea6ec7134ae",
+  "implementation_commit_sha": "af7c4cb873a99cf33a70c51c8ac79ea6ec7134ae",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D946.md",
+  "execution_scope": "clean-main-current-candidate-docker-postgresql-appliance-backup-restore",
+  "result": { "qualification": "PASS: 1/1 selected Docker test, 0 skips/failures", "cleanup": "PASS: owned image and isolated services/resources cleaned", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates" },
+  "parameters": { "runner": "tools/run_docker_qualification.ps1", "test_filter": "appliance_backup_restores_postgres_and_local_data_volume", "postgres_image": "postgres:16.4-alpine", "worker_image_digest": "sha256:6845abd5ec121e053804775bf7cd3a7bd8b848b981b49144d77c93cae52cecdc", "selected_tests": 1, "duration_seconds": 27.8, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d946-appliance-backup-docker" },
+  "hashes": { "docker_cleanup_sha256": "d0a481e656caadd876020502813febfbc7320eef619be336a70803a05c455211", "docker_pytest_output_sha256": "2454db6be54fedfb10e978702aa6123e1e1f5c6a03c1b5f9d20b762d2deeb9f9", "docker_qualification_sha256": "5894f82e71d66630a8dbe87356b14fd1d0ab70859c4ba1122b12be6d762cd408", "postgres_qualification_sha256": "524c2e338ff46ef88bb5706f69f4d0adf722d0116e79da91f9c12ef542f9fde2", "v01_acceptance_xml_sha256": "f98683975dc294123b9b6381346f09b127ffe9093384adb84038c083285ed527" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Filtered bounded appliance diagnostic only; no complete P11, HA, indefinite operation, external object-store or release evidence.", "D946 is bound to candidate af7c4cb873a99cf33a70c51c8ac79ea6ec7134ae; earlier evidence is not reattributed." ]
+}
