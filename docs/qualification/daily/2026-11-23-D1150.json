@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1150",
+  "date": "2026-11-23",
+  "status": "pass_full_postgres_suite_with_explicit_skips",
+  "candidate_sha": "328563e21760ae65310abbbde630e95c56141b52",
+  "implementation_commit_sha": "328563e21760ae65310abbbde630e95c56141b52",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1150.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {
+    "qualification": "PASS: 4763 passed, 31 skipped, 0 failed from 4794 collected in 803.19s.",
+    "scope": "Full non-performance Python test suite and packages/pyronin/tests with isolated real PostgreSQL 16.4-alpine, including all PostgreSQL-enabled integration cases.",
+    "production_change": "None.",
+    "cleanup": "PASS: isolated PostgreSQL container and volumes removed by the runner; no ronin-pytest-pg or Ronin containers remain.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "coverage_sha256": "047FB5B846CB86216E8202322B812B572EA68AE1F47AB4BE206F3D88C8236B48",
+    "pytest_output_sha256": "56B9C7303F1CADFC89E5A4E7ABCC21AAA32214938A3C30034AB3CCD4B3B5F511",
+    "postgres_log_sha256": "7A145386353CDBB29F8D6434E29A177AF10DBDE8423B9267278BB71425647B3E",
+    "junit_sha256": "7EC8043307A36A5D5D762A2C596D53E69883F5F04C2D585681547E9901BAE562",
+    "timings_sha256": "560B26CCFC552090E74A138C438EB814FCC17A35A65EEC8B8A7585AE36510B4C",
+    "runner_timings_sha256": "C103DF4D93FDD69012F11153C7CE8B9264C6B6C01E8C9664E05F3991DD919D22"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["31 skips remain explicit: Docker/provider/OTLP/Trino/Spark/SDP external opt-ins, multi-broker RF3, symlink/platform cases and other declared environment constraints; skips are not passes.", "This is PostgreSQL service evidence, not proof that the live Ronin server is configured to use PostgreSQL for scheduler/runtime.", "Historical D83-D100 and prior PostgreSQL receipts are not reattributed."]
+}
