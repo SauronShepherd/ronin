@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D930",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler daemon recovery",
+  "candidate_sha": "183a5b5268be7f52f2e5e14910fa3bdd1f564f14",
+  "implementation_commit_sha": "183a5b5268be7f52f2e5e14910fa3bdd1f564f14",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D930.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-scheduler-recovery",
+  "result": {
+    "qualification": "PASS: 2/2 selected PostgreSQL tests, 19 deselected, 0 selected skips/failures",
+    "cleanup": "PASS: isolated PostgreSQL fixture removed by runner; no Ronin containers/images/volumes remain",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_postgres_test_suite.ps1",
+    "test_path": "tests/integration/test_postgres_workflow_store_real.py",
+    "test_filter": "scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate",
+    "postgres_image": "postgres:16.4-alpine",
+    "selected_tests": 2,
+    "duration_seconds": 2.73,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d930-scheduler-recovery"
+  },
+  "hashes": {
+    "pytest_xml_sha256": "275166002451018180a104010a2ec27e732612e64723cad6839f56679225de6c",
+    "pytest_output_sha256": "2f0e82c541bb56081e36b2e5f39bdb2299f15b209a7afc080b58ffe86a3781f0"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Filtered bounded store/runtime diagnostic only; not complete P11, HA, indefinite operation or release evidence.",
+    "D930 is bound to candidate 183a5b5268be7f52f2e5e14910fa3bdd1f564f14; earlier evidence is not reattributed."
+  ]
+}
