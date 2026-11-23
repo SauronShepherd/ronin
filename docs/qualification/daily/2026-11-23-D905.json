@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D905",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate static Playwright regression",
+  "candidate_sha": "cc52f6d0620968b74bb8428c9727d3c35ab842ef",
+  "implementation_commit_sha": "cc52f6d0620968b74bb8428c9727d3c35ab842ef",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D905.md",
+  "execution_scope": "clean-main-static-playwright-regression-excluding-live",
+  "result": {
+    "qualification": "PASS: 182/182 Playwright tests passed in 4.1 minutes with exit 0",
+    "cleanup": "PASS: no runtime resources were created by the static regression",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "npm test --prefix web-tests -- --reporter=line",
+    "live_filter": "[Ll]ive",
+    "workers": 2,
+    "browser": "chromium",
+    "log_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d905-evidence\\playwright-output.log"
+  },
+  "hashes": {
+    "playwright_log_sha256": "47a3282ad7f4c437220a3b03e6a6f6b057299a306464dcaa289201aba3a41540"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Static non-live UI regression only; it does not qualify PostgreSQL scheduler/runtime, external provider/object store, HA, indefinite operation or release approval.",
+    "A non-failing static-server file-not-found/connection-aborted warning was observed during route abandonment and is recorded in the handoff.",
+    "D905 is bound to candidate cc52f6d0620968b74bb8428c9727d3c35ab842ef; earlier evidence is not reattributed."
+  ]
+}
