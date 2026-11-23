@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D919",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Independent-process Git and VCS baseline",
+  "candidate_sha": "edb66170cba062e2812a2cdaa5bca0379dd33e87",
+  "implementation_commit_sha": "edb66170cba062e2812a2cdaa5bca0379dd33e87",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D919.md",
+  "execution_scope": "clean-main-independent-git-vcs-test-nodes-no-randomly",
+  "result": {
+    "qualification": "PASS: 32/32 individual Git/VCS test nodes passed",
+    "cleanup": "PASS: pytest-only runs created no containers or images",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "families": ["tests/test_git_source.py", "tests/test_vcs_source.py"],
+    "test_nodes": 32,
+    "randomly_plugin": "disabled",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d919-evidence"
+  },
+  "hashes": {
+    "results_log_sha256": "9915402b2d329ef27180c941762c54c0487356eab1673966d495476fe46c563e",
+    "pytest_output_sha256": "119810fe1e831fa576b53b7e394e9d1112c844daf7e9e1edd419112551557291"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Independent-process baseline does not make D912 full-suite NOT_PASS disappear; grouped-suite interference remains an open harness issue.",
+    "No production source was changed and no release qualification is claimed.",
+    "D919 is bound to candidate edb66170cba062e2812a2cdaa5bca0379dd33e87; earlier evidence is not reattributed."
+  ]
+}
