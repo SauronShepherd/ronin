@@ -1,0 +1,22 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1127",
+  "date": "2026-11-23",
+  "status": "not_pass_composed_stream_worker_http",
+  "candidate_sha": "76a8e6e3d23c4baf1cb0a341e6b6da8bfdef186f",
+  "implementation_commit_sha": "76a8e6e3d23c4baf1cb0a341e6b6da8bfdef186f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1127.md",
+  "command": "python -m pytest -q <D1126 streaming+worker selection> tests/integration/test_http_submit_status.py",
+  "result": {
+    "qualification": "NOT_PASS: 121 passed, 1 failed in 140.85s.",
+    "scope": "Single-process composition of local streaming, worker/contention and HTTP control-plane tests.",
+    "failure": "tests/integration/test_worker_runtime_contention.py::test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verify_contention; replacement attempt lost SQLite lease ownership before the slow artifact verification started.",
+    "production_change": "None.",
+    "cleanup": "PASS: pytest reached terminal state; no external service or Ronin container remained.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "508187C0F01D46C72EEAEED48F84DC447E1A37BD86B9BE6D0707D8E9657BA122"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is a composed local NOT_PASS diagnostic; the failing test must be rerun in isolation before attributing the cause.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}

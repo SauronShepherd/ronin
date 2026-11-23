@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1128",
+  "date": "2026-11-23",
+  "status": "pass_isolated_worker_contention_repro",
+  "candidate_sha": "76a8e6e3d23c4baf1cb0a341e6b6da8bfdef186f",
+  "implementation_commit_sha": "76a8e6e3d23c4baf1cb0a341e6b6da8bfdef186f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1128.md",
+  "command": "python -m pytest -q tests/integration/test_worker_runtime_contention.py::test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verify_contention",
+  "result": {
+    "qualification": "PASS: 1 passed in 6.03s.",
+    "scope": "Isolated rerun of the single worker lease/artifact-contention case that failed only inside the D1127 composed selection.",
+    "production_change": "None.",
+    "cleanup": "PASS: isolated test completed its temporary SQLite/artifact/thread cleanup.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "8950D949022EF56EDA85F54C471F80641699BF5357323D01C420440CBA6EA929"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["The isolated PASS does not erase D1127's composed NOT_PASS; order-dependent interaction remains unresolved.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
