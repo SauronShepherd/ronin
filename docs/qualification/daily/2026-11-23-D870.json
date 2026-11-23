@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D870",
+  "status": "PASS_POSTGRES_ML_CURRENT_CANDIDATE",
+  "candidate_sha": "71b04a0a5b9cbe81ba4376175e8f4f70a5129d7b",
+  "qualification": "real PostgreSQL ML integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_postgres_ml_real.py -EvidenceDirectory %TEMP%\\ronin-d870-postgres-ml-20261123",
+  "result": {"selected": 12, "passed": 12, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 9.84, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "ML registry atomicity/replay/rollback, shared job fencing, archived-workspace guards, limits and node checkpoint reopen pass together",
+  "evidence": {"root": "%TEMP%\\ronin-d870-postgres-ml-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["integration file only; not complete ML family qualification", "does not qualify indefinite operation, external provider production or release", "does not reattribute D100-D869"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
