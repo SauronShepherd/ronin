@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1083",
+  "date": "2026-11-23",
+  "status": "pass_real_worker_sigkill_recovery",
+  "candidate_sha": "b4a6a0c89fbafa608e9d6cab06321ad16ac40292",
+  "implementation_commit_sha": "b4a6a0c89fbafa608e9d6cab06321ad16ac40292",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1083.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageId sha256:d0b2c480b96218886051da235c07f57603f5dfee874b8083233e0cc2c7f2a8b6 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1083-worker-recovery -TestFilter test_real_process_sigkill_reclaims_same_run_and_reuses_three_cells",
+  "result": {
+    "qualification": "PASS: 1 passed, 26 deselected, 0 skipped, 0 failed in 39.07s.",
+    "scope": "Real Docker worker process crash recovery: SIGKILL, same-run reclamation, and reuse of three persisted cells.",
+    "external_services": "Docker Desktop only; no PostgreSQL or remote provider fixture was needed for this scenario.",
+    "production_change": "None.",
+    "cleanup": "PASS: runner-owned resources cleaned; caller-supplied image removed by exact digest after the run.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "image": {
+    "digest": "sha256:d0b2c480b96218886051da235c07f57603f5dfee874b8083233e0cc2c7f2a8b6",
+    "built_from_candidate": "b4a6a0c89fbafa608e9d6cab06321ad16ac40292"
+  },
+  "hashes": {
+    "docker_cleanup_sha256": "16CFD342D9684C6E3DC9156B4DD1B660A26FC6D50362B20EA845D0ECD085BA79",
+    "docker_pytest_output_sha256": "A613DF8DF4217DA13FE897305308AD5EE6ECCEEFC8D33C98A5435D5986D35730",
+    "docker_qualification_log_sha256": "FDF3CDC99953301B3C90FC4500FA3025DCCBE027AB378E3018D796E64934152F",
+    "junit_sha256": "6B2A7FA36FBD3C2F7BA5BA0D8083B6EACBCDADA70392DB7C2127AF64743B0DA0"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is a filtered Docker diagnostic, not the strict v0.1 acceptance gate; 26 tests were deselected by the explicit filter.",
+    "It does not qualify PostgreSQL scheduler/runtime, external providers or object stores, or a release gate.",
+    "Historical D83-D100 and D100 evidence is not reattributed."
+  ]
+}
