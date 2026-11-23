@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1142",
+  "date": "2026-11-23",
+  "status": "pass_real_azure_blob_provider",
+  "candidate_sha": "e3a0c98e6ea41cd29f3c8e7dc3d311674a7c06f6",
+  "implementation_commit_sha": "e3a0c98e6ea41cd29f3c8e7dc3d311674a7c06f6",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1142.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageId sha256:ff14b8eaf18347e2e554050763af8345ae6c59c19c5ba3e17d39926591975ccc -ImageTag ronin:qualification-d1142 -EvidenceDirectory <external-temp-dir> -TestFilter 'azure_blob_discovers_reads_and_replays_snapshot_against_azurite'",
+  "result": {
+    "qualification": "PASS: 1 passed in 4.07s, 26 deselected, 0 selected skipped/failed.",
+    "scope": "Azurite-backed Azure Blob provider discovery, read and snapshot replay behavior.",
+    "production_change": "None.",
+    "cleanup": "PASS: Azurite project, container, volume and caller-built qualification image were removed after evidence capture; no Ronin/Azurite temporary resources remain.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "azurite_log_sha256": "2F07CD38F4A179CFB38F745647EF53145B3F5679AD55741B83423D9B3B649F93",
+    "cleanup_sha256": "6E0C159CE03A2CB08C6275ABF587A6FB8A43CC6C843D81BF873645996D272A7A",
+    "docker_pytest_output_sha256": "8716D56E96E13F9C371E6AEB8A568C35C397F5B48416FDFEFA040969037E8A6F",
+    "docker_qualification_log_sha256": "847F06A1EA5CA9C0B6E4232800650F98F07867CE7B1975BEC6F95D3A661D3E3D",
+    "junit_sha256": "028682672C329D945B12FEE4DBA5C362D5E479F6D585DAE379F87A2109825401"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered diagnostic only; not strict v0.1 Docker acceptance, a cloud Azure account, HA or indefinite operation.", "Historical D83-D100, D100 and prior provider evidence is not reattributed."]
+}
