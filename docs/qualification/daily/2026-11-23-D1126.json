@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1126",
+  "date": "2026-11-23",
+  "status": "pass_streaming_worker_composed_regression",
+  "candidate_sha": "1bb0bb1873cbd303a88596a54d4c76a580f28e0b",
+  "implementation_commit_sha": "1bb0bb1873cbd303a88596a54d4c76a580f28e0b",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1126.md",
+  "command": "python -m pytest -q <D1121 streaming selection> <tests/test_worker*.py> tests/integration/test_worker_runtime_contention.py tests/integration/test_runtime_contention.py",
+  "result": {
+    "qualification": "PASS: 114 passed in 93.08s.",
+    "scope": "One-process composition of local streaming runtime/checkpoint/sink behavior with worker execution, worker contention, artifact contention and runtime progress preservation.",
+    "production_change": "None.",
+    "cleanup": "PASS: process reached terminal state and no Ronin container remained.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "7F1F7613FF21ED639229283BB16C3A91A7682F5E2D648AA5FB9D9E0D3D9F00DB"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local composed regression only; it does not replace real broker, Docker worker, PostgreSQL scheduler/runtime, external provider, HA or indefinite-operation evidence.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
