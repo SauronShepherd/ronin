@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1040",
+  "date": "2026-11-23",
+  "status": "pass_real_s3_compatible_integration",
+  "candidate_sha": "c91b247b96309a14f37160ec138ee78e4651cbb7",
+  "implementation_commit_sha": "c91b247b96309a14f37160ec138ee78e4651cbb7",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1040.md",
+  "command": "RONIN_TEST_S3_ENDPOINT=http://127.0.0.1:45639 python -m pytest -q tests/integration/test_ml_s3_artifact_store_real.py tests/integration/test_s3_json_connector_real.py",
+  "result": {
+    "qualification": "PASS: 2/2 real S3-compatible ML artifact-store and S3 JSON connector integration tests",
+    "scope": "S3-compatible artifact round trip, retention, discovery and lost-response retry",
+    "external_services": "USED: temporary local LocalStack 3.8 S3 service, removed after execution",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "f0917614afd9929c66ebdff716332bdfcd470ccdc1c393cd503c337b354a861a" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Evidence uses a temporary local S3-compatible service (LocalStack), not a managed external cloud account or production object store.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
