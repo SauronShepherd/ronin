@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1102",
+  "date": "2026-11-23",
+  "status": "diagnostic_git_vcs_no_randomly_retry",
+  "candidate_sha": "282e4f30bb4715b1c3c70d6ad245bcf4c0e87b21",
+  "implementation_commit_sha": "282e4f30bb4715b1c3c70d6ad245bcf4c0e87b21",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1102.md",
+  "command": "python -m pytest -q -p no:randomly tests/test_git_source.py tests/test_vcs_git.py",
+  "result": {"qualification": "NOT QUALIFIED: 8 failed, 22 passed, 2 skipped in 20.56s; remaining failures occurred at pytest-created temporary-repository git init with exit 128.", "production_change": "None", "release_effect": "No state changes; P11 in_progress, P13 blocked, release NO-GO at 1/13 families and 0/10 gates."},
+  "hashes": {"pytest_output_sha256": "E258C1A0BEB23E43CE994BEB26016323F5AA66FFA49B7014DF4679936F4C0BC0"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No production regression established; isolated git subprocess succeeds.", "Historical evidence is not reattributed."]
+}
