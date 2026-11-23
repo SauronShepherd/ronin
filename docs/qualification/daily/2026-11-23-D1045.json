@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1045",
+  "date": "2026-11-23",
+  "status": "pass_scheduler_recovery_boundaries",
+  "candidate_sha": "8ea1099cd802614c2069151816a1429b208f7897",
+  "implementation_commit_sha": "8ea1099cd802614c2069151816a1429b208f7897",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1045.md",
+  "command": "python -m pytest -q tests/test_kernel_event_ledger_recovery.py tests/test_scheduler_leadership.py tests/test_scheduler_fencing.py tests/test_scheduler_daemon.py",
+  "result": {
+    "qualification": "PASS: 38/38 local scheduler recovery, leadership, fencing and daemon contract tests",
+    "scope": "Event-ledger recovery, leader transitions, stale-owner fencing and daemon recovery boundaries",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "3b09a68871216c7325f8431030a57559272fe829d491ef6065bb4a0be8d8ee7e" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process bounded recovery evidence only; this cell does not qualify multi-process HA, failover or indefinite production operation.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
