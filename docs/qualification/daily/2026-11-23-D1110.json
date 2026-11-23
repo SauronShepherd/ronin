@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1110",
+  "date": "2026-11-23",
+  "status": "diagnostic_external_data_engineering_unconfigured",
+  "candidate_sha": "8da920a0af31f6d833345327462580646bff6928",
+  "implementation_commit_sha": "8da920a0af31f6d833345327462580646bff6928",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1110.md",
+  "command": "python -m pytest -q tests/e2e/test_data_engineering_external.py",
+  "result": {
+    "qualification": "DIAGNOSTIC: 3 skipped in 0.53s.",
+    "scope": "External Spark Connect and SDP Studio smoke tests were collected but no external endpoint, command, or project identifier was configured.",
+    "skips": ["SPARK_CONNECT_ENDPOINT is not configured", "SDP_STUDIO_COMMAND is not configured", "SDP_PROJECT_ID is not configured for the real SDP Studio CLI"],
+    "production_change": "None.",
+    "cleanup": "PASS: no external process or container was started; temporary pytest log retained for the receipt.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "19C1609ED9E7B14F026678A5D77BC64FFA1EE350DCD1CE8C2FA46DF765D92430"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is a configuration diagnostic, not external-provider qualification and not a release gate.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
