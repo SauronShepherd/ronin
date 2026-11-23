@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D833",
+  "status": "PASS_OTLP_REAL_CURRENT_CANDIDATE",
+  "candidate_sha": "3ab15f081e51dc90f38b558dfe7cd48a89b5f211",
+  "qualification": "current-candidate real OpenTelemetry Collector provider diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_otlp_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d833-otlp-current-20261123",
+  "provider": {"image": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621", "protocol": "OTLP/HTTP"},
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "elapsed_seconds": 6.145, "process_exit_code": 0},
+  "coverage": "Collector accepted traces, metrics and logs from the real Ronin telemetry path.",
+  "cleanup": {"status": "PASS", "collector_removed": true, "volume_removed": true, "network_removed": true, "remaining_containers": [], "remaining_qualification_images": []},
+  "limitations": ["filtered local Collector diagnostic, not production observability SLO or HA", "does not complete P11/P13 or release gates", "does not reattribute D100-D832"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
