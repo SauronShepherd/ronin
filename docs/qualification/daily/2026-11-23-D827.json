@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D827",
+  "status": "NOT_PASS_POSTGRES_FULL_ORDERED_CURRENT_CANDIDATE",
+  "candidate_sha": "6f3d6372bedf7ccdbcb3af0a2560be6260c3e87f",
+  "qualification": "full non-performance Python/PostgreSQL suite with pytest-randomly disabled",
+  "command": "PYTEST_ADDOPTS=-p no:randomly pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory %TEMP%\\ronin-d827-postgres-full-ordered-20261123",
+  "result": {"collected": 4791, "passed": 4732, "failed": 31, "skipped": 31, "warnings": 23, "pytest_duration_seconds": 664.6, "process_exit_code": 1},
+  "failure_clusters": ["public status divergence", "candidate-boundary and archive verification", "VCS Git/source", "worker preparation and runtime"],
+  "cleanup": {"status": "PASS", "postgres_removed": true, "volume_removed": true, "network_removed": true},
+  "interpretation": "Negative ordered full-suite evidence; the change in failure clusters versus D822 shows that disabling randomization alone does not establish a single product root cause.",
+  "limitations": ["full suite NOT_PASS", "31 explicit platform/opt-in skips remain", "does not reattribute D100-D826"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
