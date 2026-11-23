@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D907",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Real PostgreSQL scheduler recovery",
+  "candidate_sha": "846ec4e08b831186fd79a44d2ef4d03e70030e53",
+  "implementation_commit_sha": "846ec4e08b831186fd79a44d2ef4d03e70030e53",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D907.md",
+  "execution_scope": "clean-main-isolated-postgres-16.4-focused-scheduler-recovery",
+  "result": {
+    "qualification": "PASS: 2/2 selected PostgreSQL recovery tests passed, 19 deselected, 0 failed, 0 skipped",
+    "cleanup": "PASS: isolated PostgreSQL container and postgres:16.4-alpine image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_postgres_test_suite.ps1",
+    "image": "postgres:16.4-alpine",
+    "test_path": "tests/integration/test_postgres_workflow_store_real.py",
+    "test_filter": "scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate",
+    "pytest_wall_seconds": 2.83,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d907-evidence"
+  },
+  "hashes": {
+    "pytest_output_sha256": "26c34c952bb7323b6264eccf33a69e4eeb9420e9226ea415b2c12f3408a19a15",
+    "pytest_postgres_log_sha256": "9b8b41a4ff6815eb37f2db9d5e2227e2292cb9d93869126bd434194606ae9e43",
+    "pytest_postgres_xml_sha256": "11eeb107f411f0f0424b0aa39c4d5ef0fc5590fa3caf4d44eef0f7ca2f903034"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused PostgreSQL recovery selection only; not the complete Python/PostgreSQL suite or full coverage.",
+    "No external provider/object store, HA multi-node, indefinite operation or release approval is claimed.",
+    "D907 is bound to candidate 846ec4e08b831186fd79a44d2ef4d03e70030e53; earlier evidence is not reattributed."
+  ]
+}
