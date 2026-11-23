@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1059",
+  "date": "2026-11-23",
+  "status": "pass_real_trino_after_warmup",
+  "candidate_sha": "6f877ca5ac10a7ccb75505c803b60cb6f107b72f",
+  "implementation_commit_sha": "6f877ca5ac10a7ccb75505c803b60cb6f107b72f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1059.md",
+  "command": "warmup 30s after /v1/info readiness; RONIN_TRINO_TEST_URL=http://127.0.0.1:58082 python -m pytest -q tests/integration/test_query_engine_trino_real.py",
+  "result": {
+    "qualification": "PASS: 4/4 real Trino query-engine and QueryFlux integration tests after explicit server warm-up",
+    "scope": "Prepared scalar bindings, result-byte budget, QueryFlux evidence persistence and process recovery",
+    "external_services": "USED: temporary local Trino container, removed after execution",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "pytest_output_sha256": "ce427407c96917ae134ea48c95a7060d9ea56cdc822ba65a2b7b8668585612ca",
+    "container_id_sha256": "cee2c25782cd858b4b959d57f5dcf8c6379378a025fdcfadf4c975b440244e2f"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "The explicit warm-up is required because /v1/info readiness can precede query readiness; this is bounded local Trino evidence, not HA or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
