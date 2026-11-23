@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1048",
+  "date": "2026-11-23",
+  "status": "pass_real_appliance_backup_restore",
+  "candidate_sha": "702ba2cc566d227063c18963f307aeae49c72698",
+  "implementation_commit_sha": "702ba2cc566d227063c18963f307aeae49c72698",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1048.md",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d1048 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1048-appliance-real -TestFilter appliance_backup_restores_postgres_and_local_data_volume",
+  "result": {
+    "qualification": "PASS: 1/1 real appliance backup/restore test; 26 unrelated tests deselected",
+    "scope": "Immutable Ronin qualification image, isolated PostgreSQL, local-data volume backup and restore verification",
+    "external_services": "USED: temporary local Docker services only; all containers, owned image and volumes removed",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "runner_log_sha256": "c467d5727d287cf634a91681e99de97a23bc6b1f0df02a6b4e0373d1f100e58a",
+    "pytest_output_sha256": "743466373eaf6a7f459ec64429074e82e6b8fe559d87859b6ca74ef008d672c0",
+    "qualification_log_sha256": "7465a869c9f2be572db98a64d15cf67ebf717cc989fa88185f6e5d5158e772ec",
+    "cleanup_log_sha256": "01d1e13369a3050dd5d972e7d2f6842edd663cd9285374419a86f3402410e6c4",
+    "junit_sha256": "a03fa31b1c4aaf07759d375b2c4c18f12e7e38e7d7bbdfb7e53d2e964231500"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a bounded local Docker restore qualification; it does not qualify HA, cross-region recovery, managed PostgreSQL or indefinite production operation.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
