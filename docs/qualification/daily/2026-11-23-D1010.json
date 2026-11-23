@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1010",
+  "date": "2026-11-23",
+  "status": "pass_worker_runtime_contracts",
+  "candidate_sha": "30fbe83be8c743f2b941f0b217ae9f382e5ab40f",
+  "implementation_commit_sha": "30fbe83be8c743f2b941f0b217ae9f382e5ab40f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1010.md",
+  "command": "python -m pytest -q tests/test_worker_runtime.py",
+  "result": {
+    "qualification": "PASS: 16/16 local worker-runtime contract tests",
+    "scope": "Worker runtime lifecycle and execution behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "fce41f45f77e020d076513cb7e2fa8890122c271c5a1246e94959b1f9fe7fe2e" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process contract evidence only; this cell does not qualify external providers, PostgreSQL runtime or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
