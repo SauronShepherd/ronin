@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1061",
+  "date": "2026-11-23",
+  "status": "pass_bounded_worker_contention",
+  "candidate_sha": "6a1e6255f22d863119723cd9bc2842407760287b",
+  "implementation_commit_sha": "6a1e6255f22d863119723cd9bc2842407760287b",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1061.md",
+  "command": "python -m pytest -q tests/integration/test_runtime_contention.py tests/integration/test_worker_runtime_contention.py",
+  "result": {
+    "qualification": "PASS: 3/3 bounded runtime and worker contention integration tests",
+    "scope": "Concurrent worker/runtime contention, lease coordination and bounded duplicate/ownership behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "d5280ac4d9594011fe01f9619468b27d6d4eec725f60fc436332efdd9992a933" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Bounded local/in-process contention evidence only; this does not qualify indefinite multi-worker HA or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
