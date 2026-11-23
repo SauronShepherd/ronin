@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1103",
+  "date": "2026-11-23",
+  "status": "pass_focused_git_single_case",
+  "candidate_sha": "5dbcbd98ac7a16dc4271e8e97f0583475d92ace9",
+  "implementation_commit_sha": "5dbcbd98ac7a16dc4271e8e97f0583475d92ace9",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1103.md",
+  "command": "python -m pytest -q -s tests/test_vcs_git.py::test_clean_revision_matches_head",
+  "result": {
+    "qualification": "PASS: 1 passed in 0.94s.",
+    "scope": "Single Git/VCS case that failed inside the broad D1096/D1102 combinations.",
+    "production_change": "None.",
+    "interpretation": "The case passes in isolation; this supports a suite interaction/resource diagnostic, not a product regression conclusion.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "D5C2452DB02F627F40950D33FC1640835687429F69A1118438C200B58D522F78"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single-case evidence is narrow and does not certify the full Git/VCS suite.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
