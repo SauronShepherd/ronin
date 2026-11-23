@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D820",
+  "status": "PASS_SUPERVISOR_SOAK_1200_POSTGRES_CURRENT_CANDIDATE",
+  "candidate_sha": "fe737ca82b361ae442cb77abe78881ed9271a199",
+  "qualification": "new bounded live supervisor soak with explicit PostgreSQL backend",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d820-supervisor-soak-1200-postgres-20261123 -TestGrep \"supervisor soak\" -StorageBackend postgres -SupervisorSoakSeconds 1200 -RequestTimeoutSeconds 30",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "duration_seconds": 1262.67, "process_exit_code": 0},
+  "traffic": {"api_events": 1527, "correlated_http_logs": 1527, "uncorrelated": 0, "outcomes": {"OK": 1527}, "application_errors": 0},
+  "services": {"postgres": true, "kafka": true, "ronin_api": true, "supervisor_soak_seconds": 1200, "multi_broker": false},
+  "cleanup": {"status": "PASS", "postgres_removed": true, "broker_removed": true, "volume_removed": true, "network_removed": true, "remaining_containers": [], "remaining_qualification_images": []},
+  "limitations": ["bounded 1,200-second single-broker soak, not indefinite operation or production SLO", "does not cover HA/multi-worker or dedicated multi-broker RF3 in this receipt", "does not by itself complete P11 or any release gate", "does not reattribute D100-D819"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
