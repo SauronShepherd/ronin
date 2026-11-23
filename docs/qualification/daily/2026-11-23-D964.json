@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D964",
+  "date": "2026-11-23",
+  "status": "pass_scheduler_notification_regression",
+  "candidate_sha": "04e84e5d17f13fb8ea38648a022cb01ead6e007f",
+  "implementation_commit_sha": "04e84e5d17f13fb8ea38648a022cb01ead6e007f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D964.md",
+  "command": "pytest scheduler modules plus notification dispatcher/SMTP/webhook/observability tests",
+  "result": {
+    "qualification": "PASS: 204/204 tests, 0 skipped, 0 failed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "scope": [
+    "tests/test_scheduler*.py",
+    "tests/test_notification_dispatcher.py",
+    "tests/test_smtp_notifications.py",
+    "tests/test_webhook_notifications.py",
+    "tests/test_observability_finops.py"
+  ],
+  "hashes": {
+    "pytest_output_sha256": "1f78f8860c0c9768453cdd173cdee3b76a9049d2a0fe554c2203015af6001d97"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local regression only; no external provider, HA, indefinite operation or complete P11 qualification.",
+    "D964 is bound to candidate 04e84e5d17f13fb8ea38648a022cb01ead6e007f; historical evidence is not reattributed."
+  ]
+}
