@@ -21,11 +21,17 @@ function Get-FreeLoopbackPort {
 }
 
 function Get-DockerImageId([string]$Reference) {
-    $raw = (& docker image inspect $Reference --format '{{.Id}}' 2>$null | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0 -or $raw -notmatch '^sha256:[0-9a-f]{64}$') {
-        return $null
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $raw = (& docker image inspect $Reference --format '{{.Id}}' 2>$null | Out-String).Trim()
+        if ($LASTEXITCODE -ne 0 -or $raw -notmatch '^sha256:[0-9a-f]{64}$') {
+            return $null
+        }
+        return $raw
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
     }
-    return $raw
 }
 
 function Remove-OwnedQualificationImage {
