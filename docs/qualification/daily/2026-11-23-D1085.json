@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1085",
+  "date": "2026-11-23",
+  "status": "pass_real_docker_executor_limits",
+  "candidate_sha": "002b9c326af7129861485885ecb152348e43fc21",
+  "implementation_commit_sha": "002b9c326af7129861485885ecb152348e43fc21",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1085.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageId sha256:f4414b51bdc9f5e42f3526f9a013a279f1b36b1e608830bda4b145813c11a094 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1085-docker-executor -TestFilter \"test_real_docker_memory_swap_capped or test_real_docker_records_observed_cpu_and_memory or test_real_docker_isolation_limits_usage_and_cleanup\"",
+  "result": {
+    "qualification": "PASS: 3 passed, 24 deselected, 0 skipped, 0 failed in 5.36s.",
+    "scope": "Real Docker executor resource limits, observed CPU/memory reporting, swap cap, isolation limits and cleanup.",
+    "external_services": "Docker Desktop; runner selected its PostgreSQL fixture set but no PostgreSQL test was selected.",
+    "production_change": "None.",
+    "cleanup": "PASS: runner-owned resources cleaned; caller-supplied image removed by exact digest after the run.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "image": {
+    "digest": "sha256:f4414b51bdc9f5e42f3526f9a013a279f1b36b1e608830bda4b145813c11a094",
+    "built_from_candidate": "002b9c326af7129861485885ecb152348e43fc21"
+  },
+  "hashes": {
+    "docker_cleanup_sha256": "2074825017DA23D8910DE74B8A9D8C6C3AE6B1214CEE0F054FF25AB5B179DBD7",
+    "docker_pytest_output_sha256": "B0B384DAE04FA96D18915C1B79B3AD69B00A9C1599CD2EF89B92E2F5C083147E",
+    "docker_qualification_log_sha256": "780AD27CEE5ADB2566450950D9CA303D9DAEDE728C0D01CAFD5222B8CB65C87F",
+    "postgres_qualification_log_sha256": "89BE67E46D4238A3112528B4F09B876BACDC5A9932ACE99913CE50DD27E2407E",
+    "qualification_summary_sha256": "1BEDCFA8C5B44D0A7855114655771398304541F44D5AF67004161571E2CD6886",
+    "junit_sha256": "1C158FEBB2A24C78055227335B3447A63FB3EE99B31D68F6C2A213FFE9B4B715"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is a filtered Docker diagnostic, not the strict v0.1 acceptance gate; 24 tests were deselected by the explicit filter.",
+    "It does not qualify PostgreSQL scheduler/runtime, external providers or object stores, or a release gate.",
+    "Historical D83-D100 and D100 evidence is not reattributed."
+  ]
+}
