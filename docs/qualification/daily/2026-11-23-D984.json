@@ -1,0 +1,23 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D984",
+  "date": "2026-11-23",
+  "status": "pass_local_data_engineering_qualification",
+  "candidate_sha": "71232829c741078170fd51eb21a6fed23e12f3ec",
+  "implementation_commit_sha": "71232829c741078170fd51eb21a6fed23e12f3ec",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D984.md",
+  "command": "python -m pytest -q tests/test_data_engineering_qualification.py tests/test_local_spark_qualification.py",
+  "result": {
+    "qualification": "PASS: 5/5 local Data Engineering qualification tests",
+    "external_provider": "NOT QUALIFIED: local Spark qualification/contracts only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "fd54e52dbaef3f54f18375859e0699e8a5f79f8db76c56edc10e60420e3c7f79" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This cell covers local qualification and Spark contract behavior only; no external SDP/Spark provider was contacted.",
+    "D978 remains the non-responsive external smoke attempt and D982 the local provider-contract regression."
+  ]
+}
