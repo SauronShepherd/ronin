@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1064",
+  "date": "2026-11-23",
+  "status": "pass_http_job_surface",
+  "candidate_sha": "1df5b5d3ffbec1a14e387478a0a966c19aef47ae",
+  "implementation_commit_sha": "1df5b5d3ffbec1a14e387478a0a966c19aef47ae",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1064.md",
+  "command": "python -m pytest -q tests/integration/test_http_submit_status.py tests/integration/test_http_authorized_pagination.py tests/integration/test_http_timeouts.py",
+  "result": {
+    "qualification": "PASS: 15/15 HTTP job submit/status, authorization/pagination and timeout integration tests",
+    "scope": "Authenticated job submission, status retrieval, bounded pagination and timeout behavior",
+    "external_services": "USED: temporary loopback HTTP services inside pytest process only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "a2d27aa20247aff2e37b16d384c9ed5ef7d46d3db6a4e2e2731b443889985f5f" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Evidence is bounded loopback HTTP integration, not a deployed production API or indefinite SLO qualification.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
