@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D932",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate Docker Azure Blob/Azurite snapshot replay",
+  "candidate_sha": "97d938f5448a49d7178d81e85662b82c8f1bed58",
+  "implementation_commit_sha": "97d938f5448a49d7178d81e85662b82c8f1bed58",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D932.md",
+  "execution_scope": "clean-main-current-candidate-docker-azurite-azure-blob-replay",
+  "result": {
+    "qualification": "PASS: 1 selected integration test, 26 deselected, 0 skipped/failures",
+    "cleanup": "PASS: owned Ronin image and Azurite resources cleaned",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_docker_qualification.ps1",
+    "test_filter": "azure_blob_connector_real",
+    "provider": "Azurite local Azure Blob emulator",
+    "worker_image_digest": "sha256:cf28b9a7d5e28b60a173ae1d7fbe5ddae6e6254e47b55d5cafd2cb7d9c695206",
+    "selected_tests": 1,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d932-azure-provider"
+  },
+  "hashes": {
+    "azurite_log_sha256": "ab77877c2d5378d3f50da523ce3380ab7bfb244f0c28167b82489ad54dd8c0d6",
+    "docker_cleanup_sha256": "06f09da4dac51467e67d59e185decb104eb16ea97ebb5bbd42032bd396228238",
+    "docker_pytest_output_sha256": "8a2837c9ffa46659de858deb06cf9f37955dbf5785d9b557f29cfeecf084a2e0",
+    "docker_qualification_sha256": "a7d2557c899a2288b891bda6067d99823ef5496988a3bae1cb4fee6e8b652ac3",
+    "v01_acceptance_xml_sha256": "e9dec1aef6407093c99f72e05f0098a3ea2d0755eaf0053dbf102bf402f94cf3"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Azurite is a local emulator and does not certify production Azure Blob.",
+    "Filtered bounded diagnostic only; no HA, indefinite operation, complete P11 or release evidence.",
+    "D932 is bound to candidate 97d938f5448a49d7178d81e85662b82c8f1bed58; earlier evidence is not reattributed."
+  ]
+}
