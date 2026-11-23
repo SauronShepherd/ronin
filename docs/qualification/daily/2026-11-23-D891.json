@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D891",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL bundle atomicity integration",
+  "candidate_sha": "c84d8fba97faf17620d00e7f0f6c99329a6e497a",
+  "implementation_commit_sha": "c84d8fba97faf17620d00e7f0f6c99329a6e497a",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D891.md",
+  "execution_scope": "clean-main-real-postgresql-complete-test-postgres-bundle-real-file",
+  "result": {
+    "qualification": "PASS: 2/2 tests passed, 0 skipped, 0 failed, 0 deselected and 0 unrelated collection skips",
+    "bundle": "PASS: multi-object commit atomicity/idempotency and late-binding conflict rollback",
+    "cleanup": "PASS: isolated PostgreSQL runner completed without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d891-evidence -TestPath tests/integration/test_postgres_bundle_real.py",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d891-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 0.77,
+    "test_file": "tests/integration/test_postgres_bundle_real.py",
+    "collected": 2
+  },
+  "hashes": {
+    "pytest_output": "f413f65cad7f80cc404723f75842bc9f6d77e61c29864fc196e35b61f788bcfc",
+    "pytest_postgres_log": "af73491e388c85de04b13f7dd3142444fb49deeb273018a2592402a428430464",
+    "junit": "43be5dc8bc9932524b9f962f949b3ae95be0583bd2adc6e95e39b69f73675f43",
+    "runner_timings": "d2e8d6f0e2b4a3aa792f4aa1c85e556231804c19ada4719632619bcda7c5b7a6"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This file-scoped diagnostic disables coverage and is not the complete Python/PostgreSQL suite or a release gate.",
+    "D891 does not establish HA, indefinite operation, external providers or release approval.",
+    "D891 is bound to candidate c84d8fba97faf17620d00e7f0f6c99329a6e497a; earlier evidence is not reattributed."
+  ]
+}
