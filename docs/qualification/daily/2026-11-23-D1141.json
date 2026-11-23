@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1141",
+  "date": "2026-11-23",
+  "status": "pass_real_s3_object_store",
+  "candidate_sha": "9b52f7ad6e9cdc8b002fd9cace4a42d7100b04fb",
+  "implementation_commit_sha": "9b52f7ad6e9cdc8b002fd9cace4a42d7100b04fb",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1141.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageId sha256:d9a13a4900c35975c8e52360e8117025fa20ae079e586a9356a282f5bc05004c -ImageTag ronin:qualification-d1141 -EvidenceDirectory <external-temp-dir> -TestFilter 's3_json_sink_put_read_and_retry_round_trip or ml_durable_input_output_and_retention_round_trip_through_s3'",
+  "result": {
+    "qualification": "PASS: 2 passed in 9.48s, 25 deselected, 0 selected skipped/failed.",
+    "scope": "Floci-backed S3-compatible object store: JSON connector write/read/discovery with lost-response retry and ML durable artifact round-trip with retention.",
+    "production_change": "None.",
+    "cleanup": "PASS: Floci project, container, volume and caller-built qualification image were removed after the run; no Ronin/Floci temporary resources remain.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "docker_pytest_output_sha256": "952099F99A06D228A0C6C696B0A27B6362DC7CD709E62E4A856428379083C000",
+    "docker_qualification_log_sha256": "A69083BC071998A4205E297879AA51BA0938DA26E38997D7434B9B81B8C83B08",
+    "floci_log_sha256": "33D34B3A59908DFCF2A66D0B4AD409DF6A68B5DABA53E423221B669EBC84E009",
+    "junit_sha256": "0FBF206CE9B43D7CE322948A660603926C82090E193BBA6C71071CA78E74B9CF",
+    "cleanup_sha256": "30A8ADCCFFDF197F186765FD6B2DEEA17AEB3F9E1EDB8D205AFC68A54A598B7C"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered diagnostic only; not strict v0.1 Docker acceptance, an external cloud provider, HA or indefinite operation.", "Historical D83-D100, D100 and prior object-store evidence is not reattributed."]
+}
