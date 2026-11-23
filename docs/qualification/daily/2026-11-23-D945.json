@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D945",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL ML registry lab bundles and shared jobs",
+  "candidate_sha": "2307dabb5644435eada3879147e9c2ee2e0a075a",
+  "implementation_commit_sha": "2307dabb5644435eada3879147e9c2ee2e0a075a",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D945.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-ml",
+  "result": { "qualification": "PASS: 12/12 selected tests, 0 skips/failures", "cleanup": "PASS: isolated PostgreSQL fixture removed by runner", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates" },
+  "parameters": { "runner": "tools/run_postgres_test_suite.ps1", "test_path": "tests/integration/test_postgres_ml_real.py", "postgres_image": "postgres:16.4-alpine", "storage_backend": "postgres", "selected_tests": 12, "duration_seconds": 4.49, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d945-postgres-ml" },
+  "hashes": { "pytest_output_sha256": "74787fc350610c4c2a4921660db2dd58ae14d83e767b049f2fecb6b15cd45534", "pytest_postgres_log_sha256": "b9f5aa5543edfd2e7b5b60c1ab33291d5cf20225916031f50df6bb27471e891a", "pytest_xml_sha256": "f2de080c8300b3e9543fb59c33a35d3a7ffec2a4b6777af8b1b01bec72d89d0b" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Filtered bounded ML diagnostic only; no complete P11, HA, indefinite operation or release evidence.", "D945 is bound to candidate 2307dabb5644435eada3879147e9c2ee2e0a075a; earlier evidence is not reattributed." ]
+}
