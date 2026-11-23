@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1130",
+  "date": "2026-11-23",
+  "status": "pass_http_worker_order_isolation",
+  "candidate_sha": "fba8df5e1affd912777faa953eec4fc6d9199abe",
+  "implementation_commit_sha": "fba8df5e1affd912777faa953eec4fc6d9199abe",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1130.md",
+  "command": "python -m pytest -q tests/integration/test_http_submit_status.py tests/integration/test_worker_runtime_contention.py",
+  "result": {
+    "qualification": "PASS: 10 passed in 16.21s.",
+    "scope": "HTTP control-plane module executed before the complete worker contention file to isolate D1127's order-dependent lease failure.",
+    "production_change": "None.",
+    "cleanup": "PASS: HTTP and worker tests completed their temporary server/database/artifact/thread cleanup.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "A2690D354BCCAF8EEDDE0BEFDEA0C759F23D5E440210CD0A7669A01714E93794"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This order isolation does not resolve D1127; the remaining interaction requires the streaming selection before HTTP/worker.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
