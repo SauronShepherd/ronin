@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D949",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate complete PostgreSQL workflow scheduler store",
+  "candidate_sha": "7ef0ea00bae657381efaafba5c08ee528034b76b",
+  "implementation_commit_sha": "7ef0ea00bae657381efaafba5c08ee528034b76b",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D949.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-workflow-store",
+  "result": { "qualification": "PASS: 21/21 selected tests, 0 skips/failures", "cleanup": "PASS: isolated PostgreSQL fixture removed by runner", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates" },
+  "parameters": { "runner": "tools/run_postgres_test_suite.ps1", "test_path": "tests/integration/test_postgres_workflow_store_real.py", "postgres_image": "postgres:16.4-alpine", "storage_backend": "postgres", "selected_tests": 21, "duration_seconds": 0, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d949-postgres-workflow-store" },
+  "hashes": { "pytest_output_sha256": "02d700a9d1f179b273d38c0965890be7565560ccee52136a8b65b774d09096bb", "pytest_postgres_log_sha256": "f48122b51966f7e3aaf661056cee95d5bee4cf7171e0a562c64dadd9ca29b306", "pytest_xml_sha256": "e5b1f41f9ab602fa194759e54efba235d09754f237fac2dafb004109b3dcc1cd" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Filtered bounded workflow-store diagnostic only; no complete P11, HA, indefinite operation or release evidence.", "D949 is bound to candidate 7ef0ea00bae657381efaafba5c08ee528034b76b; earlier evidence is not reattributed." ]
+}
