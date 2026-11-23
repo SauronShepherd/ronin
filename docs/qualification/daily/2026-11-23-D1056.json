@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1056",
+  "date": "2026-11-23",
+  "status": "fail_trino_real_queryflux_boundaries",
+  "candidate_sha": "15597e48ee51bc9b6097093575559dd4314289c5",
+  "implementation_commit_sha": "15597e48ee51bc9b6097093575559dd4314289c5",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1056.md",
+  "command": "RONIN_TRINO_TEST_URL=http://127.0.0.1:58080 python -m pytest -q tests/integration/test_query_engine_trino_real.py",
+  "result": {
+    "qualification": "FAIL: 2/4 real Trino integration tests passed; 2 failed in result-byte-budget and QueryFlux worker evidence paths",
+    "scope": "Real Trino scalar bindings, cancellation, result byte-budget enforcement and QueryFlux worker persistence",
+    "external_services": "USED: temporary local Trino container, removed after execution",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "pytest_output_sha256": "8164626e12976743f08a3475d2ee64a523e38df0ebe15af35af5e7e239fd26f5",
+    "container_id_sha256": "828ace552a24eb6195feb6365d6f1702d5a5b7f41d8c2381557b0530d2038ce7"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is diagnostic failure evidence, not a passing Trino qualification and not a release gate.",
+    "The failure needs isolation/fix before Trino can contribute positive P11 evidence."
+  ]
+}
