@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1166",
+  "date": "2026-11-23",
+  "status": "pass_bounded_live_empty_partition_health_postgres",
+  "candidate_sha": "7a1270d92cd7b56d386ad6ea991fd744a361dc4c",
+  "implementation_commit_sha": "7a1270d92cd7b56d386ad6ea991fd744a361dc4c",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1166.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -WorkerImage ronin:qualification-d1166 -StorageBackend postgres -TestGrep 'live streaming health reports an empty partition' -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS: 1/1 selected Playwright case, 0 skipped, 0 failed in 42.06s",
+    "criterion": "PASS: a real two-partition Redpanda topic with partition 1 empty reported zero false lag before and after partition 0 was consumed",
+    "runtime": "PASS: real PostgreSQL backend, single-broker Redpanda and Ronin API/worker image",
+    "api_traffic": "4/4 events correlated, all OK, 0 unexpected authorization/server/network errors",
+    "cleanup": "PASS: Redpanda, PostgreSQL, volume, network, live processes and temporary worker image cleaned",
+    "production_change": "None; qualification fixture, Playwright case and runner selection only",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "browser-live.log": "393F5D6DA05E43FCA71C7861492BE42EB0E797C6F4AD41FBD49BFEF62996A2BB",
+    "browser-live.xml": "DB7A459F78761AFB1B3BDEB82503B5191ED6835EA490B495AB0E601C653F4625",
+    "live-api-traffic.json": "3CEB9009DCA101B2829673EC0CD86B021607B73B68888ED04BBE386AE6AEBAD1",
+    "qualification-summary.json": "8F252663A8BED342BD9DE46F1E2C42B3EBB77A232A00FFAD10B9571A285FFD4A",
+    "live-server.stderr.log": "D61D204908D15EF41527807DB6FC58AD6697A051E4A88189DD2D4E402D8E260B",
+    "live-python-freeze.txt": "C8523E3D4628A00BAEAB22736D7002338F6D057363CF532EA2AECEE3A3540C28"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused bounded health/lag diagnostic with a single-broker Redpanda topology; not indefinite operation, production SLO, HA or multi-worker qualification.",
+    "The new cell does not qualify external providers, complete P11 or any release gate. Historical D83-D1165 evidence remains bound to its exact candidates."
+  ]
+}
