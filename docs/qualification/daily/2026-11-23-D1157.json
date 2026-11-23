@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1157",
+  "date": "2026-11-23",
+  "status": "pass_helm_postgres_configuration_implementation_contracts",
+  "candidate_sha": "6eab483e04b0bcd31d2f37e7475c6a7dad30196d",
+  "implementation_commit_sha": "6eab483e04b0bcd31d2f37e7475c6a7dad30196d",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1157.md",
+  "production_change": "Helm chart now exposes explicit server.storageBackend (sqlite/postgres), keeps sqlite as default, injects a required PostgreSQL DSN only through the Kubernetes Secret, and wires RONIN_STORAGE_BACKEND/RONIN_POSTGRES_DSN conditionally.",
+  "regressions": {
+    "pytest": "34/34 passed: Helm chart structure, backend configuration and Docker qualification contracts",
+    "helm_lint": "passed",
+    "helm_postgres_render": "passed with postgres backend and DSN; rendered Secret contains postgres-dsn and deployment references the secret key",
+    "helm_missing_dsn_render": "passed negative check: postgres backend without DSN is rejected by required()"
+  },
+  "result": {
+    "qualification": "PASS for configuration/contract boundary; live PostgreSQL Helm runtime remains pending",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This phase does not claim a live PostgreSQL-backed Kubernetes deployment; the chart intentionally consumes an external reachable PostgreSQL service.",
+    "A subsequent live qualification must provide PostgreSQL in the isolated kind environment and prove runtime behavior and restart persistence with storageBackend=postgres.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
