@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1096",
+  "date": "2026-11-23",
+  "status": "diagnostic_full_suite_failures",
+  "candidate_sha": "94e74808f82cfa52a6a84ef5c4e191410f6edc48",
+  "implementation_commit_sha": "94e74808f82cfa52a6a84ef5c4e191410f6edc48",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1096.md",
+  "command": "python -m pytest -q",
+  "result": {
+    "qualification": "NOT QUALIFIED: 4672 passed, 85 skipped, 38 failed in 628.50s (10:28).",
+    "scope": "Full repository regression diagnostic.",
+    "failure_groups": [
+      "VCS source revision and remote identity tests",
+      "public status fail-closed divergence test",
+      "worker runtime contention tests",
+      "candidate boundary/archive/manifest tests",
+      "worker preparation remote sync policy tests"
+    ],
+    "production_change": "None.",
+    "cleanup": "No Docker resources were created by this suite.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "3C79D4C9A9A4E66CFAF7353CF7CD621E47A8DE6DDCEDE8C554D0D087EBFFCAAB",
+    "failed_tests_sha256": "A97F29E175B64DEC0F18EAEF096785EE88E2A5ED9448223ADE96F95546D21EFC"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is a diagnostic full-suite result, not a qualification PASS.",
+    "The failed tests require isolation by category before any conclusion about production regressions.",
+    "Historical D83-D100 and D100 evidence is not reattributed."
+  ]
+}
