@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D996",
+  "date": "2026-11-23",
+  "status": "pass_runtime_discovery_transport_contracts",
+  "candidate_sha": "8e7df7ed475a5d5ba3bbba2a7658c6559d138106",
+  "implementation_commit_sha": "8e7df7ed475a5d5ba3bbba2a7658c6559d138106",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D996.md",
+  "command": "python -m pytest -q tests/test_runtime_profiles.py tests/test_runtime_discovery.py tests/test_transport_runtime_survivor_boundaries.py",
+  "result": {
+    "qualification": "PASS: 79/79 local runtime profile, discovery and transport-survivor contract tests",
+    "scope": "Runtime profiles, runtime discovery and transport survivor boundaries",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "ef5179ca160f06683b721ff10b581dea8fd4e25f910f1f2d080f059620d8d1a5" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process contract evidence only; this cell does not certify external providers, PostgreSQL runtime or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
