@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D972",
+  "date": "2026-11-23",
+  "status": "pass_bounded_postgresql_workflow_store",
+  "candidate_sha": "a1428741da850052ebc819f0db32b1c085f650e9",
+  "implementation_commit_sha": "a1428741da850052ebc819f0db32b1c085f650e9",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D972.md",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d972-postgres-workflow-store -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "result": {
+    "qualification": "PASS: 21/21 selected PostgreSQL workflow-store tests; 0 skipped, 0 failed, 0 deselected",
+    "coverage": "The complete integration file passed, including scheduler recovery, durable outbox, leadership fencing, cancellation, migrations, bundle import and HTTP adapter paths",
+    "postgresql": "PASS: isolated postgres:16.4-alpine service",
+    "cleanup": "PASS: runner completed isolated-service cleanup",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "pytest_output_log_sha256": "4fddf13c52aaef4207ca9a7ddd1e71153c14663afff29b53270a2cfb432acd77",
+    "pytest_postgres_log_sha256": "1321ef64ff796053c1c5c1c0e7ed408d445a00bdf5a01b7f2891c4694bbb5c4d",
+    "pytest_junit_sha256": "ac220038c31c6d19cefaa602cb2106969da43f233a3e7b44554b870732935393",
+    "pytest_timings_sha256": "4a12a9b5247d5d61337d1598abe78abe05a19372a61fdb3886ecfab2651ccee4",
+    "runner_timings_sha256": "b5a14a7f5368220dac7ca045ba4262b843d4bd62534b8e9f05e1ab0949650fb2"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is the complete selected integration file, but still a filtered PostgreSQL diagnostic rather than the complete non-performance Python/PostgreSQL suite with coverage.",
+    "The live Ronin route used SQLite for scheduler/runtime; D972 does not reattribute it as PostgreSQL runtime qualification.",
+    "D972 does not prove indefinite operation, HA/multi-worker, provider certification, P13 or release approval."
+  ]
+}
