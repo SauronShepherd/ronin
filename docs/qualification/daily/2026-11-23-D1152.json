@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1152",
+  "date": "2026-11-23",
+  "status": "pass_live_postgres_route_matrix",
+  "candidate_sha": "399b665d8dcbbe96588d06f0d5967bd89753ab58",
+  "implementation_commit_sha": "399b665d8dcbbe96588d06f0d5967bd89753ab58",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1152.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -TestGrep 'route' -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS: 26/26 filtered Playwright cases passed in 1.7m; 222 API events correlated; 0 unexpected authorization gaps or server/network errors.",
+    "scope": "Bounded live route matrix with Ronin server explicitly configured with RONIN_STORAGE_BACKEND=postgres and isolated PostgreSQL DSN; 25 API-backed/UI routes plus the credential-free API traffic audit.",
+    "production_change": "None.",
+    "cleanup": "PASS: isolated PostgreSQL, Redpanda network, volume and containers removed by the runner.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "browser_log_sha256": "F7868DD9842182BEF5D3D4C7BF9A3D95ACA607F52AAE9ACB30D2A37B6E88DC2C",
+    "browser_junit_sha256": "4697180CCEF57D960A744C19BB1DD1E5F253852B811F94BF9068B5CDBF45CF75",
+    "api_traffic_sha256": "2C97BEDCFF8415CCC9A59DE58B75D97FDCCA6EFEEB1485D16536165109C97A74",
+    "python_freeze_sha256": "8F04918B2208BBA1A9CA749B6AB8E256662FE31020D14FDDFC5C96C929277674",
+    "server_stderr_sha256": "0258C895EA6DE1D7E9D79FD8334E1E9B2C7B3A6FED1AFA08DBFCE7576022AC2D",
+    "qualification_summary_sha256": "F462DA3C4CCCDE550136A2D38A5113B426D85BDDEBC355A89F3C1F1D8EA2E0B9",
+    "web_dependency_cache_sha256": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered bounded route diagnostic only; the runner did not run the full unfiltered route-wide qualification, and this does not prove full scheduler/runtime conformance, HA, multi-worker or indefinite operation.", "Eight WARN responses are preserved in API traffic as expected diagnostic outcomes; no unexpected errors occurred.", "No historical D83-D100 or prior PostgreSQL-runtime evidence is reattributed."]
+}
