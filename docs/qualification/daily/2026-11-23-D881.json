@@ -1,0 +1,41 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D881",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler fencing and durable delivery recovery",
+  "candidate_sha": "3c587e1976ce8b4ed3f3e56e0b819269c530bcf3",
+  "implementation_commit_sha": "3c587e1976ce8b4ed3f3e56e0b819269c530bcf3",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D881.md",
+  "execution_scope": "clean-main-filtered-real-postgresql-scheduler-leadership-outbox-event-inbox",
+  "result": {
+    "qualification": "PASS: 3/3 selected tests passed, 18 deselected, 0 selected skips, 0 selected failures and 0 unrelated collection skips",
+    "recovery": "PASS: leadership generation fencing/persistence, execution outbox expiry/reconciliation, and event inbox freeze/replay",
+    "cleanup": "PASS: isolated PostgreSQL runner completed without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d881-evidence -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'leadership_is_generation_fenced_and_persistent or execution_outbox_survives_expiry_and_reconciles or event_inbox_freezes_and_replays_deliveries'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d881-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 3.29,
+    "selected_tests": [
+      "test_postgres_scheduler_leadership_is_generation_fenced_and_persistent",
+      "test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles",
+      "test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries"
+    ]
+  },
+  "hashes": {
+    "pytest_output": "94b4aa049bede2679bfdba0701659841d9282e17c61c2f626861f6422cba8d7d",
+    "pytest_postgres_log": "7f2807d5ab0171d958c316b3e25cf4907bf9266accdb3ac413ccdceb2832d6dd",
+    "junit": "dd0665e6f1eaa6144fc8c4f478df041e3a0c58d2652aacca8576c1e44e456648",
+    "runner_timings": "deb7a958ea293695584d429515c977a849550f061a289aec4a82ec38e48355e3"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered diagnostic with coverage disabled, not the complete Python/PostgreSQL suite or an HA/indefinite scheduler qualification.",
+    "D881 covers three durable recovery invariants and does not close the full P11 scheduler journey.",
+    "D881 is bound to candidate 3c587e1976ce8b4ed3f3e56e0b819269c530bcf3; earlier evidence is not reattributed."
+  ]
+}
