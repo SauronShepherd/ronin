@@ -76,7 +76,7 @@ function Remove-OwnedQualificationImage {
     if ($LASTEXITCODE -ne 0) {
         throw "Could not remove owned Ronin qualification image '$BuiltImageId'."
     }
-    if (Get-DockerImageId $BuiltImageId) {
+    if (Get-DockerImageId $ImageTag) {
         throw "Owned Ronin qualification image '$BuiltImageId' still exists after cleanup."
     }
 
