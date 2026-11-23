@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D926",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate live single-broker restart recovery",
+  "candidate_sha": "55c377638ab7e8b51102c9124943cc4d59c4938b",
+  "implementation_commit_sha": "55c377638ab7e8b51102c9124943cc4d59c4938b",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D926.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-single-broker-restart",
+  "result": {
+    "qualification": "PASS: 1/1 Playwright, 11/11 correlated events, 8 OK and 3 expected ERROR during broker outage",
+    "cleanup": "PASS: live service/network/volume cleaned and worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_live_product_qualification.ps1",
+    "image": "ronin:qualification-d926-20261123",
+    "image_digest": "sha256:b1e1ba701df9c2300271d1003a82b67c2562b79e3e13754c2ccba1431bf6941d",
+    "storage_backend": "postgres",
+    "broker": "single-broker Redpanda",
+    "api_events": 11,
+    "duration_seconds": 36.27,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d926-evidence"
+  },
+  "hashes": {
+    "qualification_summary_sha256": "0d32d7c5f6a8544913198a7b1e14c8c8fee89a59bce8caebd7291c73747b3600",
+    "live_api_traffic_sha256": "40e42ad9de0e512543bcf6535eaa77b673636100b3ebbb994a69850086b29ece"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Finite single-broker recovery cell; expected outage errors are not HA evidence.",
+    "No stable RF3, indefinite, external-provider or release approval claim.",
+    "D926 is bound to candidate 55c377638ab7e8b51102c9124943cc4d59c4938b; earlier evidence is not reattributed."
+  ]
+}
