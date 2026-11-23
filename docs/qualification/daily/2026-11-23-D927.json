@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D927",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate live two-partition bounded backlog",
+  "candidate_sha": "672159c01e5852eae07dc1d48bd177691bf7343f",
+  "implementation_commit_sha": "672159c01e5852eae07dc1d48bd177691bf7343f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D927.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-two-partition-backlog",
+  "result": {
+    "qualification": "PASS: 1/1 Playwright, 36/36 correlated API events, 36 OK, 0 unexpected errors",
+    "cleanup": "PASS: live service/network/volume cleaned and worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_live_product_qualification.ps1",
+    "image": "ronin:qualification-d927-20261123",
+    "image_digest": "sha256:8c6514c8cb080eb2fdff7317e0cf8959e0599018e2397bc803627efcdbb037be",
+    "storage_backend": "postgres",
+    "broker": "single-broker Redpanda",
+    "api_events": 36,
+    "duration_seconds": 33.57,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d927-evidence"
+  },
+  "hashes": {
+    "qualification_summary_sha256": "2e8ea8a3b38a46e22b87846be81f6478d23933073f91461f068fec8086f7fe8e",
+    "live_api_traffic_sha256": "2648fe313603da391dfe676528676248266d9391a084ec0035843b3f623b32d9"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Finite single-broker two-partition cell only; no indefinite, HA, stable RF3 or external-provider qualification.",
+    "D927 is bound to candidate 672159c01e5852eae07dc1d48bd177691bf7343f; earlier evidence is not reattributed."
+  ]
+}
