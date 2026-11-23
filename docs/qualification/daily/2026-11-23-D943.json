@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D943",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL job store lifecycle and pagination",
+  "candidate_sha": "45c2ee7320f2da0ec5863f2dd4b1d5c6b4f55981",
+  "implementation_commit_sha": "45c2ee7320f2da0ec5863f2dd4b1d5c6b4f55981",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D943.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-jobstore",
+  "result": { "qualification": "PASS: 2/2 selected tests, 0 skips/failures", "cleanup": "PASS: isolated PostgreSQL fixture removed by runner", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates" },
+  "parameters": { "runner": "tools/run_postgres_test_suite.ps1", "test_path": "tests/integration/test_postgres_jobstore_real.py", "postgres_image": "postgres:16.4-alpine", "storage_backend": "postgres", "selected_tests": 2, "duration_seconds": 1.31, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d943-postgres-jobstore" },
+  "hashes": { "pytest_output_sha256": "3d34f99f95787dfe3bf0ff727e06ffe4c0451b480c5ae61df9498bfc0c6ff1eb", "pytest_postgres_log_sha256": "ced8ba7e4b2f5c845359c004ef2dc93f9babdad8ba3598226d77bc2e505c7e6a", "pytest_xml_sha256": "005407dc4363086b6a5406df10dacbc11d199bd7046f4e8e3729f9242409e96e" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Filtered bounded job-store diagnostic only; no complete P11, HA, indefinite operation or release evidence.", "D943 is bound to candidate 45c2ee7320f2da0ec5863f2dd4b1d5c6b4f55981; earlier evidence is not reattributed." ]
+}
