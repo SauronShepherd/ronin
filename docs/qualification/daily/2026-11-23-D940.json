@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D940",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL quality store durability and scope",
+  "candidate_sha": "f9e71375fd04c19fe9753a894a3bd8e9d20f136b",
+  "implementation_commit_sha": "f9e71375fd04c19fe9753a894a3bd8e9d20f136b",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D940.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-quality-store",
+  "result": { "qualification": "PASS: 1/1 selected test, 0 skips/failures", "cleanup": "PASS: isolated PostgreSQL fixture removed by runner", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates" },
+  "parameters": { "runner": "tools/run_postgres_test_suite.ps1", "test_path": "tests/integration/test_postgres_quality_store.py", "postgres_image": "postgres:16.4-alpine", "storage_backend": "postgres", "selected_tests": 1, "duration_seconds": 1.51, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d940-postgres-quality" },
+  "hashes": { "pytest_output_sha256": "5d9490199f5df78b770e5354dcf5c076a340b1c46cb457f1e003de1be8f06ea1", "pytest_postgres_log_sha256": "2991a5404c2cd7ef2e9a4ae5b64d06b80275e00914ce32dcb211c10abb880061", "pytest_xml_sha256": "cc0ab04c27ee5432242dfdd8f44c793e05d832b005ff90b62666bcd567c49fe5" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Filtered bounded quality-store diagnostic only; no complete P11, HA, indefinite operation or release evidence.", "D940 is bound to candidate f9e71375fd04c19fe9753a894a3bd8e9d20f136b; earlier evidence is not reattributed." ]
+}
