@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D923",
+  "date": "2026-11-23",
+  "status": "pass_with_flakiness_observed",
+  "cell": "Third current-candidate live multi-broker RF3 repetition",
+  "candidate_sha": "1d83bdcce3b75ec1d2e44bce462609f7d90bba81",
+  "implementation_commit_sha": "1d83bdcce3b75ec1d2e44bce462609f7d90bba81",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D923.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-rf3-third-repeat",
+  "result": {
+    "qualification": "PASS on third repetition: 1/1 Playwright, 5/5 correlated API events, 5 OK, 0 unexpected errors",
+    "cleanup": "PASS: three brokers, PostgreSQL, network, volume and worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_live_product_qualification.ps1",
+    "image": "ronin:qualification-d923-20261123",
+    "image_digest": "sha256:a2da62442ea2649e96168c0a105af13326b01dabf4fcc419ef28748ce27615a6",
+    "storage_backend": "postgres",
+    "broker": "three-broker Redpanda RF3",
+    "api_events": 5,
+    "duration_seconds": 44.24,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d923-evidence"
+  },
+  "hashes": {
+    "qualification_summary_sha256": "a591fc39714d61826e560dcdbf617611b5e50277a12c9cb331ceef6e45bba026",
+    "live_api_traffic_sha256": "0745d98b43fbd09e957ca91d2643562fe6e7876428cbf145b0ec051690bfbd8b"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "D921 failed under the same criterion; RF3 remains marked flaky and is not treated as stable release evidence.",
+    "Finite repeated live cell only; no indefinite, HA-complete or external-provider qualification.",
+    "D923 is bound to candidate 1d83bdcce3b75ec1d2e44bce462609f7d90bba81; earlier evidence is not reattributed."
+  ]
+}
