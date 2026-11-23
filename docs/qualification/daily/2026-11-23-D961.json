@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D961",
+  "date": "2026-11-23",
+  "status": "pass_bounded_expected_error_traffic",
+  "cell": "Current-candidate live supervisor soak bounded 600 seconds",
+  "candidate_sha": "42e4b7fbc83886abb1b58a55ec129241a298bfc4",
+  "implementation_commit_sha": "42e4b7fbc83886abb1b58a55ec129241a298bfc4",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D961.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-supervisor-600s",
+  "result": {
+    "qualification": "PASS bounded: 42/43 Playwright, 1 deliberate skip, 0 case failures, 1219/1219 correlated API events",
+    "traffic": "1196 OK, 21 expected WARN, 2 expected 503 streaming_unavailable errors from fault-recovery fixture",
+    "cleanup": "PASS: live services/network/volume and worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_live_product_qualification.ps1",
+    "storage_backend": "postgres",
+    "supervisor_soak_seconds": 600,
+    "request_timeout_seconds": 90,
+    "active_routes": 25,
+    "api_routes": 24,
+    "api_events": 1219,
+    "worker_image_digest": "sha256:3ba6e57e4a7da4c83727692187a3da751b171f61bbd4474e9d6748a9de295779",
+    "duration_seconds": 845.81,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d961-supervisor-600"
+  },
+  "hashes": {
+    "qualification_summary_sha256": "a43d960d8267a9daf5528677f4bc6e908e6adf568763cf200184a97c2a9a42a6",
+    "live_api_traffic_sha256": "88c00e261286ec9b5a062f635cdf1ee86803dafa7316d067b280b9050a82f5f5",
+    "browser_live_xml_sha256": "11bb71f78564037017b4055e3942534655daad5e7567d76ae7e5cd735cde1302"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Finite 600-second single-broker supervisor cell; expected fault-recovery 503s are retained and not reclassified as OK.",
+    "No indefinite operation, HA, external provider or complete P11/release qualification; D961 is bound to the exact candidate above."
+  ]
+}
