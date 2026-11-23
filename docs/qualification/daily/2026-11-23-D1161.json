@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1161",
+  "date": "2026-11-23",
+  "status": "pass_bounded_live_max_record_checkpoint_postgres",
+  "candidate_sha": "4130fd397decdcfb827b275d313e81d702a538e6",
+  "implementation_commit_sha": "4130fd397decdcfb827b275d313e81d702a538e6",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1161.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -WorkerImage ronin:qualification-d1161 -StorageBackend postgres -TestGrep 'live streaming max-record cap resumes the durable checkpoint without replay' -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS: 1/1 selected Playwright case, 0 skipped, 0 failed in 40.37s",
+    "criterion": "PASS: max-record cap stops at the explicit cap and resumes from the durable checkpoint without replay",
+    "runtime": "PASS: real PostgreSQL backend, Kafka broker and Ronin API/worker image",
+    "api_traffic": "8/8 events correlated, 7 OK and 1 expected WARN from the bounded cap/validation path; 0 unexpected server/network errors",
+    "cleanup": "PASS: live PostgreSQL/Kafka/Ronin services, volume/network and temporary image cleaned",
+    "production_change": "None in D1161",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "browser-live.log": "FBC57DAD6E9B101AE8329CFF3815EF53E7704883A0AEACD14D87643D403C3E45",
+    "browser-live.xml": "65E07617BCCA45F1B53AB8110A2E813BEA0E90729F7BC7AA1374D585B198A88D",
+    "live-api-traffic.json": "EB02C97A7E8444AFBFD0F7C1BBEC8513AFC36CD4279C285FEA1A84A70FB8BA84",
+    "qualification-summary.json": "6405CEFF2FA23FFC70E6E7C48826EB2E228DDBAF66465AA3EE2D6735D291D548",
+    "live-server.stderr.log": "676ED1FD94C0A990323B1DE72197A07E343748407F86C0D04700C9FAA036F5D4"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused bounded diagnostic, not full route coverage, indefinite soak, HA or multi-worker qualification.",
+    "The single WARN is retained and classified; it is not converted into an OK or hidden.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
