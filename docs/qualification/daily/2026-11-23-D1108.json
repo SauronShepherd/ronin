@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1108",
+  "date": "2026-11-23",
+  "status": "pass_postgres_integrations_broad",
+  "candidate_sha": "803c7ba839c32b6ffe83e56d0d10733e5ab3b2d4",
+  "implementation_commit_sha": "803c7ba839c32b6ffe83e56d0d10733e5ab3b2d4",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1108.md",
+  "command": "RONIN_POSTGRES_TEST_DSN=... RONIN_TEST_POSTGRES_DSN=... python -m pytest -q tests/integration/test_postgres_*.py",
+  "result": {
+    "qualification": "PASS: 56 passed, 3 skipped in 31.36s.",
+    "scope": "Broad real PostgreSQL integration regression across job/workflow stores, scheduler, connectors, ML, quality, bundles, audit, catalog, retention and data-engineering surfaces.",
+    "skip": "Two connector tests require RONIN_CONNECTOR_POSTGRES_DSN; appliance backup is explicit Docker qualification opt-in.",
+    "external_services": "Temporary PostgreSQL 16.4-alpine Docker container at loopback DSN.",
+    "production_change": "None.",
+    "cleanup": "PASS: temporary PostgreSQL container removed with volumes and process DSNs cleared.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "102D32D4E24E1886413F61B8300B72D1B67584764FE04311AE0184AB3020B7CD",
+    "postgres_log_sha256": "484A2AE80266FDA18BC8435CC8716768FE9A04199796B39226BC8E1B970DF956",
+    "cleanup_sha256": "57C01398378963552CA2ED6F27686E88758EA46D3B3942F2B06187F06E96B4A9"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is broad integration evidence, not the full release gate; three explicit skips remain addressed separately where applicable.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1109",
+  "date": "2026-11-23",
+  "status": "pass_postgres_connector_dsn",
+  "candidate_sha": "803c7ba839c32b6ffe83e56d0d10733e5ab3b2d4",
+  "implementation_commit_sha": "803c7ba839c32b6ffe83e56d0d10733e5ab3b2d4",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1109.md",
+  "command": "RONIN_CONNECTOR_POSTGRES_DSN=... python -m pytest -q tests/integration/test_postgres_connector_real.py",
+  "result": {
+    "qualification": "PASS: 2 passed in 0.95s.",
+    "scope": "Real PostgreSQL connector schema/null-timezone/large-value and same-timestamp watermark paging cases with the dedicated connector DSN configured.",
+    "external_services": "Temporary PostgreSQL 16.4-alpine Docker container at a loopback DSN.",
+    "production_change": "None.",
+    "cleanup": "PASS: temporary PostgreSQL container removed with volumes and process DSNs cleared.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "61EC5AEB9D6B4BFFDF39CE98C2EF797A45080C76C2A0F8A38A81C114E6A05583",
+    "postgres_log_sha256": "19A1A00059CB64924D23AA547D7BDA3BF11819E78F48883D3384568A432EFB4F",
+    "cleanup_sha256": "087CF958BF2FE83D1D10090DD4EACE9726369B16540373A7DC2CA681D4480507"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded connector evidence only; not a release gate.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
