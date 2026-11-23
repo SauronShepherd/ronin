@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1139",
+  "date": "2026-11-23",
+  "status": "pass_real_postgres_streaming_checkpoints",
+  "candidate_sha": "e0df120de3ad797cb2c70641e3344de16a476c12",
+  "implementation_commit_sha": "e0df120de3ad797cb2c70641e3344de16a476c12",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1139.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory <external-temp-dir> -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {
+    "qualification": "PASS: 2 passed in 2.98s, 0 selected skipped/failed.",
+    "scope": "Real PostgreSQL 16.4-alpine streaming checkpoint bundle CAS/reopen and stream-table append/replay/conflict behavior.",
+    "production_change": "None.",
+    "cleanup": "PASS: runner removed the isolated PostgreSQL container and volumes; no ronin-pytest-pg container remains.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "A0CEE6D63FBB3342EA84F22A11B5FBE63B02508551EFD4887BC8A4CA0409B57C",
+    "postgres_log_sha256": "F1D045CA2C42B9D6B550C918D1BEF2A99D5CD65568F537512542833115131908",
+    "junit_sha256": "8BACD60D86329D8EAB339B98EF57FA26BF4BC43336333B5B1C0734A5FD7EF775",
+    "timings_sha256": "5BAEE4864E07EC3750DDF146CF98F54BB69C1AE50FAF09EA5A49985B15B87606",
+    "runner_timings_sha256": "3162D15CA49EC917500525E3CA206499279CB882A31061842AB40C3A34E2FEC4",
+    "runner_output_sha256": "C09ECC1CB10071827FA5E19516E3D1C169135CAD7143BBEFC73224100BB0151D"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered real PostgreSQL streaming evidence only; not the full PostgreSQL suite, multi-broker RF3, external provider, HA or indefinite operation.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
