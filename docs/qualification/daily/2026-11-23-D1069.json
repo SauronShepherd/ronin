@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1069",
+  "date": "2026-11-23",
+  "status": "pass_release_artifact_contracts_platform_skip",
+  "candidate_sha": "36043c32fefd1fbfeec1cf0630348504a89297dd",
+  "implementation_commit_sha": "36043c32fefd1fbfeec1cf0630348504a89297dd",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1069.md",
+  "command": "python -m pytest -q tests/test_verify_release_artifacts.py tests/test_backup_manifest.py tests/test_postgres_backup.py tests/test_sqlite_backup.py",
+  "result": {
+    "qualification": "PASS: 15 executed contract tests; 1 platform skip because symlinks are unavailable on Windows",
+    "scope": "Release-artifact verification, backup manifests and PostgreSQL/SQLite backup contracts",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "7aa0cd1ec18f26a21c90f1bfe512e722769eebefd899f7ce6c759da2a901fd0" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "One release-artifact test was skipped because the Windows environment cannot provide the required symlink capability; this is not a PASS for that case.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
