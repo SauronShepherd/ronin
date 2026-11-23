@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D955",
+  "date": "2026-11-23",
+  "status": "pass_with_flakiness_observed",
+  "cell": "Current-candidate live RF3 second pass after readiness fix",
+  "candidate_sha": "42c59fbd1341864eb21b06473a43ddce9cd55c35",
+  "implementation_commit_sha": "42c59fbd1341864eb21b06473a43ddce9cd55c35",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D955.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-rf3-readiness-fix-rerun-2",
+  "result": { "qualification": "PASS: 1/1 Playwright, 5/5 correlated API events, 5 OK, 0 errors/critical", "cleanup": "PASS: live services/networks/volume cleaned and worker image removed", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates", "stability": "Two consecutive passes after the readiness fix; historical D921/D953 failures remain unresolved in the record" },
+  "parameters": { "runner": "tools/run_live_product_qualification.ps1", "test_grep": "live streaming multi-broker failover", "storage_backend": "postgres", "multi_broker": true, "broker_count": 3, "replication_factor": 3, "request_timeout_seconds": 90, "api_events": 5, "duration_seconds": 84.34, "worker_image_digest": "sha256:91758f105dd2e4a38ea058387d4fa71148958c7888f8eed97f74d805839da08e", "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d955-rf3-after-readiness-fix-2" },
+  "hashes": { "qualification_summary_sha256": "3b4ba3325962833c36ef4f1c49fcebd87723c9190a441aa053eb37bddf883ab9", "live_api_traffic_sha256": "63003ec674fadb2ebc079a773ccde4eedbe1ac93ed96ee33a434c07ba37bc9ed", "browser_live_xml_sha256": "a162fcc752f0794e6b52792c4de4fbce483b55d4569beb5330df2a3cafa87d64" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Finite RF3 cell only; historical flakiness remains and no stable RF3/HA gate is claimed.", "D955 is bound to candidate 42c59fbd1341864eb21b06473a43ddce9cd55c35; earlier evidence is not reattributed." ]
+}
