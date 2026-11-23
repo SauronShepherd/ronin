@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1044",
+  "date": "2026-11-23",
+  "status": "pass_real_postgresql_control_plane",
+  "candidate_sha": "2327fb7b914cc5015b02fd9a7ec3f0c32b8396bb",
+  "implementation_commit_sha": "2327fb7b914cc5015b02fd9a7ec3f0c32b8396bb",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1044.md",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://postgres:ronin@127.0.0.1:55444/ronin python -m pytest -q tests/integration/test_postgres_connector_control_plane_real.py tests/integration/test_postgres_data_engineering_revisions_real.py",
+  "result": {
+    "qualification": "PASS: 2/2 real PostgreSQL control-plane discovery/preview and data-engineering revision integration tests",
+    "scope": "Configured PostgreSQL connector control-plane journey and revision artifact inventory",
+    "external_services": "USED: temporary local Docker PostgreSQL 16.4 container, removed after execution",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "76dc261426ea269c048d0122c5185b000443eced1a70ca504f01581e1c85756b" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "The control-plane journey uses an explicitly configured PostgreSQL backend for the connector path but does not qualify HA, failover, production topology or indefinite operation.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
