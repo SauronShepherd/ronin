@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-23",
+  "day": "D837",
+  "status": "PASS_DOCKER_SCOUT_CURRENT_IMAGE",
+  "candidate_sha": "7ed7687f46c0ea25530976a39a494590190bbda0",
+  "qualification": "current-candidate Docker image vulnerability scan",
+  "image": {"tag": "ronin:qualification-d837-scout", "digest": "sha256:e9dfffbbe02fbac1491f3dcf3b378eae6693c940908537f98c9c45706df49217", "packages_indexed": 93},
+  "command": "docker scout cves ronin:qualification-d837-scout --format sarif --output %TEMP%\\ronin-d837-docker-scout-20261123\\scout.sarif",
+  "tool": {"name": "Docker Scout", "version": "1.28.0"},
+  "result": {"vulnerable_packages": 0, "exit_code": 0},
+  "evidence": "%TEMP%\\ronin-d837-docker-scout-20261123\\scout.sarif",
+  "cleanup": {"status": "PASS", "qualification_image_removed": true, "remaining_containers": [], "remaining_qualification_images": []},
+  "limitations": ["image scan only; does not replace VEX review, history scan or human security/legal review", "does not close P13 or release gates", "does not reattribute D100-D836"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
