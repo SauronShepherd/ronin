@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1013",
+  "date": "2026-11-23",
+  "status": "pass_retention_backup_contracts",
+  "candidate_sha": "980ed9416a0b88247a9dbfa62390956e78b99fd0",
+  "implementation_commit_sha": "980ed9416a0b88247a9dbfa62390956e78b99fd0",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1013.md",
+  "command": "python -m pytest -q tests/test_postgres_retention_barrier.py tests/test_postgres_backup.py",
+  "result": {
+    "qualification": "PASS: 17/17 local retention-barrier and backup contract tests",
+    "scope": "Retention barrier invariants and backup contract behavior",
+    "external_services": "NOT USED: local contract qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "2a3ec9c54985874a591c5712ebfd6c99bf1fd6fb6b0f729d3dff8dce32035a3b" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local contract evidence only; this cell does not execute or qualify a PostgreSQL server/runtime.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
