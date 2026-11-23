@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1132",
+  "date": "2026-11-23",
+  "status": "pass_streaming_runtime_http_worker_isolation",
+  "candidate_sha": "78d0834006444f11b56c500f4fd7f4a7a5660b80",
+  "implementation_commit_sha": "78d0834006444f11b56c500f4fd7f4a7a5660b80",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1132.md",
+  "command": "python -m pytest -q tests/test_streaming_runtime.py tests/integration/test_http_submit_status.py tests/integration/test_worker_runtime_contention.py",
+  "result": {"qualification": "PASS: 24 passed in 71.57s.", "scope": "Streaming runtime supervisor plus HTTP and worker contention isolation.", "production_change": "None.", "cleanup": "PASS.", "release_effect": "No state changes; P11 in_progress, P13 blocked, release NO-GO at 1/13 and 0/10."},
+  "hashes": {"pytest_output_sha256": "F3BAF12BF33533CF659DC2C306414A79975855FCCD1BFAE5A7F40B21A1BA7F40"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Pairwise isolation does not resolve D1127's full-composition observation.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
