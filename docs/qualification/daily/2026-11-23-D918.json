@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D918",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Isolated Git source cases from grouped-suite failures",
+  "candidate_sha": "084c69f6a4b034f71685ba5c7b0e8cd90873996c",
+  "implementation_commit_sha": "084c69f6a4b034f71685ba5c7b0e8cd90873996c",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D918.md",
+  "execution_scope": "clean-main-three-git-source-cases-independent-processes",
+  "result": {
+    "qualification": "PASS: 3/3 previously failing grouped cases passed individually",
+    "cleanup": "PASS: pytest-only runs created no containers or images",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "pytest",
+    "tests": [
+      "test_git_clone_checkout_rejects_existing_destination",
+      "test_git_sync_rejects_unsafe_subdirectory_before_changing_head",
+      "test_git_fast_forward_rejects_divergent_history"
+    ],
+    "randomly_plugin": "disabled"
+  },
+  "hashes": {
+    "clone_log_sha256": "41ad08a2a5f2abb0bfce1126a0ef6fb305462656b3d0fcf4a9b5a9d71947f6a6",
+    "sync_log_sha256": "10ba7f24a795e7543f2585d97cb6c88f1c3603889d49a640fc51f6f43e1cd55d",
+    "divergent_log_sha256": "3098bbbd5b8d2362a775d3d482226c1d00b51268dbe38403d69ed069059afb87"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Individual-process evidence does not make the D912 full suite pass; grouped-suite interference remains open.",
+    "No production source was changed and no release qualification is claimed.",
+    "D918 is bound to candidate 084c69f6a4b034f71685ba5c7b0e8cd90873996c; earlier evidence is not reattributed."
+  ]
+}
