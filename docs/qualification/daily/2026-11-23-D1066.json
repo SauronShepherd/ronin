@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1066",
+  "date": "2026-11-23",
+  "status": "pass_workspace_project_http_regression",
+  "candidate_sha": "1c3d09c6213ccae9c8fe79b83129453963e806a6",
+  "implementation_commit_sha": "1c3d09c6213ccae9c8fe79b83129453963e806a6",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1066.md",
+  "command": "python -m pytest -q tests/integration/test_workspace_project_http_api.py",
+  "result": {
+    "qualification": "PASS: 61/61 workspace/project HTTP API integration regression tests",
+    "scope": "Authorization, audit, plugins, bundles, streams, execution routes and workspace/project API behavior",
+    "external_services": "USED: temporary loopback HTTP services inside pytest process only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "15290235fa07cc1146f27afe9052d96b5a42e7bcbca8bdff463d5aeb3567f233" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Evidence is bounded loopback HTTP regression, not a deployed production topology or indefinite SLO qualification.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
