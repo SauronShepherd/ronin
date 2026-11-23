@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1050",
+  "date": "2026-11-23",
+  "status": "pass_official_s3_provider",
+  "candidate_sha": "1ac0eac51bc00eb8904413fcc5cc2f4542409e93",
+  "implementation_commit_sha": "1ac0eac51bc00eb8904413fcc5cc2f4542409e93",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1050.md",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d1050 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1050-s3-official -TestFilter s3_json_sink_put_read_and_retry_round_trip",
+  "result": {
+    "qualification": "PASS: 1/1 official S3-compatible connector integration test against Floci",
+    "scope": "Official Docker qualification wiring, Floci provider, S3 JSON write/read/discovery and lost-response retry",
+    "external_services": "USED: temporary local Docker Floci service only; container, volume and owned Ronin image removed",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "runner_log_sha256": "096c6a98e6d583aa52f4c16ba36b2920bfe8e95605931aeb2b9c2fa2b246541",
+    "pytest_output_sha256": "b733881222574d8d6983353fa52cecd2f69b964357dd1b344f87d5e29f03bcea",
+    "qualification_log_sha256": "ecd46d2c9352f97c6bf5375c876aaa6529b726318bc04a9dda7a8ac204b6235a",
+    "floci_log_sha256": "a10e35c8e1f48299636dfac485f915e30d88556ffa8187c27ef8e639763897f3",
+    "cleanup_log_sha256": "77c01add03f3ea2be22d95b57036cd7ec2928838474bc77610f16a448bd1c30c",
+    "junit_sha256": "8c9ec94f5c7aa1c55572f7e2c0308bf6f520654a8f01dbb021c23c6d8753917c"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Floci is a local S3-compatible provider, not a managed cloud account or production object store.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
