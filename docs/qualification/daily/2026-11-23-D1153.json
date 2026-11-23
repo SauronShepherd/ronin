@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1153",
+  "date": "2026-11-23",
+  "status": "pass_live_postgres_rf3_failover",
+  "candidate_sha": "5e2024d5913b10287f3c0f05e6090ecd7f86ece9",
+  "implementation_commit_sha": "5e2024d5913b10287f3c0f05e6090ecd7f86ece9",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1153.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -TestGrep 'live streaming multi-broker' -MultiBroker -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS: 1/1 filtered Playwright case passed in 27.3s; 5/5 API events correlated; 0 unexpected authorization gaps or server/network errors.",
+    "scope": "Live three-broker Redpanda RF3 failover with durable checkpoint resume while the Ronin server used an isolated PostgreSQL backend.",
+    "production_change": "None.",
+    "cleanup": "PASS: three Redpanda brokers, isolated PostgreSQL, volume, network and containers removed by the runner.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "browser_log_sha256": "E298C89915E1D7707DDA6437E974CF07EDF266C5881F4361819A91D5BA9C1FD9",
+    "browser_junit_sha256": "6CBA65D642167E7246E6A032C4154E448B52BEC37ABB881DE32678D474B3020C",
+    "api_traffic_sha256": "54988E832CA2F48E2DC59744CBDCB8738F3E52826AE34C9F06A7C24811EBEE29",
+    "python_freeze_sha256": "74978241158F3C90497708D8821561928C14A86B819E91D409BE3B26EBADBF3B",
+    "server_stderr_sha256": "05A105AE9BE1A911D8D19B78DECDB58FE5669B66EFA20951AC9BBC480B762DAC",
+    "qualification_summary_sha256": "883807630B11EE8D324F40D78B9E891FF5E241181963DED8AF5B2CB326F5FD8A",
+    "web_dependency_cache_sha256": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["One bounded RF3 failover journey only; not HA, multi-worker, indefinite operation or full unfiltered live qualification.", "Historical D83-D100 and prior RF3 evidence is not reattributed."]
+}
