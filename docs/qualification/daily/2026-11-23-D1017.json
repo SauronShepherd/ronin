@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1017",
+  "date": "2026-11-23",
+  "status": "pass_postgres_bundle_contract",
+  "candidate_sha": "8d5cf935a21adb70a006c5808d1da9f94cd1df11",
+  "implementation_commit_sha": "8d5cf935a21adb70a006c5808d1da9f94cd1df11",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1017.md",
+  "command": "python -m pytest -q tests/test_postgres_bundle_contract.py",
+  "result": {
+    "qualification": "PASS: 1/1 local PostgreSQL bundle contract test",
+    "scope": "PostgreSQL bundle contract semantics",
+    "external_services": "NOT USED: local contract qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "8d2febae70ba94a0e3c00ab086bdf3c5fbbd9204b4f068ff9c5e876ced905ea4" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local contract evidence only; this cell does not execute or qualify a PostgreSQL server/runtime.",
+    "The initial selector included a nonexistent path and ran zero tests; the valid existing local contract was then executed and only that PASS is evidence.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
