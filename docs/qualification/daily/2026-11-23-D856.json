@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D856",
+  "status": "PASS_POSTGRES_WORKFLOW_CANCELLATION_CURRENT_CANDIDATE",
+  "candidate_sha": "6fdd1545838882a93a3f7e408c0f02f1e4bb1fe3",
+  "qualification": "isolated PostgreSQL durable workflow cancellation cell",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"workflow_cancellation_reconciles_durable_job_and_outbox or workflow_cancellation_retires_unsubmitted_outbox or workflow_cancellation_fences_claim_before_intent or workflow_cancellation_persists_authority_before_waiting_on_tasks\" -EvidenceDirectory %TEMP%\\ronin-d856-cancellation-20261123",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "deselected": 17, "pytest_seconds": 5.47, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "cancellation authority persists before waiting, fences claims, retires unsubmitted outbox and reconciles durable jobs/outbox",
+  "evidence": {"root": "%TEMP%\\ronin-d856-cancellation-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["filtered diagnostic only; not the complete Python/PostgreSQL suite", "does not qualify indefinite operation, production HA or release", "does not reattribute D100-D855"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
