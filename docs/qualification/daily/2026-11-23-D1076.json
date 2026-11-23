@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1076",
+  "date": "2026-11-23",
+  "status": "pass_bounded_scheduler_http_stream",
+  "candidate_sha": "b84152d61942eef7a54f9287aefad6e08553ead7",
+  "implementation_commit_sha": "b84152d61942eef7a54f9287aefad6e08553ead7",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1076.md",
+  "command": "python -m pytest -q tests/test_scheduler_backfill_http.py tests/test_stream_scheduler_bridge.py tests/test_scheduler_daemon.py",
+  "result": {
+    "qualification": "PASS: 14 passed in 16.27s",
+    "scope": "Bounded scheduler backfill HTTP, stream-scheduler bridge and scheduler daemon regression.",
+    "external_services": "NOT USED: local bounded tests only.",
+    "production_change": "None.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "004F2E323B596449CDFECEBC1D9AE3E9469FDA3134573869BF0EC651C2971D5A"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded local evidence only; this does not qualify PostgreSQL scheduler/runtime, external provider or object-store integrations, or a release gate.",
+    "Historical D83-D100 and D100 evidence is not reattributed."
+  ]
+}
