@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1057",
+  "date": "2026-11-23",
+  "status": "pass_real_postgresql_bundles",
+  "candidate_sha": "5d8acaef43616475e98d3fef65dd8bbd29090a71",
+  "implementation_commit_sha": "5d8acaef43616475e98d3fef65dd8bbd29090a71",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1057.md",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://postgres:ronin@127.0.0.1:55457/ronin python -m pytest -q tests/integration/test_postgres_bundle_real.py",
+  "result": {
+    "qualification": "PASS: 2/2 real PostgreSQL bundle export/import and conflict integration tests",
+    "scope": "PostgreSQL-backed bundle persistence, round trip and conflict handling",
+    "external_services": "USED: temporary local Docker PostgreSQL 16.4 container, removed after execution",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "3ee6c95561a9dae1ff83db8e7e4257ba09555812febf629f8f706af72263b75a" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Evidence uses a temporary local PostgreSQL service and does not qualify HA, failover, production topology or indefinite operation.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
