@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D925",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate live streaming event workflow",
+  "candidate_sha": "280f6109894fe7057ce492551c34362d81504fde",
+  "implementation_commit_sha": "280f6109894fe7057ce492551c34362d81504fde",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D925.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-event-workflow",
+  "result": {
+    "qualification": "PASS: 1/1 Playwright, 12/12 correlated API events, 12 OK, 0 unexpected errors",
+    "cleanup": "PASS: live service/network/volume cleaned and worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_live_product_qualification.ps1",
+    "image": "ronin:qualification-d925-20261123",
+    "image_digest": "sha256:456b7405bb68ee1c8ecfc8e4b95520aaf97bc24b996ec1aebebfc614d11674fa",
+    "storage_backend": "postgres",
+    "broker": "single-broker Redpanda",
+    "api_events": 12,
+    "duration_seconds": 29.06,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d925-evidence"
+  },
+  "hashes": {
+    "qualification_summary_sha256": "f85617b1634da4472641d63b8d233f4fac7f96cce525a2a6d049414e784979dd",
+    "live_api_traffic_sha256": "49b8408e1e3bc5e34bd03ae29a570236ea0c1882ed9671cfd21c9491a0ece08e"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Finite single-broker live cell only; no indefinite, HA, stable RF3 or external-provider qualification.",
+    "D925 is bound to candidate 280f6109894fe7057ce492551c34362d81504fde; earlier evidence is not reattributed."
+  ]
+}
