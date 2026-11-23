@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D953",
+  "date": "2026-11-23",
+  "status": "not_pass",
+  "cell": "Current-candidate live RF3 second rerun",
+  "candidate_sha": "cc5c5137f3dc8b02a10486b692530ca674ba91f7",
+  "implementation_commit_sha": "cc5c5137f3dc8b02a10486b692530ca674ba91f7",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D953.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-rf3-rerun-2",
+  "result": { "qualification": "NOT PASS: 0/1 Playwright, 1 failure (expected healthy, received starting), 4/4 API events correlated and OK", "cleanup": "PASS: live services/networks/volume cleaned and worker image removed", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates", "stability": "RF3 flakiness confirmed across D921 and D953; D952 remains an isolated PASS" },
+  "parameters": { "runner": "tools/run_live_product_qualification.ps1", "test_grep": "live streaming multi-broker failover", "storage_backend": "postgres", "multi_broker": true, "broker_count": 3, "replication_factor": 3, "request_timeout_seconds": 90, "api_events": 4, "duration_seconds": 63.47, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d953-rf3-rerun-2" },
+  "hashes": { "qualification_summary_sha256": "6b8523c43eb83a785f0a896837015805dde7cf74f3aadd9bc39311f347009f85", "live_api_traffic_sha256": "893fd856515ecaee775f63ab80f57fb258d2ce26f017cd4c1374f356056cc6b5", "browser_live_xml_sha256": "04c4fee5322bfdd4dbb7a32ffc69bb42f36860c67b34c4d5abeb57d89a70e00d" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "RF3 remains intermittent; no stable HA/RF3 or release claim.", "D953 is bound to candidate cc5c5137f3dc8b02a10486b692530ca674ba91f7; earlier evidence is not reattributed." ]
+}
