@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1114",
+  "date": "2026-11-23",
+  "status": "pass_real_otlp_collector",
+  "candidate_sha": "dcc8292e9115826b04eeea146789941f955a5b92",
+  "implementation_commit_sha": "dcc8292e9115826b04eeea146789941f955a5b92",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1114.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_otlp_qualification.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {
+    "qualification": "PASS: 1/1 real OTLP collector test passed, 0 skipped/failed.",
+    "scope": "Digest-pinned OpenTelemetry Collector Contrib OTLP/HTTP acceptance for one metrics batch, one telemetry event batch and one trace span batch, including flush and exporter counters.",
+    "production_change": "None.",
+    "cleanup": "PASS: runner removed the temporary collector container and volumes; no ronin-otlp container remains.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "service": {"image": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621", "protocol": "OTLP/HTTP"},
+  "hashes": {
+    "qualification_json_sha256": "4222788F3E81BADEA683F1300CB524D5374C62355A46A560E5CCBDD6F0D7236A",
+    "qualification_log_sha256": "8249DFBBE927214AF52BEF05466EF5D73E5B1B7FEE6F219553B1C2807661102C",
+    "collector_config_sha256": "70FADB1729B17CE44D54A68864049B4B8A922D8656F29EEA66373B19343AA811",
+    "collector_container_log_sha256": "B02B06EAAAE1ADC481CEC3990ABD27A5BE658D8A2FB641C61D1A248FA0EEECDA",
+    "junit_sha256": "BB2EC1437DE2E6E9A2813BB145FBC5F6DF6809165060F0C8C080EE103C2BC2DB",
+    "timings_sha256": "FE3306B2072C23B01CDE982C07AE5B20632778460DFCF79EA63C3C16148568EB",
+    "runner_output_sha256": "E5418F5D73C39DFD7346E8820C3107969D5C5C134F68B07D462859EF1C906318"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Collector is a local digest-pinned service, not an external production deployment or Prometheus/notification-provider qualification.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
