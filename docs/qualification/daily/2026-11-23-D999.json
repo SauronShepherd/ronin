@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D999",
+  "date": "2026-11-23",
+  "status": "pass_performance_runtime_integration",
+  "candidate_sha": "9d5484d5a81dcc87cb5f09773c8cf21d69a6d9a0",
+  "implementation_commit_sha": "9d5484d5a81dcc87cb5f09773c8cf21d69a6d9a0",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D999.md",
+  "command": "python -m pytest -q tests/test_performance_runtime_integration.py",
+  "result": {
+    "qualification": "PASS: 1/1 local performance-runtime integration test",
+    "scope": "Bounded performance runtime integration behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "08054f525f3e262e37d7681e7a64aecffdcc8f95dd2dc3c7c378754b0b40bda7" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Single bounded local/in-process test only; this cell does not certify sustained production SLOs, external providers or PostgreSQL runtime.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
