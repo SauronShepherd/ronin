@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-23",
+  "day": "D863",
+  "status": "PASS_HTTP_JSON_CONTROL_PLANE_RETRY_CURRENT_CANDIDATE",
+  "candidate_sha": "38efb012b67bde6757b46415e22ee6d20ce91df0",
+  "qualification": "repeat real HTTP JSON control-plane paginated preview diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_http_json_control_plane_real.py -EvidenceDirectory %TEMP%\\ronin-d863-json-control-plane-retry-20261123",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 8.45, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "real paginated HTTP JSON preview returns the expected bounded rows and checkpoint state",
+  "evidence": {"root": "%TEMP%\\ronin-d863-json-control-plane-retry-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "relationship_to_d862": "D862 remains a historical NOT_PASS observation; this clean retry passed and does not erase that receipt",
+  "limitations": ["single retry diagnostic; intermittent latency remains a qualification risk", "does not qualify indefinite operation or release", "does not reattribute D100-D862"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
