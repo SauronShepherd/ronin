@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D908",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Real PostgreSQL scheduler durable control",
+  "candidate_sha": "44679d1bb195c0e5643b3c3c58c3eb349838313b",
+  "implementation_commit_sha": "44679d1bb195c0e5643b3c3c58c3eb349838313b",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D908.md",
+  "execution_scope": "clean-main-isolated-postgres-16.4-focused-scheduler-control",
+  "result": {
+    "qualification": "PASS: 4/4 selected PostgreSQL tests passed, 17 deselected, 0 failed, 0 skipped",
+    "cleanup": "PASS: isolated PostgreSQL container and postgres:16.4-alpine image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_postgres_test_suite.ps1",
+    "image": "postgres:16.4-alpine",
+    "test_path": "tests/integration/test_postgres_workflow_store_real.py",
+    "test_filter": "scheduler_timeout_requests_and_dispatch_authority_are_durable or scheduler_schedule_cursor_fire_and_http_adapter or scheduler_run_and_task_snapshots_are_atomic_and_idempotent or scheduler_leadership_is_generation_fenced_and_persistent",
+    "pytest_wall_seconds": 1.82,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d908-evidence"
+  },
+  "hashes": {
+    "pytest_output_sha256": "16d7d8c63ca8a8212abe19b24b818c4ad0ae7a399c1607e3aba14604352de50",
+    "pytest_postgres_xml_sha256": "d36f120c7f9201fd1bf472a9e9cdb5329fe898c8e6cbe757e8e89fa61553919"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused PostgreSQL scheduler control selection only; not the complete Python/PostgreSQL suite or full coverage.",
+    "No external provider/object store, HA multi-node, indefinite operation or release approval is claimed.",
+    "D908 is bound to candidate 44679d1bb195c0e5643b3c3c58c3eb349838313b; earlier evidence is not reattributed."
+  ]
+}
