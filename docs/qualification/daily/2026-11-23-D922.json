@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D922",
+  "date": "2026-11-23",
+  "status": "pass_with_flakiness_observed",
+  "cell": "Repeated current-candidate live multi-broker RF3",
+  "candidate_sha": "35f60e26c75e871044f830bf15d97c1f70ebc1ba",
+  "implementation_commit_sha": "35f60e26c75e871044f830bf15d97c1f70ebc1ba",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D922.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-rf3-repeat",
+  "result": {
+    "qualification": "PASS on repetition: 1/1 Playwright, 5/5 correlated API events, 5 OK, 0 unexpected errors",
+    "cleanup": "PASS: three brokers, PostgreSQL, network, volume and worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_live_product_qualification.ps1",
+    "image": "ronin:qualification-d922-20261123",
+    "image_digest": "sha256:2390e0f60af96fcc42b61e6365af5f793b509bfe641eedfda4728fb8853c23d6",
+    "storage_backend": "postgres",
+    "broker": "three-broker Redpanda RF3",
+    "api_events": 5,
+    "duration_seconds": 80.28,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d922-evidence"
+  },
+  "hashes": {
+    "qualification_summary_sha256": "6d3bb0554e4587dac64802debe8fdd3a7280f419110e1884a3f49db5877800ea",
+    "live_api_traffic_sha256": "4227884ec3a571627ff3166ed3000c791aea1cb04fb7bf8a99c5b5efba10e3b4"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "D921 failed under the same criterion; RF3 remains flaky and is not treated as stable release evidence.",
+    "Finite repeated live cell only; no indefinite, HA-complete or external-provider qualification.",
+    "D922 is bound to candidate 35f60e26c75e871044f830bf15d97c1f70ebc1ba; earlier evidence is not reattributed."
+  ]
+}
