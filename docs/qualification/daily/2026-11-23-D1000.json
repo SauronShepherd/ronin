@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1000",
+  "date": "2026-11-23",
+  "status": "pass_scheduler_sql_contracts",
+  "candidate_sha": "26ecb115f770bfea44a4834ab8c9d18a8998a92c",
+  "implementation_commit_sha": "26ecb115f770bfea44a4834ab8c9d18a8998a92c",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1000.md",
+  "command": "python -m pytest -q tests/test_scheduler_sql.py tests/test_postgres_jobstore_contract.py",
+  "result": {
+    "qualification": "PASS: 5/5 local scheduler SQL and jobstore contract tests",
+    "scope": "Scheduler SQL behavior and PostgreSQL jobstore contract semantics",
+    "external_services": "NOT USED: local contract qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "313daa638739b15c8ef0df8b5b7ec5d3011e8681ce205ca44e131cad8b3468af" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local contract evidence only; this cell does not execute or qualify a PostgreSQL server/runtime.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
