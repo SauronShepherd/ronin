@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1034",
+  "date": "2026-11-23",
+  "status": "pass_azure_artifact_contracts",
+  "candidate_sha": "08c5c9d7535c7da2d8f55998bd908276314de29e",
+  "implementation_commit_sha": "08c5c9d7535c7da2d8f55998bd908276314de29e",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1034.md",
+  "command": "python -m pytest -q tests/test_azure_blob_json_connector.py tests/test_artifact_store.py",
+  "result": {
+    "qualification": "PASS: 30/30 local Azure Blob JSON connector and artifact-store contract tests",
+    "scope": "Azure Blob JSON connector mapping and artifact-store behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "5290b1983045627a402f2ce9cc6f3f0f9c32d7eabc7740483d516cff56e01d5c" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process connector evidence only; this cell does not execute Azure, an external object store or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
