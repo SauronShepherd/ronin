@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1063",
+  "date": "2026-11-23",
+  "status": "pass_real_http_control_plane",
+  "candidate_sha": "890f785ba7082389314ac6e0d4d9601a654d6afc",
+  "implementation_commit_sha": "890f785ba7082389314ac6e0d4d9601a654d6afc",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1063.md",
+  "command": "python -m pytest -q tests/integration/test_http_json_control_plane_real.py",
+  "result": {
+    "qualification": "PASS: 1/1 real HTTP control-plane preview against a paginated JSON service",
+    "scope": "Authenticated control-plane composition, connector discovery and preview over a real loopback HTTP service",
+    "external_services": "USED: temporary loopback HTTP service inside pytest process only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "60a8d2077e3950dc11f1023364d64d3cecf55a01abda9fbe7c773de1ceba07b6" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "The provider is a bounded loopback HTTP fixture, not an external managed API or production endpoint.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
