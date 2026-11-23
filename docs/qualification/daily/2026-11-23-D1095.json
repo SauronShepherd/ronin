@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1095",
+  "date": "2026-11-23",
+  "status": "pass_real_postgres_workflow_store_regression",
+  "candidate_sha": "a82e378bfbdbea6ae1593792dda93afcbeebe144",
+  "implementation_commit_sha": "a82e378bfbdbea6ae1593792dda93afcbeebe144",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1095.md",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://... python -m pytest -q tests/integration/test_postgres_workflow_store_real.py",
+  "result": {
+    "qualification": "PASS: 21 passed in 8.63s.",
+    "scope": "Full real PostgreSQL workflow-store integration regression, including scheduler persistence, recovery, fencing, outbox, cancellation, backfill, leadership and HTTP adapter surfaces present in the file.",
+    "external_services": "Temporary PostgreSQL 16.4-alpine Docker container at a loopback DSN; no remote provider used.",
+    "production_change": "None.",
+    "cleanup": "PASS: temporary PostgreSQL container removed with volumes and process DSN cleared.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "43D39A1692C268F72621A7A427BD5B4E756467A8638B587C38DED6ABF5293B92",
+    "postgres_log_sha256": "3D0112D6CC48332C26DCA1B5E7EB91FD3B770A4BF45A072548803EF724913D3F",
+    "cleanup_sha256": "2D083DCA59A0CEEEA90A2E8C26FAEB7730D93325B8D0C285543110614FC343A9"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is bounded PostgreSQL workflow-store integration evidence, not the full release gate or the complete platform qualification matrix.",
+    "Historical D83-D100 and D100 evidence is not reattributed."
+  ]
+}
