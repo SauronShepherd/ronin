@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D858",
+  "status": "NOT_PASS_FULL_POSTGRES_SUITE_TIMEOUT",
+  "candidate_sha": "1e56a0db6eaf0f83a0f7da627a5cbefac08cae50",
+  "qualification": "full non-performance Python/PostgreSQL suite diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory %TEMP%\\ronin-d858-full-postgres-20261123",
+  "result": {"collected": 4791, "collection_skips": 3, "progress_observed": "26%", "pytest_exit_code": -1, "junit_report": false, "pytest_wall_seconds": 612.611, "total_wall_seconds": 624.671, "process_exit_code": 1},
+  "interpretation": "NOT_PASS: suite exceeded the runner's 600-second bounded execution window before producing a JUnit report; observed progress is not promoted to PASS",
+  "evidence": {"root": "%TEMP%\\ronin-d858-full-postgres-20261123", "pytest_output": "pytest-output.log", "pytest_postgres_log": "pytest-postgres.log", "runner_timings": "runner-timings.json"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true, "cleanup_error": null},
+  "limitations": ["no complete pass/fail count is available because no JUnit report was produced", "this does not reattribute or invalidate D854 scheduler-file evidence", "does not reattribute D100-D857"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
