@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D929",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate live sustained backpressure and bounded drain",
+  "candidate_sha": "2ff90ec773422765d001df899e52d48f1cc91610",
+  "implementation_commit_sha": "2ff90ec773422765d001df899e52d48f1cc91610",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D929.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-sustained-backpressure",
+  "result": {
+    "qualification": "PASS: 1/1 Playwright, 12/12 correlated API events, 12 OK, 0 errors/critical",
+    "cleanup": "PASS: live service/network/volume cleaned and worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_live_product_qualification.ps1",
+    "image": "ronin:qualification-d929-20261123",
+    "image_digest": "sha256:8196a8d32ddd440b33d562b6df4d5edfe24ff4beeb42810a90514169c2af8415",
+    "storage_backend": "postgres",
+    "broker": "single-broker Redpanda",
+    "api_events": 12,
+    "duration_seconds": 34.54,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d929-evidence"
+  },
+  "hashes": {
+    "qualification_summary_sha256": "96f1e3ec2644359c83d57f8bd9b8c1e0e9af52c3d7b82b18ab0061315c849a08",
+    "live_api_traffic_sha256": "89588b1e72eaf6077394231c9c64084af09070b621505668ab8d45c063ca3aab"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Finite single-broker cell only; no indefinite, HA, stable RF3 or external-provider qualification.",
+    "Filtered diagnostic did not run the full route audit.",
+    "D929 is bound to candidate 2ff90ec773422765d001df899e52d48f1cc91610; earlier evidence is not reattributed."
+  ]
+}
