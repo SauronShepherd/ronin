@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1009",
+  "date": "2026-11-23",
+  "status": "pass_runtime_bundle_portability",
+  "candidate_sha": "e409f00d2df3f4e00b344e9a5c2e7fbcf500c685",
+  "implementation_commit_sha": "e409f00d2df3f4e00b344e9a5c2e7fbcf500c685",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1009.md",
+  "command": "python -m pytest -q tests/test_runtime_bundle_portability_survivors.py",
+  "result": {
+    "qualification": "PASS: 36/36 local runtime-bundle portability survivor contract tests",
+    "scope": "Runtime bundle portability and survivor-boundary behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "f16fa0f2b7983df0e481a7ba3019925c729cf95cd5cadaac08b85e1fb4fb9e44" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process contract evidence only; this cell does not qualify external providers, PostgreSQL runtime or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
