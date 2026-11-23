@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1123",
+  "date": "2026-11-23",
+  "status": "not_pass_sdp_cli_installation_missing",
+  "candidate_sha": "57ebb487a07954d0f3aaecb7d7af134e2bc7ab0a",
+  "implementation_commit_sha": "57ebb487a07954d0f3aaecb7d7af134e2bc7ab0a",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1123.md",
+  "command": "PYTHONPATH=<declared-sdp-source> powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_sdp_cli_qualification.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {
+    "qualification": "NOT_PASS: official runner could not read the CLI version.",
+    "scope": "Official SDP Studio runner with isolated data root and the PATH sdpstudio wrapper.",
+    "failure": "ModuleNotFoundError: No module named 'sdpstudio_cli'; the editable source path declared by __editable__.sdpstudio-0.1.0.pth no longer exists.",
+    "project_created": false,
+    "production_change": "None.",
+    "cleanup": "PASS: no project, external service or container was created.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "qualification_json_sha256": "302D9559151D64F7AE4E334AF5C0DB956D7416A6C822822CE4D453A82009BAC1",
+    "qualification_log_sha256": "991EE10DC53AFFA1466DD7665A992CF8A3A6E4907EF161D1885B21B984EF5CA6",
+    "runner_output_sha256": "BEA36DDC689DA49A9533B858D1F0F98A4CB9F88FD740A9323B304DF4F3AA7042"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["SDP Studio remains unqualified until a complete official installation is restored.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
