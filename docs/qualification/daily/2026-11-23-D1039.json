@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1039",
+  "date": "2026-11-23",
+  "status": "pass_real_postgresql_integration",
+  "candidate_sha": "76170014567c072f7470d006a69b27c71f5edb6d",
+  "implementation_commit_sha": "76170014567c072f7470d006a69b27c71f5edb6d",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1039.md",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://postgres:ronin@127.0.0.1:55439/ronin python -m pytest -q tests/integration/test_postgres_streaming_checkpoint_real.py tests/integration/test_postgres_connector_checkpoint_real.py",
+  "result": {
+    "qualification": "PASS: 5/5 real PostgreSQL streaming-checkpoint and connector-checkpoint integration tests",
+    "scope": "External PostgreSQL checkpoint persistence, CAS/fencing, replay and configured local composition",
+    "external_services": "USED: temporary local Docker PostgreSQL 16.4 container, removed after execution",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "d4bbe32adea72d5b9e6ae57bbf1055a466e71f067de1984e4ce8bfb6b3f5a589" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Evidence uses a temporary local PostgreSQL container and does not qualify the Ronin scheduler/runtime as PostgreSQL-backed unless its runtime is explicitly configured that way.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
