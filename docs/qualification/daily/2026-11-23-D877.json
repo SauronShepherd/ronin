@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-23",
+  "day": "D877",
+  "status": "PASS_HELM_KIND_CURRENT_CANDIDATE",
+  "candidate_sha": "98d48f87132297bee026c1d17a4b0b4c9af8ec34",
+  "qualification": "Helm/kind deployment, upgrade/rollback and persistence acceptance",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_helm_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d877-helm-20261123 -ImageRef ronin:qualification-d876-20261123 -DockerEvidenceDirectory %TEMP%\\ronin-d876-docker-20261123",
+  "result": {"helm_lint": "PASS", "secret_boundary": "PASS", "kind_install": "PASS", "readiness": "PASS", "upgrade_revision": 2, "rollback_restored_revision": 1, "health_endpoint": "PASS", "authorized_api": "PASS", "persistent_job_create": "PASS", "persistent_job_after_restart": "PASS", "cleanup": "PASS", "process_exit_code": 0, "kind_version": "v1.37.0", "helm_version": "v4.3.1+gc0d08d0"},
+  "image_digest": "sha256:fd59c5048f0ca40c8677ed3d90136b26f547e65886b2ff20b37d104205eb9a5e",
+  "evidence": {"root": "%TEMP%\\ronin-d877-helm-20261123", "docker_root": "%TEMP%\\ronin-d876-docker-20261123"},
+  "limitations": ["bounded kind rehearsal; not indefinite production HA or release approval", "does not reattribute D100-D876"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

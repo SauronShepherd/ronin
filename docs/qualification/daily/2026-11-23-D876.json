@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-23",
+  "day": "D876",
+  "status": "PASS_DOCKER_ACCEPTANCE_CURRENT_CANDIDATE_KEEP_IMAGE_HANDOFF",
+  "candidate_sha": "98d48f87132297bee026c1d17a4b0b4c9af8ec34",
+  "qualification": "Docker acceptance retained as exact Helm handoff",
+  "command": "docker build -f docker/Dockerfile -t ronin:qualification-d876-20261123 .; pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d876-20261123 -EvidenceDirectory %TEMP%\\ronin-d876-docker-20261123 -KeepImage",
+  "result": {"docker_integration_selected": 27, "docker_integration_passed": 27, "strict_v01_selected": 15, "strict_v01_passed": 15, "failed": 0, "skipped": 0, "image_digest": "sha256:fd59c5048f0ca40c8677ed3d90136b26f547e65886b2ff20b37d104205eb9a5e", "pytest_seconds": 155.58, "process_exit_code": 0},
+  "cleanup": {"runner_status": "PASS_TEMPORARY_RESOURCES_IMAGE_RETAINED_FOR_HELM", "post_helm_image_removed": true, "post_helm_resources": "clean"},
+  "limitations": ["bounded Docker acceptance only; not indefinite operation or release approval", "does not reattribute D100-D875"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
