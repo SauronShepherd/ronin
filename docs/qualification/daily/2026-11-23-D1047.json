@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1047",
+  "date": "2026-11-23",
+  "status": "pass_appliance_backup_contracts",
+  "candidate_sha": "bd0ceaaf55c95bde08af7cf56db34e358cfeb65a",
+  "implementation_commit_sha": "bd0ceaaf55c95bde08af7cf56db34e358cfeb65a",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1047.md",
+  "command": "python -m pytest -q tests/test_ronin_appliance_backup.py tests/test_docker_qualification_contract.py",
+  "result": {
+    "qualification": "PASS: 30/30 local appliance-backup and Docker-qualification contract tests",
+    "scope": "Backup manifest/CLI contracts, restore safeguards, compose qualification wiring and cleanup expectations",
+    "external_services": "NOT USED: local/in-process contract qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "63c1b925b72d12cdd35b1316c2b3f95e8e2229e2499d558e3e01636bab847670" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Contract-level evidence only; it does not qualify real appliance backup/restore, an immutable Ronin image, HA, failover or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
