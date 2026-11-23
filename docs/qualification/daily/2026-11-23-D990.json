@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D990",
+  "date": "2026-11-23",
+  "status": "pass_scheduler_recovery_contracts",
+  "candidate_sha": "ea90158b8f7d056f92341950bf736589630c5545",
+  "implementation_commit_sha": "ea90158b8f7d056f92341950bf736589630c5545",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D990.md",
+  "command": "python -m pytest -q tests/test_scheduler_daemon.py tests/test_scheduler_controller.py tests/test_scheduler_leader_services.py tests/test_scheduler_leadership.py tests/test_scheduler_fencing.py",
+  "result": {
+    "qualification": "PASS: 26/26 local scheduler recovery and leadership contract tests",
+    "scope": "Scheduler daemon/controller recovery, leader services, leadership and fencing",
+    "external_services": "NOT USED: static/local contracts only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "1ca435df4b37a7099034ef73a6a387352f40400c23c01f4807589b01a58bfdbE" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Static/local contract coverage only; this cell does not execute a live server or external provider.",
+    "This does not qualify PostgreSQL scheduler/runtime behavior; D971-D975 remain the authoritative PostgreSQL evidence."
+  ]
+}
