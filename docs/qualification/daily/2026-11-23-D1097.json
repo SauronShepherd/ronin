@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1097",
+  "date": "2026-11-23",
+  "status": "pass_focused_vcs_boundary",
+  "candidate_sha": "bd12069b5980d9467c136e7be5368c881236bd22",
+  "implementation_commit_sha": "bd12069b5980d9467c136e7be5368c881236bd22",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1097.md",
+  "command": "python -m pytest -q tests/test_vcs_source.py tests/test_ronin_candidate_boundary.py",
+  "result": {
+    "qualification": "PASS: 22 passed, 1 skipped in 13.36s.",
+    "scope": "Focused VCS source-revision and Ronin candidate-boundary regression.",
+    "skip": "One symlink test skipped because Windows Developer Mode/privileges were unavailable.",
+    "production_change": "None.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "CBDA6873A4B98F48FD47387B778621B638584FD6A2CF4BBD44A6DD331E43C84B"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused evidence does not erase the D1096 full-suite diagnostic; the broad run remains not qualified.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
