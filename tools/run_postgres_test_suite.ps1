@@ -54,7 +54,10 @@ if ($TestPath) {
     if (-not $testPathFull.StartsWith($checkoutPrefix, [StringComparison]::OrdinalIgnoreCase) -or -not (Test-Path -LiteralPath $testPathFull -PathType Leaf)) {
         throw "-TestPath must name an existing test file inside the repository: $TestPath"
     }
-    $TestPath = [IO.Path]::GetRelativePath($repoRoot, $testPathFull)
+    # Windows PowerShell 5/.NET Framework has no Path.GetRelativePath.
+    # The path is already validated under the checkout, so derive the
+    # repository-relative form without relying on the newer API.
+    $TestPath = $testPathFull.Substring($repoRoot.Length).TrimStart([char[]]@('\', '/'))
 }
 if ($LocalOnly -and $TestPath -match '(^|[/\\])(integration|e2e|perf)([/\\]|$)') {
     throw "-LocalOnly cannot target integration, e2e, or perf test paths; use the corresponding real-service runner."
