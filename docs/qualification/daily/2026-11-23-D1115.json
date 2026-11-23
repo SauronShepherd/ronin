@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1115",
+  "date": "2026-11-23",
+  "status": "pass_real_spark_connect",
+  "candidate_sha": "f92ec0bf7f939b6941fa7336cb27d6840b899e43",
+  "implementation_commit_sha": "f92ec0bf7f939b6941fa7336cb27d6840b899e43",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1115.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {
+    "qualification": "PASS: 1/1 Spark Connect test passed, 0 skipped/failed.",
+    "scope": "Digest-pinned Apache Spark 4.2.0 Connect server plus hash-locked pyspark-client 4.2.0; SQL smoke and pipeline evidence persistence through the external runtime.",
+    "production_change": "Runner-only change: cleanup now tolerates normal Spark diagnostic stderr while preserving container-removal failure detection.",
+    "cleanup": "PASS: runner removed the temporary Spark Connect container and volumes; no ronin-spark-connect container remains.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "service": {"image": "apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59", "spark_version": "4.2.0", "pyspark_client_version": "4.2.0"},
+  "hashes": {
+    "qualification_json_sha256": "AAEA10ADFBBDCF603EF187D02461411EBF40C8BF32C4D8EF5F0E94662BDCE247",
+    "qualification_log_sha256": "C9ACA27C06D695D5AC176E314560D8786DA8F32C11673A811C108EB300826503",
+    "spark_container_log_sha256": "CA321F4F1FCF22DA173EA328F1194A063231A94134EBAD1B61C6C2CBED08B792",
+    "junit_sha256": "AAF5117C2BB40E58C76F22ADC7CE23232218BD7D41AA8F963D3D6AB66CAB4C7F",
+    "timings_sha256": "952DDC9188BCABF7976736E74ECBBBEE6751C8205BD53791CAE1AFB78AC940AA",
+    "pyspark_install_report_sha256": "04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97",
+    "runner_output_sha256": "F246DD626AD610EE88E24A0CC1AF4B920413D427C5A246D06B7987C5918C5770"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local digest-pinned Spark Connect provider only; not SDP Studio, cloud Spark or indefinite operation.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
