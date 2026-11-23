@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D884",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler HTTP control plane",
+  "candidate_sha": "71fb659d077347b03e4deb013d8f2ff5eaf1133f",
+  "implementation_commit_sha": "71fb659d077347b03e4deb013d8f2ff5eaf1133f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D884.md",
+  "execution_scope": "clean-main-filtered-real-postgresql-scheduler-http-routes",
+  "result": {
+    "qualification": "PASS: 2/2 selected tests passed, 59 deselected, 0 selected skips, 0 selected failures and 0 unrelated collection skips",
+    "control_plane": "PASS: scheduler list/start/read/cancel routes and unsupported-method handling",
+    "cleanup": "PASS: isolated PostgreSQL runner completed without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d884-evidence -TestPath tests/integration/test_workspace_project_http_api.py -TestFilter 'scheduler_routes_list_start_read_and_cancel or scheduler_route_with_unsupported_method_is_not_method_not_found'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d884-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 1.79,
+    "selected_tests": [
+      "test_scheduler_routes_list_start_read_and_cancel",
+      "test_scheduler_route_with_unsupported_method_is_not_method_not_found"
+    ]
+  },
+  "hashes": {
+    "pytest_output": "f8ad23c8dfc55256fd19c29e4dc82c935df194aaa19eb1581c259b3ef4e40bde",
+    "pytest_postgres_log": "398543c664ef75027de7391fb8baaee5919aebe46e1c0461a20638595d47f7c8",
+    "junit": "5fa396120910d2a996e6428b0bf3b574a5e3da89cdb83124a86861b6a19ef538",
+    "runner_timings": "a9a49aab69ff5adeb72bbb34f6e71cb164e65bed16e345136e115ff4837b3fcf"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered diagnostic with coverage disabled, not the complete Python/PostgreSQL suite or a full API release gate.",
+    "D884 covers two scheduler HTTP control-plane cases and does not close the full P11 journey.",
+    "D884 is bound to candidate 71fb659d077347b03e4deb013d8f2ff5eaf1133f; earlier evidence is not reattributed."
+  ]
+}
