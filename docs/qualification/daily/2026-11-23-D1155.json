@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1155",
+  "date": "2026-11-23",
+  "status": "pass_docker_and_helm_kind_deployment_restart_persistence",
+  "candidate_sha": "1229f225cb3e4865e535654b2c23fbf53cd8dd96",
+  "implementation_commit_sha": "1229f225cb3e4865e535654b2c23fbf53cd8dd96",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1155.md",
+  "commands": [
+    "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory <docker-evidence> -ImageTag ronin:qualification-d1155 -KeepImage",
+    "pwsh -NoProfile -File tools/run_helm_qualification.ps1 -EvidenceDirectory <helm-evidence> -DockerEvidenceDirectory <docker-evidence> -ImageRef ronin:qualification-d1155 -AllowDirtyWorktree"
+  ],
+  "result": {
+    "docker_acceptance": "PASS: 27/27 integration tests, 0 skipped, 0 failed; strict v0.1 15/15, 0 skipped, 0 failed",
+    "real_services": "PASS: PostgreSQL, Docker worker, Floci/S3-compatible object store and Azurite/Azure-compatible object store",
+    "helm_kind": "PASS: lint, secret boundary, isolated kind install/readiness, health, Studio/API, upgrade revision 2 and rollback to revision 1",
+    "restart_persistence": "PASS: queued job created with HTTP 201 retained the same job ID after deployment pod restart",
+    "cleanup": "PASS: kind cluster removed and caller-supplied Ronin image removed after the dependent lane",
+    "production_change": "None in D1155",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "docker-qualification.log": "7BB10051442A000CC7CD4FA62803A1D29C629B495CD9601C4BEAB1712B256844",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "docker-qualification-summary.json": "DB2B3719A6A72F9F51C1B0810AB5770A2F74740F45F2E4AB358CAE2C06A7EFDC",
+    "helm-qualification.log": "CEA32DD68A65A2100710E03B01159ADE97FC5A0784D017F7B72A06370010A41A",
+    "helm-qualification.json": "43FB15A93FAB3FF4B8B86CE695357F3663DD0D8DCD632D657C316F28ED135544"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Bounded local Docker and isolated kind qualification; it does not certify production cluster capacity, HA, indefinite soak or human/provider/legal/security approvals.",
+    "Helm uses the explicitly recorded insecure-plaintext qualification bind policy in an isolated kind cluster.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
