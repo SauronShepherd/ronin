@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1164",
+  "date": "2026-11-23",
+  "status": "pass_bounded_300_second_supervisor_soak_postgres",
+  "candidate_sha": "ed8d6da10b75c198817637b151c49e40c84f2475",
+  "implementation_commit_sha": "ed8d6da10b75c198817637b151c49e40c84f2475",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1164.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -WorkerImage ronin:qualification-d1164 -StorageBackend postgres -TestGrep 'live streaming supervisor soak drains while records arrive for a bounded duration' -SupervisorSoakSeconds 300 -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS: 1/1 selected Playwright case, 0 skipped, 0 failed; 305.65s browser case and 334.42s total",
+    "criterion": "PASS: supervisor drained continuously arriving records for the requested bounded 300-second duration",
+    "runtime": "PASS: real PostgreSQL backend, Kafka broker and Ronin API/worker image",
+    "api_traffic": "391/391 events correlated, all OK, 0 unexpected authorization/server/network errors",
+    "application_logs": "INFO 393, WARNING 0, ERROR 0, CRITICAL 0",
+    "cleanup": "PASS: live PostgreSQL/Kafka/Ronin services, volume/network and temporary image cleaned",
+    "production_change": "None in D1164",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "browser-live.log": "50031AD08EB7226A5662A0AFF8EECB671CD75D2ACFE21A02A61CA6F3F3B305AE",
+    "browser-live.xml": "FB2F641D3F4AB6D4DAE9CB151231E23F9798647411EA5EE4EDA4B5FFF66034C3",
+    "live-api-traffic.json": "EACA1394E616ECA22AF22EE75A76495C8B94D33302A18E03A78696A1D1BC8FB8",
+    "qualification-summary.json": "2470A10948ECC5D697E0E09B99C27862B11AA0E289078031965EC7622E9BC711",
+    "live-server.stderr.log": "3184B7F88CBE80E3AA7DB33809CCA9AABADD6C3F74F7078620244EDE7AF9F39A"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a bounded 300-second single-broker diagnostic, not indefinite operation, production SLO, HA or multi-worker qualification.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
