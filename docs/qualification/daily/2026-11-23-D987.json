@@ -1,0 +1,23 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D987",
+  "date": "2026-11-23",
+  "status": "pass_local_streaming_health_contracts",
+  "candidate_sha": "cdb6ded280fa1dd9a03400caa7f30fde6f39d5e1",
+  "implementation_commit_sha": "cdb6ded280fa1dd9a03400caa7f30fde6f39d5e1",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D987.md",
+  "command": "python -m pytest -q tests/test_streaming_windows.py tests/test_streaming_health.py tests/test_streaming_contracts.py",
+  "result": {
+    "qualification": "PASS: 13/13 local streaming window, health and contract tests",
+    "external_services": "NOT USED: no PostgreSQL, Redpanda, worker or external provider",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "81ea584888a8b057ca98923e061f6a35b296d37873ba328288a69b1c916f85fa" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local contract coverage only; D987 is not live streaming or PostgreSQL runtime qualification.",
+    "Historical live receipts remain bound to their exact candidates and are not reattributed."
+  ]
+}
