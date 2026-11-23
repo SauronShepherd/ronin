@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D846",
+  "status": "PASS_POSTGRES_SCHEDULER_SNAPSHOTS_CURRENT_CANDIDATE",
+  "candidate_sha": "f4be3edc3548e4d0e31f362a5d35837d067c80ce",
+  "qualification": "isolated PostgreSQL scheduler run and task snapshot atomicity/idempotency diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"scheduler_run_and_task_snapshots_are_atomic_and_idempotent\" -EvidenceDirectory %TEMP%\\ronin-d846-run-task-snapshots-20261123",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 8.99, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "run and task snapshots commit atomically and repeated writes remain idempotent",
+  "evidence": {"root": "%TEMP%\\ronin-d846-run-task-snapshots-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["filtered diagnostic only; not the complete Python/PostgreSQL suite", "does not qualify indefinite operation or release gates", "does not reattribute D100-D845"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
