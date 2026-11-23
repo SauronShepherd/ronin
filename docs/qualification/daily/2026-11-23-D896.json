@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D896",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate Helm/kind deployment and persistence qualification",
+  "candidate_sha": "794683ccaa67e2e3120d037e37be708b77cb3d88",
+  "implementation_commit_sha": "794683ccaa67e2e3120d037e37be708b77cb3d88",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D896.md",
+  "execution_scope": "clean-main-exact-docker-evidence-helm-kind-install-upgrade-rollback-restart",
+  "result": {
+    "helm": "PASS: lint, Secret boundary, kind cluster, image load, install/readiness, upgrade revision 2, rollback revision 1, health endpoint, Studio/API, persistent job and restart persistence",
+    "docker_boundary": "PASS: exact Docker evidence strict 15/15 and image digest matched candidate",
+    "cleanup": "PASS: kind cluster removed; retained image removed after Helm; no temporary containers/images/volumes remain",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "docker_command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d896-20261123 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d896-docker-evidence -KeepImage",
+    "helm_command": "pwsh -NoProfile -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d896-helm-evidence -ImageRef ronin:qualification-d896-20261123 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d896-docker-evidence",
+    "docker_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d896-docker-evidence",
+    "helm_evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d896-helm-evidence",
+    "worker_image_digest": "sha256:fad41f75cee90b7417b1a4eeefe39db88ab3c9e481773a70166d9fd3ffd91437",
+    "helm_version": "v4.3.1+gc0d08d0",
+    "kind_node": "kindest/node:v1.37.0"
+  },
+  "hashes": {
+    "helm_json": "43b49420030e5a62ca4b002b32a1bd704ef3c019e2958a53c22752fae7a5eb7a",
+    "helm_log": "2124b9d1b3a4b01de53bacbfe8136fe13d6d3a0149d7f28a51860cc19292ff40",
+    "kubernetes_resources": "7f2b1a7b05ed5183201dec3dd0fc2ffda1972d9b246335ae0193f466464ece9b",
+    "docker_summary": "9a588c9601a98d0d1d46b040a7d8a64b509dead1b9ef7061d7c73880a8f422b5",
+    "docker_strict_json": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is local kind deployment evidence, not a production Kubernetes cluster, HA or external-provider qualification.",
+    "Passing local Helm and strict Docker lanes does not by itself close the full P11 family or release matrix.",
+    "D896 is bound to candidate 794683ccaa67e2e3120d037e37be708b77cb3d88; earlier evidence is not reattributed."
+  ]
+}
