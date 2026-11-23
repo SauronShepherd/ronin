@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D847",
+  "status": "PASS_POSTGRES_SCHEDULER_LATE_BRANCH_GUARD_CURRENT_CANDIDATE",
+  "candidate_sha": "53527e20a4568a1910ebd239f585a368e1f64ea4",
+  "qualification": "isolated PostgreSQL scheduler late branch decision guard diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"scheduler_rejects_late_branch_decision_without_mutating_terminal_task\" -EvidenceDirectory %TEMP%\\ronin-d847-late-branch-20261123",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 4.1, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "late branch decisions are rejected without mutating a terminal task",
+  "evidence": {"root": "%TEMP%\\ronin-d847-late-branch-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["filtered diagnostic only; not the complete Python/PostgreSQL suite", "does not qualify the full P11 journey or release", "does not reattribute D100-D846"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
