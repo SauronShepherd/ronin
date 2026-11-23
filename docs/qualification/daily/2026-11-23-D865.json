@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D865",
+  "status": "PASS_POSTGRES_CONNECTOR_CONTROL_PLANE_CURRENT_CANDIDATE",
+  "candidate_sha": "93cf76ba43dba7502bba9a44803a4331dd1a0142",
+  "qualification": "real PostgreSQL connector control-plane discover/preview/reopen diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_postgres_connector_control_plane_real.py -EvidenceDirectory %TEMP%\\ronin-d865-postgres-connector-control-plane-20261123",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 13.14, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "PostgreSQL connector control-plane discovery, preview and state survival across reopen pass together",
+  "evidence": {"root": "%TEMP%\\ronin-d865-postgres-connector-control-plane-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["single integration scenario; not production provider certification", "does not qualify indefinite operation or release", "does not reattribute D100-D864"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
