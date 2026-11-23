@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-23",
+  "day": "D826",
+  "status": "PASS_WORKER_CONTENTION_ORDERED_CURRENT_CANDIDATE",
+  "candidate_sha": "072ee65ebae86ef09c8db813f020a290ea3a0cac",
+  "qualification": "ordered rerun of worker runtime contention failures",
+  "command": "PYTEST_ADDOPTS=-p no:randomly pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory %TEMP%\\ronin-d826-contention-ordered-20261123 -TestPath tests/integration/test_worker_runtime_contention.py -TestFilter \"runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contention or runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verify_contention\"",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "pytest_duration_seconds": 2.25, "process_exit_code": 0},
+  "cleanup": {"status": "PASS", "postgres_removed": true, "volume_removed": true, "network_removed": true},
+  "interpretation": "Both contention cases pass in ordered isolation; D823 timeouts are interaction-sensitive and are not promoted as a product regression.",
+  "limitations": ["filtered ordered diagnostic, not the full suite", "does not qualify indefinite operation or release", "does not reattribute D100-D825"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
