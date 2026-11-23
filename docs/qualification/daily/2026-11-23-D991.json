@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D991",
+  "date": "2026-11-23",
+  "status": "pass_bounded_runtime_contention",
+  "candidate_sha": "4c5ee2852c18fb8edb586d66bf22340e322eab9a",
+  "implementation_commit_sha": "4c5ee2852c18fb8edb586d66bf22340e322eab9a",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D991.md",
+  "command": "python -m pytest -q tests/integration/test_runtime_contention.py tests/integration/test_worker_runtime_contention.py",
+  "result": {
+    "qualification": "PASS: 3/3 bounded runtime and worker contention tests",
+    "scope": "Bounded contention, controlled termination and runtime consistency under concurrent pressure",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "8a192e3777e11047ad8daa7fb0a5f9c58f875af971784e823339b696faea8307" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Bounded local/in-process evidence only; this cell does not qualify indefinite operation, external providers or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
