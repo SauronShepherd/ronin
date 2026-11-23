@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D921",
+  "date": "2026-11-23",
+  "status": "not_pass",
+  "cell": "Current-candidate live multi-broker RF3",
+  "candidate_sha": "fcc44f15f16bc4142d2a252aadae0bdd1d65b179",
+  "implementation_commit_sha": "fcc44f15f16bc4142d2a252aadae0bdd1d65b179",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D921.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-rf3",
+  "result": {
+    "qualification": "NOT_PASS: 0/1 Playwright cases passed; resume returned idle with 0 records/rows instead of succeeded with 4/4",
+    "cleanup": "PASS: three brokers, PostgreSQL, network, volume and worker image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_live_product_qualification.ps1",
+    "image": "ronin:qualification-d921-20261123",
+    "image_digest": "sha256:d681931e15a33d81627335cdf692a7f52f7d5e3744ac3d8e263a9bd422b44acd",
+    "storage_backend": "postgres",
+    "broker": "three-broker Redpanda RF3",
+    "api_events": 4,
+    "api_outcomes": "4 OK",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d921-evidence"
+  },
+  "hashes": {
+    "qualification_summary_sha256": "30ae6c5cc0964b2d3e59502e00ef5c5e30792d39bc0295a3a3a1d3df77a29a7b",
+    "live_api_traffic_sha256": "31335b302d64175c1f3d00028e5a5ae0eb7dc093d627271e1ea42118c30a450a"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "The multi-broker functional criterion did not pass; no RF3 qualification is claimed.",
+    "D921 is bound to candidate fcc44f15f16bc4142d2a252aadae0bdd1d65b179; earlier evidence is not reattributed."
+  ]
+}
