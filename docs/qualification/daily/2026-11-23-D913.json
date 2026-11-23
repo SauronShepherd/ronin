@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D913",
+  "date": "2026-11-23",
+  "status": "not_pass",
+  "cell": "Focused Git source diagnostic",
+  "candidate_sha": "3111f68e4ccc25f97629b6aeb5caf937e4ef3c8f",
+  "implementation_commit_sha": "3111f68e4ccc25f97629b6aeb5caf937e4ef3c8f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D913.md",
+  "execution_scope": "clean-main-focused-test-git-source",
+  "result": {
+    "qualification": "NOT_PASS: 8 passed, 12 failed in 6.32s; failures occur at temporary git init exit 128",
+    "cleanup": "PASS: pytest temporary artifacts are outside checkout and no containers/images were created",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "python -m pytest -q tests/test_git_source.py --disable-warnings --no-header",
+    "selected_tests": 20,
+    "log_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d913-evidence\\pytest-output.log"
+  },
+  "hashes": { "pytest_log_sha256": "3697841ccad0408a8240eb5b184273acf4698f0d9dc4a5a40636b9c318db4f86" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "The helper did not expose Git stderr, so the exact environment cause remains unverified.",
+    "D913 is diagnostic evidence only and does not qualify Git source operations or release.",
+    "D913 is bound to candidate 3111f68e4ccc25f97629b6aeb5caf937e4ef3c8f; earlier evidence is not reattributed."
+  ]
+}
