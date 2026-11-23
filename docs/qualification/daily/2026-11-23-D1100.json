@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1100",
+  "date": "2026-11-23",
+  "status": "diagnostic_git_vcs_retry",
+  "candidate_sha": "2b5fae3b7554a24258085c96af29b99f6de06ca6",
+  "implementation_commit_sha": "2b5fae3b7554a24258085c96af29b99f6de06ca6",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1100.md",
+  "command": "python -m pytest -q tests/test_git_source.py tests/test_vcs_git.py",
+  "result": {
+    "qualification": "NOT QUALIFIED: 10 failed, 20 passed, 2 skipped in 19.80s; failures again occurred during temporary-repository git init with exit 128.",
+    "scope": "Second focused Git source/VCS diagnostic retry.",
+    "production_change": "None.",
+    "environment_check": "The same intermittent init failure remains confined to the pytest-created repositories; no production regression established.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "A7338DA69068FF764334B6682527E07F0D1A46CF6600EB6D4492067CF28466A0"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No code was changed because the failure root cause is environmental and stderr is not captured by the existing test helpers.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
