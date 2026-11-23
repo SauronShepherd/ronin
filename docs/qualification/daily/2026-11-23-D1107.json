@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1107",
+  "date": "2026-11-23",
+  "status": "pass_real_external_adapters_combined",
+  "candidate_sha": "7d2c163e4444485220afc3d5977295acc43ce653",
+  "implementation_commit_sha": "7d2c163e4444485220afc3d5977295acc43ce653",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1107.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageId sha256:7aab1bfb55a92bc7a7ebf983d0c2f29f6ec345b74ed4ff9d3c664892f00b0aa3 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1107-external-adapters -TestFilter \"test_s3_json_sink_put_read_and_retry_round_trip or test_ml_durable_input_output_and_retention_round_trip_through_s3 or test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite\"",
+  "result": {
+    "qualification": "PASS: 3 passed, 24 deselected, 0 skipped, 0 failed in 6.20s.",
+    "scope": "Combined real S3 JSON, ML artifact S3 and Azure Blob adapter regression against temporary Floci and Azurite services.",
+    "external_services": "Temporary Floci S3-compatible and Azurite Blob Docker services; no remote provider used.",
+    "production_change": "None.",
+    "cleanup": "PASS: runner-owned containers, networks, volumes and caller-supplied image cleaned.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "image": {"digest": "sha256:7aab1bfb55a92bc7a7ebf983d0c2f29f6ec345b74ed4ff9d3c664892f00b0aa3", "built_from_candidate": "7d2c163e4444485220afc3d5977295acc43ce653"},
+  "hashes": {
+    "azurite_log_sha256": "16D575AD7EFF7143C39D561AC724AC54E374AA5B9EE999903868E9BE2404401F",
+    "docker_cleanup_sha256": "A291FF855FF082825972C9046A3AF90A309BB76015860C48A9450915F9DCAAD4",
+    "docker_pytest_output_sha256": "E310822079DEAF4D8F66C65437A4DAE5A8E9701EE8CD78F9526AAFAC17AF9437",
+    "docker_qualification_log_sha256": "A0C6616EDB61D18E9568CB2FB572F1DA0011B24B83E2CF5723C3A2D2E050C112",
+    "floci_log_sha256": "69FE8633ECF62828B3C2589A41605AA0B64D8D1789E6BAB6CB0F11D26FE8B719",
+    "junit_sha256": "3A5DE79E2614B828468DC8390B3226A42722EB52EC088599820F070F60E064DB"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered Docker diagnostic, not strict v0.1 acceptance; 24 tests were deselected.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
