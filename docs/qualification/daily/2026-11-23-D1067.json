@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1067",
+  "date": "2026-11-23",
+  "status": "pass_migration_studio_http",
+  "candidate_sha": "ff1f2a3af0fb68ad3964a28316ba1416cd50987f",
+  "implementation_commit_sha": "ff1f2a3af0fb68ad3964a28316ba1416cd50987f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1067.md",
+  "command": "python -m pytest -q tests/integration/test_migration_studio_acceptance.py tests/integration/test_migration_studio_http.py",
+  "result": {
+    "qualification": "PASS: 3/3 Migration Studio acceptance and HTTP integration tests",
+    "scope": "Migration session lifecycle, discovery/scope routes and durable evidence publication",
+    "external_services": "USED: temporary loopback HTTP services inside pytest process only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "02a72b9797eb3505616004eacdb4963aa7c993182e88a16d0b6eec798f825f4a" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Evidence is bounded loopback/local integration, not a deployed production migration service or indefinite operation.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
