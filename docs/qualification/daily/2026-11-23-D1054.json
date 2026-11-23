@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1054",
+  "date": "2026-11-23",
+  "status": "pass_real_otlp_collector",
+  "candidate_sha": "1d939ef15cee2a58dddefd94729a9e9800f7c917",
+  "implementation_commit_sha": "1d939ef15cee2a58dddefd94729a9e9800f7c917",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1054.md",
+  "command": "RONIN_OTLP_TEST_ENDPOINT=http://127.0.0.1:43189 python -m pytest -q tests/integration/test_otlp_collector_real.py",
+  "result": {
+    "qualification": "PASS: 1/1 real OTLP collector integration test accepting traces, metrics and logs",
+    "scope": "OTLP HTTP receiver and exporter acceptance for metrics, events/logs and spans with flush/close statistics",
+    "external_services": "USED: temporary local OpenTelemetry Collector container, removed after execution",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "pytest_output_sha256": "ac06e9859ec73e81c7b04ccec0f3ddf6cb2bd309a00a256f206f9ab5068a4dca",
+    "container_id_sha256": "809263640ffd12a0cf2d5719a451f754025756fee79091f3bbb53edd7a8ef2dc"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Evidence uses a temporary local OpenTelemetry Collector and does not qualify a managed observability service or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
