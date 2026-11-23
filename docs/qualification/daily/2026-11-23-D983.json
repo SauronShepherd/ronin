@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D983",
+  "date": "2026-11-23",
+  "status": "pass_runner_contracts_after_selector_correction",
+  "candidate_sha": "dd95de544df0b4a5d906cf88470154c1e03a07ce",
+  "implementation_commit_sha": "dd95de544df0b4a5d906cf88470154c1e03a07ce",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D983.md",
+  "commands": [
+    "python -m pytest -q tests/test_docker_qualification_contract.py tests/test_live_product_qualification_contract.py",
+    "python -m pytest -q tests/test_docker_qualification_contract.py"
+  ],
+  "result": {
+    "initial_selector": "NOT A TEST RUN: tests/test_live_product_qualification_contract.py does not exist; pytest collected 0 tests and exited 4",
+    "corrected_qualification": "PASS: 26/26 Docker/live qualification runner contract tests",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "initial_output_sha256": "f9fd999d1471c012a0ed2027f2ebba6a96ddc3697d359ac295027d02f4974c3e8",
+    "corrected_output_sha256": "d5c01f4369a59026d931df085c47244708b32c4f7a6d962f67ac897db35be179"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "D983 validates runner contracts only; it does not execute Docker, PostgreSQL, browser or external-provider services.",
+    "The initial nonexistent-file selector is retained as a tooling observation and is not counted as a test result."
+  ]
+}
