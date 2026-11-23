@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1030",
+  "date": "2026-11-23",
+  "status": "pass_bundle_import_quality_contracts",
+  "candidate_sha": "0c18ffa1fe7c017bb025542e8b1df97d9c3ef462",
+  "implementation_commit_sha": "0c18ffa1fe7c017bb025542e8b1df97d9c3ef462",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1030.md",
+  "command": "python -m pytest -q tests/test_bundle_quality_ontology.py tests/test_bundle_project_import_plan.py tests/test_bundle_project_import_commit.py",
+  "result": {
+    "qualification": "PASS: 17/17 local bundle quality/ontology and project-import contract tests",
+    "scope": "Bundle quality/ontology semantics and project import planning/commit behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "95335d77f6a438c990abcf1ef9ec510d4aef03b7d379d8706c6b0c6f4e968f2e" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process bundle evidence only; this cell does not qualify external providers, PostgreSQL runtime or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
