@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D843",
+  "status": "PASS_POSTGRES_SCHEDULER_OUTBOX_RECONCILIATION_CURRENT_CANDIDATE",
+  "candidate_sha": "1e2b79a8fa2d073b3b5a17bbe3833b6a0a58882c",
+  "qualification": "isolated PostgreSQL scheduler execution outbox expiry and reconciliation diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"scheduler_execution_outbox_survives_expiry_and_reconciles\" -EvidenceDirectory %TEMP%\\ronin-d843-outbox-reconcile-20261123",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 10.45, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "execution outbox survives lease expiry and is reconciled durably without losing the dispatch record",
+  "evidence": {"root": "%TEMP%\\ronin-d843-outbox-reconcile-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["filtered diagnostic only; not the complete Python/PostgreSQL suite", "does not establish indefinite operation or release qualification", "does not reattribute D100-D842"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
