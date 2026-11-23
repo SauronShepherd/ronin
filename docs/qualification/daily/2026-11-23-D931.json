@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D931",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate Docker S3-compatible Floci ML artifact round-trip",
+  "candidate_sha": "69a8f05a553e2dd457a668bd6f4524257fe90cef",
+  "implementation_commit_sha": "69a8f05a553e2dd457a668bd6f4524257fe90cef",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D931.md",
+  "execution_scope": "clean-main-current-candidate-docker-floci-s3-artifact-retention",
+  "result": {
+    "qualification": "PASS: 1 selected S3-compatible integration test, 26 deselected, 0 skipped/failures",
+    "cleanup": "PASS: owned Ronin image and Floci qualification resources cleaned",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_docker_qualification.ps1",
+    "test_filter": "ml_s3_artifact_store_real",
+    "provider": "Floci local S3-compatible emulator",
+    "worker_image_digest": "sha256:19234288274060e198ca87f26cc9daf822b535a46630f2281b425458881ce648",
+    "selected_tests": 1,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d931-s3-provider"
+  },
+  "hashes": {
+    "docker_cleanup_sha256": "9035c7e2d9b460533539ed4dc706d09da70c131be69a2dd95906a0872e0b3ebe",
+    "docker_pytest_output_sha256": "89a6efe692e3732b63610d1580d60ea68bf0d408a1c3ee74c99c2699b210a6a9",
+    "docker_qualification_sha256": "413395d474af7845f1296565f54ac6cfc1e45ada32f60d1fb7b8195735812d5e",
+    "floci_log_sha256": "e61ff430cbd83a764d977a211ac2a0b14d7178457e4029aa58d69e6d435f0e65",
+    "v01_acceptance_xml_sha256": "883f56aa1bcf3a6718fb6384349ddf103a82e5269429ab6902b30edcb40477f4"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Floci is a local emulator and does not certify AWS/Azure or another production object-store provider.",
+    "Filtered bounded diagnostic only; no HA, indefinite operation, or complete P11/release evidence.",
+    "D931 is bound to candidate 69a8f05a553e2dd457a668bd6f4524257fe90cef; earlier evidence is not reattributed."
+  ]
+}
