@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1014",
+  "date": "2026-11-23",
+  "status": "pass_transport_runtime_survivors",
+  "candidate_sha": "bd305b071b29786dd9f615d0f7877f31d637c0c5",
+  "implementation_commit_sha": "bd305b071b29786dd9f615d0f7877f31d637c0c5",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1014.md",
+  "command": "python -m pytest -q tests/test_transport_runtime_survivor_boundaries.py",
+  "result": {
+    "qualification": "PASS: 31/31 local transport-runtime survivor-boundary tests",
+    "scope": "Transport runtime survivor boundaries",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "dbece398eced7dcbe9a03eb7bec49080342a7f466fc9413193f3ffb1974f85f" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process contract evidence only; this cell does not qualify external providers, PostgreSQL runtime or production topology.",
+    "A preliminary selector included a nonexistent path and ran zero tests; it was corrected before this PASS and is not used as evidence.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
