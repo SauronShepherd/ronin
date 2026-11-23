@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1068",
+  "date": "2026-11-23",
+  "status": "pass_cli_data_engineering_http",
+  "candidate_sha": "dde1afc761e547e90dc9ce08bb619d328bd3d87b",
+  "implementation_commit_sha": "dde1afc761e547e90dc9ce08bb619d328bd3d87b",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1068.md",
+  "command": "python -m pytest -q tests/integration/test_cli_operator_surface.py tests/integration/test_data_engineering_http.py",
+  "result": {
+    "qualification": "PASS: 7/7 CLI/operator-surface and Data Engineering HTTP integration tests",
+    "scope": "Operator command surface, Data Engineering HTTP lifecycle and bounded query/project operations",
+    "external_services": "USED: temporary loopback HTTP services inside pytest process only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "3fbb4fc1b222ab2de86afcd02bfb2445fddb2692b3ae922d4764c1138868578f" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Evidence is bounded loopback HTTP/operator integration, not a deployed production control plane or indefinite SLO qualification.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
