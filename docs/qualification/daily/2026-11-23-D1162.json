@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1162",
+  "date": "2026-11-23",
+  "status": "pass_bounded_live_event_workflow_postgres",
+  "candidate_sha": "2f8861b5a6d2d4e4a2c64c1329222b71f58a2003",
+  "implementation_commit_sha": "2f8861b5a6d2d4e4a2c64c1329222b71f58a2003",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1162.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -WorkerImage ronin:qualification-d1162 -StorageBackend postgres -TestGrep 'live streaming event workflow is triggered by a committed record' -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS: 1/1 selected Playwright case, 0 skipped, 0 failed in 37.54s",
+    "criterion": "PASS: a committed stream.record triggered the event-to-workflow path and the workflow result was observed",
+    "runtime": "PASS: real PostgreSQL backend, Kafka broker and Ronin API/worker image",
+    "api_traffic": "11/11 events correlated, all OK, 0 unexpected authorization/server/network errors",
+    "cleanup": "PASS: live PostgreSQL/Kafka/Ronin services, volume/network and temporary image cleaned",
+    "production_change": "None in D1162",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "browser-live.log": "6187412CB91D56B985843A5E35A155F2012D733880DE3D80581D125CF1F1EEF3",
+    "browser-live.xml": "BDB36EF34C408CA92B30BF9D72D8BFC9FE7FDDF47B658D36E2448BD295D2AB5F",
+    "live-api-traffic.json": "3B025EA9B85796FF488E96868A19E34CBEDA76D8A3249A774B802E44C518E8AB",
+    "qualification-summary.json": "D92452B12B861D21AAFA5139A593951DB16297AB10EC880ACB6512893BFE446C",
+    "live-server.stderr.log": "9872763F3D48F825268D6E656200F26E89BD7B7B4199415667BE4E2F5AF63BC4"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused bounded diagnostic, not full route coverage, indefinite soak, HA or multi-worker qualification.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
