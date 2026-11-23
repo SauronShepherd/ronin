@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D947",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL streaming checkpoint CAS and append replay",
+  "candidate_sha": "dc1636923a79a1f6207f1b065beaf440e6aa635b",
+  "implementation_commit_sha": "dc1636923a79a1f6207f1b065beaf440e6aa635b",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D947.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-streaming-checkpoints",
+  "result": { "qualification": "PASS: 2/2 selected tests, 0 skips/failures", "cleanup": "PASS: isolated PostgreSQL fixture removed by runner", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates" },
+  "parameters": { "runner": "tools/run_postgres_test_suite.ps1", "test_path": "tests/integration/test_postgres_streaming_checkpoint_real.py", "postgres_image": "postgres:16.4-alpine", "storage_backend": "postgres", "selected_tests": 2, "duration_seconds": 1.35, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d947-postgres-streaming-checkpoint" },
+  "hashes": { "pytest_output_sha256": "680f863eb5bb3bc6d1b8afa6a443a9fb8111e409f7cdab4aff7f516edbf3ea05", "pytest_postgres_log_sha256": "bb3af8e4e8c315f0c970b3ca41d9f84382be410f2da673d8b85c8b5051c598f6", "pytest_xml_sha256": "c8104f4c00eaaf66ce92fca7681dbcf9fdf3d8e6f5b92ed5a01dc96ce40d8d5b" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Filtered bounded streaming diagnostic only; no complete P11, HA, indefinite operation or release evidence.", "D947 is bound to candidate dc1636923a79a1f6207f1b065beaf440e6aa635b; earlier evidence is not reattributed." ]
+}
