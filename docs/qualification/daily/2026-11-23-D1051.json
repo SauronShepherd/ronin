@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1051",
+  "date": "2026-11-23",
+  "status": "pass_official_s3_ml_artifacts",
+  "candidate_sha": "ed465f1b2c3a726e14367136615202d26bb64ce8",
+  "implementation_commit_sha": "ed465f1b2c3a726e14367136615202d26bb64ce8",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1051.md",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d1051-fixed -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1051-ml-s3-official-fixed -TestFilter ml_durable_input_output_and_retention_round_trip_through_s3 or s3_json_sink_put_read_and_retry_round_trip",
+  "result": {
+    "qualification": "PASS: 2/2 official S3-compatible ML artifact and S3 JSON integration tests against Floci",
+    "scope": "Floci provider, ML durable input/output and retention round trip, plus S3 JSON write/read/discovery/retry",
+    "external_services": "USED: temporary local Docker Floci service only; container, volume and owned Ronin image removed",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "runner_log_sha256": "b3e2bcec930e27572d52e15faf9cafc8a00beef70575261f17c59ec531e791ec",
+    "pytest_output_sha256": "a1dac38ea0d9c18dd224b4e135e697575aeb9dda2e7b107ee4b0d2a6206fcfe7",
+    "qualification_log_sha256": "c55f710b56b0cf830aab68ecad91b03e7fced6bc470b2cd76370037c64e28581",
+    "floci_log_sha256": "d632e4959247b951860cedc471d8bb7b9e970508e3688c65ddc1195798b237d2",
+    "cleanup_log_sha256": "dbff70383e33fb045d2265ef40f1f327149a3183f90ebb9ad52c129af50e6d57",
+    "junit_sha256": "ac295599260d681c1deb0de916a393cd58744433c09c092544179f2342e192e4"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Floci is a local S3-compatible provider, not a managed cloud account or production object store.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
