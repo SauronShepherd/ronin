@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D936",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL composed shared connector ingestion",
+  "candidate_sha": "399c42b8eab50a6c334af28142a4409b4ee17d09",
+  "implementation_commit_sha": "399c42b8eab50a6c334af28142a4409b4ee17d09",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D936.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-composed-connector-ingestion",
+  "result": {
+    "qualification": "PASS: 1/1 selected test, 2 deselected, 0 skips/failures",
+    "cleanup": "PASS: isolated PostgreSQL fixture removed by runner",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_postgres_test_suite.ps1",
+    "test_path": "tests/integration/test_postgres_connector_checkpoint_real.py",
+    "test_filter": "postgres_local_composition_mounts_shared_connector_ingestion",
+    "postgres_image": "postgres:16.4-alpine",
+    "storage_backend": "postgres",
+    "selected_tests": 1,
+    "duration_seconds": 2.96,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d936-postgres-composed-ingestion"
+  },
+  "hashes": {
+    "pytest_output_sha256": "74edea13f195b5c6c4c6b2eac0215f537d2f9f6681eba724c4521c8b628e6c93",
+    "pytest_postgres_log_sha256": "489bf11b0290b01c510f3a8109124d3bcd20f418faf3b0c43ae3ddfa1e8b609b",
+    "pytest_xml_sha256": "e82b28c9a60fc7f9778fcd396f13487c47198676fbc42b036467308499015835"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Filtered bounded composition diagnostic only; no complete P11, HA, indefinite operation or release evidence.",
+    "D936 is bound to candidate 399c42b8eab50a6c334af28142a4409b4ee17d09; earlier evidence is not reattributed."
+  ]
+}
