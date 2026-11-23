@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-23",
+  "day": "D830",
+  "status": "PASS_CANDIDATE_BOUNDARY_STATUS_ISOLATED_CURRENT_CANDIDATE",
+  "candidate_sha": "1c537bbe718ebd719f9f528f6bf5aa90bce69b0b",
+  "qualification": "isolated candidate-boundary and public-status regression after D827",
+  "command": "python -m pytest tests/test_public_v1_status.py tests/test_ronin_candidate_boundary.py -q -p no:randomly",
+  "result": {"selected": 14, "passed": 14, "failed": 0, "skipped": 0, "duration_seconds": 12.64, "process_exit_code": 0},
+  "cleanup": {"status": "PASS", "temporary_services": "none"},
+  "interpretation": "The candidate-boundary/status cluster passes in isolated ordered execution; D827 full-suite failures are not promoted as a confirmed product regression.",
+  "limitations": ["isolated local regression, not full PostgreSQL/live qualification", "does not explain all suite interactions or close P11/release", "does not reattribute D100-D829"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
