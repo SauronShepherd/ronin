@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D821",
+  "status": "PASS_POSTGRES_SCHEDULER_RECOVERY_CURRENT_CANDIDATE",
+  "candidate_sha": "b5a007972f9ae73531f2f7692892e6e4ff6080b3",
+  "qualification": "current-candidate PostgreSQL scheduler recovery diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory %TEMP%\\ronin-d821-postgres-scheduler-recovery-20261123 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate\"",
+  "result": {"selected": 2, "passed": 2, "failed": 0, "skipped": 0, "deselected": 19, "pytest_duration_seconds": 5.54, "process_exit_code": 0},
+  "cases": ["expired lease reacquisition without duplicate fire", "process-crash replay without duplicate job"],
+  "service": {"kind": "PostgreSQL 16.4", "isolated": true},
+  "cleanup": {"status": "PASS", "postgres_removed": true, "volume_removed": true, "network_removed": true, "remaining_containers": [], "remaining_qualification_images": []},
+  "limitations": ["filtered diagnostic, not the complete PostgreSQL suite", "bounded single-process scheduler recovery evidence, not HA or indefinite operation", "does not by itself complete P11 or release gates", "does not reattribute D100-D820"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
