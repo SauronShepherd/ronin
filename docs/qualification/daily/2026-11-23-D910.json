@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D910",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Real PostgreSQL scheduler backfill",
+  "candidate_sha": "ea7af4960f5aa72c45a6447a919d981836a86bd1",
+  "implementation_commit_sha": "ea7af4960f5aa72c45a6447a919d981836a86bd1",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D910.md",
+  "execution_scope": "clean-main-isolated-postgres-16.4-focused-scheduler-backfill",
+  "result": {
+    "qualification": "PASS: 2/2 selected PostgreSQL tests passed, 19 deselected, 0 failed, 0 skipped",
+    "cleanup": "PASS: isolated PostgreSQL container and postgres:16.4-alpine image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_postgres_test_suite.ps1",
+    "image": "postgres:16.4-alpine",
+    "test_path": "tests/integration/test_postgres_workflow_store_real.py",
+    "test_filter": "scheduler_backfill_runs_through_the_service_and_survives_reopen or scheduler_backfill_migrates_schema_five_to_six",
+    "pytest_wall_seconds": 1.9,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d910-evidence"
+  },
+  "hashes": {
+    "pytest_output_sha256": "3f3f75d27cd88ff960dcc1034f145f74e8f0fc4dab507a578af33b1986e3d5f0",
+    "pytest_postgres_xml_sha256": "4e69e4096177bc88653206dadd733a7f688bb732f176781255c21a8d6d1fd21f"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused PostgreSQL scheduler backfill selection only; not the complete Python/PostgreSQL suite or full coverage.",
+    "No external provider/object store, HA multi-node, indefinite operation or release approval is claimed.",
+    "D910 is bound to candidate ea7af4960f5aa72c45a6447a919d981836a86bd1; earlier evidence is not reattributed."
+  ]
+}
