@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1029",
+  "date": "2026-11-23",
+  "status": "pass_bundle_workflow_contracts",
+  "candidate_sha": "e5c482467e66421b1f8d8f794cfe99a0c6e20aee",
+  "implementation_commit_sha": "e5c482467e66421b1f8d8f794cfe99a0c6e20aee",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1029.md",
+  "command": "python -m pytest -q tests/test_bundle_workflow.py tests/test_bundle_workflow_export.py tests/test_bundle_project_inventory.py",
+  "result": {
+    "qualification": "PASS: 29/29 local bundle workflow, export and project-inventory contract tests",
+    "scope": "Bundle workflow orchestration, export and project inventory behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "71cb1627200bef29ed46f1807e8b306b6a5123abdca5ca74284d7322eda0a927" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process bundle evidence only; this cell does not qualify external providers, PostgreSQL runtime or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
