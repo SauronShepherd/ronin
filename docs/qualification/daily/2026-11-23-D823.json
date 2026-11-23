@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D823",
+  "status": "NOT_PASS_FAILURE_ISOLATION_CURRENT_CANDIDATE",
+  "candidate_sha": "d0a56713a01f6980569decf33fdb8347c14f16f8",
+  "qualification": "isolated rerun of D822 failure clusters",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory %TEMP%\\ronin-d823-failure-isolation-20261123 -TestFilter \"git_source or remote_sync_policy or status_check_is_fail_closed_for_divergence or runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contention or runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verify_contention\"",
+  "result": {"selected": 26, "passed": 10, "failed": 16, "skipped": 3, "deselected": 4765, "pytest_duration_seconds": 87.44, "process_exit_code": 1},
+  "findings": {"git_source": {"failed": 14, "passed": 7}, "worker_preparation": {"passed": 3}, "public_v1_status": {"passed": 1}, "runtime_contention": {"failed": 2}},
+  "cleanup": {"status": "PASS", "postgres_removed": true, "volume_removed": true, "network_removed": true},
+  "interpretation": "Reproduces the Git-source cluster and contention timeouts; no production fix is inferred because the failure output lacks a confirmed product defect and direct git init probes succeed outside pytest.",
+  "limitations": ["NOT_PASS diagnostic only", "requires root-cause isolation before implementation", "does not reattribute D100-D822"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
