@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D939",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL catalog governance revisions and lineage",
+  "candidate_sha": "4c939e9d7f7c49dffbe7d196708f8999e9233e7b",
+  "implementation_commit_sha": "4c939e9d7f7c49dffbe7d196708f8999e9233e7b",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D939.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-catalog-governance-lineage",
+  "result": {
+    "qualification": "PASS: 1/1 selected PostgreSQL catalog test, 0 skips/failures",
+    "cleanup": "PASS: isolated PostgreSQL fixture removed by runner",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_postgres_test_suite.ps1",
+    "test_path": "tests/integration/test_postgres_catalog_store.py",
+    "postgres_image": "postgres:16.4-alpine",
+    "storage_backend": "postgres",
+    "selected_tests": 1,
+    "duration_seconds": 1.04,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d939-postgres-catalog"
+  },
+  "hashes": {
+    "pytest_output_sha256": "0bc037aedffa9a420e916700fb03cd06755e915b2a7030ae8610ae119296c7d1",
+    "pytest_postgres_log_sha256": "960de207f347de6bf1e617c91439b87967a2773c11a41990ecf0f0920b9407ae",
+    "pytest_xml_sha256": "6788bd66db5be183a038d8c2cdeac0a6b8f328b691fc4b6c7f4221c909f1ef91"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Filtered bounded catalog diagnostic only; no complete P11, HA, indefinite operation or release evidence.",
+    "D939 is bound to candidate 4c939e9d7f7c49dffbe7d196708f8999e9233e7b; earlier evidence is not reattributed."
+  ]
+}
