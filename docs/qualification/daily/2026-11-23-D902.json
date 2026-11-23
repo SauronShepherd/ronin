@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D902",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-main Gitleaks supply-chain scan",
+  "candidate_sha": "75549d260ac405374172086d9ba05291f1001f52",
+  "implementation_commit_sha": "75549d260ac405374172086d9ba05291f1001f52",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D902.md",
+  "execution_scope": "clean-main-gitleaks-current-tree-all-history",
+  "result": {
+    "qualification": "PASS: Gitleaks 8.30.1 scanned 4,591 commits and approximately 23.45 MB; no leaks found",
+    "cleanup": "PASS: report was written outside the checkout and no runtime resources were created",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "gitleaks detect --no-banner --redact --exit-code 1 --source . --report-format json --report-path C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d902-gitleaks.json",
+    "tool_version": "8.30.1",
+    "report_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d902-gitleaks.json",
+    "commits_scanned": 4591,
+    "bytes_scanned": 23452891
+  },
+  "hashes": { "report_json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This scan is supply-chain evidence only; it does not qualify runtime, external providers, HA or release approval.",
+    "D902 is bound to candidate 75549d260ac405374172086d9ba05291f1001f52; earlier evidence is not reattributed."
+  ]
+}
