@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D906",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Bounded local worker/scheduler restart recovery",
+  "candidate_sha": "e6e106421093df2782037e78697f8e674a10ea5c",
+  "implementation_commit_sha": "e6e106421093df2782037e78697f8e674a10ea5c",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D906.md",
+  "execution_scope": "candidate-local-focused-worker-scheduler-restart-recovery",
+  "result": {
+    "qualification": "PASS: 2 passed, 14 deselected, 0 failed in 3.83s",
+    "cleanup": "PASS: pytest-only run created no containers, images, volumes or kind clusters",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "python -m pytest -q tests/test_worker_runtime.py -k \"restart_reclaims_same_run_and_reuses_persisted_cells or restart_reclaims_queryflux_job_and_executes_once\" --disable-warnings --no-header",
+    "selected_tests": 2,
+    "deselected_tests": 14,
+    "postgres_dsn": "absent; no PostgreSQL claim made",
+    "log_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d906-evidence\\pytest-output.log"
+  },
+  "hashes": { "pytest_log_sha256": "f336d1f6b1b0241ce4ed1b316ad833884f648437d811b40572b1bc708af3b399" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local bounded recovery only; PostgreSQL scheduler/runtime, external provider/object store, HA, indefinite operation and release approval remain open.",
+    "D906 is bound to candidate e6e106421093df2782037e78697f8e674a10ea5c; earlier evidence is not reattributed."
+  ]
+}
