@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D941",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL audit store integrity and isolation",
+  "candidate_sha": "c0b403f5c496920e17a8531fb75b6e33758e4c09",
+  "implementation_commit_sha": "c0b403f5c496920e17a8531fb75b6e33758e4c09",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D941.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-audit-store",
+  "result": { "qualification": "PASS: 5/5 selected tests, 0 skips/failures", "cleanup": "PASS: isolated PostgreSQL fixture removed by runner", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates" },
+  "parameters": { "runner": "tools/run_postgres_test_suite.ps1", "test_path": "tests/integration/test_postgres_audit_store.py", "postgres_image": "postgres:16.4-alpine", "storage_backend": "postgres", "selected_tests": 5, "duration_seconds": 1.14, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d941-postgres-audit" },
+  "hashes": { "pytest_output_sha256": "adcb06d6df027832a9915ddb0935684fc91316311bad2008de8c757859f9fa75", "pytest_postgres_log_sha256": "91123cf7ebcfdfc984aacfb970aba2fcd1e72438970d53c5fa8944182a6743f4", "pytest_xml_sha256": "9cd9ff7d2e3fd78145b8d9ecbdd8fcc0de3fc21dfc308640df965c70671ac75a" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Filtered bounded audit-store diagnostic only; no complete P11, HA, indefinite operation or release evidence.", "D941 is bound to candidate c0b403f5c496920e17a8531fb75b6e33758e4c09; earlier evidence is not reattributed." ]
+}
