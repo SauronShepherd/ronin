@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D974",
+  "date": "2026-11-23",
+  "status": "pass_full_docker_and_v01",
+  "candidate_sha": "253ad90ea30dbe410cd5ec988fa24ff25bd2593d",
+  "implementation_commit_sha": "253ad90ea30dbe410cd5ec988fa24ff25bd2593d",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D974.md",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d974 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d974-docker-full",
+  "result": {
+    "docker_integration": "PASS: 27/27, 0 skipped, 0 failed",
+    "strict_v01": "PASS: 15/15, 0 skipped, 0 xfailed, 0 failed, strict_success=true",
+    "fixtures": "PASS: real Docker worker/runtime, PostgreSQL, Floci/S3-compatible, Azurite/Azure-compatible and appliance backup/restore",
+    "worker_image_digest": "sha256:638dbaa215dd31ba5a395885f3bac5cc27a42953b63db8ae6edfabd72125be17",
+    "cleanup": "PASS: owned qualification image and temporary fixtures removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "azurite_log_sha256": "e68c2f241e957edf2d4b7fb8dcd3810292149cf106ec6289f413f40140439895",
+    "cleanup_sha256": "626aa470b8c6a194f2d67873e17607e2cc40640f351dddb5a7a34012a0ce1cae",
+    "pytest_output_sha256": "8443f2a589b33f4b33dc7591f806796d1fc7159407adb5d21ba41e22f3c51874",
+    "qualification_log_sha256": "457097824249aa3e770b829c975f6dae24360f377fd5c3612ed74c26adfa863b",
+    "floci_log_sha256": "4cd2aa4815e954b3d4cbc84770c0101aaba79971cf83278f41ac014ab449c5d0",
+    "postgres_log_sha256": "45e73a8e878f4cb10b33e87f6c34228743b64b060266e637b7b32fe579dfa774",
+    "qualification_summary_sha256": "c9bc065ec046d5ea8edcb4b9268a2a76f396b40c995d6d52aeaf0c79a1f2e026",
+    "strict_receipt_sha256": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c",
+    "strict_junit_sha256": "ee5ba762de94dffe62553e1a7d53c5d01e4d38e4beedae87bab07e1a08fa524d"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is bounded current-candidate Docker evidence; it does not prove indefinite operation, HA/multi-worker or production SLO.",
+    "Floci and Azurite qualify compatible local emulators, not external production provider certification.",
+    "D974 does not close the complete P11 aggregate, P13 or release approval; historical receipts remain bound to exact candidates."
+  ]
+}
