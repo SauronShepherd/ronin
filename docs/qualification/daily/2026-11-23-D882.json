@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D882",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler backfill recovery",
+  "candidate_sha": "167c2250338970f70cc77bf6d31159e3ff1ee512",
+  "implementation_commit_sha": "167c2250338970f70cc77bf6d31159e3ff1ee512",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D882.md",
+  "execution_scope": "clean-main-filtered-real-postgresql-scheduler-backfill-reopen-and-schema-migration",
+  "result": {
+    "qualification": "PASS: 2/2 selected tests passed, 19 deselected, 0 selected skips, 0 selected failures and 0 unrelated collection skips",
+    "recovery": "PASS: backfill runs through service and survives reopen; backfill schema five-to-six migration",
+    "cleanup": "PASS: isolated PostgreSQL runner completed without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d882-evidence -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'scheduler_backfill_runs_through_the_service_and_survives_reopen or scheduler_backfill_migrates_schema_five_to_six'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d882-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 1.85,
+    "selected_tests": [
+      "test_postgres_scheduler_backfill_migrates_schema_five_to_six",
+      "test_postgres_scheduler_backfill_runs_through_the_service_and_survives_reopen"
+    ]
+  },
+  "hashes": {
+    "pytest_output": "9b4e1cd4c70fcb4ff1c3897644ec78b3a3e91bcb7ff3a9c7bf072412289bf651",
+    "pytest_postgres_log": "0b7a8ded58eefb3888ca30ba95116ea7b7d618b17ed00b3dc87fbd32cdf533d8",
+    "junit": "1a0c99e9f03d9282dd497553e17537f230435876f52fe2d2a97160287abb0526",
+    "runner_timings": "47a32dde03e87dd893d046e31e4ae578d77a8d6355d4c0b66e88017eb2ca5a86"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered diagnostic with coverage disabled, not the complete Python/PostgreSQL suite or an HA/indefinite scheduler qualification.",
+    "D882 covers two backfill invariants and does not close the full P11 scheduler journey.",
+    "D882 is bound to candidate 167c2250338970f70cc77bf6d31159e3ff1ee512; earlier evidence is not reattributed."
+  ]
+}
