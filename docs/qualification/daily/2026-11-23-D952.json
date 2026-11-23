@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D952",
+  "date": "2026-11-23",
+  "status": "pass_with_flakiness_observed",
+  "cell": "Current-candidate live RF3 multi-broker failover rerun",
+  "candidate_sha": "a0c1883118916352fa27424af06f6bdebd5cd1df",
+  "implementation_commit_sha": "a0c1883118916352fa27424af06f6bdebd5cd1df",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D952.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-rf3-failover",
+  "result": { "qualification": "PASS: 1/1 Playwright, 5/5 correlated API events, 5 OK, 0 errors/critical", "cleanup": "PASS: live services/networks/volume cleaned and worker image removed", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates", "stability": "Historical D921 intermittent failure remains unresolved; D952 is a passing rerun, not stable RF3 certification" },
+  "parameters": { "runner": "tools/run_live_product_qualification.ps1", "test_grep": "live streaming multi-broker failover", "storage_backend": "postgres", "multi_broker": true, "broker_count": 3, "replication_factor": 3, "request_timeout_seconds": 90, "api_events": 5, "duration_seconds": 66.91, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d952-rf3-rerun" },
+  "hashes": { "qualification_summary_sha256": "7c85eefc13398e7f0c979a5cf7745395f8603d912245ca98ebd4b7d4a32ffaef", "live_api_traffic_sha256": "dcd8fde265fb1bd8fc7235cf0722fe4114af9d6bb645ae9b529089c28e279341", "browser_live_xml_sha256": "401682c0d6b4091d69860d8361501a57009b082cb0ce533d35c11c20d4abce81" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Finite RF3 rerun only; historical D921 flakiness remains and no stable RF3/HA gate is claimed.", "D952 is bound to candidate a0c1883118916352fa27424af06f6bdebd5cd1df; earlier evidence is not reattributed." ]
+}
