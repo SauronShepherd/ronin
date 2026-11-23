@@ -36,10 +36,16 @@ function Remove-OwnedQualificationImage {
         [string]$PreexistingImageId
     )
 
-    $owner = (& docker image inspect $BuiltImageId `
-        --format '{{ index .Config.Labels "org.ronin.qualification.run" }}' 2>$null | Out-String).Trim()
+    $labelsJson = (& docker image inspect $BuiltImageId `
+        --format '{{json .Config.Labels}}' 2>$null | Out-String).Trim()
     if ($LASTEXITCODE -ne 0) {
         throw "Could not inspect the built Ronin qualification image '$BuiltImageId' during cleanup."
+    }
+    try {
+        $labels = $labelsJson | ConvertFrom-Json
+        $owner = [string]$labels.'org.ronin.qualification.run'
+    } catch {
+        throw "Could not parse labels for the built Ronin qualification image '$BuiltImageId' during cleanup."
     }
     if ($owner -ne $OwnerRunId) {
         throw "Refusing to delete Ronin image '$BuiltImageId': ownership label '$owner' does not match qualification run '$OwnerRunId'."
