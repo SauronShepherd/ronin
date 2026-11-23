@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1042",
+  "date": "2026-11-23",
+  "status": "pass_real_postgresql_retention_recovery_boundary",
+  "candidate_sha": "6a78153a8df4019004f70a4669b009ad94f23132",
+  "implementation_commit_sha": "6a78153a8df4019004f70a4669b009ad94f23132",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1042.md",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://postgres:ronin@127.0.0.1:55442/ronin python -m pytest -q tests/integration/test_postgres_artifact_retention_barrier.py",
+  "result": {
+    "qualification": "PASS: 3/3 real PostgreSQL retention-barrier and reference-collection integration tests",
+    "scope": "Collector/writer fencing, async writer coordination and bounded reference collection with PostgreSQL leases",
+    "external_services": "USED: temporary local Docker PostgreSQL 16.4 container, removed after execution",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "e1c3824a0fe5f5d10855f53ca25cde9b935b44255fa579498b0a40eb4a796df7" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a bounded retention/recovery boundary, not a full appliance backup/restore or scheduler failover qualification.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
