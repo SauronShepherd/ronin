@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1165",
+  "date": "2026-11-23",
+  "status": "pass_bounded_live_rf3_failover_postgres",
+  "candidate_sha": "8ae921b30ce5f5e9bf4e5a5834d28fc34d818604",
+  "implementation_commit_sha": "8ae921b30ce5f5e9bf4e5a5834d28fc34d818604",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1165.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -WorkerImage ronin:qualification-d1165 -StorageBackend postgres -TestGrep 'live streaming multi-broker failover resumes from the durable checkpoint' -MultiBroker -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS: 1/1 selected Playwright case, 0 skipped, 0 failed in 69.80s",
+    "criterion": "PASS: three-broker RF3 failover resumed the durable streaming checkpoint without replay",
+    "runtime": "PASS: real PostgreSQL backend, three Redpanda brokers (RF3) and Ronin API/worker image",
+    "api_traffic": "5/5 events correlated, all OK, 0 unexpected authorization/server/network errors",
+    "cleanup": "PASS: three brokers, PostgreSQL, volume/network and temporary image cleaned",
+    "production_change": "None in D1165",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "browser-live.log": "541C209782827DF773A624371A58A7C5AE3B1FD320771CB701CA30CA374C297D",
+    "browser-live.xml": "948AD5FDADA26B1A2769BDEC95C7FD5276A265AC93892F6CCA9BE4C3E86F18EE",
+    "live-api-traffic.json": "2E58E83A7FC15719626C103FB81593C58A2A00CE5FD490E40D46D97D6C60A314",
+    "qualification-summary.json": "8C85A23B4B4FC4EFDD3D9D128AC7467F5117F5DB16BBD7A6B86293242258C6BA",
+    "live-server.stderr.log": "955AAFF92E38CC0596657932433764607D7095F761F5D95A31A45C14101FC24C"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused bounded RF3 diagnostic, not indefinite operation, production HA/SLO or multi-worker qualification.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
