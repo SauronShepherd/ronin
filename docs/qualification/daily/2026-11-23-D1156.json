@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1156",
+  "date": "2026-11-23",
+  "status": "pass_contract_regression_with_helm_postgres_gap_retained",
+  "candidate_sha": "c9a9b52c83c95d0ef0c2788b16e4ad7689ab6bd8",
+  "implementation_commit_sha": "c9a9b52c83c95d0ef0c2788b16e4ad7689ab6bd8",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1156.md",
+  "command": "python -m pytest -q tests/test_helm_chart_structure.py tests/test_backend_configuration.py tests/test_docker_qualification_contract.py",
+  "result": {
+    "qualification": "PASS: 34/34 contract tests, 0 failures, in 3.61s",
+    "scope": "Helm chart security/shape and Docker qualification contracts plus explicit SQLite/PostgreSQL backend selection contracts",
+    "postgres_kubernetes": "NOT QUALIFIED: deploy/helm/ronin/templates/deployment.yaml still fixes RONIN_DB to SQLite and exposes no PostgreSQL DSN wiring",
+    "production_change": "None in D1156",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest.log": "CDD30055E3C57D289D5D23F1510F80A57D397AF0D39B64FC4E7FBC1AE6B95D36" },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1156-contract-regression-5d84e2720b82465abdc32a111a302234",
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a contract regression, not a live PostgreSQL Helm qualification.",
+    "D1155 Helm evidence remains SQLite-backed; D1154 is the separate live PostgreSQL server/runtime evidence.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
