@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1158",
+  "date": "2026-11-23",
+  "status": "pass_live_helm_postgres_restart_persistence",
+  "candidate_sha": "6338a5119e43ed41645b4ee14c85a626ada89221",
+  "implementation_commit_sha": "6338a5119e43ed41645b4ee14c85a626ada89221",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1158.md",
+  "commands": [
+    "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory <docker-evidence> -ImageTag ronin:qualification-d1158 -KeepImage",
+    "pwsh -NoProfile -File tools/run_helm_qualification.ps1 -EvidenceDirectory <helm-evidence> -DockerEvidenceDirectory <docker-evidence> -ImageRef ronin:qualification-d1158 -StorageBackend postgres -PostgresDsn <isolated-postgres-dsn>"
+  ],
+  "result": {
+    "docker_acceptance": "PASS: 27/27 integration tests, 0 skipped, 0 failed; strict v0.1 15/15",
+    "helm_postgres_runtime": "PASS: real PostgreSQL service, storageBackend=postgres, Helm install/readiness, health HTTP 200, Studio HTTP 200 and authorized jobs API HTTP 200",
+    "release_operations": "PASS: Helm upgrade revision 2 and rollback to revision 1",
+    "restart_persistence": "PASS: queued job HTTP 201 retained the same ID after the Ronin deployment pod restart against PostgreSQL",
+    "secret_boundary": "PASS: DSN injected through Secret reference; chart rendered 4 resources and token remained confined to Secret",
+    "cleanup": "PASS: kind cluster, PostgreSQL container and Ronin image removed",
+    "production_change": "D1157 chart wiring plus D1158 runner backend selector; no further product change during execution",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "docker-qualification.log": "7ED9CD4018DDD15C0F3703BE0BCB3C7648039EA45CFD69B74ADAC346CB334957",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "helm-qualification.log": "CFDFA16D9D7567F2415B38CA93D93765B1A8B37DB288EA9A7C6D9929B78C7F2A",
+    "helm-qualification.json": "E77C2A2EDE7137F3BE250DCE7212F07EB12F13E93807437252D8B24A8954AEC5"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Bounded single-replica kind qualification with an external PostgreSQL service; it does not certify production cluster capacity, HA, indefinite soak or multi-worker operation.",
+    "The bind policy is insecure plaintext only inside the isolated qualification cluster.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
