@@ -33,7 +33,7 @@ def test_local_docker_qualification_script_uses_immutable_image_and_real_suites(
     assert "$resolvedImageId = $ImageId" in script
     assert "$env:RONIN_DOCKER_QUALIFICATION_IMAGE = $resolvedImageId" in script
     assert "org.ronin.qualification.run=$runId" in script
-    assert "docker image rm --force $BuiltImageId" in script
+    assert "docker image rm --force $ImageTag" in script
     assert "docker rm --force --volumes $ownedContainers" in script
     assert '$imageCleanupStatus = "caller-supplied-image-left-intact"' in script
     assert '$imageCleanupStatus = "kept-by-operator"' in script

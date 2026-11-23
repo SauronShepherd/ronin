@@ -78,7 +78,7 @@ function Remove-OwnedQualificationImage {
         }
     }
 
-    & docker image rm --force $BuiltImageId 2>&1 | Out-Null
+    & docker image rm --force $ImageTag 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "Could not remove owned Ronin qualification image '$BuiltImageId'."
     }
