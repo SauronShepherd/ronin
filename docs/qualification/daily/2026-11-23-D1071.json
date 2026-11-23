@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1071",
+  "date": "2026-11-23",
+  "status": "pass_security_bounded_platform_skip",
+  "candidate_sha": "38d84ca4755306ff43de61862751d8d4d36a504e",
+  "implementation_commit_sha": "38d84ca4755306ff43de61862751d8d4d36a504e",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1071.md",
+  "command": "python -m pytest -q tests/test_security_redaction.py tests/test_security_policy.py tests/test_secret_resolvers.py tests/test_runner_broker_security.py tests/test_ml_canonical_artifact_security.py",
+  "result": {
+    "qualification": "PASS: 46 executed bounded security tests; 1 symlink-dependent secret-resolver test skipped on Windows",
+    "scope": "Security policy, secret resolution, redaction, runner-broker security and ML artifact security",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "f559b62264721788bf9f6c1a4880fc2e9070bc6c306e7310de5d68659ec4b315" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "One symlink-dependent secret-resolver test was skipped because symlinks are unavailable on Windows; it is not counted as PASS.",
+    "Local/in-process evidence does not close P13 external secret-provider or release evidence requirements.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
