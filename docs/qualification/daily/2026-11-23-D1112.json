@@ -1,0 +1,23 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1112",
+  "date": "2026-11-23",
+  "status": "pass_bounded_deadline_contention",
+  "candidate_sha": "778f0ad01fdd0178b57ba5852d015afca1a29e0f",
+  "implementation_commit_sha": "778f0ad01fdd0178b57ba5852d015afca1a29e0f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1112.md",
+  "command": "python -m pytest -q tests/integration/test_http_timeouts.py tests/integration/test_runtime_contention.py",
+  "result": {
+    "qualification": "PASS: 5 passed in 1.66s.",
+    "scope": "Bounded HTTP read/service deadlines, invalid timeout configuration rejection, and preservation of unrelated progress during real SQLite/artifact contention.",
+    "production_change": "None.",
+    "cleanup": "PASS: tests used temporary state and completed their server, thread and artifact cleanup paths.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "096829BB73A9FAF5FB66D431A01240F9F277054F6489FECD07F79A261219BB31"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Finite local control-plane/runtime cell only; not external-provider, PostgreSQL-runtime, HA or indefinite-operation evidence.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
