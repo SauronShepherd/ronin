@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1111",
+  "date": "2026-11-23",
+  "status": "pass_bounded_http_latency",
+  "candidate_sha": "8dc8769bd492715277d763ca13f1444772be64ff",
+  "implementation_commit_sha": "8dc8769bd492715277d763ca13f1444772be64ff",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1111.md",
+  "command": "RONIN_PERFORMANCE_ARTIFACT=<temp>/performance.json python -m pytest -q tests/perf/test_http_contention_budgets.py",
+  "result": {
+    "qualification": "PASS: 2 passed in 6.56s.",
+    "scope": "Bounded local HTTP operation under one blocked SQLite status-store worker, with 200 POST and 200 GET samples.",
+    "criteria": {"POST /v1/jobs p95_ms": "< 100", "GET /v1/jobs/{id} p95_ms": "< 30"},
+    "measurements": {"POST /v1/jobs": {"sample_count": 200, "p50_ms": 14.658, "p95_ms": 26.534, "max_ms": 86.156}, "GET /v1/jobs/{id}": {"sample_count": 200, "p50_ms": 4.965, "p95_ms": 27.194, "max_ms": 28.449}},
+    "production_change": "None.",
+    "cleanup": "PASS: HTTP server, worker thread, blocker thread and temporary SQLite state shut down in the test finally block.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "DF16FD24C104308A5FE47E5AE811EDE41D66CAD7DB0B551B9E4E484488394C1C",
+    "performance_artifact_sha256": "46809C911F3A42EF7668C9E3C7EA344E62C54828CA486A393FCDACCC76C9D175"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Finite local SQLite contention cell only; not external-provider, PostgreSQL-runtime, HA or indefinite-operation evidence.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
