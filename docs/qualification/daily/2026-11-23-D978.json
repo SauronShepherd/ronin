@@ -1,0 +1,22 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D978",
+  "date": "2026-11-23",
+  "status": "not_qualified_external_spark_endpoint_no_response",
+  "candidate_sha": "900d1df4a4585718a4f17f69edd926e318be9bab",
+  "implementation_commit_sha": "900d1df4a4585718a4f17f69edd926e318be9bab",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D978.md",
+  "command": "SPARK_CONNECT_ENDPOINT=ZINGG_SPARK_CONNECT_URL python -m pytest -q tests/e2e/test_data_engineering_external.py -k spark_connect_external_smoke",
+  "result": {
+    "qualification": "NOT QUALIFIED: the read-only external smoke produced no response or pytest output for several minutes and was interrupted",
+    "provider_identity": "NOT ESTABLISHED: ZINGG_SPARK_CONNECT_URL was tested only as an endpoint candidate; no provider identity or contract equivalence was inferred",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "The external endpoint did not establish a bounded pass or a deterministic provider error before interruption.",
+    "D978 is a non-qualification attempt and must not be counted as Spark Connect evidence or release progress.",
+    "No credentials, endpoint values or external response payloads were recorded."
+  ]
+}
