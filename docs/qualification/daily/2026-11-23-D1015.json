@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1015",
+  "date": "2026-11-23",
+  "status": "pass_postgres_audit_connector_contracts",
+  "candidate_sha": "04b1e8d7cf862ae8c97741cdcf115bdbc08e74af",
+  "implementation_commit_sha": "04b1e8d7cf862ae8c97741cdcf115bdbc08e74af",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1015.md",
+  "command": "python -m pytest -q tests/test_postgres_audit_store_unit.py tests/test_postgres_connector.py",
+  "result": {
+    "qualification": "PASS: 15/15 local PostgreSQL audit-store and connector contract tests",
+    "scope": "Audit-store unit behavior and PostgreSQL connector contracts",
+    "external_services": "NOT USED: local contract qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "a98e62b7dbb0950879e43c61db4f43cbc102df320098223b91837a53c502c1ce" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local contract evidence only; this cell does not execute or qualify a PostgreSQL server/runtime.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
