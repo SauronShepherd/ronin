@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D951",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate live supervisor soak bounded 300 seconds",
+  "candidate_sha": "f6b50ba7e55a27ba82b88cc22983f66a8c01db4f",
+  "implementation_commit_sha": "f6b50ba7e55a27ba82b88cc22983f66a8c01db4f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D951.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-supervisor-300s",
+  "result": { "qualification": "PASS: 1/1 Playwright, 393/393 correlated API events, 393 OK, 0 errors/critical", "cleanup": "PASS: live services/network/volume cleaned and worker image removed", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates" },
+  "parameters": { "runner": "tools/run_live_product_qualification.ps1", "test_grep": "supervisor soak", "storage_backend": "postgres", "supervisor_soak_seconds": 300, "request_timeout_seconds": 90, "broker": "single-broker Redpanda", "worker_image_digest": "sha256:e9579f1f0a9e82b6b38bde64c25c1b0e33ee98a6b6b8733a1141eaf6c90a08d7", "api_events": 393, "duration_seconds": 340.52, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d951-supervisor-300" },
+  "hashes": { "qualification_summary_sha256": "33e29e7b25236fdc9d58e000811aa736e0c780da462d2e04aee4d523731e67e7", "live_api_traffic_sha256": "75aeb666716f6577de11f99d17df712755cb54930a0cc509adb5ebbb0c95ee9a", "browser_live_xml_sha256": "90a1e7238710f0dccdc8dae2065721fbe109f8333ecba456adcdad725b4e1615" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Finite single-broker cell only; no indefinite, HA, stable RF3, external provider or complete route audit.", "D951 is bound to candidate f6b50ba7e55a27ba82b88cc22983f66a8c01db4f; earlier evidence is not reattributed." ]
+}
