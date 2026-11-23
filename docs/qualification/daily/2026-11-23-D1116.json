@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1116",
+  "date": "2026-11-23",
+  "status": "pass_runner_cleanup_regression",
+  "candidate_sha": "23caf336d22cdf169358414a2f532ad1ede2ddee",
+  "implementation_commit_sha": "23caf336d22cdf169358414a2f532ad1ede2ddee",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1116.md",
+  "command": "python -m pytest -q tests/test_docker_qualification_contract.py tests/test_asyncio_runner_task_cancellation.py tests/test_container_kernel_executor.py",
+  "result": {
+    "qualification": "PASS: 47 passed in 5.19s.",
+    "scope": "Qualification-runner contracts plus asynchronous command cancellation, timeout and cleanup invariants after the Spark cleanup capture fix.",
+    "production_change": "None in this regression run; D1115 contains the runner change under regression.",
+    "cleanup": "PASS: local tests completed without external containers or persistent processes.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "F0CBCB556E57E4D4177D5DEC664774C573DDB788DF146A631A45D7687860DF6B"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Regression evidence only; it does not qualify external production providers, PostgreSQL runtime, HA or indefinite operation.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
