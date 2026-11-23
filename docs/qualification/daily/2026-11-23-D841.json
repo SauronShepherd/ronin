@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D841",
+  "status": "PASS_POSTGRES_SCHEDULER_LEADERSHIP_FENCING_CURRENT_CANDIDATE",
+  "candidate_sha": "2f6d80e3994786a0ac263c2b0c68d925c093df19",
+  "qualification": "isolated PostgreSQL scheduler leadership generation fencing diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"scheduler_leadership_is_generation_fenced_and_persistent\" -EvidenceDirectory %TEMP%\\ronin-d841-leadership-fencing-20261123",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 1.89, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "leadership generations persist and fence stale scheduler owners from acting after takeover",
+  "evidence": {"root": "%TEMP%\\ronin-d841-leadership-fencing-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["filtered diagnostic only; not the complete Python/PostgreSQL suite", "does not qualify HA or multi-worker production operation", "does not reattribute D100-D840"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
