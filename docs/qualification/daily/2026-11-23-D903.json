@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D903",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-main pip-audit dependency scan",
+  "candidate_sha": "8b571e54bd52757d0c89d1fa0f2f05772f7465f7",
+  "implementation_commit_sha": "8b571e54bd52757d0c89d1fa0f2f05772f7465f7",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D903.md",
+  "execution_scope": "clean-main-pip-audit-requirements-test-lock",
+  "result": {
+    "qualification": "PASS: pip-audit 2.10.1 reported no known vulnerabilities and exited 0",
+    "cleanup": "PASS: report was written outside the checkout; no runtime resources were created",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pip-audit -r requirements-test.lock --strict --format json --output C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d903-pip-audit.json",
+    "tool_version": "2.10.1",
+    "lockfile": "requirements-test.lock",
+    "report_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d903-pip-audit.json",
+    "exit_code": 0
+  },
+  "hashes": { "report_json": "d36f41ff615e1c68fac2608ff5c11aa75cca52fa675c48ddbaa52d57a42e41c2" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This dependency scan is supply-chain evidence only; it does not qualify runtime, external providers, HA or release approval.",
+    "The tool emitted a non-failing warning about a temporary venv path redirect; vulnerability result remained no known vulnerabilities and exit 0.",
+    "D903 is bound to candidate 8b571e54bd52757d0c89d1fa0f2f05772f7465f7; earlier evidence is not reattributed."
+  ]
+}
