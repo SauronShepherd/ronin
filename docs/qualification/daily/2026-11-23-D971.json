@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D971",
+  "date": "2026-11-23",
+  "status": "pass_bounded_postgresql_scheduler_recovery",
+  "candidate_sha": "7b199f4357650a4b64503634eb0e99c4ea589ee3",
+  "implementation_commit_sha": "7b199f4357650a4b64503634eb0e99c4ea589ee3",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D971.md",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d971-postgres-scheduler-recovery -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate",
+  "result": {
+    "qualification": "PASS: 2/2 selected PostgreSQL scheduler recovery tests; 0 skipped, 0 failed, 19 deselected",
+    "cases": [
+      "expired lease is reacquired without duplicate fire",
+      "job is replayed after process crash without duplicate"
+    ],
+    "postgresql": "PASS: isolated postgres:16.4-alpine service",
+    "cleanup": "PASS: runner completed isolated-service cleanup",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "pytest_output_log_sha256": "712dddf11fbf2296eef501ae3e617ee03fb1bd0f5c1017cb9054d4ed94749d93",
+    "pytest_postgres_log_sha256": "39184c19ffd68712d5be41e63125ac28e3af1543b926fb9bd9f4a91d05f19737",
+    "pytest_junit_sha256": "59c11045b5b381bdea7f842cea5151acfc77a2a266b9223fbc329aa5257fbcb3",
+    "pytest_timings_sha256": "75e04329936f57b650f764992cf40a42f95d525e25d2c3241d959902ca6d8ac6",
+    "runner_timings_sha256": "1bd0acce78ff6759a3ca8813a58073a9b1ee32f35a11d20dd08c64aac4448eb2"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a bounded focused PostgreSQL diagnostic, not the complete Python/PostgreSQL suite.",
+    "The previous live route still used SQLite for Ronin scheduler/runtime; D971 does not reattribute or convert that route into PostgreSQL runtime evidence.",
+    "D971 adds scheduler recovery evidence only and does not prove indefinite operation, HA/multi-worker, provider certification, P13 or release approval."
+  ]
+}
