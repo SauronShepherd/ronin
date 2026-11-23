@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D916",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Serial candidate-boundary regression without randomization",
+  "candidate_sha": "df9a430129173c9321b735b33ae1c7047b6bd211",
+  "implementation_commit_sha": "df9a430129173c9321b735b33ae1c7047b6bd211",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D916.md",
+  "execution_scope": "clean-main-serial-candidate-boundary-no-randomly",
+  "result": {
+    "qualification": "PASS: 11/11 selected tests passed in 12.80s",
+    "cleanup": "PASS: pytest-only run created no containers or images",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "python -m pytest -q tests/test_ronin_candidate_boundary.py -p no:randomly --disable-warnings --no-header",
+    "selected_tests": 11,
+    "log_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d916-evidence\\pytest-output.log"
+  },
+  "hashes": { "pytest_log_sha256": "db2e856db0a00b2d1bc08f209218dd6dcb5076cae89d37060aaf959d51f84bfe" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Serial focused evidence only; it does not override D912 full-suite NOT_PASS.",
+    "No production source was changed and no release qualification is claimed.",
+    "D916 is bound to candidate df9a430129173c9321b735b33ae1c7047b6bd211; earlier evidence is not reattributed."
+  ]
+}
