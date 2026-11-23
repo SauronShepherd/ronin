@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D872",
+  "status": "PASS_LOCAL_POSTGRES_AUDIT_STORE_UNIT_CURRENT_CANDIDATE",
+  "candidate_sha": "5785b14d43584ff81cafc0a9d02237ce81a45e85",
+  "qualification": "local PostgreSQL audit-store contract unit file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -LocalOnly -TestPath tests/test_postgres_audit_store_unit.py -EvidenceDirectory %TEMP%\\ronin-d872-postgres-audit-20261123",
+  "result": {"selected": 4, "passed": 4, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 1.82, "process_exit_code": 0},
+  "criterion": "audit-store constructor/migration, append/get/list/idempotency, bounded workspace listing and validation contracts pass locally",
+  "evidence": {"root": "%TEMP%\\ronin-d872-postgres-audit-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_services": "none", "postgres_evidence": false},
+  "limitations": ["local unit evidence only; not real PostgreSQL runtime evidence", "the attempted integration path did not exist and was not executed", "does not qualify indefinite operation or release", "does not reattribute D100-D871"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
