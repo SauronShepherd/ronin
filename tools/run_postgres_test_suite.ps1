@@ -216,12 +216,20 @@ try {
     $runKind = if ($LocalOnly) { "Filtered local-only diagnostic" } elseif ($isFiltered) { "Filtered PostgreSQL diagnostic" } else { "Full Python/PostgreSQL suite" }
     Push-Location $repoRoot
     $pytestClock = [Diagnostics.Stopwatch]::StartNew()
+    $savedGitConfigEnvironment = @{}
+    foreach ($variable in @(Get-ChildItem Env: | Where-Object { $_.Name -match '^GIT_CONFIG_(COUNT|KEY_|VALUE_)' })) {
+        $savedGitConfigEnvironment[$variable.Name] = $variable.Value
+        Remove-Item "Env:$($variable.Name)" -ErrorAction SilentlyContinue
+    }
     try {
         & $python -m pytest @pytestArguments 2>&1 |
             ForEach-Object { "$_" -replace [regex]::Escape($dsn), "postgresql://<redacted>" } |
             Tee-Object -FilePath $pytestOutput
         $testResult = $LASTEXITCODE
     } finally {
+        foreach ($variableName in @($savedGitConfigEnvironment.Keys)) {
+            Set-Item "Env:$variableName" $savedGitConfigEnvironment[$variableName]
+        }
         $pytestClock.Stop()
         $phaseTimings.pytest_wall_seconds = [Math]::Round($pytestClock.Elapsed.TotalSeconds, 3)
         Pop-Location
