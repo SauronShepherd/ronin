@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1121",
+  "date": "2026-11-23",
+  "status": "pass_streaming_local_regression",
+  "candidate_sha": "be771f38ee983d5070f5e9930ad6215143b6335f",
+  "implementation_commit_sha": "be771f38ee983d5070f5e9930ad6215143b6335f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1121.md",
+  "command": "python -m pytest -q tests/test_streaming_bundle.py tests/test_streaming_contracts.py tests/test_streaming_health.py tests/test_streaming_kafka.py tests/test_streaming_runtime.py tests/test_streaming_windows.py tests/test_stream_table.py tests/test_source_checkpoints.py tests/test_connector_checkpoint.py",
+  "result": {
+    "qualification": "PASS: 63 passed in 54.69s.",
+    "scope": "New local P11 streaming regression selection covering runtime supervisor, Kafka fetch/queue budgets and retry behavior, checkpoint fencing/replay, bundles, event-time windows, health, stream tables and connector checkpoints.",
+    "production_change": "None.",
+    "cleanup": "PASS: local tests completed without external containers or persistent services.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "1F39C52C398A987380F824FBD7D56DDF9732F5498BB3602FE8CFC186880F3937"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local contract/runtime evidence only; it does not replace real broker, multi-broker RF3, worker, PostgreSQL scheduler/runtime, provider or indefinite-operation evidence.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
