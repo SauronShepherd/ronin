@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D948",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL artifact retention barrier and collector lease",
+  "candidate_sha": "6046cbab54d52f6e5cb29df7503d64381211d428",
+  "implementation_commit_sha": "6046cbab54d52f6e5cb29df7503d64381211d428",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D948.md",
+  "execution_scope": "clean-main-current-candidate-isolated-postgresql-artifact-retention",
+  "result": { "qualification": "PASS: 3/3 selected tests, 0 skips/failures", "cleanup": "PASS: isolated PostgreSQL fixture removed by runner", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates" },
+  "parameters": { "runner": "tools/run_postgres_test_suite.ps1", "test_path": "tests/integration/test_postgres_artifact_retention_barrier.py", "postgres_image": "postgres:16.4-alpine", "storage_backend": "postgres", "selected_tests": 3, "duration_seconds": 2.39, "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d948-artifact-retention" },
+  "hashes": { "pytest_output_sha256": "a30256bbf9cf22dec71791bf734f7515a434588349d88c45ce2370ea3c6584c0", "pytest_postgres_log_sha256": "901874b66bf52e6c371bfb98a14fb47c4addfc7e057d27a475188ab3489c0269", "pytest_xml_sha256": "cd055bdb5fbef1e4b99ce60c205cd3759b7fdf72e5ecddee3de4d5615b52751d" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Filtered bounded retention diagnostic only; no complete P11, HA, indefinite operation or release evidence.", "D948 is bound to candidate 6046cbab54d52f6e5cb29df7503d64381211d428; earlier evidence is not reattributed." ]
+}
