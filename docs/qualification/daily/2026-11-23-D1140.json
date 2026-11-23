@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1140",
+  "date": "2026-11-23",
+  "status": "pass_real_postgres_scheduler_recovery",
+  "candidate_sha": "cee5f9b72f06269b9ddbd4457179f056517d8e20",
+  "implementation_commit_sha": "cee5f9b72f06269b9ddbd4457179f056517d8e20",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1140.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory <external-temp-dir> -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or test_postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate'",
+  "result": {
+    "qualification": "PASS: 2 passed in 10.62s, 19 deselected, 0 selected skipped/failed.",
+    "scope": "Real PostgreSQL scheduler recovery after process crash and expired leader lease, asserting replay/reacquire without duplicate dispatch/fire.",
+    "production_change": "None.",
+    "cleanup": "PASS: isolated PostgreSQL container and volumes removed by runner.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "7D48863BCA86E2C5D207964ACB95C2C2C2D401B95F3286138B2E58A93A176F80",
+    "postgres_log_sha256": "8ABB8EACFA3215C3ACE7461E8592AB07F4A22923663495426DA13B86C9337B33",
+    "junit_sha256": "FBDEA69A3F42AAC9641FD0C70368A0767F8AA86BBD6F99B9D77489B78CB97C1B",
+    "timings_sha256": "A7FBE7E83B737730EFA43230DCB5D59A7870AEA181CF55069EEBDE6C88DE341F",
+    "runner_timings_sha256": "E0FBD7F78BD56C806A0AE5024D7FFD469D22EE1D52FD939A7384795A30C98B6D"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered real PostgreSQL scheduler recovery evidence only; not the full PostgreSQL suite, external provider, HA or indefinite operation.", "Historical D83-D100, D100 and D1138 evidence is not reattributed."]
+}
