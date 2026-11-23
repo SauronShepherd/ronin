@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-23",
+  "day": "D875",
+  "status": "NOT_RUN_HELM_IMAGE_EVIDENCE_MISMATCH",
+  "candidate_sha": "11c83c584225fa2795b211cb5015769935baf17b",
+  "qualification": "Helm/kind precondition diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_helm_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d875-helm-20261123 -ImageRef ronin:qualification-d874-20261123 -DockerEvidenceDirectory %TEMP%\\ronin-d874-docker-20261123",
+  "result": {"executed": false, "reason": "supplied image ID did not match full Docker acceptance evidence; no kind cluster was created", "process_exit_code": 1},
+  "cleanup": {"status": "PASS", "temporary_image_removed": true, "temporary_containers": 0, "temporary_volumes": 0},
+  "limitations": ["Helm/kind evidence not produced", "D874 Docker evidence is not reused across a rebuilt image digest", "does not reattribute D100-D874"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

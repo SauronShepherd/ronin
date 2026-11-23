@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-23",
+  "day": "D874",
+  "status": "PASS_DOCKER_ACCEPTANCE_CURRENT_CANDIDATE_CLEANUP_EXCEPTION",
+  "candidate_sha": "11c83c584225fa2795b211cb5015769935baf17b",
+  "qualification": "Docker integration and strict v0.1 acceptance on current candidate",
+  "command": "docker build -f docker/Dockerfile -t ronin:qualification-d874-20261123 .; pwsh -NoLogo -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d874-20261123 -EvidenceDirectory %TEMP%\\ronin-d874-docker-20261123",
+  "result": {"docker_integration_selected": 27, "docker_integration_passed": 27, "docker_integration_failed": 0, "docker_integration_skipped": 0, "strict_v01_selected": 15, "strict_v01_passed": 15, "strict_v01_failed": 0, "image_digest": "sha256:a343777162e15236fdb18b15e890e5dc0c835e36ab284e8a4738b3897271516e", "pytest_seconds": 155.22, "process_exit_code": 0},
+  "cleanup": {"runner_status": "EXCEPTION", "runner_error": "pre-existing qualification tag could not be restored", "post_inspection_status": "PASS_NO_TEMPORARY_CONTAINERS_IMAGES_OR_VOLUMES", "evidence_root_external": true},
+  "limitations": ["cleanup tag restoration raised after all tests passed", "bounded acceptance only; not indefinite operation or release approval", "does not reattribute D100-D873"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
