@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D909",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Real PostgreSQL scheduler fencing and reconciliation",
+  "candidate_sha": "d1737f29c47c539040742dfacaa4d7132703b957",
+  "implementation_commit_sha": "d1737f29c47c539040742dfacaa4d7132703b957",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D909.md",
+  "execution_scope": "clean-main-isolated-postgres-16.4-focused-scheduler-fencing-reconciliation",
+  "result": {
+    "qualification": "PASS: 3/3 selected PostgreSQL tests passed, 18 deselected, 0 failed, 0 skipped",
+    "cleanup": "PASS: isolated PostgreSQL container and postgres:16.4-alpine image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_postgres_test_suite.ps1",
+    "image": "postgres:16.4-alpine",
+    "test_path": "tests/integration/test_postgres_workflow_store_real.py",
+    "test_filter": "scheduler_attempt_leases_fence_workers_and_reclaim_expiry or scheduler_execution_outbox_survives_expiry_and_reconciles or scheduler_event_inbox_freezes_and_replays_deliveries",
+    "pytest_wall_seconds": 3.81,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d909-evidence"
+  },
+  "hashes": {
+    "pytest_output_sha256": "26746ebbc0d2bac27502335c867e6f2a8089d297d0795f64b9e254ab2623ee48",
+    "pytest_postgres_xml_sha256": "0278498e2baef00897ebdc069e1bc4bdbb65be5060619a55388ea763883570ab"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused PostgreSQL scheduler fencing/reconciliation selection only; not the complete Python/PostgreSQL suite or full coverage.",
+    "No external provider/object store, HA multi-node, indefinite operation or release approval is claimed.",
+    "D909 is bound to candidate d1737f29c47c539040742dfacaa4d7132703b957; earlier evidence is not reattributed."
+  ]
+}
