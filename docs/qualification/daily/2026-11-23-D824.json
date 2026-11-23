@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-23",
+  "day": "D824",
+  "status": "PASS_GIT_SOURCE_SINGLE_CURRENT_CANDIDATE",
+  "candidate_sha": "072ee65ebae86ef09c8db813f020a290ea3a0cac",
+  "qualification": "single Git-source regression isolation",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory %TEMP%\\ronin-d824-git-single-20261123 -TestPath tests/test_git_source.py -TestFilter \"git_fetch_revision_does_not_change_worktree_head\"",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 19, "pytest_duration_seconds": 2.23, "process_exit_code": 0},
+  "cleanup": {"status": "PASS", "postgres_removed": true, "volume_removed": true, "network_removed": true},
+  "interpretation": "The minimal previously failing Git-source case passes in a fresh isolated process; no production defect is established.",
+  "limitations": ["single filtered case, not full-suite evidence", "does not explain suite-order interference or close P11/release", "does not reattribute D100-D823"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
