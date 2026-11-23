@@ -1289,7 +1289,10 @@ test('live streaming multi-broker failover resumes from the durable checkpoint',
     execFileSync('docker', ['start', broker], { encoding: 'utf8', timeout: 20_000 });
     brokerStopped = false;
     let brokerHealth = '';
-    for (let attempt = 0; attempt < 20; attempt += 1) {
+    // Redpanda's compose healthcheck allows up to 60 seconds after a broker
+    // restart for replica election and listener recovery. Keep the assertion
+    // strict (`healthy`) while matching that bounded readiness window.
+    for (let attempt = 0; attempt < 120; attempt += 1) {
       brokerHealth = execFileSync(
         'docker',
         ['inspect', '-f', '{{.State.Health.Status}}', broker],
