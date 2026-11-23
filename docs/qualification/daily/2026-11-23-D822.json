@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D822",
+  "status": "NOT_PASS_POSTGRES_FULL_CURRENT_CANDIDATE",
+  "candidate_sha": "b52f3da17a575c1dc122a23e837bddb7ecf97bf9",
+  "qualification": "full non-performance Python/PostgreSQL suite on current candidate",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory %TEMP%\\ronin-d822-postgres-full-current-20261123",
+  "result": {"collected": 4791, "passed": 4750, "failed": 13, "skipped": 31, "warnings": 23, "pytest_duration_seconds": 796.84, "process_exit_code": 1},
+  "failure_clusters": ["7 tests.test_git_source failures plus 3 worker_preparation Git-source failures", "test_public_v1_status::test_status_check_is_fail_closed_for_divergence", "2 integration worker-runtime contention failures/timeouts"],
+  "cleanup": {"status": "PASS", "postgres_removed": true, "volume_removed": true, "network_removed": true},
+  "interpretation": "Negative qualification evidence only; no production change was made and no failed result is promoted to P11 or release.",
+  "limitations": ["full suite result is NOT_PASS", "31 skips are explicit platform/opt-in skips recorded by pytest", "does not reattribute D100-D821"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
