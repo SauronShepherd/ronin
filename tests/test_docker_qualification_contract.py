@@ -532,7 +532,7 @@ def test_postgres_runner_isolates_container_and_externalizes_evidence() -> None:
     assert '$pytestArguments = @("-v") + $pytestArguments' in script
     assert "[string]$TestPath" in script
     assert "TestFilter" in script
-    assert "GetRelativePath($repoRoot, $testPathFull)" in script
+    assert "Substring($repoRoot.Length).TrimStart" in script
     assert "if ($TestFilter) {" in script
     assert "Filtered PostgreSQL diagnostic" in script
     assert "-LocalOnly" in script
