@@ -1,0 +1,22 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D970",
+  "date": "2026-11-23",
+  "status": "pass_external_runtime_contracts_only",
+  "candidate_sha": "8a8bbc05301ac37f9d4cd2057ac7ab0a4eb9fd60",
+  "implementation_commit_sha": "8a8bbc05301ac37f9d4cd2057ac7ab0a4eb9fd60",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D970.md",
+  "command": "python -m pytest -q tests/test_sdp_cli_qualification_contract.py tests/test_spark_connect_qualification_contract.py",
+  "result": {
+    "qualification": "PASS: 6/6 local contract tests",
+    "external_provider": "NOT QUALIFIED: no SDP Studio or Spark Connect provider configured",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "69524e119f663f45b55bd6d685dcef1a469d131be24ccb73ae7a994c536143b7" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local fail-closed contract only; no external SDP/Spark execution or provider certification.",
+    "D970 is bound to candidate 8a8bbc05301ac37f9d4cd2057ac7ab0a4eb9fd60; historical evidence is not reattributed."
+  ]
+}
