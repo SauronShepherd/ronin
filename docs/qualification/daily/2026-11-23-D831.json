@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D831",
+  "status": "PASS_MULTI_BROKER_POSTGRES_CURRENT_CANDIDATE",
+  "candidate_sha": "36b2c3827f078b1e7db8be7056097021e5cab619",
+  "qualification": "current-candidate three-broker RF3 streaming diagnostic with explicit PostgreSQL backend",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory %TEMP%\\ronin-d831-multibroker-postgres-20261123 -TestGrep streaming -MultiBroker -StorageBackend postgres -WorkerImage ronin:qualification-d831-live -RequestTimeoutSeconds 30",
+  "result": {"selected": 10, "passed": 10, "failed": 0, "skipped": 0, "duration_seconds": 228.14, "process_exit_code": 0},
+  "traffic": {"api_events": 233, "correlated_http_logs": 233, "uncorrelated": 0, "outcomes": {"OK": 225, "WARN": 8, "ERROR": 0}},
+  "services": {"postgres": true, "kafka_brokers": 3, "replication_factor": 3, "ronin_api": true, "real_worker": true},
+  "cleanup": {"status": "PASS", "postgres_removed": true, "all_brokers_removed": true, "volume_removed": true, "network_removed": true, "worker_image_removed": true, "remaining_containers": [], "remaining_qualification_images": []},
+  "limitations": ["filtered streaming diagnostic, not route-wide qualification", "bounded failover evidence, not indefinite HA/SLO or release approval", "does not reattribute D100-D830"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
