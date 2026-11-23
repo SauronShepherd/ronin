@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D885",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate complete PostgreSQL workflow scheduler integration file",
+  "candidate_sha": "76442fda2ea61b1672d19f67be0d4faf4231fa0e",
+  "implementation_commit_sha": "76442fda2ea61b1672d19f67be0d4faf4231fa0e",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D885.md",
+  "execution_scope": "clean-main-real-postgresql-complete-test-postgres-workflow-store-real-file",
+  "result": {
+    "qualification": "PASS: 21/21 tests passed, 0 skipped, 0 failed, 0 deselected and 0 unrelated collection skips",
+    "coverage": "The complete scheduler workflow integration file ran against isolated PostgreSQL; coverage collection was disabled by the runner",
+    "cleanup": "PASS: isolated PostgreSQL runner completed without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d885-evidence -TestPath tests/integration/test_postgres_workflow_store_real.py",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d885-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 9.6,
+    "test_file": "tests/integration/test_postgres_workflow_store_real.py",
+    "collected": 21
+  },
+  "hashes": {
+    "pytest_output": "c5ac11ce19510a7a57bf6e27a9d18e9c7b39b4fba1b04f4202067b07f05bdc95",
+    "pytest_postgres_log": "aebcaff523930a40bd5d9d5dbfd5324167b504dc96d5d32ae3105c78f29c1c36",
+    "junit": "ec9a154b0de24915ff86129c7a5f4594ee1498f4daff03525b23d88b23fee244",
+    "runner_timings": "89f2b06c758139b30a238fb86159dea714a26f4c94e027ee0dd2ea6ed67c4e9c"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "The runner explicitly disables coverage for this file-scoped diagnostic; this is not the complete Python/PostgreSQL suite or global coverage evidence.",
+    "This file-level result does not establish HA, indefinite operation, external providers or release approval.",
+    "D885 is bound to candidate 76442fda2ea61b1672d19f67be0d4faf4231fa0e; earlier evidence is not reattributed."
+  ]
+}
