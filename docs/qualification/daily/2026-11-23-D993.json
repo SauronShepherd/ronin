@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D993",
+  "date": "2026-11-23",
+  "status": "pass_event_ledger_execution_bridge",
+  "candidate_sha": "36982072b38c29ff777b0bdaeb055a2b06b17fb3",
+  "implementation_commit_sha": "36982072b38c29ff777b0bdaeb055a2b06b17fb3",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D993.md",
+  "command": "python -m pytest -q tests/test_kernel_event_ledger_recovery.py tests/test_scheduler_execution_bridge.py",
+  "result": {
+    "qualification": "PASS: 37/37 local event-ledger recovery and execution-bridge tests",
+    "scope": "Kernel event-ledger recovery and scheduler execution bridge behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "bdff2e6068d705e5a4504abdc5c8de866e8a1e05bef9fc52f0585d6f7e41a12a" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process evidence only; this cell does not qualify external providers, PostgreSQL runtime or indefinite operation.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
