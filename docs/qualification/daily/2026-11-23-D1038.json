@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1038",
+  "date": "2026-11-23",
+  "status": "pass_ml_runtime_contracts",
+  "candidate_sha": "a95a98396365bc6d3e091bfd33510a0a312c1f93",
+  "implementation_commit_sha": "a95a98396365bc6d3e091bfd33510a0a312c1f93",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1038.md",
+  "command": "python -m pytest -q tests/test_ml_drift.py tests/test_ml_domain.py tests/test_ml_datasets.py tests/test_ml_clustering.py",
+  "result": {
+    "qualification": "PASS: 43/43 local ML drift, domain, dataset and clustering contract tests",
+    "scope": "ML runtime domain, datasets, drift and clustering",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "9e5a4be65954e50ac8cd5f0d5157dfa30e02238d681806178be72676ea487790" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process ML runtime evidence only; this cell does not qualify external providers, PostgreSQL runtime or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
