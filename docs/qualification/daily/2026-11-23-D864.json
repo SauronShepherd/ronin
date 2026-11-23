@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D864",
+  "status": "PASS_HTTP_JSON_CONNECTOR_REAL_CURRENT_CANDIDATE",
+  "candidate_sha": "3a519650129b8a5cefceaba9c75edcae806c7548",
+  "qualification": "real HTTP JSON connector integration file",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_http_json_connector_real.py -EvidenceDirectory %TEMP%\\ronin-d864-http-json-connector-20261123",
+  "result": {"selected": 8, "passed": 8, "failed": 0, "skipped": 0, "deselected": 0, "pytest_seconds": 13.91, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "real HTTP JSON pagination, snapshot replay, retry, redirect, origin, repeated-next and byte-boundary contracts pass together",
+  "evidence": {"root": "%TEMP%\\ronin-d864-http-json-connector-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["filtered integration file only; not external production provider certification", "does not qualify indefinite operation or release", "does not reattribute D100-D863"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
