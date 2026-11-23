@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-23",
+  "day": "D855",
+  "status": "PASS_PYTHON_ARTIFACT_CURRENT_CANDIDATE",
+  "candidate_sha": "98fe62647d3671ef7d4b74c655378901034bf338",
+  "qualification": "isolated pyronin wheel and sdist build with contract qualification",
+  "command": "python tools/artifact_qualification.py --checkout . --work-root %TEMP%\\ronin-d855-artifacts-current-20261123\\work --output %TEMP%\\ronin-d855-artifacts-current-20261123\\qualification.json",
+  "result": {"contract_tests": 92, "passed": 92, "failed": 0, "import_origin": "isolated-site-packages", "version": "0.0.1a0", "process_exit_code": 0},
+  "artifacts": {"wheel": {"filename": "pyronin-0.0.1a0-py3-none-any.whl", "sha256": "2dcbc11393e7cdf99cb6c3c3c8957c0195939ea51aa94c3067d9ca51cb17e9a4"}, "sdist": {"filename": "pyronin-0.0.1a0.tar.gz", "sha256": "feed84f2e14c1da3f4a696ebab9d608cddd276008d21a4f7329bb20c69621736"}, "wheel_record_sha256": "5f38cb2415674e859ec5077fb5a15535fb6d6675d0dab12131898c6285b7df3b"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_services": "none"},
+  "limitations": ["pyronin artifact surface only, not complete Ronin release artifact/family qualification", "version remains 0.0.1a0 and does not constitute release approval", "does not reattribute D100-D854"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
