@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1012",
+  "date": "2026-11-23",
+  "status": "pass_scheduler_events_contracts",
+  "candidate_sha": "9b6d829dcff96b37c6b3d9b15aa7b04ababdc385",
+  "implementation_commit_sha": "9b6d829dcff96b37c6b3d9b15aa7b04ababdc385",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1012.md",
+  "command": "python -m pytest -q tests/test_scheduler_events.py",
+  "result": {
+    "qualification": "PASS: 11/11 local scheduler event contract tests",
+    "scope": "Scheduler event creation, ordering and state-transition semantics",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "e3b43c879a420237d446e49df97ff10ec8a89d90547cf2cd0fbcfd4e5db19b2d" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process contract evidence only; this cell does not qualify external providers, PostgreSQL runtime or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
