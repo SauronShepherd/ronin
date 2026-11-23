@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1018",
+  "date": "2026-11-23",
+  "status": "pass_finops_contracts",
+  "candidate_sha": "ae2e7a8e315b4bbba3740856c2155460f45a0b1d",
+  "implementation_commit_sha": "ae2e7a8e315b4bbba3740856c2155460f45a0b1d",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1018.md",
+  "command": "python -m pytest -q tests/test_finops_forecast.py tests/test_finops_allocation.py",
+  "result": {
+    "qualification": "PASS: 8/8 local FinOps forecast and allocation contract tests",
+    "scope": "FinOps forecasting and allocation behavior",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "ccaa2abe227dd841667010a9bdaffd58a98845ac98754a199e857fd3f7db79a3" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process contract evidence only; this cell does not qualify external providers, PostgreSQL runtime or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
