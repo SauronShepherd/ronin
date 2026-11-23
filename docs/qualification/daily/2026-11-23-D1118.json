@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1118",
+  "date": "2026-11-23",
+  "status": "pass_spark_contract_regression",
+  "candidate_sha": "2afd59757787e1ca14b28f4710767f3766469c34",
+  "implementation_commit_sha": "2afd59757787e1ca14b28f4710767f3766469c34",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1118.md",
+  "command": "python -m pytest -q tests/test_spark_connect_qualification_contract.py tests/test_local_spark_qualification.py tests/test_data_engineering_spark_connect.py",
+  "result": {
+    "qualification": "PASS: 11 passed in 3.06s.",
+    "scope": "Spark Connect qualification-runner contract, local Spark qualification parsing/timeout behavior, and Spark Connect provider availability/error contracts.",
+    "production_change": "None.",
+    "cleanup": "PASS: unit/contract regression used isolated temporary state and left no external services.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "005B1E90E13B0F7C29DBD5D773D48629760594E7C34BCC6813FC7D37F665C6F4"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Regression evidence only; it does not add a remote-provider qualification beyond D1115.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
