@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D880",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler daemon recovery",
+  "candidate_sha": "7c7d94254c73706dfc5431543002c49ed0ddff6a",
+  "implementation_commit_sha": "7c7d94254c73706dfc5431543002c49ed0ddff6a",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D880.md",
+  "execution_scope": "clean-main-filtered-real-postgresql-scheduler-daemon-recovery",
+  "result": {
+    "qualification": "PASS: 2/2 selected tests passed, 19 deselected, 0 selected skips, 0 selected failures and 0 unrelated collection skips",
+    "recovery": "PASS: daemon reacquires expired lease without duplicate fire; daemon replays job after process crash without duplicate",
+    "cleanup": "PASS: isolated PostgreSQL runner completed and reported evidence without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d880-evidence -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'daemon_reacquires_after_expired_lease_without_duplicate_fire or daemon_replays_job_after_process_crash_without_duplicate'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d880-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 2.62,
+    "selected_tests": [
+      "tests/integration/test_postgres_workflow_store_real.py::test_postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate",
+      "tests/integration/test_postgres_workflow_store_real.py::test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire"
+    ]
+  },
+  "hashes": {
+    "pytest_output": "ee14c8955cdea4b2677c68bcbeb24218b574a08050ad5e7e53bca3bc5ac66782",
+    "pytest_postgres_log": "cd4abe8cfa438485f076c9633fc5691b1c7e1024267e5a8adec665ac57ddb020",
+    "junit": "7397df0bfe39a036c6cfa1326b9b5ec36111b5a025adb55cb47e4b19e2cefc33",
+    "runner_timings": "c0abac485e36772a4de5e2cb6d89194f2dac7a591e0f86bd07bddc12eb7706b9"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered diagnostic with coverage disabled, not the complete Python/PostgreSQL suite or an HA/indefinite scheduler qualification.",
+    "The evidence covers two daemon recovery invariants and does not close the full P11 scheduler journey.",
+    "D880 is bound to candidate 7c7d94254c73706dfc5431543002c49ed0ddff6a; earlier evidence is not reattributed."
+  ]
+}
