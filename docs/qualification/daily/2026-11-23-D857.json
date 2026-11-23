@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-23",
+  "day": "D857",
+  "status": "PASS_POSTGRES_WORKFLOW_BUNDLE_IMPORT_CURRENT_CANDIDATE",
+  "candidate_sha": "00bb8f3faa184c5186166fcc732022383e4f8e83",
+  "qualification": "isolated PostgreSQL workflow and schedule bundle import diagnostic",
+  "command": "pwsh -NoLogo -NoProfile -File tools/run_postgres_test_suite.ps1 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"workflow_and_schedule_bundle_import_is_atomic_and_idempotent\" -EvidenceDirectory %TEMP%\\ronin-d857-bundle-import-20261123",
+  "result": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0, "deselected": 20, "pytest_seconds": 5.67, "postgres_image": "postgres:16.4-alpine", "process_exit_code": 0},
+  "criterion": "workflow and schedule bundle import is atomic and repeated import is idempotent over durable PostgreSQL state",
+  "evidence": {"root": "%TEMP%\\ronin-d857-bundle-import-20261123", "pytest_xml": "pytest-postgres.xml", "pytest_output": "pytest-output.log"},
+  "cleanup": {"status": "PASS", "work_root_external": true, "temporary_postgres_removed": true},
+  "limitations": ["filtered diagnostic only; not the complete Python/PostgreSQL suite", "does not qualify complete family or release gates", "does not reattribute D100-D856"],
+  "state": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
