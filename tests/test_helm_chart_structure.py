@@ -80,3 +80,6 @@ def test_helm_qualification_runner_isolated_and_checks_restart_persistence() -> 
     assert '[ValidateSet("sqlite", "postgres")]' in script
     assert "Postgres qualification requires -PostgresDsn" in script
     assert "storageBackend: $StorageBackend" in script
+    assert "Postgres qualification requires -PostgresContainerName" in script
+    assert "postgres_restart_recovery" in script
+    assert "pg_isready -U ronin -d ronin" in script

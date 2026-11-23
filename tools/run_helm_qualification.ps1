@@ -11,6 +11,7 @@ param(
     [ValidateSet("sqlite", "postgres")]
     [string]$StorageBackend = "sqlite",
     [string]$PostgresDsn = "",
+    [string]$PostgresContainerName = "",
     [switch]$AllowDirtyWorktree
 )
 
@@ -89,6 +90,9 @@ if ($StorageBackend -eq "postgres" -and [string]::IsNullOrWhiteSpace($PostgresDs
 if ($StorageBackend -eq "sqlite" -and -not [string]::IsNullOrWhiteSpace($PostgresDsn)) {
     throw "-PostgresDsn is only valid with -StorageBackend postgres."
 }
+if ($StorageBackend -eq "postgres" -and [string]::IsNullOrWhiteSpace($PostgresContainerName)) {
+    throw "Postgres qualification requires -PostgresContainerName for restart recovery."
+}
 $qualificationMode = if ($workingTreeStatus.Count -gt 0) { "DIRTY-WORKTREE DIAGNOSTIC" } else { "CLEAN-CANDIDATE QUALIFICATION" }
 $dockerEvidenceRoot = [IO.Path]::GetFullPath($DockerEvidenceDirectory)
 if (-not (Test-Path -LiteralPath $dockerEvidenceRoot -PathType Container)) {
@@ -158,6 +162,7 @@ $studioStatus = $null
 $jobsStatus = $null
 $restartJobId = $null
 $restartPersistence = $false
+$postgresRestartRecovery = $false
 $upgradeRevision = $null
 $rollbackStatus = $null
 $renderedResourceCount = 0
@@ -312,6 +317,24 @@ server:
     if ($beforeRestart.state -ne "queued") { throw "New Helm smoke job did not start queued." }
     Add-Phase "persistent_job_create" "passed (HTTP 201; job remains queued without a worker)"
 
+    & docker restart $PostgresContainerName
+    if ($LASTEXITCODE -ne 0) { throw "Could not restart PostgreSQL container '$PostgresContainerName'." }
+    $postgresDeadline = (Get-Date).AddSeconds(60)
+    $postgresReady = $false
+    do {
+        $readyOutput = (& docker exec $PostgresContainerName pg_isready -U ronin -d ronin 2>&1 | Out-String).Trim()
+        if ($LASTEXITCODE -eq 0 -and $readyOutput -match "accepting connections") { $postgresReady = $true }
+        if (-not $postgresReady) { Start-Sleep -Seconds 2 }
+    } while (-not $postgresReady -and (Get-Date) -lt $postgresDeadline)
+    if (-not $postgresReady) { throw "PostgreSQL did not become ready after container restart." }
+    $afterPostgresRestart = Invoke-RestMethod "http://127.0.0.1:$port/v1/jobs/$restartJobId" `
+        -Headers @{ Authorization = "Bearer $token" } -TimeoutSec 10
+    if ($afterPostgresRestart.id -ne $restartJobId -or $afterPostgresRestart.state -ne "queued") {
+        throw "Queued job was not durable after PostgreSQL restart."
+    }
+    $postgresRestartRecovery = $true
+    Add-Phase "postgres_restart_recovery" "passed (PostgreSQL container restarted and queued job remained durable)"
+
     Stop-Process -Id $forward.Id -Force
     $forward = $null
     & $kubectl --context $kubeContext rollout restart "deployment/$deployment" -n $namespace
@@ -390,6 +413,7 @@ server:
         authorized_jobs_status = $jobsStatus
         restart_job_id = $restartJobId
         restart_persistence = $restartPersistence
+        postgres_restart_recovery = $postgresRestartRecovery
         upgrade_revision = $upgradeRevision
         rollback_status = $rollbackStatus
         phases = $phases
