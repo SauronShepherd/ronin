@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D959",
+  "date": "2026-11-23",
+  "status": "not_qualified_external_provider_unavailable",
+  "candidate_sha": "a5fa08b8094b2cd0e3d3bd4d98eb02bfa6a08eee",
+  "implementation_commit_sha": "a5fa08b8094b2cd0e3d3bd4d98eb02bfa6a08eee",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D959.md",
+  "command": "python -m tools.data_engineering_qualification",
+  "probe": {
+    "docker_cli": true,
+    "spark_connect": "not_configured",
+    "sdp_studio": "not_configured",
+    "ready_for_external_e2e": false
+  },
+  "result": {
+    "qualification": "NOT RUN: official external E2E was withheld because required provider configuration is absent",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is an environment-availability diagnostic, not provider qualification evidence.",
+    "A future run requires an explicitly authorized Spark Connect and SDP Studio configuration."
+  ]
+}
