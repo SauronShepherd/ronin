@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D883",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL scheduler timeout and schedule cursor control",
+  "candidate_sha": "58562c4f663355e3eef6104c9b23d101cc5a44fa",
+  "implementation_commit_sha": "58562c4f663355e3eef6104c9b23d101cc5a44fa",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D883.md",
+  "execution_scope": "clean-main-filtered-real-postgresql-scheduler-timeout-and-schedule-cursor",
+  "result": {
+    "qualification": "PASS: 2/2 selected tests passed, 19 deselected, 0 selected skips, 0 selected failures and 0 unrelated collection skips",
+    "control": "PASS: durable timeout requests/dispatch authority and schedule cursor fire/HTTP adapter",
+    "cleanup": "PASS: isolated PostgreSQL runner completed without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d883-evidence -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter 'scheduler_timeout_requests_and_dispatch_authority_are_durable or scheduler_schedule_cursor_fire_and_http_adapter'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d883-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 1.32,
+    "selected_tests": [
+      "test_postgres_scheduler_schedule_cursor_fire_and_http_adapter",
+      "test_postgres_scheduler_timeout_requests_and_dispatch_authority_are_durable"
+    ]
+  },
+  "hashes": {
+    "pytest_output": "b85c5aece6bc02554589fa2abb10520e5f1f208a3beae4da0f233b63fa3356fb",
+    "pytest_postgres_log": "95054399211234d65567cd8383ea9aa9d944acc61d9cfb338b1d182b5753bc79",
+    "junit": "547dfb4785f9d901cd6680d6b683b682f3e73887b12ecf49b05b4bf02503e3e3",
+    "runner_timings": "67a73b7bfafe6a2354f3094880980ef9694d43470762608bf88b1e38494da281"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered diagnostic with coverage disabled, not the complete Python/PostgreSQL suite or an HA/indefinite scheduler qualification.",
+    "D883 covers two scheduler control invariants and does not close the full P11 journey.",
+    "D883 is bound to candidate 58562c4f663355e3eef6104c9b23d101cc5a44fa; earlier evidence is not reattributed."
+  ]
+}
