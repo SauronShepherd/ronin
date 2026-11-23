@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D912",
+  "date": "2026-11-23",
+  "status": "not_pass",
+  "cell": "Complete Python/PostgreSQL suite diagnostic",
+  "candidate_sha": "59d7a0270f2703298eae4b154276214224c4673b",
+  "implementation_commit_sha": "59d7a0270f2703298eae4b154276214224c4673b",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D912.md",
+  "execution_scope": "clean-main-isolated-postgres-16.4-full-python-postgres-suite",
+  "result": {
+    "qualification": "NOT_PASS: 4729 passed, 35 failed, 30 skipped, 23 warnings; exit 1",
+    "cleanup": "PASS: isolated PostgreSQL container and postgres:16.4-alpine image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "runner": "tools/run_postgres_test_suite.ps1",
+    "image": "postgres:16.4-alpine",
+    "pytest_wall_seconds": 790.20,
+    "collected": 4791,
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d912-evidence"
+  },
+  "hashes": {
+    "pytest_output_sha256": "4a16483a610ceb07bd152eb4278a0d92340ef281a2e3e626e498d66ec8ec134",
+    "pytest_postgres_xml_sha256": "4d1bf8dab3dc87838ef2dd58bc449935e28f460f69c55a5d35ff2f2181183bc0"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "The complete suite is not passing in this environment; failures are recorded and not suppressed.",
+    "D912 is diagnostic evidence only and does not qualify the failed surfaces or release.",
+    "D912 is bound to candidate 59d7a0270f2703298eae4b154276214224c4673b; earlier evidence is not reattributed."
+  ]
+}
