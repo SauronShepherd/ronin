@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1106",
+  "date": "2026-11-23",
+  "status": "pass_http_control_plane_combined_regression",
+  "candidate_sha": "e151227319d65ad6071c7b91b09b1ee6d9947955",
+  "implementation_commit_sha": "e151227319d65ad6071c7b91b09b1ee6d9947955",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1106.md",
+  "command": "python -m pytest -q tests/integration/*http*.py tests/integration/test_workspace_project_http_api.py tests/integration/test_cli_operator_surface.py tests/integration/test_migration_studio_http.py tests/integration/test_ml_studio_http.py tests/integration/test_data_engineering_http.py",
+  "result": {
+    "qualification": "PASS: 97 passed, 1 skipped in 77.13s.",
+    "scope": "Combined HTTP/control-plane regression across auth, pagination, submit/status, timeouts, workspace APIs, CLI/operator, migration, ML and Data Engineering routes.",
+    "skip": "One PostgreSQL composed-catalog HTTP test skipped because RONIN_TEST_POSTGRES_DSN was not configured.",
+    "production_change": "None.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "4663420D040C9026EE9694D58231E305314B335F520B5ADA32C9A035504CD08B"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["The composed PostgreSQL catalog HTTP case was skipped by its explicit DSN guard; real PostgreSQL evidence is recorded separately.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
