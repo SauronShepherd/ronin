@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D956",
+  "date": "2026-11-23",
+  "status": "pass_with_flakiness_observed",
+  "cell": "Current-candidate live RF3 third pass after readiness fix",
+  "candidate_sha": "840262801de29892b20f20414963b024f906b084",
+  "implementation_commit_sha": "840262801de29892b20f20414963b024f906b084",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D956.md",
+  "execution_scope": "clean-main-current-candidate-live-postgres-redpanda-rf3-readiness-fix-rerun-3",
+  "result": { "qualification": "PASS: 1/1 Playwright, 5/5 correlated API events, 5 OK, 0 errors/critical", "cleanup": "PASS: live services/networks/volume cleaned and worker image removed", "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates", "stability": "Three consecutive passes after readiness fix; historical D921/D953 failures remain in record" },
+  "parameters": { "runner": "tools/run_live_product_qualification.ps1", "test_grep": "live streaming multi-broker failover", "storage_backend": "postgres", "multi_broker": true, "broker_count": 3, "replication_factor": 3, "request_timeout_seconds": 90, "api_events": 5, "duration_seconds": 82.34, "worker_image_digest": "sha256:033fe8b116dd64676329f149f37144fe6b179aeabcf7b88f5a08286aa2d7c4c8", "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d956-rf3-after-readiness-fix-3" },
+  "hashes": { "qualification_summary_sha256": "631e786033be8d71341f9ed125e461f817b07f1c3c0dd6ca110925e27ace6856", "live_api_traffic_sha256": "e883ffbbd32c3a32d8362d359e80bf567d3d2b6384c9fee17b00c4e21df80756", "browser_live_xml_sha256": "cea35b06de8ca75ff114a3a774f09775101b31fb6ff639e232fce97be5aca4ac" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [ "Finite RF3 cell only; historical flakiness remains and no stable RF3/HA gate is claimed.", "D956 is bound to candidate 840262801de29892b20f20414963b024f906b084; earlier evidence is not reattributed." ]
+}
