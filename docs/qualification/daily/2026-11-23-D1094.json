@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1094",
+  "date": "2026-11-23",
+  "status": "pass_real_postgres_scheduler_bundle",
+  "candidate_sha": "a996bb1f993ced64f09342df1ab188c3c7fb021f",
+  "implementation_commit_sha": "a996bb1f993ced64f09342df1ab188c3c7fb021f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1094.md",
+  "command": "RONIN_POSTGRES_TEST_DSN=postgresql://... python -m pytest -q tests/integration/test_postgres_workflow_store_real.py -k \"test_postgres_scheduler_deployment_binding_is_workspace_scoped_and_runnable or test_postgres_workflow_and_schedule_bundle_import_is_atomic_and_idempotent\"",
+  "result": {
+    "qualification": "PASS: 2 passed, 19 deselected in 1.38s.",
+    "scope": "Real PostgreSQL scheduler deployment binding workspace scope and atomic/idempotent workflow-schedule bundle import.",
+    "external_services": "Temporary PostgreSQL 16.4-alpine Docker container at a loopback DSN; no remote provider used.",
+    "production_change": "None.",
+    "cleanup": "PASS: temporary PostgreSQL container removed with volumes and process DSN cleared.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "pytest_output_sha256": "30F8CAB186601D76328911AEDFEA5C51968BFDEB8ACCC4DB5B665DEC85694357",
+    "postgres_log_sha256": "98DF850D0685A77C4714F66DBC4B70A08D8FE7A257711CF099930ABB73C7427C",
+    "cleanup_sha256": "F382AB0B162EBE682AF58FFDC023BF884CCB0C4C9B6D6128A600E8BE3092844F"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is bounded PostgreSQL integration evidence, not the full release gate or full scheduler/runtime suite.",
+    "Historical D83-D100 and D100 evidence is not reattributed."
+  ]
+}
