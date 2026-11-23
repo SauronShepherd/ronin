@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1065",
+  "date": "2026-11-23",
+  "status": "pass_ml_studio_http_surface",
+  "candidate_sha": "07801edc8f2d63cf45c7f1b8e06fe5bd8f87d2a3",
+  "implementation_commit_sha": "07801edc8f2d63cf45c7f1b8e06fe5bd8f87d2a3",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1065.md",
+  "command": "python -m pytest -q tests/integration/test_ml_studio_http.py",
+  "result": {
+    "qualification": "PASS: 3/3 ML Studio HTTP integration flows",
+    "scope": "ML lab quality/execution flow, model evaluation review/promotion gates and workspace-scoped feature lifecycle",
+    "external_services": "USED: temporary loopback HTTP services inside pytest process only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "7f7616eebf967a4eebcba6ff6d2d75df2d4abf30280e966e6bb184f307ca4415" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Evidence is bounded loopback HTTP and local ML stores, not a deployed production API or managed ML service.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
