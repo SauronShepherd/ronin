@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D887",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate complete PostgreSQL connector integration file",
+  "candidate_sha": "2efb9c8a7c4b05f8f05c85b830dc068578a8c903",
+  "implementation_commit_sha": "2efb9c8a7c4b05f8f05c85b830dc068578a8c903",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D887.md",
+  "execution_scope": "clean-main-real-postgresql-complete-test-postgres-connector-real-file",
+  "result": {
+    "qualification": "PASS: 2/2 tests passed, 0 skipped, 0 failed, 0 deselected and 0 unrelated collection skips",
+    "connector": "PASS: watermark paging preserves same-timestamp rows without loss; schema/null-timezone/large-value handling",
+    "cleanup": "PASS: isolated PostgreSQL runner completed without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d887-evidence -TestPath tests/integration/test_postgres_connector_real.py",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d887-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 0.96,
+    "test_file": "tests/integration/test_postgres_connector_real.py",
+    "collected": 2
+  },
+  "hashes": {
+    "pytest_output": "dae3013bfc7f7b12ccaf6afbe461943781939669a62b65a4b274512765f27f8d",
+    "pytest_postgres_log": "cb2cb6c0d8720953110615ade7544fe7432682df00c1dab70dce5db2dc3a43f7",
+    "junit": "807a370b48555ad80d9c2ed156ea49aece82dee3a7399d1bf766ad4621232d9c",
+    "runner_timings": "b944429e1d2ac69ec3e104548f1ab8dfa521f007425aa1bd96c7aaa5265c1b29"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This file-scoped diagnostic disables coverage and is not the complete Python/PostgreSQL suite or a release gate.",
+    "D887 does not establish HA, indefinite operation, external providers or release approval.",
+    "D887 is bound to candidate 2efb9c8a7c4b05f8f05c85b830dc068578a8c903; earlier evidence is not reattributed."
+  ]
+}
