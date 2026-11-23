@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D900",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL live stream event workflow",
+  "candidate_sha": "d365c426e5ed950858eea07555f5ed3b3849d30b",
+  "implementation_commit_sha": "d365c426e5ed950858eea07555f5ed3b3849d30b",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D900.md",
+  "execution_scope": "clean-main-live-diagnostic-postgresql-redpanda-real-worker-stream-event-workflow",
+  "result": {
+    "qualification": "PASS: 1/1 filtered Playwright case passed in 6.8s",
+    "api_traffic": "PASS: 12/12 API events correlated with structured logs; 12 OK, 0 uncorrelated, 0 ERROR/CRITICAL",
+    "workflow": "PASS: committed streaming record triggered the durable workflow route",
+    "cleanup": "PASS: live services/network/volume and qualification image were removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "docker build -f docker/Dockerfile -t ronin:qualification-d900-20261123 .; pwsh -NoProfile -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d900-evidence -TestGrep 'live streaming event workflow' -WorkerImage ronin:qualification-d900-20261123 -StorageBackend postgres",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d900-evidence",
+    "worker_image_digest": "sha256:a68e5d23f56989bd87ffb0bcb4847bfc83d56bd049d056beae4dafa26288270d",
+    "api_events": 12,
+    "elapsed_seconds": 29.83
+  },
+  "hashes": {
+    "browser_live_log": "0451d45855334b46d1e07634b3611dc80776eee26df0459e033673a6e5f9ee81",
+    "browser_live_xml": "be9a102ade3b8a960d4bc7bb0478def81fc6ecd26cccc28a7d0de6cf7c80b544",
+    "live_api_traffic": "bf18d6fd31b1d6be890dee28d6960cb97ba069633898fff949d39498c2bad65c",
+    "qualification_summary": "bcb26bf4027f46a7812f34ea0f3b4f04b2860e6ddd5c8e2009a7be3130702ddb"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered bounded live diagnostic, not the full live route, indefinite SLO/HA qualification or release gate.",
+    "D899 used an invalid test pattern, executed 0/0 and was cleaned up; it is not attributed as PASS.",
+    "D900 is bound to candidate d365c426e5ed950858eea07555f5ed3b3849d30b; earlier evidence is not reattributed."
+  ]
+}
