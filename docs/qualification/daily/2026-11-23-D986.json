@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D986",
+  "date": "2026-11-23",
+  "status": "pass_local_streaming_runtime_regression",
+  "candidate_sha": "38406fa6750b7fe52a6eef3cdbc35614b2564f19",
+  "implementation_commit_sha": "38406fa6750b7fe52a6eef3cdbc35614b2564f19",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D986.md",
+  "command": "python -m pytest -q tests/test_streaming_runtime.py tests/test_stream_scheduler_bridge.py",
+  "result": {
+    "qualification": "PASS: 15/15 local streaming runtime and scheduler bridge tests",
+    "scope": "Local checkpoint/sink continuity, replay/idempotency and stream-event scheduler bridge",
+    "external_services": "NOT USED: no PostgreSQL, Redpanda, worker or external provider",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "f508822f830ee10d360aad1287549d12f82bed197505a9d5c9afaf17012324c8" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local regression only; D986 is not live streaming or PostgreSQL runtime qualification.",
+    "Earlier live evidence remains bound to its exact candidate and is not reattributed."
+  ]
+}
