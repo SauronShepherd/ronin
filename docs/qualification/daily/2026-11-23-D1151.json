@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1151",
+  "date": "2026-11-23",
+  "status": "pass_live_postgres_stream_workflow",
+  "candidate_sha": "1bfbc4768ca129289a9bb10763021cbcbe0e1bcb",
+  "implementation_commit_sha": "1bfbc4768ca129289a9bb10763021cbcbe0e1bcb",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1151.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -TestGrep 'live streaming event workflow' -StorageBackend postgres -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS: 1/1 filtered Playwright case passed in 9.6s; 10/10 API events correlated; 0 unexpected authorization gaps or server/network errors.",
+    "scope": "Live Ronin server explicitly configured with RONIN_STORAGE_BACKEND=postgres and isolated PostgreSQL DSN; committed streaming record triggered the workflow route through the real HTTP/browser fixture.",
+    "production_change": "None.",
+    "cleanup": "PASS: isolated PostgreSQL, Redpanda network, volume and containers removed by the runner.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "browser_log_sha256": "4945BD05CEAB470AA6756A9C362D36A6D55F054A85317DEC722D333D2CA38085",
+    "browser_junit_sha256": "9AD01480857971FAE15EACCBA954EBC0888AC176F655F61561960234CCD6DF60",
+    "api_traffic_sha256": "BC5E114E44FB90501E5BAEE4B0532F27DB66606E0B07659805772ED4620B58CE",
+    "python_freeze_sha256": "8456CE8A148C0962D10DC821800C866E76551D4FA671A78FE4536C83B6F48172",
+    "server_stderr_sha256": "243750082B846B3B2821F6A9C7E5CE61C377DD199C038252A3ADBF5D363DAAF2",
+    "qualification_summary_sha256": "9CE6D37F1DE26D5D3D2079AF6AB4B532E8E97B59301E3F7FF4F7E8E41DF9194E",
+    "web_dependency_cache_sha256": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live journey only; this does not prove full scheduler/runtime conformance, full route coverage, HA, multi-worker or indefinite operation.", "No historical D83-D100 or prior PostgreSQL-runtime evidence is reattributed."]
+}
