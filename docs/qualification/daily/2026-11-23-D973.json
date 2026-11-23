@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D973",
+  "date": "2026-11-23",
+  "status": "pass_full_python_postgresql_bounded",
+  "candidate_sha": "28d0fc11a17a9a1fadd258f1692220300a9dc1bb",
+  "implementation_commit_sha": "28d0fc11a17a9a1fadd258f1692220300a9dc1bb",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D973.md",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d973-python-postgres-full",
+  "result": {
+    "qualification": "PASS: 4763/4794 tests passed, 31 explicit skips, 0 failures, 23 warnings",
+    "scope": "All non-performance Python tests with isolated PostgreSQL 16.4 and branch coverage",
+    "cleanup": "PASS: runner completed isolated PostgreSQL cleanup",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": {
+    "coverage_sha256": "a54b2ac35f3d47893c054a422eccb253c77a9a608f9341fb876c142406ea0376",
+    "pytest_output_log_sha256": "86c14b319db196779d317bbe3be79d47ccbc4f6b772ab106f8f187ac0f9630f4",
+    "pytest_postgres_log_sha256": "cd9d459b77dcb9e7aedc9979f5ae360feb52099657a40b58b176cea0e5a55654",
+    "pytest_junit_sha256": "cac68cdd3f1471e8fe7a04ed8d97111d0ec6050338d4b5a8d9789a73d1f76419",
+    "pytest_timings_sha256": "57639d4476274596d756f2339dc10c29125aeb7050885b0e8858d5de196eb428",
+    "runner_timings_sha256": "303a65ac524c6fc461453902decf2ee9f85aebf5407d414b212d8de7eadf62fd"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "31 skips remain explicit and are not evidence: Docker/worker lanes, external S3/Azure/Trino/SDP/Spark/OTLP providers, and platform symlink/POSIX capabilities require their configured environments.",
+    "This is bounded current-candidate evidence; it does not prove indefinite operation, HA/multi-worker, external provider certification, complete P11 or release approval.",
+    "Historical receipts remain bound to their exact candidates; D973 does not reattribute earlier evidence."
+  ]
+}
