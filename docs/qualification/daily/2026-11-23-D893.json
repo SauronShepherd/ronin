@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D893",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate Docker PostgreSQL appliance backup and restore",
+  "candidate_sha": "98e2c3c5589794a683232c133573181bc2e72cd1",
+  "implementation_commit_sha": "98e2c3c5589794a683232c133573181bc2e72cd1",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D893.md",
+  "execution_scope": "clean-main-docker-filtered-real-postgresql-appliance-backup-restore",
+  "result": {
+    "qualification": "PASS: 1/1 selected Docker test passed, 26 deselected, 0 skipped and 0 failed",
+    "backup": "PASS: appliance backup restores PostgreSQL and local data volume",
+    "cleanup": "PASS: owned Docker resources and qualification image removed",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d893-20261123 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d893-docker-evidence -TestFilter 'appliance_backup_restores_postgres'",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d893-docker-evidence",
+    "worker_image_digest": "sha256:ff5e9e79a408fc77da9f472e5fd1bd37b991306171d7c53852d93e2d71f17c9c",
+    "pytest_seconds": 15.54,
+    "selected_test": "tests/integration/test_postgres_appliance_backup_real.py::test_appliance_backup_restores_postgres_and_local_data_volume"
+  },
+  "hashes": {
+    "docker_cleanup": "044b05fd1125e8a88c4fe8eaa566cff4205b3ae163870a80b22c9632bb9f6f0d",
+    "docker_pytest_output": "d89d9e93d77a08e625ded69dc74908acc69d2c1f87e903004b2354d1908d1dfa",
+    "docker_qualification_log": "1d5544447d7e5738d6413189941f65debc469018f343f59c92749dcb758f5efe",
+    "postgres_log": "ddfa5206a523316307674d0a53204d3a496652e4f05a7d2103d418bb57f72c92",
+    "junit": "a68142a7eb122aa6e1b4da331916f2efeed478b9e597229c3ffd2da6c97ca751"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is a filtered Docker diagnostic, not strict v0.1 acceptance and not full appliance/provider breadth.",
+    "The first PostgreSQL-only runner attempt skipped by design because this test requires Docker; that skip is not attributed as PASS.",
+    "D893 is bound to candidate 98e2c3c5589794a683232c133573181bc2e72cd1; earlier evidence is not reattributed."
+  ]
+}
