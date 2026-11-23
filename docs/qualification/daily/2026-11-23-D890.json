@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D890",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate PostgreSQL Data Engineering revision integration",
+  "candidate_sha": "2c6492c3d3b10d0a42f541d79699dc0eb8739538",
+  "implementation_commit_sha": "2c6492c3d3b10d0a42f541d79699dc0eb8739538",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D890.md",
+  "execution_scope": "clean-main-real-postgresql-test-postgres-data-engineering-revisions-real",
+  "result": {
+    "qualification": "PASS: 1/1 test passed, 0 skipped, 0 failed, 0 deselected and 0 unrelated collection skips",
+    "data_engineering": "PASS: revision inventory discovers all project artifacts against isolated PostgreSQL",
+    "cleanup": "PASS: isolated PostgreSQL runner completed without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d890-evidence -TestPath tests/integration/test_postgres_data_engineering_revisions_real.py",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d890-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 0.81,
+    "test_file": "tests/integration/test_postgres_data_engineering_revisions_real.py",
+    "collected": 1
+  },
+  "hashes": {
+    "pytest_output": "49f41551e60dd0fef666b5c48cafaa895e33a88033086487a9617afc62dfecb9",
+    "pytest_postgres_log": "7c673638d960123f6c7ff6344698b351db568242c3ea6b6914c3d24e884d737d",
+    "junit": "1762fb857237d435c91f369365bef5debf439fdee2f275e523ebfb135674b512",
+    "runner_timings": "36423ff32cac282cb34bc0db34ec8997e7f54a8a81e2c36814f3169c73fd5578"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This file-scoped diagnostic disables coverage and is not the complete Python/PostgreSQL suite or a release gate.",
+    "D890 does not establish HA, indefinite operation, external providers or release approval.",
+    "D890 is bound to candidate 2c6492c3d3b10d0a42f541d79699dc0eb8739538; earlier evidence is not reattributed."
+  ]
+}
