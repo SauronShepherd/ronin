@@ -1102,6 +1102,94 @@ for (const route of routes) {
   });
 }
 
+test('live streaming health reports an empty partition without false lag', async ({ page }) => {
+  test.setTimeout(120_000);
+  test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');
+
+  const calls = installLiveApiProxy(page);
+  const workspace = process.env.RONIN_LIVE_WORKSPACE;
+  const api = process.env.RONIN_LIVE_API_URL;
+  const token = process.env.RONIN_LIVE_API_TOKEN;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+  const streamId = 'events/empty-partition';
+  const encodedWorkspace = encodeURIComponent(workspace);
+  const encodedStream = encodeURIComponent(streamId);
+  const streamPath = `/v1/workspaces/${encodedWorkspace}/streams/${encodedStream}`;
+  const runPath = `${streamPath}/run`;
+  const healthPath = `${streamPath}/health`;
+  const definition = {
+    id: streamId,
+    name: 'Live empty partition health qualification',
+    source: {
+      connection_id: 'live-kafka',
+      resource: 'ronin-live-empty-partition-events',
+      partitions: [0, 1],
+      format: 'json',
+    },
+    sink: { kind: 'table', target_ref: 'live-empty-partition-events', mode: 'append' },
+    schema: [{ name: 'event', data_type: 'string', nullable: false }],
+    runtime: { profile_id: 'local', batch_limit: 1, timeout_seconds: 1 },
+  };
+
+  const request = async (method, path, data) => {
+    const response = await page.evaluate(async ({ apiBase, requestPath, requestMethod, requestHeaders, body }) => {
+      const upstream = await fetch(`${apiBase}${requestPath}`, {
+        method: requestMethod,
+        headers: requestHeaders,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      return { status: upstream.status, text: await upstream.text() };
+    }, { apiBase: api, requestPath: path, requestMethod: method, requestHeaders: headers, body: data });
+    return {
+      status: () => response.status,
+      text: async () => response.text,
+      json: async () => JSON.parse(response.text),
+    };
+  };
+
+  const saved = await request('PUT', streamPath, { definition, checkpoint_policy: 'reset' });
+  expect(saved.status(), await saved.text()).toBe(200);
+
+  const initialHealth = await request('GET', healthPath);
+  expect(initialHealth.status(), await initialHealth.text()).toBe(200);
+  expect(await initialHealth.json()).toMatchObject({
+    source_status: 'available',
+    status: 'lagging',
+    healthy: false,
+    partitions: 2,
+    lag: { '0': 1, '1': 0 },
+    total_lag: 1,
+    empty_partitions: ['1'],
+  });
+
+  const run = await request('POST', runPath, { limit: 1, timeout_seconds: 1 });
+  expect(run.status(), await run.text()).toBe(200);
+  expect(await run.json()).toMatchObject({
+    stream_id: streamId,
+    status: 'succeeded',
+    records: 1,
+    rows: 1,
+  });
+
+  const finalHealth = await request('GET', healthPath);
+  expect(finalHealth.status(), await finalHealth.text()).toBe(200);
+  expect(await finalHealth.json()).toMatchObject({
+    source_status: 'available',
+    status: 'healthy',
+    healthy: true,
+    partitions: 2,
+    lag: { '0': 0, '1': 0 },
+    total_lag: 0,
+    empty_partitions: ['1'],
+  });
+  expect(calls.some(call => call.path === healthPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
+  expect(calls.some(call => call.path === runPath && call.status === 200 && call.outcome === 'OK')).toBe(true);
+  await flushLiveTraffic();
+});
+
 test('live streaming broker restart resumes from the durable checkpoint', async ({ page }) => {
   test.setTimeout(90_000);
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and Redpanda fixture.');

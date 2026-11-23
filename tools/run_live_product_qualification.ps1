@@ -154,8 +154,9 @@ $backpressureOnlyDiagnostic = $TestGrep -eq "sustained backpressure"
 $parquetStreamingDiagnostic = $TestGrep -eq "live streaming parquet sink"
 $supervisorSoakDiagnostic = $TestGrep -eq "supervisor soak"
 $streamEventWorkflowDiagnostic = $TestGrep -eq "live streaming event workflow"
+$emptyPartitionHealthDiagnostic = $TestGrep -eq "live streaming health reports an empty partition"
 $performancePluginDiagnostic = -not $TestGrep -or $TestGrep -match "performance|route"
-$streamingOnlyDiagnostic = $TestGrep -eq "streaming" -or $multiBrokerDiagnostic -or $backpressureOnlyDiagnostic -or $parquetStreamingDiagnostic -or $supervisorSoakDiagnostic -or $streamEventWorkflowDiagnostic
+$streamingOnlyDiagnostic = $TestGrep -eq "streaming" -or $multiBrokerDiagnostic -or $backpressureOnlyDiagnostic -or $parquetStreamingDiagnostic -or $supervisorSoakDiagnostic -or $streamEventWorkflowDiagnostic -or $emptyPartitionHealthDiagnostic
 if ($multiBrokerDiagnostic -and (-not $TestGrep -or $TestGrep -notmatch "streaming")) {
     throw "-MultiBroker requires a focused streaming -TestGrep so the three-broker fixture cannot be mistaken for the default live qualification."
 }

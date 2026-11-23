@@ -89,6 +89,7 @@ def main() -> int:
     near_batch_limit_topic = "ronin-live-near-batch-limit-events"
     over_batch_limit_topic = "ronin-live-over-batch-limit-events"
     multi_broker_topic = "ronin-live-multi-broker-events"
+    empty_partition_topic = "ronin-live-empty-partition-events"
     stream_id = "events/main"
     poison_stream_id = "events/poison"
     oversized_stream_id = "events/oversized"
@@ -110,6 +111,7 @@ def main() -> int:
         (near_batch_limit_topic, 1, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
         (over_batch_limit_topic, 1, {"max.message.bytes": str(MAX_KAFKA_RECORD_BYTES * 2)}),
         (multi_broker_topic, 1, {}),
+        (empty_partition_topic, 2, {}),
     ):
         results = admin.create_topics(
             [
@@ -189,6 +191,14 @@ def main() -> int:
             key=f"ronin-live-multi-broker-{index}",
             value=json.dumps({"event": f"multi-broker-{index}"}),
         )
+    # Keep partition 1 empty so the live health path must distinguish an empty
+    # partition from lagging data without fabricating an offset.
+    producer.produce(
+        empty_partition_topic,
+        partition=0,
+        key="ronin-live-empty-partition-0",
+        value=json.dumps({"event": "empty-partition-0"}),
+    )
     for index in range(12):
         producer.produce(
             partitioned_topic,
