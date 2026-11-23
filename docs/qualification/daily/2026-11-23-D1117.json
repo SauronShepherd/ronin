@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1117",
+  "date": "2026-11-23",
+  "status": "pass_bounded_local_spark",
+  "candidate_sha": "e2ac501882d3763c220bde7005a573d079b35e6f",
+  "implementation_commit_sha": "e2ac501882d3763c220bde7005a573d079b35e6f",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1117.md",
+  "command": "python tools/local_spark_qualification.py --output <external-temp-dir>/qualification.json",
+  "result": {
+    "qualification": "PASS: bounded local PySpark qualification completed within the 45-second default timeout.",
+    "scope": "Local PySpark SQL aggregation over three input rows, deterministic two-row result and correctness digest comparison.",
+    "provider": "pyspark-local",
+    "spark_version": "3.5.9",
+    "runtime": "3.13.15",
+    "row_count": 2,
+    "correctness_digest": "0658e466e8922f1446a0cf87a9a2a2c43d106f93daee34f0396c06ee73707579",
+    "production_change": "None.",
+    "cleanup": "PASS: qualification used a temporary warehouse and bounded subprocess; process completed without persistent services.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {
+    "stdout_sha256": "9694AF4C86AB412214D6735A916EA41A18D9F5BC9D238AA49F575B39AF22F552",
+    "qualification_json_sha256": "9694AF4C86AB412214D6735A916EA41A18D9F5BC9D238AA49F575B39AF22F552"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local bounded PySpark only; it does not imply remote Spark Connect, SDP Studio, cloud Spark, HA or indefinite operation.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
