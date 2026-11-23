@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D886",
+  "date": "2026-11-23",
+  "status": "pass",
+  "cell": "Current-candidate complete PostgreSQL jobstore integration file",
+  "candidate_sha": "dd85022d056d133fc42db197094662ef4e42d24a",
+  "implementation_commit_sha": "dd85022d056d133fc42db197094662ef4e42d24a",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D886.md",
+  "execution_scope": "clean-main-real-postgresql-complete-test-postgres-jobstore-real-file",
+  "result": {
+    "qualification": "PASS: 2/2 tests passed, 0 skipped, 0 failed, 0 deselected and 0 unrelated collection skips",
+    "jobstore": "PASS: complete lifecycle plus filtered list/keyset pagination against isolated PostgreSQL",
+    "cleanup": "PASS: isolated PostgreSQL runner completed without cleanup errors",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "parameters": {
+    "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d886-evidence -TestPath tests/integration/test_postgres_jobstore_real.py",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d886-evidence",
+    "postgres_image": "postgres:16.4-alpine",
+    "pytest_seconds": 0.81,
+    "test_file": "tests/integration/test_postgres_jobstore_real.py",
+    "collected": 2
+  },
+  "hashes": {
+    "pytest_output": "127fbd954b76bf3f4e771beaa7e2affea7a14d01bf334780073789e00bccfe50",
+    "pytest_postgres_log": "903cea0c7833ecb56fc2a098dd71ccb0cc28ed5ff9b6afcc50a8984ddb00f01b",
+    "junit": "0734d35bfbcb9e47e0528d2c370c53fbb569a8f1fa2074396ed79aa992d44fd1",
+    "runner_timings": "42d27a017333333c2dab877a189774c58c5f74ce2bc2797a2a011b2a6ff43021"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This file-scoped diagnostic disables coverage and is not the complete Python/PostgreSQL suite or a release gate.",
+    "D886 does not establish HA, indefinite operation, external providers or release approval.",
+    "D886 is bound to candidate dd85022d056d133fc42db197094662ef4e42d24a; earlier evidence is not reattributed."
+  ]
+}
