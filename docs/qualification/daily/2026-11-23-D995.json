@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D995",
+  "date": "2026-11-23",
+  "status": "pass_quality_plugin_runtime_contracts",
+  "candidate_sha": "7b8f27809c8107fc292d088623008614f07e606c",
+  "implementation_commit_sha": "7b8f27809c8107fc292d088623008614f07e606c",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D995.md",
+  "command": "python -m pytest -q tests/test_quality_runtime.py tests/test_plugin_runtime.py",
+  "result": {
+    "qualification": "PASS: 36/36 local quality-runtime and plugin-runtime contract tests",
+    "scope": "Quality runtime and plugin runtime contracts",
+    "external_services": "NOT USED: local/in-process qualification only",
+    "production_change": "None",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "hashes": { "pytest_output_sha256": "4029dace38fe6adcdd446fff9380e536b60a97d1434bd60878f1ddb862a308bb" },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Local/in-process contract evidence only; this cell does not certify external providers, credentials or production topology.",
+    "No release gate or product family is closed by this receipt."
+  ]
+}
