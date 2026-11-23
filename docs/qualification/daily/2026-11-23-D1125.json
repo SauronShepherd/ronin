@@ -1,0 +1,21 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1125",
+  "date": "2026-11-23",
+  "status": "pass_http_control_plane_sqlite",
+  "candidate_sha": "cd96b737341d8afefd88d275476dbaf98daf2631",
+  "implementation_commit_sha": "cd96b737341d8afefd88d275476dbaf98daf2631",
+  "evidence": "docs/qualification/handoffs/2026-11-23-D1125.md",
+  "command": "python -m pytest -q tests/integration/test_http_submit_status.py",
+  "result": {
+    "qualification": "PASS: 8 passed in 11.88s.",
+    "scope": "SQLite-backed HTTP control-plane integration: submit/status/list/events/cancel, authorization, typed SQL bindings, bounded result responses, reopen persistence and idempotency.",
+    "production_change": "None.",
+    "cleanup": "PASS: tests completed their temporary server, database and thread cleanup paths.",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates."
+  },
+  "hashes": {"pytest_output_sha256": "DAF5AE989EDFC653F7ECA8E6B79006679A107C876A3C112E2E91443357D52344"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local SQLite control-plane evidence only; it does not qualify PostgreSQL runtime, external providers, HA or indefinite operation.", "Historical D83-D100 and D100 evidence is not reattributed."]
+}
