@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1295",
+  "date":"2026-11-26",
+  "status":"NOT_PASS",
+  "candidate_sha":"0224315a8e63b2351f59ed8388a4248d71f952d0",
+  "implementation_commit_sha":"0224315a8e63b2351f59ed8388a4248d71f952d0",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1295-sdp-provider-20261126",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_sdp_cli_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1295-sdp-provider-20261126"],
+  "result":{"cli_path":"C:\\Users\\angel.alvarez\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\sdpstudio.exe","tests":"not executed","failure":"ModuleNotFoundError: No module named 'sdpstudio_cli'","project_created":false},
+  "evidence_hashes":{"qualification.json":"82D228FC9E975058D0CFC8A90033045740831B4ED7F1590D44E1504D2ACF3B04","qualification.log":"83E934BF99191B574136EE53303153B9D9BAD91FDDABDC7BE454470005DD2BB0"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This receipt records a missing/broken local CLI dependency; no product test result is claimed.","No project or external provider state was created."]
+}

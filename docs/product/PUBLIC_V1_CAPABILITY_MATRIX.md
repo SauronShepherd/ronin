@@ -22,6 +22,8 @@ D1293 queda **NOT_PASS** por imagen Spark ausente antes de ejecutar; D1293b repi
 
 D1294 pasa los contratos POSIX Linux sobre `main@5386e581`: `8/8`, sin skips/fallos, con imagen Ronin Linux construida del candidato y cleanup PASS. Los preintentos de imagen ausente/tag rechazado permanecen separados; es evidencia bounded, no cierre de P11.
 
+D1295 queda **NOT_PASS** porque el SDP CLI no puede importar `sdpstudio_cli`; D1296 pasa Helm/kind PostgreSQL sobre `main@0224315a`, cubriendo install/readiness, upgrade/rollback y persistencia tras reinicios, con cleanup PASS. La evidencia negativa y positiva permanecen separadas; no es cierre de P11.
+
 D1283 pasa supervised drain/idle con checkpoint durable: `1/1`, `5/5` eventos (`4 OK`, `1 WARN` esperado) y cleanup PASS sobre `main@5ce62df3`. Es evidencia bounded, no cierre de P11.
 
 D1282 pasa reinicio de broker y recuperación de checkpoint: `1/1`, `11/11` eventos (`8 OK`, `3 ERROR` esperados durante outage) y cleanup PASS sobre `main@71e8ab5a`. Es evidencia bounded, no certificación HA ni cierre de P11.
@@ -954,7 +956,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `5386e58165b95803835ff4e5198d2d895bf1fc1b` (2026-11-26).
+**Observed source baseline:** `0224315a8e63b2351f59ed8388a4248d71f952d0` (2026-11-26).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1296",
+  "date":"2026-11-26",
+  "status":"PASS",
+  "candidate_sha":"0224315a8e63b2351f59ed8388a4248d71f952d0",
+  "implementation_commit_sha":"0224315a8e63b2351f59ed8388a4248d71f952d0",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1296-helm-postgres-20261126",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1296-docker-base-20261126 -ImageTag ronin:qualification-d1296-helm -KeepImage","docker run -d --name ronin-d1296-postgres -e POSTGRES_USER=ronin -e POSTGRES_PASSWORD=ronin -e POSTGRES_DB=ronin -p 127.0.0.1:55445:5432 postgres:16.4-alpine","powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1296-helm-postgres-20261126 -ImageRef ronin:qualification-d1296-helm -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1296-docker-base-20261126 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55445/ronin -PostgresContainerName ronin-d1296-postgres","docker rm -f ronin-d1296-postgres","docker image rm 551078c83d0e"],
+  "result":{"docker_integration":"27 passed; 0 skipped; 0 failed","strict_v01":"15 passed; 0 skipped; 0 failed; strict_success=true","helm":"lint, Secret boundary, kind, image load, install, readiness, upgrade, rollback, health/API, PostgreSQL restart persistence, deployment restart persistence all passed","image":"sha256:551078c83d0ec255b3a847bd594dbcd884990ea47445bba8bb574adad66e1d29","helm_version":"v4.3.1+gc0d08d0","cleanup":"PASS","postgres_image":"postgres:16.4-alpine"},
+  "evidence_hashes":{"helm-qualification.json":"469A220C62A5B9411948C1880630E04D0CD7E02CAEDC1DB4B5F3919CFA5798A8","helm-qualification.log":"D8016D40AE8FB50C5613C59298E9DE7ED5834B74C0F4D30CFAFB591D0C30920F","kubernetes-resources.txt":"C1DD4634AEE3097D65DCFAA5C308E733D2A90A42F0E6CE343499A0EA9C954541","port-forward-error.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","port-forward-restart-error.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","port-forward-restart.log":"A079BCEF21709F0187F7142D1713859A8BE30D81B68AC052EA955DA15B1A8B16","port-forward.log":"F2B1CD02496EAF3F45DC1D1FEF2EA1974F8F7C372EA4D7F64B43620FDC325969"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Helm/kind and Docker evidence are bounded and do not close P11, HA, indefinite operation or release approval.","Two pre-existing ronin-fabric13 containers were observed outside this qualification scope and were not modified."]
+}
