@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1210",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "d7a8ebf907d4811df625fc4c538b7abe813d862b",
+  "implementation_commit_sha": "d7a8ebf907d4811df625fc4c538b7abe813d862b",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1210-live-max-record-postgres-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1210-live-max-record-postgres-20261124 -WorkerImage ronin:qualification-d1209-max-record -StorageBackend postgres -TestGrep 'live streaming max-record cap resumes the durable checkpoint without replay' -RequestTimeoutSeconds 30"],
+  "result": {"playwright": "1/1", "api_events": "8/8 correlated", "api_outcomes": {"OK": 7, "expected_WARN": 1}, "real_services": ["PostgreSQL", "single-broker Redpanda", "Ronin API", "Docker worker"], "checkpoint": "preserved_without_replay", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live diagnostic; route-wide coverage was not run.", "One WARN is the expected oversized-record rejection; bounded cap/recovery evidence does not prove indefinite operation, HA, complete P11 or release approval."]
+}
