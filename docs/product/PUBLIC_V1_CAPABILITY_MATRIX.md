@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1232 pasa PostgreSQL Bundle `2/2` para commit multiobjeto atómico/idempotente
+y rollback por conflicto; cleanup PASS. Es evidencia filtrada/bounded y no
+cambia P11, P13 ni release.
+
 D1231 pasa PostgreSQL connector checkpoint `3/3` para ingestión compartida,
 avance scoped, fencing e inventory/restart; cleanup PASS. Es evidencia
 filtrada/bounded y no cambia P11, P13 ni release.
@@ -827,7 +831,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `52033de886517cf5faa0586bfb13276d065b392f` (2026-11-24).
+**Observed source baseline:** `c67614765d8442088392d9086bcd581e855bc42d` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
