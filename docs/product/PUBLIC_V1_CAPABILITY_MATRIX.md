@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1231 pasa PostgreSQL connector checkpoint `3/3` para ingestión compartida,
+avance scoped, fencing e inventory/restart; cleanup PASS. Es evidencia
+filtrada/bounded y no cambia P11, P13 ni release.
+
 D1230 pasa PostgreSQL streaming checkpoint `4/4` para CAS/reopen, checkpoint
 durable, replay/conflict y no duplicados; cleanup PASS. Es evidencia
 filtrada/bounded y no cambia P11, P13 ni release.

@@ -7,6 +7,10 @@
 
 ## Current exact-SHA qualification — 24 November 2026
 
+D1231 pasa connector checkpoint PostgreSQL `3/3` sobre `main@e0eeb850`,
+cubriendo ingestión compartida, avance scoped, fencing e inventory/restart;
+cleanup PASS. Es diagnóstico filtrado/bounded y no cambia P11, P13 ni release.
+
 D1230 pasa streaming checkpoint PostgreSQL `4/4` sobre `main@52033de8`,
 cubriendo CAS/reopen, checkpoint durable, replay/conflict y ausencia de
 duplicados; cleanup PASS. Es diagnóstico filtrado/bounded y no cambia P11,
