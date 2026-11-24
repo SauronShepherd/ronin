@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1185",
+  "date": "2026-11-24",
+  "status": "pass_focused_live_reproduction",
+  "candidate_sha": "8fddd3527d64582a11402ec3b0f5bdafd0424136",
+  "implementation_commit_sha": "8fddd3527d64582a11402ec3b0f5bdafd0424136",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1185.md",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1185-live-two-partition-repro-20261124 -WorkerImage ronin:qualification-d1183-live -StorageBackend postgres -TestGrep 'live streaming drains a two-partition backlog in bounded micro-batches' -RequestTimeoutSeconds 30"],
+  "result": {"playwright": "1/1 passed", "api_events": "46/46 correlated, all OK", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused diagnostic only; it does not override D1184 full-campaign NOT_PASS or close P11.", "No historical evidence reattributed."]
+}

@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1183",
+  "date": "2026-11-24",
+  "status": "pass_docker_full",
+  "candidate_sha": "8fddd3527d64582a11402ec3b0f5bdafd0424136",
+  "implementation_commit_sha": "8fddd3527d64582a11402ec3b0f5bdafd0424136",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1183.md",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1183-docker-live-full-20261124 -ImageTag ronin:qualification-d1183-live -KeepImage"],
+  "result": {"integration": "27/27 passed", "strict": "15/15 passed", "image_digest": "sha256:dc9702e015e17bcbd18b83b1a1af1e2c79e8378a4afd1515af2b429d5e05e2dd", "cleanup": "PASS; image retained only for D1184/D1185 then removed"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded Docker qualification; no complete P11 or release approval.", "No historical evidence reattributed."]
+}

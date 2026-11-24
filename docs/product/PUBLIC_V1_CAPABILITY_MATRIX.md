@@ -2,6 +2,15 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1183 pasa Docker `27/27` y strict `15/15` sobre `main@8fddd352`, con cleanup
+PASS y digest worker exacto `sha256:dc9702e015e17bcbd18b83b1a1af1e2c79e8378a4afd1515af2b429d5e05e2dd`.
+D1184 queda **NOT_PASS** para la campaña live completa (`42/44`, `1` skip,
+`1` fallo en el límite de intentos del backlog de dos particiones; cleanup
+PASS). D1185 pasa la repetición enfocada `1/1` (`46/46` eventos), pero no
+convierte la campaña completa en PASS. P11 sigue `in_progress`, P13 `blocked`
+y release `NO-GO` (`1/13`, `0/10`).
+
+
 D1166 passes a new focused live streaming health/lag cell on
 `main@7a1270d9`: `1/1` case passed in `42.06 s` with real PostgreSQL,
 single-broker Redpanda and a real Ronin API/worker. A two-partition topic with
@@ -669,7 +678,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `0797851a659696074bf8c93b19ecf69ab9cd1bd4` (2026-11-24).
+**Observed source baseline:** `8fddd3527d64582a11402ec3b0f5bdafd0424136` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1184",
+  "date": "2026-11-24",
+  "status": "not_pass_full_live_campaign",
+  "candidate_sha": "8fddd3527d64582a11402ec3b0f5bdafd0424136",
+  "implementation_commit_sha": "8fddd3527d64582a11402ec3b0f5bdafd0424136",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1184.md",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1184-live-full-postgres-20261124 -WorkerImage ronin:qualification-d1183-live -StorageBackend postgres -RequestTimeoutSeconds 30"],
+  "result": {"playwright": "42 passed, 1 skipped, 1 failed of 44", "failure": "two-partition backlog reached 40 attempts while assertion required <40", "api_events": "522/522 correlated; 498 OK, 21 WARN, 3 ERROR", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Full live campaign remains NOT_PASS; D1185 is a separate focused reproduction.", "No historical evidence reattributed."]
+}
