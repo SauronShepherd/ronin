@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-11-23T22:24:51+01:00",
-  "observed_main_sha": "013d97d343ee965b4d95159c14b728e601828cd4",
+  "observed_main_sha": "4e7ca4a84ded7e97db41d4f60366ab337bc2c547",
   "latest_automated_evidence": "D1169 current-main bounded live broker-restart recovery diagnostic: 1/1 selected Playwright case passed with real PostgreSQL, single-broker Redpanda and Ronin API; 11/11 API events correlated and cleanup PASS. D1168, D1167, D1166 and D1165 remain separately bound to their exact candidates; earlier receipts remain bound to exact candidates. This evidence is bounded and does not prove indefinite operation, HA, multi-worker, external-provider certification, complete P11 or release approval. P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_observation": "2026-11-24 current main 013d97d3: D1169 bounded live broker-restart recovery diagnostic passes 1/1 with real PostgreSQL, single-broker Redpanda and Ronin API; the durable checkpoint resumed after restart and final lag reached zero. Release remains NO-GO at 1/13 families and 0/10 gates.",
   "current_p11_observation": "D1169 adds a bounded current-main live recovery cell: after a single Redpanda broker stops, expected 503 responses occur; after restart, the durable checkpoint resumes, four records drain and final lag reaches zero, with 11/11 API events correlated. This does not prove indefinite operation, production SLO, HA/multi-worker, external-provider certification, complete P11 or release approval; D83-D1168 evidence is not reattributed. P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates.",
