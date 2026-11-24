@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1314",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"630069036a6559fce1e3ce9d1c9605cbbaa50da3",
+  "implementation_commit_sha":"630069036a6559fce1e3ce9d1c9605cbbaa50da3",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1314-docker-full-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1314-docker-full-20261127"],
+  "result":{"docker_integration":"27 passed; 0 skipped; 0 failed","strict_v01":"15 passed; 0 skipped; 0 xfailed; 0 failed; 0 errors; 0 missing; strict_success=true","scope":"PostgreSQL, worker/runtime, appliance backup/restore, Floci/S3, Azurite/Azure and v0.1 E2E journey","cleanup":"PASS","pytest_seconds":229.04},
+  "evidence_hashes":{"azurite-qualification.log":"211B2652A11E1B33A586353B9D80A8FDCDE51402EB2483E91E774D8DDF07E8D0","docker-cleanup.json":"87B34701C9F00986062C35A00CF4CB27539FC9561AC1789B185CD77A17565145","docker-pytest-output.log":"A71CBE0E05CD83354EC352C183A88F9225CAA921C27AAB3C78C6B60895D68424","docker-qualification.log":"B98B7671986AE543979B5042B95A1E3B40F506E43759EEA13EB2B39CE0FBB294","floci-s3-qualification.log":"EEB5AFF5FC4AAD6FC9A76F0C2C76E357990931FB005C31A090D4576AF4925A55","postgres-qualification.log":"530A7E4DB02BA9314578D9C68F245134B6907BD66CB978DE4044BB4E0F54D4DA","qualification-summary.json":"950CA4452100B9CC9345F487913873CA899109FB34D885CEB129D5F0D4C67A64","v01-acceptance-strict.json":"5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C","v01-acceptance.xml":"4BAC91FF27B965F244AA6B6A0DBF4FFB8913EE31A6122948513A45E4A430C92F"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is bounded Docker acceptance evidence; it does not prove indefinite operation, full provider certification, complete P11 or release approval.","The runner removed owned containers, volumes, networks and the temporary Ronin image; unrelated pre-existing Fabric13 resources were not touched."]
+}
