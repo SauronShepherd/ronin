@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1356",
+  "date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "9b9931352bcb0f1bb399c52e15e318ba43e0eb98",
+  "implementation_commit_sha": "9b9931352bcb0f1bb399c52e15e318ba43e0eb98",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1356-postgres-composed-catalog-http-20261128",
+  "commands": [
+    "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1356-postgres-composed-catalog-http-20261128 -TestPath tests/integration/test_postgres_local_composed_catalog_http.py"
+  ],
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "Complete tests/integration/test_postgres_local_composed_catalog_http.py against isolated PostgreSQL 16.4",
+    "coverage": "disabled; filtered file qualification",
+    "cleanup": "PASS; isolated PostgreSQL container removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "8CA8D65A227E9A60B9B422333F9641492D2D74B66FA973102817EFE6CCECCA91",
+    "pytest-postgres.log": "8522F7B01FAE8E5CCFA872967F58F64C2A92AAEFF06BEF9A45286795D3FB724D",
+    "pytest-postgres.xml": "B40E506C353DBA7287020439A94EEBD3FF09BC01A68AA601BB3934BBC06A0C53",
+    "pytest-timings.json": "4669042C2EB93BF0E358F00616924F531F6D9ADA2D6D7C39832364B85486814C",
+    "runner-timings.json": "186C1B034EAC8196C23470D37995AD0E2C80C95E7B281B9D20B63C04532B7C08"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered PostgreSQL evidence only; it is not the complete Python/PostgreSQL suite or coverage evidence."
+  ]
+}
