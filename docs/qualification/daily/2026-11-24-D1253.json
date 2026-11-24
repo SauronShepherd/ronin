@@ -1,0 +1,14 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1253",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"e22828c6b6f96a82a2af58c4b28a87d92cb2ddfe",
+  "implementation_commit_sha":"e22828c6b6f96a82a2af58c4b28a87d92cb2ddfe",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1253-live-full-postgres-20261124",
+  "commands":["docker build --label org.ronin.qualification.run=d1253 -t ronin:qualification-d1253-live -f docker/Dockerfile .","powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1253-live-full-postgres-20261124 -WorkerImage ronin:qualification-d1253-live -StorageBackend postgres -RequestTimeoutSeconds 30"],
+  "result":{"test_kind":"live-product-qualification","playwright":"43/44","passed":43,"failed":0,"skipped":1,"skip_reason":"explicit acceptance skip","route_coverage":"25 active routes; 24 API-backed; 1 UI-only","api_events":"516/516 correlated","api_outcomes":{"OK":492,"WARN":21,"ERROR":3},"worker_image":"sha256:7fd91b134c7b5a14f2f3185382c60b882ff0afb4fb07bb6bca396a1e3339f35c","cleanup":"PASS"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Full live product qualification passed its 43 executable cases; one explicit skip remains, so this does not close complete P11 or release approval.","Local PostgreSQL, Kafka/Redpanda and Docker worker evidence is not production cloud-provider certification or HA/multi-worker certification.","Temporary services, volume, network and worker image were removed; no kind clusters remained."]
+}
