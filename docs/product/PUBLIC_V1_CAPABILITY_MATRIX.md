@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1408 aporta evidencia bounded de backup/restore (`9/9` PASS) sobre `main@6bed5737`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
+
 D1407 aporta evidencia bounded parcial de streaming runtime (`12 PASS`, `2 deseleccionadas por pyarrow`, `0` fallos) sobre `main@d2e25bf5`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
 
 D1406 aporta evidencia bounded del archivo graph runtime (`28/28` PASS) sobre `main@c8efeab0`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
@@ -1174,7 +1176,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `d2e25bf5056eb5616e81633e8065c357a4f5ffec` (2026-11-29).
+**Observed source baseline:** `6bed5737dfa095eb9e51170bb5e0021168e7cc9f` (2026-11-29).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
