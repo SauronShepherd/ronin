@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1293",
+  "date":"2026-11-26",
+  "status":"NOT_PASS",
+  "candidate_sha":"b84e8f6a72e8e1e442aa6acc6e266468e1789408",
+  "implementation_commit_sha":"b84e8f6a72e8e1e442aa6acc6e266468e1789408",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1293-spark-connect-provider-20261126",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1293-spark-connect-provider-20261126"],
+  "result":{"service":"Spark Connect 4.2.0","image":"sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59","tests":"not executed","failure":"pinned image absent locally; Docker returned No such image","cleanup":"not-required"},
+  "evidence_hashes":{"pyspark-client-install.json":"04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97","qualification.json":"A899F28976C5BA6FD6CC353C09BAE03703D5417895D192898BA854D5DB6B2A55","qualification.log":"4A0286B9CA072054466E9363C49337BEBC92EBE5BDCAA27F24FC1FC2D4DF84EB"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This receipt records an environmental precondition failure only; it is not product evidence and no test result is claimed.","D1293b is the separate reattempt after explicit image pull."]
+}

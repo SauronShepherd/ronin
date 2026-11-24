@@ -18,6 +18,8 @@ D1291 pasa el provider externo Trino 484 sobre `main@28e75bd2`: `4/4` pruebas, s
 
 D1292 pasa la cualificación OTLP real sobre `main@fbe0caec`: `1/1` prueba, sin skips/fallos, contra Collector contrib fijado, cubriendo traces, métricas y logs por OTLP/HTTP; cleanup PASS. Es evidencia bounded, no cierre de P11.
 
+D1293 queda **NOT_PASS** por imagen Spark ausente antes de ejecutar; D1293b repite tras pull explícito del digest y pasa `1/1`, `0` skips/fallos, con cleanup PASS. La evidencia negativa y positiva se conservan separadas; no es cierre de P11.
+
 D1283 pasa supervised drain/idle con checkpoint durable: `1/1`, `5/5` eventos (`4 OK`, `1 WARN` esperado) y cleanup PASS sobre `main@5ce62df3`. Es evidencia bounded, no cierre de P11.
 
 D1282 pasa reinicio de broker y recuperación de checkpoint: `1/1`, `11/11` eventos (`8 OK`, `3 ERROR` esperados durante outage) y cleanup PASS sobre `main@71e8ab5a`. Es evidencia bounded, no certificación HA ni cierre de P11.
@@ -950,7 +952,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `fbe0caec29f9c1d5f8553eafc5ed08565fbb27c6` (2026-11-26).
+**Observed source baseline:** `b84e8f6a72e8e1e442aa6acc6e266468e1789408` (2026-11-26).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1293b",
+  "date":"2026-11-26",
+  "status":"PASS",
+  "candidate_sha":"b84e8f6a72e8e1e442aa6acc6e266468e1789408",
+  "implementation_commit_sha":"b84e8f6a72e8e1e442aa6acc6e266468e1789408",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1293b-spark-connect-provider-20261126",
+  "commands":["docker pull apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59","powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1293b-spark-connect-provider-20261126","docker image rm 84a4eedb1abc"],
+  "result":{"service":"Spark Connect 4.2.0","image":"apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59","pytest":"1 passed; 0 skipped; 0 failed; 2 deselected","scope":"Spark Connect SQL smoke, pipeline execution and content-addressed evidence persistence","cleanup":"PASS","elapsed_seconds":14.47},
+  "evidence_hashes":{"pyspark-client-install.json":"04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97","pytest-timings.json":"DB015925E71A1396F687CCC8AF258F0033F6ADC75EFEA2CA8F13918A7DA6A20D","qualification.json":"36E7F1679104E8EDEED4BD82DC1273F2583F79636174053CCF9302060151B9D3","qualification.log":"107E2E13E585A8D34A648159EC9A9B91733976C8DB27196C25E937792BAE3E4E","spark-container.log":"7B8363778501494015B56DE7E7B3DD6C16AE020097516DF389F9E5E0AB3FA598","spark-junit.xml":"C91A90F7D59E74C756D6F24CA0C43EB2ACC3B45275A8FEF1779034BF39B9118B"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a bounded Spark provider qualification and does not certify the complete provider matrix, indefinite operation, complete P11 or release approval.","The pinned image was removed explicitly after the successful retry."]
+}
