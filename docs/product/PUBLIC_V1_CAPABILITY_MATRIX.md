@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 26 November 2026
 
+D1306 pasa el contrato del `PostgresAuditStore` sobre `main@a23fa930`: `5/5` pruebas, sin skips/fallos, con idempotencia/conflicto, detección de manipulación, listing bounded, outcomes y workspace desconocido contra PostgreSQL 16.4 aislado; cleanup PASS. Evidencia bounded, no cierre de P11.
+
 D1305 pasa el contrato del `PostgresMetadataStore` sobre `main@5b090133`: `1/1` prueba, sin skips/fallos, con catálogo, governance, revisiones, conflictos y lineage contra PostgreSQL 16.4 aislado; cleanup PASS. Evidencia bounded, no cierre de P11.
 
 D1304 pasa el catálogo HTTP local-composed sobre `main@564af91e`: `1/1` prueba, sin skips/fallos, sirviendo catálogo y governance contra PostgreSQL 16.4 aislado; cleanup PASS. Evidencia bounded, no cierre de P11.
@@ -974,7 +976,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `5b090133d472e3d233ed3eac3dd4d470e393c8be` (2026-11-26).
+**Observed source baseline:** `a23fa930b73eb726ca725cccb9b7bcaa9336c088` (2026-11-27).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
