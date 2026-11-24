@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1382 pasa el archivo completo de CatalogStore PostgreSQL real sobre `main@62f124bf`: `1/1` prueba, sin skips/fallos, cubriendo governance de assets, revisiones y lineage; cleanup PASS. Evidencia bounded de catalog/backend, no cierre de P11.
+
 D1380 queda NOT_PASS de dependencia: Floci saludable y topología válida, pero Terraform requerido `1.13.5` no disponible (local `1.16.2`); cleanup PASS. No se atribuye evidencia Cloud Studio.
 
 D1379 pasa la cualificación Docker completa sobre `main@74c121fd`: integración `27/27` y strict v0.1 `15/15`, sin skips/fallos/errors/missing/unexpected; cubre runtime, PostgreSQL, backup/restore, Floci/S3, Azurite/Azure y journey. Cleanup PASS; no cierre automático de P11.
@@ -1122,7 +1124,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `e352eeb1b02c8683076861a91d88857ce8fbb949` (2026-11-29).
+**Observed source baseline:** `62f124bf2811501bddf96c65e270a076b665a191` (2026-11-29).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
