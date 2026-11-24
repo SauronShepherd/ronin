@@ -7,6 +7,11 @@
 
 ## Current exact-SHA qualification — 24 November 2026
 
+D1222 pasa el caso completo PostgreSQL Quality Store `1/1` sobre
+`main@f04ee732`, verificando durabilidad, scope por workspace y orden
+cronológico; cleanup PASS. Es diagnóstico filtrado y bounded, sin cambios en
+P11, P13 ni release.
+
 D1221 pasa el archivo PostgreSQL ML runtime completo `12/12` sobre
 `main@80cea73d`, cubriendo atomicidad/concurrencia/replay de bundles,
 rollback, fencing/cancelación y reopen de checkpoints; cleanup PASS. Es

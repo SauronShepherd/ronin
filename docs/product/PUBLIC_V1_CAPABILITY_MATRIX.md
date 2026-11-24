@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1222 pasa PostgreSQL Quality Store `1/1` para durabilidad, scope y orden
+cronológico; cleanup PASS. Es evidencia filtrada/bounded y no cambia P11,
+P13 ni release.
+
 D1221 pasa PostgreSQL ML runtime `12/12` con atomicidad, concurrencia,
 rollback, cancelación/fencing y reopen de checkpoints; cleanup PASS. Es
 evidencia filtrada/bounded y no cambia P11 `in_progress`, P13 `blocked` ni
