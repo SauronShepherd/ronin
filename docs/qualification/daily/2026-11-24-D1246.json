@@ -1,0 +1,14 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1246",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"dd7e06f05def00981579e5f29bd9df36b725fd40",
+  "implementation_commit_sha":"dd7e06f05def00981579e5f29bd9df36b725fd40",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1246-helm-postgres-20261124b",
+  "commands":["docker run --detach --name ronin-d1245-postgres --publish 127.0.0.1:55443:5432 --env POSTGRES_USER=ronin --env POSTGRES_PASSWORD=ronin --env POSTGRES_DB=ronin postgres:16.4-alpine","powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1246-helm-postgres-20261124b -ImageRef ronin:qualification -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1245-docker-base-keep2-20261124 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55443/ronin -PostgresContainerName ronin-d1245-postgres"],
+  "result":{"helm":"PASS","helm_version":"v4.3.1+gc0d08d0","image":"sha256:b16345ea99a7a4984f57fdaeb4eb9adbaa80af2541e1613f1e137860d51e57ac","docker_support":"27/27 integration; 15/15 strict","storage_backend":"postgres","health":"HTTP 200","studio":"HTTP 200","authorized_jobs":"HTTP 200","upgrade":"revision 2 PASS","rollback":"PASS","postgres_restart_recovery":true,"deployment_restart":true,"persistent_job_after_restart":true,"cleanup":"PASS"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Single-node kind/Helm and local PostgreSQL are bounded qualification, not HA, multi-worker or production Kubernetes/provider certification.","D1245 Docker support evidence is retained at C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1245-docker-base-keep2-20261124; no historical evidence is reattributed.","Temporary PostgreSQL container, preserved image, kind cluster and runner-owned resources were removed."]
+}

@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1246 pasa Helm/kind PostgreSQL con upgrade/rollback, persistencia tras reinicio de PostgreSQL y deployment, health/Studio/API y cleanup PASS; soporte Docker del mismo SHA `27/27` y `15/15` strict. Es evidencia bounded y no cierra P11 ni release.
+
 D1244 pasa Docker full acceptance `27/27` y `15/15` strict, con PostgreSQL, Floci/S3, Azurite/Azure Blob, worker/runtime, backup y journey e2e; cleanup PASS. Es evidencia bounded y no cierra P11 ni release.
 
 D1243 pasa Docker container executor `3/3` para aislamiento, memory/swap cap y
@@ -862,7 +864,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `7452ff8fbcfeec255f097dd28a6825a8028e5677` (2026-11-24).
+**Observed source baseline:** `dd7e06f05def00981579e5f29bd9df36b725fd40` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
