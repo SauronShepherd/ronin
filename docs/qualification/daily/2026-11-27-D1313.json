@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1313",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"01f0708790c7962b80c93525770ec667c757acc6",
+  "implementation_commit_sha":"01f0708790c7962b80c93525770ec667c757acc6",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1313-appliance-backup-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1313-appliance-backup-20261127 -TestFilter test_appliance_backup_restores_postgres_and_local_data_volume"],
+  "result":{"pytest":"1 passed; 26 deselected; 0 skipped; 0 failed","scope":"appliance backup/restore of PostgreSQL and local data volume","service_profile":"Docker qualification with PostgreSQL and worker fixtures","cleanup":"PASS","pytest_seconds":24.24,"strict_v01":"not evaluated; filtered diagnostic"},
+  "evidence_hashes":{"docker-cleanup.json":"CCCB77F35CD49B2D2858F7563EC4F02FD82E741326A06943E8C322F6C9773A3D","docker-pytest-output.log":"F71BDBBBCD0EFFCAE7CB08FEDEC2305D9A7F441966B4FE3D77083979288614B3","docker-qualification.log":"CB193BA0F8E99597653D107BF2838842C707BF8B9DB91292CECEE4A0B15099B9","postgres-qualification.log":"2028A4E9497FA4B265C3EEB1B326929E8431B17229BF2AEC3074EB8367C24D75","v01-acceptance.xml":"EFD4A1D432C005D0C1BA156FD5C8CEEFEE7D87AD4ED6A8AC63CA3C032D719C5A"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a filtered Docker diagnostic; strict v0.1 acceptance was not evaluated.","This bounded recovery evidence does not prove complete P11, indefinite operation, provider certification or release approval."]
+}

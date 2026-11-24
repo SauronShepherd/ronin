@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27 November 2026
 
+D1313 pasa el backup/restore de appliance sobre `main@01f07087`: `1/1` caso seleccionado, sin skips/fallos, restaurando PostgreSQL y volumen local con Docker; cleanup PASS e imagen temporal eliminada. Strict v0.1 no evaluado por ser diagnóstico filtrado; evidencia bounded, no cierre de P11.
+
 D1312 pasa el inventario de revisiones Data Engineering sobre `main@41926da6`: `1/1` prueba, sin skips/fallos, descubriendo artefactos de proyectos y referencias contra PostgreSQL 16.4 aislado; cleanup PASS. Evidencia bounded, no cierre de P11.
 
 D1311 pasa la barrera de retención de artefactos PostgreSQL sobre `main@1f25a17c`: `3/3` pruebas, sin skips/fallos, con writers asíncronos, espera/fencing y collector lease bounded contra PostgreSQL 16.4 aislado; cleanup PASS. Evidencia bounded, no cierre de P11.
@@ -988,7 +990,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `41926da63dc5c5d753641206be9a7254fc971e8c` (2026-11-27).
+**Observed source baseline:** `01f0708790c7962b80c93525770ec667c757acc6` (2026-11-27).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
