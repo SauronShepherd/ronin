@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1342",
+  "date":"2026-11-28",
+  "status":"PASS",
+  "candidate_sha":"7445ce017ebe0d69c3e20509955970d07ae7fce6",
+  "implementation_commit_sha":"7445ce017ebe0d69c3e20509955970d07ae7fce6",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1342-postgres-connector-control-plane-full-20261128",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1342-postgres-connector-control-plane-full-20261128 -TestPath tests/integration/test_postgres_connector_control_plane_real.py"],
+  "result":{"pytest":"1 selected passed; 0 selected skipped; 0 selected failed; 0 deselected","scope":"real PostgreSQL connector control-plane discover/preview and service reopen persistence","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":18.739,"total_wall_seconds":38.08},
+  "evidence_hashes":{"pytest-output.log":"14ACB69F95B3C09CF3614AF984FB11C62EFEF02ECFC4B33197D5B534ED9588AA","pytest-postgres.log":"F3391904EFDE105F0743085FAEE2BEAA968948DA39ABF1F3527D83118E645624","pytest-postgres.xml":"671C0561827BE5F0DF66E1149C045CECAA8CE6035380807E018A4D7E91E6B9F4","pytest-timings.json":"DA25E5EC46D149FE7C1C58A97BF1CDBE9A15B0F8D59F9B889810E68B64B6A63F","runner-timings.json":"E5410661A538C5DEBE051AA1609F0D71856C100D6A3621DE2ED660579401448A"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is the complete control-plane integration file but not the complete Python/PostgreSQL suite or complete product qualification.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
