@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1282 pasa reinicio de broker y recuperación de checkpoint: `1/1`, `11/11` eventos (`8 OK`, `3 ERROR` esperados durante outage) y cleanup PASS sobre `main@71e8ab5a`. Es evidencia bounded, no certificación HA ni cierre de P11.
+
 D1281 repite empty-partition aislado y pasa `1/1`, con `4/4` eventos API OK y cleanup PASS sobre `main@655bd533`; D1280 sigue NOT_PASS en la batería conjunta. Ambos resultados se conservan sin reatribución.
 
 D1280 deja la batería streaming focalizada **NOT_PASS** (`10/12` PASS, `1` skip, `1` fallo en empty-partition). La evidencia negativa se conserva y no reatribuye los diagnósticos focalizados PASS.
@@ -930,7 +932,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `655bd533dca09fbca301d18dcf2bab85f5b17d4e` (2026-11-25).
+**Observed source baseline:** `71e8ab5a2ba7495e28669b4f85b9aebaf8ebd812` (2026-11-25).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

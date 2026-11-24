@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1282",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"71e8ab5a2ba7495e28669b4f85b9aebaf8ebd812",
+  "implementation_commit_sha":"71e8ab5a2ba7495e28669b4f85b9aebaf8ebd812",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1282-live-broker-restart-current-postgres-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1282-live-broker-restart-current-postgres-20261125 -StorageBackend postgres -TestGrep \"live streaming broker restart resumes from the durable checkpoint\" -RequestTimeoutSeconds 60"],
+  "result":{"selection":"live streaming broker restart resumes from the durable checkpoint","playwright":"1 passed; 0 skipped; 0 failed","api_events":"11/11 correlated","api_outcomes":"8 OK; 3 expected ERROR during broker outage","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","scope":"checkpointed record, broker stop 503 health/run, broker start, lag recovery and four resumed records","route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":98.01},
+  "evidence_hashes":{"browser-live.log":"D73E96A11A2F735B8E2C37A0EF05854DBF9B49B6D000A34F3FE56D251F5B0EC3","browser-live.xml":"F218F37650AC72BAD8EBD82BFAB17E2E028804B861DDEC7FE2B6FDD387C33128","live-api-traffic.json":"F9448D3F92F70A8056A45E2D9E78A8E3F9E4A22CEBE2DC8D86036469A9FD5B3C","live-python-freeze.txt":"8EC98217810155A06CBF570B4BB068B6D3DE04869730780EADA67E9AFE32A878","live-server.stderr.log":"3679FDDF6B249BCDCFEA604376A40904FEE6710D82C6E5A234091AC59D8FB72A","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"ED4F25E38EF2542B6CA3221FBEF058D27CA7F0CC36853F6B7DD33908A567B264","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded single-broker restart recovery evidence only; it does not certify indefinite operation, HA, multi-worker operation, complete P11 or release approval.","The 3 ERROR outcomes are the expected 503 responses while the broker is deliberately stopped; recovery and resumed drain passed.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}
