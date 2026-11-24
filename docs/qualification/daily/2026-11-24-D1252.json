@@ -1,0 +1,14 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1252",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"ad461c3461df401d969203f04bc8fe6fa9bb0294",
+  "implementation_commit_sha":"ad461c3461df401d969203f04bc8fe6fa9bb0294",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1252-live-empty-partition-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1252-live-empty-partition-postgres-20261124 -StorageBackend postgres -TestGrep 'live streaming health reports an empty partition' -RequestTimeoutSeconds 30"],
+  "result":{"test_kind":"live-api-diagnostic","playwright":"1/1","passed":1,"failed":0,"skipped":0,"api_events":"4/4 correlated","api_outcomes":{"OK":4},"real_services":"PostgreSQL + Kafka/Redpanda + Ronin API","cleanup":"PASS"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Focused regression only; it does not qualify complete P11 or release.","D1251 backlog PASS and D1250 experiment NOT_PASS remain bound to their exact candidates.","Temporary services, volume and network were removed; no kind clusters remained."]
+}

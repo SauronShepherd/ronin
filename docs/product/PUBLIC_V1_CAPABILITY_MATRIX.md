@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1252 verifica la regresión de partición vacía tras el cambio de runtime: live `1/1`, 4/4 eventos correlacionados y cleanup PASS. Es evidencia focalizada.
+
 D1251 corrige el backlog de dos particiones con microbatch bounded dentro de una petición: local `28/28`, live `1/1`, 64/64 eventos correlacionados y cleanup PASS. Es evidencia focalizada.
 
 D1250 prueba una gracia bounded de 50 ms para batches parciales: local `28/28` PASS, live sigue NOT_PASS en `0/1` con 40 intentos frente a `<40`; no se promueve como solución.
@@ -874,7 +876,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `de54e410391c6c8e12394e9d2c449c6869c488d0` (2026-11-24).
+**Observed source baseline:** `ad461c3461df401d969203f04bc8fe6fa9bb0294` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
