@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1204",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "9fa7e4c4b47a75c6e69b40b537ad830ac72c870e",
+  "implementation_commit_sha": "9fa7e4c4b47a75c6e69b40b537ad830ac72c870e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1204-live-backpressure-postgres-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1204-live-backpressure-postgres-20261124 -WorkerImage ronin:qualification-d1203-backpressure -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 256 -BackpressureTimeoutSeconds 240 -RequestTimeoutSeconds 30"],
+  "result": {"playwright": "1/1", "api_events": "12/12 correlated", "api_outcomes": {"OK": 12}, "real_services": ["PostgreSQL", "single-broker Redpanda", "Ronin API", "Docker worker"], "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live diagnostic; route-wide coverage was not run.", "Bounded backpressure/drain evidence does not prove indefinite operation, HA, complete P11 or release approval."]
+}

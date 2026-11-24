@@ -2,6 +2,12 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1204 pasa backpressure live bounded `1/1`, con `12/12` eventos API
+correlacionados todos OK y cleanup PASS sobre PostgreSQL y Redpanda reales;
+D1203 pasa Docker `27/27` y strict `15/15` sobre el mismo candidato. Es
+evidencia filtrada/bounded: P11 sigue `in_progress`, P13 `blocked` y release
+`NO-GO` (`1/13`, `0/10`).
+
 D1202 pasa el sink Parquet live con replay `1/1`, `11/11` eventos API
 correlacionados todos OK y cleanup PASS sobre PostgreSQL y Redpanda reales;
 D1201 pasa Docker `27/27` y strict `15/15` sobre el mismo candidato. Es
@@ -727,7 +733,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `0e88b9861f50b7756093858332808ef3b158d48b` (2026-11-24).
+**Observed source baseline:** `9fa7e4c4b47a75c6e69b40b537ad830ac72c870e` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
