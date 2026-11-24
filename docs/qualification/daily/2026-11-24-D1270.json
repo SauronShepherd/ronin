@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1270",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"cae119daf04b4272f1926c84719405fad7bda4d6",
+  "implementation_commit_sha":"cae119daf04b4272f1926c84719405fad7bda4d6",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1270-helm-postgres-20261124",
+  "commands":["docker run -d --name ronin-d1269-postgres -e POSTGRES_USER=ronin -e POSTGRES_PASSWORD=ronin -e POSTGRES_DB=ronin -p 55440:5432 postgres:16.4-alpine","powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1270-helm-postgres-20261124 -ImageRef ronin:qualification-d1269-helm -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1269-docker-base-20261124 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55440/ronin -PostgresContainerName ronin-d1269-postgres"],
+  "result":{"selection":"Helm/kind deployment and recovery with real PostgreSQL","helm_lint":"passed","render_secret_boundary":"passed; 4 resources; token confined to Secret","install":"passed","readiness":"passed","upgrade":"passed; revision 2","rollback":"passed; restored revision 1","health_and_authorized_api":"passed; HTTP 200/200/200","persistent_job_create":"passed; HTTP 201","postgres_restart_recovery":"passed; queued job remained durable","deployment_restart":"passed","persistent_job_after_restart":"passed; same queued job ID survived pod restart","cleanup":"passed; kind cluster and PostgreSQL container removed","image_digest":"sha256:a4b532e4b0369e137a8e1e52cf9fca80da42810f4a8804ab0a2d8305e78df4d5"},
+  "evidence_hashes":{"helm-qualification.json":"97FB1C1129EEE2921DF34C485B59820EAC7E8B9AB272E5E6D5AAE5411E6FD4B7","helm-qualification.log":"64BE19E057D3A8D6696F9F7F465AE4D8F824C7C27F323482051E3E2D5F20434D","kubernetes-resources.txt":"30B41465D5BF7229FD5DB65139DACDC169D58581472B233877C76ABF1BDA04D4","port-forward-restart.log":"E2FD8BA5263816D23AF32571FFAD90CF1302A1909F8F5B309BFFE6BF7D64A1A1","port-forward.log":"7CB12FAAB87283FE31F24F3549B503F2716F7421CCD96316E1E3A1D51652F703"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded local Helm/kind recovery evidence only; it does not certify cloud providers, indefinite operation, HA, multi-worker, complete P11 or release approval.","D1269 Docker and D1270 Helm are bound to the exact clean candidate cae119daf; no historical evidence was reattributed.","The isolated kind cluster, PostgreSQL container and temporary image were removed after qualification."]
+}

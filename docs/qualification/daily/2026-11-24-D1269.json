@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1269",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"cae119daf04b4272f1926c84719405fad7bda4d6",
+  "implementation_commit_sha":"cae119daf04b4272f1926c84719405fad7bda4d6",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1269-docker-base-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d1269-helm -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1269-docker-base-20261124 -KeepImage"],
+  "result":{"selection":"full Docker acceptance base for Helm qualification","integration":"27 passed; 0 skipped; 0 failed","strict_v01":"15 passed; 0 skipped; 0 failed","fixtures":"PostgreSQL + Docker worker + Floci/S3 + Azurite/Azure","image_digest":"sha256:a4b532e4b0369e137a8e1e52cf9fca80da42810f4a8804ab0a2d8305e78df4d5","cleanup":"PASS; image retained only until D1270 completed","pytest_seconds":null},
+  "evidence_hashes":{"azurite-qualification.log":"2692EDBCE6A368E0DA669A8A1EE9322B8BAD13C4979C883C671873EB9A59A819","docker-cleanup.json":"6F0FE0259881A1FFEE035A3507E686D9348260B3D09CA9D4453732BC9C9CDC14","docker-pytest-output.log":"E2ED7E686E5BDABEBC993E2BAFD21058F75A3FCB84DE08A8393B3F632DAD55F8","docker-qualification.log":"62C11E825B7C8584EDC990B42531A4CF5801475785C1542B14FEDEAE55ADE667","floci-s3-qualification.log":"824D1B616DC9D29D3F881251CB393B5F11741603681FB00A75341A22D260D231","postgres-qualification.log":"2689D21427B36449D5833EC92DEBFF5495B30C36FDF5A4963DBE135B35DF1D9E","qualification-summary.json":"F44270BFAE3096AF4EB9C85622D65A5873301173E3DE4F846E3B8F9E66DF1796","v01-acceptance-strict.json":"5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C","v01-acceptance.xml":"42F6CB9F2E5E9D545EC48D4459E2D4BE80022BCE8135981D8206AD4B0332EAB5"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded local Docker/provider acceptance only; it does not certify cloud providers, indefinite operation, HA, complete P11 or release approval.","The image was retained only as an input to D1270 and was removed after that qualification.","Historical evidence remains bound to exact candidates; no reattribution."]
+}
