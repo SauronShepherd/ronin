@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1186 pasa `4/4` pruebas de proveedor Trino real (versión 484, digest fijado),
+con cleanup PASS. La celda es bounded y no cambia P11 `in_progress`, P13
+`blocked` ni release `NO-GO` (`1/13`, `0/10`).
+
 D1183 pasa Docker `27/27` y strict `15/15` sobre `main@8fddd352`, con cleanup
 PASS y digest worker exacto `sha256:dc9702e015e17bcbd18b83b1a1af1e2c79e8378a4afd1515af2b429d5e05e2dd`.
 D1184 queda **NOT_PASS** para la campaña live completa (`42/44`, `1` skip,
@@ -678,7 +682,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `8fddd3527d64582a11402ec3b0f5bdafd0424136` (2026-11-24).
+**Observed source baseline:** `a5ff1180bec2fbf6ac8ca08cd4cfb6a1968f565c` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
