@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 24 November 2026
 
+D1221 pasa el archivo PostgreSQL ML runtime completo `12/12` sobre
+`main@80cea73d`, cubriendo atomicidad/concurrencia/replay de bundles,
+rollback, fencing/cancelación y reopen de checkpoints; cleanup PASS. Es
+evidencia filtrada y bounded: P11 sigue `in_progress`, P13 `blocked` y release
+`NO-GO` (`1/13`, `0/10`).
+
 D1219 queda **NOT_PASS** sobre `main@1026bb20`: el archivo Data Engineering
 HTTP PostgreSQL obtuvo `4/5`, con `WinError 10053` en el caso QueryFlux tras
 el rechazo esperado de `max_rows=True`; cleanup PASS. D1220 repite ese caso

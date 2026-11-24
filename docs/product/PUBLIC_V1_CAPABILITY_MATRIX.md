@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1221 pasa PostgreSQL ML runtime `12/12` con atomicidad, concurrencia,
+rollback, cancelación/fencing y reopen de checkpoints; cleanup PASS. Es
+evidencia filtrada/bounded y no cambia P11 `in_progress`, P13 `blocked` ni
+release `NO-GO` (`1/13`, `0/10`).
+
 D1219 queda **NOT_PASS**: Data Engineering HTTP PostgreSQL `4/5`, con
 `WinError 10053` en el caso QueryFlux; cleanup PASS. D1220 repite el caso
 `1/1` como diagnóstico enfocado, sin promover ni reatribuir D1219. P11 sigue

@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1221",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "80cea73d0bd3b95231b556d644a5da24c0791c6d",
+  "implementation_commit_sha": "80cea73d0bd3b95231b556d644a5da24c0791c6d",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1221-postgres-ml-real-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1221-postgres-ml-real-20261124 -TestPath tests\\integration\\test_postgres_ml_real.py"],
+  "result": {"pytest": "12/12", "passed": 12, "failed": 0, "skipped": 0, "deselected": 0, "service": "PostgreSQL 16.4-alpine real container", "coverage": "disabled_filtered_diagnostic", "scope": "ML registry bundle atomicity/concurrency/replay, conflict rollback, shared job fencing/cancellation, reference bounds, archived-workspace mutation rejection, and checkpoint reopen", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered complete file diagnostic, not the complete Python/PostgreSQL suite or coverage.", "Bounded PostgreSQL runtime evidence does not establish cloud-provider certification, indefinite operation, HA, complete P11 or release approval.", "D148, D889, D1043 and earlier ML evidence remain bound to their exact historical candidates; this receipt does not reattribute them."]
+}
