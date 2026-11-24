@@ -1,0 +1,14 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1251",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"de54e410391c6c8e12394e9d2c449c6869c488d0",
+  "implementation_commit_sha":"de54e410391c6c8e12394e9d2c449c6869c488d0",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1251-live-two-partition-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1251-live-two-partition-postgres-20261124 -StorageBackend postgres -TestGrep 'live streaming drains a two-partition backlog in bounded micro-batches' -RequestTimeoutSeconds 90"],
+  "result":{"test_kind":"live-api-diagnostic","playwright":"1/1","passed":1,"failed":0,"skipped":0,"api_events":"64/64 correlated","api_outcomes":{"OK":64},"real_services":"PostgreSQL + Kafka/Redpanda + Ronin API","cleanup":"PASS","route_coverage":"not evaluated for focused diagnostic"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Focused diagnostic only; it does not qualify the complete P11 family or release.","D1250 remains NOT_PASS on its prior candidate; D1251 verifies the subsequent runtime change on a new exact SHA.","Temporary services, volume and network were removed; no kind clusters remained."]
+}
