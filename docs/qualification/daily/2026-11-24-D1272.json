@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1272",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"cba039f0393cfaef574769d5efe8778f4b5f0673",
+  "implementation_commit_sha":"cba039f0393cfaef574769d5efe8778f4b5f0673",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1272-live-backpressure-8192-postgres-180s-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1272-live-backpressure-8192-postgres-180s-20261124 -StorageBackend postgres -TestGrep \"sustained backpressure\" -BackpressureRecords 8192 -BackpressureTimeoutSeconds 300 -RequestTimeoutSeconds 180"],
+  "result":{"selection":"sustained backpressure at 8192 records with 180-second request timeout","playwright":"1 passed; 0 skipped; 0 failed","api_events":"12/12 correlated","api_outcomes":"12 OK","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":77.24},
+  "evidence_hashes":{"browser-live.log":"14E2AA2AE6AD9452B53A8391AD6E908BB52F2CC9BE89AACB8E29803CC17855A3","browser-live.xml":"EF781DA3138426608CA4E91F88BBF9BAD166A799E46E3A15D38C3816E4FDFFAF","live-api-traffic.json":"3766E376E31507F67D020C9DF8C11C7BE47E5C5A2183BCEF0F7B9C1339D6CAB0","live-python-freeze.txt":"BCA6B1B1A1FB3D794B3A4FDE64A9D8C82FFFFB2BE839AD4A58B66546464E254B","live-server.stderr.log":"683B0459A0345D49CED9C0085BD646ADFD9F86D84D73D9BF387D9A210F895DF6","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"9571129E241081D9BDE7467821916DA5197C92957BF2E10158D66AE5204E69EA","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded single-broker live evidence; it demonstrates completion when the request timeout is 180 seconds, but does not certify performance SLO, indefinite operation, HA, complete P11 or release approval.","D1271 remains explicit NOT_PASS at a 60-second request timeout; D1266 remains bound to its historical candidate and is not reattributed.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}
