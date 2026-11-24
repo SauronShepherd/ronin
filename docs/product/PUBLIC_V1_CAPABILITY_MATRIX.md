@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1279 pasa los límites live de bytes por registro/microbatch sobre `main@f6f97458`: `1/1`, `13/13` eventos API (`11 OK`, `2 WARN` esperados) y cleanup PASS. Es evidencia bounded, no cierre de P11.
+
 D1278 pasa el sink Parquet live con reset replay sobre `main@5c20ff51`: `1/1`, `11/11` eventos API OK y cleanup PASS. Es evidencia bounded, no cierre de P11.
 
 D1277 pasa el workflow live disparado por registro streaming comprometido sobre `main@7958426a`: `1/1`, `9/9` eventos API OK y cleanup PASS. Es evidencia bounded, no cierre de P11.
@@ -924,7 +926,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `5c20ff51e74c5671add37db6f52ac29b8ba80d67` (2026-11-25).
+**Observed source baseline:** `f6f974582f7367aa1d29c032e45f4c888cedb5f1` (2026-11-25).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

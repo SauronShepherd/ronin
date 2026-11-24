@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1279",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"f6f974582f7367aa1d29c032e45f4c888cedb5f1",
+  "implementation_commit_sha":"f6f974582f7367aa1d29c032e45f4c888cedb5f1",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1279-live-byte-boundaries-postgres-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1279-live-byte-boundaries-postgres-20261125 -StorageBackend postgres -TestGrep \"live streaming enforces near-record and near-batch byte boundaries\" -RequestTimeoutSeconds 60"],
+  "result":{"selection":"live streaming enforces near-record and near-batch byte boundaries","playwright":"1 passed; 0 skipped; 0 failed","api_events":"13/13 correlated","api_outcomes":"11 OK; 2 WARN expected for over-batch rejection","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","scope":"near-record positive boundary, near-batch positive boundary and repeated over-batch rejection preserving lag","route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":73.72},
+  "evidence_hashes":{"browser-live.log":"04153D11CB9D59DF39A51E03CD63B0A84DCC7FCFA81A7029404725EE1FDAD986","browser-live.xml":"2BDB6463CF0F2C5946140A9D94E2D44A0F11A1B3F585B13C72070CD10A821D6B","live-api-traffic.json":"06EF17C01BE586B80E50DD298BB5A7C378ABC432379BF347B5F116E1CDDE66DC","live-python-freeze.txt":"768352062ADD24084FBC044891A2D36D48B98731F61DFFB79557CD479ABFF990","live-server.stderr.log":"843A395059DED0AA7E2BEC8E22C1930212E2E09CE11D510E6AFA75B911A6972D","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"3EF0A78F5EF053B80C9E30A5EA86FDA25030D8F23B8E1CB1C0BD6EDF37084653","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded streaming input-boundary evidence only; it does not certify indefinite operation, HA, complete P11 or release approval.","The two WARN outcomes are expected 422 stream_input_rejected responses for the over-batch input; no application ERROR or CRITICAL was recorded.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}
