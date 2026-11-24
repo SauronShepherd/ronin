@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1173",
+  "date": "2026-11-24",
+  "status": "pass_bounded_azure_blob_compatible_provider_docker",
+  "candidate_sha": "47549a44d4cc9b90613c7a029f33d08d210b8b29",
+  "implementation_commit_sha": "47549a44d4cc9b90613c7a029f33d08d210b8b29",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1173.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory <external-temp-dir> -ImageTag ronin:qualification-d1173 -TestFilter 'test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite'",
+  "result": {
+    "qualification": "PASS: 1/1 selected integration test, 0 skipped, 0 failed in 2.17s; 26 unrelated cases deselected",
+    "criterion": "PASS: Azure Blob-compatible discovery, read and snapshot replay completed against real isolated Azurite",
+    "runtime": "PASS: Docker-built Ronin image sha256:08ce7a647940a79b1777a6e37af574d84761f325531712500f0d9838261db053 with real Azurite fixture",
+    "cleanup": "PASS: Azurite container, network, volume and temporary Ronin image removed",
+    "production_change": "None; filtered provider qualification only",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1173-docker-azure-blob-20261124",
+  "hashes": {
+    "azurite-qualification.log": "27A40C19C6EE68D3B03078DCDB46E1CC7D13A9DF797285DC388A1C7A19204B4E",
+    "docker-cleanup.json": "5E2DD4CD266AF9204191358B47254189E0C839F16092640A9C3F5B1AB4A011DB",
+    "docker-pytest-output.log": "E5732F4F7A1F679B844FA4890D9B2F464A2C49A571F93755925F9B72ABA5AEEF",
+    "docker-qualification.log": "769B7B02722262ACAEE82D1158604294CEAC1928F6762157633025A697570EFA",
+    "v01-acceptance.xml": "40B0EEA51D1E0E616B915E0BC6A0B4FD72AFE2B2E2A2109D088F9379B6BCC7A8"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is Azure Blob-compatible local Azurite evidence, not Azure production certification or an external SLA claim.",
+    "Filtered Docker diagnostic; strict v0.1 acceptance and the remaining provider/format/failure matrix were not evaluated. D83-D1172 evidence remains bound to exact candidates."
+  ]
+}
