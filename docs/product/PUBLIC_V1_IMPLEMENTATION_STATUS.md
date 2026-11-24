@@ -95,6 +95,12 @@ D1181 repeats the failed QueryFlux HTTP case `20/20` times with seeds 1–20;
 all selected runs passed. This supports the isolated-case diagnosis but does
 not override D1179's full-suite NOT_PASS or close P11.
 
+D1182 passes the eight-case POSIX contract qualification in an isolated Linux
+container built from `main@0797851a`: `8/8` passed with no skips or failures,
+covering symlink/checkout safety, secret-file permissions, NUL handling and
+process fallback. The container and temporary image were removed. This is
+bounded Linux-container evidence and does not close P11 or release.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s` with `realServices.postgres=true`, covering
 PostgreSQL page discovery and watermark advancement without replay duplication,

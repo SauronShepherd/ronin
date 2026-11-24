@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1182",
+  "date": "2026-11-24",
+  "status": "pass_posix_contracts_linux_container",
+  "candidate_sha": "0797851a659696074bf8c93b19ecf69ab9cd1bd4",
+  "implementation_commit_sha": "0797851a659696074bf8c93b19ecf69ab9cd1bd4",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1182.md",
+  "commands": [
+    "docker build --file docker/Dockerfile --tag ronin:qualification-d1182-posix .",
+    "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_posix_contract_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1182-posix-20261124 -ImageRef sha256:731499cd0e868795e6be5997370faf73c97b0d3601b786f91b91f70bccd326aa"
+  ],
+  "result": {
+    "tests": "8/8 passed, 0 skipped, 0 failed",
+    "image_digest": "sha256:731499cd0e868795e6be5997370faf73c97b0d3601b786f91b91f70bccd326aa",
+    "pytest_seconds": 13.926,
+    "cleanup": "PASS: POSIX container and temporary image removed"
+  },
+  "hashes": {
+    "qualification.json": "9CF6416E1829E765C2EDC7E6686381045B8BBCFE2C7965273E3309E4433ABB90",
+    "qualification.log": "79B867D4D63569E4C10136B7C76EC99D7692DF2395E82688D57666791FAA1DB6",
+    "posix-junit.xml": "BF1BDB79CA081AAF3AFF4073EB627170F6A5ED799A84123377B2B0327454746C",
+    "pytest-timings.json": "F71475C59BEC286E3A9741E283DC40F96E2C262248E9A2CC3D79E7C220684959"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded Linux-container contract evidence on Windows; it does not close complete P11, production HA or release approval.",
+    "No historical D83-D1181 evidence is reattributed."
+  ]
+}
