@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1377 pasa la prueba real de backup/restore de appliance sobre `main@600e683c`: `1/1` PASS, sin skips/fallos, restaurando PostgreSQL y el volumen local; cleanup Docker PASS. Evidencia bounded de recuperación adicional, no cierre de P11.
+
 D1376 pasa las tres lanes externas seleccionadas sobre `main@0a486233`: `3/3` pruebas, sin skips/fallos, cubriendo S3 JSON sink/retry, ML ArtifactStore S3 y Azure Blob/Azurite; cleanup Docker PASS. Evidencia bounded de providers emulados, no certificación cloud ni cierre de P11.
 
 D1375 queda separado como NOT_PASS de tooling: filtro pytest inválido antes de colección; los fixtures Floci/Azurite sí limpiaron correctamente.
@@ -1114,7 +1116,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `0a4862333083e65ca6c7277eb419025ae0a32822` (2026-11-29).
+**Observed source baseline:** `600e683c4f870d74fa9d23e7e2c7e481a892567a` (2026-11-29).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
