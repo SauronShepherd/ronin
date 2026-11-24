@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1280 deja la batería streaming focalizada **NOT_PASS** (`10/12` PASS, `1` skip, `1` fallo en empty-partition). La evidencia negativa se conserva y no reatribuye los diagnósticos focalizados PASS.
+
 D1279 pasa los límites live de bytes por registro/microbatch sobre `main@f6f97458`: `1/1`, `13/13` eventos API (`11 OK`, `2 WARN` esperados) y cleanup PASS. Es evidencia bounded, no cierre de P11.
 
 D1278 pasa el sink Parquet live con reset replay sobre `main@5c20ff51`: `1/1`, `11/11` eventos API OK y cleanup PASS. Es evidencia bounded, no cierre de P11.
@@ -926,7 +928,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `f6f974582f7367aa1d29c032e45f4c888cedb5f1` (2026-11-25).
+**Observed source baseline:** `3f6f082052c150287fd4535cbcda9e65e7cb4b45` (2026-11-25).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

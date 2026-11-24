@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1280",
+  "date":"2026-11-25",
+  "status":"NOT_PASS",
+  "candidate_sha":"3f6f082052c150287fd4535cbcda9e65e7cb4b45",
+  "implementation_commit_sha":"3f6f082052c150287fd4535cbcda9e65e7cb4b45",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1280-live-streaming-family-postgres-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1280-live-streaming-family-postgres-20261125 -StorageBackend postgres -TestGrep \"streaming\" -RequestTimeoutSeconds 60"],
+  "result":{"selection":"focused streaming family battery","playwright":"10 passed; 1 skipped; 1 failed","failure":"empty-partition case returned idle/0 instead of succeeded/1","api_events":"254/254 correlated","api_outcomes":"243 OK; 8 WARN; 3 ERROR","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","cleanup":"PASS","duration_seconds":302.2},
+  "evidence_hashes":{"browser-live.log":"87E16A16970C12F227947673B5D55BB7191A59ED10019904C67C693CC0C40CF7","browser-live.xml":"44CE5143FE6F5C21FBFB64420A8C702DC6E1F9FAEEBD277739FB9707E0A20DF5","live-api-traffic.json":"F959B20F9536613A70E051C17FF0BAF31E8EA2F25409615B6E66B3954E3A6780","live-python-freeze.txt":"2E1950DEE2276FDFC08BD1EAB7052C3CF5F338307EBE7D836D698485AC6CDAD1","live-server.stderr.log":"0A3D41C6D7A057782F3C6AE7D2AF9F191E77B25D271857E3943E61789D881294","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"EB76A1A823B8D3D4ED681B8B58C31E94A5A2FD90974C518F10623E39CE35D1AC","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is explicit negative family-level evidence; it is not promoted and does not erase the focused PASS receipts D1248, D1274 or other exact-candidate evidence.","The failure is the empty-partition case in the shared streaming battery; 10 other cases passed and 1 was skipped.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}
