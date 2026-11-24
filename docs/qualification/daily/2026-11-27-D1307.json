@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1307",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"6ebcebbcfefa6c727a237388aff39469926beba2",
+  "implementation_commit_sha":"6ebcebbcfefa6c727a237388aff39469926beba2",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1307-postgres-jobstore-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1307-postgres-jobstore-20261127 -TestPath tests/integration/test_postgres_jobstore_real.py"],
+  "result":{"pytest":"2 passed; 0 skipped; 0 failed","scope":"job filters/keyset pagination, complete lifecycle and durable artifact reference discovery","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","pytest_seconds":0.87},
+  "evidence_hashes":{"pytest-output.log":"CD0E7489DEB279329B75788281A2BC458694918C241369DD320F0A88F7D3E2B7","pytest-postgres.log":"09830925C9AA9D7B0AC890777B86CCA6B4DE6D848EFAF9E29B76867484D5EA1B","pytest-postgres.xml":"30B1300A68297754E72EFF806F0D09AD4231C92F6C9A1BCF1E57B93FC950F822","pytest-timings.json":"EF51614B198D5B69FF516BE82039C8214F916589AA1E63199FE2A894D736FDC1","runner-timings.json":"3AD6DA42CFEA736F8369F3B165D3B0C771B7F3FC1768FCAB3CA6AB63AA849708"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded backend evidence; it is not complete provider matrix, indefinite operation, complete P11 or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}

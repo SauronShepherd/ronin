@@ -1,6 +1,8 @@
 # Ronin Public v1 capability matrix
 
-## Current exact-SHA snapshot — 26 November 2026
+## Current exact-SHA snapshot — 27 November 2026
+
+D1307 pasa el contrato del `PostgresJobReadPort` sobre `main@6ebcebbc`: `2/2` pruebas, sin skips/fallos, con filtros/paginación keyset, ciclo de vida completo de jobs y referencias durables contra PostgreSQL 16.4 aislado; cleanup PASS. Evidencia bounded, no cierre de P11.
 
 D1306 pasa el contrato del `PostgresAuditStore` sobre `main@a23fa930`: `5/5` pruebas, sin skips/fallos, con idempotencia/conflicto, detección de manipulación, listing bounded, outcomes y workspace desconocido contra PostgreSQL 16.4 aislado; cleanup PASS. Evidencia bounded, no cierre de P11.
 
@@ -976,7 +978,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `a23fa930b73eb726ca725cccb9b7bcaa9336c088` (2026-11-27).
+**Observed source baseline:** `6ebcebbcfefa6c727a237388aff39469926beba2` (2026-11-27).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
