@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1337",
+  "date":"2026-11-28",
+  "status":"PASS",
+  "candidate_sha":"c88d6f699c30018877e51e20002189efd21e3285",
+  "implementation_commit_sha":"c88d6f699c30018877e51e20002189efd21e3285",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1337-postgres-quality-store-20261128",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1337-postgres-quality-store-20261128 -TestPath tests/integration/test_postgres_quality_store.py"],
+  "result":{"pytest":"1 selected passed; 0 selected skipped; 0 selected failed; 0 deselected","scope":"real PostgresQualityStore durability, workspace scoping and chronological quality records","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":2.158,"total_wall_seconds":6.104},
+  "evidence_hashes":{"pytest-output.log":"3BBD05D153D6349C021BC4F3FF6DB1D9BC10D278FBB538EC1DC95F1F11CDD434","pytest-postgres.log":"B5496A8379D43C5760875D7B1364B02E05BC7500B38DEDBFBC14374A579C09BE","pytest-postgres.xml":"CEE5A42E22222FFD70FE72717F44E1A3AD6AB4425E279662DD380D40D6CEC78D","pytest-timings.json":"D6B175EE92044D117D9F24AAB727D044252D7E309924364BE5E5B261B19400ED","runner-timings.json":"FE9A3F7200F8BB8093859BAEFFD387BE11E7BA6DFBA9F3C6410DBDD4EF9D797D"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a filtered PostgreSQL diagnostic, not the complete quality/backend or Python/PostgreSQL suite.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
