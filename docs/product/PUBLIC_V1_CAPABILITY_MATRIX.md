@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1218 pasa el archivo PostgreSQL workflow store `21/21`, con recuperación,
+leases, liderazgo y outbox cubiertos y cleanup PASS. Es evidencia filtrada de
+archivo: P11 sigue `in_progress`, P13 `blocked` y release `NO-GO` (`1/13`,
+`0/10`).
+
 D1217 pasa recuperación de scheduler PostgreSQL `1/1` tras process crash sin
 duplicado y cleanup PASS; es diagnóstico filtrado. La selección Docker-opt-in
 sin casos ejecutables no se promueve. P11 sigue `in_progress`, P13 `blocked` y
@@ -773,7 +778,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `bb0c48d4214219d0b1aec37f0f3c9fbb0e458774` (2026-11-24).
+**Observed source baseline:** `40c89e164d2a7384683018dc1f9c3cfe5f2f1f1c` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

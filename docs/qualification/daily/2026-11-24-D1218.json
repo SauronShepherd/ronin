@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1218",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "40c89e164d2a7384683018dc1f9c3cfe5f2f1f1c",
+  "implementation_commit_sha": "40c89e164d2a7384683018dc1f9c3cfe5f2f1f1c",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1218-postgres-workflow-store-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1218-postgres-workflow-store-20261124 -TestPath tests\\integration\\test_postgres_workflow_store_real.py"],
+  "result": {"pytest": "21/21", "passed": 21, "failed": 0, "skipped": 0, "deselected": 0, "service": "PostgreSQL 16.4-alpine real container", "coverage": "disabled_filtered_diagnostic", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered file diagnostic, not the complete Python/PostgreSQL suite or coverage.", "Does not establish indefinite operation, production HA, complete P11 or release approval."]
+}
