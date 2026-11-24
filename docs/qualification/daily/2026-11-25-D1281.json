@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1281",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"655bd533dca09fbca301d18dcf2bab85f5b17d4e",
+  "implementation_commit_sha":"655bd533dca09fbca301d18dcf2bab85f5b17d4e",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1281-live-empty-partition-current-postgres-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1281-live-empty-partition-current-postgres-20261125 -StorageBackend postgres -TestGrep \"live streaming health reports an empty partition without false lag\" -RequestTimeoutSeconds 60"],
+  "result":{"selection":"live streaming health reports an empty partition without false lag","playwright":"1 passed; 0 skipped; 0 failed","api_events":"4/4 correlated","api_outcomes":"4 OK","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","scope":"empty partition health, lag/healthy transition and one-record drain","route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":82.93},
+  "evidence_hashes":{"browser-live.log":"F62E703FFE7D97451FAEF3A282C758ECEDB1D0B962CDD7295864B3C1F2C3C09B","browser-live.xml":"A6029F29AD282498ED5EDB4BD01357260DEA979849A15FC3A24F41405D038A3E","live-api-traffic.json":"BF15EE10AE088651D88DDE8ACE19364B8D2648761D438705C4C2D67A5D4F31AB","live-python-freeze.txt":"040E8D7228C81FA8FFC49F07C5648AF23FA13BA067D1A948B7DD05C2635BDA87","live-server.stderr.log":"E6B7ADCB045C248532FCA505AA2B31B8D7C109F12628B451D4AA3037591C0123","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"1C8C217563C7BB7317DA8E9CE4CC74BAFB0C7DF0FC9899D4BE313FADF4F85111","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded isolated empty-partition evidence only; it does not certify the full streaming family, indefinite operation, HA, complete P11 or release approval.","D1280 remains explicit NOT_PASS for the shared 12-case streaming battery; this focused PASS does not erase or reattribute that family result.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}
