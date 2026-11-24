@@ -7,6 +7,12 @@
 
 ## Current exact-SHA qualification — 24 November 2026
 
+D1189 intentó la cualificación del CLI oficial SDP sobre
+`main@dbba86fc`: **NOT_PASS** antes de crear proyecto o ejecutar pruebas,
+porque `sdpstudio.exe` falló con `ModuleNotFoundError: sdpstudio_cli`.
+No se reclama evidencia SDP; el bloqueo de instalación queda separado de las
+celdas Spark Connect y Trino que sí pasaron.
+
 D1188 pasa la cualificación Spark Connect real sobre `main@6db6f249`: `1/1`
 prueba seleccionada, sin skips ni fallos (`2` casos deselected), usando Apache
 Spark 4.2.0 fijado al digest `sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59`.
@@ -1661,7 +1667,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `6db6f249b5dcc15b726a25c5a55b560ea038877b` (2026-11-24).
+**Observed source head:** `dbba86fcd1dd536b1b9ba6761bd77b7f0ea61481` (2026-11-24).
 
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 

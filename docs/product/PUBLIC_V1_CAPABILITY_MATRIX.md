@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1189 deja el CLI oficial SDP **NOT_PASS** por instalación incompleta antes de
+la creación de proyecto. No modifica P11 `in_progress`, P13 `blocked` ni
+release `NO-GO` (`1/13`, `0/10`).
+
 D1188 pasa la celda Spark Connect real `1/1` sobre `main@6db6f249`, con
 cleanup PASS. D1187 queda como preflight `NOT_PASS` por imagen ausente y no se
 cuenta como cualificación. P11 sigue `in_progress`, P13 `blocked` y release
@@ -687,7 +691,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `6db6f249b5dcc15b726a25c5a55b560ea038877b` (2026-11-24).
+**Observed source baseline:** `dbba86fcd1dd536b1b9ba6761bd77b7f0ea61481` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

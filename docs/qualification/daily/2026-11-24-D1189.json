@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1189",
+  "date": "2026-11-24",
+  "status": "not_pass_broken_sdp_cli_installation",
+  "candidate_sha": "dbba86fcd1dd536b1b9ba6761bd77b7f0ea61481",
+  "implementation_commit_sha": "dbba86fcd1dd536b1b9ba6761bd77b7f0ea61481",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1189.md",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_sdp_cli_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1189-sdp-cli-current-20261124"],
+  "result": {"tests": "not executed", "failure": "sdpstudio.exe failed at version with ModuleNotFoundError: sdpstudio_cli", "project_created": false, "cleanup": "PASS/not-required: no project was created"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Official SDP CLI remains unqualified until a complete installation is restored.", "No historical evidence reattributed."]
+}
