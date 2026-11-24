@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1278",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"5c20ff51e74c5671add37db6f52ac29b8ba80d67",
+  "implementation_commit_sha":"5c20ff51e74c5671add37db6f52ac29b8ba80d67",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1278-live-parquet-reset-postgres-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1278-live-parquet-reset-postgres-20261125 -StorageBackend postgres -TestGrep \"live streaming parquet sink preserves reset replay across bounded runs\" -RequestTimeoutSeconds 60"],
+  "result":{"selection":"live streaming parquet sink preserves reset replay across bounded runs","playwright":"1 passed; 0 skipped; 0 failed","api_events":"11/11 correlated","api_outcomes":"11 OK","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","scope":"Parquet cap, drain, idle replay, reset replay twice and parquet commit identifiers","route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":54.94},
+  "evidence_hashes":{"browser-live.log":"EE11F1280CA0FE585F5933A874F6E3522DD1B3A0196EDED130FC0EB2BBFED0E6","browser-live.xml":"772E69693530F697F81F5D507F92EBDF45E6334CD25470F2B72C3D24F381261F","live-api-traffic.json":"50BF6FFF183B22053F1D88E6595068D4C06222F4AEADE189B8FBA206282B7173","live-python-freeze.txt":"D1C40136422FC672636686FD6FB3503E6E2CA8ACF839AD83B20B832F8BA5F145","live-server.stderr.log":"4B83B8A8D64A76D239AAA3D73C488B1F4CB6E8325B77DB9EA507DD6E77611212","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"C8F20CCCC743AD9CED1F3EDC354DBA6872E78E6262E836FBE973A531B822C19D","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded Parquet sink/replay evidence only; it does not certify indefinite operation, HA, complete P11 or release approval.","Historical Parquet evidence remains bound to exact candidates and is not reattributed.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}

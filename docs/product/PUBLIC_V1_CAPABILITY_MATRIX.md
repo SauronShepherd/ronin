@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1278 pasa el sink Parquet live con reset replay sobre `main@5c20ff51`: `1/1`, `11/11` eventos API OK y cleanup PASS. Es evidencia bounded, no cierre de P11.
+
 D1277 pasa el workflow live disparado por registro streaming comprometido sobre `main@7958426a`: `1/1`, `9/9` eventos API OK y cleanup PASS. Es evidencia bounded, no cierre de P11.
 
 D1276 pasa el supervisor soak live bounded de 300 s sobre `main@f393877e`: `1/1`, `369/369` eventos API OK y cleanup PASS. Es evidencia bounded, no operación indefinida ni cierre de P11.
@@ -922,7 +924,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `7958426a03267d8f1684a3ece6cc9368127e861d` (2026-11-25).
+**Observed source baseline:** `5c20ff51e74c5671add37db6f52ac29b8ba80d67` (2026-11-25).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
