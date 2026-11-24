@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1275",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"5e7a0369ce2b53774a87f495ccf20a52f6e31eb2",
+  "implementation_commit_sha":"5e7a0369ce2b53774a87f495ccf20a52f6e31eb2",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1275-live-max-record-checkpoint-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1275-live-max-record-checkpoint-postgres-20261124 -StorageBackend postgres -TestGrep \"live streaming max-record cap resumes the durable checkpoint without replay\" -RequestTimeoutSeconds 60"],
+  "result":{"selection":"live streaming max-record cap resumes the durable checkpoint without replay","playwright":"1 passed; 0 skipped; 0 failed","api_events":"8/8 correlated","api_outcomes":"7 OK; 1 WARN expected for invalid max_records=0","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":47.37},
+  "evidence_hashes":{"browser-live.log":"6CF92A860E6E0F097D1D8B5B16485A1D8F4FE93711D0FE81F4580D4E7E1166C4","browser-live.xml":"F568C4AF784902C5231862F26DBF27CF7A6ADB8E53584F06995874ADFB0161EC","live-api-traffic.json":"CC8E06243819C737EFF5476F761F6AC6013DC03C7E4663AEF5F8C96521A9427E","live-python-freeze.txt":"849EF8AA47B8544FA06163B664276A5E0D61D0E8ED6F3A635C8ACAD67F16D10C","live-server.stderr.log":"FFE98348302E6FC053343CC8934686F5B16DC4AFACB063C551E30F50ADC2F904","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"237AD072344EFED92917B0DBAA48AC1F646F8B9ACB70321A499116A0019E2E27","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded checkpoint/replay recovery evidence only; it does not certify indefinite operation, HA, complete P11 or release approval.","The WARN is the expected API rejection of max_records=0; no application ERROR or CRITICAL was recorded.","Historical evidence remains bound to exact candidates and is not reattributed."]
+}

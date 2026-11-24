@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1275 pasa la recuperación live de max-record/checkpoint/replay sobre `main@5e7a0369`: `1/1`, `8/8` eventos API (`7 OK`, `1 WARN` esperado) y cleanup PASS. Es evidencia bounded, no cierre de P11.
+
 D1274 pasa el backlog live bounded de dos particiones sobre `main@2a0aa455`: `1/1`, `44/44` eventos API OK y cleanup PASS. No es certificación de operación indefinida, HA ni cierre de P11.
 
 D1273 repite el failover live RF3 multi-broker sobre `main@54d746b7`: `1/1`, `5/5` eventos API OK y cleanup PASS. Es evidencia bounded, no certificación HA productiva ni cierre de P11.
@@ -916,7 +918,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `2a0aa4551aa265596bd0af330aa660bfcc44a6d2` (2026-11-24).
+**Observed source baseline:** `5e7a0369ce2b53774a87f495ccf20a52f6e31eb2` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
