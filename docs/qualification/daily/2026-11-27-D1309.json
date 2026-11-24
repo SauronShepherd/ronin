@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1309",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"620af2cbe918ca96b9c087e3ea2fd7c2e8f03ed0",
+  "implementation_commit_sha":"620af2cbe918ca96b9c087e3ea2fd7c2e8f03ed0",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1309-postgres-finops-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1309-postgres-finops-20261127 -TestPath tests/integration/test_postgres_finops_real.py"],
+  "result":{"pytest":"1 passed; 0 skipped; 0 failed","scope":"FinOps pricing, write idempotency and budget persistence","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","pytest_seconds":0.96},
+  "evidence_hashes":{"pytest-output.log":"9914BB15AC1EFC72B9020D967D0BC8D737A09699C721470E2324927F30371330","pytest-postgres.log":"AED38C3C3041924FED6997EA5FAA4AB271E04E3D31B998C56384445E1B4CE852","pytest-postgres.xml":"8F00B85ED5495001647154DE9BE2643723EC98120D19725C4315335C67B17261","pytest-timings.json":"67FB274C50E891EEB41945F9E18AB24FCD011007B7D8F2FE70E0BF4094B04871","runner-timings.json":"37AB02F1E2FFBBA8215283BF11AAA2358744F0183BB49D3DEC4F71A23CEF7D90"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded backend evidence; it is not complete provider matrix, indefinite operation, complete P11 or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}

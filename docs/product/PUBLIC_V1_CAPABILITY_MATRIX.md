@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27 November 2026
 
+D1309 pasa el contrato del `PostgresFinOpsStore` sobre `main@620af2cb`: `1/1` prueba, sin skips/fallos, con pricing, idempotencia de escrituras y persistencia de budget contra PostgreSQL 16.4 aislado; cleanup PASS. Evidencia bounded, no cierre de P11.
+
 D1308 pasa el contrato del `PostgresQualityStore` sobre `main@9d5d6c27`: `1/1` prueba, sin skips/fallos, con durabilidad, aislamiento por workspace y orden cronológico contra PostgreSQL 16.4 aislado; cleanup PASS. Evidencia bounded, no cierre de P11.
 
 D1307 pasa el contrato del `PostgresJobReadPort` sobre `main@6ebcebbc`: `2/2` pruebas, sin skips/fallos, con filtros/paginación keyset, ciclo de vida completo de jobs y referencias durables contra PostgreSQL 16.4 aislado; cleanup PASS. Evidencia bounded, no cierre de P11.
@@ -980,7 +982,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `9d5d6c270510c80b38e99fc185d65f2ac61248c6` (2026-11-27).
+**Observed source baseline:** `620af2cbe918ca96b9c087e3ea2fd7c2e8f03ed0` (2026-11-27).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
