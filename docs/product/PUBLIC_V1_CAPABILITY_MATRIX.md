@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27 November 2026
 
+D1325 pasa la composición/control plane de ingestión compartida con PostgreSQL sobre `main@07e6e87a`: `1/1` caso seleccionado, sin fallos, con lineage HTTP y checkpoints PostgreSQL; cleanup PASS. Evidencia filtrada de integración backend/control plane, no cierre de P11.
+
 D1324 pasa el worker real de sincronización de conectores PostgreSQL sobre `main@e5457c0f`: `1/1` caso seleccionado, sin fallos, con lectura/escritura y checkpoint scoped; cleanup PASS. Evidencia filtrada de backend/runtime, no cierre de P11.
 
 D1323 pasa el checkpoint real de conectores PostgreSQL sobre `main@d9f21508`: `1/1` caso seleccionado, sin fallos, con fencing/CAS, reopen, replay idempotente e inventario de referencias; cleanup PASS. Evidencia filtrada de backend/recuperación, no cierre de P11.
@@ -1010,7 +1012,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `e5457c0ff106a4cd334d51df8e091735bfeaddce` (2026-11-27).
+**Observed source baseline:** `07e6e87a618f7ff38e907679395bd41e8358cc6b` (2026-11-27).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

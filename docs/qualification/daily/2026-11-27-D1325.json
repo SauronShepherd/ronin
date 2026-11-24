@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1325",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"07e6e87a618f7ff38e907679395bd41e8358cc6b",
+  "implementation_commit_sha":"07e6e87a618f7ff38e907679395bd41e8358cc6b",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1325-postgres-connector-control-plane-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1325-postgres-connector-control-plane-20261127 -TestPath tests/integration/test_postgres_connector_checkpoint_real.py -TestFilter \"local_composition_mounts_shared_connector_ingestion\""],
+  "result":{"pytest":"1 selected passed; 0 selected skipped; 0 selected failed; 2 deselected","scope":"real local composition mounts shared connector ingestion, exposes lineage over control-plane HTTP and binds PostgreSQL checkpoint adapter","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":6.483,"total_wall_seconds":10.122},
+  "evidence_hashes":{"pytest-output.log":"DE31B243F79C928ABDC3F0C413C704BD18B827EB28CBDD2E0E893CD33D41D846","pytest-postgres.log":"A72F34550F77B042F016022021466244254B864329804720271BF0AA6504F9EF","pytest-postgres.xml":"A8FFAEEB09C6C422F9BFD84B8A785B40CD99625B069DEBA3DCFFEDF3ACE99536","pytest-timings.json":"FB5DD96736F204BFFE7868D097E5556B8A639591075D258D23A585CE037EE1BE","runner-timings.json":"7597556102E226B6FB6D50D1F92864904B77145A47DD41EAE0B4E7052C6DE972"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a filtered PostgreSQL diagnostic, not the complete connector/control-plane or Python/PostgreSQL suite.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
