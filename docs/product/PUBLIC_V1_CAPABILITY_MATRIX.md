@@ -21,6 +21,12 @@ from the durable checkpoint with no duplicate sink row. This bounded evidence
 uses a deterministic source double and does not close P11 or release.
 
 D1169 passes the focused live broker-restart recovery cell on
+`main@013d97d3`; the durable checkpoint resumed after restart and final lag
+reached zero. D1170 passes the focused live two-partition backlog cell on
+`main@4c533a2e` with `34/34` correlated API events and cleanup PASS. These
+bounded recovery cells do not close P11 or release.
+
+D1169 passes the focused live broker-restart recovery cell on
 `main@013d97d3`: `1/1` case passed with real PostgreSQL, single-broker
 Redpanda and Ronin API; the durable checkpoint resumed after restart and final
 lag reached zero. All `11/11` API events correlated and cleanup passed. This
@@ -614,7 +620,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `4e7ca4a84ded7e97db41d4f60366ab337bc2c547` (2026-11-24).
+**Observed source baseline:** `4c533a2e1009d0afce6ad3b3c01052efe0702361` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

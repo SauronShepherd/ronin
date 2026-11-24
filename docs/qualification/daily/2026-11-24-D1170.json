@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1170",
+  "date": "2026-11-24",
+  "status": "pass_bounded_live_two_partition_backlog_postgres",
+  "candidate_sha": "4c533a2e1009d0afce6ad3b3c01052efe0702361",
+  "implementation_commit_sha": "4c533a2e1009d0afce6ad3b3c01052efe0702361",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1170.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -StorageBackend postgres -TestGrep 'live streaming drains a two-partition backlog in bounded micro-batches' -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS: 1/1 selected Playwright case, 0 skipped, 0 failed in 11.1s",
+    "criterion": "PASS: a real two-partition backlog drained through bounded micro-batches with durable progress and final lag zero",
+    "runtime": "PASS: real PostgreSQL backend, single-broker Redpanda and Ronin API; 34/34 API events correlated, all OK, 0 log errors/critical",
+    "cleanup": "PASS: PostgreSQL, Redpanda, volume, network and live processes removed",
+    "production_change": "None; existing live qualification case executed against the current main candidate",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1170-live-two-partition-backlog-postgres-20261124",
+  "hashes": {
+    "browser-live.log": "132E439A43F115C44BE9A3814B333CC511E0FC834CFE747A84DF1A40737C7190",
+    "browser-live.xml": "3E8ABE6817EA917A98DCA3AE7804D56F91764D142BC854B987BF2447822EC3DD",
+    "live-api-traffic.json": "7D27C8DFAB0B31F0D7CF3197AC8454D07A177D2C1357419A645181EE04DDBA47",
+    "live-python-freeze.txt": "2179F40C9EB287F0926D12CA6F06E1E5E03609A4588032F23D91DA6B409DBDFA",
+    "live-server.stderr.log": "FEBB94E56EF946C40ABA46DBE9E21407C58789DAFC64C3C6A83C36A8C25FA674",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "749E09F09433E7DEFA048B79A5E87A5DE2EB78AC70A4210B2F373B9517F702B1",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused bounded two-partition single-broker diagnostic; not indefinite operation, production SLO, HA, multi-worker or external-provider qualification.",
+    "This does not prove complete P11 or any release gate. D83-D1169 evidence remains bound to exact candidates."
+  ]
+}
