@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1230 pasa PostgreSQL streaming checkpoint `4/4` para CAS/reopen, checkpoint
+durable, replay/conflict y no duplicados; cleanup PASS. Es evidencia
+filtrada/bounded y no cambia P11, P13 ni release.
+
 D1229 pasa PostgreSQL Job Store `2/2` para filtros, keyset pagination y
 lifecycle completo; cleanup PASS. Es evidencia filtrada/bounded y no cambia
 P11, P13 ni release.
@@ -819,7 +823,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `0504fa500f1c4dfe0ea629e0841f294605de3546` (2026-11-24).
+**Observed source baseline:** `52033de886517cf5faa0586bfb13276d065b392f` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
