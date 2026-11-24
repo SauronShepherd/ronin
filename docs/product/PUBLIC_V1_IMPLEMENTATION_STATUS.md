@@ -91,6 +91,10 @@ Windows `WinError 10053` connection abort. D1180 reproduces that selected case
 `1/1` and the complete five-case file `5/5`, so D1179 remains NOT_PASS and is
 not promoted to a release gate. Cleanup passed in both runs.
 
+D1181 repeats the failed QueryFlux HTTP case `20/20` times with seeds 1–20;
+all selected runs passed. This supports the isolated-case diagnosis but does
+not override D1179's full-suite NOT_PASS or close P11.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s` with `realServices.postgres=true`, covering
 PostgreSQL page discovery and watermark advancement without replay duplication,

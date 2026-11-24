@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1181",
+  "date": "2026-11-24",
+  "status": "pass_focused_queryflux_http_stress",
+  "candidate_sha": "a02dfbaa6de5128c4a49cf7aba2b8fd335ae2e5e",
+  "implementation_commit_sha": "a02dfbaa6de5128c4a49cf7aba2b8fd335ae2e5e",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1181.md",
+  "commands": ["20 repetitions of python -m pytest -q tests/integration/test_data_engineering_http.py -k queryflux_async_create_is_project_scoped_and_fail_closed_on_bounds --randomly-seed=<seed> for seeds 1..20"],
+  "result": {"selected_runs": "20/20 passed, 0 failed, 4 deselected per run", "evidence_log_sha256": "D1B3B5E0D92BECF8F12798B109CA6F95813A3650274C59FD704AD97E2BA5FA23", "cleanup": "PASS: no services or external resources created"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused stress evidence does not override D1179 full-suite NOT_PASS or close P11.", "The full-suite interaction that caused WinError 10053 remains open."]
+}

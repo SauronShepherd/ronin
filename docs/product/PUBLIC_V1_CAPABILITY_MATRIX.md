@@ -72,6 +72,10 @@ connection-abort failure. D1180 reproduced the selected case `1/1` and its
 five-case file `5/5`; the full-suite interaction remains open and is not a
 release claim.
 
+D1181 repeated the selected QueryFlux HTTP case `20/20` times with seeds 1–20;
+all passed. This is focused stability evidence only and does not override the
+full-suite NOT_PASS.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s`, with the server configured against real
 PostgreSQL, 28/28 API events OK and cleanup PASS. This bounded evidence does not
