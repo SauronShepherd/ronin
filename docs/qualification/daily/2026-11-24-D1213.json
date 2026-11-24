@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1213",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "f14a6694594051b492dc1a81c312e8a28beb24b1",
+  "implementation_commit_sha": "f14a6694594051b492dc1a81c312e8a28beb24b1",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1213-docker-supervisor-soak-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1213-docker-supervisor-soak-20261124 -ImageTag ronin:qualification-d1213-supervisor-soak -KeepImage"],
+  "result": {"docker_integration": "27/27", "strict_acceptance": "15/15", "skips": 0, "failures": 0, "image_digest": "sha256:3cf93e56a2d403de35b7046f14e252b2ab9cef25a9275e45eea761792357482e", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded Docker acceptance; image was retained only for D1214 and then removed.", "Does not certify cloud providers, indefinite operation, HA, complete P11 or release approval."]
+}

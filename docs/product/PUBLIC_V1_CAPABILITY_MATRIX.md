@@ -2,6 +2,12 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1214 pasa supervisor soak live bounded de `60` segundos `1/1`, con `79/79`
+eventos API correlacionados todos OK y cleanup PASS sobre PostgreSQL y
+Redpanda reales; D1213 pasa Docker `27/27` y strict `15/15`. Es evidencia
+filtrada/bounded: P11 sigue `in_progress`, P13 `blocked` y release `NO-GO`
+(`1/13`, `0/10`).
+
 D1212 pasa drain supervisado live `1/1`, con `5/5` eventos correlacionados,
 `4` OK y `1` WARN esperado, checkpoint durable y cleanup PASS sobre PostgreSQL
 y Redpanda reales; D1211 pasa Docker `27/27` y strict `15/15`. Es evidencia
@@ -757,7 +763,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `c280a0d737ae0bdb2aa64176421b8a2da806c516` (2026-11-24).
+**Observed source baseline:** `f14a6694594051b492dc1a81c312e8a28beb24b1` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
