@@ -1,0 +1,14 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1256",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"d8b80505cf344975ecb05519f1a64fc421367ead",
+  "implementation_commit_sha":"d8b80505cf344975ecb05519f1a64fc421367ead",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1256-python-postgres-full-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1256-python-postgres-full-20261124"],
+  "result":{"selection":"full-nonperformance-suite","pytest":"4765 passed; 31 skipped; 0 failed","total_collected":4793,"coverage":"enabled","service_profile":"isolated-postgres-16.4","cleanup":"PASS","duration_seconds":1315.873},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["31 skips remain explicit for external providers, Docker opt-ins, POSIX-only behavior, symlinks and unconfigured services; this is not complete P11 or release approval.","D1253-D1255 and all historical evidence remain bound to exact candidates; no reattribution.","Isolated PostgreSQL was removed successfully; no kind clusters remained."]
+}

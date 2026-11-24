@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1256 suite completa no-performance Python/PostgreSQL pasa `4765` casos, `31` skips y `0` fallos con cleanup PASS; los skips externos permanecen explícitos y no cierra P11 ni release.
+
 D1255 Helm/kind PostgreSQL pasa install, upgrade/rollback, persistencia tras reinicios y cleanup PASS; soporte Docker del mismo candidato `27/27` y `15/15` strict. Es evidencia bounded y no cierra P11 ni release.
 
 D1254 Docker full pasa `27/27` y `15/15` strict, con cleanup PASS; cubre worker/runtime, PostgreSQL, backup y proveedores emulados. Es evidencia bounded y no cierra P11 ni release.
@@ -882,7 +884,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `5c5e47171670a64305ca4a84072893ded4c556ab` (2026-11-24).
+**Observed source baseline:** `d8b80505cf344975ecb05519f1a64fc421367ead` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
