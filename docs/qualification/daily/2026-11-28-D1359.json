@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1359",
+  "date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "8d38e6e851b12ef29b88ae326400af81b590e361",
+  "implementation_commit_sha": "8d38e6e851b12ef29b88ae326400af81b590e361",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1359-http-json-real-20261128",
+  "commands": [
+    "python -m pytest -q tests/integration/test_http_json_connector_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1359-http-json-real-20261128\\pytest-junit.xml"
+  ],
+  "result": {
+    "pytest": "8 passed; 0 skipped; 0 failed",
+    "scope": "Complete HTTP JSON connector integration against a real loopback HTTP service",
+    "coverage": "direct integration file; no external provider certification",
+    "cleanup": "PASS; loopback service context shut down"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "E9F9E177E04D95F0B415BECF3B989396C99F42806C471F6455B35237194D3C30",
+    "pytest.log": "2BD1311E223CFEE0DE71906EC260EAF94EF3A5A2ED272E2082C22B354CF182D2"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Loopback service evidence only; it does not certify a remote HTTP provider or close complete P11."
+  ]
+}

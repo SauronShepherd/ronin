@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1359 pasa la integración completa del conector HTTP JSON contra servicio loopback real sobre `main@8d38e6e8`: `8/8` pruebas, sin skips/fallos, con paginación, replay, retry 503, redirects, límites de bytes y cross-origin. Evidencia bounded de connector, no certificación externa ni cierre de P11.
+
 D1358 pasa el archivo completo de checkpoints streaming PostgreSQL real sobre `main@eda4e493`: `4/4` pruebas, sin skips/fallos, con reopen durable, CAS/reopen, append/replay/conflict y replay sin duplicados; cleanup PASS. Evidencia bounded de recovery streaming/backend, no cierre de P11.
 
 D1357 queda NOT_PASS/SKIP explícito sobre `main@815caf43`: el archivo de backup/restore requiere la cualificación Docker opt-in; `0/1` passed y `1` skipped. No reatribuye D1344 y la brecha de recovery sigue abierta.
@@ -1078,7 +1080,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `eda4e493cc6193796122f92b25502e99e414be68` (2026-11-28).
+**Observed source baseline:** `8d38e6e851b12ef29b88ae326400af81b590e361` (2026-11-28).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
