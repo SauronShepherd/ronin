@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1315",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"a78c4833ef04f08c204dab32f740fbbc742e153e",
+  "implementation_commit_sha":"a78c4833ef04f08c204dab32f740fbbc742e153e",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1315-postgres-ml-full-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1315-postgres-ml-full-20261127 -TestPath tests/integration/test_postgres_ml_real.py"],
+  "result":{"pytest":"12 passed; 0 skipped; 0 failed","scope":"ML checkpoints/reopen, atomic and replayable registry bundles, conflict rollback, shared job fencing, archived workspace isolation and fail-closed references","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","pytest_seconds":15.68},
+  "evidence_hashes":{"pytest-output.log":"BD7E1B387B58531CBF40442E15091A18861015A972FC71875DDFC6EA134B5C7A","pytest-postgres.log":"E80DABF997EFC49521DD797B0EA571C99221E0CFB4B1634032593FFC3899AF73","pytest-postgres.xml":"1C01E6D06D11564A7147BED4A3BDB2BE92DCD53FC499AD1D7723A7B3F934633A","pytest-timings.json":"7C317E27CCD3DB645B04B30594D3FE56BD4323732381F157838E4855FF1CC8A4","runner-timings.json":"D15F40FC64F7883DB846189615947592D5FF3CF52C6C4ABA3AA771E99693E7F0"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded provider/backend evidence; it is not complete provider matrix, indefinite operation, complete P11 or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}

@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27 November 2026
 
+D1315 pasa la suite completa del store ML PostgreSQL sobre `main@a78c4833`: `12/12` pruebas, sin skips/fallos, con checkpoint tras reopen, bundles atómicos/concurrent replay, rollbacks, fences de jobs, aislamiento y referencias fail-closed; PostgreSQL 16.4 aislado y cleanup PASS. Evidencia bounded, no cierre de P11.
+
 D1314 pasa la batería Docker completa sobre `main@63006903`: integración `27/27` y strict v0.1 `15/15`, sin skips/fallos, con PostgreSQL, worker/runtime, backup/restore, Floci/S3, Azurite/Azure y journey E2E; cleanup PASS. Evidencia bounded, no cierre de P11.
 
 D1313 pasa el backup/restore de appliance sobre `main@01f07087`: `1/1` caso seleccionado, sin skips/fallos, restaurando PostgreSQL y volumen local con Docker; cleanup PASS e imagen temporal eliminada. Strict v0.1 no evaluado por ser diagnóstico filtrado; evidencia bounded, no cierre de P11.
@@ -992,7 +994,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `630069036a6559fce1e3ce9d1c9605cbbaa50da3` (2026-11-27).
+**Observed source baseline:** `a78c4833ef04f08c204dab32f740fbbc742e153e` (2026-11-27).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
