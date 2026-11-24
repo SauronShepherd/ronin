@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1334",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"4b4210662c040942f00e024fe545c1358b8ee943",
+  "implementation_commit_sha":"4b4210662c040942f00e024fe545c1358b8ee943",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1334-postgres-attempt-leases-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1334-postgres-attempt-leases-20261127 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"attempt_leases\""],
+  "result":{"pytest":"1 selected passed; 0 selected skipped; 0 selected failed; 20 deselected","scope":"real PostgreSQL scheduler attempt lease fencing between workers and reclaim after expiry","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":3.348,"total_wall_seconds":7.673},
+  "evidence_hashes":{"pytest-output.log":"1590CC40283531E6C003D484E4FA2EBC5C132A126FF45AFA5EAEB4ABCE48A600","pytest-postgres.log":"6AA2073B998CCA4F03A48AA5BB93B5671871AEC971EA6A8C146F097B859A0E21","pytest-postgres.xml":"09B1A96731635B4043BE23A6CE07DE9A4AE1F53BE77848511381B8A19130BEBF","pytest-timings.json":"44A26FBA6019061B13B28142E4C9FB6EDA15C8C63B7161593570D4280541E62C","runner-timings.json":"FE0B113E4A9557E072565394BB591397770B9A032AD505D045B37C6C77E86719"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a filtered PostgreSQL diagnostic, not the complete workflow/scheduler or Python/PostgreSQL suite.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
