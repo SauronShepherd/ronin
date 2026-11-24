@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1257",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"987c28976cdecdb3f7da9f1de69595641f55d1ab",
+  "implementation_commit_sha":"987c28976cdecdb3f7da9f1de69595641f55d1ab",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1257-live-broker-restart-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1257-live-broker-restart-postgres-20261124 -StorageBackend postgres -TestGrep \"live streaming broker restart\" -RequestTimeoutSeconds 30"],
+  "result":{"selection":"live streaming broker restart","playwright":"1 passed; 0 skipped; 0 failed","api_events":"11/11 correlated","service_profile":"PostgreSQL + Redpanda + Ronin API","cleanup":"PASS","duration_seconds":77.98},
+  "evidence_hashes":{"browser-live.log":"5252681FF56950C30D3EA76F244F3A3656501B87CFDEC37152711FC25B5414B4","browser-live.xml":"7D3D6F08D58DFF6774F55B8EB34CE6C1C062CF4B377793887048E086F403107E","live-api-traffic.json":"12CCC3851EE83EE707CB5F62B85F5DF04D175E31CB3429C05032A4506B7E32C5","qualification-summary.json":"CE4063CB3CA46AAC3FADB9DA9F38B089E4C240A9B93B8D89B0EC83E23710B4AB"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded single-broker restart evidence only; it does not certify indefinite operation, HA, multi-worker operation, complete P11 or release approval.","D1253-D1256 and all historical evidence remain bound to exact candidates; no reattribution.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}

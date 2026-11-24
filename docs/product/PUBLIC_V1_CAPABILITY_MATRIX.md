@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1257 broker restart recovery pasa `1/1`, con `11/11` eventos API correlacionados y cleanup PASS sobre `main@987c2897`; es evidencia bounded y no cierra P11 ni release.
+
 D1256 suite completa no-performance Python/PostgreSQL pasa `4765` casos, `31` skips y `0` fallos con cleanup PASS; los skips externos permanecen explícitos y no cierra P11 ni release.
 
 D1255 Helm/kind PostgreSQL pasa install, upgrade/rollback, persistencia tras reinicios y cleanup PASS; soporte Docker del mismo candidato `27/27` y `15/15` strict. Es evidencia bounded y no cierra P11 ni release.
@@ -884,7 +886,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `d8b80505cf344975ecb05519f1a64fc421367ead` (2026-11-24).
+**Observed source baseline:** `987c28976cdecdb3f7da9f1de69595641f55d1ab` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
