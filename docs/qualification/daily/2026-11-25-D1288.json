@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1288",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"38528b37a24a97a18208e20c2b9dd7a088ba5b9f",
+  "implementation_commit_sha":"38528b37a24a97a18208e20c2b9dd7a088ba5b9f",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1288-live-full-postgres-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1288-docker-worker-20261125 -ImageTag ronin:qualification-d1288-worker -TestFilter \"test_real_docker_worker_executes_clean_container_demo\" -KeepImage","powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1288-live-full-postgres-20261125 -StorageBackend postgres -WorkerImage ronin:qualification-d1288-worker -RequestTimeoutSeconds 180","docker image rm ronin:qualification-d1288-worker"],
+  "result":{"playwright":"43 passed; 1 skipped; 0 failed","route_audit":"25 active routes; 24 API-backed; 1 UI-only","api_events":"513/513 correlated","api_outcomes":"489 OK; 21 WARN; 3 ERROR expected during recovery/scenario paths","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API + Docker worker","worker_image_digest":"sha256:6305e4956c578e5da617a31963847deace04b1050555bd63c9bf3962fded5a9d","scope":"complete live route/API/UI journey, streaming recovery, project bundle, authorization, notebook worker","cleanup":"PASS","duration_seconds":332.62},
+  "evidence_hashes":{"browser-live.log":"36A101687CD990E0ACD35B4DBEC6913325CDADA2595F1B0EB4A54C26B5943A73","browser-live.xml":"838889FBE163C74A810928D2E755B934453BAA113C40FDA836A112FAC733D810","live-api-traffic.json":"6A959FAAC2BEEEAFE09A636817F45EA8188B91B1EBE6A63D4E5B3B317F7B4BCC","live-python-freeze.txt":"CDDC642ABD8A8CC501513F36A64A3E73EAFA24206B962DAE48B92A0226C731AD","live-server.stderr.log":"615AE12273EFCD0A8B7D6A95584A4B02A4CD41B109E1C894F297F984DA41069D","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","live-worker.stderr.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","live-worker.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"FF47ABBD6A9D4F1461E5869CAF2E8FBD5A9365F09FB7C6D65A208FF7EFE3FFC6","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["One full-live case was skipped explicitly by the runner; skips are not counted as passes.","Bounded live evidence does not certify indefinite operation, cloud providers, HA, complete P11 or release approval.","The runner removed PostgreSQL, Redpanda, volume, network, live processes and the temporary worker image."]
+}
