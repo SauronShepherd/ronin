@@ -1,0 +1,10 @@
+{
+  "schema":"ronin.daily-receipt/v1","phase":"D1372","date":"2026-11-28","status":"PASS",
+  "candidate_sha":"fbdfc5e6de1ed73a523f6dd2f427d644169db26d","implementation_commit_sha":"fbdfc5e6de1ed73a523f6dd2f427d644169db26d",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1372-postgres-workflow-store-real-20261128",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1372-postgres-workflow-store-real-20261128 -TestPath tests/integration/test_postgres_workflow_store_real.py"],
+  "result":{"pytest":"21 passed; 0 skipped; 0 failed; 0 deselected","scope":"Complete tests/integration/test_postgres_workflow_store_real.py against isolated PostgreSQL 16.4","coverage":"disabled; filtered file qualification","cleanup":"PASS; isolated PostgreSQL container removed"},
+  "evidence_hashes":{"pytest-output.log":"8B247A9B95CCC5521F8A6814C4127B1CA739A971269B5A98EDBFB64641CA0836","pytest-postgres.log":"DED847B13CFD60134B443C545DD3316FF1933FAF718605B7286D6D89101D23F4","pytest-postgres.xml":"BFFCE542D5F0BBD69EC5448ADDE781C1C877D44849A467009E879BD3C15A4D58","pytest-timings.json":"102236F9EFCBB80B5442D8A1B85E4F1F5CF5FE3A12E8A5153DFEFF6B27DDBCDC","runner-timings.json":"068EDD11598464CE195F77E5A9DE802A0F77DD15246E642F5007DECC5F951B61"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},"progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Filtered PostgreSQL evidence only; not complete Python/PostgreSQL suite or coverage evidence."]
+}
