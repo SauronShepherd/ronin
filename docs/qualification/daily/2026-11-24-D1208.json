@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1208",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "5f3d8b392b534732bde18c4f963b73792b6bf1ad",
+  "implementation_commit_sha": "5f3d8b392b534732bde18c4f963b73792b6bf1ad",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1208-live-two-partition-postgres-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1208-live-two-partition-postgres-20261124 -WorkerImage ronin:qualification-d1207-two-partition -StorageBackend postgres -TestGrep 'live streaming drains a two-partition backlog in bounded micro-batches' -RequestTimeoutSeconds 90"],
+  "result": {"playwright": "1/1", "api_events": "66/66 correlated", "api_outcomes": {"OK": 66}, "real_services": ["PostgreSQL", "single-broker Redpanda", "Ronin API", "Docker worker"], "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live diagnostic; route-wide coverage was not run.", "Bounded two-partition backlog evidence does not prove indefinite operation, HA, complete P11 or release approval."]
+}
