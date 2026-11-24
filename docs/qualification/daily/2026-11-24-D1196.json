@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1196",
+  "date": "2026-11-24",
+  "status": "pass_helm_postgres_restart_recovery",
+  "candidate_sha": "b26310ca1f6e60d55d43d5303e09d68f54f22a7f",
+  "implementation_commit_sha": "b26310ca1f6e60d55d43d5303e09d68f54f22a7f",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1196.md",
+  "commands": ["docker run --detach --name ronin-d1196-postgres --publish 127.0.0.1:55440:5432 --env POSTGRES_USER=ronin --env POSTGRES_PASSWORD=ronin --env POSTGRES_DB=ronin postgres:16.4-alpine", "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1196-helm-postgres-20261124 -ImageRef ronin:qualification-d1195-helm -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1195-docker-helm-base-20261124 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55440/ronin -PostgresContainerName ronin-d1196-postgres"],
+  "result": {"helm": "lint/install/readiness/upgrade/rollback PASS", "runtime": "health 200, Studio/API 200", "recovery": "PostgreSQL restart and pod restart preserved queued job", "cleanup": "PASS; kind cluster, PostgreSQL container and image removed"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded single-replica local kind evidence; not HA, indefinite operation or complete P11.", "No historical evidence reattributed."]
+}

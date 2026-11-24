@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1195",
+  "date": "2026-11-24",
+  "status": "pass_docker_base_for_helm",
+  "candidate_sha": "b26310ca1f6e60d55d43d5303e09d68f54f22a7f",
+  "implementation_commit_sha": "b26310ca1f6e60d55d43d5303e09d68f54f22a7f",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1195.md",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1195-docker-helm-base-20261124 -ImageTag ronin:qualification-d1195-helm -KeepImage"],
+  "result": {"integration": "27/27 passed", "strict": "15/15 passed", "image_digest": "sha256:32ae262858bfb93e601ae451632267c768c06fc718825d9b2212d07498f2225b", "cleanup": "PASS; fixtures removed, image retained for D1196 then removed"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Docker base lane for Helm; no complete P11 or release approval.", "No historical evidence reattributed."]
+}
