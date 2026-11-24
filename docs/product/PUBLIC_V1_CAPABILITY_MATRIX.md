@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27 November 2026
 
+D1333 pasa binding scoped y timeout/dispatch authority reales del scheduler PostgreSQL sobre `main@abb857e3`: `2/2` casos seleccionados, sin fallos; cleanup PASS. Evidencia filtrada de scheduler/backend, no cierre de P11.
+
 D1332 pasa snapshots y branch decisions reales del scheduler PostgreSQL sobre `main@daa7bcbb`: `2/2` casos seleccionados, sin fallos, con atomicidad/idempotencia y fail-safe; cleanup PASS. Evidencia filtrada de scheduler/backend, no cierre de P11.
 
 D1331 pasa cursor/fire/HTTP y bundle atómico de scheduling PostgreSQL sobre `main@48ae0f61`: `2/2` casos seleccionados, sin fallos; cleanup PASS. Evidencia filtrada de scheduling/backend, no cierre de P11.
@@ -1026,7 +1028,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `daa7bcbb2181a4eb1f1f0d80ab3f908b3fcf4235` (2026-11-27).
+**Observed source baseline:** `abb857e32fe1bb8049aaaa12d4467084cc4f47cc` (2026-11-27).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

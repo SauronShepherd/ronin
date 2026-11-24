@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1333",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"abb857e32fe1bb8049aaaa12d4467084cc4f47cc",
+  "implementation_commit_sha":"abb857e32fe1bb8049aaaa12d4467084cc4f47cc",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1333-postgres-scheduler-authority-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1333-postgres-scheduler-authority-20261127 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"deployment_binding or timeout_requests\""],
+  "result":{"pytest":"2 selected passed; 0 selected skipped; 0 selected failed; 19 deselected","scope":"real PostgreSQL scheduler workspace-scoped deployment binding/runnable path and durable timeout requests/dispatch authority","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":2.665,"total_wall_seconds":6.847},
+  "evidence_hashes":{"pytest-output.log":"05746696C2BCCFBAF50761038128C543346767F326BB97BA2487DD2CB9A9AB09","pytest-postgres.log":"E96A389509639BEAE51982CC26C326CFC3B416B43974DB636C5621303F7ADF31","pytest-postgres.xml":"F17EA56437CCF487649D92623CF8B30D428C8850B546B5CC0EEC6CAED27E5035","pytest-timings.json":"98962E1A74B9D798F0B3EA126D35FEEB23AABB0790AD9ACB46DB9C286B523505","runner-timings.json":"3D885B316A21B11537C63CB1E538C349FC8F732D6ABB286E9C38994738050545"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a filtered PostgreSQL diagnostic, not the complete workflow/scheduler or Python/PostgreSQL suite.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
