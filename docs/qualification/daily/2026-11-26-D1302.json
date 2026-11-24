@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1302",
+  "date":"2026-11-26",
+  "status":"PASS",
+  "candidate_sha":"38366d1900f9b1c9a4a9e125cfcdf0c0687d2ab2",
+  "implementation_commit_sha":"38366d1900f9b1c9a4a9e125cfcdf0c0687d2ab2",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1302-postgres-connector-checkpoint-20261126",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1302-postgres-connector-checkpoint-20261126 -TestPath tests/integration/test_postgres_connector_checkpoint_real.py"],
+  "result":{"pytest":"3 passed; 0 skipped; 0 failed","scope":"checkpoint fencing inventory/restart; sync worker scoped checkpoint read/write/advance; local composition shared connector ingestion mount","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","pytest_seconds":5.36},
+  "evidence_hashes":{"pytest-output.log":"53F6CD021CBC48C795AD894163523A2B70A673E42DC85204EA135D0200CF43EB","pytest-postgres.log":"382A8799E49A7DD156D67FF37F76DE7CC8094DA3620E9D305F067242697BA38B","pytest-postgres.xml":"EBC7CBEA2BAA1CE3A2DC8FF69E69D1DA69068C282BC89D3DA3F5FFBCF68CBE96","pytest-timings.json":"7231F0A2F22D149DF02A86D65CDD8E226593F540A1DC31BCFE34315598FC4948","runner-timings.json":"F4435972777F8760E08B8B029652F02E7C28299F101E22F599AFE803EB46889D"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded backend/recovery evidence; it is not complete provider matrix, indefinite operation, complete P11 or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}

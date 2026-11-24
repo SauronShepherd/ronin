@@ -1,6 +1,8 @@
 # Ronin Public v1 capability matrix
 
-## Current exact-SHA snapshot — 25 November 2026
+## Current exact-SHA snapshot — 26 November 2026
+
+D1302 pasa el checkpoint/fencing del conector PostgreSQL real sobre `main@38366d19`: `3/3` pruebas, sin skips/fallos, con inventario/fencing tras reinicio, avance de checkpoint acotado del sync worker y montaje de composición local; PostgreSQL 16.4 aislado y cleanup PASS. Evidencia bounded, no cierre de P11.
 
 D1284 repite la batería streaming focalizada y pasa sobre `main@52d6603f`: `11/12` casos (`1` skip, `0` fallos), `246/246` eventos API correlacionados (`235 OK`, `8 WARN`, `3 ERROR` esperados durante recuperación) y cleanup PASS. D1280 permanece NOT_PASS y D1281 permanece como PASS aislado; no se reatribuye evidencia. Es evidencia bounded, no cierre de P11.
 
@@ -966,7 +968,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `760eee47504b88e4fb86e1074c86b0558d37b204` (2026-11-26).
+**Observed source baseline:** `38366d1900f9b1c9a4a9e125cfcdf0c0687d2ab2` (2026-11-26).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
