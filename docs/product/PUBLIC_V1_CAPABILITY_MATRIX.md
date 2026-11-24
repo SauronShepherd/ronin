@@ -2,6 +2,9 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1227 pasa PostgreSQL FinOps `1/1` para idempotencia, pricing y budgets;
+cleanup PASS. Es evidencia filtrada/bounded y no cambia P11, P13 ni release.
+
 D1226 pasa PostgreSQL connector runtime `2/2` para watermark pagination,
 schema y valores límite; cleanup PASS. Es evidencia filtrada/bounded y no
 cambia P11, P13 ni release.
@@ -808,7 +811,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `1cadf15df338e40efacc935472e871c3dae10406` (2026-11-24).
+**Observed source baseline:** `31e0648a943241da11af3a13def1c385f137c382` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
