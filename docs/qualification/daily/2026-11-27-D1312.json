@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1312",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"41926da63dc5c5d753641206be9a7254fc971e8c",
+  "implementation_commit_sha":"41926da63dc5c5d753641206be9a7254fc971e8c",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1312-postgres-data-engineering-revisions-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1312-postgres-data-engineering-revisions-20261127 -TestPath tests/integration/test_postgres_data_engineering_revisions_real.py"],
+  "result":{"pytest":"1 passed; 0 skipped; 0 failed","scope":"revision inventory discovers all project artifacts and references","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","pytest_seconds":0.81},
+  "evidence_hashes":{"pytest-output.log":"F5A8BB4F39BCDDA694FFC04609CE2EFD1A4E10B9AD2F9E88FA0E3568AD742A42","pytest-postgres.log":"65871CB986B519944934EA79F976D6B06DD606BC3D18374B805D88F1D1760AB9","pytest-postgres.xml":"6EDD5277391E51D45656A848D3A7FC9A138AC85FBDE64B959EB490E5366FC1FA","pytest-timings.json":"EED62A0DE7B67802E8C077E3F71DDF8D7863888744F15A8386CE0EF8AB1F898C","runner-timings.json":"6262FFA10C895F34C15BB73E5FF2748C54F1A27EA5E0E1EF6F11738822635723"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded provider/backend evidence; it is not complete provider matrix, indefinite operation, complete P11 or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}
