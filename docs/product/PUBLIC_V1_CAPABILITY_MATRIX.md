@@ -1,6 +1,8 @@
 # Ronin Public v1 capability matrix
 
-## Current exact-SHA snapshot — 27 November 2026
+## Current exact-SHA snapshot — 27–28 November 2026
+
+D1336 pasa el archivo completo de integración de checkpoints/conectores PostgreSQL sobre `main@c05ce6eb`: `3/3` casos, sin skips/fallos, con fencing/restart, sync worker y composición/control plane; cleanup PASS. Evidencia completa de este archivo, no cierre de P11.
 
 D1335 pasa el archivo completo de integración workflow/scheduler PostgreSQL sobre `main@533c6032`: `21/21` casos, sin skips/fallos, cubriendo scheduling, recovery y persistencia; cleanup PASS. Evidencia amplia acotada, no cierre de P11.
 
@@ -1032,7 +1034,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `533c6032e2e4621eb439ee774d528a3c753330de` (2026-11-28).
+**Observed source baseline:** `c05ce6eb8924726fc2a3a39252de50d5688e2e79` (2026-11-28).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
