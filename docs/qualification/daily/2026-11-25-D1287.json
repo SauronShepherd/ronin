@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1287",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"d6105f0659096767a737d570a97e7193a81d9725",
+  "implementation_commit_sha":"d6105f0659096767a737d570a97e7193a81d9725",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1287-python-postgres-full-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1287-python-postgres-full-20261125"],
+  "result":{"pytest":"4765 passed; 31 skipped; 0 failed","collected":"4793 items / 3 collection skips; runner summary 4796 total with 31 skips","scope":"all non-performance Python tests, including PostgreSQL-enabled cases","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","duration_seconds":743.95},
+  "evidence_hashes":{".coverage":"68CE11F99B956EAEAF84D35F4F984C5DA3A061FD0BCCA20C478DBF5F61BA4D14","pytest-output.log":"5E4C6FA8FA5CCDC4721DF4B2CC88496F2AAD285C782294CD2C23A5AF6241E40E","pytest-postgres.log":"E455F3C1129F0DFF64B534929B8BB50784C236B4F74CA573233B69FA0F32DAB0","pytest-postgres.xml":"DDAFCD1866B5E00DC418D965E1492492B5871EE3A1DF27F1C0951A7FA9973659","pytest-timings.json":"8C826FF7407D1A23F2471FA4F61A8493CBF4C2B9EA086ED743E466BA06AA4D37","runner-timings.json":"5CA787E892C146A25C3BC5966D1A39E642A6A22872818824AD8D017013BA431B"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["The 31 skips remain explicit and include opt-in Docker/worker/provider/OTLP/Trino/external cases and Windows POSIX/symlink limitations; they are not passes.","This is a bounded clean-candidate regression, not complete P11, indefinite operation, HA, cloud certification or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}
