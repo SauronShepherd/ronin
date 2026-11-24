@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1343",
+  "date":"2026-11-28",
+  "status":"PASS",
+  "candidate_sha":"9f7ec3dc71b8c1fc9bb3ea1c45061a76a4fc5ee7",
+  "implementation_commit_sha":"9f7ec3dc71b8c1fc9bb3ea1c45061a76a4fc5ee7",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1343-python-postgres-full-current-20261128",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1343-python-postgres-full-current-20261128"],
+  "result":{"pytest":"4765 passed; 31 skipped; 0 failed; 4796 collected outcomes","scope":"full non-performance Python/PostgreSQL suite with branch coverage enabled","service_profile":"isolated PostgreSQL 16.4","warnings":23,"cleanup":"PASS","pytest_wall_seconds":776.151,"total_wall_seconds":780.628},
+  "evidence_hashes":{".coverage":"5B497E66BC2D4E1C2C0382298A417067ACC3F561E4C6AE82708A4F448B0EA93D","pytest-output.log":"5CE4CDB7EAD421ACAAC331977AF4F1E66153B710E43D6B211AB9BCD25389D772","pytest-postgres.log":"1E7778596D366601C3C7AA909F818E341BA3B057737887D4D29C2E3D99695A77","pytest-postgres.xml":"62C9020C38FBB72E33D5CA232B61E6B6BB9CC8465E87B0DE3A366ADE7FC56F14","pytest-timings.json":"7BE7B2876BC28D7E2DEDDB154FBB977D89B6D94C3C6F4C967AF3692E57465311","runner-timings.json":"FB6366D2ACAA12AF13848A57D5016909A90F4247ADB82C8B741832DFAA17B6AB"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["31 skips remain explicit and are not counted as passes: opt-in Docker/provider/SDP/Trino/OTLP cases and host-specific POSIX/symlink constraints.","23 warnings were emitted, including ResourceWarning database cleanup warnings; no test failures occurred.","This is a broad regression, not complete cloud certification, indefinite operation, HA, complete P11 or release evidence.","Runner removed the isolated PostgreSQL container and related test state."]
+}
