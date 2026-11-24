@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1327b",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"08bcb0b673cf75f29966d57c8649578b7d3c087d",
+  "implementation_commit_sha":"08bcb0b673cf75f29966d57c8649578b7d3c087d",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1327b-postgres-workflow-recovery-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1327b-postgres-workflow-recovery-20261127 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"reacquires_after_expired_lease_without_duplicate_fire or replays_job_after_process_crash_without_duplicate or backfill_runs_through_the_service_and_survives_reopen\""],
+  "result":{"pytest":"3 selected passed; 0 selected skipped; 0 selected failed; 18 deselected","scope":"real PostgreSQL scheduler recovery: expired-lease reacquisition without duplicate fire, process-crash replay without duplicate and durable backfill through service/reopen","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":4.621,"total_wall_seconds":7.515},
+  "evidence_hashes":{"pytest-output.log":"564B7E2DD59DEF664135818FE5E83D92664435B2BAEABAAF3F60F0AF102F18AD","pytest-postgres.log":"E3CC00A19ADB04111E2487874C4EDC7C270B8D8E90FC50FEE9EB7C374AE9DF54","pytest-postgres.xml":"EAB18C6CDC945A485A0EF79945615D31EDFD1B8D2947D545B01409514C0C8D5F","pytest-timings.json":"E437FCCB91EA866CE579DB6053774A1789689DF4FCDDFCFBE2351EDB3D61528E","runner-timings.json":"B9F20B11A70A45452DD3A23F13EF87ED56BF516811B22228CE8D93F3B89243A0"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a filtered PostgreSQL diagnostic, not the complete workflow/scheduler or Python/PostgreSQL suite.","The earlier D1327 attempt with -TestFilter recovery selected zero tests and is not evidence; it is not attributed to product behavior.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
