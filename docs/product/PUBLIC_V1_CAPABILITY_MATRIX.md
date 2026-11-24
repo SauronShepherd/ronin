@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1188 pasa la celda Spark Connect real `1/1` sobre `main@6db6f249`, con
+cleanup PASS. D1187 queda como preflight `NOT_PASS` por imagen ausente y no se
+cuenta como cualificación. P11 sigue `in_progress`, P13 `blocked` y release
+`NO-GO` (`1/13`, `0/10`).
+
 D1186 pasa `4/4` pruebas de proveedor Trino real (versión 484, digest fijado),
 con cleanup PASS. La celda es bounded y no cambia P11 `in_progress`, P13
 `blocked` ni release `NO-GO` (`1/13`, `0/10`).
@@ -682,7 +687,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `a5ff1180bec2fbf6ac8ca08cd4cfb6a1968f565c` (2026-11-24).
+**Observed source baseline:** `6db6f249b5dcc15b726a25c5a55b560ea038877b` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

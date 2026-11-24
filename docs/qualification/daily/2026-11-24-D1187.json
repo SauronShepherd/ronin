@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1187",
+  "date": "2026-11-24",
+  "status": "not_pass_missing_local_digest_image",
+  "candidate_sha": "6db6f249b5dcc15b726a25c5a55b560ea038877b",
+  "implementation_commit_sha": "6db6f249b5dcc15b726a25c5a55b560ea038877b",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1187.md",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1187-spark-connect-current-20261124"],
+  "result": {"tests": "not executed", "failure": "digest-only image was absent locally; runner could not start Spark", "cleanup": "PASS/not-required: no container started"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is an infrastructure preflight failure, not qualification evidence.", "D1188 is the explicit pull-and-retry result; no historical evidence reattributed."]
+}

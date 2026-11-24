@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1188",
+  "date": "2026-11-24",
+  "status": "pass_spark_connect_real_provider",
+  "candidate_sha": "6db6f249b5dcc15b726a25c5a55b560ea038877b",
+  "implementation_commit_sha": "6db6f249b5dcc15b726a25c5a55b560ea038877b",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1188.md",
+  "commands": ["docker pull apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59", "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1188-spark-connect-current-20261124"],
+  "result": {"tests": "1/1 passed, 0 skipped, 0 failed; 2 deselected", "service": "Apache Spark Connect 4.2.0, digest sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59", "cleanup": "PASS; container and temporary image removed", "elapsed_seconds": 17.806},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded Spark Connect provider diagnostic; not complete P11 or release approval.", "No historical evidence reattributed."]
+}
