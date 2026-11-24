@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1330",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"27998a901f12620131ea991263beb85c9e70bb94",
+  "implementation_commit_sha":"27998a901f12620131ea991263beb85c9e70bb94",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1330-postgres-execution-outbox-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1330-postgres-execution-outbox-20261127 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"outbox\""],
+  "result":{"pytest":"3 selected passed; 0 selected skipped; 0 selected failed; 18 deselected","scope":"real PostgreSQL execution outbox durability: cancellation reconciliation, expiry survival/reconciliation and unsubmitted outbox retirement","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":5.08,"total_wall_seconds":9.359},
+  "evidence_hashes":{"pytest-output.log":"5442E7F662F8F808DBB802141676A6CB1911C86D47C0EDB091083D54C1AEE0CD","pytest-postgres.log":"FF59E1618D105BD79418B6B8A331EA605DD51D64CADE29A6808280EEF72E4428","pytest-postgres.xml":"FE06DC4E9927D0059638C6C89E302285DD0CB13861BF027C4978183AC189ED1C","pytest-timings.json":"89BE352246EA07A7F02AA8F0A812570F31DC17234E25DE462638241539901700","runner-timings.json":"B58930A0D2D61784938C19784F07E94D7A79222591678160C22F51C7B25C0D3F"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a filtered PostgreSQL diagnostic, not the complete workflow/scheduler or Python/PostgreSQL suite.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
