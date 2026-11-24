@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1298",
+  "date":"2026-11-26",
+  "status":"PASS",
+  "candidate_sha":"8eaf904ae8df445663cefd917236597f52987872",
+  "implementation_commit_sha":"8eaf904ae8df445663cefd917236597f52987872",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1298-postgres-scheduler-recovery-20261126",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1298-postgres-scheduler-recovery-20261126 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or scheduler_daemon_replays_job_after_process_crash_without_duplicate\""],
+  "result":{"pytest":"2 passed; 0 skipped; 0 failed; 19 deselected","scope":"scheduler daemon reacquisition after expired lease and process-crash replay without duplicate fire","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","pytest_seconds":3.02},
+  "evidence_hashes":{"pytest-output.log":"B2A31D8A8EB440EACB4FB15A599E2068142C3D90FB75E1BCD9C9B06022C7DB27","pytest-postgres.log":"633E1FC91B4CD13354400A7A388B760BC7D751A4B6057541368992329519EA43","pytest-postgres.xml":"56F9432CDB120B4F7F9AD98406D6568B83592E90A6A61FFCB5BF2B85D0C1FB5B","pytest-timings.json":"0428C83E8D5C06CA5AA0876C5EBFD536ACFA2BE54F7BB8FEA4CCCAE39FAB40D2","runner-timings.json":"072D2638B5883D657E8F4490B0D5734E5AE5243D766D9823C39B02E2E3B6CF32"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered scheduler recovery evidence; it is not complete P11, HA, indefinite operation or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}
