@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1398 aporta evidencia bounded de portabilidad de bundles/runtime (`36/36` PASS) sobre `main@ab731616`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
+
 D1397 aporta evidencia bounded de fronteras de transporte/runtime (`31/31` PASS) sobre `main@1c3d75ad`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
 
 D1396 aporta evidencia bounded de recuperación del ledger de eventos JSONL del kernel (`17/17` PASS) sobre `main@f98f4cc6`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
@@ -1154,7 +1156,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `1c3d75adf337f4104560889d9e0ece8485465cf7` (2026-11-29).
+**Observed source baseline:** `ab73161650e7b30a684841162c304733405d051a` (2026-11-29).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
