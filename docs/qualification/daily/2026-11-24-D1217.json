@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1217",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "bb0c48d4214219d0b1aec37f0f3c9fbb0e458774",
+  "implementation_commit_sha": "bb0c48d4214219d0b1aec37f0f3c9fbb0e458774",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1217-postgres-scheduler-recovery-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1217-postgres-scheduler-recovery-20261124 -TestPath tests\\integration\\test_postgres_workflow_store_real.py -TestFilter process_crash"],
+  "result": {"pytest": "1/1", "passed": 1, "failed": 0, "skipped_selected": 0, "deselected": 20, "service": "PostgreSQL 16.4-alpine real container", "scope": "scheduler daemon replays job after process crash without duplicate", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered PostgreSQL diagnostic, not full Python/PostgreSQL suite or coverage.", "An earlier selector against Docker-opt-in tests selected no executable cases; it is not evidence and is not counted.", "Does not close complete P11, HA, indefinite operation or release approval."]
+}
