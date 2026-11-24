@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1364",
+  "date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "a934c78110e8044683037496881340bf010f0588",
+  "implementation_commit_sha": "a934c78110e8044683037496881340bf010f0588",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1364-ml-s3-floci-real-20261128",
+  "commands": ["docker compose -p ronin-d1364-s3 -f examples/cloud-studio/compose.floci.yaml up -d floci", "python -m pytest -q tests/integration/test_ml_s3_artifact_store_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1364-ml-s3-floci-real-20261128\\pytest-junit.xml", "docker compose -p ronin-d1364-s3 -f examples/cloud-studio/compose.floci.yaml down --volumes --remove-orphans"],
+  "result": {"pytest": "1 passed; 0 skipped; 0 failed", "scope": "ML ArtifactStore input/output/retention against Floci 2.1.0 S3-compatible service", "cleanup": "PASS; container, volume and network removed"},
+  "evidence_hashes": {"compose-up.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "floci.log": "68F9C60F3F3AA541054EEC19D8B4657322C19918B615764D7A666E0F0D8ABAA8", "pytest-junit.xml": "0B27ACB1E99CE8B5D22C0219D74D6E786824FECBC36A3F5049E268F2FC69F973", "pytest.log": "7F7FD0746504F9BEED5B82AD674E06C38EDC08AF7B96466D64A5F7D677F346BD"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Floci S3-compatible evidence only; not cloud-provider certification or complete P11."]
+}

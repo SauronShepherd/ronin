@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1364 pasa el ML ArtifactStore contra Floci S3-compatible 2.1.0 real local sobre `main@a934c781`: `1/1` prueba, sin skips/fallos; cleanup PASS. Evidencia bounded de object store/provider emulado, no certificación cloud ni cierre de P11.
+
 D1363 pasa la cualificación Azure Blob contra Azurite 3.35.0 real local sobre `main@d91f01cd`: `1/1` prueba, sin skips/fallos, con discovery, lectura y snapshot replay; cleanup PASS. D1362 queda separado como falso negativo del probe HTTP 400. Evidencia bounded de provider emulado, no certificación Azure cloud ni cierre de P11.
 
 D1362 permanece NOT_PASS sobre `main@d91f01cd`: Azurite no alcanzó readiness según el probe HTTP estricto, aunque el log muestra HTTP 400 esperado; pytest no se ejecutó.
@@ -1088,7 +1090,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `d91f01cd390faa68db823a41bb66bc798c3ed237` (2026-11-28).
+**Observed source baseline:** `a934c78110e8044683037496881340bf010f0588` (2026-11-28).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
