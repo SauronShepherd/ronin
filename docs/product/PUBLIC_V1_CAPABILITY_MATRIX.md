@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1243 pasa Docker container executor `3/3` para aislamiento, memory/swap cap y
+CPU/memoria; cleanup PASS. Es evidencia filtrada/bounded y no cambia P11, P13
+ni release.
+
 D1242 pasa Docker worker clean demo `1/1`, con cleanup PASS. Es evidencia
 filtrada/bounded y no reatribuye D1241 ni cambia P11, P13 o release.
 
@@ -856,7 +860,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `c71fe9f81f52ede8434539c8cfd8a58c4d0bb7dd` (2026-11-24).
+**Observed source baseline:** `d0f79efa8a10fa1d5b5ea93605e0a029dccbe773` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
