@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1363",
+  "date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "d91f01cd390faa68db823a41bb66bc798c3ed237",
+  "implementation_commit_sha": "d91f01cd390faa68db823a41bb66bc798c3ed237",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1363-azurite-real-20261128",
+  "commands": ["docker compose -p ronin-d1363-azurite -f examples/connectors/compose.azurite.yaml up -d azurite", "python -m pytest -q tests/integration/test_azure_blob_connector_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1363-azurite-real-20261128\\pytest-junit.xml", "docker compose -p ronin-d1363-azurite -f examples/connectors/compose.azurite.yaml down --volumes --remove-orphans"],
+  "result": {"pytest": "1 passed; 0 skipped; 0 failed", "scope": "Azure Blob JSON connector against Azurite 3.35.0", "cleanup": "PASS; container, volume and network removed"},
+  "evidence_hashes": {"azurite.log": "F861E2654214AF0EB94583A8B24631090D68A4AD06CF10A91D50135071712507", "compose-up.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "pytest-junit.xml": "782FB24E365789EF2F81A47E8FD760441B8E34869ECA56AC4E11DE8003077787", "pytest.log": "2B048718BF809CAA18804A2B3F6B47691A23BCA970D39FE175D8FE4719F0D312"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Azurite evidence only; not Azure cloud certification or complete P11."]
+}

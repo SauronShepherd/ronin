@@ -7,6 +7,10 @@
 
 ## Current exact-SHA qualification — 27–28 November 2026
 
+D1363 pasa la cualificación Azure Blob contra Azurite 3.35.0 real local sobre `main@d91f01cd`: `1/1` prueba, `0` skips/fallos, con discovery, lectura y snapshot replay; cleanup de contenedor, volumen y red PASS. D1362 queda separado como falso negativo del probe HTTP 400. Es evidencia bounded de provider emulado y no certificación Azure cloud ni cierre de P11/release.
+
+D1362 permanece NOT_PASS sobre `main@d91f01cd`: Azurite se inició, pero el probe HTTP raíz trató el `400` esperado como fallo de readiness; pytest no se ejecutó. El cleanup eliminó contenedor, volumen y red.
+
 D1361 pasa la cualificación S3 JSON contra Floci 2.1.0 real local sobre `main@5c39b845`: `1/1` prueba, `0` skips/fallos, tras corregir el mapeo de puerto Compose observado en D1360; cleanup de contenedor, volumen y red PASS. Es evidencia bounded de provider emulado localmente y no certificación cloud ni cierre de P11/release.
 
 D1360 permanece NOT_PASS sobre `main@7bf7abd5`: Floci S3 se inició, pero no abrió el endpoint HTTP durante la ventana de readiness; pytest no se ejecutó. El cleanup eliminó contenedor, volumen y red; no se promociona como evidencia de provider/object store.
@@ -2080,7 +2084,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `5c39b8455eb46f9db3888ed964a51bbb5fa688a2` (2026-11-28).
+**Observed source head:** `d91f01cd390faa68db823a41bb66bc798c3ed237` (2026-11-28).
 
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 

@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1362",
+  "date": "2026-11-28",
+  "status": "NOT_PASS",
+  "candidate_sha": "d91f01cd390faa68db823a41bb66bc798c3ed237",
+  "implementation_commit_sha": "d91f01cd390faa68db823a41bb66bc798c3ed237",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1362-azurite-real-20261128",
+  "result": {"pytest": "not executed", "failure": "HTTP 400 from Azurite root was treated as readiness failure", "cleanup": "PASS; container, volume and network removed"},
+  "evidence_hashes": {"azurite.log": "52D2F5C1A38B2CF28B356DB3F1C2C5AEB2C9CAB24C2D127E1A69013CD5E3356C", "compose-up.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Explicit probe false negative; no Azure Blob test ran. D1363 is the corrected rerun."]
+}
