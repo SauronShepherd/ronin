@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1291",
+  "date":"2026-11-26",
+  "status":"PASS",
+  "candidate_sha":"28e75bd204d48b01718ca2a61c7e61fcad7c0709",
+  "implementation_commit_sha":"28e75bd204d48b01718ca2a61c7e61fcad7c0709",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1291-trino-provider-20261126",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_trino_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1291-trino-provider-20261126"],
+  "result":{"service":"Trino 484","image":"trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f","pytest":"4 passed; 0 skipped; 0 failed","scope":"prepared scalar bindings, exact/under byte budget, terminal evidence persistence, SIGKILL recovery without duplicate","cleanup":"PASS","elapsed_seconds":27.028},
+  "evidence_hashes":{"pytest-timings.json":"95C092B09E9588DFB77227A99477DEB242FBE14280DE7388F2FF4EC8AFC05997","qualification.json":"EFF2803881B9BAC34B6DA9EFA33B201EB8B46B48B9EBA10BA1FE147E23F7DAB7","qualification.log":"6FDB74FC0005711F60EE86C6BFB2E93ACA0E8F968300F9A0612C733834F3DF78","trino-container.log":"744423F275E663D8735F15579987352220449889D9CA8CC7A004CC328BF649B5","trino-junit.xml":"A3F8345E9FC88F86EC1E3683B143D7CFCBAEC6D3208A03C43CDE56922DEEDFB5"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a bounded Trino provider qualification, not complete provider matrix, indefinite operation, HA, complete P11 or release approval.","The runner removed the pinned Trino container and associated temporary resources."]
+}
