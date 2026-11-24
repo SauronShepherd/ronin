@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1219",
+  "date": "2026-11-24",
+  "status": "NOT_PASS",
+  "candidate_sha": "1026bb20b7559a17c5eed120838b9a4741013d4e",
+  "implementation_commit_sha": "1026bb20b7559a17c5eed120838b9a4741013d4e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1219-postgres-data-engineering-http-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1219-postgres-data-engineering-http-20261124 -TestPath tests\\integration\\test_data_engineering_http.py"],
+  "result": {"pytest": "4/5", "passed": 4, "failed": 1, "skipped": 0, "deselected": 0, "failure": "test_queryflux_async_create_is_project_scoped_and_fail_closed_on_bounds: WinError 10053 during the second request after the invalid max_rows=True request; captured server warnings were 400 then 404", "service": "PostgreSQL 16.4-alpine real container", "coverage": "disabled_filtered_diagnostic", "cleanup": "PASS"},
+  "repeat": {"phase": "D1220", "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1220-queryflux-repeat-20261124", "result": "1/1 PASS", "scope": "same QueryFlux test selected by -TestFilter on the same candidate; diagnostic only"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Complete selected file did not pass; no capability evidence was promoted.", "The D1220 focused repeat passed but does not erase or reattribute D1219; the full-suite interaction remains open.", "No production code changed. P11 remains in_progress, P13 remains blocked and release remains NO-GO."]
+}

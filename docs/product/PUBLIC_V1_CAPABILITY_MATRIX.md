@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1219 queda **NOT_PASS**: Data Engineering HTTP PostgreSQL `4/5`, con
+`WinError 10053` en el caso QueryFlux; cleanup PASS. D1220 repite el caso
+`1/1` como diagnóstico enfocado, sin promover ni reatribuir D1219. P11 sigue
+`in_progress`, P13 `blocked` y release `NO-GO` (`1/13`, `0/10`).
+
 D1218 pasa el archivo PostgreSQL workflow store `21/21`, con recuperación,
 leases, liderazgo y outbox cubiertos y cleanup PASS. Es evidencia filtrada de
 archivo: P11 sigue `in_progress`, P13 `blocked` y release `NO-GO` (`1/13`,
@@ -778,7 +783,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `40c89e164d2a7384683018dc1f9c3cfe5f2f1f1c` (2026-11-24).
+**Observed source baseline:** `1026bb20b7559a17c5eed120838b9a4741013d4e` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
