@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1361",
+  "date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "5c39b8455eb46f9db3888ed964a51bbb5fa688a2",
+  "implementation_commit_sha": "5c39b8455eb46f9db3888ed964a51bbb5fa688a2",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1361-s3-floci-real-20261128",
+  "commands": [
+    "docker compose -p ronin-d1361-s3 -f examples/cloud-studio/compose.floci.yaml up -d floci",
+    "python -m pytest -q tests/integration/test_s3_json_connector_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1361-s3-floci-real-20261128\\pytest-junit.xml",
+    "docker compose -p ronin-d1361-s3 -f examples/cloud-studio/compose.floci.yaml down --volumes --remove-orphans"
+  ],
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed",
+    "scope": "S3 JSON sink/read/retry round trip against Floci 2.1.0 S3-compatible service",
+    "service_profile": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db",
+    "cleanup": "PASS; container, volume and network removed"
+  },
+  "evidence_hashes": {
+    "compose-up.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "floci.log": "3E24098D849F6D68F4A500B0F9D85D084AA3C3E12CED70F5D028102EAA3B93CC",
+    "pytest-junit.xml": "E936C3211637DD2FDBA4495DF38F0CEC02FCFF9F1FB96BAA9A9FFE34AD4652E0",
+    "pytest.log": "B88748BE948E9DBBFF4105AF7375D2686DA1559A51DC7E3296D21021288CC404"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local S3-compatible provider evidence only; not cloud-provider certification or complete P11."
+  ]
+}
