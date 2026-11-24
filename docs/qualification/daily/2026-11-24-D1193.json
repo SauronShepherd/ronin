@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1193",
+  "date": "2026-11-24",
+  "status": "pass_postgres_data_engineering_http_file",
+  "candidate_sha": "00cdfdfbd4da1829f6e7df9c80eaca394a3c5f7a",
+  "implementation_commit_sha": "00cdfdfbd4da1829f6e7df9c80eaca394a3c5f7a",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1193.md",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1193-data-engineering-http-postgres-20261124 -TestPath tests/integration/test_data_engineering_http.py"],
+  "result": {"tests": "5/5 passed, 0 skipped, 0 failed", "service": "isolated PostgreSQL 16.4", "targeted_case": "test_queryflux_async_create_is_project_scoped_and_fail_closed_on_bounds passed", "cleanup": "PASS", "total_wall_seconds": 9.53},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered file evidence only; it does not override D1179 full-suite NOT_PASS or qualify the complete suite.", "No historical evidence reattributed."]
+}
