@@ -12,6 +12,8 @@ D1287 pasa la suite completa Python/PostgreSQL no-performance sobre `main@d6105f
 
 D1288 pasa la cualificación live completa sobre `main@38528b37`: `43/44` casos, `1` skip, `0` fallos, 25 rutas auditadas (24 API-backed), `513/513` eventos correlacionados y cleanup PASS con PostgreSQL, Redpanda y worker Docker real. Es evidencia bounded, no cierre de P11.
 
+D1289 pasa la batería streaming completa con Redpanda RF3 multi-broker y PostgreSQL real sobre `main@733578b6`: `11/11` casos, sin skips/fallos, `249/249` eventos correlacionados (`241 OK`, `8 WARN` esperados), cero errores/critical y cleanup PASS. Es evidencia bounded, no cierre de P11.
+
 D1283 pasa supervised drain/idle con checkpoint durable: `1/1`, `5/5` eventos (`4 OK`, `1 WARN` esperado) y cleanup PASS sobre `main@5ce62df3`. Es evidencia bounded, no cierre de P11.
 
 D1282 pasa reinicio de broker y recuperación de checkpoint: `1/1`, `11/11` eventos (`8 OK`, `3 ERROR` esperados durante outage) y cleanup PASS sobre `main@71e8ab5a`. Es evidencia bounded, no certificación HA ni cierre de P11.
@@ -944,7 +946,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `38528b37a24a97a18208e20c2b9dd7a088ba5b9f` (2026-11-25).
+**Observed source baseline:** `733578b638c085168bef80b36ae744d9c4ca86ae` (2026-11-25).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1289",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"733578b638c085168bef80b36ae744d9c4ca86ae",
+  "implementation_commit_sha":"733578b638c085168bef80b36ae744d9c4ca86ae",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1289-live-streaming-multibroker-postgres-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1289-live-streaming-multibroker-postgres-20261125 -StorageBackend postgres -MultiBroker -TestGrep streaming -RequestTimeoutSeconds 180"],
+  "result":{"selection":"streaming","playwright":"11 passed; 0 skipped; 0 failed","api_events":"249/249 correlated","api_outcomes":"241 OK; 8 WARN expected","service_profile":"PostgreSQL + three-broker Redpanda RF3 + Ronin API","scope":"streaming health, RF3 failover, two-partition backlog, supervised drain, checkpoint/replay, backpressure, Parquet sink, soak, event workflow and byte boundaries","route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":230.42},
+  "evidence_hashes":{"browser-live.log":"6953423288667F52D30027F3E2447A1A70AE2F8354E7F7B82E62D92A0176EC20","browser-live.xml":"61D156E2178B41BF2BF386367BD8180EFE2BF5CAA9706847A8FD5DCA240104D8","live-api-traffic.json":"123BEA68DEA4D129A85469D38A9B690CCD27138C3BFDF29406D572C2B2AE707D","live-python-freeze.txt":"747C23426E64EC81E1743D7EDCAC7956585D3C062EEC436B352F50FFD8366730","live-server.stderr.log":"3149FC1262307ED3DE3BEB93235A5D17C7BACA22AD18EDBDD79E060FF801C55B","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"23F2E3ACDD98428EC282BFBC8320B0FACCB9EA4F04035BFD9667EE442F65354F","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Filtered streaming evidence does not audit all product routes or certify complete P11, indefinite operation or production HA.","The eight WARN outcomes are expected bounded-path warnings; application ERROR and CRITICAL counts were zero.","The runner removed PostgreSQL, all three Redpanda brokers, volume and network."]
+}
