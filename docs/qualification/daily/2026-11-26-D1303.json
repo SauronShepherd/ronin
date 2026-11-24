@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1303",
+  "date":"2026-11-26",
+  "status":"PASS",
+  "candidate_sha":"486d29a1338e1872d95fd999eb7d1c18fadefa45",
+  "implementation_commit_sha":"486d29a1338e1872d95fd999eb7d1c18fadefa45",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1303-postgres-connector-control-plane-20261126",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1303-postgres-connector-control-plane-20261126 -TestPath tests/integration/test_postgres_connector_control_plane_real.py"],
+  "result":{"pytest":"1 passed; 0 skipped; 0 failed","scope":"control-plane discover/preview survives connector reopen","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","pytest_seconds":7.20},
+  "evidence_hashes":{"pytest-output.log":"3DBD55D488422AB8A48EA3222A2134B11C648809D31F35862C5D5BAD1BEDD8F8","pytest-postgres.log":"6C90D98FB5595D360E43DF0D379D9507238302859308C03F23B145D5B8CAA437","pytest-postgres.xml":"A901563A74E1C03F91E9BF85E805C3DC03FA408825F103C9D5CF2F6B882DC305","pytest-timings.json":"BF0FB1A3CBA8F3788262FAEE9592F15CC178E88C4FA17ED46B2C4BE969C6A9B6","runner-timings.json":"5134A9C5869482D1A938D08F08656307926965B388F35C20CFF3BB5FA5B28DCE"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded provider/backend evidence; it is not complete provider matrix, indefinite operation, complete P11 or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}
