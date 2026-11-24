@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1273",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"54d746b7c94826e83277eaa9d2e2ca6eae93e514",
+  "implementation_commit_sha":"54d746b7c94826e83277eaa9d2e2ca6eae93e514",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1273-live-rf3-current-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1273-live-rf3-current-postgres-20261124 -StorageBackend postgres -TestGrep \"live streaming multi-broker failover resumes from the durable checkpoint\" -MultiBroker -RequestTimeoutSeconds 60"],
+  "result":{"selection":"live streaming multi-broker failover resumes from the durable checkpoint","playwright":"1 passed; 0 skipped; 0 failed","api_events":"5/5 correlated","api_outcomes":"5 OK","service_profile":"PostgreSQL + three-broker Redpanda RF3 + Ronin API","cleanup":"PASS","duration_seconds":56.37},
+  "evidence_hashes":{"browser-live.log":"40228EB1506908A64024F3F09ADFFC73E8AE0479F696ECE10E8E5FFF704676BE","browser-live.xml":"E2B99CEBEEBA81CE2B88359BD824AE9DE7C82A6BAF961330FBD24D17FDD41FED","live-api-traffic.json":"4F8D26153A29EFB1B61D4954534E848C324388C01528F07CB2ADED84D4ACCA59","live-python-freeze.txt":"2C941ECD68E5F3F0B62C238C4BC243314AB82BE1F48F378854F92CAB39A0D472","live-server.stderr.log":"1B005CB6A5CCDD6743743CA9EF81315A2F7E228182745E80A4F434E4BF23106E","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"DEB7E92BACAD98213CA99781A2B33FA3CD8797E88AC9987A9844AFB2FA317546","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded RF3 multi-broker failover evidence only; it does not certify indefinite operation, production HA/SLO, multi-worker operation, complete P11 or release approval.","D1267 remains bound to its exact historical candidate; this receipt records a fresh run on 54d746b7 and does not reattribute history.","The runner removed three brokers, PostgreSQL, volume and network; no temporary resources remained."]
+}

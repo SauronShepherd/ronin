@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1273 repite el failover live RF3 multi-broker sobre `main@54d746b7`: `1/1`, `5/5` eventos API OK y cleanup PASS. Es evidencia bounded, no certificación HA productiva ni cierre de P11.
+
 D1272 pasa el backpressure live de `8192` con timeout de request de `180 s`: `1/1`, `12/12` eventos API OK y cleanup PASS sobre `main@cba039f0`; D1271 a `60 s` permanece **NOT_PASS**. Es evidencia bounded, no certificación SLO/indefinida ni cierre de P11.
 
 D1271 repite el backpressure live de `8192` y queda **NOT_PASS** (`0/1`, `Failed to fetch`), con `5/5` eventos API correlacionados (`4 OK`, `1 ERROR`) y cleanup PASS sobre `main@add410e5`; la brecha de carga sigue abierta.
@@ -912,7 +914,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `cba039f0393cfaef574769d5efe8778f4b5f0673` (2026-11-24).
+**Observed source baseline:** `54d746b7c94826e83277eaa9d2e2ca6eae93e514` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
