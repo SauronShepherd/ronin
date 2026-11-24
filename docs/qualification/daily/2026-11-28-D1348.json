@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1348",
+  "date": "2026-11-28",
+  "status": "NOT_PASS",
+  "candidate_sha": "8071860e6229e1d643d0638d6a8bb81bfe783e6f",
+  "implementation_commit_sha": "8071860e6229e1d643d0638d6a8bb81bfe783e6f",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1348-sdp-cli-real-20261128",
+  "commands": [
+    "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_sdp_cli_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1348-sdp-cli-real-20261128"
+  ],
+  "result": {
+    "pytest": "not executed",
+    "scope": "SDP Studio official CLI real qualification preflight",
+    "cli_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\sdpstudio.exe",
+    "failure": "ModuleNotFoundError: sdpstudio_cli while executing sdpstudio version",
+    "project_created": false,
+    "cleanup": "PASS; isolated data root empty and no service resources created"
+  },
+  "evidence_hashes": {
+    "qualification.json": "23967CFDBA1A90A55C17ACB30DD47ED17C57F16EAAD201A54275EBB3D097ACD8",
+    "qualification.log": "361E53FF069D3682AE3D8509AEA54A7C7E4D66E4537344BEA63CAD9E0C2AF841"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is explicit NOT_PASS environmental evidence; no SDP CLI test or project qualification occurred.",
+    "The missing CLI module must be supplied before a valid SDP qualification can run."
+  ]
+}
