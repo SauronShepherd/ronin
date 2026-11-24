@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1202",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "0e88b9861f50b7756093858332808ef3b158d48b",
+  "implementation_commit_sha": "0e88b9861f50b7756093858332808ef3b158d48b",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1202-live-parquet-postgres-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1202-live-parquet-postgres-20261124 -WorkerImage ronin:qualification-d1201-parquet -StorageBackend postgres -TestGrep 'live streaming parquet sink' -RequestTimeoutSeconds 30"],
+  "result": {"playwright": "1/1", "api_events": "11/11 correlated", "api_outcomes": {"OK": 11}, "real_services": ["PostgreSQL", "single-broker Redpanda", "Ronin API", "Docker worker"], "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live diagnostic; route-wide coverage was not run.", "Bounded Parquet sink/replay evidence does not prove indefinite operation, HA, complete P11 or release approval."]
+}
