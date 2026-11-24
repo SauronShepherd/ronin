@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27 November 2026
 
+D1329 pasa liderazgo y event inbox reales sobre PostgreSQL en `main@b980ff94`: `2/2` casos seleccionados, sin fallos, con fencing generacional y replay durable; cleanup PASS. Evidencia filtrada de operación/scheduler, no cierre de P11.
+
 D1328 pasa cuatro casos reales de cancelación durable del workflow PostgreSQL sobre `main@ddcf80ee`: `4/4` seleccionados, sin fallos, con job/outbox, fencing y autoridad persistente; cleanup PASS. Evidencia filtrada de cancelación/recuperación, no cierre de P11.
 
 D1327b pasa tres casos reales de recuperación del workflow PostgreSQL sobre `main@08bcb0b6`: `3/3` seleccionados, sin fallos, con leases, replay y backfill durable; cleanup PASS. Evidencia filtrada de recuperación/scheduler, no cierre de P11.
@@ -1018,7 +1020,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `ddcf80ee391ab2b7e1784180d54031b067a90e21` (2026-11-27).
+**Observed source baseline:** `b980ff94bd4d8637bec048815595f872e6724710` (2026-11-27).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

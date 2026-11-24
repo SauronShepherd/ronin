@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1329",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"b980ff94bd4d8637bec048815595f872e6724710",
+  "implementation_commit_sha":"b980ff94bd4d8637bec048815595f872e6724710",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1329-postgres-leadership-event-inbox-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1329-postgres-leadership-event-inbox-20261127 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"leadership or event_inbox\""],
+  "result":{"pytest":"2 selected passed; 0 selected skipped; 0 selected failed; 19 deselected","scope":"real PostgreSQL scheduler leadership generation fencing/persistence and event inbox freeze/replay deliveries","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":4.927,"total_wall_seconds":9.92},
+  "evidence_hashes":{"pytest-output.log":"8F880256D7D770330F7E9F7A742A6FF93285FF6CAC80791EA1B8CE929F862BE5","pytest-postgres.log":"B5F446D5A5D900C99730143FE94456C38742F7ED85A8B1581B505D87134DA9B2","pytest-postgres.xml":"07602A174E4E33C173D18D075CB3707B0E9D47DDC237FBBFAB9E022BF95FE342","pytest-timings.json":"C336E56097780C041EA5CA2EA6B230E2FA03472C8D20D17CA257FAD1AC7DFA60","runner-timings.json":"39CFAB8FCD9416499C7CFC1E14FEAE9CB1C4637E2FC3007442B78238A51A9590"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a filtered PostgreSQL diagnostic, not the complete workflow/scheduler or Python/PostgreSQL suite.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
