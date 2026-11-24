@@ -2,6 +2,9 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1241 queda **NOT_PASS/incompleto**: Docker worker observó `3` casos PASS pero
+no terminó el cuarto; cleanup explícito PASS y sin promoción de capacidad.
+
 D1240 pasa Azure Blob-compatible con Azurite `1/1` para discover/read/replay;
 cleanup PASS. Es evidencia filtrada/bounded y no cambia P11, P13 ni release.
 
@@ -850,7 +853,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `502470caaf224c9461a120fe81bf5266086a4828` (2026-11-24).
+**Observed source baseline:** `370b864b8558c2c9864e5b7b8ac6a9eabdc46b59` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
