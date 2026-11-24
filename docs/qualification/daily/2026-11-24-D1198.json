@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1198",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "6c4dda742b27e8e0e56b6199d67c32d8f97046ff",
+  "implementation_commit_sha": "6c4dda742b27e8e0e56b6199d67c32d8f97046ff",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1198-live-rf3-failover-postgres-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1198-live-rf3-failover-postgres-20261124 -WorkerImage ronin:qualification-d1197-rf3 -StorageBackend postgres -TestGrep 'live streaming multi-broker failover resumes from the durable checkpoint' -MultiBroker -RequestTimeoutSeconds 30"],
+  "result": {"playwright": "1/1", "api_events": "5/5 correlated", "api_outcomes": {"OK": 5}, "real_services": ["PostgreSQL", "three-broker Redpanda", "Ronin API", "Docker worker"], "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live diagnostic; route-wide coverage was not run.", "Bounded RF3 failover evidence does not prove indefinite operation, production HA, complete P11 or release approval."]
+}
