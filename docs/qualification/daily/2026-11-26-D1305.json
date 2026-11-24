@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1305",
+  "date":"2026-11-26",
+  "status":"PASS",
+  "candidate_sha":"5b090133d472e3d233ed3eac3dd4d470e393c8be",
+  "implementation_commit_sha":"5b090133d472e3d233ed3eac3dd4d470e393c8be",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1305-postgres-catalog-store-20261126",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1305-postgres-catalog-store-20261126 -TestPath tests/integration/test_postgres_catalog_store.py"],
+  "result":{"pytest":"1 passed; 0 skipped; 0 failed","scope":"catalog assets, governance, revisions, conflicts and lineage","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","pytest_seconds":0.98},
+  "evidence_hashes":{"pytest-output.log":"556B2D5E2B35E632D4616E873CA9D009B6DEB1110B95BDBACCF2A54A4E138B15","pytest-postgres.log":"11DDFB2C237F06F0FE9DB872ACAD3BF595430556CA21788AEC1DA241BE7F4AB8","pytest-postgres.xml":"BDA7D77205C79D9CF60A09A7B43686EC909331B63E61CE754C31052085078166","pytest-timings.json":"D15099DDA1DA6D4B55FC98D8833FB5D772D82F4395EB1A2153FAB5E02406D64E","runner-timings.json":"C275FDDDDAA830D4F682A063DEC46972BEC6511518BC784C43097CCE45CE2A30"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded backend evidence; it is not complete provider matrix, indefinite operation, complete P11 or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}
