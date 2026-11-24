@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1358",
+  "date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "eda4e493cc6193796122f92b25502e99e414be68",
+  "implementation_commit_sha": "eda4e493cc6193796122f92b25502e99e414be68",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1358-postgres-streaming-checkpoint-real-20261128",
+  "commands": [
+    "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1358-postgres-streaming-checkpoint-real-20261128 -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py"
+  ],
+  "result": {
+    "pytest": "4 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "Complete tests/integration/test_postgres_streaming_checkpoint_real.py against isolated PostgreSQL 16.4",
+    "coverage": "disabled; filtered file qualification",
+    "cleanup": "PASS; isolated PostgreSQL container removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "F3E2DD912B3A7890212F19100C548BAE28589616500D246387DC1B93EF179CA5",
+    "pytest-postgres.log": "2ECD5A430E42E6C549FA221FB277D09980C42B28AB7B2BB9012079CAC17B2569",
+    "pytest-postgres.xml": "24591B35D6839F600A3636562112AFA31AE7FBA43582F6706D997C09F44ED52E",
+    "pytest-timings.json": "7C5506355536FAB0F84CDB792C67E6B7915E676F41592BC7E2267D86E8BFD74A",
+    "runner-timings.json": "FABD845A17DB817F83246495ECBA157236419310FFD1BC63564100CBDBF54D41"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered PostgreSQL evidence only; it is not the complete Python/PostgreSQL suite or coverage evidence."
+  ]
+}
