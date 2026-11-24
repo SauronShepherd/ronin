@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1276",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"f393877e3ffabe849f551f2e2f24abc9ac22bcb9",
+  "implementation_commit_sha":"f393877e3ffabe849f551f2e2f24abc9ac22bcb9",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1276-live-supervisor-soak-300-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1276-live-supervisor-soak-300-postgres-20261124 -StorageBackend postgres -TestGrep \"supervisor soak\" -SupervisorSoakSeconds 300 -RequestTimeoutSeconds 30"],
+  "result":{"selection":"live streaming supervisor soak drains while records arrive for a bounded duration","playwright":"1 passed; 0 skipped; 0 failed","api_events":"369/369 correlated","api_outcomes":"369 OK","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","soak_seconds":300,"route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":361.88},
+  "evidence_hashes":{"browser-live.log":"5F28ED42B9377F84A79575C0BBD0E3056267E15AC5D9362650CB9301949ADBD6","browser-live.xml":"9B0654E12B2CD2382E312CCCE79A214B19E552B5ABDC4FA08E25BBA7D8C55A2A","live-api-traffic.json":"DED4667CDCA5E5ADC4D88406CA95FD370CEFB874783D7B9062B082F8F8060157","live-python-freeze.txt":"BDFD4C1F7A1C927B853C44FB592F855678C73EE0473CFFCDC7DDAD0B387CC031","live-server.stderr.log":"90EDBCC12FFC834A4C2550B660B16FF4FC377B4E5D5EAA28C5A658C97C400920","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"5BB9715E0AAB1B5F96DE776D557AB7E8D66B623E999E7E6AFD4CB7159F7852E9","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded 300-second supervisor soak only; it does not certify indefinite operation, production SLO, HA, multi-worker operation, complete P11 or release approval.","Historical evidence remains bound to exact candidates and is not reattributed.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}
