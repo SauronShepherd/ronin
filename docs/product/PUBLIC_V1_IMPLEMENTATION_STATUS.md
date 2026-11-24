@@ -7,6 +7,8 @@
 
 ## Current exact-SHA qualification — 27–28 November 2026
 
+D1396 pasa la recuperación del ledger JSONL del kernel sobre `main@f98f4cc6`: `17/17` pruebas, `0` fallos, cubriendo recuperación de intento/secuencia, ledger vacío, rechazo de eventos parciales y fail-closed ante corrupción, mezcla de intentos y secuencias no contiguas; cleanup PASS. Es evidencia bounded de recuperación runtime y no cierra P11 ni release.
+
 D1395 pasa el archivo completo de bundles PostgreSQL real sobre `main@169e7fa4`: `2/2` pruebas, `0` skips/fallos, cubriendo commit multi-objeto atómico/idempotente y rollback por conflicto de late binding; cleanup PASS. Es evidencia bounded de bundles/recovery backend y no cierra P11 ni release.
 
 D1394 pasa el control plane connector PostgreSQL real sobre `main@4839996a`: `1/1` prueba, `0` skips/fallos, con discover/preview tras reopen; cleanup PASS. Es evidencia bounded de connector control plane/backend y no cierra P11 ni release.
