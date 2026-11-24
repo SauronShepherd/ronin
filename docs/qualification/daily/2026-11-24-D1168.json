@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1168",
+  "date": "2026-11-24",
+  "status": "pass_bounded_postgres_stream_processor_reopen",
+  "candidate_sha": "b09bb5d2adf439303089db632ce64564bda27c88",
+  "implementation_commit_sha": "b09bb5d2adf439303089db632ce64564bda27c88",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1168.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory <external-temp-dir> -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py -TestFilter 'processor_reopens or table_reopen or checkpoint_bundle'",
+  "result": {
+    "qualification": "PASS: 3/3 selected PostgreSQL integration cases, 0 skipped, 0 failed in 3.30s; 1 unrelated case deselected",
+    "criterion": "PASS: MicroBatchProcessor reopened with real PostgreSQL checkpoint and sink state, resumed at the durable checkpoint, returned idle and preserved exactly one sink record",
+    "runtime": "PASS: isolated PostgreSQL 16.4 real service; checkpoint CAS/reopen and sink reopen/replay cases also passed",
+    "cleanup": "PASS: runner removed the isolated PostgreSQL container and volumes",
+    "production_change": "None; integration qualification test only",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1168-postgres-processor-reopen-20261124",
+  "hashes": {
+    "pytest-output.log": "FB8E4764BEA95EDC95BC43ADB9BDD3BF55EBB1A0978C18773306BD81A5D84BFE",
+    "pytest-postgres.log": "B3EEB040A39608A163E766E3CDF8C0A3023B75D71843A5A1A226738A5EC95EDC",
+    "pytest-postgres.xml": "2E590FAD33218AD1FA727AF3453BFD9E6F66C99E8DA46CB8DA3BD93C26BB4920",
+    "pytest-timings.json": "715D1291A1438E14A4352D5AF9C47AE29F56D2533915F22158CD331EECA8139E",
+    "runner-timings.json": "68268D146057A5F0DA8CDF32E2A15A209539B7D3DDEA8ED55CE5DEB23628D498"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused bounded integration diagnostic; not indefinite operation, production SLO, HA, multi-worker or external-provider qualification.",
+    "The test uses a deterministic source double with real PostgreSQL sink/checkpoint adapters; it does not qualify a real Kafka broker, complete P11 or any release gate. D83-D1167 evidence remains bound to exact candidates."
+  ]
+}

@@ -15,6 +15,11 @@ D1167 passes a focused real PostgreSQL streaming sink recovery cell on
 reopen/replay with zero duplicate rows, with isolated-service cleanup PASS.
 This bounded persistence evidence does not close P11 or release.
 
+D1168 passes a focused real PostgreSQL processor recovery cell on
+`main@b09bb5d2`: `3/3` selected integration cases passed, including restart
+from the durable checkpoint with no duplicate sink row. This bounded evidence
+uses a deterministic source double and does not close P11 or release.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s`, with the server configured against real
 PostgreSQL, 28/28 API events OK and cleanup PASS. This bounded evidence does not

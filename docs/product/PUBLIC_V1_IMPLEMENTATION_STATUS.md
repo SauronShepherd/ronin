@@ -21,6 +21,12 @@ reopening `PostgresStreamTable` and replaying the same batch with zero duplicate
 rows. The isolated PostgreSQL runner cleanup passed. This bounded persistence
 evidence does not close P11 or release and does not reattribute D83-D1166.
 
+D1168 passes a focused real PostgreSQL processor recovery cell on
+`main@b09bb5d2`: `3/3` selected integration cases passed in `3.30 s`. A second
+`MicroBatchProcessor` instance recovered the durable checkpoint, returned idle
+and preserved exactly one sink record. This bounded evidence uses a deterministic
+source double and does not close P11 or release.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s` with `realServices.postgres=true`, covering
 PostgreSQL page discovery and watermark advancement without replay duplication,
