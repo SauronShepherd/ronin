@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1274",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"2a0aa4551aa265596bd0af330aa660bfcc44a6d2",
+  "implementation_commit_sha":"2a0aa4551aa265596bd0af330aa660bfcc44a6d2",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1274-live-two-partition-current-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1274-live-two-partition-current-postgres-20261124 -StorageBackend postgres -TestGrep \"live streaming drains a two-partition backlog in bounded micro-batches\" -RequestTimeoutSeconds 60"],
+  "result":{"selection":"live streaming drains a two-partition backlog in bounded micro-batches","playwright":"1 passed; 0 skipped; 0 failed","api_events":"44/44 correlated","api_outcomes":"44 OK","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":46.73},
+  "evidence_hashes":{"browser-live.log":"F4F2C995AACD7B5E817CACF20F3FD6B33D3837282DBC6D730023F9835BE8AF7C","browser-live.xml":"4764C0FF1A03AB151E899E647BEE4C463F6573A2343634E1F5A39481D6BC6E55","live-api-traffic.json":"FB348810C2643F5F6953A97C477757AC118C9CAC476EBE3FE96794E91EA36AE2","live-python-freeze.txt":"C24789823FB67E690FB7ABECFA5417F6A7932A212AB8AA729335A54F5B6E2599","live-server.stderr.log":"5B76293EA32568E53B329F5292CD1C344F4843B09466AC0B557E9145717D89E0","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"FAB0A834E476910528A17D4082DDF6F3D598F7921AD49507A168A9212D95B38B","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded two-partition backlog evidence only; it does not certify indefinite operation, HA, complete P11 or release approval.","D1247/D1249 historical NOT_PASS results remain bound to exact prior candidates and are not reattributed; this is fresh evidence on 2a0aa455.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}
