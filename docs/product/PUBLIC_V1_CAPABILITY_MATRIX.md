@@ -36,6 +36,11 @@ D1171 passes the complete non-performance Python/PostgreSQL regression on
 `main@ad114f11`: `4765/4796` passed, `31` explicit skips, `0` failures and
 cleanup PASS. These bounded results do not close P11 or release.
 
+D1172 passes a filtered Docker S3-compatible provider cell on
+`main@f9ee8b6d`: `1/1` integration test passed against isolated Floci,
+including retry after a simulated lost PUT response. Cleanup PASS. This is
+local compatible-provider evidence, not production-cloud certification.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s`, with the server configured against real
 PostgreSQL, 28/28 API events OK and cleanup PASS. This bounded evidence does not
@@ -624,7 +629,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `ad114f1195eb183e87e268e60372fa8334530f46` (2026-11-24).
+**Observed source baseline:** `f9ee8b6dee1380efa442c168d0234db74e090448` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
