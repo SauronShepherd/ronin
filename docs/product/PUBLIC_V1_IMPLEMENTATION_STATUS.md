@@ -7,6 +7,10 @@
 
 ## Current exact-SHA qualification — 27 November 2026
 
+D1320b repite el Spark Connect 4.2.0 real sobre `main@ba98415a` tras pull explícito del digest: `1/1` prueba, `0` skips/fallos, cleanup PASS e imagen dangling retirada explícitamente. D1320 conserva por separado el intento NOT_PASS por imagen ausente; ninguna evidencia se reatribuye. Es evidencia bounded de provider y no cierra P11 ni release.
+
+D1320 queda **NOT_PASS** por precondición ambiental sobre el mismo `main@ba98415a`: la imagen Spark 4.2.0 fijada no estaba localmente disponible y el servidor no inició; no se ejecutaron pruebas. El receipt conserva el fallo sin atribuirlo a producto; P11 y release no cambian.
+
 D1319 pasa el Collector OTLP real sobre `main@fe461c06`: `1/1` prueba, `0` skips/fallos, recibiendo traces, métricas y logs por OTLP/HTTP; cleanup PASS del contenedor y retirada explícita de la imagen dangling por digest. Es evidencia bounded de observabilidad/provider y no cierra P11 ni release.
 
 D1318 pasa el provider Trino 484 real sobre `main@9b192456`: `4/4` pruebas, `0` skips/fallos, cubriendo bindings preparados, byte budget, persistencia de evidencia terminal y recuperación tras SIGKILL; cleanup PASS del contenedor y retirada explícita de la imagen dangling por digest. Es evidencia bounded de provider y no cierra P11 ni release.
@@ -1994,7 +1998,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `fe461c062766c73528b1a23ecf7ace23bb5fbf5f` (2026-11-27).
+**Observed source head:** `ba98415a5a5b4a1456ced95577a23e1ff09d6c58` (2026-11-27).
 
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 

@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1320b",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"ba98415a5a5b4a1456ced95577a23e1ff09d6c58",
+  "implementation_commit_sha":"ba98415a5a5b4a1456ced95577a23e1ff09d6c58",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1320b-spark-connect-real-20261127",
+  "commands":["docker pull apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59","powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1320b-spark-connect-real-20261127"],
+  "result":{"pytest":"1 passed; 2 deselected; 0 skipped; 0 failed","scope":"Spark Connect 4.2.0 external provider smoke","service_profile":"Spark image digest sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59","cleanup":"PASS","image_cleanup":"explicitly removed dangling digest image","pytest_seconds":14.05},
+  "evidence_hashes":{"pyspark-client-install.json":"04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97","pytest-timings.json":"C1D4A8CB24F216F45C08BA3208FFE65DB0CA0D20C5972C76A4A06E1C1C5B9A5D","qualification.json":"38D1BDE7C96604EEE8D12F71061AE0C1F6E73C0387030E278BAFBA121E2F3752","qualification.log":"1890F00086C3606CBC28259BB54EFD5B472995E2212B8ECB7E95601AA179330D","spark-container.log":"9A2C36556E554022E796BC6B3F85CA8BC9EEB88FBA4AFA62269552EBA6608108","spark-junit.xml":"8CC8E432788B5DBD99E40F2A405252B79B344365E732D784BF25A9A637F349BD"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is bounded external-provider evidence; it is not complete cloud certification, indefinite operation, complete P11 or release approval."]
+}

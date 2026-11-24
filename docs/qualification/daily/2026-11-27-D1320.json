@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1320",
+  "date":"2026-11-27",
+  "status":"NOT_PASS",
+  "candidate_sha":"ba98415a5a5b4a1456ced95577a23e1ff09d6c58",
+  "implementation_commit_sha":"ba98415a5a5b4a1456ced95577a23e1ff09d6c58",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1320-spark-connect-real-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1320-spark-connect-real-20261127"],
+  "result":{"pytest":"not executed","scope":"Spark Connect 4.2.0 external provider precondition","service_profile":"Spark image digest sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59","cleanup":"not required","failure":"pinned image absent locally; server did not start"},
+  "evidence_hashes":{"pyspark-client-install.json":"04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97","qualification.json":"0B767C6D45B259111D3343170E85BEE2B2FC1E22D6E838DABD6EC7432453202A","qualification.log":"0ADD321834EC6D30C561228C68E1BF9422CC9D3C3A2CFDA8CF8A3B491752987B"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Environmental NOT_PASS only; no Spark Connect test ran and no product failure is inferred."]
+}

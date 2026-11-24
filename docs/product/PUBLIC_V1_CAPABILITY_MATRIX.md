@@ -1002,7 +1002,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `fe461c062766c73528b1a23ecf7ace23bb5fbf5f` (2026-11-27).
+**Observed source baseline:** `ba98415a5a5b4a1456ced95577a23e1ff09d6c58` (2026-11-27).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
@@ -1197,3 +1197,6 @@ qualification result, dependency or deployment profile changes. Do not mark a
 row `release-qualified` while `public-v1-status.json` reports an incomplete or
 blocked release.
 
+D1320b repite Spark Connect 4.2.0 real sobre `main@ba98415a`: `1/1` prueba, sin skips/fallos, tras pull explícito del digest; cleanup PASS e imagen retirada. D1320 conserva su NOT_PASS ambiental por imagen ausente; evidencia no reatribuida, bounded y sin cierre de P11.
+
+D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició y no hubo pruebas ejecutadas. Se conserva como intento ambiental separado; no cambia P11/P13/release.
