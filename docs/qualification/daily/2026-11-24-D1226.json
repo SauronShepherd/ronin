@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1226",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "1cadf15df338e40efacc935472e871c3dae10406",
+  "implementation_commit_sha": "1cadf15df338e40efacc935472e871c3dae10406",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1226-postgres-connector-runtime-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1226-postgres-connector-runtime-20261124 -TestPath tests\\integration\\test_postgres_connector_real.py"],
+  "result": {"pytest": "2/2", "passed": 2, "failed": 0, "skipped": 0, "deselected": 0, "service": "PostgreSQL 16.4-alpine real container", "coverage": "disabled_filtered_diagnostic", "scope": "watermark pagination at equal timestamps without loss; schema/null timezone/large value handling", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered two-test diagnostic, not the complete Python/PostgreSQL suite or coverage.", "Bounded connector runtime evidence does not close P11 or release gates; P11 remains in_progress and P13 remains blocked.", "Historical connector receipts remain bound to their exact prior candidates and are not reattributed."]
+}
