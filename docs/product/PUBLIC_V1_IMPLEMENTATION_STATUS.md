@@ -7,6 +7,8 @@
 
 ## Current exact-SHA qualification — 27–28 November 2026
 
+D1366 pasa el contrato real de `PostgresQualityStore` sobre `main@6a5ae6f3`: `1/1` prueba, `0` skips/fallos, con durabilidad, scoping y orden cronológico; cleanup PASS. Es evidencia bounded de backend/calidad y no cierra P11 ni release.
+
 D1365 pasa el archivo completo ML PostgreSQL real sobre `main@fcd21c5b`: `12/12` pruebas, `0` skips/fallos, cubriendo bundles atómicos/replay/rollback, checkpoints, jobs/cancelación, Lab v1 y límites fail-closed; cleanup PASS. Es evidencia bounded de ML backend/recovery y no cierra P11 ni release.
 
 D1364 pasa el ML ArtifactStore contra Floci S3-compatible 2.1.0 real local sobre `main@a934c781`: `1/1` prueba, `0` skips/fallos; cleanup de contenedor, volumen y red PASS. Es evidencia bounded de object store/provider emulado y no certificación cloud ni cierre de P11/release.
@@ -2088,7 +2090,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `fcd21c5b7be0051fc69f11bf0d4678ad69711cc1` (2026-11-28).
+**Observed source head:** `6a5ae6f3faa24d08ecedcde26e113794117743eb` (2026-11-28).
 
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 
