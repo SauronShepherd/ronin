@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1263",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"bf406bc1f803649012601f4157ad96c2fa4d821a",
+  "implementation_commit_sha":"bf406bc1f803649012601f4157ad96c2fa4d821a",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1263-live-event-workflow-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1263-live-event-workflow-postgres-20261124 -StorageBackend postgres -TestGrep \"live streaming event workflow\" -RequestTimeoutSeconds 30"],
+  "result":{"selection":"live streaming event workflow","playwright":"1 passed; 0 skipped; 0 failed","api_events":"12/12 correlated","api_outcomes":"12 OK","service_profile":"PostgreSQL + Redpanda + Ronin API","cleanup":"PASS","duration_seconds":50.63},
+  "evidence_hashes":{"browser-live.log":"CF18BEC6D04EE93120073A13646CC1F158AB348ACE8EBEE87DCFC8A13343320D","browser-live.xml":"C70CB700D59931C964048280FE03FD7DD42EBE2BC809CC30C0D9B4BB72ACC5A3","live-api-traffic.json":"41C276E97090FF425C13A2A1110F46163DFB53B3F857E6ED9A3BF4E21141F8A2","qualification-summary.json":"7AC27CA4EE4171C525DC33CF0464DF78B440B14E7BF786721E58A793D8868839"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded single-broker live event-workflow evidence only; it does not certify indefinite operation, HA, multi-worker operation, complete P11 or release approval.","D1254-D1262 and all historical evidence remain bound to exact candidates; no reattribution.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}
