@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1190",
+  "date": "2026-11-24",
+  "status": "pass_otlp_real_collector",
+  "candidate_sha": "33933e3249432994dfd95a1ce9efe447bcd7b64c",
+  "implementation_commit_sha": "33933e3249432994dfd95a1ce9efe447bcd7b64c",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1190.md",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_otlp_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1190-otlp-current-20261124"],
+  "result": {"tests": "1/1 passed, 0 skipped, 0 failed", "service": "OpenTelemetry Collector Contrib digest sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621", "coverage": "OTLP/HTTP traces, metrics and logs", "cleanup": "PASS; container removed", "elapsed_seconds": 3.848},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded local OTLP provider diagnostic; not complete P11 or release approval.", "No historical evidence reattributed."]
+}
