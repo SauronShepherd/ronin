@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1355",
+  "date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "20a8da8ffc8cfa78c3f1a20634ea5f32526e7576",
+  "implementation_commit_sha": "20a8da8ffc8cfa78c3f1a20634ea5f32526e7576",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1355-postgres-retention-real-20261128",
+  "commands": [
+    "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1355-postgres-retention-real-20261128 -TestPath tests/integration/test_postgres_artifact_retention_barrier.py"
+  ],
+  "result": {
+    "pytest": "3 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "Complete tests/integration/test_postgres_artifact_retention_barrier.py against isolated PostgreSQL 16.4",
+    "coverage": "disabled; filtered file qualification",
+    "cleanup": "PASS; isolated PostgreSQL container removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "389AA2F163276329BEF92F017A09CF22B16C4A5E922E08B8C91C760F71B8BE36",
+    "pytest-postgres.log": "E22F9E43EBDA744C336BE2DFFD02E63CC9A71FB684383C4EEB008F6757672D17",
+    "pytest-postgres.xml": "77BC8458329A71D939A06421754016EEC05DC1850933BEBBE8AE0237E94AB2EE",
+    "pytest-timings.json": "247028422B26178E1122AB2BAC7560DD97826E9DCB60A0D5A480B47B76F09369",
+    "runner-timings.json": "A6FEA77DAF2042DDE13938A5A2ED9ABDBCD014519315C6981775D0487B09BB8A"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered PostgreSQL evidence only; it is not the complete Python/PostgreSQL suite or coverage evidence."
+  ]
+}
