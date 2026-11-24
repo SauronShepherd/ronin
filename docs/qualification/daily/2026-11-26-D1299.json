@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1299",
+  "date":"2026-11-26",
+  "status":"PASS",
+  "candidate_sha":"8e8ace17c5f94eeae7309a60d9d49a302fb17952",
+  "implementation_commit_sha":"8e8ace17c5f94eeae7309a60d9d49a302fb17952",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1299-postgres-scheduler-fencing-20261126",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1299-postgres-scheduler-fencing-20261126 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"scheduler_attempt_leases_fence_workers_and_reclaim_expiry or scheduler_execution_outbox_survives_expiry_and_reconciles or scheduler_event_inbox_freezes_and_replays_deliveries or scheduler_leadership_is_generation_fenced_and_persistent\""],
+  "result":{"pytest":"4 passed; 0 skipped; 0 failed; 17 deselected","scope":"leadership/attempt fencing, lease reclaim, execution outbox expiry/reconciliation and event inbox freeze/replay","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","pytest_seconds":4.95},
+  "evidence_hashes":{"pytest-output.log":"F0BCE98D1208C43E790B595D9D3AC999380D0F7E7D619FAA960D63182EFF051E","pytest-postgres.log":"C65C7CB231F72286FCADE7EAC4CEABE33EF975EB8CE4A747AEAD5714BACEB86A","pytest-postgres.xml":"C3C6445B67AC17359759C7DA33432D2FA281A1A360E197F545C5B4A5475F371C","pytest-timings.json":"705CB3EB2E9D8F7E00AF94852CAB14843D9564C0D781E0B924A5F05FB54748E6","runner-timings.json":"0614FCDFE08889ECC165E582711D45AD08EC4C3048D04B44C7FC34EA09B01759"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered scheduler recovery evidence; it is not complete P11, HA, indefinite operation or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}

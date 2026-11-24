@@ -28,6 +28,8 @@ D1297 pasa la integración PostgreSQL de checkpoints streaming sobre `main@d09cd
 
 D1298 pasa la recuperación scheduler PostgreSQL sobre `main@8eaf904a`: `2/2`, sin skips/fallos, cubriendo lease expiry y process-crash replay sin duplicados; cleanup PASS. Es evidencia bounded, no cierre de P11.
 
+D1299 pasa cuatro contratos adicionales de scheduler PostgreSQL sobre `main@8e8ace17`: `4/4`, sin skips/fallos, cubriendo leadership/attempt fencing, reclaim, outbox y event inbox replay; cleanup PASS. Es evidencia bounded, no cierre de P11.
+
 D1283 pasa supervised drain/idle con checkpoint durable: `1/1`, `5/5` eventos (`4 OK`, `1 WARN` esperado) y cleanup PASS sobre `main@5ce62df3`. Es evidencia bounded, no cierre de P11.
 
 D1282 pasa reinicio de broker y recuperación de checkpoint: `1/1`, `11/11` eventos (`8 OK`, `3 ERROR` esperados durante outage) y cleanup PASS sobre `main@71e8ab5a`. Es evidencia bounded, no certificación HA ni cierre de P11.
@@ -960,7 +962,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `8eaf904ae8df445663cefd917236597f52987872` (2026-11-26).
+**Observed source baseline:** `8e8ace17c5f94eeae7309a60d9d49a302fb17952` (2026-11-26).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
