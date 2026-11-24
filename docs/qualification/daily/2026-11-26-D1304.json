@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1304",
+  "date":"2026-11-26",
+  "status":"PASS",
+  "candidate_sha":"564af91e7701c3a838dd0c289b7d3d92a17937c9",
+  "implementation_commit_sha":"564af91e7701c3a838dd0c289b7d3d92a17937c9",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1304-postgres-local-composed-catalog-http-20261126",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1304-postgres-local-composed-catalog-http-20261126 -TestPath tests/integration/test_postgres_local_composed_catalog_http.py"],
+  "result":{"pytest":"1 passed; 0 skipped; 0 failed","scope":"local-composed catalog and governance served over real HTTP","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","pytest_seconds":4.42},
+  "evidence_hashes":{"pytest-output.log":"C354297355AEF407DF85B4353643B30432AAC9FB50293ED54C839834B58147BF","pytest-postgres.log":"5DCC8B4D8C91896E999161F1CEB6464CEA3CCC388F1F56827AFAC6175E497258","pytest-postgres.xml":"1E53A00454E6335DC985DF8B6484E8D365B7F07AF9DE55D1AF73E01DF52730A5","pytest-timings.json":"FADA02999F6C7441761C81FDDB3649CCAD6F827DAE53C814256693F848CC8C4A","runner-timings.json":"D6CA427EDF29342979CF627609302F8793DE7C11D5D21857BCC183C911B7678C"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded backend/API evidence; it is not complete provider matrix, indefinite operation, complete P11 or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}
