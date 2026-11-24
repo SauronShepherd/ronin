@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1376 pasa las tres lanes externas seleccionadas sobre `main@0a486233`: `3/3` pruebas, sin skips/fallos, cubriendo S3 JSON sink/retry, ML ArtifactStore S3 y Azure Blob/Azurite; cleanup Docker PASS. Evidencia bounded de providers emulados, no certificación cloud ni cierre de P11.
+
+D1375 queda separado como NOT_PASS de tooling: filtro pytest inválido antes de colección; los fixtures Floci/Azurite sí limpiaron correctamente.
+
 D1374 pasa la suite completa no-performance Python/PostgreSQL sobre `main@a3b6cf6d`: `4765/4796` PASS, `0` fallos, `31` skips explícitos; cobertura habilitada y cleanup PASS. Evidencia amplia, pero no completa de proveedores externos/Docker opt-in; no cierre de P11.
 
 D1373 pasa el archivo completo de bundles PostgreSQL real sobre `main@154ac984`: `2/2` pruebas, sin skips/fallos, cubriendo rollback por conflicto de late binding y commit multi-objeto atómico/idempotente; cleanup PASS. Evidencia bounded de recuperación/bundles backend, no cierre de P11.
@@ -1110,7 +1114,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `a3b6cf6d95daf5e1b903289157e3bff7ee6412d8` (2026-11-29).
+**Observed source baseline:** `0a4862333083e65ca6c7277eb419025ae0a32822` (2026-11-29).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
