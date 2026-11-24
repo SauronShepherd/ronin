@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1360",
+  "date": "2026-11-28",
+  "status": "NOT_PASS",
+  "candidate_sha": "7bf7abd56f53d2317964b2a4b799196b9fa16de5",
+  "implementation_commit_sha": "7bf7abd56f53d2317964b2a4b799196b9fa16de5",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1360-s3-floci-real-20261128",
+  "commands": [
+    "docker compose -p ronin-d1360-s3 -f examples/cloud-studio/compose.floci.yaml up -d floci",
+    "python -m pytest -q tests/integration/test_s3_json_connector_real.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1360-s3-floci-real-20261128\\pytest-junit.xml"
+  ],
+  "result": {
+    "pytest": "not executed",
+    "scope": "S3 JSON connector against Floci S3-compatible service",
+    "failure": "Floci did not become ready on the HTTP endpoint during the readiness window",
+    "cleanup": "PASS; container, volume and network explicitly removed"
+  },
+  "evidence_hashes": {
+    "compose-up.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "floci.log": "21E6927080498F7BE4F77C611829076F5AEED72EDF61FFC2B1A89FAB18B423C0"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Explicit NOT_PASS environmental evidence; no S3 provider test ran and no provider capability is claimed.",
+    "A current Docker/Floci lane with a healthy endpoint is required before repeating the provider qualification."
+  ]
+}
