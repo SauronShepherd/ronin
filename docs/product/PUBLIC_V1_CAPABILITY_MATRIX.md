@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1344 pasa la aceptación Docker completa sobre `main@7d86b905`: integración `27/27` y strict v0.1 `15/15`, sin skips/fallos, con runtime/providers locales y E2E; cleanup PASS. Evidencia bounded, no cierre de P11.
+
 D1343 pasa la suite completa Python/PostgreSQL no-performance sobre `main@9f7ec3dc`: `4765/4796`, `31` skips, `0` fallos y `23` warnings; cobertura habilitada y cleanup PASS. Regresión amplia, no cierre de P11.
 
 D1342 pasa el archivo completo de control plane connector PostgreSQL sobre `main@7445ce01`: `1/1` caso, sin skips/fallos, con discover/preview y reopen; cleanup PASS. Evidencia completa del archivo, no cierre de P11.
@@ -1048,7 +1050,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `9f7ec3dc71b8c1fc9bb3ea1c45061a76a4fc5ee7` (2026-11-28).
+**Observed source baseline:** `7d86b905c805a3669c0bfc506f423c5c896569b6` (2026-11-28).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1344",
+  "date":"2026-11-28",
+  "status":"PASS",
+  "candidate_sha":"7d86b905c805a3669c0bfc506f423c5c896569b6",
+  "implementation_commit_sha":"7d86b905c805a3669c0bfc506f423c5c896569b6",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1344-docker-full-current-20261128",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1344-docker-full-current-20261128 -ImageTag ronin:qualification-d1344"],
+  "result":{"docker_integration":"27/27 passed; 0 skipped; 0 failed","strict_v01":"15/15 passed; 0 skipped; 0 xfailed; 0 failed","scope":"real Docker worker/runtime, PostgreSQL journeys, appliance backup/restore, Floci S3, Azurite Azure Blob and v0.1 E2E","image_digest":"sha256:2ebfecbe747cf8beaaec97b575efc0dabda12d3ae62b2ab91cd4e7e3b4674adf","cleanup":"PASS","pytest_seconds":162.4},
+  "evidence_hashes":{"azurite-qualification.log":"5698986AB1FBB1EC138006109E737BCC545D2DFBFC14947AC1D6864218D2813B","docker-cleanup.json":"5538EBBC65C2A554D68D77428C4E9A8DCAE7C82DBD50828A8977CAF5FBFF0F74","docker-pytest-output.log":"2779ADF0054B92355C27CC0E3A39887F9B43B3764D854B761B748FFA61C23E5F","docker-qualification.log":"34C250BA033F8D0B1CB557E88B67B931517FF82A09CF24BACF50B227E7A3C42C","floci-s3-qualification.log":"87DD55582EEE878DE3A7329B7D164FA1630E6A192F7ECE0420DEDCC386D8DCC8","postgres-qualification.log":"59664D90DEF85D6F185141EF1D327D59936426A9997DF898498B20BCD43943DB","qualification-summary.json":"91D428D8D57BA4BA8113AD93E4D98E37F90ED9593EE3DE56858BB0F44300A553","v01-acceptance-strict.json":"5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C","v01-acceptance.xml":"98A8EB6CC57458EA7FA1F2090AE34E1F77AA0F96825FE59D3EFD4EBC73E49361"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["The qualification summary records resource measurement unavailable for the cancellation and timeout cases because execution ended before final measurement; no owned containers remained and cleanup was PASS.","This evidence does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release."]
+}
