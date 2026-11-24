@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1248 focused live diagnostic de partición vacía pasa `1/1`, con `4/4` llamadas correlacionadas y cleanup PASS; es diagnóstico aislado y no borra D1247 NOT_PASS.
+
 D1247 full live product qualification queda NOT_PASS en `40/44` Playwright, con 3 fallos y 1 skip; 495/495 eventos HTTP correlacionados y cleanup PASS. No se promueve ni cierra P11.
 
 D1246 pasa Helm/kind PostgreSQL con upgrade/rollback, persistencia tras reinicio de PostgreSQL y deployment, health/Studio/API y cleanup PASS; soporte Docker del mismo SHA `27/27` y `15/15` strict. Es evidencia bounded y no cierra P11 ni release.
@@ -866,7 +868,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `3082b63f9044478e98ae17f5703f4b85abf5b8e1` (2026-11-24).
+**Observed source baseline:** `092875b9f0b43f4885d8031638c06848639ec887` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

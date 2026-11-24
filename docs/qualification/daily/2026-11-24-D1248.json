@@ -1,0 +1,14 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1248",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"092875b9f0b43f4885d8031638c06848639ec887",
+  "implementation_commit_sha":"092875b9f0b43f4885d8031638c06848639ec887",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1248-live-empty-partition-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1248-live-empty-partition-postgres-20261124 -StorageBackend postgres -TestGrep 'live streaming health reports an empty partition' -RequestTimeoutSeconds 30"],
+  "result":{"test_kind":"live-ui-diagnostic","playwright":"1/1","passed":1,"failed":0,"skipped":0,"api_events":"4/4 correlated","api_outcomes":{"OK":4},"real_services":"PostgreSQL + Kafka/Redpanda + Ronin API","cleanup":"PASS"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Focused diagnostic only; it does not erase or reattribute D1247 full-live NOT_PASS.","The full acceptance interaction remains NOT_PASS with its three exact failures preserved.","Temporary services, volume and network were removed; no kind clusters remained."]
+}
