@@ -5,12 +5,14 @@ from uuid import uuid4
 
 import pytest
 from studio_streaming import (
+    MicroBatchProcessor,
     PostgresStreamCheckpointStore,
     PostgresStreamTable,
     StreamBatch,
     StreamCheckpoint,
     StreamPosition,
     StreamRecord,
+    StreamSinkCommit,
 )
 
 pytestmark = pytest.mark.skipif(
@@ -77,3 +79,52 @@ def test_postgres_stream_table_reopen_replays_without_duplicate_rows() -> None:
         assert reopened.read(stream_id) == batch.records
     finally:
         reopened.close()
+
+
+def test_postgres_stream_processor_reopens_with_durable_checkpoint() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    stream_id = f"processor-reopen-{uuid4().hex}"
+    batch = StreamBatch(
+        (StreamRecord(0, 21, 789, "processor-key", {"event": "processed"}),),
+        StreamCheckpoint((StreamPosition(0, 21),)),
+    )
+
+    class Source:
+        def poll(self, checkpoint, *, limit, timeout_seconds):
+            assert limit == 1
+            assert timeout_seconds == 0.0
+            return batch if not checkpoint.positions else StreamBatch((), checkpoint)
+
+    class Sink:
+        def __init__(self, table):
+            self.table = table
+
+        def write(self, current_stream_id, current_batch, rows):
+            written = self.table.append(current_stream_id, current_batch)
+            return StreamSinkCommit(
+                f"postgres-batch:{current_batch.checkpoint.digest}",
+                written,
+                current_batch.checkpoint.digest,
+            )
+
+        def close(self):
+            self.table.close()
+
+    first_store = PostgresStreamCheckpointStore(dsn)
+    first = MicroBatchProcessor(Source(), Sink(PostgresStreamTable(dsn)), first_store)
+    try:
+        result = first.run_once(stream_id, limit=1, timeout_seconds=0.0)
+        assert result.records == 1
+    finally:
+        first.close()
+
+    reopened_store = PostgresStreamCheckpointStore(dsn)
+    reopened_table = PostgresStreamTable(dsn)
+    second = MicroBatchProcessor(Source(), Sink(reopened_table), reopened_store)
+    try:
+        idle = second.run_once(stream_id, limit=1, timeout_seconds=0.0)
+        assert idle.records == 0
+        assert reopened_store.get(stream_id) == batch.checkpoint
+        assert reopened_table.read(stream_id) == batch.records
+    finally:
+        second.close()
