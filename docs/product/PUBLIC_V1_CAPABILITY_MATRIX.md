@@ -32,6 +32,10 @@ Redpanda and Ronin API; the durable checkpoint resumed after restart and final
 lag reached zero. All `11/11` API events correlated and cleanup passed. This
 bounded recovery evidence does not close P11 or release.
 
+D1171 passes the complete non-performance Python/PostgreSQL regression on
+`main@ad114f11`: `4765/4796` passed, `31` explicit skips, `0` failures and
+cleanup PASS. These bounded results do not close P11 or release.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s`, with the server configured against real
 PostgreSQL, 28/28 API events OK and cleanup PASS. This bounded evidence does not
@@ -620,7 +624,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `4c533a2e1009d0afce6ad3b3c01052efe0702361` (2026-11-24).
+**Observed source baseline:** `ad114f1195eb183e87e268e60372fa8334530f46` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

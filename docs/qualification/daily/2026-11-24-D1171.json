@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1171",
+  "date": "2026-11-24",
+  "status": "pass_bounded_full_python_postgres_suite",
+  "candidate_sha": "ad114f1195eb183e87e268e60372fa8334530f46",
+  "implementation_commit_sha": "ad114f1195eb183e87e268e60372fa8334530f46",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1171.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {
+    "qualification": "PASS: 4765/4796 tests passed, 31 explicit skips, 0 failures, pytest 770.93s",
+    "criterion": "PASS: complete non-performance Python and PostgreSQL-backed suite executed on a clean candidate with branch coverage enabled",
+    "runtime": "PASS: isolated PostgreSQL 16.4 service; streaming PostgreSQL integration file passed 4/4 within the full suite",
+    "cleanup": "PASS: isolated PostgreSQL container and volumes removed",
+    "production_change": "None; full regression qualification only",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1171-python-postgres-full-20261124",
+  "hashes": {
+    ".coverage": "88E6F08938D8217E0C3A90595F4E9BF66507C73E66C201CE402832E075723097",
+    "pytest-output.log": "00F659D1F8C94D3073F8106EECAA470E47C7F443CAFDD799823E3606CA9A56A3",
+    "pytest-postgres.log": "2438A19FF1EDECE22631830A1CC281B54FCF07B9C9A968EB639B38B39E068CA1",
+    "pytest-postgres.xml": "93C09BD4208DDFFC6BE5B245F0FECBC9A0551D775D15E16F787A7F570304EA10",
+    "pytest-timings.json": "BF2A4C095AE5C76004416355E986134A7CF30C435E47FA18B615F05E7131CD87",
+    "runner-timings.json": "891A51797B7F3D77E3BF2DA3CD1F8760323361B51727B6E0F6716A19844EE651"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "31 explicit skips remain: Docker/worker, multi-broker, external S3/Azure/OTLP/Trino/SDP/Spark, POSIX/symlink and opt-in backup lanes.",
+    "This is complete-file bounded regression evidence, not complete P11, provider certification, indefinite operation or release approval. D83-D1170 evidence remains bound to exact candidates."
+  ]
+}
