@@ -1,0 +1,16 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1294",
+  "date":"2026-11-26",
+  "status":"PASS",
+  "candidate_sha":"5386e58165b95803835ff4e5198d2d895bf1fc1b",
+  "implementation_commit_sha":"5386e58165b95803835ff4e5198d2d895bf1fc1b",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1294-posix-contracts-final-20261126",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1294-docker-image-20261126 -ImageTag ronin:qualification-d1294-posix -TestFilter \"test_real_docker_worker_executes_clean_container_demo\" -KeepImage","powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_posix_contract_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1294-posix-contracts-final-20261126 -ImageRef sha256:4f72f65431ea79ac7a6a38422ad1c01aded6904256e4e9632c64f1b65b864ef5","docker image rm 4f72f65431ea"],
+  "result":{"pytest":"8 passed; 0 skipped; 0 failed","git_version":"2.56.1","scope":"POSIX symlink/checkout safety, secret permissions, NUL handling, native process fallback and local-file symlink contracts","image":"sha256:4f72f65431ea79ac7a6a38422ad1c01aded6904256e4e9632c64f1b65b864ef5","cleanup":"PASS","pytest_session_seconds":10.457,"elapsed_seconds":18.388},
+  "evidence_hashes":{"git-version.txt":"0EFF67955296E123526D7F9B9146FFF8D8DC8D6DBF4F49BA5F838923D2B4AF71","posix-junit.xml":"AE922886BDBAFBE319617602521F3AD72609A61C70037D9A48A0F2C84B16F9F1","pytest-timings.json":"B63656B519DA0F365A39E02053C3E2D4D80D9BFD315D75F84BEE98E4B23837B7","qualification.json":"CC8FA824F270ECD36FFA2C5FB40705317AA1735B40B00CBD77E5FA96C0F03A0B","qualification.log":"32A68170773F5396F8537078A9F7DA06A606AC4FEFD9D5B07164DD1373746769"},
+  "preattempts":["D1294-pre: default image sha256:fb9029dad0d8d5aade4bb5809c8a4e027f416a158fedc633c65667d0b21b01b8 absent locally; no tests executed.","D1294-tag: POSIX runner rejected tag ImageRef because it requires the digest of the locally built image; no tests executed."],
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is bounded Linux-platform evidence, not complete P11, indefinite operation, HA or release approval.","The temporary Ronin image and Docker resources were removed after the PASS run."]
+}
