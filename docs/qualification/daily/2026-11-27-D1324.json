@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1324",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"e5457c0ff106a4cd334d51df8e091735bfeaddce",
+  "implementation_commit_sha":"e5457c0ff106a4cd334d51df8e091735bfeaddce",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1324-postgres-connector-sync-worker-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1324-postgres-connector-sync-worker-20261127 -TestPath tests/integration/test_postgres_connector_checkpoint_real.py -TestFilter \"sync_worker_reads_writes_and_advances_scoped_checkpoint\""],
+  "result":{"pytest":"1 selected passed; 0 selected skipped; 0 selected failed; 2 deselected","scope":"real PostgreSQL connector sync worker reads/writes source rows, writes destination artifact and advances scoped checkpoint","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":4.64,"total_wall_seconds":8.277},
+  "evidence_hashes":{"pytest-output.log":"E4BDAA1F9D76B02CCED3AA53C5D2A8EB662A4FB05ECE23C038743B24AEED1AB7","pytest-postgres.log":"DD79472F93582B83F2CE5A9244F12DB15928C2F8320D5EF24B0FB2A18ED22537","pytest-postgres.xml":"41DE64751AAD4B845E5262A7BB6E1F7000E43C1FFA9D51C4BA4DF2E061F24AB7","pytest-timings.json":"F951C4D6AB01FB52C06A0B26281E15811FF530EA60295E181C353637B75FA57D","runner-timings.json":"C214F603B56EECBB553EE86B1D35E03F2133E0A1E922956B81C11697C151C0E7"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a filtered PostgreSQL diagnostic, not the complete connector or Python/PostgreSQL suite.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
