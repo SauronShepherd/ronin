@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1250 prueba una gracia bounded de 50 ms para batches parciales: local `28/28` PASS, live sigue NOT_PASS en `0/1` con 40 intentos frente a `<40`; no se promueve como solución.
+
 D1249 reproduce el backlog de dos particiones en `0/1`: exactamente 40 intentos frente a `<40`, con 82/82 eventos correlacionados y cleanup PASS; no se promueve.
 
 D1248 focused live diagnostic de partición vacía pasa `1/1`, con `4/4` llamadas correlacionadas y cleanup PASS; es diagnóstico aislado y no borra D1247 NOT_PASS.
@@ -870,7 +872,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `0c40c22bbbf830d28a4c5511da91d30ae6db222f` (2026-11-24).
+**Observed source baseline:** `67f0f0f50e9370f729c5f04eebec999d8f6e78a0` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

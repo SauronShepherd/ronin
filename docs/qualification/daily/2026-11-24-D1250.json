@@ -1,0 +1,14 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1250",
+  "date":"2026-11-24",
+  "status":"NOT_PASS",
+  "candidate_sha":"67f0f0f50e9370f729c5f04eebec999d8f6e78a0",
+  "implementation_commit_sha":"67f0f0f50e9370f729c5f04eebec999d8f6e78a0",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1250-live-two-partition-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1250-live-two-partition-postgres-20261124 -StorageBackend postgres -TestGrep 'live streaming drains a two-partition backlog in bounded micro-batches' -RequestTimeoutSeconds 90"],
+  "result":{"test_kind":"live-api-diagnostic","playwright":"0/1","passed":0,"failed":1,"skipped":0,"failure":"two-partition backlog still completed in exactly 40 attempts after bounded partial-batch grace change; contract requires <40","api_events":"82/82 correlated","api_outcomes":{"OK":82},"cleanup":"PASS"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["The production change is an experiment, not a closure: local Kafka/runtime regression passed 28/28 but live throughput criterion remains NOT_PASS.","No historical evidence was reattributed; D1249 remains bound to its prior candidate.","Temporary services, volume and network were removed; no kind clusters remained."]
+}
