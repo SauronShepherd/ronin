@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1271",
+  "date":"2026-11-24",
+  "status":"NOT_PASS",
+  "candidate_sha":"add410e5b0512756114d250bac5162ce55ce7ee7",
+  "implementation_commit_sha":"add410e5b0512756114d250bac5162ce55ce7ee7",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1271-live-backpressure-8192-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1271-live-backpressure-8192-postgres-20261124 -StorageBackend postgres -TestGrep \"sustained backpressure\" -BackpressureRecords 8192 -BackpressureTimeoutSeconds 300 -RequestTimeoutSeconds 60"],
+  "result":{"selection":"sustained backpressure at 8192 records","playwright":"0 passed; 0 skipped; 1 failed","failure":"Failed to fetch","api_events":"5/5 correlated","api_outcomes":"4 OK; 1 ERROR","application_log_errors":"0 ERROR; 0 CRITICAL","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","cleanup":"PASS","duration_seconds":146.31},
+  "evidence_hashes":{"browser-live.log":"AB9ED092091E7204C08607CBDC7EF4ECC28200D78D6F51F86CFDCFFD6E10A93C","browser-live.xml":"E21509E918057E15D1F8DCDD76148783B3E797E4272BD56ACBA5F84CB4F91008","live-api-traffic.json":"41439A122CFA35A2093ECD9A36120E6B3EA5D9DBDE54926E1B99824947C87BCD","live-python-freeze.txt":"1DE0CD8792403B56BC37B83A8E27DF2A24D0DFACE88A7A672FB1D305D8A21600","live-server.stderr.log":"ED94498BB55E6F0D5EB34234F63BB4BFEF5A5CF727381FA3062B2655874A8839","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"8E37B320E5597151808FB6441962C545A78424DDEDD4C2F7FB3FD81FB50F3218","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is explicit negative bounded evidence at 8192 records; it is not promoted and does not erase D1266.","The run does not certify indefinite operation, HA, complete P11 or release approval.","The runner removed PostgreSQL, Redpanda, volume and network; no kind clusters remained."]
+}

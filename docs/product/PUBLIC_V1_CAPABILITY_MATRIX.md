@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1271 repite el backpressure live de `8192` y queda **NOT_PASS** (`0/1`, `Failed to fetch`), con `5/5` eventos API correlacionados (`4 OK`, `1 ERROR`) y cleanup PASS sobre `main@add410e5`; la brecha de carga sigue abierta.
+
 D1270 Helm/kind con PostgreSQL real pasa install/readiness, upgrade, rollback y recuperación de jobs tras reinicios, con cleanup PASS sobre `main@cae119da`; D1269 Docker base pasa `27/27` integración y `15/15` strict v0.1. Es evidencia bounded y no cierra P11 ni release.
 
 D1267 RF3 multi-broker failover live pasa `1/1`, con `5/5` eventos API correlacionados, todos OK, y cleanup PASS sobre `main@a81d8124`; es evidencia bounded y no cierra P11 ni release.
@@ -908,7 +910,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `cae119daf04b4272f1926c84719405fad7bda4d6` (2026-11-24).
+**Observed source baseline:** `add410e5b0512756114d250bac5162ce55ce7ee7` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
