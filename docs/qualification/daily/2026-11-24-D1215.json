@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1215",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "a46603c37da90f5c84bc84722445a9ae08b18dfa",
+  "implementation_commit_sha": "a46603c37da90f5c84bc84722445a9ae08b18dfa",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1215-docker-notebook-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1215-docker-notebook-20261124 -ImageTag ronin:qualification-d1215-notebook -KeepImage"],
+  "result": {"docker_integration": "27/27", "strict_acceptance": "15/15", "skips": 0, "failures": 0, "image_digest": "sha256:4c9f7ddd58332aa4632408ae4bf0ff3bd9abf1043d37c22392fa1f9f567b732c", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded Docker acceptance; image was retained only for D1216 and then removed.", "Does not certify Notebook Studio live execution, cloud providers, indefinite operation, HA, complete P11 or release approval."]
+}

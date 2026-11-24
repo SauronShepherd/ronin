@@ -2,6 +2,11 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1216 queda **NOT_PASS**: Notebook Studio agotó 120 s antes de cualquier API,
+esperando el rail de navegación; D1215 pasa Docker `27/27` y strict `15/15`.
+No se promueve esta evidencia. P11 sigue `in_progress`, P13 `blocked` y
+release `NO-GO` (`1/13`, `0/10`).
+
 D1214 pasa supervisor soak live bounded de `60` segundos `1/1`, con `79/79`
 eventos API correlacionados todos OK y cleanup PASS sobre PostgreSQL y
 Redpanda reales; D1213 pasa Docker `27/27` y strict `15/15`. Es evidencia
@@ -763,7 +768,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `f14a6694594051b492dc1a81c312e8a28beb24b1` (2026-11-24).
+**Observed source baseline:** `a46603c37da90f5c84bc84722445a9ae08b18dfa` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

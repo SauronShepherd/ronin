@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1216",
+  "date": "2026-11-24",
+  "status": "NOT_PASS",
+  "candidate_sha": "a46603c37da90f5c84bc84722445a9ae08b18dfa",
+  "implementation_commit_sha": "a46603c37da90f5c84bc84722445a9ae08b18dfa",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1216-live-notebook-postgres-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1216-live-notebook-postgres-20261124 -WorkerImage ronin:qualification-d1215-notebook -StorageBackend postgres -TestGrep 'live Notebook Studio creates, versions and executes a notebook on a Docker worker' -RequestTimeoutSeconds 30"],
+  "result": {"playwright": "0/1", "api_events": "0", "failure": "120-second Playwright timeout waiting for #rail .nav-item before any API traffic", "real_services": ["PostgreSQL", "single-broker Redpanda", "Ronin API", "Docker worker image built"], "application_errors": 0, "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["NOT_PASS is preserved; no Notebook live qualification is claimed.", "Failure occurred in UI readiness before API traffic, so this evidence does not establish a product execution failure or a pass.", "P11 and release remain open."]
+}
