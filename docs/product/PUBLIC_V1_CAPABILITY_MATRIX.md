@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1262 PostgreSQL streaming checkpoint recovery pasa `4/4` sobre `main@cc57e581`, cubriendo CAS/reopen, replay/conflict, reapertura sin duplicados y processor durable; cleanup PASS. Es evidencia filtered bounded y no cierra P11 ni release.
+
 D1261 ML artifact S3-compatible enfocado pasa `1/1` contra Floci 2.1.0, cubriendo input/output durable y retención; cleanup de imagen y fixtures PASS sobre `main@02914de0`. Es evidencia local bounded y no cierra P11 ni release.
 
 D1260 provider Azure Blob-compatible enfocado pasa `1/1` contra Azurite, cubriendo discovery/read/replay; cleanup de imagen y fixtures PASS sobre `main@6d124613`. Es evidencia local bounded y no cierra P11 ni release.
@@ -894,7 +896,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `02914de03b78214845cba302ca5d1200edd347fa` (2026-11-24).
+**Observed source baseline:** `cc57e581f7cad4aa128e716dbff30b928e3b02ea` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1262",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"cc57e581f7cad4aa128e716dbff30b928e3b02ea",
+  "implementation_commit_sha":"cc57e581f7cad4aa128e716dbff30b928e3b02ea",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1262-postgres-streaming-checkpoint-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1262-postgres-streaming-checkpoint-20261124 -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py"],
+  "result":{"selection":"tests/integration/test_postgres_streaming_checkpoint_real.py","pytest":"4 passed; 0 skipped; 0 failed","service_profile":"isolated-postgres-16.4","coverage":"disabled (filtered diagnostic)","cleanup":"PASS","pytest_seconds":7.452,"total_seconds":13.225},
+  "evidence_hashes":{"pytest-output.log":"C65A7A4993C85B33559D06AD8CF67DFE518DD0E7ECCE6ADA6E0E2435BA305F17","pytest-postgres.log":"F986A919147BA959FCD27125A4D5CA301891ADE1CF08B3568E3D00DA7F38F1E7","pytest-postgres.xml":"BEF1607C6945D3A55F6E9686847A1E6FE5C58D243B1B3BE848CA0C4E21DB585D","pytest-timings.json":"445801FE51C01740BE5AC8D6537BBE6F23904DED1207A8AB4E3FD40A0BBDF7E3","runner-timings.json":"E1FDE97D03C2A6B60E323DAB1227E4DAA96162E74E2CF3DAFA4AE3FA15708349"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Filtered PostgreSQL streaming recovery evidence only; coverage was disabled and this does not replace the full suite or close P11/release.","D1254-D1261 and all historical evidence remain bound to exact candidates; no reattribution.","The runner removed isolated PostgreSQL, volumes and network; no temporary resources remained."]
+}
