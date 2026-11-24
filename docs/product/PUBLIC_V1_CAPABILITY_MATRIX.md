@@ -2,6 +2,9 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1242 pasa Docker worker clean demo `1/1`, con cleanup PASS. Es evidencia
+filtrada/bounded y no reatribuye D1241 ni cambia P11, P13 o release.
+
 D1241 queda **NOT_PASS/incompleto**: Docker worker observó `3` casos PASS pero
 no terminó el cuarto; cleanup explícito PASS y sin promoción de capacidad.
 
@@ -853,7 +856,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `370b864b8558c2c9864e5b7b8ac6a9eabdc46b59` (2026-11-24).
+**Observed source baseline:** `c71fe9f81f52ede8434539c8cfd8a58c4d0bb7dd` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
