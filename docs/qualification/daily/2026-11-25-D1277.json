@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1277",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"7958426a03267d8f1684a3ece6cc9368127e861d",
+  "implementation_commit_sha":"7958426a03267d8f1684a3ece6cc9368127e861d",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1277-live-event-workflow-postgres-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1277-live-event-workflow-postgres-20261125 -StorageBackend postgres -TestGrep \"live streaming event workflow is triggered by a committed record\" -RequestTimeoutSeconds 60"],
+  "result":{"selection":"live streaming event workflow is triggered by a committed record","playwright":"1 passed; 0 skipped; 0 failed","api_events":"9/9 correlated","api_outcomes":"9 OK","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","scope":"stream record commit, event trigger delivery, workflow run retrieval and replay idle","route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":45.85},
+  "evidence_hashes":{"browser-live.log":"86DB33357EA392DB217C1596011DFCA815E28B010A972F55DCB61B158193A2B6","browser-live.xml":"9BA5ACF9CD6F21D5C32B3FCEAF9D3294A13B172FEA6B9A8A55E72977F9008F99","live-api-traffic.json":"8CD382459750CFE0C9510A04175882BBB00260C95CC25E7AEB4D905E11DE8986","live-python-freeze.txt":"7696B0635F9D593E3B46275EFE27A5316617DD432E462ECE122037645E976D8D","live-server.stderr.log":"797965D1B5FFF65844F50A6718E8C4C49E0E6B5C7217A6BA82BC28FE928C50AF","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"3D3947D308E2F7FACB07C6F01605290CB338112B7799CE621C388A8F4D23D5C9","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded single-broker event-workflow evidence only; it does not certify indefinite operation, HA, multi-worker operation, complete P11 or release approval.","Historical event-workflow evidence remains bound to exact candidates and is not reattributed.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}

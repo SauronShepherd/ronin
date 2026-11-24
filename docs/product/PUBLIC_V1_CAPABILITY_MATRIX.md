@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1277 pasa el workflow live disparado por registro streaming comprometido sobre `main@7958426a`: `1/1`, `9/9` eventos API OK y cleanup PASS. Es evidencia bounded, no cierre de P11.
+
 D1276 pasa el supervisor soak live bounded de 300 s sobre `main@f393877e`: `1/1`, `369/369` eventos API OK y cleanup PASS. Es evidencia bounded, no operación indefinida ni cierre de P11.
 
 D1275 pasa la recuperación live de max-record/checkpoint/replay sobre `main@5e7a0369`: `1/1`, `8/8` eventos API (`7 OK`, `1 WARN` esperado) y cleanup PASS. Es evidencia bounded, no cierre de P11.
@@ -920,7 +922,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `f393877e3ffabe849f551f2e2f24abc9ac22bcb9` (2026-11-25).
+**Observed source baseline:** `7958426a03267d8f1684a3ece6cc9368127e861d` (2026-11-25).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
