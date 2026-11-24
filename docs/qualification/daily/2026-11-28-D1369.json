@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1369",
+  "date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "3ded52697572d4d8448863af15d3a6bc9312981a",
+  "implementation_commit_sha": "3ded52697572d4d8448863af15d3a6bc9312981a",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1369-postgres-control-plane-real-20261128",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1369-postgres-control-plane-real-20261128 -TestPath tests/integration/test_postgres_connector_control_plane_real.py"],
+  "result": {"pytest": "1 passed; 0 skipped; 0 failed; 0 deselected", "scope": "Complete tests/integration/test_postgres_connector_control_plane_real.py against isolated PostgreSQL 16.4", "coverage": "disabled; filtered file qualification", "cleanup": "PASS; isolated PostgreSQL container removed"},
+  "evidence_hashes": {"pytest-output.log": "37AB17D587655C00484E46147F995C35268770554B4607C36B6BB77BE9F9BAD5", "pytest-postgres.log": "9149FBF7069D65B0CFFD4BB3419B5F4FC3258BC2F3595959C2F482720186E34D", "pytest-postgres.xml": "4A2ED4C2F9574D4579021EFCDC43CC764E7144240F9184A2D0BF3F3F6B9BC60F", "pytest-timings.json": "9A1532C0EF213742551D9CA9F6B309BBFB5508D593E3568FF7C614A7981BF229", "runner-timings.json": "AD29AAA25A04AFFBE11D7646C689D45566781C64E1C66845048F0A995BBC995F"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered PostgreSQL evidence only; not the complete Python/PostgreSQL suite or coverage evidence."]
+}
