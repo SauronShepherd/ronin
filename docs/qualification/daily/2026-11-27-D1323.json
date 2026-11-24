@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1323",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"d9f215089c954cf20e45daf39e2873da94276802",
+  "implementation_commit_sha":"d9f215089c954cf20e45daf39e2873da94276802",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1323-postgres-connector-checkpoint-recovery-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1323-postgres-connector-checkpoint-recovery-20261127 -TestPath tests/integration/test_postgres_connector_checkpoint_real.py -TestFilter \"fencing_inventory_and_restart\""],
+  "result":{"pytest":"1 selected passed; 0 selected skipped; 0 selected failed; 2 deselected","scope":"real PostgresConnectorCheckpointStore fencing, CAS, reopen and committed-output reference inventory","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":7.236,"total_wall_seconds":16.651},
+  "evidence_hashes":{"pytest-output.log":"458450AF1C83F0A7496B6B452FA2A97457AD1D49D0AE9B01139E9A4D0EE09808","pytest-postgres.log":"135D913AFFBEEFBE3BEF2BE4DAF1566D9E8D337E1E39FE052FE57D113269B9D1","pytest-postgres.xml":"20C8D1F4421F4FAD033CA4C91D103B3DE3ADCD295D93DD1409CB01C273C5B0CC","pytest-timings.json":"0B9528BF1E774A7B8CB20EBEBFA899EE91960990D7E15DD0BC3F6E91AE837CFF","runner-timings.json":"7BC12CE2E8234D53144BE16ED5FFC44FD1C6D0D76BE54089F1125846C41E6194"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a filtered PostgreSQL diagnostic, not the complete connector or Python/PostgreSQL suite.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
