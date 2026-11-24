@@ -7,6 +7,8 @@
 
 ## Current exact-SHA qualification — 24 November 2026
 
+D1254 Docker full acceptance pasa `27/27` y `15/15` strict sobre `main@402cc5d1`; cubre worker/runtime, PostgreSQL, backup, Floci/S3, Azurite/Azure y journey e2e; cleanup PASS. Es evidencia bounded y no cierra P11 ni release.
+
 D1253 full live product qualification pasa `43/44` casos, `0` fallos y `1` skip explícito sobre `main@e22828c6`; `516/516` eventos correlacionados, 25 rutas auditadas y cleanup PASS. El fix de streaming elimina los fallos de throughput, pero no cierra P11 ni release.
 
 D1252 verifica que el runtime nuevo conserva la partición vacía: live `1/1`, `4/4` eventos correlacionados y cleanup PASS sobre `main@ad461c34`.
@@ -1870,7 +1872,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `e22828c6b6f96a82a2af58c4b28a87d92cb2ddfe` (2026-11-24).
+**Observed source head:** `402cc5d10bea2041b3377c4ab28a6598a1a26fd2` (2026-11-24).
 
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 

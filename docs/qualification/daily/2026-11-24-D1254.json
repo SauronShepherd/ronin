@@ -1,0 +1,14 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1254",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"402cc5d10bea2041b3377c4ab28a6598a1a26fd2",
+  "implementation_commit_sha":"402cc5d10bea2041b3377c4ab28a6598a1a26fd2",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1254-docker-full-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1254-docker-full-20261124"],
+  "result":{"pytest":"27/27","strict_acceptance":"15/15","passed":27,"failed":0,"skipped":0,"image":"sha256:2a7c402bd2c55fa279a88d6fc97348c237e9c7b8ae4fee768664cb67a0aaa17d","fixtures":"PostgreSQL + Floci/S3 + Azurite/Azure Blob + Docker worker","cleanup":"PASS","strict_success":true},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Docker/strict acceptance is bounded local/emulator evidence, not cloud-provider certification, HA or complete P11.","D1253 full live evidence and all historical receipts remain bound to exact candidates; no reattribution.","Temporary image and runner-owned resources were removed; no kind clusters remained."]
+}

@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1254 Docker full pasa `27/27` y `15/15` strict, con cleanup PASS; cubre worker/runtime, PostgreSQL, backup y proveedores emulados. Es evidencia bounded y no cierra P11 ni release.
+
 D1253 full live pasa `43/44` con 1 skip explícito, 516/516 eventos correlacionados, 25 rutas auditadas y cleanup PASS; es evidencia bounded y no cierra P11 ni release.
 
 D1252 verifica la regresión de partición vacía tras el cambio de runtime: live `1/1`, 4/4 eventos correlacionados y cleanup PASS. Es evidencia focalizada.
@@ -878,7 +880,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `e22828c6b6f96a82a2af58c4b28a87d92cb2ddfe` (2026-11-24).
+**Observed source baseline:** `402cc5d10bea2041b3377c4ab28a6598a1a26fd2` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
