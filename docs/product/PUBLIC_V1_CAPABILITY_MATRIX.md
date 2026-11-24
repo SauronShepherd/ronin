@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1234 pasa artifact retention barrier PostgreSQL `3/3` para fencing, commit
+barrier y lease bounded; cleanup PASS. Es evidencia filtrada/bounded y no
+cambia P11, P13 ni release.
+
 D1233 pasa catálogo local compuesto PostgreSQL/HTTP `1/1` para catálogo y
 governance; cleanup PASS. Es evidencia filtrada/bounded y no cambia P11, P13
 ni release.
@@ -835,7 +839,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `68002c2ef0877fad523fb562b43da29ca322e466` (2026-11-24).
+**Observed source baseline:** `ff208ac05a81769b5db91ee1d8bcfb414be1d24f` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1234",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "ff208ac05a81769b5db91ee1d8bcfb414be1d24f",
+  "implementation_commit_sha": "ff208ac05a81769b5db91ee1d8bcfb414be1d24f",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1234-postgres-artifact-retention-barrier-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1234-postgres-artifact-retention-barrier-20261124 -TestPath tests\\integration\\test_postgres_artifact_retention_barrier.py"],
+  "result": {"pytest": "3/3", "passed": 3, "failed": 0, "skipped": 0, "deselected": 0, "service": "PostgreSQL 16.4-alpine real container", "coverage": "disabled_filtered_diagnostic", "scope": "collector/writer fencing, async writer reference commit barrier and bounded collector lease", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered three-test diagnostic, not the complete Python/PostgreSQL suite or coverage.", "Bounded artifact-retention evidence does not close P11 or release gates; P11 remains in_progress and P13 remains blocked.", "Historical artifact-retention receipts remain bound to their exact prior candidates and are not reattributed."]
+}
