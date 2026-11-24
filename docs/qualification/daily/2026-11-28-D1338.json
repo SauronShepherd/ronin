@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1338",
+  "date":"2026-11-28",
+  "status":"PASS",
+  "candidate_sha":"7e77aec9aad80a39a2dbc500f4f000e5cbb7e9d4",
+  "implementation_commit_sha":"7e77aec9aad80a39a2dbc500f4f000e5cbb7e9d4",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1338-postgres-ml-real-full-20261128",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1338-postgres-ml-real-full-20261128 -TestPath tests/integration/test_postgres_ml_real.py"],
+  "result":{"pytest":"12 selected passed; 0 selected skipped; 0 selected failed; 0 deselected","scope":"complete real PostgreSQL ML integration file: registry round trips/conflicts, atomic concurrent bundles/replay/rollback, lab metadata, references, shared jobs, archived workspace and service reopen","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":12.977,"total_wall_seconds":24.542},
+  "evidence_hashes":{"pytest-output.log":"A58E5A18C088DFFC6D06761CA9D2A6E80C9612BB49A189085A3995430250F450","pytest-postgres.log":"4105E8B86210DA06FF0F5DB31A890ACD88A9B6A85E9DD4BF456167DEA889F917","pytest-postgres.xml":"2FE89EB585CABE61CDCF4E3C4F7B32505EBB487A9E959EF1D35D29B8DB76BDC0","pytest-timings.json":"3267316CF8A74F514D0530B6F0ECBBAE6EB7E94EF580475560897770D6F7505C","runner-timings.json":"5541850793E6AC673555CD963EF7E2A889D10D75AC47B461D3D9C8B8A3376FEC"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is the complete ML PostgreSQL integration file but not the complete Python/PostgreSQL suite or complete product qualification.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
