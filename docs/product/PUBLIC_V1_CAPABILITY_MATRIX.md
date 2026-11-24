@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1223 pasa PostgreSQL Catalog Store `1/1` para gobierno de assets, revisiones
+y lineage; cleanup PASS. Es evidencia filtrada/bounded y no cambia P11, P13 ni
+release.
+
 D1222 pasa PostgreSQL Quality Store `1/1` para durabilidad, scope y orden
 cronológico; cleanup PASS. Es evidencia filtrada/bounded y no cambia P11,
 P13 ni release.
@@ -792,7 +796,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `f04ee732150685bca40374a3eb0c1f446a45bff9` (2026-11-24).
+**Observed source baseline:** `774e11b0bf6e59dd539758d02fdcb2f3b6a809f4` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
