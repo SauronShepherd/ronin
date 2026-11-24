@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1265",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"c8d2da997836e5c8b86f65fccc2b9c5823662418",
+  "implementation_commit_sha":"c8d2da997836e5c8b86f65fccc2b9c5823662418",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1265-live-backpressure-4096-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1265-live-backpressure-4096-postgres-20261124 -StorageBackend postgres -TestGrep \"sustained backpressure\" -BackpressureRecords 4096 -BackpressureTimeoutSeconds 300 -RequestTimeoutSeconds 60"],
+  "result":{"selection":"sustained backpressure","records":4096,"playwright":"1 passed; 0 skipped; 0 failed","api_events":"12/12 correlated","api_outcomes":"12 OK","service_profile":"PostgreSQL + Redpanda + Ronin API","cleanup":"PASS","duration_seconds":101.19},
+  "evidence_hashes":{"browser-live.log":"F9030C5B2B29EDF273D88EB2BF92348966E33BB0DB501CC19B4FBA7614491A03","browser-live.xml":"D3407D6AF94153F5ADDD689381FB6E2C6CA373E32CA6B1C67C06C50A9BB65A7D","live-api-traffic.json":"A1F973C2BF36A55A2FD552BC727B83F329D207EEF9BE2EAED7A547F1849796BD","qualification-summary.json":"A975E6970060A21DDEE70D5C0B2331CCCAB0C86C4F69FF6B658303AC44CFD6E1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded single-broker backpressure evidence at 4096 records only; it does not certify indefinite operation, higher-load behavior, HA, multi-worker operation, complete P11 or release approval.","D1254-D1264 and all historical backpressure evidence remain bound to exact candidates; no reattribution.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}

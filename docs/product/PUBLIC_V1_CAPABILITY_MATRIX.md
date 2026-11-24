@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1265 sustained backpressure live de `4096` registros pasa `1/1`, con `12/12` eventos API correlacionados, todos OK, y cleanup PASS sobre `main@c8d2da99`; es evidencia bounded y no cierra P11 ni release.
+
 D1264 sustained backpressure live de `1024` registros pasa `1/1`, con `12/12` eventos API correlacionados, todos OK, y cleanup PASS sobre `main@7979562f`; es evidencia bounded y no cierra P11 ni release.
 
 D1263 live streaming event workflow pasa `1/1`, con `12/12` eventos API correlacionados, todos OK, y cleanup PASS sobre `main@bf406bc1`; es evidencia bounded y no cierra P11 ni release.
@@ -900,7 +902,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `7979562f7802c77844dd2d94b86612801072660d` (2026-11-24).
+**Observed source baseline:** `c8d2da997836e5c8b86f65fccc2b9c5823662418` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
