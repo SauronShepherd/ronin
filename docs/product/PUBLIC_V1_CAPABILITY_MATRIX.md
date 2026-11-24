@@ -51,6 +51,13 @@ D1174 passes the filtered Docker ML-artifact lifecycle cell on
 including digest-bound durable input/output and retention cleanup. This is
 local compatible-provider evidence, not cloud certification.
 
+D1175 passes the full Docker acceptance qualification on
+`main@8bc91074`: `27/27` Docker integration tests and `15/15` strict v0.1
+acceptance checks passed with PostgreSQL, a Docker worker, Floci/S3 and
+Azurite/Azure fixtures. Cleanup PASS removed the image and all qualification
+resources. This is bounded local acceptance evidence, not cloud certification,
+indefinite operation, HA/multi-worker qualification or complete P11.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s`, with the server configured against real
 PostgreSQL, 28/28 API events OK and cleanup PASS. This bounded evidence does not
@@ -639,7 +646,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `187052f2c2f55410b5b7492ee48c87071b642600` (2026-11-24).
+**Observed source baseline:** `8bc91074ba140490bde8f7d140fec69ddbad9b1f` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1175",
+  "date": "2026-11-24",
+  "status": "pass_bounded_docker_full_acceptance",
+  "candidate_sha": "8bc91074ba140490bde8f7d140fec69ddbad9b1f",
+  "implementation_commit_sha": "8bc91074ba140490bde8f7d140fec69ddbad9b1f",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1175.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory <external-temp-dir> -ImageTag ronin:qualification-d1175",
+  "result": {
+    "qualification": "PASS: Docker integration 27/27, strict v0.1 acceptance 15/15, 0 skipped, 0 failed; pytest 209.07s",
+    "criterion": "PASS: Docker worker/runtime, PostgreSQL-backed journeys, appliance backup/restore, Floci S3, Azurite Azure Blob and frozen strict v0.1 journey all passed",
+    "runtime": "PASS: Ronin image sha256:378e075fff2a17ec3bd6e855e798496eefea8f4697913312fd07f7cdf532c92d with PostgreSQL, Docker worker, Floci and Azurite fixtures",
+    "cleanup": "PASS: PostgreSQL, worker containers, Floci, Azurite, networks, volumes and temporary Ronin image removed",
+    "production_change": "None; full Docker qualification only",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1175-docker-full-20261124",
+  "hashes": {
+    "azurite-qualification.log": "97C6C4B177191DD2637E3505D798B501D03FCEB00DCAC9CFEDF01FC6476464DF",
+    "docker-cleanup.json": "69228D968B238FF0AEEA19555123F54068D62BF0697735C931593853565F56A0",
+    "docker-pytest-output.log": "7815E95280410BEA69668E68624EFBAE4391B459ADDE34BB2F0CE876F7DB3C77",
+    "docker-qualification.log": "5B5D2CF99E6954A87B28AE3FBD16F16815AE93BE4A1900202178434BF8DD63BD",
+    "floci-s3-qualification.log": "007C8A5F7221CAD191D5F2511D9DDD11822B81AF9D0D35118C40ECCC9262459D",
+    "postgres-qualification.log": "6288B4B584AD5B5144DBB44D6EBAFA8D14F8617F7279DD14D3A44B866FB80909",
+    "qualification-summary.json": "8CE045CDF558DD609AD31D0623A2B90348485E190B1C0FC38D8256B66B1FF3F0",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "723BF609BC4E04FC0CD87E1ACEEBB7FF8B860F98064289D298719D8F59868542"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Full Docker acceptance is bounded and local; it does not prove indefinite operation, HA, multi-worker production operation, cloud-provider certification or complete P11.",
+    "This receipt does not reattribute D83-D1174 and does not satisfy human/legal/release decisions."
+  ]
+}
