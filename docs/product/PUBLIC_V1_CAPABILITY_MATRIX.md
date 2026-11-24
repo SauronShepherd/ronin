@@ -1,6 +1,8 @@
 # Ronin Public v1 capability matrix
 
-## Current exact-SHA snapshot — 24 November 2026
+## Current exact-SHA snapshot — 25 November 2026
+
+D1284 repite la batería streaming focalizada y pasa sobre `main@52d6603f`: `11/12` casos (`1` skip, `0` fallos), `246/246` eventos API correlacionados (`235 OK`, `8 WARN`, `3 ERROR` esperados durante recuperación) y cleanup PASS. D1280 permanece NOT_PASS y D1281 permanece como PASS aislado; no se reatribuye evidencia. Es evidencia bounded, no cierre de P11.
 
 D1283 pasa supervised drain/idle con checkpoint durable: `1/1`, `5/5` eventos (`4 OK`, `1 WARN` esperado) y cleanup PASS sobre `main@5ce62df3`. Es evidencia bounded, no cierre de P11.
 
@@ -934,7 +936,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `5ce62df349d70c2b3c1c180f9d3c61a07e226226` (2026-11-25).
+**Observed source baseline:** `52d6603f08210cb9b448820d0f5b56c1bb660ba3` (2026-11-25).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

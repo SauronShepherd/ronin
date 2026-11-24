@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1284",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"52d6603f08210cb9b448820d0f5b56c1bb660ba3",
+  "implementation_commit_sha":"52d6603f08210cb9b448820d0f5b56c1bb660ba3",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1284-live-streaming-family-postgres-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1284-live-streaming-family-postgres-20261125 -StorageBackend postgres -TestGrep \"streaming\" -RequestTimeoutSeconds 60"],
+  "result":{"selection":"streaming","playwright":"11 passed; 1 skipped; 0 failed","api_events":"246/246 correlated","api_outcomes":"235 OK; 8 WARN; 3 ERROR expected during recovery scenarios","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","scope":"streaming family repetition including empty-partition, restart/failover, backlog, drain, checkpoint, sink and event workflow","route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":185.75},
+  "evidence_hashes":{"browser-live.log":"B71180400C07639EEA2E2FDD93E4E0A3C57CEB0AC10345DCD0F1F0EB0A31DE1D","browser-live.xml":"4602389EF828EAD8C7311DDEBC6A8DB9661D8FBF154E15AE2E7863AE7BC5277B","live-api-traffic.json":"86CC9C90CDC9C34EA6A499187A2BB51208A4D742DE5BFD481557F9A3D9FDB182","live-python-freeze.txt":"F81EE72B0B937DA38D4E7D45D3DC30B4D1AA9611AD498576DD7D004DCB33B160","live-server.stderr.log":"991A3A2CEE05C805A2C9EA1A9C113C0943B7D8AF94102D722A72F61279205F75","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"6DCAF5D5B0F1EB37E0A258E332D3E43E8DA3C207A73A9171AD6D5B441FC36F17","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Filtered streaming-family evidence is bounded and does not certify indefinite operation, HA, complete P11 or release approval.","D1280 NOT_PASS and D1281 isolated PASS remain separately preserved; this repetition does not reattribute either result.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}
