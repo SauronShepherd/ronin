@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1322",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"8415198f7728b2a14708d90618499cb04bd8105c",
+  "implementation_commit_sha":"8415198f7728b2a14708d90618499cb04bd8105c",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1322-live-backpressure-16384-postgres-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1322-live-backpressure-16384-postgres-20261127 -TestGrep \"sustained backpressure\" -StorageBackend postgres -BackpressureRecords 16384 -BackpressureTimeoutSeconds 300 -RequestTimeoutSeconds 360"],
+  "result":{"pytest":"1 passed; 0 skipped; 0 failed","api_events":"13/13 correlated","api_outcomes":{"ok":13},"errors_or_critical":0,"scope":"live sustained-backpressure bounded operation at 16384 records with PostgreSQL backend","service_profile":"Redpanda single-broker plus PostgreSQL real isolated backend","cleanup":"PASS","elapsed_seconds":87.56},
+  "evidence_hashes":{"browser-live.log":"38114862AB9530CC5CB7D20ED11CDA53A5B58594C15F4C44BF1D2FE1E213F26A","browser-live.xml":"C4657400F6B1C46342BFB17D7D7FE6984297E74219E93E411F81FD3C3F45A726","live-api-traffic.json":"5A209924FFAC8D7078F05E0F84E2B30CE1C13810E23AA4DC636AB2536A0D7474","live-python-freeze.txt":"DAB1B9D89EFE001B733FEC9DD61DC190802264591E17F1E56A943AD8A4E58495","live-server.stderr.log":"886D0AEB835010BE23B05B91929E2027F6F5668A0027941CCB3B747A39348F82","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"D95510A4E68AEF5600BDD1EA01F3BB90C40FE94F761CB0F9957BB6DFA2A39945","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded backpressure evidence; it does not prove indefinite operation, HA, route-wide audit, complete P11 or release.","Runner removed owned broker, PostgreSQL, volume and network."]
+}
