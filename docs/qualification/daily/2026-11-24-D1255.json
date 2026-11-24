@@ -1,0 +1,14 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1255",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"5c5e47171670a64305ca4a84072893ded4c556ab",
+  "implementation_commit_sha":"5c5e47171670a64305ca4a84072893ded4c556ab",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1255-helm-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1255-docker-helm-base-20261124 -KeepImage","docker run --detach --name ronin-d1255-postgres --publish 127.0.0.1:55444:5432 --env POSTGRES_USER=ronin --env POSTGRES_PASSWORD=ronin --env POSTGRES_DB=ronin postgres:16.4-alpine","powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1255-helm-postgres-20261124 -ImageRef ronin:qualification -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1255-docker-helm-base-20261124 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55444/ronin -PostgresContainerName ronin-d1255-postgres"],
+  "result":{"helm":"PASS","helm_version":"v4.3.1+gc0d08d0","docker_support":"27/27 integration; 15/15 strict","image":"sha256:f65aba920276112e6f08058c605e50221abc666178529382bdb800b29a616865","storage_backend":"postgres","health":"HTTP 200","studio":"HTTP 200","authorized_jobs":"HTTP 200","upgrade":"revision 2 PASS","rollback":"PASS","postgres_restart_recovery":true,"deployment_restart":true,"persistent_job_after_restart":true,"cleanup":"PASS"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Single-node kind/Helm and local PostgreSQL are bounded qualification, not HA, multi-worker or production Kubernetes/provider certification.","Temporary PostgreSQL container, image, kind cluster and runner-owned resources were removed.","D1253/D1254 and all historical evidence remain bound to exact candidates; no reattribution."]
+}
