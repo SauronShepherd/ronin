@@ -46,6 +46,11 @@ D1173 passes a filtered Docker Azure Blob-compatible provider cell on
 including discovery, read and snapshot replay. Cleanup PASS. This is local
 emulator evidence, not Azure production certification.
 
+D1174 passes the filtered Docker ML-artifact lifecycle cell on
+`main@187052f2`: `1/1` integration test passed against isolated Floci,
+including digest-bound durable input/output and retention cleanup. This is
+local compatible-provider evidence, not cloud certification.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s`, with the server configured against real
 PostgreSQL, 28/28 API events OK and cleanup PASS. This bounded evidence does not
@@ -634,7 +639,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `47549a44d4cc9b90613c7a029f33d08d210b8b29` (2026-11-24).
+**Observed source baseline:** `187052f2c2f55410b5b7492ee48c87071b642600` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

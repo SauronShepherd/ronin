@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1174",
+  "date": "2026-11-24",
+  "status": "pass_bounded_ml_s3_artifact_lifecycle_docker",
+  "candidate_sha": "187052f2c2f55410b5b7492ee48c87071b642600",
+  "implementation_commit_sha": "187052f2c2f55410b5b7492ee48c87071b642600",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1174.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory <external-temp-dir> -ImageTag ronin:qualification-d1174b -TestFilter 'ml_s3_artifact'",
+  "result": {
+    "qualification": "PASS: 1/1 selected integration test, 0 skipped, 0 failed in 1.80s; 26 unrelated cases deselected",
+    "criterion": "PASS: durable ML input/output round trip through S3-compatible Floci verified digest-bound readback and safe unreferenced-object retention cleanup",
+    "runtime": "PASS: Docker-built Ronin image sha256:7b5a4a3983c2466ac752e1cc2fef7cdb37d4c4092fada16d4c0724bedbfc12cb with real isolated Floci fixture",
+    "cleanup": "PASS: Floci container, network, volume and temporary Ronin image removed",
+    "production_change": "None; filtered provider qualification only",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1174b-docker-ml-s3-artifact-20261124",
+  "hashes": {
+    "docker-cleanup.json": "7FDD85EC9D9A092A612AFD4B4AB5644FCDB285B9863763CF5C1534D8DA1EE425",
+    "docker-pytest-output.log": "89A87A875AC382FC08664D91B56CDA3DC3B8370B81CC02D4C564B15C96DAD306",
+    "docker-qualification.log": "D967234DD4EEE8BAAD1DA14DC22989B8CFD30D83014EFBDF9FA59C553A641786",
+    "floci-s3-qualification.log": "C2620B2DA403A6C89CA72AB7CD308E8B3E02922FB556D7E1CEDC785A140CF4CB",
+    "v01-acceptance.xml": "8AF863F402D817F4CDC042437BC7C5F30001EAF85211D190DA38FC3E13F5BC16"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is S3-compatible local Floci evidence, not AWS/Azure/GCP production certification or an external SLA claim.",
+    "The first attempted selector omitted the Floci fixture and was rejected as a skip-only diagnostic; it is not counted as PASS. The corrected run above is the sole qualification evidence."
+  ]
+}
