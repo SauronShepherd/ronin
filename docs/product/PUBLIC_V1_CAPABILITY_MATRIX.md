@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27 November 2026
 
+D1321 pasa el supervisor soak live bounded de 300 s sobre `main@e6fc97d9`: `1/1` caso, `405/405` eventos correlacionados (`405` OK), cero errores/critical y cleanup PASS con PostgreSQL. Evidencia bounded de operación/runtime/backend, no cierre de P11.
+
 D1319 pasa el Collector OTLP real sobre `main@fe461c06`: `1/1` prueba, sin skips/fallos, recibiendo traces, métricas y logs por OTLP/HTTP; cleanup PASS y retirada de imagen dangling. Evidencia bounded de observabilidad/provider, no cierre de P11.
 
 D1318 pasa el provider Trino 484 real sobre `main@9b192456`: `4/4` pruebas, sin skips/fallos, con bindings, byte budget, evidencia terminal y recuperación tras SIGKILL; cleanup PASS y retirada de imagen dangling. Evidencia bounded de provider, no cierre de P11.
@@ -1002,7 +1004,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `ba98415a5a5b4a1456ced95577a23e1ff09d6c58` (2026-11-27).
+**Observed source baseline:** `e6fc97d950a30ecd0383496d1b08f934f6a713ea` (2026-11-27).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

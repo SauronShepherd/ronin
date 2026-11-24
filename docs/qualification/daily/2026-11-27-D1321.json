@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1321",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"e6fc97d950a30ecd0383496d1b08f934f6a713ea",
+  "implementation_commit_sha":"e6fc97d950a30ecd0383496d1b08f934f6a713ea",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1321-live-supervisor-soak-300-postgres-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1321-live-supervisor-soak-300-postgres-20261127 -TestGrep \"supervisor soak\" -StorageBackend postgres -SupervisorSoakSeconds 300 -RequestTimeoutSeconds 180"],
+  "result":{"pytest":"1 passed; 0 skipped; 0 failed","api_events":"405/405 correlated","api_outcomes":{"ok":405},"errors_or_critical":0,"scope":"live supervisor soak bounded 300s with durable streaming checkpoint and PostgreSQL backend","service_profile":"Redpanda single-broker plus PostgreSQL real isolated backend","cleanup":"PASS","elapsed_seconds":349.21},
+  "evidence_hashes":{"browser-live.log":"D7FCC9CAE49018D73DF7E00C75C6731F9291CF2EDEFD9E8C172002D897CC30AF","browser-live.xml":"61973D9E787BF0DC003AD6EEF9F79C9D91D501D4F6AFC486159ED28326FC0393","live-api-traffic.json":"4F2ADF1E9CCDFF763BBAE755B90967A823D93B21D5A199643C50EA011E9AEBC4","live-python-freeze.txt":"91833B5F74A9A9682D3FA977122F6B0BED166839697B9D0401CDE6AA76A07C65","live-server.stderr.log":"5ABFE0EC8311128411534126DBB3BEAA3456324D59102D39E294ABC7A6DC3767","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"2D07E3572A1E2031706CC841351D5A0E590EDA9AA2EE88272FBE8C609AF77235","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded live soak evidence; route-wide audit, indefinite operation, HA and complete P11/release are not proven.","Runner removed owned broker, PostgreSQL, volume and network.","Direct post-run Docker/kind inventory was permission-denied in the current shell and requires elevated verification."]
+}
