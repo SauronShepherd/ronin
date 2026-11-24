@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1179",
+  "date": "2026-11-24",
+  "status": "not_pass_full_python_postgres_regression",
+  "candidate_sha": "a02dfbaa6de5128c4a49cf7aba2b8fd335ae2e5e",
+  "implementation_commit_sha": "a02dfbaa6de5128c4a49cf7aba2b8fd335ae2e5e",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1179.md",
+  "commands": [
+    "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1179-python-postgres-full-20261124"
+  ],
+  "result": {
+    "full_python_postgres": "NOT_PASS: 4764/4796 passed, 31 skipped, 1 failed, 23 warnings; pytest 6755.78s",
+    "failed_test": "tests/integration/test_data_engineering_http.py::test_queryflux_async_create_is_project_scoped_and_fail_closed_on_bounds",
+    "failure": "ConnectionAbortedError WinError 10053 during the cross-workspace request",
+    "cleanup": "PASS: isolated PostgreSQL runner cleanup completed"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "This is not full-suite PASS evidence and is not promoted to a release gate.",
+    "The focused reproduction D1180 passed the failed test; root cause remains open for investigation."
+  ]
+}

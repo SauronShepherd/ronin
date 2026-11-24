@@ -66,6 +66,12 @@ restart recovery and pod-restart persistence. Cleanup removed the kind
 cluster, PostgreSQL container and image. This remains bounded local
 single-replica evidence, not production certification or complete P11.
 
+D1179 is NOT_PASS: the full Python/PostgreSQL regression on
+`main@a02dfbaa` recorded `4764/4796` passed, `31` skips and one QueryFlux HTTP
+connection-abort failure. D1180 reproduced the selected case `1/1` and its
+five-case file `5/5`; the full-suite interaction remains open and is not a
+release claim.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s`, with the server configured against real
 PostgreSQL, 28/28 API events OK and cleanup PASS. This bounded evidence does not
@@ -654,7 +660,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `d6ce5ece5b212277ecc1b15368ddc654c15d086c` (2026-11-24).
+**Observed source baseline:** `a02dfbaa6de5128c4a49cf7aba2b8fd335ae2e5e` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
