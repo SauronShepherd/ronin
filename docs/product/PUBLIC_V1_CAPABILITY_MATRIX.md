@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1405 aporta evidencia bounded de semantic runtime (`19 PASS`, `2 skips explícitos`, `0` fallos) sobre `main@f0b7ba28`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
+
 D1404 aporta evidencia bounded del archivo ontology runtime (`24/24` PASS) sobre `main@76b18851`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
 
 D1403 aporta evidencia bounded de runtimes Data Engineering (`5/5` PASS) sobre `main@c8752b6c`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
@@ -1168,7 +1170,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `76b18851764f27e5f4bba509cf20a5c171f12e2f` (2026-11-29).
+**Observed source baseline:** `f0b7ba28349ac941cdba0501cb954c4d78e5f76f` (2026-11-29).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
