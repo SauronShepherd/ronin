@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1192",
+  "date": "2026-11-24",
+  "status": "pass_live_supervisor_soak",
+  "candidate_sha": "b72c48569983d4d61540cb697b419f7102874e3c",
+  "implementation_commit_sha": "b72c48569983d4d61540cb697b419f7102874e3c",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1192.md",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1192-live-supervisor-soak-20261124 -WorkerImage ronin:qualification-d1191-supervisor -StorageBackend postgres -TestGrep 'live streaming supervisor soak drains while records arrive for a bounded duration' -RequestTimeoutSeconds 30"],
+  "result": {"tests": "1/1 passed, 0 skipped, 0 failed", "api_events": "77/77 correlated, all OK", "services": "PostgreSQL, single-broker Redpanda, Ronin API and Docker worker", "worker_image_digest": "sha256:961b0caafb5c99c6777cf8ee61f60abe50509933b1115800ddd89ea209f3e233", "cleanup": "PASS; services and image removed", "elapsed_seconds": 128.29},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused bounded supervisor evidence; route-wide audit was not run and complete P11 remains open.", "No historical evidence reattributed."]
+}

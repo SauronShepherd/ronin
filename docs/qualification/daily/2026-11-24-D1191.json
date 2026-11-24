@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1191",
+  "date": "2026-11-24",
+  "status": "not_pass_invalid_docker_filter",
+  "candidate_sha": "b72c48569983d4d61540cb697b419f7102874e3c",
+  "implementation_commit_sha": "b72c48569983d4d61540cb697b419f7102874e3c",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1191.md",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1191-docker-supervisor-20261124 -ImageTag ronin:qualification-d1191-supervisor -TestFilter 'supervisor soak' -KeepImage", "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1191b-docker-supervisor-20261124 -ImageTag ronin:qualification-d1191-supervisor -TestFilter 'supervisor and soak' -KeepImage"],
+  "result": {"tests": "0/27 selected", "failure": "Docker acceptance runner filter is not the live Playwright suite; the first expression was invalid and the corrected expression selected no Docker tests", "image_digest": "sha256:961b0caafb5c99c6777cf8ee61f60abe50509933b1115800ddd89ea209f3e233", "cleanup": "PASS for temporary fixtures; image retained for D1192 then removed"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No Docker acceptance qualification is claimed from this filter-only lane.", "D1192 is the live result using the exact retained image."]
+}
