@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1347",
+  "date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "cd613bff56e71c310b07273eb134e3d4cc9c9660",
+  "implementation_commit_sha": "cd613bff56e71c310b07273eb134e3d4cc9c9660",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1347-spark-connect-real-20261128-retry",
+  "commands": [
+    "docker pull apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+    "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1347-spark-connect-real-20261128-retry"
+  ],
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed",
+    "scope": "Spark Connect 4.2.0 real-service SQL smoke with Ronin pipeline evidence persistence",
+    "service_profile": "Apache Spark exact digest sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+    "client": "pyspark 4.2.0, hash-locked client cache",
+    "cleanup": "PASS",
+    "image_cleanup": "PASS; exact digest image explicitly removed"
+  },
+  "evidence_hashes": {
+    "pyspark-client-install.json": "04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97",
+    "pytest-timings.json": "6E766BF4773B5CC03794F912315620B70F8195CCA53CFA613536DDBFCCB2C3E9",
+    "qualification.json": "8324793348C2B4F2054285F30D8646C602E5AEC3C8FD343DD22979EA7AD78BDB",
+    "qualification.log": "CB52AA9206009DAF2F9633A6BDCB34B44EE277B86627FA81A0E88A65031873EA",
+    "spark-container.log": "72CDCD58F69036780D744A08D53D78843088027D3B311FE0DD2AF11A461F1218",
+    "spark-junit.xml": "94CDDFDA3D79635CB048160A23BDECFEEDF2C60E5CCCA2D7F7BAB893B882E05E"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded external-provider evidence; not cloud certification, indefinite operation, complete P11 or release approval.",
+    "The initial image-absent attempt is retained only as a separate environmental NOT_PASS and is not counted as qualification evidence."
+  ]
+}
