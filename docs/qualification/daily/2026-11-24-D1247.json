@@ -1,0 +1,14 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1247",
+  "date":"2026-11-24",
+  "status":"NOT_PASS",
+  "candidate_sha":"3082b63f9044478e98ae17f5703f4b85abf5b8e1",
+  "implementation_commit_sha":"3082b63f9044478e98ae17f5703f4b85abf5b8e1",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1247-live-full-postgres-20261124",
+  "commands":["docker build --label org.ronin.qualification.run=d1247 -t ronin:qualification-d1247-live -f docker/Dockerfile .","powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1247-live-full-postgres-20261124 -WorkerImage ronin:qualification-d1247-live -StorageBackend postgres -RequestTimeoutSeconds 30"],
+  "result":{"test_kind":"live-product-qualification","playwright":"40/44","passed":40,"failed":3,"skipped":1,"api_events":"495/495 correlated","api_outcomes":{"OK":472,"WARN":20,"ERROR":3},"failures":["route mlstudio loads and reaches the live API: UI rail visibility timeout","live streaming health reports an empty partition without false lag: received idle/0 records instead of succeeded/1","live streaming drains a two-partition backlog in bounded micro-batches: received 40 attempts, contract requires <40"],"real_services":"PostgreSQL + Kafka/Redpanda + Ronin API + Docker worker","cleanup":"PASS"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This full live result is NOT_PASS and is not promoted; it preserves the exact failures on the current candidate.","The runner removed isolated services, volume, network, processes and browser media; the temporary worker image was also removed.","D1246 and all prior historical evidence remain bound to their exact candidates; no reattribution was made."]
+}
