@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1370",
+  "date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "698ea1ecfbc42474019d338321d9407a873e70a7",
+  "implementation_commit_sha": "698ea1ecfbc42474019d338321d9407a873e70a7",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1370-postgres-finops-real-20261128",
+  "commands": [
+    "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1370-postgres-finops-real-20261128 -TestPath tests/integration/test_postgres_finops_real.py"
+  ],
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "Complete tests/integration/test_postgres_finops_real.py against isolated PostgreSQL 16.4",
+    "coverage": "disabled; filtered file qualification",
+    "cleanup": "PASS; isolated PostgreSQL container removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "BF30D912067C7C76B1B5BEB54ADB1A55FBA34D3DBDFD925DA8EBD20ACF674532",
+    "pytest-postgres.log": "74CB1006E0E84EA8EF490621B8763291CFC1474717AEA333501EAE3C97C9FF84",
+    "pytest-postgres.xml": "11F8E8D54E037080ED3583B2975660A6F4AED7B637650ED1A310F1E04CF7025F",
+    "pytest-timings.json": "0BF684763CA7752A1C2C566BB7ECD51FCCA8D32B5C9D5421F412F9EE64155305",
+    "runner-timings.json": "DE7033D2F8F3BD0E24B5404FFA754DCBB60A711DD6D038021E53A89F4D719E2E"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered PostgreSQL evidence only; not complete Python/PostgreSQL suite or coverage evidence."]
+}
