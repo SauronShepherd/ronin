@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1349 pasa `22/22` regresiones focalizadas de artefactos y contrato del runner SDP sobre `main@1d419b3c`, sin skips/fallos. La cualificación completa del artefacto queda NOT_PASS ambiental por Python 3.13 externo inaccesible; esta regresión no sustituye SDP oficial ni cierra P11.
+
 D1348 permanece NOT_PASS sobre `main@8071860e`: el wrapper `sdpstudio.exe` falla al ejecutar `version` por módulo ausente `sdpstudio_cli`, antes de crear el proyecto; no se ejecutó ninguna prueba. La evidencia negativa se conserva y la brecha SDP sigue abierta.
 
 D1347 pasa la cualificación real de Spark Connect 4.2.0 sobre `main@cd613bff`: `1/1` prueba, sin skips/fallos, con ejecución SQL remota y persistencia de evidencia; cleanup PASS. El intento previo por imagen ausente queda separado como NOT_PASS ambiental. Evidencia bounded de provider, no cierre de P11.
@@ -1058,7 +1060,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `8071860e6229e1d643d0638d6a8bb81bfe783e6f` (2026-11-28).
+**Observed source baseline:** `1d419b3ce05c3063c5ece7b91590dc288e7e059a` (2026-11-28).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

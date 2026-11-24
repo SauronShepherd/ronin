@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1349",
+  "date": "2026-11-28",
+  "status": "PASS_WITH_LIMITATION",
+  "candidate_sha": "1d419b3ce05c3063c5ece7b91590dc288e7e059a",
+  "implementation_commit_sha": "1d419b3ce05c3063c5ece7b91590dc288e7e059a",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1349-artifact-sdp-regression-20261128-retry",
+  "commands": [
+    "python -m pytest -q tests/test_artifact_qualification.py tests/test_sdp_cli_qualification_contract.py --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1349-artifact-sdp-regression-20261128-retry\\pytest-junit.xml"
+  ],
+  "result": {
+    "pytest": "22 passed; 0 skipped; 0 failed",
+    "scope": "Focused immutable-artifact qualification regressions and SDP CLI runner contract",
+    "cleanup": "PASS; evidence-only run, no service resources created",
+    "full_artifact_qualification": "NOT_PASS environmental: build subprocess targeted inaccessible external Python 3.13"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "7B08DC0CD95FDA8C36722FC7B4FDE4384D369EB4ED5969C6ABC3879B1B0DF7F3",
+    "pytest.log": "437B135FBCBFFE9D05DE8FB8ECE77F3B5B4ABC8112D17E921D9DC02197E556AA"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Focused regressions do not qualify the official SDP provider or the complete artifact build lane.",
+    "The full artifact lane remains NOT_PASS until its external Python 3.13 dependency is accessible."
+  ]
+}
