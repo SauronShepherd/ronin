@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1286",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"4bf6e4e4331985c89bef2a2eea646de89106136f",
+  "implementation_commit_sha":"4bf6e4e4331985c89bef2a2eea646de89106136f",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1286-docker-full-current-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1286-docker-full-current-20261125 -ImageTag ronin:qualification-d1286"],
+  "result":{"integration":"27 passed; 0 skipped; 0 failed","strict_v01":"15 passed; 0 skipped; 0 failed; strict_success=true","scope":"Docker worker/runtime, PostgreSQL, backup/restore, resource limits, S3/Azure-compatible stores and complete v0.1 journey","service_profile":"Ronin image + PostgreSQL + Docker worker + Floci S3-compatible fixture + Azurite Azure Blob fixture","cleanup":"PASS","image_digest":"sha256:3f3e32fb7a73e8198bc5d4b5cfa417454a429ab43edfb8986455e2bf21759ead","duration_seconds":162.54},
+  "evidence_hashes":{"azurite-qualification.log":"27B098480EF0AB4E973E119F3E4DAA08FDC6FB7640B0A4BE4EB4646A22E2723D","docker-cleanup.json":"8A5275AE13237A54F17EFA10C0FD70371117BF7B4CC601A96AD866B9F4CA0AD1","docker-pytest-output.log":"227377A23A6FC5AB86BA735D33B9CD7AFF6EF2B8B5FCA786A4C2F3F7443A3BC4","docker-qualification.log":"7FC302598171F59F3158D94B9006AC24306A52382152D3A9CCB2A2D7A7A3E0C2","floci-s3-qualification.log":"023C8C1746C8C25A6616B4846F0DB04D1E1C0A8D3C7895F60E82C0D6825A9A36","postgres-qualification.log":"DFA7A8CE42ACC063D78FBCBF4634525ECE72FB2EC2A9C9F69598EC96A82D0DB7","qualification-summary.json":"AD4B52C89DB8DEE570192BC037AB9C9CC746B12D3782B6C63D048014EC39D83E","v01-acceptance-strict.json":"5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C","v01-acceptance.xml":"C9BF8A2AFE398019CF7E1D13B86C61AB9FC475697168F39BD385084BA7DF2A84"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is bounded Docker evidence on local emulators and does not certify cloud providers, indefinite operation, HA, complete P11 or release approval.","The strict v0.1 gate passes for this Docker candidate but does not promote the overall release ledger.","The runner removed the Ronin image, PostgreSQL, Floci, Azurite, worker resources, networks and volumes."]
+}

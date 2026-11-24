@@ -6,6 +6,8 @@ D1284 repite la batería streaming focalizada y pasa sobre `main@52d6603f`: `11/
 
 D1285 pasa la cualificación Docker conjunta de object stores sobre `main@61ca3b58`: `3/3` casos, sin skips/fallos, con S3 JSON retry, ML artifact round-trip/retención y Azure Blob discovery/read/replay contra Floci y Azurite; imagen, fixtures y recursos eliminados. Es evidencia bounded de emuladores locales, no cierre de P11.
 
+D1286 pasa la aceptación Docker completa sobre `main@4bf6e4e4`: integración `27/27` y strict v0.1 `15/15`, sin skips/fallos. Incluye worker/runtime, PostgreSQL, backup/restore, límites de recursos, object stores emulados y journey completo; cleanup PASS. Es evidencia bounded, no cierre de P11.
+
 D1283 pasa supervised drain/idle con checkpoint durable: `1/1`, `5/5` eventos (`4 OK`, `1 WARN` esperado) y cleanup PASS sobre `main@5ce62df3`. Es evidencia bounded, no cierre de P11.
 
 D1282 pasa reinicio de broker y recuperación de checkpoint: `1/1`, `11/11` eventos (`8 OK`, `3 ERROR` esperados durante outage) y cleanup PASS sobre `main@71e8ab5a`. Es evidencia bounded, no certificación HA ni cierre de P11.
@@ -938,7 +940,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `61ca3b58c71761ff3cffbda3091b36f1524397c9` (2026-11-25).
+**Observed source baseline:** `4bf6e4e4331985c89bef2a2eea646de89106136f` (2026-11-25).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
