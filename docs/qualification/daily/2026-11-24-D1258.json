@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1258",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"6b4ac74e6c1ce24b3dbbcbb1aac44653f42c5e2f",
+  "implementation_commit_sha":"6b4ac74e6c1ce24b3dbbcbb1aac44653f42c5e2f",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1258-live-supervisor-soak-300-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1258-live-supervisor-soak-300-postgres-20261124 -StorageBackend postgres -TestGrep \"supervisor soak\" -SupervisorSoakSeconds 300 -RequestTimeoutSeconds 30"],
+  "result":{"selection":"supervisor soak","duration_seconds":300,"playwright":"1 passed; 0 skipped; 0 failed","api_events":"343/343 correlated","api_outcomes":"343 OK","service_profile":"PostgreSQL + Redpanda + Ronin API","cleanup":"PASS","runner_duration_seconds":367.36},
+  "evidence_hashes":{"browser-live.log":"2EFF84CE1B6A6A04DC88F127BAE6362BBAD056211B0AB1995B5ACB0D0A9781D8","browser-live.xml":"2A99071F908A782A261EB2D7E232DE1769E9E34BCFF6BDE16832A3EE94EFD67F","live-api-traffic.json":"CA5C39D3047B71586E57FBDC2BB7181A60A553C3B5B63621EE7C7C202A12C15B","qualification-summary.json":"43F90954E676A318E6C92F58F0CFFB8E13ED6472003662F48E1F6B60DD68C1DD"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded single-broker supervisor soak only; it does not certify indefinite operation, production SLO, HA, multi-worker operation, complete P11 or release approval.","D1253-D1257 and all historical evidence remain bound to exact candidates; no reattribution.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}
