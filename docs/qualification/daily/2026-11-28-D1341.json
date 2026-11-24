@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1341",
+  "date":"2026-11-28",
+  "status":"PASS",
+  "candidate_sha":"76067cc9429811dbd6381a2ef476f6c675c878b7",
+  "implementation_commit_sha":"76067cc9429811dbd6381a2ef476f6c675c878b7",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1341-postgres-jobstore-real-full-20261128",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1341-postgres-jobstore-real-full-20261128 -TestPath tests/integration/test_postgres_jobstore_real.py"],
+  "result":{"pytest":"2 selected passed; 0 selected skipped; 0 selected failed; 0 deselected","scope":"complete real PostgresJobReadPort/job store integration file: complete lifecycle and scoped filters/keyset pagination","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":1.791,"total_wall_seconds":5.796},
+  "evidence_hashes":{"pytest-output.log":"BAE2A2AF6271FBCF183FEEA55F52559EC504BA9147DC14256321E3F48E0102BA","pytest-postgres.log":"CDB580D4B1B90C0112B577CE73CB2864DE7E815758A0FC66C41C07B033A2EA6D","pytest-postgres.xml":"3A2FC9143EB6B8216B8BC9F85782FA9FDEE363ACD400F34F3B67CCA0BE41F5E0","pytest-timings.json":"2BCEAC12CBB4C205CB218D58C1298EC3FFEA7B4BDCF438E6200FDF76FD57D1BB","runner-timings.json":"9DAC00B4EBFEB10F702BEFB8B299A634D34979CAAE3A9CE868BA2D14B745CAC1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is the complete job-store integration file but not the complete Python/PostgreSQL suite or complete product qualification.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
