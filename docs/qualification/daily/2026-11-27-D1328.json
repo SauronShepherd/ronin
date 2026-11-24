@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1328",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"ddcf80ee391ab2b7e1784180d54031b067a90e21",
+  "implementation_commit_sha":"ddcf80ee391ab2b7e1784180d54031b067a90e21",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1328-postgres-workflow-cancellation-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1328-postgres-workflow-cancellation-20261127 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"cancellation\""],
+  "result":{"pytest":"4 selected passed; 0 selected skipped; 0 selected failed; 17 deselected","scope":"real PostgreSQL durable workflow cancellation: reconcile job/outbox, retire unsubmitted outbox, fence claim before intent and persist authority before waiting on tasks","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":5.983,"total_wall_seconds":12.498},
+  "evidence_hashes":{"pytest-output.log":"8A57394F00F9B6F7242B61F8F3C90EE4F04830D97D61250C8E6195CA19251864","pytest-postgres.log":"860F3041B773889CC15113FB1C8ACCE460AFE8CEC4AA86716055458D144FCA67","pytest-postgres.xml":"C0FE74FC5AFC2EE76C14E864F452B3F2FA5C4B974B2B0BA91BA2845EAA0CB083","pytest-timings.json":"4E8102FA3A530E5C22F3A9BF51A41EEBD610B7F9F8E67FF1C20883C473B8CD89","runner-timings.json":"F8406582E4CA0DACA9B7B299771703396153B3A26B621E4EC25755A131EA8580"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is a filtered PostgreSQL diagnostic, not the complete workflow/scheduler or Python/PostgreSQL suite.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
