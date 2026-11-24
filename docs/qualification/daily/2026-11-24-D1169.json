@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1169",
+  "date": "2026-11-24",
+  "status": "pass_bounded_live_broker_restart_postgres",
+  "candidate_sha": "013d97d343ee965b4d95159c14b728e601828cd4",
+  "implementation_commit_sha": "013d97d343ee965b4d95159c14b728e601828cd4",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1169.md",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -StorageBackend postgres -TestGrep 'live streaming broker restart resumes from the durable checkpoint' -RequestTimeoutSeconds 30",
+  "result": {
+    "qualification": "PASS: 1/1 selected Playwright case, 0 skipped, 0 failed in 16.2s",
+    "criterion": "PASS: after stopping the single Redpanda broker, health/run returned expected 503 responses; after restart the durable checkpoint resumed, four records drained and final lag reached zero",
+    "runtime": "PASS: real PostgreSQL backend, single-broker Redpanda and Ronin API; 11/11 API events correlated, 8 OK and 3 expected broker-outage ERROR outcomes",
+    "cleanup": "PASS: PostgreSQL, Redpanda, volume, network and live processes removed",
+    "production_change": "None; existing live qualification case executed against the current main candidate",
+    "release_effect": "No family or release gate changes; P11 remains in_progress, P13 remains blocked and release remains NO-GO at 1/13 families and 0/10 gates"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1169-live-broker-restart-postgres-20261124",
+  "hashes": {
+    "browser-live.log": "87B443BA44B22A9205C87084701E4B0AE5D0576DE98E29D3A90C7D518D2409F6",
+    "browser-live.xml": "1D741CE297ED60C75708D1FA4D52A651BDBAB74E9826ED72DCA2538D6B85C1F3",
+    "live-api-traffic.json": "55FE1DC334CCE4B815FE1C92A9D97761F441FC0B8CA398158ABC8F35AC1E6CDF",
+    "live-python-freeze.txt": "6E0107DFFA4A7B0ADA7E4FDF14CBCCAA16CA099D7FA1F4FEB4689B39D40E0A1B",
+    "live-server.stderr.log": "9CB4F259B9B57635DF0E5DB10A94A680233CEACDDB14B3F6BC8152A03DBB1E77",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "7C0ED17754FFB7B53E648C18780D7F7582CB40C23F93A618E4B2A3F3B2C6BBF2",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Focused bounded single-broker restart diagnostic; not indefinite operation, production SLO, HA, multi-worker or external-provider qualification.",
+    "The expected outage responses are classified as part of the recovery criterion; this does not prove complete P11 or any release gate. D83-D1168 evidence remains bound to exact candidates."
+  ]
+}

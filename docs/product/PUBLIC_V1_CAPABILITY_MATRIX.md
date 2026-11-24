@@ -1,6 +1,6 @@
 # Ronin Public v1 capability matrix
 
-## Current exact-SHA snapshot — 23 November 2026
+## Current exact-SHA snapshot — 24 November 2026
 
 D1166 passes a new focused live streaming health/lag cell on
 `main@7a1270d9`: `1/1` case passed in `42.06 s` with real PostgreSQL,
@@ -19,6 +19,12 @@ D1168 passes a focused real PostgreSQL processor recovery cell on
 `main@b09bb5d2`: `3/3` selected integration cases passed, including restart
 from the durable checkpoint with no duplicate sink row. This bounded evidence
 uses a deterministic source double and does not close P11 or release.
+
+D1169 passes the focused live broker-restart recovery cell on
+`main@013d97d3`: `1/1` case passed with real PostgreSQL, single-broker
+Redpanda and Ronin API; the durable checkpoint resumed after restart and final
+lag reached zero. All `11/11` API events correlated and cleanup passed. This
+bounded recovery evidence does not close P11 or release.
 
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s`, with the server configured against real
@@ -608,7 +614,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `b09bb5d2adf439303089db632ce64564bda27c88` (2026-11-24).
+**Observed source baseline:** `013d97d343ee965b4d95159c14b728e601828cd4` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
