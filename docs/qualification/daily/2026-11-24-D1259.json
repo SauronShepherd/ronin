@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1259",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"7fd6a2955f70beb5c8bea2fe5342c310028834e3",
+  "implementation_commit_sha":"7fd6a2955f70beb5c8bea2fe5342c310028834e3",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1259-docker-s3-json-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d1259 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1259-docker-s3-json-20261124 -TestFilter s3_json"],
+  "result":{"selection":"tests.integration.test_s3_json_connector_real::test_s3_json_sink_put_read_and_retry_round_trip","pytest":"1 passed; 26 deselected; 0 skipped; 0 failed","provider":"Floci 2.1.0 S3-compatible","image_digest":"sha256:22da9f651baf475544acbd6067188ca652c4515c554482485278d414677f2ce9","cleanup":"PASS"},
+  "evidence_hashes":{"docker-cleanup.json":"12D7ED30BB4EFF84BF09A3E52D7BF1D47BF267E93E28207A03C37C8CAD61C92F","docker-pytest-output.log":"66945F6465573A434171B16225675AF661F92555CBDAD8CFC70B65FCA5CEDD98","docker-qualification.log":"DA1225A6A9BF753367CA797FD6E3C93D1C1A9B5D4F59F40BD7349FF5107DF750","floci-s3-qualification.log":"75EC95C4F01EDE818049033D4B19523AE51B87CCA7A2B872CB6FF20BF847781A","v01-acceptance.xml":"DE70269AAC12BF82C23C9940C8A392807FE4531B6E76E51431C0E6C61B5FDAD3"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Filtered local S3-compatible provider evidence only; strict v0.1 acceptance and cloud-provider certification were not evaluated.","D1254 and all historical evidence remain bound to exact candidates; no reattribution.","Cleanup removed the owned image, Floci container, volume and network; no temporary resources remained."]
+}
