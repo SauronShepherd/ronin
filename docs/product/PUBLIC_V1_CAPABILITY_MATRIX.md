@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1268 Docker full acceptance pasa `27/27` integración y `15/15` strict v0.1, sin skips ni fallos, con PostgreSQL, worker, Floci/S3, Azurite/Azure y cleanup PASS sobre `main@3f01def7`; es evidencia bounded y no cierra P11 ni release.
+
 D1267 RF3 multi-broker failover live pasa `1/1`, con `5/5` eventos API correlacionados, todos OK, y cleanup PASS sobre `main@a81d8124`; es evidencia bounded y no cierra P11 ni release.
 
 D1266 backpressure live de `8192` registros queda **NOT_PASS**: `0/1`, `Failed to fetch`, `5/5` eventos correlacionados (`4 OK`, `1 ERROR`) y cleanup PASS sobre `main@71c7b05c`; no se promociona y mantiene abierta la brecha de carga.
@@ -906,7 +908,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `a81d8124472763e3dfad066b1b7841e151abd3ea` (2026-11-24).
+**Observed source baseline:** `3f01def7bb1730a793c13c8f3ca5cf616f09e52f` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

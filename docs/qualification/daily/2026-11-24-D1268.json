@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1268",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"3f01def7bb1730a793c13c8f3ca5cf616f09e52f",
+  "implementation_commit_sha":"3f01def7bb1730a793c13c8f3ca5cf616f09e52f",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1268-docker-full-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d1268 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1268-docker-full-20261124"],
+  "result":{"selection":"full Docker acceptance","integration":"27 passed; 0 skipped; 0 failed","strict_v01":"15 passed; 0 skipped; 0 failed","fixtures":"PostgreSQL + Docker worker + Floci/S3 + Azurite/Azure","image_digest":"sha256:93292723033fe4913b4ca1a8ec23c5a1fee260f945b379956f50ed168b2bda08","cleanup":"PASS","pytest_seconds":205.56},
+  "evidence_hashes":{"azurite-qualification.log":"4B99712A9C9E3005AB7F99BD640E3A376F1489956416EDE79EA900ACB19C21AB","docker-cleanup.json":"3EF4322A5C460B02A06146288D924BDBA51E3F2735978F45B4DCE252D7FF8BB6","docker-pytest-output.log":"63869E8ECD801C1C8B68617EC5FEBB3DE58E0F968269F5C52044F25FA4ADF57B","docker-qualification.log":"352A3D69E80930760825FB4D3A57363FB8B9A6C3303305157EB78803588B6D06","floci-s3-qualification.log":"E183F7094715497D3C60BAF0357A7C3E9E2D9E0451192D684298B51F0A075689","postgres-qualification.log":"13BD20FB3647DC319154D5B035A668F385183527328976827FA1AD1B7A585D5F","qualification-summary.json":"2926E6D496C6602102DFD89F0C4719B3C506D63F3183187B201E5D7140D907E4","v01-acceptance-strict.json":"5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C","v01-acceptance.xml":"BB51FA4FB184DF80013338D1A64072FD7013ABAB38489413C036E47BAC0D9B6E"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded local Docker/provider acceptance only; it does not certify cloud providers, indefinite operation, HA, complete P11 or release approval.","D1254-D1267 and all historical evidence remain bound to exact candidates; no reattribution.","Cleanup removed PostgreSQL, Floci, Azurite, worker containers, image, volumes and networks; no temporary resources remained."]
+}
