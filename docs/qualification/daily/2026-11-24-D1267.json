@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1267",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"a81d8124472763e3dfad066b1b7841e151abd3ea",
+  "implementation_commit_sha":"a81d8124472763e3dfad066b1b7841e151abd3ea",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1267-live-rf3-failover-postgres-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1267-live-rf3-failover-postgres-20261124 -StorageBackend postgres -TestGrep \"live streaming multi-broker failover resumes from the durable checkpoint\" -MultiBroker -RequestTimeoutSeconds 30"],
+  "result":{"selection":"live streaming multi-broker failover resumes from the durable checkpoint","playwright":"1 passed; 0 skipped; 0 failed","api_events":"5/5 correlated","api_outcomes":"5 OK","service_profile":"PostgreSQL + three-broker Redpanda RF3 + Ronin API","cleanup":"PASS","duration_seconds":110.69},
+  "evidence_hashes":{"browser-live.log":"2B0205114E8C449F7ABFBB14710EBC8C747CBD32E076F09F89FFF307E953B763","browser-live.xml":"AD390C5519A90F1013F0A7F2EE5D94D3120548A87FD9BB1263D70C83CD725243","live-api-traffic.json":"BD6B4DBA133C1540F7F0A2EE0D6C4DAD7450941935CBB65CC746D5AA31CE8B3F","qualification-summary.json":"BC9C411882F288D58FD3CFCF9EB76D208DDDFAC3DBAE0041DF8966FDD15EF8D1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded RF3 multi-broker failover evidence only; it does not certify indefinite operation, production HA/SLO, multi-worker operation, complete P11 or release approval.","D1165 and all historical RF3 evidence remain bound to exact candidates; no reattribution.","The runner removed three brokers, PostgreSQL, volume and network; no temporary resources remained."]
+}
