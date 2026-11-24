@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1393 pasa el catálogo HTTP compuesto local PostgreSQL real sobre `main@c0b0157c`: `1/1` prueba, sin skips/fallos, sirviendo catálogo y governance por HTTP real; cleanup PASS. Evidencia bounded de composición/control plane, no cierre de P11.
+
 D1392 pasa el archivo completo WorkflowStore/scheduler PostgreSQL real sobre `main@59243805`: `21/21` pruebas, sin skips/fallos, cubriendo outbox, cancelación, leases, migraciones, backfill, event inbox, adapters HTTP y fencing; cleanup PASS. Evidencia bounded de workflow/backend, no cierre de P11.
 
 D1391 pasa el archivo completo de retention barrier PostgreSQL real sobre `main@45b661f3`: `3/3` pruebas, sin skips/fallos, cubriendo collector lease, bloqueo hasta reference commit y fencing de nuevos writers; cleanup PASS. Evidencia bounded de retención/recovery backend, no cierre de P11.
@@ -1144,7 +1146,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `592438052aa8b9ebcfb94a53d9bd85dec44b15ca` (2026-11-29).
+**Observed source baseline:** `c0b0157c0768ef08ab0f0ca022ad3c2db4959aa7` (2026-11-29).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
