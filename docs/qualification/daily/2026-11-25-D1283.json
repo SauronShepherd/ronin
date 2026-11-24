@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1283",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"5ce62df349d70c2b3c1c180f9d3c61a07e226226",
+  "implementation_commit_sha":"5ce62df349d70c2b3c1c180f9d3c61a07e226226",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1283-live-supervised-drain-current-postgres-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1283-live-supervised-drain-current-postgres-20261125 -StorageBackend postgres -TestGrep \"live streaming supervised drain stops at idle with durable checkpoint progress\" -RequestTimeoutSeconds 60"],
+  "result":{"selection":"live streaming supervised drain stops at idle with durable checkpoint progress","playwright":"1 passed; 0 skipped; 0 failed","api_events":"5/5 correlated","api_outcomes":"4 OK; 1 WARN expected for max_batches=0","service_profile":"PostgreSQL + single-broker Redpanda + Ronin API","scope":"64-record drain, idle stop, lag zero and invalid cap rejection","route_audit":"not run; filtered diagnostic","cleanup":"PASS","duration_seconds":33.76},
+  "evidence_hashes":{"browser-live.log":"0CF33C84F86EB5E507C27707C349DE3901D539351E8E78A6C8D66CF32453E21B","browser-live.xml":"68F671753A46D9C6C18EC1D440A60B1D124C5DDDD56D00CF2AC0B23918A938E6","live-api-traffic.json":"1A0010855A4ADFF1F84C0B1EE7594126CDD6AAF38E6646EFC5A2FD101BD84016","live-python-freeze.txt":"0CC079051BC1720B8FF714143AEFF4E9F0EDA03677CD63ACFCEB7132B31B4B44","live-server.stderr.log":"310ACBD6138491B74D77A7D763C4D3469A7B54B15E0EE27DAA70AB07C569F07F","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"5E6C1C824F3D2F2AF48E228154440C85C68BDC6BD0A6F475F5E7631EA9DC177D","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Bounded supervised drain evidence only; it does not certify indefinite operation, HA, complete P11 or release approval.","The WARN is the expected invalid max_batches=0 rejection; no application ERROR or CRITICAL was recorded.","The runner removed PostgreSQL, Redpanda, volume and network; no temporary resources remained."]
+}
