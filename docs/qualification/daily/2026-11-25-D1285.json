@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1285",
+  "date":"2026-11-25",
+  "status":"PASS",
+  "candidate_sha":"61ca3b58c71761ff3cffbda3091b36f1524397c9",
+  "implementation_commit_sha":"61ca3b58c71761ff3cffbda3091b36f1524397c9",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1285-docker-object-stores-20261125",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1285-docker-object-stores-20261125 -ImageTag ronin:qualification-d1285 -TestFilter \"s3_json or ml_s3_artifact or azure_blob\""],
+  "result":{"selection":"s3_json or ml_s3_artifact or azure_blob","pytest":"3 passed; 0 skipped; 0 failed","scope":"S3 JSON round-trip/retry, ML durable input/output/retention, Azure Blob discovery/read/replay","service_profile":"Ronin Docker image + Floci S3-compatible fixture + Azurite Azure Blob fixture","strict_v01":"not evaluated; filtered diagnostic","cleanup":"PASS","image_digest":"sha256:7d1a6c173b55fcd867905d98d32fed2036dfc5f8d77e215995a10e895f30e188","duration_seconds":4.56},
+  "evidence_hashes":{"azurite-qualification.log":"B0C8443FC94B966E484B9667E29A64136353B38EE14A9753DB562978C42BC285","docker-cleanup.json":"5E2546404B9C05AAB4210E76C5A95F146BCBF249D07B070EE797E433BC221983","docker-pytest-output.log":"E7C8D98124A3BDB2FB670DB5BBFB10770A0EC1C3C0B9C10324F84B7435D35C4C","docker-qualification.log":"516259EFF43212F045426D40893E07C806E8F91C911A9B3EF8591D440A5FD3BB","floci-s3-qualification.log":"C8B382975CF81F650FDF56A3328FA29C0F47E86A826047DC7D6FBD2E07476956","v01-acceptance.xml":"985EE36DC400A8795F43F44177D9B78226FCC88E055F75655C1935CF480B31B2"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Filtered Docker evidence is bounded and uses local S3/Azure-compatible emulators; it is not cloud-provider certification or complete P11.","Strict v0.1 acceptance was not evaluated because -TestFilter was used.","The runner removed the Ronin image, Floci, Azurite, networks and volumes; no temporary resources remained."]
+}
