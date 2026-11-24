@@ -58,6 +58,14 @@ Azurite/Azure fixtures. Cleanup PASS removed the image and all qualification
 resources. This is bounded local acceptance evidence, not cloud certification,
 indefinite operation, HA/multi-worker qualification or complete P11.
 
+D1177 passes the Docker base qualification on
+`main@d6ce5ece`: `27/27` integration tests and `15/15` strict v0.1 checks
+passed. D1178 passes Helm/kind PostgreSQL qualification on the same candidate,
+including install/readiness, upgrade/rollback, health/UI/API, PostgreSQL
+restart recovery and pod-restart persistence. Cleanup removed the kind
+cluster, PostgreSQL container and image. This remains bounded local
+single-replica evidence, not production certification or complete P11.
+
 D414 passes the focused live PostgreSQL ingestion cell on `main@890fa2c2`:
 `2/2` cases passed in `53.52 s`, with the server configured against real
 PostgreSQL, 28/28 API events OK and cleanup PASS. This bounded evidence does not
@@ -646,7 +654,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `8bc91074ba140490bde8f7d140fec69ddbad9b1f` (2026-11-24).
+**Observed source baseline:** `d6ce5ece5b212277ecc1b15368ddc654c15d086c` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

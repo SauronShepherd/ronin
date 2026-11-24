@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1177",
+  "date": "2026-11-24",
+  "status": "pass_docker_full_for_helm_candidate",
+  "candidate_sha": "d6ce5ece5b212277ecc1b15368ddc654c15d086c",
+  "implementation_commit_sha": "d6ce5ece5b212277ecc1b15368ddc654c15d086c",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1177.md",
+  "commands": [
+    "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1177-docker-helm-20261124 -ImageTag ronin:qualification-d1177-helm -KeepImage"
+  ],
+  "result": {
+    "docker_integration": "PASS: 27/27, 0 skipped, 0 failed",
+    "strict_v01": "PASS: 15/15, 0 skipped, 0 xfailed, 0 failed",
+    "image_digest": "sha256:78474388a1726a5fd30d7fcc0ac2ce436da336b3d964a5370f8db3d48407a2dc",
+    "cleanup": "PASS: qualification containers, networks and volumes removed; image retained only for D1178"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Bounded local Docker acceptance; it does not certify cloud providers, indefinite operation, HA, multi-worker production or complete P11.",
+    "The retained image was removed after the dependent D1178 Helm qualification."
+  ]
+}

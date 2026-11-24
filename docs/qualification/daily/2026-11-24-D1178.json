@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1178",
+  "date": "2026-11-24",
+  "status": "pass_helm_kind_postgres_restart_and_pod_persistence",
+  "candidate_sha": "d6ce5ece5b212277ecc1b15368ddc654c15d086c",
+  "implementation_commit_sha": "d6ce5ece5b212277ecc1b15368ddc654c15d086c",
+  "evidence": "docs/qualification/handoffs/2026-11-24-D1178.md",
+  "commands": [
+    "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1178-helm-postgres-20261124 -ImageRef ronin:qualification-d1177-helm -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1177-docker-helm-20261124 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55439/ronin -PostgresContainerName ronin-d1178-postgres"
+  ],
+  "result": {
+    "helm_kind": "PASS: lint, Secret boundary, isolated kind, install/readiness, upgrade revision 2 and rollback revision 1",
+    "runtime": "PASS: health HTTP 200, Studio HTTP 200 and authorized jobs API HTTP 200",
+    "postgres_restart_recovery": "PASS: PostgreSQL restarted, pg_isready recovered and queued job remained durable",
+    "pod_restart_persistence": "PASS: same queued job ID survived Ronin deployment restart",
+    "cleanup": "PASS: kind cluster, PostgreSQL container and Ronin image removed"
+  },
+  "hashes": {
+    "helm-qualification.json": "14510EF051D062C0E669AC57E18A4392E2C66993136433D0D13C7180478B0898",
+    "helm-qualification.log": "1A1FBDF3AC2EE29B598734032E77647E049FDEC8FBD26973BE28D20F70852635",
+    "kubernetes-resources.txt": "24C687743BD679CC8A5D1183C301DEE3C5A8FB6EE2A8C6C1AA7EDD2A5F39DA59"
+  },
+  "progress_before": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "progress_after": { "families": "1/13", "gates": "0/10", "release": "NO-GO" },
+  "limitations": [
+    "Bounded single-replica kind qualification with insecure plaintext bind policy inside the isolated cluster.",
+    "Does not certify production capacity, HA, indefinite soak, multi-worker operation, cloud providers or complete P11."
+  ]
+}
