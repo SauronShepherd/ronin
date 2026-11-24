@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1368",
+  "date": "2026-11-28",
+  "status": "PASS",
+  "candidate_sha": "2c3ac0791dbeae45186d1eec9ebb6f6385cdd8fa",
+  "implementation_commit_sha": "2c3ac0791dbeae45186d1eec9ebb6f6385cdd8fa",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1368-postgres-connector-checkpoint-real-20261128",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1368-postgres-connector-checkpoint-real-20261128 -TestPath tests/integration/test_postgres_connector_checkpoint_real.py"],
+  "result": {"pytest": "3 passed; 0 skipped; 0 failed; 0 deselected", "scope": "Complete tests/integration/test_postgres_connector_checkpoint_real.py against isolated PostgreSQL 16.4", "coverage": "disabled; filtered file qualification", "cleanup": "PASS; isolated PostgreSQL container removed"},
+  "evidence_hashes": {"pytest-output.log": "B8C057F9F316F4F9692DD6FE7DC17E65DD906E0E1F0EEE6FFBCC6609281C6768", "pytest-postgres.log": "E26E30DC7324BF410C444E378BF3FC644A38251604A5FD862C5B9236FBC0D3D5", "pytest-postgres.xml": "3C74C6C26788CB2B5280EB46EF2301EB47051CDE20FC38451367BAC685ABC409", "pytest-timings.json": "5F6E88EE9845D1004400E8EA527E2699B4B90C2F6C810C0375C837F2E78148B4", "runner-timings.json": "BFA8080F9EC0C63CEE352BB1E3398A94C9B3D3B9306FE0BD7268C8683759C12F"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered PostgreSQL evidence only; not the complete Python/PostgreSQL suite or coverage evidence."]
+}
