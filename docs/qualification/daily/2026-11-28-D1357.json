@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1357",
+  "date": "2026-11-28",
+  "status": "NOT_PASS",
+  "candidate_sha": "815caf4341631c1cec55a6007c0750f8618f6c53",
+  "implementation_commit_sha": "815caf4341631c1cec55a6007c0750f8618f6c53",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1357-postgres-backup-real-20261128",
+  "commands": [
+    "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1357-postgres-backup-real-20261128 -TestPath tests/integration/test_postgres_appliance_backup_real.py"
+  ],
+  "result": {
+    "pytest": "0 passed; 1 skipped; 0 failed",
+    "scope": "PostgreSQL appliance backup/restore file attempted through PostgreSQL-only runner",
+    "skip_reason": "opt-in Docker qualification starts isolated Ronin and PostgreSQL services",
+    "cleanup": "PASS; PostgreSQL-only runner cleaned its isolated service"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "5D8D669E56FBC1C7219D0106F60D6AE5AA3374B83B3F6B426C61F2AACCFE2B3B",
+    "pytest-postgres.log": "F73B031B3707C4813F1C84E1FF2F08282D19006F193F0890A7C4032B173BCEF4",
+    "pytest-postgres.xml": "4E8E1365336964E94F8FBBE9DE87E35F6B9FF7FBB4620508828BB56CBFF36250",
+    "pytest-timings.json": "BF5600FD90B0EB7411451213404FAF7AFA39DEBE986D4F79E2BA4955A125527D",
+    "runner-timings.json": "9C9E78630A30723942723E002FF4F020988E74D696A358183534ADD701BD2ACA"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is explicit SKIP/NOT_PASS evidence, not backup/restore qualification.",
+    "A Docker qualification lane is required; D1344 remains the separate historical Docker evidence."
+  ]
+}

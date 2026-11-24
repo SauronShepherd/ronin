@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1357 queda NOT_PASS/SKIP explícito sobre `main@815caf43`: el archivo de backup/restore requiere la cualificación Docker opt-in; `0/1` passed y `1` skipped. No reatribuye D1344 y la brecha de recovery sigue abierta.
+
 D1356 pasa el journey HTTP real de composición de catálogo PostgreSQL sobre `main@9b993135`: `1/1` prueba, sin skips/fallos, sirviendo catálogo y governance; cleanup PASS. Evidencia bounded de runtime/API/backend, no cierre de P11.
 
 D1355 pasa el archivo completo de artifact retention barrier PostgreSQL real sobre `main@20a8da8f`: `3/3` pruebas, sin skips/fallos, con collector lease, bloqueo hasta commit de referencia y fencing de nuevos writers; cleanup PASS. Evidencia bounded de recovery/retención, no cierre de P11.
@@ -1074,7 +1076,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `9b9931352bcb0f1bb399c52e15e318ba43e0eb98` (2026-11-28).
+**Observed source baseline:** `815caf4341631c1cec55a6007c0750f8618f6c53` (2026-11-28).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
