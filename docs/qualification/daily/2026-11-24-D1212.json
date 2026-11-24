@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1212",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "c280a0d737ae0bdb2aa64176421b8a2da806c516",
+  "implementation_commit_sha": "c280a0d737ae0bdb2aa64176421b8a2da806c516",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1212-live-supervised-drain-postgres-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1212-live-supervised-drain-postgres-20261124 -WorkerImage ronin:qualification-d1211-supervised-drain -StorageBackend postgres -TestGrep 'live streaming supervised drain stops at idle with durable checkpoint progress' -RequestTimeoutSeconds 30"],
+  "result": {"playwright": "1/1", "api_events": "5/5 correlated", "api_outcomes": {"OK": 4, "expected_WARN": 1}, "real_services": ["PostgreSQL", "single-broker Redpanda", "Ronin API", "Docker worker"], "checkpoint": "durable_progress_to_idle", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live diagnostic; route-wide coverage was not run.", "One WARN is the expected idle-transition outcome; bounded supervised drain evidence does not prove indefinite operation, HA, complete P11 or release approval."]
+}
