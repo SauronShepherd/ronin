@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1380 queda NOT_PASS de dependencia: Floci saludable y topología válida, pero Terraform requerido `1.13.5` no disponible (local `1.16.2`); cleanup PASS. No se atribuye evidencia Cloud Studio.
+
 D1379 pasa la cualificación Docker completa sobre `main@74c121fd`: integración `27/27` y strict v0.1 `15/15`, sin skips/fallos/errors/missing/unexpected; cubre runtime, PostgreSQL, backup/restore, Floci/S3, Azurite/Azure y journey. Cleanup PASS; no cierre automático de P11.
 
 D1378 pasa la lane Docker de worker/runtime sobre `main@8d5d47fe`: `4/4` pruebas, sin skips/fallos, cubriendo ejecución limpia, PostgreSQL y dos recuperaciones tras SIGKILL con reutilización de tres celdas; cleanup PASS. Evidencia bounded de runtime/recovery, no cierre de P11.
@@ -1120,7 +1122,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `74c121fdcee6a0a88e70575d0fbafac94cfe42ba` (2026-11-29).
+**Observed source baseline:** `e352eeb1b02c8683076861a91d88857ce8fbb949` (2026-11-29).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
