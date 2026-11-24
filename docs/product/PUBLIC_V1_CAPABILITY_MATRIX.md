@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1419 aporta evidencia bounded de artefactos ML/remote controller (`8/8` PASS) sobre `main@92f8f9d7`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
+
 D1418 aporta evidencia bounded de migration API/OpenAPI (`25/25` PASS) sobre `main@8be7a459`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
 
 D1417 aporta evidencia bounded de adapters HTTP ontology/quality/SQL (`48/48` PASS) sobre `main@2002c3cf`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
@@ -1196,7 +1198,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `8be7a459aef05925a3db27da0bc2313030c4a7f9` (2026-11-30).
+**Observed source baseline:** `92f8f9d7575f9a8c164eaffbe838f8614de204df` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
