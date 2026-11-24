@@ -16,6 +16,8 @@ D1289 pasa la batería streaming completa con Redpanda RF3 multi-broker y Postgr
 
 D1291 pasa el provider externo Trino 484 sobre `main@28e75bd2`: `4/4` pruebas, sin skips/fallos, con bindings, byte budget, evidencia terminal y recuperación tras SIGKILL; cleanup PASS. Es evidencia bounded de provider, no cierre de P11.
 
+D1292 pasa la cualificación OTLP real sobre `main@fbe0caec`: `1/1` prueba, sin skips/fallos, contra Collector contrib fijado, cubriendo traces, métricas y logs por OTLP/HTTP; cleanup PASS. Es evidencia bounded, no cierre de P11.
+
 D1283 pasa supervised drain/idle con checkpoint durable: `1/1`, `5/5` eventos (`4 OK`, `1 WARN` esperado) y cleanup PASS sobre `main@5ce62df3`. Es evidencia bounded, no cierre de P11.
 
 D1282 pasa reinicio de broker y recuperación de checkpoint: `1/1`, `11/11` eventos (`8 OK`, `3 ERROR` esperados durante outage) y cleanup PASS sobre `main@71e8ab5a`. Es evidencia bounded, no certificación HA ni cierre de P11.
@@ -948,7 +950,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `28e75bd204d48b01718ca2a61c7e61fcad7c0709` (2026-11-26).
+**Observed source baseline:** `fbe0caec29f9c1d5f8553eafc5ed08565fbb27c6` (2026-11-26).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
