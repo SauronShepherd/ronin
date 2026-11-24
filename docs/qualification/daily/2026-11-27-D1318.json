@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1318",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"9b192456f19d8e6326cc2e42338d27c97cf7153c",
+  "implementation_commit_sha":"9b192456f19d8e6326cc2e42338d27c97cf7153c",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1318-trino-real-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_trino_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1318-trino-real-20261127"],
+  "result":{"pytest":"4 passed; 0 skipped; 0 failed","scope":"prepared scalar bindings, exact byte budget boundary, terminal evidence persistence and SIGKILL recovery","service_profile":"Trino 484 real service, image digest sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f","cleanup":"PASS","image_cleanup":"explicitly removed dangling digest image after runner cleanup","pytest_seconds":12.71},
+  "evidence_hashes":{"pytest-timings.json":"A6E0DF3C106EB3DC995EAD2BC88899DF1251C1963E070F92D1383F5649C9EBE9","qualification.json":"A9D1B058D0843A5FC8B94C90BFFD394C91710591ADA02C2E48BFE9D0B7B1D9E2","qualification.log":"8C1E8EDD1D6BBD3AB9C651C4A2F77CCEB7BE8BC9A0946EF62D2F6EDB478E0ABF","trino-container.log":"5686A92F741ABBF714FEBEA2FA3595EA42869A3C4654F2731418C5AF9904AC86" ,"trino-junit.xml":"66FD0D05DF1F5A92DA06BE99CE4CC9D5AE3340B2125944C16B6C676AB98DD9C0"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is bounded external-provider evidence; it is not cloud-provider certification, indefinite operation, complete P11 or release approval.","The isolated Trino container and digest image were removed after the run."]
+}

@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27 November 2026
 
+D1318 pasa el provider Trino 484 real sobre `main@9b192456`: `4/4` pruebas, sin skips/fallos, con bindings, byte budget, evidencia terminal y recuperación tras SIGKILL; cleanup PASS y retirada de imagen dangling. Evidencia bounded de provider, no cierre de P11.
+
 D1317 pasa el failover live RF3 multi-broker con PostgreSQL sobre `main@6a6115b3`: `11/11` casos, `271/271` eventos correlacionados (`263` OK, `8` WARN esperados), cero errores/critical y cleanup PASS. Evidencia bounded de recuperación, no cierre de P11.
 
 D1316 pasa la suite completa Python/PostgreSQL no-performance sobre `main@f8ec7d8f`: `4765/4796`, `31` skips explícitos, `0` fallos y `23` warnings; PostgreSQL 16.4 aislado, cobertura habilitada y cleanup PASS. Los skips siguen clasificados y no son passes; evidencia amplia, no cierre de P11.
@@ -998,7 +1000,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `6a6115b30c03c7ef42b9e6d9298fcbc856c47628` (2026-11-27).
+**Observed source baseline:** `9b192456f19d8e6326cc2e42338d27c97cf7153c` (2026-11-27).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
