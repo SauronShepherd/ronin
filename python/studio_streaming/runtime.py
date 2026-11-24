@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import time
 import tempfile
 from collections.abc import Callable, Mapping
 from contextlib import ExitStack, nullcontext
@@ -245,12 +246,43 @@ class KafkaStreamingRuntime:
             timeout_seconds=timeout_seconds,
         )
         try:
-            result = self._run_processor_once(
-                processor,
-                runtime_id,
-                limit=batch_limit,
-                timeout_seconds=timeout,
-            )
+            deadline = time.monotonic() + timeout
+            first = True
+            results: list[MicroBatchResult] = []
+            records = 0
+            while records < batch_limit:
+                remaining_timeout = timeout if first else max(0.0, deadline - time.monotonic())
+                first = False
+                result = self._run_processor_once(
+                    processor,
+                    runtime_id,
+                    limit=batch_limit - records,
+                    timeout_seconds=remaining_timeout,
+                )
+                if result.records == 0:
+                    break
+                results.append(result)
+                records += result.records
+                if time.monotonic() >= deadline:
+                    break
+            if not results:
+                result = MicroBatchResult(
+                    stream_id=runtime_id,
+                    previous_checkpoint=self._checkpoints.get(runtime_id),
+                    next_checkpoint=self._checkpoints.get(runtime_id),
+                    records=0,
+                    rows=0,
+                    sink_commit=None,
+                )
+            else:
+                result = MicroBatchResult(
+                    stream_id=runtime_id,
+                    previous_checkpoint=results[0].previous_checkpoint,
+                    next_checkpoint=results[-1].next_checkpoint,
+                    records=sum(item.records for item in results),
+                    rows=sum(item.rows for item in results),
+                    sink_commit=results[-1].sink_commit,
+                )
             return {
                 "stream_id": stream_id,
                 "status": "succeeded" if result.records else "idle",
