@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1340",
+  "date":"2026-11-28",
+  "status":"PASS",
+  "candidate_sha":"3ac456a1687ccb9bbff3b48310f1ec4f33f0ebf6",
+  "implementation_commit_sha":"3ac456a1687ccb9bbff3b48310f1ec4f33f0ebf6",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1340-postgres-finops-real-full-20261128",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1340-postgres-finops-real-full-20261128 -TestPath tests/integration/test_postgres_finops_real.py"],
+  "result":{"pytest":"1 selected passed; 0 selected skipped; 0 selected failed; 0 deselected","scope":"real PostgresFinOpsStore pricing, write idempotency and budget persistence","service_profile":"isolated PostgreSQL 16.4","cleanup":"PASS","pytest_wall_seconds":2.138,"total_wall_seconds":6.194},
+  "evidence_hashes":{"pytest-output.log":"A83CD74B40033187E572E678549281CA2AE50F89EEF04DD94BAE51378A7D856D","pytest-postgres.log":"D38D5431B0382C543835EA4A239121337803FB52C257C18AB8A705771A6726E9","pytest-postgres.xml":"4144CFB300877390241DE3D63C2F6E472F7A7649F228D4F43F35E0F11971C247","pytest-timings.json":"4B8D6479731C48ECBED35EDF352E48D9156DD18272ADB99B80270F9378402C68","runner-timings.json":"2EAA0280C85DB87FBE024358A203A5EE769883303668626BDF1F62A64CE95E01"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is the complete FinOps integration file but not the complete Python/PostgreSQL suite or complete product qualification.","It does not prove cloud-provider certification, indefinite operation, HA, complete P11 or release.","Runner removed the isolated PostgreSQL container and related test state."]
+}
