@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1244 pasa Docker full acceptance `27/27` y `15/15` strict, con PostgreSQL, Floci/S3, Azurite/Azure Blob, worker/runtime, backup y journey e2e; cleanup PASS. Es evidencia bounded y no cierra P11 ni release.
+
 D1243 pasa Docker container executor `3/3` para aislamiento, memory/swap cap y
 CPU/memoria; cleanup PASS. Es evidencia filtrada/bounded y no cambia P11, P13
 ni release.
@@ -860,7 +862,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `d0f79efa8a10fa1d5b5ea93605e0a029dccbe773` (2026-11-24).
+**Observed source baseline:** `7452ff8fbcfeec255f097dd28a6825a8028e5677` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

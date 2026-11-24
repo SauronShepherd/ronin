@@ -1,0 +1,14 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1244",
+  "date":"2026-11-24",
+  "status":"PASS",
+  "candidate_sha":"7452ff8fbcfeec255f097dd28a6825a8028e5677",
+  "implementation_commit_sha":"7452ff8fbcfeec255f097dd28a6825a8028e5677",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1244-docker-full-20261124",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1244-docker-full-20261124"],
+  "result":{"pytest":"27/27","strict_acceptance":"15/15","passed":27,"failed":0,"skipped":0,"image":"sha256:5d91fdd687a6fea2c94fa7ebb1834bc0733b72f38c27d27f2cc21466ae181b82","fixtures":"PostgreSQL + Floci/S3 + Azurite/Azure Blob + Docker worker","cleanup":"PASS","strict_success":true},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["Docker acceptance against local PostgreSQL and emulators is not production cloud-provider certification.","The full Docker lane is bounded and does not prove indefinite operation, HA, multi-worker operation or complete P11.","Temporary image and runner-owned resources were removed; no kind clusters remained."]
+}
