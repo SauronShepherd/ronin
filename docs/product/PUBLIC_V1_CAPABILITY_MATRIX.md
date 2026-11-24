@@ -2,6 +2,9 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1194 pasa Docker `27/27` y strict `15/15`, sin skips/fallos y con cleanup
+PASS. P11 sigue `in_progress`, P13 `blocked` y release `NO-GO` (`1/13`, `0/10`).
+
 D1193 pasa el archivo Data Engineering HTTP PostgreSQL `5/5`, incluyendo el
 caso QueryFlux afectado. Es evidencia filtrada y no cambia P11 `in_progress`,
 P13 `blocked` ni release `NO-GO` (`1/13`, `0/10`).
@@ -702,7 +705,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `00cdfdfbd4da1829f6e7df9c80eaca394a3c5f7a` (2026-11-24).
+**Observed source baseline:** `bdcb5cd875a41732cac6597547b5a27e010f0de7` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
