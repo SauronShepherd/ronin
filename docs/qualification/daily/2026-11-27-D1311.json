@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1311",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"1f25a17c16934a31cb8667c6563d5909d44c10b9",
+  "implementation_commit_sha":"1f25a17c16934a31cb8667c6563d5909d44c10b9",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1311-postgres-artifact-retention-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1311-postgres-artifact-retention-20261127 -TestPath tests/integration/test_postgres_artifact_retention_barrier.py"],
+  "result":{"pytest":"3 passed; 0 skipped; 0 failed","scope":"async writers, collector wait/fencing and bounded PostgreSQL collector lease","service_profile":"PostgreSQL 16.4 real isolated service","cleanup":"PASS","pytest_seconds":2.04},
+  "evidence_hashes":{"pytest-output.log":"5A191E71C9ADE104B2A18EA3C71242DFE50A63D051F82749C8FAFA741FAE81DE","pytest-postgres.log":"1F1E00E3F49D393F1D73CA7286AB73529FBED982C0B5D60CA97D4A5F849E49D2","pytest-postgres.xml":"E85167712D3B74D91BD748969B8E1C1CD7EDBBADA5529371E0C4B5EBD6DFF594","pytest-timings.json":"178E110C40B9A2509822573B756CF6DAD9AF21235F76CB08A24AFC59B4E008FC","runner-timings.json":"4A41EA0499F5421B02ACE06F968E513925B5093A5ECCE785222E47F5FBCA1511"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded recovery/backend evidence; it is not complete provider matrix, indefinite operation, complete P11 or release approval.","The runner removed the isolated PostgreSQL container and volumes."]
+}
