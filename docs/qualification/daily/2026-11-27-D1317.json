@@ -1,0 +1,15 @@
+{
+  "schema":"ronin.daily-receipt/v1",
+  "phase":"D1317",
+  "date":"2026-11-27",
+  "status":"PASS",
+  "candidate_sha":"6a6115b30c03c7ef42b9e6d9298fcbc856c47628",
+  "implementation_commit_sha":"6a6115b30c03c7ef42b9e6d9298fcbc856c47628",
+  "evidence":"C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1317-live-multibroker-postgres-20261127",
+  "commands":["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1317-live-multibroker-postgres-20261127 -TestGrep streaming -MultiBroker -StorageBackend postgres -RequestTimeoutSeconds 180"],
+  "result":{"pytest":"11 passed; 0 skipped; 0 failed","api_events":"271/271 correlated","api_outcomes":{"ok":263,"warn":8},"errors_or_critical":0,"scope":"live RF3 three-broker failover, durable checkpoint and bounded streaming recovery","service_profile":"Redpanda RF3 multi-broker plus PostgreSQL real isolated backend","cleanup":"PASS","elapsed_seconds":333.15},
+  "evidence_hashes":{"browser-live.log":"D31BCB674057968086AF3F4A6A37132F675F36842CB92BB9F98CFC6511A375B4","browser-live.xml":"4838F80954A6C38EDDF716E4691AD19FDCE639E73B3BE20BE0A1C35018E26DE8","live-api-traffic.json":"A177B3CD5760AA097B12176E77E70688010237F2AC32430B325AFCF34EAA8DF6","live-python-freeze.txt":"5769C1E06F7D9CAC1DAF95D40F0E5DDB126C751D77A581EAF2DE517E9F241439","live-server.stderr.log":"F87E0647B4278E014260F899B25776CBB340E38F82B88C9BBE5A64C6DA571E0E","live-server.stdout.log":"E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855","qualification-summary.json":"8B66707D0F70224C52FD7E57469916717147043871CB133AF301DBFD5F0863AC","web-test-dependency-cache.json":"8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "progress_after":{"families":"1/13","gates":"0/10","release":"NO-GO"},
+  "limitations":["This is filtered bounded live multi-broker evidence; route-wide audit and indefinite operation are not proven.","The runner removed owned brokers, PostgreSQL, volume and network; unrelated pre-existing Fabric13 resources were not touched."]
+}
