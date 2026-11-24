@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1225",
+  "date": "2026-11-24",
+  "status": "PASS",
+  "candidate_sha": "e5d191737590e592073076c5ef7f7b4376f0ae1c",
+  "implementation_commit_sha": "e5d191737590e592073076c5ef7f7b4376f0ae1c",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1225-postgres-data-engineering-revisions-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1225-postgres-data-engineering-revisions-20261124 -TestPath tests\\integration\\test_postgres_data_engineering_revisions_real.py"],
+  "result": {"pytest": "1/1", "passed": 1, "failed": 0, "skipped": 0, "deselected": 0, "service": "PostgreSQL 16.4-alpine real container", "coverage": "disabled_filtered_diagnostic", "scope": "revision inventory discovers all project artifacts", "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered one-test diagnostic, not the complete Python/PostgreSQL suite or coverage.", "Bounded revision-inventory evidence does not close P11 or release gates; P11 remains in_progress and P13 remains blocked.", "Historical Data Engineering revision receipts remain bound to their exact prior candidates and are not reattributed."]
+}

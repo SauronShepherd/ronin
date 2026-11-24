@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1225 pasa Data Engineering revisions PostgreSQL `1/1` para inventario de
+artifacts; cleanup PASS. Es evidencia filtrada/bounded y no cambia P11, P13 ni
+release.
+
 D1224 pasa PostgreSQL connector control plane `1/1` para discover/preview y
 persistencia tras reopen; cleanup PASS. Es evidencia filtrada/bounded y no
 cambia P11, P13 ni release.
@@ -800,7 +804,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `a9835c7737888e43274ccde5fb1865aebaa74c20` (2026-11-24).
+**Observed source baseline:** `e5d191737590e592073076c5ef7f7b4376f0ae1c` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
