@@ -16,6 +16,7 @@ MAX_KAFKA_BATCH_BYTES = 8_388_608
 _KAFKA_PROTOCOL_OVERHEAD_BYTES = 512
 _KAFKA_METADATA_PROBE_TTL_SECONDS = 5.0
 _KAFKA_METADATA_PROBE_CACHE_LIMIT = 256
+_KAFKA_PARTIAL_BATCH_GRACE_SECONDS = 0.05
 _kafka_metadata_probe_cache: OrderedDict[tuple[str, str, tuple[int, ...]], float] = OrderedDict()
 
 
@@ -229,9 +230,25 @@ class KafkaJsonSource:
             latest = {item.partition: item.offset for item in checkpoint.positions}
             deadline = time.monotonic() + timeout_seconds
             first_poll = True
+            partial_batch_grace_used = False
             while len(records) < limit:
                 remaining = timeout_seconds if first_poll else max(0.0, deadline - time.monotonic())
+                is_first_poll = first_poll
                 first_poll = False
+                if remaining <= 0:
+                    if is_first_poll:
+                        pass
+                    elif not records or partial_batch_grace_used:
+                        break
+                    else:
+                        # A bounded consume can return a partial batch exactly
+                        # at the deadline while additional records are already
+                        # queued by another partition. Give that queued data
+                        # one short, non-blocking grace window so small limits
+                        # do not turn a sustained backlog into repeated
+                        # underfilled API calls.
+                        remaining = _KAFKA_PARTIAL_BATCH_GRACE_SECONDS
+                        partial_batch_grace_used = True
                 messages = consumer.consume(
                     num_messages=limit - len(records),
                     timeout=remaining,
