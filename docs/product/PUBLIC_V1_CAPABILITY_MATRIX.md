@@ -2,6 +2,10 @@
 
 ## Current exact-SHA snapshot — 24 November 2026
 
+D1236 pasa backup/restore del appliance Docker `1/1` con PostgreSQL y worker
+reales; D1235 queda NOT_PASS por skip del runner directo. Es diagnóstico
+filtrado/bounded y no cambia P11, P13 ni release.
+
 D1234 pasa artifact retention barrier PostgreSQL `3/3` para fencing, commit
 barrier y lease bounded; cleanup PASS. Es evidencia filtrada/bounded y no
 cambia P11, P13 ni release.
@@ -839,7 +843,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `ff208ac05a81769b5db91ee1d8bcfb414be1d24f` (2026-11-24).
+**Observed source baseline:** `bae59661170631917d939107e163106236b63033` (2026-11-24).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1235",
+  "date": "2026-11-24",
+  "status": "NOT_PASS",
+  "candidate_sha": "bae59661170631917d939107e163106236b63033",
+  "implementation_commit_sha": "bae59661170631917d939107e163106236b63033",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1235-postgres-appliance-backup-20261124",
+  "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1235-postgres-appliance-backup-20261124 -TestPath tests\\integration\\test_postgres_appliance_backup_real.py"],
+  "result": {"pytest": "0/1", "passed": 0, "failed": 0, "skipped": 1, "deselected": 0, "service": "PostgreSQL 16.4-alpine real container", "failure": "The case is opt-in Docker qualification and was skipped by the direct PostgreSQL runner; this is not executable PASS evidence.", "cleanup": "PASS"},
+  "follow_up": "D1236 executed the same case through the authorized Docker qualification runner and passed 1/1 on the next exact candidate.",
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No capability evidence was promoted from this direct-run skip; D1235 is not a PASS and is not reattributed to D1236."]
+}
