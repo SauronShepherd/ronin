@@ -1224,7 +1224,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `d4928c95f93260a55f523d341590edd702a098ff` (2026-11-30).
+**Observed source baseline:** `d291ae2420afaa602e4715576222b3e6252f4884` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
@@ -2002,5 +2002,11 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 
 - Supply-chain/license/release-artifact tests: `195/195 PASS`, `1` symlink skip on `main@d4928c95f93260a55f523d341590edd702a098ff`.
 - Playwright installed-artifact smoke was excluded because the optional dependency was unavailable; no public-v1 gate closure.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
+# D1531 — SQL and job-store qualification (2026-11-30)
+
+- SQL/job-store tests: `113/113 PASS` on `main@d291ae2420afaa602e4715576222b3e6252f4884` with temporary `duckdb`.
+- Filtered local evidence; no public-v1 gate closure.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
