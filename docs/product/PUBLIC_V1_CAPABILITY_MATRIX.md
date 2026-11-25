@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1586 — Performance budgets y contention HTTP (2026-11-30)
+
+- Performance CLI/runtime y HTTP contention budgets: `4/4 PASS` sobre `main@9e565969ac7bb6776522708c19156b17d9edbe6e`.
+- Evidencia local bounded; no cierra HA ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1585 — CLI/operator y survivor boundaries (2026-11-30)
 
 - CLI, migration validation CLI, operator boundaries/operators y plugin CLI lock: `55/55 PASS` sobre `main@9d78a1e5ceee953509ab81e718b08445b0abe84b`.
@@ -1302,7 +1308,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `9d78a1e5ceee953509ab81e718b08445b0abe84b` (2026-11-30).
+**Observed source baseline:** `9e565969ac7bb6776522708c19156b17d9edbe6e` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
