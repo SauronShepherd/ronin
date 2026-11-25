@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1582 — Scheduler, leases, connection y async job store (2026-11-30)
+
+- Async job store, connection service, scheduler daemon/leadership/pools: `31/31 PASS` sobre `main@1c8cd1966ebb3617cb1f00bfd181371424b4ad57`.
+- Evidencia local bounded de operación/leases; no cierra HA, backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1581 — Contratos ML remotos y adapters (2026-11-30)
 
 - ML remote contract, provider adapters, backend registry y backend capabilities: `13/13 PASS` sobre `main@543a86ba473c8047e517dde1d6c53d2e224641b0`.
@@ -1278,7 +1284,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `543a86ba473c8047e517dde1d6c53d2e224641b0` (2026-11-30).
+**Observed source baseline:** `1c8cd1966ebb3617cb1f00bfd181371424b4ad57` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
