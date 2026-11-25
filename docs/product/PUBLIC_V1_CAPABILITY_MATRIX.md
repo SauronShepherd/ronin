@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1598 — FinOps forecast y allocation (2026-11-30)
+
+- FinOps forecast y allocation: `8/8 PASS` sobre `main@c9c5fa2696dbec9f2e77bea50f2d34530444a581`.
+- Evidencia local bounded; observability/alerts quedan fuera; no cierra backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1597 — Streaming checkpoints y storage durability (2026-11-30)
 
 - Connector/source checkpoints, storage contracts y streaming health/kafka/bundle/windows/contracts: `80/80 PASS` sobre `main@1b4dd18d7fa9e6a033d211830c2ac3e6cfdc8374`.
@@ -1374,7 +1380,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `1b4dd18d7fa9e6a033d211830c2ac3e6cfdc8374` (2026-11-30).
+**Observed source baseline:** `c9c5fa2696dbec9f2e77bea50f2d34530444a581` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
