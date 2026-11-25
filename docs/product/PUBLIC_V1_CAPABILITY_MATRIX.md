@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1589 — Web audit, access logging y retention CLI (2026-11-30)
+
+- Artifact retention CLI, browser audit routes, HTTP access logging y studio web audit: `20/20 PASS` sobre `main@eb138eac9eb7d2c59a621c5946eb8a834e78ef5e`.
+- Evidencia local bounded; no cierra live deployment ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1588 — Lineage, ontology, graph y project governance (2026-11-30)
 
 - Ontology/graph/governance, OpenLineage y project manifest: `304/304 PASS` sobre `main@1c2f3f4a51cb1523fe92ed2dcf9e11e077ba5f2e`.
@@ -1320,7 +1326,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `1c2f3f4a51cb1523fe92ed2dcf9e11e077ba5f2e` (2026-11-30).
+**Observed source baseline:** `eb138eac9eb7d2c59a621c5946eb8a834e78ef5e` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
