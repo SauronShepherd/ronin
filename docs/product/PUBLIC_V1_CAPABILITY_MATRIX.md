@@ -1224,7 +1224,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `6b41aca55d2519e5aac39a8f56d5fd099ce42d06` (2026-11-30).
+**Observed source baseline:** `cdcefce62350f764fcf01a88391662df216335b9` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
@@ -1858,5 +1858,11 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 
 - Workspace plugin/UI unit tests: `5/5 PASS` on `main@6b41aca55d2519e5aac39a8f56d5fd099ce42d06`.
 - Filtered local evidence; the HTTP integration attempt was inconclusive and is not counted.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
+# D1506 — Migration Studio API/OpenAPI qualification (2026-11-30)
+
+- API/OpenAPI tests: `25/25 PASS` on `main@cdcefce62350f764fcf01a88391662df216335b9`.
+- Filtered local evidence; no public-v1 gate closure.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
