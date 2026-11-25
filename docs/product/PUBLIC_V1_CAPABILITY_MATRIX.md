@@ -1224,7 +1224,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `8d3daa7d051bf72e9786a633e1b6f42fc5d2f2d3` (2026-11-30).
+**Observed source baseline:** `70d416c44c26df689700c5aa9269c734e28d9300` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
@@ -1665,6 +1665,12 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 # D1473 — scheduler and timeout qualification (2026-11-30)
 
 - Scheduler/timeouts/store-decision tests: `15/15 PASS` on `main@8d3daa7d051bf72e9786a633e1b6f42fc5d2f2d3`.
+- Filtered local evidence; no public-v1 gate closure.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
+# D1474 — SQL editor and history qualification (2026-11-30)
+
+- SQL editor/history/export/HTTP tests: `44/44 PASS` on `main@70d416c44c26df689700c5aa9269c734e28d9300`.
 - Filtered local evidence; no public-v1 gate closure.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
