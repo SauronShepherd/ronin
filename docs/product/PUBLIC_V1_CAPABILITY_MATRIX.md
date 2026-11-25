@@ -1224,7 +1224,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `a3ac1a4f43c6b4b6315996d7f6987f81324cfc9c` (2026-11-30).
+**Observed source baseline:** `304f74b0282f87ceefc8d2625be39f75877d244c` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
@@ -1422,3 +1422,9 @@ blocked release.
 D1320b repite Spark Connect 4.2.0 real sobre `main@ba98415a`: `1/1` prueba, sin skips/fallos, tras pull explícito del digest; cleanup PASS e imagen retirada. D1320 conserva su NOT_PASS ambiental por imagen ausente; evidencia no reatribuida, bounded y sin cierre de P11.
 
 D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició y no hubo pruebas ejecutadas. Se conserva como intento ambiental separado; no cambia P11/P13/release.
+# D1433 — SDK client contract qualification (2026-11-30)
+
+- `pyronin` client contract suite: `87/87 PASS` on `main@304f74b0282f87ceefc8d2625be39f75877d244c`.
+- Evidence is filtered and does not close a public-v1 gate.
+- Release status unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+

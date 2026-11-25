@@ -2220,7 +2220,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `a3ac1a4f43c6b4b6315996d7f6987f81324cfc9c` (2026-11-30).
+**Observed source head:** `304f74b0282f87ceefc8d2625be39f75877d244c` (2026-11-30).
 
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 
@@ -3146,4 +3146,13 @@ califican como release. El plan §27 registra el alcance de este resultado.
 El estado sigue **NO-GO, 0/13 (0%)**: P8, decisiones humanas de versión,
 licencias/NOTICE y claims, revisión visual manual, candidate SHA limpio,
 qualification completa por familia y matriz de plataformas están pendientes.
+
+# D1433 — SDK client contract qualification (2026-11-30)
+
+- Candidate: `main@304f74b0282f87ceefc8d2625be39f75877d244c`.
+- Result: `packages/pyronin/tests/test_client.py`, `87 passed`, `0 skipped`, `0 failed`.
+- Scope: typed SDK contracts, bounded paths/queries, idempotency, fail-closed validation, and retry behavior.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1433-sdk-client-20261130`.
+- No production implementation change; filtered SDK qualification only.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
