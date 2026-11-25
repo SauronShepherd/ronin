@@ -1224,7 +1224,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `cb2630870256b6e87d46cc303fb57b46d0e5249a` (2026-11-30).
+**Observed source baseline:** `db994b6ba729e53f8d611091cf86b62db8dcc7a0` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
@@ -1912,5 +1912,11 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 
 - Cancellation/backfill tests: `30/30 PASS` on `main@cb2630870256b6e87d46cc303fb57b46d0e5249a`.
 - Filtered local evidence; no public-v1 gate closure.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
+# D1516 — Data engineering and QueryFlux qualification (2026-11-30)
+
+- Data-engineering/QueryFlux tests: `68/68 PASS` on `main@db994b6ba729e53f8d611091cf86b62db8dcc7a0`.
+- `test_query_engine_local.py` excluded because the environment lacks optional `pyarrow`; no public-v1 gate closure.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
