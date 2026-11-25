@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1577 — Plugin, migration, scheduler y streaming runtime (2026-11-30)
+
+- Plugin runtime, migration studio runtime, scheduler backfill runtime y streaming runtime: `29/29 PASS` sobre `main@27da10642108d1e8caf0033db5959e61d84d164d`.
+- Evidencia local bounded; no cierra HA, broker live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1576 — Runtimes Data Engineering/query/graph/quality/semantic (2026-11-30)
 
 - Data Engineering runtimes/query engine, graph, quality y semantic runtime: `88/88 PASS` sobre `main@5fb347684064f59ed7eb3ab1c54672e500698553`.
@@ -1248,7 +1254,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `5fb347684064f59ed7eb3ab1c54672e500698553` (2026-11-30).
+**Observed source baseline:** `27da10642108d1e8caf0033db5959e61d84d164d` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
