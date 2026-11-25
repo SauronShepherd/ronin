@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1588 — Lineage, ontology, graph y project governance (2026-11-30)
+
+- Ontology/graph/governance, OpenLineage y project manifest: `304/304 PASS` sobre `main@1c2f3f4a51cb1523fe92ed2dcf9e11e077ba5f2e`.
+- Evidencia local bounded; no cierra backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1587 — Auditoría, seguridad y access boundaries (2026-11-30)
 
 - Auditoría, redaction/policy, broker security, grants, project/workspace y source-control boundaries: `326/326 PASS` sobre `main@b9aaa5621159bb1e818acbdabe4683dc07c276c1`.
@@ -1314,7 +1320,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `b9aaa5621159bb1e818acbdabe4683dc07c276c1` (2026-11-30).
+**Observed source baseline:** `1c2f3f4a51cb1523fe92ed2dcf9e11e077ba5f2e` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
