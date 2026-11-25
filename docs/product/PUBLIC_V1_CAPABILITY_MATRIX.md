@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1574 — Recuperación appliance y backup (2026-11-30)
+
+- Appliance backup, backup manifest, PostgreSQL backup/restore y SQLite backup: `13/13 PASS` sobre `main@e2c4c9059d6f4d58b77d8f5a615a7f1da52c1efc`.
+- Evidencia unitaria local bounded; no cierra restore live, HA ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1573 — Worker runtime y recuperación (2026-11-30)
 
 - Worker runtime, kernel event ledger recovery y runtime bundle portability: `69/69 PASS` sobre `main@0c3a1bf304476243d9dab1024801e62cab9db13b`.
@@ -1230,7 +1236,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `0c3a1bf304476243d9dab1024801e62cab9db13b` (2026-11-30).
+**Observed source baseline:** `e2c4c9059d6f4d58b77d8f5a615a7f1da52c1efc` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
