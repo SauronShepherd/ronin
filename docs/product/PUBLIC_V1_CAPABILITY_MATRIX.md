@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1593 — Transporte, serialización y contratos de cliente (2026-11-30)
+
+- Artifact paging, canonical JSON, ML HTTP/OpenLineage transport y transport policy: `173/173 PASS` sobre `main@45f871be1835b4461a1d2a16429024223edfb199`.
+- Evidencia local bounded; no cierra backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1592 — PostgreSQL store, backup, bundle y retention contracts (2026-11-30)
 
 - PostgreSQL backup/audit unit, JobStore/bundle contracts y retention barrier: `24/24 PASS` sobre `main@25d98d28af203f8d1d7477fd2d6c214581959f73`.
@@ -1344,7 +1350,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `25d98d28af203f8d1d7477fd2d6c214581959f73` (2026-11-30).
+**Observed source baseline:** `45f871be1835b4461a1d2a16429024223edfb199` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
