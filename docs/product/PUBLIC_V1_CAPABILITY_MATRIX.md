@@ -2,6 +2,8 @@
 
 ## Current exact-SHA snapshot — 27–28 November 2026
 
+D1424 aporta evidencia bounded de integración del plugin de performance (`1/1` PASS) sobre `main@2f8bb559`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
+
 D1423 aporta evidencia bounded de la suite SDK pyronin (`92/92` PASS) sobre `main@95bc99b8`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
 
 D1422 aporta evidencia bounded parcial de submit/status HTTP (`12 PASS`, `2 skips`, `1 deseleccionada por DuckDB`, `0` fallos) sobre `main@7a3ec25f`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
@@ -1206,7 +1208,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `95bc99b83a24080a451be6c7f97a2399667d66bf` (2026-11-30).
+**Observed source baseline:** `2f8bb559c3751a3c58cd3647aaa22669b8d75848` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
