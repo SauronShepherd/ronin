@@ -1224,7 +1224,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `65651d60de2c3572e6e034509ec6b41ce023d323` (2026-11-30).
+**Observed source baseline:** `4d07f6a0a556f792a34aac8e93bc27ebcd308a52` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
@@ -1756,5 +1756,11 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 
 - OpenAPI/ML plugin API tests: `51/51 PASS` on `main@65651d60de2c3572e6e034509ec6b41ce023d323`.
 - Filtered local evidence; initial dependency-missing run was not promoted; final run used temporary optional ML dependencies and no public-v1 gate is closed.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
+# D1489 — streaming runtime, windows and tables qualification (2026-11-30)
+
+- Streaming runtime/window/table tests: `18/18 PASS` on `main@4d07f6a0a556f792a34aac8e93bc27ebcd308a52`.
+- Filtered local evidence; initial dependency-missing run was not promoted; final run used temporary `pyarrow` and no public-v1 gate is closed.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
