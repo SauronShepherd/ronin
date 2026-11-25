@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1583 — Catálogo, notebooks, workflow pins y artifact paging (2026-11-30)
+
+- Artifact paging, bundle catalog, catalog boundaries/search/ownership, notebook dependencies y workflow pinning: `130/130 PASS` sobre `main@08fc4ed0396a50a865ca0419d29151fefd223c5c`.
+- Evidencia local bounded; no cierra backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1582 — Scheduler, leases, connection y async job store (2026-11-30)
 
 - Async job store, connection service, scheduler daemon/leadership/pools: `31/31 PASS` sobre `main@1c8cd1966ebb3617cb1f00bfd181371424b4ad57`.
@@ -1284,7 +1290,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `1c8cd1966ebb3617cb1f00bfd181371424b4ad57` (2026-11-30).
+**Observed source baseline:** `08fc4ed0396a50a865ca0419d29151fefd223c5c` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
