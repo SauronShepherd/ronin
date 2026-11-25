@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1592 — PostgreSQL store, backup, bundle y retention contracts (2026-11-30)
+
+- PostgreSQL backup/audit unit, JobStore/bundle contracts y retention barrier: `24/24 PASS` sobre `main@25d98d28af203f8d1d7477fd2d6c214581959f73`.
+- Evidencia local unitaria bounded; no certifica PostgreSQL live ni HA.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1591 — Worker/runtime contention (2026-11-30)
 
 - Worker runtime contention y runtime contention: `3/3 PASS` sobre `main@d126d34f3aabe620c6df3f5fc2fb2b995e8f5acc`.
@@ -1338,7 +1344,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `d126d34f3aabe620c6df3f5fc2fb2b995e8f5acc` (2026-11-30).
+**Observed source baseline:** `25d98d28af203f8d1d7477fd2d6c214581959f73` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
