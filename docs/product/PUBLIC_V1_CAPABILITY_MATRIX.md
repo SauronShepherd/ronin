@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1581 — Contratos ML remotos y adapters (2026-11-30)
+
+- ML remote contract, provider adapters, backend registry y backend capabilities: `13/13 PASS` sobre `main@543a86ba473c8047e517dde1d6c53d2e224641b0`.
+- Evidencia local provider-neutral; runtime tabular nativo y provider live quedan fuera.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1580 — Release evidence y capability contracts (2026-11-30)
 
 - Capability status, release inventory, publication, portable evidence y contract snapshots: `22/22 PASS` sobre `main@0cdf7dc8a4bb4a5ab75e3c5ed86ad79eac1273dc`.
@@ -1272,7 +1278,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `0cdf7dc8a4bb4a5ab75e3c5ed86ad79eac1273dc` (2026-11-30).
+**Observed source baseline:** `543a86ba473c8047e517dde1d6c53d2e224641b0` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
