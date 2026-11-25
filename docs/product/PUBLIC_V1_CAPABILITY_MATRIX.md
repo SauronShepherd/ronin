@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1585 — CLI/operator y survivor boundaries (2026-11-30)
+
+- CLI, migration validation CLI, operator boundaries/operators y plugin CLI lock: `55/55 PASS` sobre `main@9d78a1e5ceee953509ab81e718b08445b0abe84b`.
+- Evidencia local bounded; integración CLI real queda fuera; no cierra live deployment ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1584 — Control-plane pagination y static surface (2026-11-30)
 
 - Control-plane pagination y static control-plane: `23/23 PASS` sobre `main@468922925e77f6721b412633d69bd3b1f0978e6c`.
@@ -1296,7 +1302,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `468922925e77f6721b412633d69bd3b1f0978e6c` (2026-11-30).
+**Observed source baseline:** `9d78a1e5ceee953509ab81e718b08445b0abe84b` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
