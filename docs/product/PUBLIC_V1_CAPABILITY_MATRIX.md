@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1575 — Contratos object store S3/Azure (2026-11-30)
+
+- S3 JSON connector, S3 artifact store, Azure Blob JSON connector y artifact store: `57/57 PASS` sobre `main@daef25a20e5f1752c83fdc34dc0d92187e7fef5e`.
+- Evidencia local con doubles; no certifica cloud/provider live ni cierra gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1574 — Recuperación appliance y backup (2026-11-30)
 
 - Appliance backup, backup manifest, PostgreSQL backup/restore y SQLite backup: `13/13 PASS` sobre `main@e2c4c9059d6f4d58b77d8f5a615a7f1da52c1efc`.
@@ -1236,7 +1242,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `e2c4c9059d6f4d58b77d8f5a615a7f1da52c1efc` (2026-11-30).
+**Observed source baseline:** `daef25a20e5f1752c83fdc34dc0d92187e7fef5e` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
