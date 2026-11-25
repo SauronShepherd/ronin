@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1579 — Contratos core/query/storage/streaming/publication (2026-11-30)
+
+- Core boundaries, query engine, storage pagination, streaming, survivor validation y publication contract: `79/79 PASS` sobre `main@88896cd073aa1cb2f7577a3e8d8873a1084f848e`.
+- Evidencia local bounded; no cierra HA, backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1578 — Control-plane HTTP bounded (2026-11-30)
 
 - HTTP submit/status, timeout y authorized pagination: `15/15 PASS` sobre `main@121bd12c39b0a18ac8ed057068ab21e3eeab60ca`.
@@ -1260,7 +1266,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `121bd12c39b0a18ac8ed057068ab21e3eeab60ca` (2026-11-30).
+**Observed source baseline:** `88896cd073aa1cb2f7577a3e8d8873a1084f848e` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
