@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1597 — Streaming checkpoints y storage durability (2026-11-30)
+
+- Connector/source checkpoints, storage contracts y streaming health/kafka/bundle/windows/contracts: `80/80 PASS` sobre `main@1b4dd18d7fa9e6a033d211830c2ac3e6cfdc8374`.
+- Evidencia local bounded; no certifica broker live ni HA.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1596 — Bundles multi-object y workflow export/import (2026-11-30)
 
 - Multi-object commit/import, workflow bundle y workflow export: `13/13 PASS` sobre `main@c6f27d151ce7f666ff04291062ece657c42fc3fe`.
@@ -1368,7 +1374,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `c6f27d151ce7f666ff04291062ece657c42fc3fe` (2026-11-30).
+**Observed source baseline:** `1b4dd18d7fa9e6a033d211830c2ac3e6cfdc8374` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
