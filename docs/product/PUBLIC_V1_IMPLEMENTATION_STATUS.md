@@ -2220,7 +2220,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `cf95448c345d2545a1d0b621b9fa29090899247e` (2026-11-30).
+**Observed source head:** `3fed63128afdfc1cf27c7144cf20b96b4e1cd34f` (2026-11-30).
 
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 
@@ -3162,6 +3162,15 @@ qualification completa por familia y matriz de plataformas están pendientes.
 - Result: `tests/test_backend_configuration.py tests/test_connector_capabilities.py`, `10 passed`, `0 skipped`, `0 failed`.
 - Scope: backend configuration boundaries, optional DuckDB SQL root handling, and connector capability contracts.
 - Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1434-backend-connectors-20261130`.
+- No production implementation change; isolated qualification only.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
+# D1435 — connector registry and checkpoint qualification (2026-11-30)
+
+- Candidate: `main@3fed63128afdfc1cf27c7144cf20b96b4e1cd34f`.
+- Result: `tests/test_connector_registry.py tests/test_connector_checkpoint.py`, `44 passed`, `0 skipped`, `0 failed`.
+- Scope: connector registry dispatch, HTTP pagination/retry boundaries, byte/deadline budgets, and durable checkpoint fencing/replay.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1435-connector-registry-checkpoint-20261130`.
 - No production implementation change; isolated qualification only.
 - Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
