@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1591 — Worker/runtime contention (2026-11-30)
+
+- Worker runtime contention y runtime contention: `3/3 PASS` sobre `main@d126d34f3aabe620c6df3f5fc2fb2b995e8f5acc`.
+- Evidencia local bounded de concurrencia; no cierra HA ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1590 — Qualification contracts open tables/Spark/Trino/Docker (2026-11-30)
 
 - Open-table, Spark Connect, Trino y Docker qualification contracts: `34/34 PASS` sobre `main@433eeaa78f5e3024feb340aece56ea4ff5b373f4`.
@@ -1332,7 +1338,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `433eeaa78f5e3024feb340aece56ea4ff5b373f4` (2026-11-30).
+**Observed source baseline:** `d126d34f3aabe620c6df3f5fc2fb2b995e8f5acc` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
