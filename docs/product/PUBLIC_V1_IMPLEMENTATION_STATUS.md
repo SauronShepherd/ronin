@@ -2220,7 +2220,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `b2b9b5bd31e26c88b6c9557b9ce9ed2a758e79f2` (2026-11-30).
+**Observed source head:** `e4529ecab15f5c2b604ee83323bdf22c5e45c8ed` (2026-11-30).
 
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 
@@ -4027,5 +4027,13 @@ qualification completa por familia y matriz de plataformas están pendientes.
 - Result: scheduler controller/daemon/leadership/fencing/notifications/execution bridge and stream bridge tests, `48 passed`, `0 failed`.
 - Scope: bounded local scheduler qualification; no HA or indefinite-operation claim.
 - Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1541-scheduler-20261130`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
+# D1542 — Worker runtime y evidencia portable (2026-11-30)
+
+- Candidate: `main@e4529ecab15f5c2b604ee83323bdf22c5e45c8ed`.
+- Result: worker runtime/preparation/execution/cancellation/portable evidence and plugin worker tests, `53 passed`, `0 failed`.
+- Scope: bounded local worker qualification; no multi-worker or live backend certification claim.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1542-worker-runtime-20261130`.
 - Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
