@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1580 — Release evidence y capability contracts (2026-11-30)
+
+- Capability status, release inventory, publication, portable evidence y contract snapshots: `22/22 PASS` sobre `main@0cdf7dc8a4bb4a5ab75e3c5ed86ad79eac1273dc`.
+- Evidencia local bounded; no cambia gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1579 — Contratos core/query/storage/streaming/publication (2026-11-30)
 
 - Core boundaries, query engine, storage pagination, streaming, survivor validation y publication contract: `79/79 PASS` sobre `main@88896cd073aa1cb2f7577a3e8d8873a1084f848e`.
@@ -1266,7 +1272,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `88896cd073aa1cb2f7577a3e8d8873a1084f848e` (2026-11-30).
+**Observed source baseline:** `0cdf7dc8a4bb4a5ab75e3c5ed86ad79eac1273dc` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
