@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1573 — Worker runtime y recuperación (2026-11-30)
+
+- Worker runtime, kernel event ledger recovery y runtime bundle portability: `69/69 PASS` sobre `main@0c3a1bf304476243d9dab1024801e62cab9db13b`.
+- Evidencia local bounded; no cierra HA, backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## Current exact-SHA snapshot — 27–28 November 2026
 
 D1432 aporta evidencia bounded de transporte HTTP del SDK (`5/5` PASS) sobre `main@a3ac1a4f`; mantiene `P11=in_progress`, `P13=blocked` y `release=NO-GO`.
@@ -1224,7 +1230,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `9becf8fc2b26a6134dcc75526cb1a082e369b904` (2026-11-30).
+**Observed source baseline:** `0c3a1bf304476243d9dab1024801e62cab9db13b` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66

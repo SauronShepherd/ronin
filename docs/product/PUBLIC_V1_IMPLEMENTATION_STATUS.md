@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1573 — Worker runtime y recuperación (2026-11-30)
+
+- Candidate: `main@0c3a1bf304476243d9dab1024801e62cab9db13b`.
+- Result: worker runtime, kernel event ledger recovery y runtime bundle portability, `69 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de runtime/recovery; sin claim de HA, backend live ni cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1573-runtime-recovery-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `6E8EFC7B8774B00E47D9132BAE30F5438B3AFC86CA8344554F75ADE468878391`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
@@ -2220,7 +2229,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `9becf8fc2b26a6134dcc75526cb1a082e369b904` (2026-11-30).
+**Observed source head:** `0c3a1bf304476243d9dab1024801e62cab9db13b` (2026-11-30).
 
 D136 live product qualification on candidate `abf0dfab5f2a36ee4a66bc30cdfd1047960421dd` executed 43 cases: 42 passed, 1 skipped, 0 failed. The strict runner therefore records FAIL; 448 API events were correlated across 24 API-backed routes and one UI-only route. The Ronin server used SQLite; PostgreSQL was only the ingestion/browser fixture. P11 remains in_progress, P13 blocked, and release remains NO-GO.
 
