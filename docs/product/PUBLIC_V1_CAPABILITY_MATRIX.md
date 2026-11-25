@@ -1224,7 +1224,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `716c587bf16a6069e1de0709ccea71d4964e3284` (2026-11-30).
+**Observed source baseline:** `d09c67e353d4b6681e84def29303a051d3933114` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
@@ -1972,5 +1972,11 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 
 - Web/Studio/HTTP contract tests: `68/68 PASS` on `main@716c587bf16a6069e1de0709ccea71d4964e3284`.
 - Cloud Studio/heavy web fixtures were inconclusive and excluded; no public-v1 gate closure.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
+# D1526 — Ontology, grants and survivor qualification (2026-11-30)
+
+- Ontology/grant/survivor tests: `299/299 PASS` on `main@d09c67e353d4b6681e84def29303a051d3933114`.
+- Property-based `test_grants.py` battery was inconclusive and excluded; no public-v1 gate closure.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
