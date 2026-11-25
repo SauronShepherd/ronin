@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1596 — Bundles multi-object y workflow export/import (2026-11-30)
+
+- Multi-object commit/import, workflow bundle y workflow export: `13/13 PASS` sobre `main@c6f27d151ce7f666ff04291062ece657c42fc3fe`.
+- Evidencia local bounded de atomicidad/idempotencia/recovery; no cierra backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1595 — Notebook revisions, portability y dependencies (2026-11-30)
 
 - Notebook revisions, portability y dependency graph: `30/30 PASS` sobre `main@69b58cf96b5cbf9ab0e822c69e8340a73c2c2bad`.
@@ -1362,7 +1368,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `69b58cf96b5cbf9ab0e822c69e8340a73c2c2bad` (2026-11-30).
+**Observed source baseline:** `c6f27d151ce7f666ff04291062ece657c42fc3fe` (2026-11-30).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
