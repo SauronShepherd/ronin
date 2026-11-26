@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1660 — Backlog de dos particiones en micro-batches (2026-11-30)
+
+- Candidate exacto: `main@68c8b5ff7307104bbc207273f6545c43969ffe37`.
+- Resultado: drenado live de backlog de dos particiones en micro-batches bounded PASS, `1 passed`, `0 failed`, `0 skipped`; `36/36` eventos API correlacionados, todos `OK`, sin errores inesperados.
+- Scope: PostgreSQL real y Redpanda single-broker, dos particiones y micro-batches bounded; no afirma operación indefinida, HA multi-broker, cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1660-live-two-partition-backlog-20261130`.
+- Evidence hashes: `qualification-summary.json` `139C22220D0F8268ACC81809397BC2A97979C324CB1012E6E84577CFF2D288D5`; `browser-live.log` `0C115AD1E44E86F0278BDB572A40F99803E6E8FFC0F325C72C63E171F8C0C5F4`; `browser-live.xml` `1338754287ECCB9F96E8DCD187569796DBBF7DD51C283E4E8D8EA5848B677FFD`; `live-api-traffic.json` `699B860BB1F54959CD37846436E904772090F1A44DDEBC7F9B3D860284F4251A`.
+- Cleanup PASS: broker, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1659 — Drenado supervisado hasta idle con checkpoint durable (2026-11-30)
 
 - Candidate exacto: `main@d1f8a4244419c31c5ed3cdaed935751b7011b297`.

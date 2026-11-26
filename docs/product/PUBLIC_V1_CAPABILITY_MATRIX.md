@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1660 — Backlog de dos particiones en micro-batches (2026-11-30)
+
+- Two-partition backlog: `1/1 PASS`, `36/36` eventos correlacionados sobre `main@68c8b5ff7307104bbc207273f6545c43969ffe37`, con PostgreSQL real y Redpanda single-broker.
+- Cleanup de broker, PostgreSQL, volumen y red temporales PASS; evidencia bounded, sin certificación de HA multi-broker ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1660-live-two-partition-backlog-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1659 — Drenado supervisado hasta idle con checkpoint durable (2026-11-30)
 
 - Supervised drain: `1/1 PASS`, `5/5` eventos correlacionados (`4 OK`, `1 WARN` esperado) sobre `main@d1f8a4244419c31c5ed3cdaed935751b7011b297`, con PostgreSQL real y Redpanda single-broker.
