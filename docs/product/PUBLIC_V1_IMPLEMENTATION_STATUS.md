@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1604 — Certificación funcional de migración (2026-11-30)
+
+- Candidate: `main@ff0f6c5d94056b35b538bc81a1aad270447e0166`.
+- Result: migration profiles, qualification, registry y SQL, `16 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de perfiles/certificación/registro SQL; distinta del runtime D1577 y sin claim de backend live ni cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1604-migration-certification-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `E64B8EAFAB2E000AF069B84D7D4CB4701A7A61086DC9A116CD0D0B56877CE896`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1603 — Inventarios de artefactos, migración y plugins (2026-11-30)
 
 - Candidate: `main@ce06cbdbea1807a1f3a9431b9921962029688747`.

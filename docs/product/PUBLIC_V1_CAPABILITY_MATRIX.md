@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1604 — Certificación funcional de migración (2026-11-30)
+
+- Migration profiles, qualification, registry y SQL: `16/16 PASS` sobre `main@ff0f6c5d94056b35b538bc81a1aad270447e0166`.
+- Evidencia local bounded; no certifica backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1603 — Inventarios de artefactos, migración y plugins (2026-11-30)
 
 - Artifact writer inventory, migration inventory y plugin inventory: `9/9 PASS` sobre `main@ce06cbdbea1807a1f3a9431b9921962029688747`.
