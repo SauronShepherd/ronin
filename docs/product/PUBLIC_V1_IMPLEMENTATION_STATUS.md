@@ -1,5 +1,16 @@
 # Ronin Public v1 implementation status
 
+## D1665 — Ingestion Studio descubrimiento PostgreSQL con worker Docker (2026-11-30)
+
+- Candidate exacto: `main@10bb0a46ce22cf37667d6fd51f12103870809814`.
+- Resultado: descubrimiento live de páginas PostgreSQL PASS, `1 passed`, `0 failed`, `0 skipped`; `12/12` eventos API correlacionados, todos `OK`, sin errores inesperados.
+- Servicios: PostgreSQL real, Redpanda single-broker, Ronin API y worker Docker construido desde el candidato; imagen inmutable `sha256:7e0b357cb21ba2ff0dc34ef66601b04864007b35d0d5917aa83ffbdf94dfc7fd`.
+- Scope: recorrido bounded de descubrimiento/paginación; no afirma operación indefinida, multi-worker, provider externo, cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1665-live-ingestion-discovery-20261130`.
+- Evidence hashes: `qualification-summary.json` `E866156124F4633D4C665ACCE6FE3ED97BC0EAAFE720867B9191691FCACF0216`; `browser-live.log` `BD542CC7BEB7914B73CC0F2D8D70D23EB3FFCDEAC89F83E755A7BFF9347A7CA9`; `browser-live.xml` `8AE34A64C6B455D4658FB264ED19660BFCE79690D019310E2FAF4B4C48A8AC9F`; `live-api-traffic.json` `DF54E8C668B4732748718985CA6B05EB30EF4BD95CCFF53C73F4DA52C099CF35`.
+- Cleanup PASS: broker, PostgreSQL, volumen, red y worker image temporal eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1664 — Ingestion Studio watermark live con worker Docker (2026-11-30)
 
 - Candidate exacto: `main@630d67cdbb60eed9d28be672a6fa4b5e8b52ae5c`.

@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1665 — Ingestion Studio descubrimiento PostgreSQL con worker Docker (2026-11-30)
+
+- Ingestion discovery: `1/1 PASS`, `12/12` eventos correlacionados sobre `main@10bb0a46ce22cf37667d6fd51f12103870809814`, con PostgreSQL, Redpanda y worker Docker real; imagen `sha256:7e0b357cb21ba2ff0dc34ef66601b04864007b35d0d5917aa83ffbdf94dfc7fd`.
+- Cleanup de servicios e imagen temporal PASS; evidencia bounded, sin certificación de multi-worker, operación indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1665-live-ingestion-discovery-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1664 — Ingestion Studio watermark live con worker Docker (2026-11-30)
 
 - Ingestion watermark: `1/1 PASS`, `15/15` eventos correlacionados sobre `main@630d67cdbb60eed9d28be672a6fa4b5e8b52ae5c`, con PostgreSQL, Redpanda y worker Docker real; imagen `sha256:d40521f7f75fc7da275ead48502b6887bda74f5f812a4f47d791cd8138a4d400`.
