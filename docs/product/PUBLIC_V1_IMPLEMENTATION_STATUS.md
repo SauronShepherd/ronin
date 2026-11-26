@@ -1,5 +1,16 @@
 # Ronin Public v1 implementation status
 
+## D1646 — Docker acceptance full current candidate (2026-11-30)
+
+- Candidate exacto: `main@9b955d034ee5b8d5dd69cad623344cf3baad3a6c`.
+- Resultado: aceptación Docker completa, `27 passed`, `0 skipped`, `0 failed`; strict v0.1 `15 passed`, `0 skipped`, `0 xfailed`, `0 failed`, `0 missing`.
+- Scope: worker/runtime Docker real, PostgreSQL, backup/restore, S3/Floci, Azure/Azurite y journey v0.1 estricto sobre el candidato actual; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1646-docker-full-20261130`.
+- Image: `sha256:af92674425f0956d3047ff2fa951dc1f3bde7814d970d9c151c1efbf6f9229b4`.
+- Evidence hashes: `qualification-summary.json` `F4CD67520F8921A00126FCCAFA2DAC8D0036E11698C37C20D9D30CA587C99FA5`; `docker-pytest-output.log` `E6DD007453443D444CD6831F4A67E739CA7FDAFDEA77BC619B802B7604DBADA9`; `v01-acceptance-strict.json` `5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C`; `v01-acceptance.xml` `81C15931358A6B49488DB6E0EFCE63DF8DB425F5A360D568418050EB6649C306`; `docker-qualification.log` `DB856E0D28194B0A374641E8809FE9171AEBF1B617E7023B026BF2480CD6E3D1`; `docker-cleanup.json` `61886CE01D09FCB1A2893FD64F2B459A3AFD9BB18C0EF46F08440FB4E3AD80FC`.
+- Cleanup PASS: PostgreSQL, Floci, Azurite, worker containers, volumes, networks e imagen temporal eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1645 — ML S3 artifact store/Floci live-emulated (2026-11-30)
 
 - Candidate exacto: `main@e149a9d84cf7c7389799142cbc2132d2d38f0a0d`.

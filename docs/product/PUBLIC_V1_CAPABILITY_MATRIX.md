@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1646 — Docker acceptance full current candidate (2026-11-30)
+
+- Docker acceptance: `27/27 PASS`; strict v0.1: `15/15 PASS`, sobre `main@9b955d034ee5b8d5dd69cad623344cf3baad3a6c` e imagen inmutable `sha256:af92674425f0956d3047ff2fa951dc1f3bde7814d970d9c151c1efbf6f9229b4`.
+- Incluye worker/runtime, PostgreSQL, backup/restore, S3/Floci, Azure/Azurite y journey estricto; cleanup de todos los recursos propios PASS.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1646-docker-full-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1645 — ML S3 artifact store/Floci live-emulated (2026-11-30)
 
 - ML durable artifact store contra Floci: `1/1 PASS` sobre `main@e149a9d84cf7c7389799142cbc2132d2d38f0a0d`; round-trip input/output y retención.
