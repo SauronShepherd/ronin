@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1601 — Workspace plugin ports y events (2026-11-30)
+
+- Workspace plugin ports/events, plugin UI manifest y workspace project services: `13/13 PASS` sobre `main@795b8a180eec2797ace07bf4acbdbaf53165e16f`.
+- Evidencia local bounded; no certifica backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1600 — Project/workspace lifecycle y manifests (2026-11-30)
 
 - Project manifests, survivor boundaries, configuration y projects: `104/104 PASS` sobre `main@9750b329c1317725e57c1f7fc0f789acba89ebca`.

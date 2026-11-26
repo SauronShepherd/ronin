@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1601 — Workspace plugin ports y events (2026-11-30)
+
+- Candidate: `main@795b8a180eec2797ace07bf4acbdbaf53165e16f`.
+- Result: workspace plugin ports/events, plugin UI manifest y workspace project services, `13 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de puertos/eventos de plugins; sin claim de backend live ni cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1601-workspace-plugins-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `2FABE0926FF95C3611B43CCD17BBC422E373EFDB9D4F9DE6774C0C7F22058B7F`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1600 — Project/workspace lifecycle y manifests (2026-11-30)
 
 - Candidate: `main@9750b329c1317725e57c1f7fc0f789acba89ebca`.
