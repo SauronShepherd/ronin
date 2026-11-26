@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1628 — ML S3 artifact store/Floci live-emulated (2026-11-30)
+
+- Candidate: `main@f33b6b29c2ccee013bd31f93ffc135d0ac048ff6`.
+- Result: ML durable input/output/retention round-trip contra Floci 2.1.0 fijado por digest, `1 passed`, `0 failed`, `0 skipped`; `boto3` instalado solo en `.testdeps` temporal.
+- Scope: cualificación provider/object-store bounded de artefactos ML y retención; no certifica AWS cloud real ni cierra P11/release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1628-floci-ml-s3-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `F59E0DDD4E8C93CCA3C6FB7FC09EF244C12824BF944A54EE897279C112966769`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1627 — S3/Floci provider live-emulated (2026-11-30)
 
 - Candidate: `main@58198a9933b3c44d5e4f0385567e58ed5d4b660f`.
