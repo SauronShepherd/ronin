@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1619 — PostgreSQL connector control-plane live (2026-11-30)
+
+- Candidate: `main@95ac150210655fa2f82c5213fa386ec37a49a71a`.
+- Result: PostgreSQL connector control-plane discover/preview/reopen integration, `1 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de discovery/preview y reapertura; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1619-postgres-control-plane-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `59F5D83B39CA531BA2A6D5E945E678FF6D8F2556C29C9AB591F11A5C67345BEA`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1618 — PostgreSQL artifact retention barrier live (2026-11-30)
 
 - Candidate: `main@2b277f70f50b2bc81991de7c145ad57defc8c279`.

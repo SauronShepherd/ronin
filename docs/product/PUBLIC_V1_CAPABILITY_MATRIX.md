@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1619 — PostgreSQL connector control-plane live (2026-11-30)
+
+- PostgreSQL connector control-plane discover/preview/reopen: `1/1 PASS` contra PostgreSQL 16.4 aislado sobre `main@95ac150210655fa2f82c5213fa386ec37a49a71a`.
+- Cleanup de contenedor PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1618 — PostgreSQL artifact retention barrier live (2026-11-30)
 
 - PostgreSQL artifact retention barrier integration: `3/3 PASS` contra PostgreSQL 16.4 aislado sobre `main@2b277f70f50b2bc81991de7c145ad57defc8c279`.
