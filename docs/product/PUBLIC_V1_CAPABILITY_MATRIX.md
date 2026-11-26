@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1655 — Sink Parquet y replay tras reset live con PostgreSQL (2026-11-30)
+
+- Sink Parquet/replay: `1/1 PASS`, `11/11` eventos correlacionados sobre `main@097f026c8e9c83d98f467e2251df69b0a276a50e`, con PostgreSQL real y Redpanda single-broker.
+- Cleanup de broker, PostgreSQL, volumen y red temporales PASS; evidencia bounded, sin certificación de provider externo ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1655-live-parquet-replay-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1654 — Event workflow live con PostgreSQL (2026-11-30)
 
 - Event workflow: `1/1 PASS`, `12/12` eventos correlacionados sobre `main@e9c2691e1d984652332ddd32682c12110f3f7921`, con PostgreSQL real y Redpanda single-broker.

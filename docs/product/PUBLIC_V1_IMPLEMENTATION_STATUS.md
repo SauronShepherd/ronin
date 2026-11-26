@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1655 — Sink Parquet y replay tras reset live con PostgreSQL (2026-11-30)
+
+- Candidate exacto: `main@097f026c8e9c83d98f467e2251df69b0a276a50e`.
+- Resultado: sink Parquet preserva replay tras reset en diagnóstico live PASS, `1 passed`, `0 failed`, `0 skipped`; `11/11` eventos API correlacionados, todos `OK`, sin errores inesperados.
+- Scope: ejecución bounded con PostgreSQL real y Redpanda single-broker; no afirma operación indefinida, provider externo, cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1655-live-parquet-replay-20261130`.
+- Evidence hashes: `qualification-summary.json` `91F9B3C57737BC62CD14A197B526161AC960EDC7C60B072E25B93ADA3ACB638F`; `browser-live.log` `4EC482013271D73548623F3CC6B04BA244751A65C43D0C6368BE82B9E1D8D1D5`; `browser-live.xml` `7C32F78035B77616287543AC22ABB211C912D4D493871A7C3D9BDC01561AD39B`; `live-api-traffic.json` `B90F1165D7316875565FE1435C471E10F47179DE441F7940260C1EF19863164C`.
+- Cleanup PASS: broker, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1654 — Event workflow live con PostgreSQL (2026-11-30)
 
 - Candidate exacto: `main@e9c2691e1d984652332ddd32682c12110f3f7921`.
