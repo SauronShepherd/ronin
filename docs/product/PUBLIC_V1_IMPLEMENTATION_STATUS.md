@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1618 — PostgreSQL artifact retention barrier live (2026-11-30)
+
+- Candidate: `main@2b277f70f50b2bc81991de7c145ad57defc8c279`.
+- Result: PostgreSQL artifact retention barrier integration, `3 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de retención y barreras de referencias; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1618-postgres-retention-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `DEEEB9777831D175215F55664B0AABD7F8D9DB012D5652BC46287F22E9C65C87`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1617 — PostgreSQL Data Engineering revisions live (2026-11-30)
 
 - Candidate: `main@2f2f44c3e4994fdbc0c87a65bfa9111a32b19b9d`.

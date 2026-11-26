@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1618 — PostgreSQL artifact retention barrier live (2026-11-30)
+
+- PostgreSQL artifact retention barrier integration: `3/3 PASS` contra PostgreSQL 16.4 aislado sobre `main@2b277f70f50b2bc81991de7c145ad57defc8c279`.
+- Cleanup de contenedor PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1617 — PostgreSQL Data Engineering revisions live (2026-11-30)
 
 - PostgreSQL Data Engineering revisions integration: `1/1 PASS` contra PostgreSQL 16.4 aislado sobre `main@2f2f44c3e4994fdbc0c87a65bfa9111a32b19b9d`.
