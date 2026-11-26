@@ -4840,3 +4840,12 @@ qualification completa por familia y matriz de plataformas están pendientes.
 - Cleanup: PASS; imagen temporal Ronin y fixtures propios eliminados; recursos persistentes ajenos no tocados.
 - Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1637 — Helm/kind PostgreSQL restart persistence live (2026-11-30)
+
+- Candidate: `main@73b43cc939d3629b7230f64e3246f0081e65eed3`.
+- Result: Helm lint/secret boundary/install/upgrade/rollback, health/authorized API, durable PostgreSQL job, PostgreSQL restart recovery and deployment restart persistence all passed.
+- Scope: bounded deployment/runtime recovery qualification on kind with PostgreSQL 16.4 and Ronin image `sha256:4bf7870699ff2e2637e2da363ab37ac6c38fd662eb9467bcac28262af9220601`; no multi-user/HA or complete P11 claim.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1637-helm-postgres-20261130`.
+- Cleanup: PASS; kind cluster, PostgreSQL container and temporary Ronin images removed.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+

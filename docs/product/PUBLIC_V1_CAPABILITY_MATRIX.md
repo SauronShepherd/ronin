@@ -2622,3 +2622,9 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 - Cleanup PASS; evidencia Docker acotada, sin certificación de cloud real, operación indefinida, HA ni cierre de P11.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1637 — Helm/kind PostgreSQL restart persistence live (2026-11-30)
+
+- Helm/kind PostgreSQL deployment recovery: lint, install/upgrade/rollback, health/API and restart persistence PASS on `main@73b43cc939d3629b7230f64e3246f0081e65eed3`.
+- Bounded single-replica deployment evidence only; no multi-user/HA, external provider or public-v1 gate closure.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
