@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1609 — Quality observability y alert signals (2026-11-30)
+
+- Quality observability y alert signals: `4/4 PASS` sobre `main@edc3389b1e48ff756117950f712e7ad92c32d543`.
+- Evidencia local bounded; no certifica backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1608 — Cloud Studio/Floci bounded qualification (2026-11-30)
 
 - Cloud Studio y Floci qualification contracts: `42/42 PASS` sobre `main@cc54f93ab292f2e158ab03a51442e3bfd1814f7f`.

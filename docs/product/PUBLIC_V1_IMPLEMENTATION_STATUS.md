@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1609 — Quality observability y alert signals (2026-11-30)
+
+- Candidate: `main@edc3389b1e48ff756117950f712e7ad92c32d543`.
+- Result: quality observability y alert signals, `4 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de observabilidad/alertas; complementa la exclusión de D1598, sin claim de backend live ni cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1609-quality-observability-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `75F1CD62AD0AF16100D8B931DB12BE5E0AB94D5564B5BD233239CB2F8A29CC48`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1608 — Cloud Studio/Floci bounded qualification (2026-11-30)
 
 - Candidate: `main@cc54f93ab292f2e158ab03a51442e3bfd1814f7f`.
