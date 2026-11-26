@@ -39,7 +39,8 @@ function Remove-OwnedQualificationImage {
         [Parameter(Mandatory = $true)] [string]$BuiltImageId,
         [Parameter(Mandatory = $true)] [string]$ImageTag,
         [Parameter(Mandatory = $true)] [string]$OwnerRunId,
-        [string]$PreexistingImageId
+        [string]$PreexistingImageId,
+        [string]$PreexistingBackupTag
     )
 
     $labelsJson = (& docker image inspect $BuiltImageId `
@@ -90,9 +91,16 @@ function Remove-OwnedQualificationImage {
     # run owns the newly built image, not the caller's old image; restore the
     # old tag so cleanup does not destroy pre-existing local state.
     if ($PreexistingImageId) {
-        & docker tag $PreexistingImageId $ImageTag 2>&1 | Out-Null
+        $restoreReference = if ($PreexistingBackupTag) { $PreexistingBackupTag } else { $PreexistingImageId }
+        & docker tag $restoreReference $ImageTag 2>&1 | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw "Owned image was removed, but the pre-existing image '$PreexistingImageId' could not be restored as '$ImageTag'."
+        }
+        if ($PreexistingBackupTag) {
+            & docker image rm --force $PreexistingBackupTag 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "Pre-existing image was restored as '$ImageTag', but its temporary backup tag '$PreexistingBackupTag' could not be removed."
+            }
         }
     }
 }
@@ -158,6 +166,7 @@ $flociStarted = $false
 $azuriteStarted = $false
 $imageWasBuiltFromCheckout = $false
 $preexistingImageId = $null
+$preexistingBackupTag = $null
 $resolvedImageId = $null
 $imageCleanupStatus = "not-required"
 $needsPostgres = -not $TestFilter -or $TestFilter -match 'postgres|appliance|worker|docker|v01_journey'
@@ -192,6 +201,13 @@ try {
         Write-Output "Filtered diagnostic reuses caller-supplied image $resolvedImageId; the current checkout's Docker image is not qualified."
     } else {
         $preexistingImageId = Get-DockerImageId $ImageTag
+        if ($preexistingImageId) {
+            $preexistingBackupTag = "$ImageTag.__preexisting.$runId"
+            docker tag $preexistingImageId $preexistingBackupTag
+            if ($LASTEXITCODE -ne 0) {
+                throw "Could not create temporary backup tag '$preexistingBackupTag' for pre-existing image '$preexistingImageId'."
+            }
+        }
         docker build --file docker/Dockerfile `
             --label "org.ronin.qualification.run=$runId" `
             --tag $ImageTag .
@@ -456,7 +472,8 @@ try {
                     -BuiltImageId $resolvedImageId `
                     -ImageTag $ImageTag `
                     -OwnerRunId $runId `
-                    -PreexistingImageId $preexistingImageId
+                    -PreexistingImageId $preexistingImageId `
+                    -PreexistingBackupTag $preexistingBackupTag
                 $imageCleanupStatus = "succeeded"
                 Write-Output "Ronin qualification image cleanup: removed owned image $resolvedImageId."
             } catch {
