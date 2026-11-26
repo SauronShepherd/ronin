@@ -1,5 +1,6 @@
 from io import BytesIO
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import studio_cloud.backends as cloud_backends
@@ -338,6 +339,29 @@ def test_plugin_derives_isolated_terraform_workspace_directories(tmp_path) -> No
     assert Path(beta.workspace_dir).is_dir()
     with pytest.raises(ValueError, match="unsafe"):
         plugin._backend_for_workspace("../escape")
+
+
+def test_terraform_backend_passes_runtime_endpoint_to_mutating_commands(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    calls: list[list[str]] = []
+
+    def run(command, **_kwargs):
+        calls.append(list(command))
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(cloud_backends.subprocess, "run", run)
+    backend = TerraformEmulatorBackend(
+        "floci",
+        "http://127.0.0.1:52399",
+        workspace_dir=str(tmp_path / "terraform"),
+    )
+
+    backend._run("apply", "-auto-approve")
+    backend._run("validate")
+
+    assert calls[0][-2:] == ["-var", "endpoint=http://127.0.0.1:52399"]
+    assert all("-var" not in call for call in calls[1:])
 
 
 def test_snapshot_store_round_trips_workspace(tmp_path) -> None:

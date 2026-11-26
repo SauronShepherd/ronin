@@ -198,9 +198,22 @@ class TerraformEmulatorBackend(HttpEmulatorBackend):
         if self.plugin_cache_dir:
             Path(self.plugin_cache_dir).mkdir(parents=True, exist_ok=True)
             environment["TF_PLUGIN_CACHE_DIR"] = self.plugin_cache_dir
+        command_arguments = list(arguments)
+        if (
+            self.endpoint is not None
+            and arguments
+            and arguments[0]
+            in {
+                "plan",
+                "apply",
+                "refresh",
+                "destroy",
+            }
+        ):
+            command_arguments.extend(("-var", f"endpoint={self.endpoint}"))
         try:
             completed = subprocess.run(  # noqa: S603 - executable is a configured local Terraform binary
-                [self.terraform_executable, f"-chdir={self.workspace_dir}", *arguments],
+                [self.terraform_executable, f"-chdir={self.workspace_dir}", *command_arguments],
                 capture_output=True,
                 text=True,
                 timeout=self.command_timeout_seconds,
