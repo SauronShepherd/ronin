@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1643 — Azure Blob/Azurite provider live-emulated (2026-11-30)
+
+- Azure Blob JSONL contra Azurite: `1/1 PASS` sobre `main@eabd5dce87aba91c5cc1c266467a2df7a41a86b1`; discovery, lectura y replay de snapshot.
+- Cleanup de Azurite, volumen, red e imagen temporal PASS; no certifica Azure cloud real ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1643-azure-blob-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1642 — Suite completa Python/PostgreSQL (2026-11-30)
 
 - Suite no-performance completa contra PostgreSQL 16.4: `4768/4799 PASS`, `31` skips explícitos, `0` fallos sobre `main@39eeceb2b457ac77ac625e32712eaf1cd33dde60`.

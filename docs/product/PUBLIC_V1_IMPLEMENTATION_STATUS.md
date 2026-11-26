@@ -1,5 +1,16 @@
 # Ronin Public v1 implementation status
 
+## D1643 — Azure Blob/Azurite provider live-emulated (2026-11-30)
+
+- Candidate exacto: `main@eabd5dce87aba91c5cc1c266467a2df7a41a86b1`.
+- Resultado: conector real Azure Blob JSONL contra Azurite, `1 passed`, `0 failed`, `0 skipped` (`26` deselected); discovery, lectura y replay de snapshot PASS.
+- Scope: provider/object store bounded live-emulated sobre el candidato actual; no certifica Azure cloud real, no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1643-azure-blob-20261130`.
+- Image: `sha256:85de005c0b1d7eee062ad00463ae1fec4973b4cae3f5fd57595b134e1bfa23bc`.
+- Evidence hashes: `docker-pytest-output.log` `068B016AFCC9D29D16428E10E4BCB7A5ED4E33532BEC58C6FC265126A0CDAD8B`; `v01-acceptance.xml` `062E3C89700D0E4C7144CA53F1DD5B5184E80C1E07F4E9DA02ED3434A15AAC3B`; `docker-qualification.log` `F954D85167378538E90DB915064372D5E2890C48B9D5602EFFB540EFFE444F19`; `docker-cleanup.json` `4C89DBE12EDA4FE60F7373FF8647D0156CF507E15C0A7ED0879A9613426BDEC2`.
+- Cleanup PASS: Azurite, volumen, red e imagen temporal eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1642 — Suite completa Python/PostgreSQL (2026-11-30)
 
 - Candidate exacto: `main@39eeceb2b457ac77ac625e32712eaf1cd33dde60`.
