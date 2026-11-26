@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1630 — PostgreSQL streaming checkpoints live (2026-11-30)
+
+- Candidate: `main@f741af8da6580d814dbd1d22bc5a7f70ed02e4ad`.
+- Result: PostgreSQL streaming checkpoint/table processor integration, `4 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de CAS, replay, reopen y checkpoints durables; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1630-postgres-streaming-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `B4E93C7ECCBA6F3B0F4D11C8738FAEA16A6A5B093B938E14B1131BDC06D5E839`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1629 — PostgreSQL bundles live (2026-11-30)
 
 - Candidate: `main@16919590402bec87da801539f12ddea1b690603e`.

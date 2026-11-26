@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1630 — PostgreSQL streaming checkpoints live (2026-11-30)
+
+- PostgreSQL streaming checkpoint/table processor: `4/4 PASS` sobre `main@f741af8da6580d814dbd1d22bc5a7f70ed02e4ad` contra PostgreSQL 16.4 aislado.
+- Cleanup de contenedor PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1629 — PostgreSQL bundles live (2026-11-30)
 
 - PostgreSQL multi-object bundle atomic/idempotent commit: `2/2 PASS` sobre `main@16919590402bec87da801539f12ddea1b690603e` contra PostgreSQL 16.4 aislado.
