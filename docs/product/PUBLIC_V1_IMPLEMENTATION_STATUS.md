@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1659 — Drenado supervisado hasta idle con checkpoint durable (2026-11-30)
+
+- Candidate exacto: `main@d1f8a4244419c31c5ed3cdaed935751b7011b297`.
+- Resultado: drenado supervisado hasta idle PASS, `1 passed`, `0 failed`, `0 skipped`; `5/5` eventos API correlacionados (`4 OK`, `1 WARN` esperado), sin errores inesperados.
+- Scope: PostgreSQL real y Redpanda single-broker, ciclo bounded con progreso durable; no afirma operación indefinida, cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1659-live-supervised-drain-20261130`.
+- Evidence hashes: `qualification-summary.json` `250D2004DE9F4D4D49DAC07968BA89EF37BA9E7F449EF00AC1CE03D75458028E`; `browser-live.log` `641C4289B842C1429CB825445B92C2D4985B3B3E38822C31535F19BB7375BC18`; `browser-live.xml` `8CD2A9173F998277E3DF65EBA91D1085D180B9081E890EF6BC4842F0BD95F633`; `live-api-traffic.json` `5FAD20320EB67DF327F8A77FC64E14B90292333F43CA4C28ED0B63A81749E055`.
+- Cleanup PASS: broker, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1658 — Cap de registros y resume durable sin replay (2026-11-30)
 
 - Candidate exacto: `main@01259ea59bb0787a7341126dd2aa2fcd428c6fda`.

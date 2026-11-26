@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1659 — Drenado supervisado hasta idle con checkpoint durable (2026-11-30)
+
+- Supervised drain: `1/1 PASS`, `5/5` eventos correlacionados (`4 OK`, `1 WARN` esperado) sobre `main@d1f8a4244419c31c5ed3cdaed935751b7011b297`, con PostgreSQL real y Redpanda single-broker.
+- Cleanup de broker, PostgreSQL, volumen y red temporales PASS; evidencia bounded, sin certificación de operación indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1659-live-supervised-drain-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1658 — Cap de registros y resume durable sin replay (2026-11-30)
 
 - Cap/resume/replay: `1/1 PASS`, `8/8` eventos correlacionados (`7 OK`, `1 WARN` esperado) sobre `main@01259ea59bb0787a7341126dd2aa2fcd428c6fda`, con PostgreSQL real y Redpanda single-broker.
