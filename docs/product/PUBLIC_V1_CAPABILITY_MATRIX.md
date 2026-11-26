@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1656 — Límites near-record y near-batch live con PostgreSQL (2026-11-30)
+
+- Byte boundaries: `1/1 PASS`, `13/13` eventos correlacionados (`11 OK`, `2 WARN` esperados) sobre `main@9e74159a16734d97e7919b91b326c9919ec43bc6`, con PostgreSQL real y Redpanda single-broker.
+- Cleanup de broker, PostgreSQL, volumen y red temporales PASS; evidencia bounded, sin certificación de operación indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1656-live-byte-boundaries-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1655 — Sink Parquet y replay tras reset live con PostgreSQL (2026-11-30)
 
 - Sink Parquet/replay: `1/1 PASS`, `11/11` eventos correlacionados sobre `main@097f026c8e9c83d98f467e2251df69b0a276a50e`, con PostgreSQL real y Redpanda single-broker.

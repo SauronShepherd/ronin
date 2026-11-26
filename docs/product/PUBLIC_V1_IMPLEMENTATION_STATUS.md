@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1656 — Límites near-record y near-batch live con PostgreSQL (2026-11-30)
+
+- Candidate exacto: `main@9e74159a16734d97e7919b91b326c9919ec43bc6`.
+- Resultado: validación live de límites de bytes PASS, `1 passed`, `0 failed`, `0 skipped`; `13/13` eventos API correlacionados (`11 OK`, `2 WARN` esperados por rechazo de boundary), sin errores inesperados.
+- Scope: límites near-record y near-batch con PostgreSQL real y Redpanda single-broker; evidencia bounded, no afirma operación indefinida, cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1656-live-byte-boundaries-20261130`.
+- Evidence hashes: `qualification-summary.json` `FF17903A77C6B8D82104E71722D1D04FF041F8BE56DC479EFA84563A0E7A6E21`; `browser-live.log` `1D1D5210CB99A233E452BE5829DF0BAF6C40A0635E215EC815A5DF45A648F6BB`; `browser-live.xml` `E8FC95B33F5E003DB4B8826A471B6EFEBA3035BB30B3E47E19BC43CC7A0C7043`; `live-api-traffic.json` `AACD19CC84750CA48A1462B1D77BA6D0994F68DA14747E1ECB91F359C6BDE649`.
+- Cleanup PASS: broker, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1655 — Sink Parquet y replay tras reset live con PostgreSQL (2026-11-30)
 
 - Candidate exacto: `main@097f026c8e9c83d98f467e2251df69b0a276a50e`.
