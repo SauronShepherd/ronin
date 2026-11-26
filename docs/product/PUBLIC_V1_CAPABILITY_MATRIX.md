@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1615 — PostgreSQL ML live (2026-11-30)
+
+- PostgreSQL ML integration: `12/12 PASS` contra PostgreSQL 16.4 aislado sobre `main@5d066d7e5e71326a8775dc96144cfa8415460665`.
+- Cleanup de contenedor PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1614 — PostgreSQL workflow store live (2026-11-30)
 
 - PostgreSQL workflow store integration: `21/21 PASS` contra PostgreSQL 16.4 aislado sobre `main@ba6ab8a8bae1b05261272078c8e8141eb3d898b0`.

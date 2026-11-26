@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1615 — PostgreSQL ML live (2026-11-30)
+
+- Candidate: `main@5d066d7e5e71326a8775dc96144cfa8415460665`.
+- Result: PostgreSQL ML integration, `12 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de persistencia ML; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1615-postgres-ml-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `8E508B4732D0DB251F55DD441076F7F6950EE933A7A3B528759E6DDCA96442DA`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1614 — PostgreSQL workflow store live (2026-11-30)
 
 - Candidate: `main@ba6ab8a8bae1b05261272078c8e8141eb3d898b0`.
