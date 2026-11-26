@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1664 — Ingestion Studio watermark live con worker Docker (2026-11-30)
+
+- Ingestion watermark: `1/1 PASS`, `15/15` eventos correlacionados sobre `main@630d67cdbb60eed9d28be672a6fa4b5e8b52ae5c`, con PostgreSQL, Redpanda y worker Docker real; imagen `sha256:d40521f7f75fc7da275ead48502b6887bda74f5f812a4f47d791cd8138a4d400`.
+- Cleanup de servicios e imagen temporal PASS; evidencia bounded, sin certificación de multi-worker, operación indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1664-live-ingestion-watermark-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1663 — Notebook Studio live con worker Docker del candidato actual (2026-11-30)
 
 - Notebook worker-backed: `1/1 PASS`, `18/18` eventos correlacionados sobre `main@696232b219f984b82a1fa7a335753094cdbe76ce`, con PostgreSQL, Redpanda y worker Docker real; imagen `sha256:5e78db272f061aefc544605d82af8995e54cbb452787525391ac80ffd6ebbabf`.
