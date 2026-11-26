@@ -2598,3 +2598,9 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 - Bounded runtime/backend recovery evidence only; no HA, broker live or public-v1 gate closure.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1632 — PostgreSQL streaming table concurrent append live (2026-11-30)
+
+- PostgreSQL streaming checkpoint/table and concurrent duplicate append tests: `6/6 PASS` on `main@b08d3ab9c1022235baacabcb72c2842d6e3ebfaf`.
+- Bounded runtime/backend recovery evidence only; no HA, broker live or public-v1 gate closure.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+

@@ -95,6 +95,32 @@ def test_postgres_stream_table_append_replay_and_conflict() -> None:
     table.close()
 
 
+def test_postgres_stream_table_concurrent_duplicate_append_is_idempotent() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    stream_id = f"concurrent-table-{uuid4().hex}"
+    batch = StreamBatch(
+        (
+            StreamRecord(0, 11, 123, "concurrent-key", {"event": "durable"}),
+            StreamRecord(0, 12, 124, "concurrent-key-2", {"event": "durable-2"}),
+        ),
+        StreamCheckpoint((StreamPosition(0, 12),)),
+    )
+    first = PostgresStreamTable(dsn)
+    second = PostgresStreamTable(dsn)
+
+    def append(table):
+        return table.append(stream_id, batch)
+
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(append, (first, second)))
+        assert sorted(results) == [0, 2]
+        assert first.read(stream_id) == batch.records
+    finally:
+        first.close()
+        second.close()
+
+
 def test_postgres_stream_table_reopen_replays_without_duplicate_rows() -> None:
     dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
     stream_id = f"reopen-table-{uuid4().hex}"

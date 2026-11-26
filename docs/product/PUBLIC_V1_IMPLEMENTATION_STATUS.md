@@ -4807,3 +4807,11 @@ qualification completa por familia y matriz de plataformas están pendientes.
 - Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1631-postgres-streaming-fencing-20261130`.
 - Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1632 — PostgreSQL streaming table concurrent append live (2026-11-30)
+
+- Candidate: `main@b08d3ab9c1022235baacabcb72c2842d6e3ebfaf`.
+- Result: PostgreSQL stream checkpoint/table integration, including concurrent duplicate append idempotency, `6 passed`, `0 failed`.
+- Scope: bounded runtime/backend recovery qualification; no HA, broker live or complete P11 claim.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1632-postgres-stream-table-concurrency-20261130`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
