@@ -121,6 +121,31 @@ def test_postgres_stream_table_concurrent_duplicate_append_is_idempotent() -> No
         second.close()
 
 
+def test_postgres_stream_table_conflict_rolls_back_mixed_batch_atomically() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    stream_id = f"mixed-conflict-{uuid4().hex}"
+    existing = StreamRecord(0, 31, 900, "existing", {"event": "original"})
+    table = PostgresStreamTable(dsn)
+    try:
+        assert table.append(
+            stream_id,
+            StreamBatch((existing,), StreamCheckpoint((StreamPosition(0, 31),))),
+        ) == 1
+        conflicting = StreamRecord(0, 31, 900, "existing", {"event": "changed"})
+        new_record = StreamRecord(0, 32, 901, "new", {"event": "must-rollback"})
+        with pytest.raises(ValueError, match="replay conflicts"):
+            table.append(
+                stream_id,
+                StreamBatch(
+                    (conflicting, new_record),
+                    StreamCheckpoint((StreamPosition(0, 32),)),
+                ),
+            )
+        assert table.read(stream_id) == (existing,)
+    finally:
+        table.close()
+
+
 def test_postgres_stream_table_reopen_replays_without_duplicate_rows() -> None:
     dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
     stream_id = f"reopen-table-{uuid4().hex}"

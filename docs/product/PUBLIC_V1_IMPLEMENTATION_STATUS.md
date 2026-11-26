@@ -4815,3 +4815,11 @@ qualification completa por familia y matriz de plataformas están pendientes.
 - Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1632-postgres-stream-table-concurrency-20261130`.
 - Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1633 — PostgreSQL streaming table atomic conflict recovery live (2026-11-30)
+
+- Candidate: `main@19bde1df16f34477b5715476979ce6eef4deb9fc`.
+- Result: PostgreSQL stream checkpoint/table integration, concurrent idempotent append and mixed-batch conflict rollback, `7 passed`, `0 failed`.
+- Scope: bounded runtime/backend recovery qualification; no HA, broker live or complete P11 claim.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1633-postgres-stream-table-atomicity-20261130`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
