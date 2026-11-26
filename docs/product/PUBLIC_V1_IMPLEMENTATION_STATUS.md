@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1600 — Project/workspace lifecycle y manifests (2026-11-30)
+
+- Candidate: `main@9750b329c1317725e57c1f7fc0f789acba89ebca`.
+- Result: project manifests, survivor boundaries, configuration y project tests, `104 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de lifecycle de proyectos/workspaces y manifests; sin claim de backend live ni cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1600-project-lifecycle-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `FF996D8C2A67B44BD50BBB05B109522763D764351D7FCD5BC416E690DB9DE0EA`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1599 — Grants y límites de supervivencia (2026-11-30)
 
 - Candidate: `main@a0c5a002a6d580c5033c7579793a33bdaf671e7a`.

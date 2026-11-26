@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1600 — Project/workspace lifecycle y manifests (2026-11-30)
+
+- Project manifests, survivor boundaries, configuration y projects: `104/104 PASS` sobre `main@9750b329c1317725e57c1f7fc0f789acba89ebca`.
+- Evidencia local bounded; no certifica backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1599 — Grants y límites de supervivencia (2026-11-30)
 
 - Grants survivor boundaries, scope projection y grants: `203/203 PASS` sobre `main@a0c5a002a6d580c5033c7579793a33bdaf671e7a`.
