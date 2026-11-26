@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1613 — PostgreSQL FinOps live (2026-11-30)
+
+- Candidate: `main@e2bbe5621cc320a9b7d0e8a7f13880737d04f6cc`.
+- Result: PostgreSQL FinOps integration, `1 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de forecast/allocation persistidos; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1613-postgres-finops-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `454310FB9B4DABDAABDFC894B873E3373A99EDB6E0A112F77A07E9A03F3441A4`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1612 — PostgreSQL catalog y audit store live (2026-11-30)
 
 - Candidate: `main@1e5d1b77025dd344a2b0238723df731154ec47e3`.

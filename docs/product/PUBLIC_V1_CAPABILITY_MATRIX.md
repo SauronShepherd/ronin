@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1613 — PostgreSQL FinOps live (2026-11-30)
+
+- PostgreSQL FinOps integration: `1/1 PASS` contra PostgreSQL 16.4 aislado sobre `main@e2bbe5621cc320a9b7d0e8a7f13880737d04f6cc`.
+- Cleanup de contenedor PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1612 — PostgreSQL catalog y audit store live (2026-11-30)
 
 - PostgreSQL catalog y audit store integrations: `6/6 PASS` contra PostgreSQL 16.4 aislado sobre `main@1e5d1b77025dd344a2b0238723df731154ec47e3`.
