@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1599 — Grants y límites de supervivencia (2026-11-30)
+
+- Candidate: `main@a0c5a002a6d580c5033c7579793a33bdaf671e7a`.
+- Result: grant survivor boundaries, scope projection y grants, `203 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de grants, proyección de scope y límites de supervivencia; sin claim de backend live ni cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1599-grants-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `711FA4C11B3DCA1736F5903E46F25FE3B720A82E7064ABBAF4CB157DDFDCB162`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1598 — FinOps forecast y allocation (2026-11-30)
 
 - Candidate: `main@c9c5fa2696dbec9f2e77bea50f2d34530444a581`.
