@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1606 — Migration Studio análisis y sesiones locales (2026-11-30)
+
+- Session store/session, analysis y validation local: `13/13 PASS` sobre `main@7c913c2365640f2ec1f5be2ced0d7bcaa655e8e0`.
+- Evidencia local bounded; HTTP/backend live no certificados; no cierra gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1605 — Fixtures y validación de migración (2026-11-30)
 
 - Migration fixture/certification, validation CLI y vendor golden: `20/20 PASS` sobre `main@903c33a2096430d1ff3369c5a8ba8a76a118602a`.

@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1606 — Migration Studio análisis y sesiones locales (2026-11-30)
+
+- Candidate: `main@7c913c2365640f2ec1f5be2ced0d7bcaa655e8e0`.
+- Result: session store/session, analysis y validation local, `13 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de análisis/sesiones/validación de Migration Studio; HTTP y backend live quedan fuera, sin cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1606-migration-studio-local-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `E2EE228D9531D921E3513A2D8A6E2297962F06CAAEE94009930E28167A32D8D7`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1605 — Fixtures y validación de migración (2026-11-30)
 
 - Candidate: `main@903c33a2096430d1ff3369c5a8ba8a76a118602a`.
