@@ -1,5 +1,16 @@
 # Ronin Public v1 implementation status
 
+## D1647 — Live product full route con PostgreSQL y worker (2026-11-30)
+
+- Candidate exacto: `main@987d27009dd1e389ba87fc220a2ac8ea2c13e538`.
+- Resultado: ruta live completa, `43 passed`, `1 skipped`, `0 failed`; `487/487` eventos API correlacionados; `25` rutas activas auditadas (`24` API-backed, `1` UI-only).
+- Servicios: PostgreSQL real, Redpanda single-broker, API Ronin y worker Docker real; imagen `sha256:e2626b1031b2acad0a9c5be1a23a62960b2a04ec87694f771aced418422fc1a7`.
+- Scope: cualificación live bounded de producto completo sobre el candidato actual; no afirma RF3/HA indefinido, no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1647-live-full-postgres-20261130`.
+- Evidence hashes: `qualification-summary.json` `10663933D723E460E5F95EC1B31F7611CC7CAD42688A41CF8CFB83799EB7E424`; `browser-live.log` `A9BC662AA4BA985A3D47F853CC871874389CF230F4AF1A5A11E9962D0C22E334`; `browser-live.xml` `00329BA9761E9321482D75C9C8E8F943A71A178051E0D24BAD6AFB86C2524399`; `live-api-traffic.json` `80E9770049B269DED58BD635BC1934612C260AC90531D23A0BB51966BD53B6F6`.
+- Cleanup PASS: broker, PostgreSQL, worker, volumen, red e imagen temporal eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1646 — Docker acceptance full current candidate (2026-11-30)
 
 - Candidate exacto: `main@9b955d034ee5b8d5dd69cad623344cf3baad3a6c`.

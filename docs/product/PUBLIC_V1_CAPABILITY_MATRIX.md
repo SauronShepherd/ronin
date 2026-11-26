@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1647 — Live product full route con PostgreSQL y worker (2026-11-30)
+
+- Ruta live completa: `43/44 PASS`, `1` skip, `0` fallos; `487/487` eventos correlacionados y `25` rutas auditadas sobre `main@987d27009dd1e389ba87fc220a2ac8ea2c13e538`.
+- PostgreSQL, Redpanda single-broker, worker Docker e imagen temporal cleanup PASS; tres errores de recuperación esperados permanecen representados honestamente en el tráfico (`ERROR=3`) y no fueron fallos de caso.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1647-live-full-postgres-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1646 — Docker acceptance full current candidate (2026-11-30)
 
 - Docker acceptance: `27/27 PASS`; strict v0.1: `15/15 PASS`, sobre `main@9b955d034ee5b8d5dd69cad623344cf3baad3a6c` e imagen inmutable `sha256:af92674425f0956d3047ff2fa951dc1f3bde7814d970d9c151c1efbf6f9229b4`.
