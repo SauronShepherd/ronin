@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1668 — Helm/kind PostgreSQL restart persistence actual (2026-11-30)
+
+- Helm/kind PostgreSQL: PASS en lint, Secret, install/readiness, upgrade/rollback, health/API, restart PostgreSQL y restart deployment sobre `main@6bf5b2114523950912cdd89b43a943f8d7f2a2be`.
+- Support Docker del mismo candidato: `27/27` y strict `15/15`; cleanup de kind, PostgreSQL e imagen temporal PASS.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1668-helm-postgres-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1667 — Docker acceptance actual con providers emulados (2026-11-30)
 
 - Docker acceptance: `27/27 PASS`; strict v0.1 `15/15 PASS` sobre `main@23de37e0466ac450e61e75b49a57ef288b2ba92a`, con worker real, PostgreSQL, Floci/S3, Azurite/Azure, backup/restore y reclaim.

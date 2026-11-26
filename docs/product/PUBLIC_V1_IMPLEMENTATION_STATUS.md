@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1668 — Helm/kind PostgreSQL restart persistence actual (2026-11-30)
+
+- Candidate exacto: `main@6bf5b2114523950912cdd89b43a943f8d7f2a2be`.
+- Resultado: Helm/kind PASS en lint, secret boundary, cluster kind, image load, install/readiness, upgrade revision 2, rollback revision 1, health/API, creación durable de job, recuperación tras reinicio PostgreSQL y persistencia tras restart del deployment.
+- Support receipt del mismo candidato: Docker acceptance `27/27`, strict v0.1 `15/15`; imagen `sha256:49b391748c0e903fbaac9f9e8e1f0cd41a976519c2d3ca2d4a231b95622da14c`.
+- Evidence Helm: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1668-helm-postgres-20261130`; Docker: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1668-docker-helm-20261130`.
+- Helm hashes: `helm-qualification.json` `53D9DE8E7E0894336A5368FE1CFFA1BEF0EABDC8580FBB6AC501742A43249396`; `helm-qualification.log` `F172FBA873D9F054BB30726F58836AAECA09CABC3FF666F844CDDE5109120561`; `kubernetes-resources.txt` `88460A8657ABE24FAEF04CCAD1852D2B87B545F9B72554A8348A191EE5B938F5`. Docker hashes: `qualification-summary.json` `6DA39D9F4DE5F3F6C14FAA86D6EF28D677F2D3FCC021961A1FB61DBC924DCE61`; `docker-pytest-output.log` `FACE1C06AC1685A6B13B86E6F0E27F42C87272FC92B0799C766C67A9A35B1C5C`; `v01-acceptance-strict.json` `5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C`; `v01-acceptance.xml` `F9B7A2D89CD278773353858DF3102CC0CA9D27A4B076F96DC14BE86DCCCF7E1D`; `docker-qualification.log` `B445B4B4E97E46148CE8E7210EF3FB2BDDA3D749612283CD2DF33ECD1C99743C`; `docker-cleanup.json` `6263BF6923F5ACD238402BABE5001972C19D07627FB1D9194E1D8C03AE554748`.
+- Cleanup PASS: kind cluster, PostgreSQL temporal, port-forwards, worker image y recursos temporales eliminados; no quedan clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1667 — Docker acceptance actual con providers emulados (2026-11-30)
 
 - Candidate exacto: `main@23de37e0466ac450e61e75b49a57ef288b2ba92a`.
