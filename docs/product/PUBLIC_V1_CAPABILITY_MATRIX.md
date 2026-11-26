@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1657 — Salud de partición vacía sin lag falso (2026-11-30)
+
+- Empty-partition health: `1/1 PASS`, `4/4` eventos correlacionados sobre `main@7d69f693bcef4dd0f3f82f7abd142e8a30afab58`, con PostgreSQL real y Redpanda single-broker; lag vacío no se reporta falsamente.
+- Cleanup de broker, PostgreSQL, volumen y red temporales PASS; evidencia bounded, sin certificación de operación indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1657-live-empty-partition-health-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1656 — Límites near-record y near-batch live con PostgreSQL (2026-11-30)
 
 - Byte boundaries: `1/1 PASS`, `13/13` eventos correlacionados (`11 OK`, `2 WARN` esperados) sobre `main@9e74159a16734d97e7919b91b326c9919ec43bc6`, con PostgreSQL real y Redpanda single-broker.

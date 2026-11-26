@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1657 — Salud de partición vacía sin lag falso (2026-11-30)
+
+- Candidate exacto: `main@7d69f693bcef4dd0f3f82f7abd142e8a30afab58`.
+- Resultado: diagnóstico live de salud de streaming PASS, `1 passed`, `0 failed`, `0 skipped`; `4/4` eventos API correlacionados, todos `OK`, sin errores inesperados; partición vacía reportada sin lag falso.
+- Scope: PostgreSQL real y Redpanda single-broker, ejecución bounded; no afirma operación indefinida, cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1657-live-empty-partition-health-20261130`.
+- Evidence hashes: `qualification-summary.json` `6E31163FF6867508E44ACCEB4E6F9AC9F9F11A5B5C71EDCF8462362FA0ABAE5F`; `browser-live.log` `39DE9665F2E47E45B4BEDD4E0316D1E9F5B15621532BCB546C149186E8D3CA90`; `browser-live.xml` `6088909F430A72C650D772B6067DCA6CC11A62958E938C9C40C5E60D29A82B62`; `live-api-traffic.json` `1DAB42F8E16CB0AA687F46FE3E657E52023B48C47266FE286DF2C91CA103F609`.
+- Cleanup PASS: broker, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1656 — Límites near-record y near-batch live con PostgreSQL (2026-11-30)
 
 - Candidate exacto: `main@9e74159a16734d97e7919b91b326c9919ec43bc6`.
