@@ -259,6 +259,58 @@ def test_kafka_source_retries_a_transient_empty_poll_for_a_later_partition(
     assert consumer.closed
 
 
+def test_kafka_source_uses_one_grace_poll_after_partial_deadline_fetch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _PartialConsumer(_Consumer):
+        def __init__(self) -> None:
+            super().__init__([])
+            self.responses = [
+                [_Message(b'{"event":"partition-0-a"}', 0, partition=0),
+                 _Message(b'{"event":"partition-1-a"}', 0, partition=1)],
+                [_Message(b'{"event":"partition-0-b"}', 1, partition=0),
+                 _Message(b'{"event":"partition-1-b"}', 1, partition=1)],
+            ]
+
+        def consume(self, *, num_messages: int, timeout: float):
+            call = (num_messages, timeout)
+            self.consume_calls.append(call)
+            if self.consume_args is None:
+                self.consume_args = call
+            response, self.responses = self.responses[0], self.responses[1:]
+            return response[:num_messages]
+
+    consumer = _PartialConsumer()
+
+    def consumer_type(settings):
+        return _capture_config(consumer, settings)
+
+    fake_kafka = SimpleNamespace(
+        Consumer=consumer_type,
+        TopicPartition=_TopicPartition,
+        KafkaError=SimpleNamespace(_PARTITION_EOF=-191),
+        OFFSET_BEGINNING=-2,
+    )
+    monkeypatch.setattr(kafka_adapter, "import_module", lambda _name: fake_kafka)
+    clock = iter((0.0, 0.2))
+    monkeypatch.setattr(kafka_adapter.time, "monotonic", lambda: next(clock))
+    source = KafkaJsonSource(
+        bootstrap_servers="localhost:9092",
+        topic="events",
+        partitions=(0, 1),
+    )
+
+    try:
+        batch = source.poll(StreamCheckpoint(), limit=4, timeout_seconds=0.1)
+        assert len(batch.records) == 4
+        assert len(consumer.consume_calls) == 2
+        assert consumer.consume_calls[1][1] == kafka_adapter._KAFKA_PARTIAL_BATCH_GRACE_SECONDS
+    finally:
+        source.close()
+
+    assert consumer.closed
+
+
 def test_kafka_source_reuses_consumer_until_source_is_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

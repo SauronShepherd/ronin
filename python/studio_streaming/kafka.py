@@ -311,8 +311,11 @@ class KafkaJsonSource:
                 # stopping after that first non-empty fetch needlessly turns a
                 # limit=4 batch into one- or two-record batches and can starve
                 # bounded supervisors under sustained backlog.
-                if time.monotonic() >= deadline:
-                    break
+                # Do not stop immediately at the deadline after a partial
+                # fetch.  The next loop iteration applies the bounded,
+                # non-blocking grace window above once, allowing records that
+                # arrived on another assigned partition to complete this
+                # micro-batch without extending the provider wait unboundedly.
             if not records:
                 return StreamBatch((), checkpoint)
             next_checkpoint = StreamCheckpoint(
