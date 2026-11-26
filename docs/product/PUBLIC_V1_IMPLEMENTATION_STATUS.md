@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1616 — PostgreSQL connector checkpoints live (2026-11-30)
+
+- Candidate: `main@40f08819275d40d7cbe914d98fc2f6bac78a20cf`.
+- Result: PostgreSQL connector checkpoint integration, `3 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de checkpoint fencing/replay; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1616-postgres-checkpoint-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `B8A167A9BB3E63975190C225F4899024C1CBE4758F64FC212C45DA19F1AD6802`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1615 — PostgreSQL ML live (2026-11-30)
 
 - Candidate: `main@5d066d7e5e71326a8775dc96144cfa8415460665`.

@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1616 — PostgreSQL connector checkpoints live (2026-11-30)
+
+- PostgreSQL connector checkpoint integration: `3/3 PASS` contra PostgreSQL 16.4 aislado sobre `main@40f08819275d40d7cbe914d98fc2f6bac78a20cf`.
+- Cleanup de contenedor PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1615 — PostgreSQL ML live (2026-11-30)
 
 - PostgreSQL ML integration: `12/12 PASS` contra PostgreSQL 16.4 aislado sobre `main@5d066d7e5e71326a8775dc96144cfa8415460665`.
