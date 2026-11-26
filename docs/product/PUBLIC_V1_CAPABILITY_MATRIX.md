@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1602 — Project import/export y backup manifests (2026-11-30)
+
+- Project import plan/commit, backup manifest y project inventory: `38/38 PASS` sobre `main@3157137a8128b6f5176886ee3418e3bf23fe1f9c`.
+- Evidencia local bounded; no certifica backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1601 — Workspace plugin ports y events (2026-11-30)
 
 - Workspace plugin ports/events, plugin UI manifest y workspace project services: `13/13 PASS` sobre `main@795b8a180eec2797ace07bf4acbdbaf53165e16f`.

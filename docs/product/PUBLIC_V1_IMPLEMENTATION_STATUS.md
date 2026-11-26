@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1602 — Project import/export y backup manifests (2026-11-30)
+
+- Candidate: `main@3157137a8128b6f5176886ee3418e3bf23fe1f9c`.
+- Result: project import plan/commit, backup manifest y project inventory, `38 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de recuperación/importación y manifests; sin claim de backend live ni cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1602-project-import-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `585B3389F8E4AE008E794911314F059CD98F09ACB830902CC47C50C4B942446C`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1601 — Workspace plugin ports y events (2026-11-30)
 
 - Candidate: `main@795b8a180eec2797ace07bf4acbdbaf53165e16f`.
