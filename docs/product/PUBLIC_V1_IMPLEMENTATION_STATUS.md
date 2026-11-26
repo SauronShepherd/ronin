@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1654 — Event workflow live con PostgreSQL (2026-11-30)
+
+- Candidate exacto: `main@e9c2691e1d984652332ddd32682c12110f3f7921`.
+- Resultado: workflow de evento disparado por registro comprometido PASS, `1 passed`, `0 failed`, `0 skipped`; `12/12` eventos API correlacionados, todos `OK`, sin errores inesperados.
+- Scope: diagnóstico live bounded con PostgreSQL real y Redpanda single-broker; no afirma ejecución de worker Docker, operación indefinida, cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1654-live-event-workflow-20261130`.
+- Evidence hashes: `qualification-summary.json` `937A2BA80CE7063EBDE94CADCAF518239E1721969522F82095C6F58E72C9B647`; `browser-live.log` `554D14822B8DE7506CAEDFBBD7D735313AB5A52F0712697B6313C9E5A45C1D32`; `browser-live.xml` `7707E4C1A7CF6322BDD45885D0C854F332A5AB97E5CC41A59C8B828789E35F0F`; `live-api-traffic.json` `A86482639BE88448A7DBE1C517E9689DE139CC914CD615AB30BEC9FF260A57C6`.
+- Cleanup PASS: broker, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1653 — Backpressure sostenido bounded con 16.384 registros (2026-11-30)
 
 - Candidate exacto: `main@838f166bc861b0a47af371a211c1ed1686b91e93`.
