@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1622 — PostgreSQL connector real live (2026-11-30)
+
+- PostgreSQL connector real integration: `2/2 PASS` contra PostgreSQL 16.4 aislado sobre `main@a04403910ca789994d1fbaf0c80bf522a699a64b`.
+- Cleanup de contenedor PASS; evidencia runtime/provider bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1621 — PostgreSQL JobStore live (2026-11-30)
 
 - PostgreSQL JobStore integration: `2/2 PASS` contra PostgreSQL 16.4 aislado sobre `main@b80e42571fbbde377df6b4162fa37a97edbe6aab`.

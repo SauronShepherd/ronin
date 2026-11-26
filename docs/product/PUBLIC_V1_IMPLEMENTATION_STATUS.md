@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1622 — PostgreSQL connector real live (2026-11-30)
+
+- Candidate: `main@a04403910ca789994d1fbaf0c80bf522a699a64b`.
+- Result: PostgreSQL connector real integration, `2 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado con `RONIN_CONNECTOR_POSTGRES_DSN` explícito.
+- Scope: cualificación runtime/provider bounded de lectura/conector PostgreSQL; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1622-postgres-connector-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `9336C2B179789A5B7C2BC13C29AC8297E0806AFE2C8F9087AD2783B7F97E3D74`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1621 — PostgreSQL JobStore live (2026-11-30)
 
 - Candidate: `main@b80e42571fbbde377df6b4162fa37a97edbe6aab`.
