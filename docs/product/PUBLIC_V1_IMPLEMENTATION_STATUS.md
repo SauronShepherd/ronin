@@ -1,5 +1,16 @@
 # Ronin Public v1 implementation status
 
+## D1663 — Notebook Studio live con worker Docker del candidato actual (2026-11-30)
+
+- Candidate exacto: `main@696232b219f984b82a1fa7a335753094cdbe76ce`.
+- Resultado: caso Notebook Studio live PASS, `1 passed`, `0 failed`, `0 skipped`; `18/18` eventos API correlacionados, todos `OK`, sin errores inesperados.
+- Servicios: PostgreSQL real, Redpanda single-broker, Ronin API y worker Docker construido desde el candidato; imagen inmutable `sha256:5e78db272f061aefc544605d82af8995e54cbb452787525391ac80ffd6ebbabf`.
+- Scope: creación, versionado y ejecución de notebook bounded; no afirma operación indefinida, multi-worker, provider externo, cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1663-live-worker-notebook-20261130`.
+- Evidence hashes: `qualification-summary.json` `8B2F7008517201776A9D9AE3630674660C308180EEFD18239A6F58037E9B6363`; `browser-live.log` `2BA8ECE5DD1ED546C09BAE70E4C8703B22E23EEBE217EC2A8AABB2481557377E`; `browser-live.xml` `8A86F692AAEB6DD4A644E199BBB1577352E85F578B2453C5258B378C300E5257`; `live-api-traffic.json` `E5C3C8F9C216C5E0D7046C88C109C2C9BAEDB6D86A0BF86688FE556A1E06EF33`.
+- Cleanup PASS: broker, PostgreSQL, volumen, red y worker image temporal eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1662 — RF3 multi-broker streaming live sobre candidato actual (2026-11-30)
 
 - Candidate exacto: `main@f75e49eb2fd39d419b91e901eda3bfa7bf5f8ef4`.

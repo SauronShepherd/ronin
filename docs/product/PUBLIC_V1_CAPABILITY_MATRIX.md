@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1663 — Notebook Studio live con worker Docker del candidato actual (2026-11-30)
+
+- Notebook worker-backed: `1/1 PASS`, `18/18` eventos correlacionados sobre `main@696232b219f984b82a1fa7a335753094cdbe76ce`, con PostgreSQL, Redpanda y worker Docker real; imagen `sha256:5e78db272f061aefc544605d82af8995e54cbb452787525391ac80ffd6ebbabf`.
+- Cleanup de servicios e imagen temporal PASS; evidencia bounded, sin certificación de multi-worker, operación indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1663-live-worker-notebook-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1662 — RF3 multi-broker streaming live sobre candidato actual (2026-11-30)
 
 - RF3 multi-broker: `11/11 PASS`, `234/234` eventos correlacionados (`226 OK`, `8 WARN` esperados) sobre `main@f75e49eb2fd39d419b91e901eda3bfa7bf5f8ef4`, con tres brokers Redpanda y PostgreSQL real.
