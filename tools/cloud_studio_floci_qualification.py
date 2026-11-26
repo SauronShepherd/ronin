@@ -135,9 +135,15 @@ def qualify(
     backend: EmulatorBackend | None = None,
     backend_kind: str = "floci",
     command_timeout_seconds: float = 120.0,
+    terraform_executable: str = "terraform",
 ) -> dict[str, Any]:
     Path(workspace).mkdir(parents=True, exist_ok=True)
-    selected = backend or create_backend(backend_kind, endpoint, workspace_dir=workspace)
+    selected = backend or create_backend(
+        backend_kind,
+        endpoint,
+        workspace_dir=workspace,
+        iac_executable=terraform_executable,
+    )
     if hasattr(selected, "command_timeout_seconds"):
         selected.command_timeout_seconds = command_timeout_seconds
     topology = fixture()
@@ -252,6 +258,11 @@ def main() -> int:
     parser.add_argument("--endpoint", default="http://127.0.0.1:4566")
     parser.add_argument("--backend", choices=("floci", "localstack"), default="floci")
     parser.add_argument("--command-timeout-seconds", type=float, default=120.0)
+    parser.add_argument(
+        "--terraform-executable",
+        default="terraform",
+        help="path or command for the exact Terraform binary used by the qualification",
+    )
     parser.add_argument("--workspace", default=".ronin/cloud-studio/qualification/floci")
     parser.add_argument("--evidence", type=Path)
     parser.add_argument(
@@ -266,6 +277,7 @@ def main() -> int:
         args.terraform,
         backend_kind=args.backend,
         command_timeout_seconds=args.command_timeout_seconds,
+        terraform_executable=args.terraform_executable,
     )
     if args.evidence:
         args.evidence.parent.mkdir(parents=True, exist_ok=True)
