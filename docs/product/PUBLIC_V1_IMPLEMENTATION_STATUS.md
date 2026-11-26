@@ -1,5 +1,16 @@
 # Ronin Public v1 implementation status
 
+## D1650 — Helm/kind PostgreSQL restart persistence (2026-11-30)
+
+- Candidate exacto: `main@54d00fd21c9717cc3c6ece15bd4241a029008d44`.
+- Resultado: Helm/kind PASS: lint, secret boundary, image load, install/readiness, upgrade revision 2, rollback revision 1, health/API HTTP 200, PostgreSQL restart recovery y deployment restart persistence.
+- Support receipt del mismo candidato: Docker acceptance `27/27`, strict v0.1 `15/15`; imagen `sha256:eb6b95689205fb73a758712e4a375a0f3732acb9b882afc56055b9b90381bd04`.
+- Scope: cualificación bounded single-replica kind con PostgreSQL real; no cierra P11 completo, HA/multi-user indefinido ni release.
+- Evidence Helm: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1650-helm-postgres-20261130`; Docker: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1650-docker-full-current-20261130`.
+- Evidence hashes: `helm-qualification.json` `D1EEA9B73B64258F1BCC0A83F8794E432FD4443914DAA0FDD9B48B38C5E15F45`; `helm-qualification.log` `547A5E9C907D01AF10F420D7F01E3CE0251868D995143F518EDF6C5BBA494BF2`; `kubernetes-resources.txt` `095A563515150A421D3E60EFC400E458F75C69053BC72A344DF131B866046FE1`; Docker log `9E0A7318C7DC0DED4BD1AAAE707241D7E2379DEADBE34EC671CFEFB540C9C023`; strict receipt `5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C`.
+- Cleanup PASS: kind, PostgreSQL temporal, port-forwards y temporary image eliminados; no quedan clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1647 — Live product full route con PostgreSQL y worker (2026-11-30)
 
 - Candidate exacto: `main@987d27009dd1e389ba87fc220a2ac8ea2c13e538`.

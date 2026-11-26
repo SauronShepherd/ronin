@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1650 — Helm/kind PostgreSQL restart persistence (2026-11-30)
+
+- Helm/kind PostgreSQL: PASS en lint, Secret, install/readiness, upgrade/rollback, health/API, restart PostgreSQL y restart deployment sobre `main@54d00fd21c9717cc3c6ece15bd4241a029008d44`.
+- Support Docker del mismo candidato: `27/27` y strict `15/15`; cleanup de kind, PostgreSQL e imagen temporal PASS.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1650-helm-postgres-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1647 — Live product full route con PostgreSQL y worker (2026-11-30)
 
 - Ruta live completa: `43/44 PASS`, `1` skip, `0` fallos; `487/487` eventos correlacionados y `25` rutas auditadas sobre `main@987d27009dd1e389ba87fc220a2ac8ea2c13e538`.
