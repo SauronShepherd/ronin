@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1611 — PostgreSQL quality store live (2026-11-30)
+
+- Candidate: `main@8534c5cdff615fe5f3366251c7e2377a362f545b`.
+- Result: PostgreSQL quality store integration, `1 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de persistencia quality; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1611-postgres-quality-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `0C4D5A845645E2D42AA345855D9E7DE6D230B9B285501DF5E83B613DAEEDAD05`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1610 — Quality sandbox, artifact rows y bundle validator (2026-11-30)
 
 - Candidate: `main@83446e3cce80f0cde9ad2e7269f290dba43d811b`.

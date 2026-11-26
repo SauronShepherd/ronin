@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1611 — PostgreSQL quality store live (2026-11-30)
+
+- PostgreSQL quality store integration: `1/1 PASS` contra PostgreSQL 16.4 aislado sobre `main@8534c5cdff615fe5f3366251c7e2377a362f545b`.
+- Cleanup de contenedor PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1610 — Quality sandbox, artifact rows y bundle validator (2026-11-30)
 
 - Quality artifact rows, sandbox y bundle validator boundaries: `36/36 PASS` sobre `main@83446e3cce80f0cde9ad2e7269f290dba43d811b`.
