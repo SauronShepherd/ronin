@@ -259,11 +259,14 @@ class SqliteStreamCheckpointStore:
             if row is None:
                 if expected.positions:
                     return False
-                connection.execute(
+                cursor = connection.execute(
                     "INSERT INTO stream_checkpoints(stream_id,checkpoint_json,checkpoint_digest) "
-                    "VALUES (?,?,?)",
+                    "VALUES (?,?,?) ON CONFLICT(stream_id) DO NOTHING",
                     (stream_id, self._json(next_checkpoint), next_checkpoint.digest),
                 )
+                if cursor.rowcount != 1:
+                    connection.rollback()
+                    return False
             else:
                 if row[0] != expected.digest:
                     connection.rollback()

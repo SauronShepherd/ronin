@@ -4799,3 +4799,11 @@ qualification completa por familia y matriz de plataformas están pendientes.
 - Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1572-durable-workflows-20261130`.
 - Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1631 — PostgreSQL streaming checkpoint fencing live (2026-11-30)
+
+- Candidate: `main@47e2a65a4a727dcc6b9edc0ed0e23adb8b7e6113`.
+- Result: PostgreSQL streaming checkpoint CAS/reopen and concurrent stale-writer fencing regression, `5 passed`, `0 failed`.
+- Scope: bounded runtime/backend recovery qualification; initial concurrent CAS races now return one success and one clean `False`; no HA, broker live or complete P11 claim.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1631-postgres-streaming-fencing-20261130`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+

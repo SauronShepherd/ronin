@@ -2592,3 +2592,9 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 - Filtered local evidence; no HA, live backend or public-v1 gate closure.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1631 — PostgreSQL streaming checkpoint fencing live (2026-11-30)
+
+- PostgreSQL streaming checkpoint CAS/reopen/concurrent-fencing tests: `5/5 PASS` on `main@47e2a65a4a727dcc6b9edc0ed0e23adb8b7e6113`.
+- Bounded runtime/backend recovery evidence only; no HA, broker live or public-v1 gate closure.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+

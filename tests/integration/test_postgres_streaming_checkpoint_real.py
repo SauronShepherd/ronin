@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 
 import pytest
@@ -39,6 +40,40 @@ def test_postgres_stream_checkpoint_bundle_cas_and_reopen() -> None:
         StreamCheckpoint((StreamPosition(0, 40), StreamPosition(1, 17))),
         advanced,
     )
+
+
+def test_postgres_stream_checkpoint_concurrent_cas_fences_stale_writer() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    stream_id = f"concurrent-cas-{uuid4().hex}"
+    initial = StreamCheckpoint()
+    winner = StreamCheckpoint((StreamPosition(0, 101),))
+    loser = StreamCheckpoint((StreamPosition(0, 202),))
+    first = PostgresStreamCheckpointStore(dsn)
+    second = PostgresStreamCheckpointStore(dsn)
+
+    def attempt(store, checkpoint):
+        return store.compare_and_set(stream_id, initial, checkpoint)
+
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(
+                pool.map(
+                    attempt,
+                    (first, second),
+                    (winner, loser),
+                )
+            )
+        assert sorted(results) == [False, True]
+        reopened = PostgresStreamCheckpointStore(dsn)
+        try:
+            durable = reopened.get(stream_id)
+            assert durable is not None
+            assert durable == winner or durable == loser
+            assert not reopened.compare_and_set(stream_id, initial, loser)
+        finally:
+            del reopened
+    finally:
+        del first, second
 
 
 def test_postgres_stream_table_append_replay_and_conflict() -> None:
