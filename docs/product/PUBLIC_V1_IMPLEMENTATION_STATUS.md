@@ -1,5 +1,17 @@
 # Ronin Public v1 implementation status
 
+## D1666 — Cualificación live completa con PostgreSQL y worker Docker (2026-11-30)
+
+- Candidate exacto: `main@3dc82060fd70ebd2cfb74804db0dd7b8c6de9b25`.
+- Resultado: `43/44` casos Playwright PASS, `1` skip deliberado, `0` fallos; `486/486` eventos API correlacionados, `463 OK`, `21 WARN` esperados y `2 ERROR` esperados `503 streaming_unavailable` durante fault recovery; sin eventos no correlacionados ni errores inesperados.
+- Cobertura: `44` casos, `25` rutas activas (`24` API-backed, `1` UI-only); PostgreSQL real, Redpanda single-broker, Ronin API y worker Docker real.
+- Imagen worker: `sha256:82e5c8eb1c1b7014bc9d7cd1938e03802aebd15f987c935519f1ca2a974c0363`.
+- Scope: cualificación live completa bounded; el skip y los outcomes esperados se conservan explícitamente. No cierra P11 completo ni release, ni certifica operación indefinida, HA multi-broker o provider externo.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1666-live-full-worker-20261130`.
+- Evidence hashes: `qualification-summary.json` `312EFFA95E5AED4C1AA5FE6C1A76D69278B5A86166EBD9A1B6BDB99CA056C881`; `browser-live.log` `F7B428780DCD27681CE2E6D72BD72103F28974095894FA15F76E22489464ACBB`; `browser-live.xml` `D876D73860DED25227EED309771AB9075DFCB86430842E3A8FE724E2B0440F3F`; `live-api-traffic.json` `7F3B24DBED2AD782E77DF0F08BE3B845F7A2EDDDE91E2D1D01C7884A973754DA`.
+- Cleanup PASS: broker, PostgreSQL, volumen, red y worker image temporal eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1665 — Ingestion Studio descubrimiento PostgreSQL con worker Docker (2026-11-30)
 
 - Candidate exacto: `main@10bb0a46ce22cf37667d6fd51f12103870809814`.

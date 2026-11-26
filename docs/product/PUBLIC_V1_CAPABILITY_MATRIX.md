@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1666 — Cualificación live completa con PostgreSQL y worker Docker (2026-11-30)
+
+- Full live current candidate: `43/44 PASS`, `1 skip`, `0 fallos`; `486/486` eventos correlacionados (`463 OK`, `21 WARN` esperados, `2 ERROR` esperados durante fault recovery) sobre `main@3dc82060fd70ebd2cfb74804db0dd7b8c6de9b25`.
+- Cobertura: 25 rutas activas, 24 API-backed y 1 UI-only; PostgreSQL, Redpanda y worker Docker reales; cleanup PASS.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1666-live-full-worker-20261130`.
+- No es evidencia 44/44 ni cierre de gates; release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1665 — Ingestion Studio descubrimiento PostgreSQL con worker Docker (2026-11-30)
 
 - Ingestion discovery: `1/1 PASS`, `12/12` eventos correlacionados sobre `main@10bb0a46ce22cf37667d6fd51f12103870809814`, con PostgreSQL, Redpanda y worker Docker real; imagen `sha256:7e0b357cb21ba2ff0dc34ef66601b04864007b35d0d5917aa83ffbdf94dfc7fd`.
