@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1667 — Docker acceptance actual con providers emulados (2026-11-30)
+
+- Docker acceptance: `27/27 PASS`; strict v0.1 `15/15 PASS` sobre `main@23de37e0466ac450e61e75b49a57ef288b2ba92a`, con worker real, PostgreSQL, Floci/S3, Azurite/Azure, backup/restore y reclaim.
+- Imagen `sha256:946f5ed6…` y todos los recursos temporales eliminados; evidencia current-candidate bounded, no certifica cloud real, operación indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1667-docker-full-current-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1666 — Cualificación live completa con PostgreSQL y worker Docker (2026-11-30)
 
 - Full live current candidate: `43/44 PASS`, `1 skip`, `0 fallos`; `486/486` eventos correlacionados (`463 OK`, `21 WARN` esperados, `2 ERROR` esperados durante fault recovery) sobre `main@3dc82060fd70ebd2cfb74804db0dd7b8c6de9b25`.

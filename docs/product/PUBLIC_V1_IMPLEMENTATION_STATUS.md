@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1667 — Docker acceptance actual con providers emulados (2026-11-30)
+
+- Candidate exacto: `main@23de37e0466ac450e61e75b49a57ef288b2ba92a`.
+- Resultado: aceptación Docker `27/27` PASS, `0` skip, `0` fallos; strict v0.1 `15/15` PASS, `0` skip, `0` xfail, `0` missing.
+- Scope: worker/runtime Docker real, PostgreSQL, reclaim/kill/restart, backup/restore, S3/Floci, Azure/Azurite y journey estricto; imagen construida desde el checkout `sha256:946f5ed6a77db7276e1c3c2546df00014b640c67cfa6f3e88c2b13e45abfc869`.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1667-docker-full-current-20261130`.
+- Evidence hashes: `qualification-summary.json` `2D1EF540E7879003863982E3908F58BE6F42FA354D9E6F92721926A2A6368FA8`; `docker-pytest-output.log` `953434267573389F6D05A7DE4EF5D3B8A028E0F98AB5917844E9DC18191DC25B`; `v01-acceptance-strict.json` `5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C`; `v01-acceptance.xml` `55F3F5DC5348947051636C41BEB15D49C43E06EA624F454480AE4B005440683D`; `docker-qualification.log` `4238C05EA7399DF0A979F8CDDDFD230B3F88931A965D31AB605A220822E60617`; `docker-cleanup.json` `E457864F4BEDED6CE311E119B2AFBE1EFBB0E4484B62A656E313DEABE7A0A800`.
+- Cleanup PASS: PostgreSQL, Floci, Azurite, worker containers, volúmenes, redes e imagen temporal eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1666 — Cualificación live completa con PostgreSQL y worker Docker (2026-11-30)
 
 - Candidate exacto: `main@3dc82060fd70ebd2cfb74804db0dd7b8c6de9b25`.
