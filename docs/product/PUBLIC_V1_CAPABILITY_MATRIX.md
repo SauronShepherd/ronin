@@ -2628,3 +2628,9 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 - Bounded single-replica deployment evidence only; no multi-user/HA, external provider or public-v1 gate closure.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1638 — Live streaming single-broker con PostgreSQL (2026-11-30)
+
+- Single-broker streaming journey: `11/12 PASS`, `1 SKIP`, `0` case failures, `243/243` correlated API events on `main@a1f31d0b3f6f2eca66a1074e8f76e718ac8c9ec3`.
+- Bounded streaming evidence only; no RF3/HA, indefinite operation, external provider or public-v1 gate closure.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+

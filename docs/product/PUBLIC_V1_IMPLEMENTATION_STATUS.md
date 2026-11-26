@@ -4849,3 +4849,12 @@ qualification completa por familia y matriz de plataformas están pendientes.
 - Cleanup: PASS; kind cluster, PostgreSQL container and temporary Ronin images removed.
 - Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1638 — Live streaming single-broker con PostgreSQL (2026-11-30)
+
+- Candidate: `main@a1f31d0b3f6f2eca66a1074e8f76e718ac8c9ec3`.
+- Result: filtered Playwright streaming journey `11 passed`, `1 skipped`, `0 case failures`; `243/243` real API events correlated (`232 OK`, `8 WARN` expected, `3` recovery errors expected by the scenarios).
+- Scope: bounded single-broker Redpanda + PostgreSQL streaming health, restart/checkpoint, backlog, drain, backpressure, Parquet, soak, event workflow and byte-boundary journeys; no RF3/HA or complete P11 claim.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1638-live-streaming-postgres-20261130`.
+- Cleanup: PASS; owned broker, PostgreSQL, volume and network removed.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
