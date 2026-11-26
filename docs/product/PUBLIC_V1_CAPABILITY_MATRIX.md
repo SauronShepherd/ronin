@@ -1761,7 +1761,7 @@ profile meets its complete gates, delay publication.
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed source baseline:** `97b7ba38f74c35022b9d5d7172b299f3d57d5ab6` (2026-11-26).
+**Observed source baseline:** `1acdbed13816db8914af29c97c9d0c8c9a8103f1` (2026-11-26).
 
 The D67 scaled backpressure slice passes `1/1` with a real local
 single-broker Redpanda fixture and `12/12` correlated `OK` events. The D66
