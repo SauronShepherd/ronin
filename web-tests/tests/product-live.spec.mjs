@@ -1131,7 +1131,9 @@ test('live streaming health reports an empty partition without false lag', async
     },
     sink: { kind: 'table', target_ref: 'live-empty-partition-events', mode: 'append' },
     schema: [{ name: 'event', data_type: 'string', nullable: false }],
-    runtime: { profile_id: 'local', batch_limit: 1, timeout_seconds: 1 },
+    // RF3 startup and assignment can consume the first bounded poll while
+    // retaining the same finite, fail-closed drain criterion.
+    runtime: { profile_id: 'local', batch_limit: 1, timeout_seconds: 5 },
   };
 
   const request = async (method, path, data) => {
@@ -1165,7 +1167,7 @@ test('live streaming health reports an empty partition without false lag', async
     empty_partitions: ['1'],
   });
 
-  const run = await request('POST', runPath, { limit: 1, timeout_seconds: 1 });
+  const run = await request('POST', runPath, { limit: 1, timeout_seconds: 5 });
   expect(run.status(), await run.text()).toBe(200);
   expect(await run.json()).toMatchObject({
     stream_id: streamId,
