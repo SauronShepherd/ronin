@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1614 — PostgreSQL workflow store live (2026-11-30)
+
+- PostgreSQL workflow store integration: `21/21 PASS` contra PostgreSQL 16.4 aislado sobre `main@ba6ab8a8bae1b05261272078c8e8141eb3d898b0`.
+- Cleanup de contenedor PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1613 — PostgreSQL FinOps live (2026-11-30)
 
 - PostgreSQL FinOps integration: `1/1 PASS` contra PostgreSQL 16.4 aislado sobre `main@e2bbe5621cc320a9b7d0e8a7f13880737d04f6cc`.

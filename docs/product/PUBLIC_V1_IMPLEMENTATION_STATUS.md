@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1614 — PostgreSQL workflow store live (2026-11-30)
+
+- Candidate: `main@ba6ab8a8bae1b05261272078c8e8141eb3d898b0`.
+- Result: PostgreSQL workflow store integration, `21 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de workflows, leases, snapshots y recuperación; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1614-postgres-workflow-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `4210FC2DDBA5B2E442A254DBA49793022A3E46C7D39A4445B99287296E400B4D`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1613 — PostgreSQL FinOps live (2026-11-30)
 
 - Candidate: `main@e2bbe5621cc320a9b7d0e8a7f13880737d04f6cc`.
