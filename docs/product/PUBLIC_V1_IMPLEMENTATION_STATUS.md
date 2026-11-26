@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1662 — RF3 multi-broker streaming live sobre candidato actual (2026-11-30)
+
+- Candidate exacto: `main@f75e49eb2fd39d419b91e901eda3bfa7bf5f8ef4`.
+- Resultado: batería live RF3 multi-broker PASS, `11 passed`, `0 failed`, `0 skipped`; `234/234` eventos API correlacionados (`226 OK`, `8 WARN` esperados), sin errores inesperados.
+- Scope: tres brokers Redpanda con factor de replicación 3 y PostgreSQL real; failover/replay/streaming bounded sobre el candidato actual; no reatribuye D1651, no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1662-live-rf3-current-20261130`.
+- Evidence hashes: `qualification-summary.json` `9B1A2432A26E993CFB0C2E6F35757750690E46AF4062456846C564837DCDE7D1`; `browser-live.log` `50081EAA8FE3993255DCA12154418D2B513F0FE89B2474AA7A195CE00E9196C0`; `browser-live.xml` `5E5532AC58E27E1ED7B2069474717FA71AD90D511557B85534CA40D5A22F4729`; `live-api-traffic.json` `70EC6630370A8E78974A147207028711D758C7742434A55D12FF3564025795C5`.
+- Cleanup PASS: tres brokers, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1661 — Reinicio de broker y resume desde checkpoint durable (2026-11-30)
 
 - Candidate exacto: `main@cb5561e3d0844ac8b29566c672d07d1b9f6f79a8`.

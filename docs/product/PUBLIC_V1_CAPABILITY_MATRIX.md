@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1662 — RF3 multi-broker streaming live sobre candidato actual (2026-11-30)
+
+- RF3 multi-broker: `11/11 PASS`, `234/234` eventos correlacionados (`226 OK`, `8 WARN` esperados) sobre `main@f75e49eb2fd39d419b91e901eda3bfa7bf5f8ef4`, con tres brokers Redpanda y PostgreSQL real.
+- Cleanup de tres brokers, PostgreSQL, volumen y red temporales PASS; evidencia bounded, no certifica operación indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1662-live-rf3-current-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1661 — Reinicio de broker y resume desde checkpoint durable (2026-11-30)
 
 - Broker restart/recovery: `1/1 PASS`, `11/11` eventos correlacionados (`8 OK`, `3 ERROR` esperados `503 streaming_unavailable` durante la interrupción) sobre `main@cb5561e3d0844ac8b29566c672d07d1b9f6f79a8`; health y runs posteriores OK.
