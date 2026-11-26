@@ -4823,3 +4823,11 @@ qualification completa por familia y matriz de plataformas están pendientes.
 - Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1633-postgres-stream-table-atomicity-20261130`.
 - Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1634 — Python full-suite candidate qualification (2026-11-30)
+
+- Candidate: `main@8cbb0020eb670efd945730e922f7c167f05a9450`.
+- Result: complete Python collection, with process-local `GIT_*` variables removed, `4710 passed`, `90 skipped`, `0 failed`, in `9:50`.
+- Scope: clean-candidate regression evidence; opt-in external services and Windows-specific privilege cases remain skipped, so this does not close P11 or release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1634-python-full-clean-env-20261130`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+

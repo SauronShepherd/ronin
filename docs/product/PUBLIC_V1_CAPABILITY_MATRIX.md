@@ -2610,3 +2610,9 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 - Bounded runtime/backend recovery evidence only; no HA, broker live or public-v1 gate closure.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1634 — Python full-suite candidate qualification (2026-11-30)
+
+- Complete Python test collection: `4710 PASS`, `90 SKIP`, `0 FAIL` on `main@8cbb0020eb670efd945730e922f7c167f05a9450`, with process-local `GIT_*` variables removed.
+- Clean-candidate regression evidence only; opt-in provider/live-service and Windows privilege coverage remain open.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
