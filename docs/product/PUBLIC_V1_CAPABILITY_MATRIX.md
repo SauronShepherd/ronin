@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1624 — Docker worker PostgreSQL live
+
+- Real Docker worker contra PostgreSQL: `1/1 PASS` (`3` deselected) con imagen inmutable sobre `main@648f6e15bc242c1f61afa60288fb5fb76a3fae7b`.
+- Cleanup de contenedor e imagen temporal PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1623 — Appliance backup PostgreSQL live (2026-11-30)
 
 - Opt-in Docker appliance backup/restore: `1/1 PASS` con PostgreSQL 16.4 e imagen Ronin inmutable sobre `main@957aa0520e9c88dbc35d2b66eeef3cb860b2e0f1`.

@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1624 — Docker worker PostgreSQL live
+
+- Candidate: `main@648f6e15bc242c1f61afa60288fb5fb76a3fae7b`.
+- Result: real Docker worker executes demo against PostgreSQL, `1 passed`, `3 deselected`, `0 failed`, con imagen Ronin inmutable y PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/worker bounded de ejecución durable y resultados; cleanup PASS de contenedor PostgreSQL, contenedores de prueba e imagen temporal; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1624-worker-postgres-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `249E5FB5A06F1098099049059C8C73E61D124EC2EE1A069E98661E24BEEEF02F`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1623 — Appliance backup PostgreSQL live (2026-11-30)
 
 - Candidate: `main@957aa0520e9c88dbc35d2b66eeef3cb860b2e0f1`.
