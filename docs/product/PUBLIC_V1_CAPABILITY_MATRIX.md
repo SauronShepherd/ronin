@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1652 — Supervisor soak bounded live con PostgreSQL (2026-11-30)
+
+- Supervisor soak: `1/1 PASS`, `345/345` eventos correlacionados, todos `OK`, sobre `main@24468c4f97be5ac91ae05bb0c58b2a5944c675e7`; ventana supervisada de 300 segundos con PostgreSQL real y Redpanda single-broker.
+- Cleanup de broker, PostgreSQL, volumen y red temporales PASS; evidencia bounded, no certifica operación indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1652-live-supervisor-soak-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1651 — RF3 multi-broker streaming live con PostgreSQL (2026-11-30)
 
 - Streaming RF3 multi-broker: `11/11 PASS`, `232/232` eventos correlacionados sobre `main@be44abc825a22dd10ff0557f65de442f79564717`; `224 OK`, `8 WARN`, `0` errores inesperados.

@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1652 — Supervisor soak bounded live con PostgreSQL (2026-11-30)
+
+- Candidate exacto: `main@24468c4f97be5ac91ae05bb0c58b2a5944c675e7`.
+- Resultado: caso live `supervisor soak` PASS, `1 passed`, `0 failed`, `0 skipped`; `345/345` eventos API correlacionados, todos `OK`, sin errores inesperados.
+- Scope: drenado supervisado durante 300 segundos sobre Redpanda single-broker y PostgreSQL real; evidencia bounded, no operación indefinida, no cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1652-live-supervisor-soak-20261130`.
+- Evidence hashes: `qualification-summary.json` `9D6CDF749E9830CD93679D84064A91A78A09431B9967D463CEF6B3EB14B2C272`; `browser-live.log` `70B1679961077283B0C9968CEBB84E5C8143E7D6D9329EA77B678BA6677CD943`; `browser-live.xml` `B21CA86DD0E39D3D75AC8FDF0BA8C93409322579ED83A42E3FA156CB29376493`; `live-api-traffic.json` `A6D9C3B61DB450E980D70E8C1C3EB3BC776DC31921C1D364A012D197EFEDE450`.
+- Cleanup PASS: broker, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1651 — RF3 multi-broker streaming live con PostgreSQL (2026-11-30)
 
 - Candidate exacto: `main@be44abc825a22dd10ff0557f65de442f79564717`.
