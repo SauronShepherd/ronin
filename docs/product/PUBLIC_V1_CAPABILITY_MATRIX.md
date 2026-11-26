@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1645 — ML S3 artifact store/Floci live-emulated (2026-11-30)
+
+- ML durable artifact store contra Floci: `1/1 PASS` sobre `main@e149a9d84cf7c7389799142cbc2132d2d38f0a0d`; round-trip input/output y retención.
+- Cleanup de Floci, volumen, red e imagen temporal PASS; no certifica AWS cloud real ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1645-ml-s3-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1644 — S3 JSON/Floci provider live-emulated (2026-11-30)
 
 - S3 JSON contra Floci: `1/1 PASS` sobre `main@17ece926a1a6b95d45a93a6d55c4acd890784598`; put/read y retry tras pérdida de respuesta.

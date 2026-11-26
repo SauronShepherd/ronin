@@ -1,5 +1,16 @@
 # Ronin Public v1 implementation status
 
+## D1645 — ML S3 artifact store/Floci live-emulated (2026-11-30)
+
+- Candidate exacto: `main@e149a9d84cf7c7389799142cbc2132d2d38f0a0d`.
+- Resultado: artefactos ML durables contra Floci, `1 passed`, `0 failed`, `0 skipped` (`26` deselected); round-trip input/output y retención PASS.
+- Scope: provider/object store bounded live-emulated para artefactos ML; no certifica AWS cloud real, no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1645-ml-s3-20261130`.
+- Image: `sha256:b5d2ec30da311374b23878e7464627c492ba1a3a26424699e76460fec5e7fe5a`.
+- Evidence hashes: `docker-pytest-output.log` `70ACA489E4981A60CEA95EF529ECAF24FC4D656F2239B6DE48E85765EBF3AB9E`; `v01-acceptance.xml` `5168BA82C2C5DDB85041C537AEBE4C19248809C5F6F310DBAB186F3B4F166F00`; `docker-qualification.log` `70A9E81F58B1C8B8B8F8655F0A90C103E248932A10938D021A7941D4BE92191D`; `floci-s3-qualification.log` `66A6A39F5C20B942B38390B454C9206D0F9CDEE8165A05FDACCC33D1EE2E9418`; `docker-cleanup.json` `4474A19C29D5FC820EBCBF964E281E92249865A5F4F392D1E357A4D3699B2E69`.
+- Cleanup PASS: Floci, volumen, red e imagen temporal eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1644 — S3 JSON/Floci provider live-emulated (2026-11-30)
 
 - Candidate exacto: `main@17ece926a1a6b95d45a93a6d55c4acd890784598`.
