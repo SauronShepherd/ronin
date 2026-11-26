@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1605 — Fixtures y validación de migración (2026-11-30)
+
+- Migration fixture/certification, validation CLI y vendor golden: `20/20 PASS` sobre `main@903c33a2096430d1ff3369c5a8ba8a76a118602a`.
+- Evidencia local bounded; no certifica backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1604 — Certificación funcional de migración (2026-11-30)
 
 - Migration profiles, qualification, registry y SQL: `16/16 PASS` sobre `main@ff0f6c5d94056b35b538bc81a1aad270447e0166`.

@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1605 — Fixtures y validación de migración (2026-11-30)
+
+- Candidate: `main@903c33a2096430d1ff3369c5a8ba8a76a118602a`.
+- Result: migration fixture/certification, validation CLI y vendor golden tests, `20 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de fixtures, golden cases y validación CLI; sin claim de backend live ni cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1605-migration-fixtures-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `5848AF1B83127BB8931DE0F4D5FCB2B25CF2A399C169DE9872B597ACF292579A`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1604 — Certificación funcional de migración (2026-11-30)
 
 - Candidate: `main@ff0f6c5d94056b35b538bc81a1aad270447e0166`.
