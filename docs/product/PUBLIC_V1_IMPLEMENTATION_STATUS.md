@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1653 — Backpressure sostenido bounded con 16.384 registros (2026-11-30)
+
+- Candidate exacto: `main@838f166bc861b0a47af371a211c1ed1686b91e93`.
+- Resultado: diagnóstico live de backpressure sostenido PASS, `1 passed`, `0 failed`, `0 skipped`; cap/resume/reset/replay sobre 16.384 registros, `13/13` eventos API correlacionados, todos `OK`, sin errores inesperados.
+- Scope: single-broker Redpanda y PostgreSQL real, ejecución bounded; no afirma carga indefinida, HA multi-broker, cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1653-live-backpressure-20261130`.
+- Evidence hashes: `qualification-summary.json` `9CAA35CB91DF27FBCF323F92BB8CC9E43BDA35A5B124D7B4EA30A4FABBAFC639`; `browser-live.log` `97CE1E6C348C36E2C260377EED981D4A094DF58D16C05FC20A0933F373845EB1`; `browser-live.xml` `DA5C25FA2BA67EEB8E0AE7BF128F7D7F3EC5048029A2668A85BAA15F6EDDE43D`; `live-api-traffic.json` `A0917409F208C598BEFEAB41FBB010DDE31B95DEB0ACAAE5D86F615B704B5228`.
+- Cleanup PASS: broker, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1652 — Supervisor soak bounded live con PostgreSQL (2026-11-30)
 
 - Candidate exacto: `main@24468c4f97be5ac91ae05bb0c58b2a5944c675e7`.

@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1653 — Backpressure sostenido bounded con 16.384 registros (2026-11-30)
+
+- Backpressure/cap/resume/reset/replay: `1/1 PASS`, `13/13` eventos correlacionados sobre `main@838f166bc861b0a47af371a211c1ed1686b91e93`, con 16.384 registros, PostgreSQL real y Redpanda single-broker.
+- Cleanup de broker, PostgreSQL, volumen y red temporales PASS; evidencia bounded, no certifica carga indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1653-live-backpressure-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1652 — Supervisor soak bounded live con PostgreSQL (2026-11-30)
 
 - Supervisor soak: `1/1 PASS`, `345/345` eventos correlacionados, todos `OK`, sobre `main@24468c4f97be5ac91ae05bb0c58b2a5944c675e7`; ventana supervisada de 300 segundos con PostgreSQL real y Redpanda single-broker.
