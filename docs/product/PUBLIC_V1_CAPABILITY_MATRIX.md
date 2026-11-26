@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1607 — Migration Studio codegen, IICS y Spark validation (2026-11-30)
+
+- Codegen, IICS, Spark validation y benchmark: `17/17 PASS` sobre `main@3e6f196d91f61ea702878af3d016848be314dd97`.
+- Evidencia local bounded; no certifica backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1606 — Migration Studio análisis y sesiones locales (2026-11-30)
 
 - Session store/session, analysis y validation local: `13/13 PASS` sobre `main@7c913c2365640f2ec1f5be2ced0d7bcaa655e8e0`.

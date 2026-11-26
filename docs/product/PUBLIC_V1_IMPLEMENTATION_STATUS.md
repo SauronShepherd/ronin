@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1607 — Migration Studio codegen, IICS y Spark validation (2026-11-30)
+
+- Candidate: `main@3e6f196d91f61ea702878af3d016848be314dd97`.
+- Result: codegen, IICS, Spark validation y benchmark tests, `17 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de generación/validación especializada; sin claim de backend live ni cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1607-migration-studio-specialized-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `F76A8A3879D3CF7801B096CC2173A74F022541A1995E467A1AD7013D12AA3F29`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1606 — Migration Studio análisis y sesiones locales (2026-11-30)
 
 - Candidate: `main@7c913c2365640f2ec1f5be2ced0d7bcaa655e8e0`.
