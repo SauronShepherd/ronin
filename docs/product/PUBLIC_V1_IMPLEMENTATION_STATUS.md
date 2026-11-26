@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1621 — PostgreSQL JobStore live (2026-11-30)
+
+- Candidate: `main@b80e42571fbbde377df6b4162fa37a97edbe6aab`.
+- Result: PostgreSQL JobStore integration, `2 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de durable job store y leases; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1621-postgres-jobstore-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `802521E0FF6CA35BEF5F268232C17DA72168C34E4008215D59C07A1847CEDCA7`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1620 — PostgreSQL catálogo HTTP local-composed (2026-11-30)
 
 - Candidate: `main@727fef1bfbea38d18fd8c58c6a863d61d5b6da9d`.

@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1621 — PostgreSQL JobStore live (2026-11-30)
+
+- PostgreSQL JobStore integration: `2/2 PASS` contra PostgreSQL 16.4 aislado sobre `main@b80e42571fbbde377df6b4162fa37a97edbe6aab`.
+- Cleanup de contenedor PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1620 — PostgreSQL catálogo HTTP local-composed (2026-11-30)
 
 - PostgreSQL local-composed catalog HTTP integration: `1/1 PASS` contra PostgreSQL 16.4 aislado sobre `main@727fef1bfbea38d18fd8c58c6a863d61d5b6da9d`.
