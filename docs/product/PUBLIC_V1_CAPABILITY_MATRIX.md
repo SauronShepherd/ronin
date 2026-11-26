@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1620 — PostgreSQL catálogo HTTP local-composed (2026-11-30)
+
+- PostgreSQL local-composed catalog HTTP integration: `1/1 PASS` contra PostgreSQL 16.4 aislado sobre `main@727fef1bfbea38d18fd8c58c6a863d61d5b6da9d`.
+- Cleanup de contenedor PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1619 — PostgreSQL connector control-plane live (2026-11-30)
 
 - PostgreSQL connector control-plane discover/preview/reopen: `1/1 PASS` contra PostgreSQL 16.4 aislado sobre `main@95ac150210655fa2f82c5213fa386ec37a49a71a`.

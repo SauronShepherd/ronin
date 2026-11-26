@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1620 — PostgreSQL catálogo HTTP local-composed (2026-11-30)
+
+- Candidate: `main@727fef1bfbea38d18fd8c58c6a863d61d5b6da9d`.
+- Result: PostgreSQL local-composed catalog HTTP integration, `1 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de catálogo HTTP, bundles/quality/lineage y reapertura; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1620-postgres-catalog-http-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `0242F14106DB87C42B82F08BBE2CC36CE525D9AFBE8ECD159153CEFFEF148E2E`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1619 — PostgreSQL connector control-plane live (2026-11-30)
 
 - Candidate: `main@95ac150210655fa2f82c5213fa386ec37a49a71a`.
