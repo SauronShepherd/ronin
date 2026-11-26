@@ -4831,3 +4831,12 @@ qualification completa por familia y matriz de plataformas están pendientes.
 - Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1634-python-full-clean-env-20261130`.
 - Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1635 — Docker full acceptance en candidato limpio (2026-11-30)
+
+- Candidate: `main@23df2ff295ff0df0492e54e3f7161c6fe78dc572`.
+- Result: Docker integration `27 passed`, `0 skipped`, `0 failed`; strict v0.1 `15 passed`, `0 skipped`, `0 xfailed`, `0 failed`, `0 errors`, `0 missing`, `0 unexpected`.
+- Scope: worker/runtime, PostgreSQL, backup/restore, Floci/S3, Azurite/Azure y journey v0.1; no cierre de P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1635-docker-full-20261130`.
+- Cleanup: PASS; imagen temporal Ronin y fixtures propios eliminados; recursos persistentes ajenos no tocados.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+

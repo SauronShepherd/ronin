@@ -2616,3 +2616,9 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 - Clean-candidate regression evidence only; opt-in provider/live-service and Windows privilege coverage remain open.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1635 — Docker full acceptance en candidato limpio (2026-11-30)
+
+- Docker integration: `27/27 PASS`; strict v0.1: `15/15 PASS`, sobre `main@23df2ff295ff0df0492e54e3f7161c6fe78dc572`, con PostgreSQL, worker, Floci/S3 y Azurite/Azure.
+- Cleanup PASS; evidencia Docker acotada, sin certificación de cloud real, operación indefinida, HA ni cierre de P11.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
