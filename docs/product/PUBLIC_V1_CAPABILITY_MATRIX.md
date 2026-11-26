@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1627 — S3/Floci provider live-emulated (2026-11-30)
+
+- S3 JSON connector contra Floci 2.1.0 fijado por digest: `1/1 PASS` sobre `main@58198a9933b3c44d5e4f0385567e58ed5d4b660f`.
+- Cleanup de compose, volumen y `.testdeps` temporal PASS; no certifica AWS cloud real ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1626 — Azure Blob/Azurite provider live-emulated (2026-11-30)
 
 - Azure Blob JSON connector contra Azurite local: `1/1 PASS` sobre `main@c6afe00a493911c30826964618f7c068837a7220`.

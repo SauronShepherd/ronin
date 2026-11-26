@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1627 — S3/Floci provider live-emulated (2026-11-30)
+
+- Candidate: `main@58198a9933b3c44d5e4f0385567e58ed5d4b660f`.
+- Result: S3 JSON connector contra Floci 2.1.0 fijado por digest, `1 passed`, `0 failed`, `0 skipped`; `boto3` instalado solo en `.testdeps` temporal.
+- Scope: cualificación provider/object-store bounded de write/read, retry tras pérdida de respuesta, idempotencia y discovery; no certifica AWS cloud real ni cierra P11/release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1627-floci-s3-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `E08AB2D30A2863A156F3542DB6D7E4C263A7A18F44A344D5AC7E6BB2FA0E7E80`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1626 — Azure Blob/Azurite provider live-emulated (2026-11-30)
 
 - Candidate: `main@c6afe00a493911c30826964618f7c068837a7220`.
