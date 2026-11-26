@@ -2634,3 +2634,9 @@ D1320 queda NOT_PASS por imagen Spark 4.2.0 fijada ausente: servidor no inició 
 - Bounded streaming evidence only; no RF3/HA, indefinite operation, external provider or public-v1 gate closure.
 - Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1639 — Live product full route con PostgreSQL y worker (2026-11-30)
+
+- Full live route/product journey: `43/44 PASS`, `1 SKIP`, `0` failures, `501/501` correlated API events, `25` routes audited on `main@50947246b1b81ea5413644bd142e4fe8e5804c39`.
+- Bounded single-broker live evidence only; no RF3/HA, indefinite operation, external provider or public-v1 gate closure.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+

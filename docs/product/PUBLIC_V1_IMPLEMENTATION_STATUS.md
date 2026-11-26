@@ -4858,3 +4858,12 @@ qualification completa por familia y matriz de plataformas están pendientes.
 - Cleanup: PASS; owned broker, PostgreSQL, volume and network removed.
 - Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
 
+## D1639 — Live product full route con PostgreSQL y worker (2026-11-30)
+
+- Candidate: `main@50947246b1b81ea5413644bd142e4fe8e5804c39`.
+- Result: live Playwright `43 passed`, `1 skipped`, `0 case failures`; `501/501` real API events correlated; `25` active routes audited (`24` API-backed, `1` UI-only).
+- Scope: full live route/product journey with PostgreSQL, single-broker Redpanda and Docker worker image `sha256:d1f299c7c20fa76254f039149d13cc0d6d10e0d0e103f1c76d4d121460eb05d5`; no RF3/HA, indefinite operation or complete P11 claim.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1639-live-full-postgres-20261130`.
+- Cleanup: PASS; broker, PostgreSQL, worker, volume, network and temporary image removed.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
