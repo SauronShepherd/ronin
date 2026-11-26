@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1658 — Cap de registros y resume durable sin replay (2026-11-30)
+
+- Cap/resume/replay: `1/1 PASS`, `8/8` eventos correlacionados (`7 OK`, `1 WARN` esperado) sobre `main@01259ea59bb0787a7341126dd2aa2fcd428c6fda`, con PostgreSQL real y Redpanda single-broker.
+- Cleanup de broker, PostgreSQL, volumen y red temporales PASS; evidencia bounded, sin certificación de operación indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1658-live-max-record-resume-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1657 — Salud de partición vacía sin lag falso (2026-11-30)
 
 - Empty-partition health: `1/1 PASS`, `4/4` eventos correlacionados sobre `main@7d69f693bcef4dd0f3f82f7abd142e8a30afab58`, con PostgreSQL real y Redpanda single-broker; lag vacío no se reporta falsamente.

@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1658 — Cap de registros y resume durable sin replay (2026-11-30)
+
+- Candidate exacto: `main@01259ea59bb0787a7341126dd2aa2fcd428c6fda`.
+- Resultado: cap de registros, reanudación desde checkpoint durable y replay sin duplicación PASS, `1 passed`, `0 failed`, `0 skipped`; `8/8` eventos API correlacionados (`7 OK`, `1 WARN` esperado), sin errores inesperados.
+- Scope: diagnóstico bounded con PostgreSQL real y Redpanda single-broker; no afirma operación indefinida, cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1658-live-max-record-resume-20261130`.
+- Evidence hashes: `qualification-summary.json` `0FF4B29F0C1D8DCEE1F5257D76328B443FA93AAA5951338D98B2307128AC3B85`; `browser-live.log` `00330275EDC2BD7D3385BF9BAAC164DF51088C321886ECE426976A70B04DFCA5`; `browser-live.xml` `462B38F5B32BC214F4EBEC7AFA0742A221F73C14660270B26E53637178B44D88`; `live-api-traffic.json` `3FFC51E2BF0E3CB3408B1116A8BCD3ECDF93093576AB4886616A14D50798EB3F`.
+- Cleanup PASS: broker, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1657 — Salud de partición vacía sin lag falso (2026-11-30)
 
 - Candidate exacto: `main@7d69f693bcef4dd0f3f82f7abd142e8a30afab58`.
