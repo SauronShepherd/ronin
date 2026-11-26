@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1610 — Quality sandbox, artifact rows y bundle validator (2026-11-30)
+
+- Candidate: `main@83446e3cce80f0cde9ad2e7269f290dba43d811b`.
+- Result: quality artifact rows, sandbox y bundle validator boundaries, `36 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de aislamiento/artefactos/validación quality; sin claim de backend live ni cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1610-quality-sandbox-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `CCC1964CE2914080A832BE90716D144D683CF81BA71253BDF635AF6903CAC4E1`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1609 — Quality observability y alert signals (2026-11-30)
 
 - Candidate: `main@edc3389b1e48ff756117950f712e7ad92c32d543`.

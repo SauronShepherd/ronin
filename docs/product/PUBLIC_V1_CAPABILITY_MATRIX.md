@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1610 — Quality sandbox, artifact rows y bundle validator (2026-11-30)
+
+- Quality artifact rows, sandbox y bundle validator boundaries: `36/36 PASS` sobre `main@83446e3cce80f0cde9ad2e7269f290dba43d811b`.
+- Evidencia local bounded; no certifica backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1609 — Quality observability y alert signals (2026-11-30)
 
 - Quality observability y alert signals: `4/4 PASS` sobre `main@edc3389b1e48ff756117950f712e7ad92c32d543`.
