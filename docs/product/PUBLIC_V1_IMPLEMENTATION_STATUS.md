@@ -1,5 +1,16 @@
 # Ronin Public v1 implementation status
 
+## D1644 — S3 JSON/Floci provider live-emulated (2026-11-30)
+
+- Candidate exacto: `main@17ece926a1a6b95d45a93a6d55c4acd890784598`.
+- Resultado: conector real S3 JSON contra Floci, `1 passed`, `0 failed`, `0 skipped` (`26` deselected); put/read y retry tras pérdida de respuesta PASS.
+- Scope: provider/object store bounded live-emulated sobre el candidato actual; no certifica AWS cloud real, no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1644-s3-json-20261130`.
+- Image: `sha256:723c399f36deb65f4b9b16fef0731ea7fde84e9b34450b002baf9470ade42834`.
+- Evidence hashes: `docker-pytest-output.log` `539637A846565FD840E229DA5C22FF844BD0C881C3188CB0FC5FF754A380DB01`; `v01-acceptance.xml` `639333234C869B6770D8C21CF140A669C024E4BE1569A466A6B6F5BDF36D2B9F`; `docker-qualification.log` `E3B75125E217C094BA364AE306BB0E260A255A4D6D5946522EB7C4E131955744`; `floci-s3-qualification.log` `1A4F2F111A7B0FCB49A61978916BF4A40E7C840DDFDDEDA976E38CE3500FF1E2`; `docker-cleanup.json` `1282410BC7538F8F149381305F25FED205120292ED93393D968E58FA226AF35D`.
+- Cleanup PASS: Floci, volumen, red e imagen temporal eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1643 — Azure Blob/Azurite provider live-emulated (2026-11-30)
 
 - Candidate exacto: `main@eabd5dce87aba91c5cc1c266467a2df7a41a86b1`.
