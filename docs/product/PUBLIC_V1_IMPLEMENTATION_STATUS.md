@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1642 — Suite completa Python/PostgreSQL (2026-11-30)
+
+- Candidate exacto: `main@39eeceb2b457ac77ac625e32712eaf1cd33dde60`.
+- Resultado: suite completa no-performance contra PostgreSQL 16.4 aislado, `4768 passed`, `31 skipped`, `0 failed` de `4799` casos, en `947.09s`.
+- Scope: regresión amplia de Python/runtime/backend con PostgreSQL; las omisiones quedan enumeradas por el runner y corresponden a integraciones opt-in, servicios externos no configurados o límites del host Windows. No cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1642-postgres-full-20261130`.
+- Evidence hashes: `pytest-output.log` `06905BD5D73430F71DB4785D002BD397024F939C72ABF0D45FF83546243C555C`; `pytest-postgres.xml` `612D3DF6E7F07B29F09046FDDBE4DBBCDA5C6EFADBE6ADCB751B2E4D0A506CCA`; `pytest-timings.json` `8E33A7190F438C14D14BF3ECD8EEE3BEC4D36E0927D8A8F55813F3FE9EE45C7B`; `runner-timings.json` `5DF0AD91CBC902CA5BC2EBC014AA9A5C2907FE8F5CBCAD53A133BF5F6FCD52BC`.
+- Cleanup PASS: PostgreSQL aislado y contenedor temporal eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1641 — PostgreSQL worker crash/reclaim live (2026-11-30)
 
 - Candidate exacto: `main@497d20befbf1f5fa948771d3ce609ace3e730368`.

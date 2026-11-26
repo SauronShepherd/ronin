@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1642 — Suite completa Python/PostgreSQL (2026-11-30)
+
+- Suite no-performance completa contra PostgreSQL 16.4: `4768/4799 PASS`, `31` skips explícitos, `0` fallos sobre `main@39eeceb2b457ac77ac625e32712eaf1cd33dde60`.
+- Cleanup del PostgreSQL aislado PASS; las integraciones externas/opt-in omitidas no se reatribuyen ni se consideran cualificadas.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1642-postgres-full-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1641 — PostgreSQL worker crash/reclaim live (2026-11-30)
 
 - Worker real con PostgreSQL: `1/1 PASS` sobre `main@497d20befbf1f5fa948771d3ce609ace3e730368`; reclaim tras crash, reutilización de tres checkpoints y continuación de dos celdas sin duplicados.
