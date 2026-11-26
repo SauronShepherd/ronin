@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1629 — PostgreSQL bundles live (2026-11-30)
+
+- Candidate: `main@16919590402bec87da801539f12ddea1b690603e`.
+- Result: PostgreSQL multi-object bundle atomic/idempotent commit tests, `2 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de bundles/importación/atomicidad; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1629-postgres-bundle-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `09588571148DF3FE6FFB921F5C80C0724218E8832F096814652F75C69C70956A`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1628 — ML S3 artifact store/Floci live-emulated (2026-11-30)
 
 - Candidate: `main@f33b6b29c2ccee013bd31f93ffc135d0ac048ff6`.

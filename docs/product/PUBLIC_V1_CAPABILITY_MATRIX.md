@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1629 — PostgreSQL bundles live (2026-11-30)
+
+- PostgreSQL multi-object bundle atomic/idempotent commit: `2/2 PASS` sobre `main@16919590402bec87da801539f12ddea1b690603e` contra PostgreSQL 16.4 aislado.
+- Cleanup de contenedor PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1628 — ML S3 artifact store/Floci live-emulated (2026-11-30)
 
 - ML S3 artifact store round-trip/retention contra Floci 2.1.0: `1/1 PASS` sobre `main@f33b6b29c2ccee013bd31f93ffc135d0ac048ff6`.
