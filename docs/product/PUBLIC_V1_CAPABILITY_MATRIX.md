@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1641 — PostgreSQL worker crash/reclaim live (2026-11-30)
+
+- Worker real con PostgreSQL: `1/1 PASS` sobre `main@497d20befbf1f5fa948771d3ce609ace3e730368`; reclaim tras crash, reutilización de tres checkpoints y continuación de dos celdas sin duplicados.
+- Cleanup de PostgreSQL, contenedor de ejecución e imagen temporal inmutable PASS; evidencia bounded, no certifica operación indefinida ni P11 completo.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1641-postgres-worker-crash-20261130-r3`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1640 — RF3 multi-broker streaming live con PostgreSQL (2026-11-30)
 
 - Streaming multi-broker RF3 contra PostgreSQL: `11/11 PASS`, `225/225` eventos correlacionados sobre `main@c7388e59d8ef362802d6ff5397df310057a17225`.

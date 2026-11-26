@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1641 — PostgreSQL worker crash/reclaim live (2026-11-30)
+
+- Candidate exacto: `main@497d20befbf1f5fa948771d3ce609ace3e730368`.
+- Resultado: test real de proceso worker con PostgreSQL, `1 passed`, `0 failed`, `0 skipped` (`3` deselected); el proceso fue terminado tras tres checkpoints, la replacement esperó la lease de producción de 30 s, reclaimó el run, reutilizó tres checkpoints y ejecutó dos celdas sin duplicados.
+- Scope: recuperación bounded de worker respaldada por PostgreSQL; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1641-postgres-worker-crash-20261130-r3`.
+- Evidence hashes: `pytest-output.log` `08E6C4B50C7CD1ADAAFCE1D90402B12B062531724A8EF2A2B0689D6CEB32EB11`; `pytest-postgres.xml` `5B3728BCB94A3567475286463699630773BACC3FF12EEB27C27D9F1C3A604A43`; `pytest-timings.json` `F49F9BB8328D70193A66F93640CD1C6F267B25A04A415DE2C4AEF6869F80DFB2`.
+- Cleanup PASS: PostgreSQL temporal, contenedor de ejecución e imagen inmutable temporal eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1640 — RF3 multi-broker streaming live con PostgreSQL (2026-11-30)
 
 - Candidate exacto: `main@c7388e59d8ef362802d6ff5397df310057a17225`.
