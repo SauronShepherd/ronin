@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1603 — Inventarios de artefactos, migración y plugins (2026-11-30)
+
+- Candidate: `main@ce06cbdbea1807a1f3a9431b9921962029688747`.
+- Result: artifact writer inventory, migration inventory y plugin inventory, `9 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de inventarios y contratos de artefactos; sin claim de backend live ni cierre de P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1603-inventories-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `700225B297372B9BBBE1AF1D26D94E53260B6647CF3CA62E903DA62FD990D526`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1602 — Project import/export y backup manifests (2026-11-30)
 
 - Candidate: `main@3157137a8128b6f5176886ee3418e3bf23fe1f9c`.

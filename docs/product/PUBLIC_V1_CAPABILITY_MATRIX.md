@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1603 — Inventarios de artefactos, migración y plugins (2026-11-30)
+
+- Artifact writer inventory, migration inventory y plugin inventory: `9/9 PASS` sobre `main@ce06cbdbea1807a1f3a9431b9921962029688747`.
+- Evidencia local bounded; no certifica backend live ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1602 — Project import/export y backup manifests (2026-11-30)
 
 - Project import plan/commit, backup manifest y project inventory: `38/38 PASS` sobre `main@3157137a8128b6f5176886ee3418e3bf23fe1f9c`.
