@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1625 — Docker worker crash/reclaim PostgreSQL live
+
+- Real worker SIGKILL/reclaim/reuse contra PostgreSQL: `1/1 PASS` (`3` deselected) con imagen inmutable sobre `main@ed55c3c446911a7231de9384af368e9056765cf5`.
+- Cleanup de contenedor e imagen temporal PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1624 — Docker worker PostgreSQL live
 
 - Real Docker worker contra PostgreSQL: `1/1 PASS` (`3` deselected) con imagen inmutable sobre `main@648f6e15bc242c1f61afa60288fb5fb76a3fae7b`.

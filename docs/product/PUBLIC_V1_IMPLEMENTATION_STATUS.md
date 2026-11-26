@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1625 — Docker worker crash/reclaim PostgreSQL live
+
+- Candidate: `main@ed55c3c446911a7231de9384af368e9056765cf5`.
+- Result: real process SIGKILL reclaims PostgreSQL run and reuses three cells, `1 passed`, `3 deselected`, `0 failed`, con imagen Ronin inmutable y PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/worker bounded de crash/reclaim/reuse; cleanup PASS de contenedor PostgreSQL, contenedores de prueba e imagen temporal; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1625-worker-crash-postgres-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `2CBCE971C92438968D5EF799B3BBDF1D3FC7455E160125174FA3AC273CFC3E3C`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1624 — Docker worker PostgreSQL live
 
 - Candidate: `main@648f6e15bc242c1f61afa60288fb5fb76a3fae7b`.
