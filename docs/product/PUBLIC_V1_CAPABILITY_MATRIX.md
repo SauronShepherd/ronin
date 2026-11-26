@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1623 — Appliance backup PostgreSQL live (2026-11-30)
+
+- Opt-in Docker appliance backup/restore: `1/1 PASS` con PostgreSQL 16.4 e imagen Ronin inmutable sobre `main@957aa0520e9c88dbc35d2b66eeef3cb860b2e0f1`.
+- Imagen temporal eliminada y cleanup PASS; evidencia runtime bounded, no cierra backend completo ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1622 — PostgreSQL connector real live (2026-11-30)
 
 - PostgreSQL connector real integration: `2/2 PASS` contra PostgreSQL 16.4 aislado sobre `main@a04403910ca789994d1fbaf0c80bf522a699a64b`.

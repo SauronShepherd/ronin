@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1623 — Appliance backup PostgreSQL live (2026-11-30)
+
+- Candidate: `main@957aa0520e9c88dbc35d2b66eeef3cb860b2e0f1`.
+- Result: opt-in Docker appliance backup/restore integration, `1 passed`, `0 failed`, `0 skipped`, con PostgreSQL 16.4 e imagen Ronin inmutable construida desde `main`.
+- Scope: cualificación runtime/backend bounded de backup y restore de PostgreSQL/volumen local; cleanup PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1623-appliance-backup-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `D1C0DE479048FFA9963B63781FB31703BD5CC4BE9CB1E9EF6C1CBDEB0E667E6D`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1622 — PostgreSQL connector real live (2026-11-30)
 
 - Candidate: `main@a04403910ca789994d1fbaf0c80bf522a699a64b`.
