@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1651 — RF3 multi-broker streaming live con PostgreSQL (2026-11-30)
+
+- Streaming RF3 multi-broker: `11/11 PASS`, `232/232` eventos correlacionados sobre `main@be44abc825a22dd10ff0557f65de442f79564717`; `224 OK`, `8 WARN`, `0` errores inesperados.
+- Cleanup de tres brokers, PostgreSQL, volumen y red temporales PASS; evidencia bounded, no certifica operación indefinida ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1651-live-rf3-postgres-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1650 — Helm/kind PostgreSQL restart persistence (2026-11-30)
 
 - Helm/kind PostgreSQL: PASS en lint, Secret, install/readiness, upgrade/rollback, health/API, restart PostgreSQL y restart deployment sobre `main@54d00fd21c9717cc3c6ece15bd4241a029008d44`.

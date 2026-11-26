@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1651 — RF3 multi-broker streaming live con PostgreSQL (2026-11-30)
+
+- Candidate exacto: `main@be44abc825a22dd10ff0557f65de442f79564717`.
+- Resultado: diagnóstico live RF3 con tres brokers Redpanda y PostgreSQL real, `11 passed`, `0 failed`, `0 skipped`; `232/232` eventos API correlacionados (`224 OK`, `8 WARN`), sin errores inesperados.
+- Scope: failover/replay/streaming multi-broker bounded sobre el candidato actual; no reatribuye D1640/D1165/D1317, no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1651-live-rf3-postgres-20261130`.
+- Evidence hashes: `qualification-summary.json` `DF43A830361D15A31D68168D628230901756F34D321E5DB802C7C57604393EF2`; `browser-live.log` `ABF88A05139259F679FD198A791306AAA39A28F84D55D5808E919EAF884AD388`; `browser-live.xml` `6FAA2A4348F48FFF30FA8C91652064B05FDCE5622FBDB5D8E36F07D5CE50F83E`; `live-api-traffic.json` `6885748E75B7107B9935172DF0F45A26685E63067EFF85E31C15CFBE2BB8F605`.
+- Cleanup PASS: tres brokers, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1650 — Helm/kind PostgreSQL restart persistence (2026-11-30)
 
 - Candidate exacto: `main@54d00fd21c9717cc3c6ece15bd4241a029008d44`.
