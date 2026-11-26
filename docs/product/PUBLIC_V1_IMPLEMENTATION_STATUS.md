@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1626 — Azure Blob/Azurite provider live-emulated (2026-11-30)
+
+- Candidate: `main@c6afe00a493911c30826964618f7c068837a7220`.
+- Result: Azure Blob JSON connector contra Azurite local, `1 passed`, `0 failed`, `0 skipped`; dependencia `azure-storage-blob` instalada solo en `.testdeps` temporal.
+- Scope: cualificación provider/object-store bounded de discover/read/snapshot replay; no certifica Azure cloud real ni cierra P11/release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1626-azurite-azure-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `F06AD1029533D5724A4DFB15B691041C82D8FCDAD2A04EE1E250B02E85AC8526`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1625 — Docker worker crash/reclaim PostgreSQL live
 
 - Candidate: `main@ed55c3c446911a7231de9384af368e9056765cf5`.

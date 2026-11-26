@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1626 — Azure Blob/Azurite provider live-emulated (2026-11-30)
+
+- Azure Blob JSON connector contra Azurite local: `1/1 PASS` sobre `main@c6afe00a493911c30826964618f7c068837a7220`.
+- Cleanup de contenedor y `.testdeps` temporal PASS; no certifica Azure cloud real ni gates de public v1.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1625 — Docker worker crash/reclaim PostgreSQL live
 
 - Real worker SIGKILL/reclaim/reuse contra PostgreSQL: `1/1 PASS` (`3` deselected) con imagen inmutable sobre `main@ed55c3c446911a7231de9384af368e9056765cf5`.
