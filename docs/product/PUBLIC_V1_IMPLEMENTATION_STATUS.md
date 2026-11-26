@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1617 — PostgreSQL Data Engineering revisions live (2026-11-30)
+
+- Candidate: `main@2f2f44c3e4994fdbc0c87a65bfa9111a32b19b9d`.
+- Result: PostgreSQL Data Engineering revisions integration, `1 passed`, `0 failed`, `0 skipped`, contra PostgreSQL 16.4 aislado.
+- Scope: cualificación runtime/backend bounded de revisiones Data Engineering; cleanup del contenedor PASS; no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1617-postgres-data-engineering-live-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `4BCB0C3F087EC1AEB1BC4D13927290CD232F91643BE651F3434001668B343ACB`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1616 — PostgreSQL connector checkpoints live (2026-11-30)
 
 - Candidate: `main@40f08819275d40d7cbe914d98fc2f6bac78a20cf`.
