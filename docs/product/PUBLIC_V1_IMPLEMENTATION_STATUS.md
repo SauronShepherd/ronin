@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1661 — Reinicio de broker y resume desde checkpoint durable (2026-11-30)
+
+- Candidate exacto: `main@cb5561e3d0844ac8b29566c672d07d1b9f6f79a8`.
+- Resultado: recuperación live tras reinicio de broker PASS, `1 passed`, `0 failed`, `0 skipped`; `11/11` eventos API correlacionados (`8 OK`, `3 ERROR` esperados `503 streaming_unavailable` durante la interrupción), sin eventos no correlacionados ni fallos de caso; health y runs posteriores vuelven a `200`.
+- Scope: PostgreSQL real y Redpanda single-broker, recuperación bounded; no afirma HA multi-broker, operación indefinida, cierre de P11 ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1661-live-broker-restart-20261130`.
+- Evidence hashes: `qualification-summary.json` `A3566ED80B135B7FDDBC6710D04D6B4732758474D9A9DFB2D8549F45DFAF899A`; `browser-live.log` `D9FBA6BDC16DB1C66EF74BC03E3DD8057EB343026CCEE24B1B305D4D760EEA98`; `browser-live.xml` `CBB414C2B18E08B8B803A4475308D6B4F25AFF42D328059B7343C3001FD6AD7D`; `live-api-traffic.json` `D26C574FA1F376597AFB30664C1042BE8AA88767B2023F66310A5FCE22E53AB0`.
+- Cleanup PASS: broker, PostgreSQL, volumen y red temporales eliminados; no hubo clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1660 — Backlog de dos particiones en micro-batches (2026-11-30)
 
 - Candidate exacto: `main@68c8b5ff7307104bbc207273f6545c43969ffe37`.

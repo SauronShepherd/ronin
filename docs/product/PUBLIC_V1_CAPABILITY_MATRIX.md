@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1661 — Reinicio de broker y resume desde checkpoint durable (2026-11-30)
+
+- Broker restart/recovery: `1/1 PASS`, `11/11` eventos correlacionados (`8 OK`, `3 ERROR` esperados `503 streaming_unavailable` durante la interrupción) sobre `main@cb5561e3d0844ac8b29566c672d07d1b9f6f79a8`; health y runs posteriores OK.
+- Cleanup de broker, PostgreSQL, volumen y red temporales PASS; evidencia bounded, no certifica HA multi-broker ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1661-live-broker-restart-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1660 — Backlog de dos particiones en micro-batches (2026-11-30)
 
 - Two-partition backlog: `1/1 PASS`, `36/36` eventos correlacionados sobre `main@68c8b5ff7307104bbc207273f6545c43969ffe37`, con PostgreSQL real y Redpanda single-broker.
