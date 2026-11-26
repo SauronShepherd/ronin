@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1807",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "fccf2a0deba2e1ca355b7ce595488885204ca856",
+  "implementation_sha": "fccf2a0deba2e1ca355b7ce595488885204ca856",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1807-live-empty-partition-health-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1807 --label org.ronin.qualification.run=d1807 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1807-live-empty-partition-health-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1807 -TestGrep 'live streaming health reports an empty partition' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d1807",
+  "result": {"playwright": "1/1 passed", "api_events": "4/4 correlated", "api_ok": 4, "unexpected_errors": 0, "cleanup": "PASS", "topology": "single-broker RF1, PostgreSQL, Docker worker"},
+  "hashes": {"browser-live.log": "C6AA4193140AA77BCA13DB4546D407765C12A6133A6B937314056BD90B2BE053", "browser-live.xml": "9D23C63EF3EF86190A944C369BBDBBAD7B2BBD5B112CE401B9D65BEF1B0B7A72", "live-api-traffic.json": "93EF7B5BEFA1C799A2F47AB73F1EAA29B0B2BD8ECBFFDEF1AFF3B4B274ACC4D6", "live-python-freeze.txt": "456DD780EC178CEAB97B3CABD13B3B0DE6DEAE7F12D080344606058258A176A9", "live-server.stderr.log": "460E2DF8C3BCAE8DFF2D650F16EE1442E649A60535F87929D6A9620AD707A67B", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "2CAC69EE16FA5FF570E2C1F598B194E927108938CD41171E4F3BFF649D58FFE6", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded RF1 empty-partition health qualification; no HA, indefinite soak, SLO, complete P11, or release evidence.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
