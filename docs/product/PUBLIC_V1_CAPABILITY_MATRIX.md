@@ -1,5 +1,11 @@
 # Ronin Public v1 capability matrix
 
+## D1608 — Cloud Studio/Floci bounded qualification (2026-11-30)
+
+- Cloud Studio y Floci qualification contracts: `42/42 PASS` sobre `main@cc54f93ab292f2e158ab03a51442e3bfd1814f7f`.
+- Evidencia local bounded; Terraform live/despliegue externo no certificados por la limitación de versión documentada.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1607 — Migration Studio codegen, IICS y Spark validation (2026-11-30)
 
 - Codegen, IICS, Spark validation y benchmark: `17/17 PASS` sobre `main@3e6f196d91f61ea702878af3d016848be314dd97`.

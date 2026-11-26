@@ -1,5 +1,14 @@
 # Ronin Public v1 implementation status
 
+## D1608 — Cloud Studio/Floci bounded qualification (2026-11-30)
+
+- Candidate: `main@cc54f93ab292f2e158ab03a51442e3bfd1814f7f`.
+- Result: Cloud Studio y Floci qualification contracts, `42 passed`, `0 failed`, `0 skipped`.
+- Scope: cualificación local bounded de topología/contratos Cloud Studio; no certifica Terraform live ni despliegue externo por la limitación de versión documentada, y no cierra P11.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1608-cloud-studio-20261130`.
+- Evidence hash: `pytest-output.log` SHA256 `177BDBC9196FE3169F730FC16F296AC43ED8514DCE6CD4DE4A24A21F48DA5320`.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1607 — Migration Studio codegen, IICS y Spark validation (2026-11-30)
 
 - Candidate: `main@3e6f196d91f61ea702878af3d016848be314dd97`.
