@@ -1,5 +1,12 @@
 # Ronin Public v1 capability matrix
 
+## D1640 — RF3 multi-broker streaming live con PostgreSQL (2026-11-30)
+
+- Streaming multi-broker RF3 contra PostgreSQL: `11/11 PASS`, `225/225` eventos correlacionados sobre `main@c7388e59d8ef362802d6ff5397df310057a17225`.
+- Cleanup de tres brokers, PostgreSQL, volumen y red temporales PASS; evidencia bounded, no certifica operación indefinida, cloud provider, P11 completo ni gates de public v1.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1640-live-rf3-postgres-20261130`.
+- Release unchanged: `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1630 — PostgreSQL streaming checkpoints live (2026-11-30)
 
 - PostgreSQL streaming checkpoint/table processor: `4/4 PASS` sobre `main@f741af8da6580d814dbd1d22bc5a7f70ed02e4ad` contra PostgreSQL 16.4 aislado.

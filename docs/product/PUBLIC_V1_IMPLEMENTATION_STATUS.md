@@ -1,5 +1,15 @@
 # Ronin Public v1 implementation status
 
+## D1640 — RF3 multi-broker streaming live con PostgreSQL (2026-11-30)
+
+- Candidate exacto: `main@c7388e59d8ef362802d6ff5397df310057a17225`.
+- Resultado: diagnóstico live bounded RF3 con tres brokers Redpanda y PostgreSQL real, `11 passed`, `0 failed`, `0 skipped`; `225/225` eventos API correlacionados (`217 OK`, `8 WARN`), sin errores inesperados.
+- Scope: failover/replay/streaming multi-broker contra el candidato actual; no reatribuye evidencia histórica D1165/D1317, no cierra P11 completo ni release.
+- Evidence: `C:\Users\angel.alvarez\AppData\Local\Temp\ronin-d1640-live-rf3-postgres-20261130`.
+- Evidence hashes: `qualification-summary.json` `68806F16BD64959A1622B04350E10A2DA7A97059CB6E4E0197431985DF5C40A2`; `browser-live.log` `23FA4EC81EFBBF089AB7058688BDE3E5F332DF54903752031212BAF3C952F37F`; `browser-live.xml` `63F3991295D56A44B03C9A2F4D0A407F6AC32CC1D399D9263C698D45FBCCEDD2`; `live-api-traffic.json` `4E861A64CEE53273C79E716CDA5310E3AB21BA9617A18D03E71CDE5BF008D5B2`.
+- Cleanup PASS: brokers, PostgreSQL, volumen y red temporales eliminados; no quedaron contenedores RF3 ni clústeres kind.
+- Progress remains `1/13` families, `0/10` gates, release `NO-GO`; `P11=in_progress`, `P13=blocked`.
+
 ## D1630 — PostgreSQL streaming checkpoints live (2026-11-30)
 
 - Candidate: `main@f741af8da6580d814dbd1d22bc5a7f70ed02e4ad`.
