@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1814",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "e46ea5bf107102368e063679dbfb09c97b32a737",
+  "implementation_sha": "e46ea5bf107102368e063679dbfb09c97b32a737",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1814-live-parquet-sink-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1814 --label org.ronin.qualification.run=d1814 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1814-live-parquet-sink-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1814 -TestGrep 'live streaming parquet sink' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d1814",
+  "result": {"playwright": "1/1 passed", "api_events": "11/11 correlated", "api_ok": 11, "unexpected_errors": 0, "cleanup": "PASS", "topology": "single-broker RF1, PostgreSQL, Docker worker"},
+  "hashes": {"browser-live.log": "F8137DBBE179C1D3F03DC90CFD88D008A728E38899B5033D81DFFDF018D2022B", "browser-live.xml": "301B5FE371986716B61DC98EA65FC5B3CCF38B2F2442E2C814E79BB6B53CA8CD", "live-api-traffic.json": "9F480DC7CB9489FACA61C6DAD27D71118F7DDF470B46C3D10170060B5217FCAB", "live-python-freeze.txt": "B7E597C95C90ECF2AA4511D7C8E42A8563074F02E625379148B0528E95C0A262", "live-server.stderr.log": "48E77E556139D0824E1EE83941483A88B57CD52C721251C8D845D6B9771F680C", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "0175100808548F647664253064266674333D7F5892CB6D40CCBA0B431D234E68", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded RF1 Parquet sink reset/replay qualification; no HA, indefinite soak, SLO, complete P11, or release evidence.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
