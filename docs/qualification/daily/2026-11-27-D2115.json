@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2115",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_CURRENT",
+  "candidate_sha": "5266180bc5d56da0ce03ebe861d57dd06b93cdf3",
+  "implementation_commit_sha": "ba8ecd5f232ed1e369f206b96ffe1e350f5af992",
+  "production_change_boundary": "ba8ecd5f232ed1e369f206b96ffe1e350f5af992",
+  "production_change": "SqliteStreamTable best-effort destructor cleanup; affected regressions 20/20 PASS",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2115-live-event-workflow-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2115 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2115-live-event-workflow-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2115 -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2115",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 12, "correlated_events": 12, "api_outcomes": {"OK": 12}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 51.14},
+  "evidence_hashes": {"qualification-summary.json": "D6ECE72CE6C2C54D1A014925DEF3284CAF08AD2436CE4A89C52FF02CE2C2C549", "browser-live.log": "4948B3400E7341C4D0F285B53D6E73F39B6B3E4952584BFE4042973CF4174A60", "browser-live.xml": "9D146E3BDA5E1EFEA11D0E79836F736F1129AB94740C31E73568548FABB1EBBB", "live-api-traffic.json": "FF1DEC0A7779A2A581432FF651DBE0F2FB56CEBD061B924D4A3001FE3E7A0E1F"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded event-to-workflow live diagnostic, not indefinite operation, HA, hosted provider/IAM certification, complete P11 or release approval. No historical evidence is reattributed."]
+}
