@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1855",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "5d82d320cc883f4d0e806ffecff524b3f2c87130",
+  "implementation_commit_sha": "5d82d320cc883f4d0e806ffecff524b3f2c87130",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1855-appliance-backup-docker-20261127",
+  "result": {
+    "pytest": "1 passed; 26 deselected; 0 skipped; 0 failed",
+    "scope": "filtered real PostgreSQL appliance backup and restore with local data volume",
+    "backend": "PostgreSQL 16.4 and Ronin Docker worker in isolated Compose resources",
+    "cleanup": "PASS; owned Ronin image, Compose services, network and volumes removed"
+  },
+  "evidence_hashes": {
+    "docker-cleanup.json": "175D2CFFB1AA681F1F537D44ABEF2DC716101037C2204316FE270F0A0FA32CD9",
+    "docker-pytest-output.log": "686876D10D8B03E526A5798D4F5768D7862802BDA4AA6A650D2A47EB2DBDFB7C",
+    "docker-qualification.log": "F31038315632B8CEB1652AEE5D4C7E3D3112DF7AD889C24A199FD6C8D696A325",
+    "postgres-qualification.log": "3D72595C2EBC639335883A5E86754163A9896A0C5F99A4475E37DC3FE03B2777",
+    "v01-acceptance.xml": "13EC433E91C51B1ACE08842352F51A507CFC5A074028DF7B3A94F35479DA3366"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one appliance backup/restore integration test; 26 tests were deselected and strict v0.1 acceptance was not evaluated.",
+    "The first non-Docker invocation skipped by design and is not counted as evidence; this receipt covers only the valid Docker execution.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
