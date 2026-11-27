@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2062",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_APPLIANCE_RECOVERY",
+  "candidate_sha": "5e0416c2ca4842ad247a74212a1e7352f39e356f",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2062-docker-postgres-appliance-recovery-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2062-docker-postgres-appliance-recovery-current-20261127-01 -TestFilter 'appliance'",
+  "services": {"postgres": true, "docker_worker": true},
+  "fixture": {"ronin_image": "sha256:c3e2e3057a0cad6fda57c79ba9bc3f1f515b11bf145b97f0c1b811665690a9f9"},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 53.41, "tests": ["test_appliance_backup_restores_postgres_and_local_data_volume"], "cleanup": "PASS"},
+  "evidence_hashes": {
+    "docker-cleanup.json": "70132CD2D455FB4049AF3DCAC7AA05406AC5C03C4C9686AAC5D6395070BC5AF5",
+    "docker-pytest-output.log": "1F45D85A5C51D616E021910A90175170CFF87CF40CFCF952C5A6BE1C230AC31F",
+    "docker-qualification.log": "0BC0CBD4F4BFCDCD5B0A395306A6DFEA77CE855DA920DD58D8B45CBB09F638BA",
+    "postgres-qualification.log": "83860879C1E98C839D80B61D9C1BF46B981CF9DE0A04326246852D9A8526DAAB",
+    "v01-acceptance.xml": "5784422567F2940D3D4F3A23986F3EB31C16D767B8DAC5C3AC379F9240AC2756"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación filtrada y bounded de recuperación de appliance local; no equivale a recuperación externa/cloud, P14 completa, P11, P13 ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
