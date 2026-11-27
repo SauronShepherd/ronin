@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1967",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_INTEGRATION",
+  "candidate_sha": "cfb5be8849624f5e2eb8133504b6e9ea654ba0e5",
+  "implementation_commit_sha": "cfb5be8849624f5e2eb8133504b6e9ea654ba0e5",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1967-http-authorized-pagination-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_http_authorized_pagination.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "3 passed; 0 skipped; 0 failed", "scope": "Bounded authorized HTTP pagination integration lane"},
+  "evidence_hashes": {"pytest-junit.xml": "AA78A851CC1CC5DDCA6911E7BCDA557F0A20F057BC9F966E281E136C5626F8EA", "pytest.log": "70277235C0EDC8C6BF5669FF5E5153AC4B9554AABC31A6D21FA3EB3D056821CA"},
+  "cleanup": {"containers": "none relevant", "kind_clusters": "none"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded local HTTP integration only; no indefinite operation, HA, cloud-provider certification or full release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
