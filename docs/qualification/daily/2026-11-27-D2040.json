@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2040",
+  "date": "2026-11-27",
+  "status": "PASS_POSIX_LINUX_CONTRACTS",
+  "candidate_sha": "d746e88a1dca84e2c2366b28ab4b6375b385f5ce",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2040-posix-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_posix_contract_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2040-posix-20261127-01 -ImageRef sha256:5677455125b6a8110b1292f036a751ee28834144b56311743cabaa206b8b9c88",
+  "service": {"image": "sha256:5677455125b6a8110b1292f036a751ee28834144b56311743cabaa206b8b9c88", "git_version": "2.56.1"},
+  "result": {"pytest": "8 passed; 0 skipped; 0 failed", "selected": 8, "executed": 8, "cleanup": "PASS", "image_cleanup": "PASS"},
+  "evidence_hashes": {"git-version.txt": "0EFF67955296E123526D7F9B9146FFF8D8DC8D6DBF4F49BA5F838923D2B4AF71", "posix-junit.xml": "80D329555DC93867A923797BBB5AAC5A56683A1C295F1D4352B6CD8793785102", "pytest-timings.json": "899BAA718C69D5130213E36E005432DF4AB75464A8C9B65A8151DF41B5C0BC06", "qualification.json": "A2476587232C3E0FB5D3E05F3078BA2C7DC1E57282503657C2AD23E1EBCC25ED", "qualification.log": "C6EBC50DB0D0B8AD378EF44179B4A19FC57F5DD4640FF6108CCF64EE5F6045CE"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Eight isolated Linux-container contract tests only; this does not certify complete P11, all supported platforms, indefinite operation, cloud providers or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
