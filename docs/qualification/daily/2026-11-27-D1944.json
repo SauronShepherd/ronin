@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1944",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "2c143e7aa682638fc86210a2182227ddde594db0",
+  "implementation_commit_sha": "2c143e7aa682638fc86210a2182227ddde594db0",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1944-notify-backup-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_notification_dispatcher.py tests/test_smtp_notifications.py tests/test_webhook_notifications.py tests/test_sqlite_backup.py tests/test_postgres_backup.py tests/test_ronin_appliance_backup.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "31 passed; 0 skipped; 0 failed", "scope": "Notification dispatcher/SMTP/webhook and SQLite/PostgreSQL/appliance backup contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "BE67AE97C8C87E639B2BD56D2EAAE7E254DE2D2EBDCEEC4BCBC43333CE3512EB", "pytest.log": "9338FC0EEBEC5BC5AF9BF6C85FCF3FBC9B33A4CB39BA08E82252B3C0840D07B1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local bounded notification/backup contracts only; no live restore or external provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
