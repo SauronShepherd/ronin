@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1822",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "5794c60f311163db1ccfa6dfb2f2a1c201cf2c95",
+  "implementation_sha": "5794c60f311163db1ccfa6dfb2f2a1c201cf2c95",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1822-live-route-wide-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1822 --label org.ronin.qualification.run=d1822 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1822-live-route-wide-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1822 -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d1822",
+  "result": {"playwright": "43/44 passed, 1 skipped", "active_routes": 25, "api_routes": 24, "api_events": "515/515 correlated", "api_ok": 492, "expected_warnings": 21, "expected_errors": 2, "unexpected_errors": 0, "cleanup": "PASS", "topology": "single-broker RF1, PostgreSQL, Docker worker"},
+  "hashes": {"browser-live.log": "8C713890D76F773BCF3380548534459B370ECD5CDA08B78823815479A8CB3861", "browser-live.xml": "85EECB0AC3858DC33CFC6B59E637CFEE0166456DFADFE232A9B5C2F88DE6A4E6", "live-api-traffic.json": "320EABD45051420CA04BAD9D0CBA44C58A115F51C7812BB8A7B38662EA3FCBD4", "live-python-freeze.txt": "14FCF8D0643AC4DB74CF427A1329A4418CBE4AFD1D12847CA665FA93685AD025", "live-server.stderr.log": "1FDFEDB6DBC0D2F47D68B102E975012DCB8F8979183522A0FC3CA20255DA1B74", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "E85E9322EFE4B4C3E841A525E82194A3C9B014D339FB4CCBEACD27BBD9D10ABE", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Route-wide bounded qualification with one documented skip and two expected API errors; no HA, indefinite soak, SLO, complete P11, or release evidence.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
