@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1940",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "547a16393cce0c6a1fd5636d3606934235ee7709",
+  "implementation_commit_sha": "547a16393cce0c6a1fd5636d3606934235ee7709",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1940-architecture-contracts-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_architecture_contracts.py tests/test_capability_status.py tests/test_contract_boundary_matrix.py tests/test_contract_snapshots.py tests/test_dependency_surfaces.py tests/test_core_contract_boundaries.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "97 passed; 0 skipped; 0 failed", "scope": "Architecture, capability-status, contract-boundary/snapshot and dependency-surface contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "036A64C2E274CED9C8D8FAA919E7175881F3230DFC2FD16C1AB66C1FCD1742CB", "pytest.log": "A0A9F8A98D679226377127D35C09121E4574758E70D11081D5EE3D373A4A6578"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local architecture/contract verification only; no complete release gate or external-provider qualification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
