@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1924",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "8f82f35263223268110194f3ae691e9b34cc6bf2",
+  "implementation_commit_sha": "8f82f35263223268110194f3ae691e9b34cc6bf2",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1924-policy-audit-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_security_policy.py tests/test_audit.py tests/test_mutation_audit.py tests/test_security_redaction.py tests/test_transport_policy.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "101 passed; 0 skipped; 0 failed", "scope": "Security policy, audit, mutation audit, redaction and transport policy contracts"},
+  "evidence_hashes": {
+    "pytest-junit.xml": "FF313EBAE4464EE6BB378CE5CB6FE5CC8A9130F1E2AEAE76EF4CAA839AD1F995",
+    "pytest.log": "05E02C74BA1581E07C32C49E9D6ECE74DB5ECF92BD8EA32D8B20E514059B39D0"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local policy/audit contracts only; no external provider or production deployment certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
