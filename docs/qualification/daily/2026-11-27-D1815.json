@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1815",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "7ef44c2f66311a43c661baec5c5735ab71a51854",
+  "implementation_sha": "7ef44c2f66311a43c661baec5c5735ab71a51854",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1815-live-backpressure-rf1-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1815 --label org.ronin.qualification.run=d1815 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1815-live-backpressure-rf1-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1815 -TestGrep 'sustained backpressure' -BackpressureRecords 256 -BackpressureTimeoutSeconds 240 -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d1815",
+  "result": {"playwright": "1/1 passed", "api_events": "12/12 correlated", "api_ok": 12, "unexpected_errors": 0, "cleanup": "PASS", "topology": "single-broker RF1, PostgreSQL, Docker worker", "backpressure_records": 256},
+  "hashes": {"browser-live.log": "52D858668347C035A3C742AF53BE4D79F6A53A8B3105BAA4027CFDD1CF674E74", "browser-live.xml": "BBC2098B00ADC7B2B2BEB74453C65390014A74A9CBE93268D7465F5D439B16B2", "live-api-traffic.json": "5D071A8EE301EBE31FA919E333C14858FC1205557866B79C5ECC28E7B7A4DBB3", "live-python-freeze.txt": "5575C142190E857637FB5C97E8B9BF09BC48DF98929713EA10D1DAE0D639DA34", "live-server.stderr.log": "3F922944A554CB18B030CACC814BA5812DF3326357C85A537555D0E6AE638A9D", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "03CC89E89E25490951A08A1C4C839192077141311AB64F5A5AA01CB7FDA77709", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded RF1 backpressure qualification with 256 records; no HA, indefinite soak, SLO, complete P11, or release evidence.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
