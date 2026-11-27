@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2047",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_S3_JSON_FLOCI",
+  "candidate_sha": "86deae4ea969cba1cc73a6778a9c666ae13d7c69",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2047-docker-s3-json-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2047-docker-s3-json-current-20261127-01 -TestFilter 'test_s3_json'",
+  "provider": {"name": "Floci", "scope": "isolated S3-compatible local provider", "fixture": "Floci/S3"},
+  "image": {"digest": "sha256:732d4ba66903af0255f6f12721f3e4a3f0fb6131395b6dc6cf04f4e4f1a49e82", "cleanup": "PASS"},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "cleanup": "PASS", "strict_v01_acceptance": "NOT_RUN_FILTERED_DIAGNOSTIC"},
+  "evidence_hashes": {
+    "docker-cleanup.json": "9A2118392608ED48613C1D83D7B177C380F71819AB50E06D9E8364393953844F",
+    "docker-pytest-output.log": "6879406D701032327F64D9E5EBBB42EB20053E17CC8D8E89AAD47BDB39BEFE7C",
+    "docker-qualification.log": "98E39A542E8F3E24AD8ED1B079C8125E84BA4F8521504F422CE91158AE8450B5",
+    "floci-s3-qualification.log": "0C1AD614F140D149CE4DFD7D9A62C0878E9C8ACF78F2C0D747BD07B3BDA2A538",
+    "v01-acceptance.xml": "82B6F9C65EAEA11F0BBD906218BB50203A9FE4EEF76C8772EA9440AA5E6BF070"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Diagnóstico Docker filtrado de un único round-trip S3 JSON contra Floci aislado; no certifica producción cloud, la matriz completa de object stores, P13, P11 completo ni release. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
