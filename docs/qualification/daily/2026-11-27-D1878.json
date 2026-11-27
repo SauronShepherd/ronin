@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1878",
+  "date": "2026-11-27",
+  "status": "NOT_PASS",
+  "candidate_sha": "6e73f22163a8649ba26bdb8436ba7253e7e99700",
+  "implementation_commit_sha": "6e73f22163a8649ba26bdb8436ba7253e7e99700",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1878-floci-terraform-20261127b",
+  "commands": [
+    "docker compose -p ronin-d1878-floci -f examples/cloud-studio/compose.floci.yaml up --detach",
+    "python tools/cloud_studio_floci_qualification.py --endpoint <dynamic-loopback> --terraform --terraform-executable <terraform-1.13.5.exe> --command-timeout-seconds 300 --workspace <external-temp-workspace> --evidence <external-temp-evidence>"
+  ],
+  "result": {
+    "status": "NOT_PASS",
+    "reason": "Terraform qualification did not reach a terminal result within the bounded observation; the Terraform and Python qualification processes were explicitly stopped after the Floci container had already exited during cleanup.",
+    "qualification_json": "not generated",
+    "cleanup": "Floci container, network and volume absent after cleanup; Terraform workspace removal was blocked by host recursive-delete policy and remains for manual cleanup"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is NOT_PASS provider evidence and is not promoted to PASS or a release gate.",
+    "No Terraform apply/destroy claim is made because the qualification receipt was not produced; the prior D1741 PASS remains bound to its exact candidate and is not reattributed.",
+    "The explicit workspace C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1878-floci-workspace-20261127b remains pending manual removal due host deletion policy.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
