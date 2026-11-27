@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import heapq
 import os
+import time
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +24,19 @@ class ArtifactRef:
 
 class ArtifactIntegrityError(ValueError):
     """Raised when persisted artifact content no longer matches its digest."""
+
+
+def _replace_with_windows_retry(source: Path, target: Path) -> None:
+    """Replace a content-addressed file, tolerating transient Windows file locks."""
+
+    for attempt in range(6):
+        try:
+            source.replace(target)
+            return
+        except PermissionError:
+            if os.name != "nt" or attempt == 5:
+                raise
+            time.sleep(0.01 * (2**attempt))
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,7 +83,7 @@ class LocalArtifactStore:
                 handle.flush()
                 os.fsync(handle.fileno())
             try:
-                temporary.replace(target)
+                _replace_with_windows_retry(temporary, target)
             finally:
                 temporary.unlink(missing_ok=True)
         ref = ArtifactRef(

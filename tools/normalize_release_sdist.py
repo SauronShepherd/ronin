@@ -8,8 +8,22 @@ import os
 import stat
 import tarfile
 import tempfile
+import time
 import zlib
 from pathlib import Path, PurePosixPath
+
+
+def _replace_with_windows_retry(source: Path, target: Path) -> None:
+    """Replace a release artifact, tolerating transient Windows file locks."""
+
+    for attempt in range(6):
+        try:
+            source.replace(target)
+            return
+        except PermissionError:
+            if os.name != "nt" or attempt == 5:
+                raise
+            time.sleep(0.01 * (2**attempt))
 
 
 def _validate_member(member: tarfile.TarInfo) -> None:
@@ -81,7 +95,7 @@ def normalize_sdist(path: Path, *, source_date_epoch: int) -> None:
                     normalized.addfile(record, content)
 
         temporary.chmod(stat.S_IMODE(artifact.stat().st_mode))
-        temporary.replace(artifact)
+        _replace_with_windows_retry(temporary, artifact)
     except (OSError, EOFError, zlib.error, tarfile.TarError) as exc:
         raise ValueError(f"could not normalize sdist: {exc}") from exc
     finally:
