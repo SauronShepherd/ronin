@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2013",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_JOBSTORE",
+  "candidate_sha": "083c71a5bb30b9774684d097d9675135cae45696",
+  "implementation_commit_sha": "083c71a5bb30b9774684d097d9675135cae45696",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2013-postgres-jobstore-direct-20261127",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://postgres:ronin@127.0.0.1:55438/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_jobstore_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "2 passed; 0 skipped; 0 failed", "duration": "0.84s", "scope": "Real PostgreSQL JobStore lifecycle, claim/completion/cancellation persistence and keyset-filtered pagination"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55438", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "297A60D64BE8931919D689584662837F23BDEB7F7C33D2B764F8F95B0E563FC9", "pytest.log": "91A1569A9CD7DF38CF440C32B650E33D02767FB7595753AE5E925FE9EFDEFD15", "postgres.log": "CB96DAE8F6E311C4EFE92F5EA113616E17866900419F1E2BCAB6EE381E5725A8", "docker-cleanup.log": "CD9DBDD2C0B946ACCA42BF88BB55AA1072D91526144AA2E9FEF210D72F698DF4"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL JobStore integration only; no indefinite operation, HA, multi-worker or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
