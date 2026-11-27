@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1999",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_REGRESSION",
+  "candidate_sha": "970f716dddbc3568a5093e6ba4fd0e690280da58",
+  "implementation_commit_sha": "970f716dddbc3568a5093e6ba4fd0e690280da58",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1999-root-contracts-post-vcs-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests --ignore=tests/integration --ignore=tests/perf --ignore=tests/test_git_source.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "4495 passed; 18 skipped; 0 failed", "duration": "702.01s", "scope": "Broad local root contract regression after VCS environment sanitization; integration/perf and separately diagnosed git-source test excluded"},
+  "evidence_hashes": {"pytest-junit.xml": "4994AF8A8AD40C1A461EEF179989E779C07BCF2C4F4BFD8D57A8E8B49D676E9F", "pytest.log": "2BC181BF79B62AC8F220568CD4AF53846349248B1EA9AA9AF7FFC923CC68E333"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local broad contract regression only; integration/performance and separately qualified VCS test file were excluded. No hosted provider or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
