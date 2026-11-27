@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1845",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "d86b61ff6fa59cdd91004a615e17ba112b9d0b71",
+  "implementation_commit_sha": "d86b61ff6fa59cdd91004a615e17ba112b9d0b71",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1845-postgres-workflow-store-20261127",
+  "result": {
+    "pytest": "21 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL workflow store scheduler durability, leases/fencing, outbox/inbox replay, migrations, cancellation, leadership and atomicity",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "CADEB2BC075C6AFB5837B924EFABF74C16820A79D87CAEB1DA471693CA0F5891",
+    "pytest-postgres.log": "42D12516AD74CD7BAB375A297ACF512346B54B18ABBE6E465CADF1A2D6044E5B",
+    "pytest-postgres.xml": "B39E686B62FE5CEDC20A2A64F2C506408B7AC899339ECD6B9330D6A4255C1271",
+    "pytest-timings.json": "2CBD2193ACCAE2A88B1202724A700561FC4750A16A07489A8699BA7D560DC811",
+    "runner-timings.json": "55FA46C35BF54366CAA71A17B1A6BE8971BE5775BB2A8A27306A94C9C17F2846"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test file only; not the complete Python/PostgreSQL suite or complete P11.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
