@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1798",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_NOTEBOOK_STUDIO_CURRENT",
+  "candidate_sha": "abf57a811fcfbe1a3b7675aec468ac6a2e9c3484",
+  "implementation_commit_sha": "abf57a811fcfbe1a3b7675aec468ac6a2e9c3484",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1798-live-notebook-current-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1798-notebook-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1798-live-notebook-current-20261201 -StorageBackend postgres -WorkerImage ronin:qualification-d1798-notebook-20261201 -TestGrep 'live Notebook Studio' -RequestTimeoutSeconds 240; docker image rm --force e89c5514cc3b066aedcf737eee656677882bb75f305f7d54722a121d60b0a1f7",
+  "result": {"status": "passed", "tests": "1 passed, 0 skipped, 0 failed", "api_events": 16, "correlated_events": 16, "api_outcomes": {"OK": 16}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "worker_image_digest": "sha256:e89c5514cc3b066aedcf737eee656677882bb75f305f7d54722a121d60b0a1f7", "cleanup": "PASS", "elapsed_seconds": 29.29},
+  "evidence_hashes": {"qualification-summary.json": "ED7552C15B3F5966C4EC0319B58E740378433AE735DF55D38DB488BFD8AE6C4C", "live-api-traffic.json": "31B625CFB57B9FFFFD52B6BCC612398CC1F9732C47023574600A8409074F4FFF", "browser-live.xml": "E1DE34C49222660DFF881004464463951B16A151CA2E274A355BB1D7C754752B", "browser-live.log": "C19C1BAD6F8928CE09F46399FDD87E56F15C26BCA8770F80A7BB6180ECD678F5", "live-server.stderr.log": "F34C75DD4186DFE6B89FAFD061C640F155C18CD9199F6C10258BA57DB6E383A6", "live-python-freeze.txt": "27ACF163C841F29CD1E1999689A8089E0E7ACE9879648F58DD153E551C5395C9", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Notebook Studio live bounded con PostgreSQL, un broker y un worker Docker; no demuestra operación indefinida, HA/multi-worker productivo, hosted providers, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
