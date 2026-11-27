@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1792",
+  "date": "2026-12-01",
+  "status": "PASS_DOCKER_FULL_CURRENT",
+  "candidate_sha": "e4a3041747e027664ab90ca1a08692f04c044903",
+  "implementation_commit_sha": "e4a3041747e027664ab90ca1a08692f04c044903",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1792-docker-full-current-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1792-docker-full-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d1792-docker-full-20261201 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1792-docker-full-current-20261201; docker image rm --force d8576f771ae04ee84e724c1eccb231bbe7a4d1fbf41d1ac8d0219feb2ff507aa f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db 647c63a91102a9d8e8000aab803436e1fc85fbb285e7ce830a82ee5d6661cf37",
+  "result": {"status": "passed", "docker_tests": "27 passed, 0 skipped, 0 failed", "strict_v01": "15 passed, 0 skipped, 0 failed", "worker_image_digest": "sha256:c11e042004f8bb75d861480515592910c009cdcfb5dffd10c2772f27f4d22439", "fixtures": ["PostgreSQL", "Docker worker", "Floci/S3", "Azurite/Azure Blob"], "pytest_seconds": 166.47, "cleanup": "PASS"},
+  "evidence_hashes": {"qualification-summary.json": "D8F6F156B031F1DF0700266D3EB303E890EA0782F76D529E85983372443AD0D7", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "622D65FDB49B2A5AADEC11E35BF751D0F76D6EA1B692E12848A093ADB0EF7", "docker-pytest-output.log": "914305EF4BCC87D50474A6C9158260F1BA21929506B87073204F4E1902FC99B4", "docker-qualification.log": "11E123CF46B59C3FA1BC715A93A22523C90BC6DB0CDB0F394F2B2DEAAC0D5250", "postgres-qualification.log": "D91A72AC5E5549A110CAEA4DFEC38E4F9F0E192AABD4F8A02BBFA0071ECAD286", "floci-s3-qualification.log": "13478EEC883D70EDD6219D43F8F589AFBD0E7C6C6D6DCD99E8AFD197293B423A", "azurite-qualification.log": "AEF7F8CEE5B8F7FF4AF54EA03AF63FDEFAC88B22BCFCB638CAAA4391283E474F", "docker-cleanup.json": "5B5968F1AB5FBC45B1A9FC34A8A28E8C501FBA387E7C3A0E74785070A40D3A97"},
+  "initial_attempt": {"status": "not_counted", "reason": "runner parameter was incorrect; build completed but qualification did not start"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Docker acceptance local bounded: no hosted cloud certification, indefinite operation, HA/multi-worker production topology, complete P11 or release approval. No historical evidence is reattributed."]
+}
