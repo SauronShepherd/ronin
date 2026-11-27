@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1840",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "a8a3a0b8173fffbec5a56cbaf3ab27fe6cbc75a9",
+  "implementation_commit_sha": "a8a3a0b8173fffbec5a56cbaf3ab27fe6cbc75a9",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1840-postgres-jobstore-20261127",
+  "result": {
+    "pytest": "2 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL JobStore lifecycle, filtering and keyset pagination integration",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "F35136ABC2905702B19AA9794C7D0EFB36B0F3804012D8A5344C1B3769EF2814",
+    "pytest-postgres.log": "2D7F0DC1CCD46A1FB7D954BDB369B0E2EDEA2502889450A5F96BD70ADBAD97F9",
+    "pytest-postgres.xml": "1D645B9E95A658493903FDF8BF081B1B05FEF1CF6C4A393042D1B42090A7E5E3",
+    "pytest-timings.json": "70C23532FCAE41EFAC6B7FF1F546FDBD1BE8590749C963AFF7A33F8022E6AC96",
+    "runner-timings.json": "D96D6D8BF7F3E992AD06EA5E53BF4D6F81141EA4F9B02989819BE3B88350EBAF"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test file only; not the complete Python/PostgreSQL suite or complete P11.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
