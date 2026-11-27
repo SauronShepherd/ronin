@@ -1,0 +1,49 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1871",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "edbab32ce7d3bd6506fb347194229eecfd575108",
+  "implementation_commit_sha": "edbab32ce7d3bd6506fb347194229eecfd575108",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1871-helm-postgres-recovery-20261127",
+  "commands": [
+    "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory <docker-evidence> -ImageTag ronin:qualification-d1871 -KeepImage",
+    "docker run --detach --name ronin-d1871-postgres --publish 127.0.0.1:55480:5432 --env POSTGRES_USER=ronin --env POSTGRES_PASSWORD=ronin --env POSTGRES_DB=ronin postgres:16.4-alpine",
+    "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory <helm-evidence> -DockerEvidenceDirectory <docker-evidence> -ImageRef ronin:qualification-d1871 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55480/ronin -PostgresContainerName ronin-d1871-postgres"
+  ],
+  "result": {
+    "docker_support": "27 passed; 0 skipped; 0 failed; strict v0.1 15/15 passed",
+    "helm": "PASS: lint, Secret boundary, kind, image load, install/readiness, upgrade revision 2, rollback revision 1, health/API, queued job persistence across PostgreSQL restart and deployment restart",
+    "image": "sha256:74e6b80cd3c64788f2c08cd27d59585faa6633618b9b33515104e3b8b9c50dd6",
+    "cleanup": "PASS; kind cluster, PostgreSQL container, ports, networks, volumes and temporary image removed"
+  },
+  "evidence": {
+    "docker_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1871-docker-support-20261127",
+    "helm_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1871-helm-postgres-recovery-20261127"
+  },
+  "evidence_hashes": {
+    "docker/azurite-qualification.log": "F2274954FD7C5FC1514635E9DFF59BC21234F2C58F30CB7763E6355E7A28EC34",
+    "docker/docker-cleanup.json": "286E1C88A42B768F571CC7B2D38257DCC68F7CE8978CDF65304993CCB02005CD",
+    "docker/docker-pytest-output.log": "AD02E7D4F3E7DD9664CCAC521EEFE4E3A71BDC412315C986AC3C5B9EEE08D8B2",
+    "docker/docker-qualification.log": "67581B4179200413CE1114E1BBC62C0BD384883AE680DD7211251454514F3D82",
+    "docker/floci-s3-qualification.log": "11755FCAD555086B2C159145168BBE55402FE3C2FF13C16E0D4BE07F699D6821",
+    "docker/postgres-qualification.log": "304BEE3BEEAEE3B5ABB9B2803A861CF6724428D408941E6642E899145E78629F",
+    "docker/qualification-summary.json": "A7E3D039C3DB1CA70CA84BC9A29BA1B83DBB4118724513BC3CDE77E46D89555D",
+    "docker/v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "docker/v01-acceptance.xml": "928BACECA742734EA14781F86DCC05EBF998A74700467EDC6E1E606002339FD7",
+    "helm/helm-qualification.json": "DF01F129ABF9ADFF0BA517E60C712CB2C52862EBA6B6585730B7240404BF7D3C",
+    "helm/helm-qualification.log": "6DDAFFA3AAD545ED9EB06707090BD16AC4D4C64022C489735A385DD0215F66C4",
+    "helm/kubernetes-resources.txt": "2C274CFE14D713BABD305C48D9F5B9B4BA2B43DEB4CFACF54D1BEA9F96CB9FE2",
+    "helm/port-forward-error.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "helm/port-forward-restart-error.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "helm/port-forward-restart.log": "DB7415D63B3557B232500A9C0BBEEA4DFD6EED3B5F0AD4BE146F3A2FDC56EDCA",
+    "helm/port-forward.log": "947AB26B74F00A3F809773E1150BB5F754576620AC28DEB8989EA97010C523B5"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded single-replica Helm/kind recovery with local provider emulators; not HA, indefinite operation or hosted cloud IAM certification.",
+    "A preliminary Helm invocation was rejected for missing DSN/container parameters and is excluded; the valid exact-head rerun generated all evidence above.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
