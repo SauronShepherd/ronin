@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1957",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "1be12aaf07949f927233cdf48f8fa8542b23e05c",
+  "implementation_commit_sha": "1be12aaf07949f927233cdf48f8fa8542b23e05c",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1957-public-api-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_public_v1_status.py tests/test_public_capability_matrix.py tests/test_public_import_smoke.py tests/test_publication_contract.py tests/test_publication_workflows.py tests/test_openapi_snapshot.py tests/test_migration_studio_api.py tests/test_migration_studio_openapi.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "38 passed; 0 skipped; 0 failed", "scope": "Public v1 status/capability/import/publication, OpenAPI and Migration Studio API contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "4324280F41F9214C0C16FD4A8F9A968F8BF64E0CB662F0FA84894584ACE2ADE3", "pytest.log": "D7C8D533C8473845F67B4B3C47186E8BAB17EBE6E87246E5436652F050BDB507"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local public/API contracts only; no live integration, visual review or external-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
