@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1913",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "910079489be0f0bb1f577c358d3e94e67311a0b0",
+  "implementation_commit_sha": "910079489be0f0bb1f577c358d3e94e67311a0b0",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1913-open-data-migration-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_open_data_plane.py tests/test_migration_studio_openapi.py tests/test_table_metadata.py tests/test_sensitivity_metadata.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "38 passed; 0 skipped; 0 failed",
+    "scope": "Open data plane, migration/OpenAPI, table metadata and sensitivity metadata contracts"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "D12ECA10285196FB00E9602D589F464B0E8A3A98C8CC9A9127ED38B0741A1479",
+    "pytest.log": "3525B75645C4E869617D52856B516909274B212AEFC7FF5DD428C45148ED09A9"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local data-plane/schema contracts only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
