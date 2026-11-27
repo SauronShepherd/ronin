@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2029",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_POSTGRES",
+  "candidate_sha": "ad5a1e20b1323321d319a04c2f5c32d05a78bcd0",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2029-live-event-workflow-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2029-live-event-workflow-postgres-20261127-01 -StorageBackend postgres -TestGrep 'live streaming event workflow' -SupervisorSoakSeconds 60",
+  "service": {"postgres": "isolated Docker service", "broker": "redpandadata/redpanda:v24.2.18@sha256:0270951e8793c77f0dd9178d137198018fa7ffd920e5a2a3b02a050ec76195b8"},
+  "result": {"playwright": "1 passed; 0 skipped; 0 failed", "api_events": "11/11 correlated", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS"},
+  "evidence_hashes": {"browser-live.log": "40F7AB17CCB55668E1F306A59BDEDE5F25B22DD618AB202086024F1BC65332B6", "browser-live.xml": "746B69987D9BD0D5B81F0333847FBB1E1209E2616F3B36A6C80A4D9CEF5543C6", "live-api-traffic.json": "6CB110A218B486B0B401741B96AA70D45B3E6732CBFB62B78D6FEB11E8F93A0F", "qualification-summary.json": "555319B47F8113C014E16ABE902D23B6F7FE5EC2864651D9F42F7D5008BB1D9"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single bounded live workflow case; does not certify indefinite operation, HA, cloud provider support, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
