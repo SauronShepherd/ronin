@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2073",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_WORKER_EVENT_WORKFLOW_RF3",
+  "candidate_sha": "76b95e309e456e5ed22cde19df73690d8668b2f2",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2073-live-event-workflow-120-worker-rf3-current-20261127-01",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d2073 --label org.ronin.qualification.run=d2073 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2073-live-event-workflow-120-worker-rf3-current-20261127-01 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d2073 -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 120; docker rmi ronin:qualification-d2073",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true, "worker_image_digest": "sha256:f3d537da2621eace91416cc7e2218a8de445bfb3c8039691261315b0c3827623"},
+  "fixture": {"event_workflow": true, "multi_broker": true, "replication_factor": 3, "request_timeout_seconds": 120},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 47.23, "api_events": 10, "correlated_http_logs": 10, "uncorrelated": 0, "outcomes": {"OK": 10}, "application_logs": {"INFO": 12, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "28BAAEF9AB4C4FC585F1E8CE137A09C9219CC2DD83995E9470C9783E43EE5461",
+    "browser-live.xml": "D4A5E2FE448FE1F6FA1F9C88160C1D6B45BE8A3530658DCA3CF51DA57278AEFD",
+    "live-api-traffic.json": "120DB311FBA5C2DE4BB2D0D0B60FF4826AFFB8F29810C35984FD8863702E673A",
+    "live-python-freeze.txt": "BF6901894F534658107209E13226D629C003AE4EF644FB233261098AB60CF825",
+    "live-server.stderr.log": "123A13648949B7D7D2AF17FFFC70269160AC89100C4C6CFEED00ECAA18EEC9F8",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "02EF450663103A976889AB9C10EC5C8BDCC489FED01CE3E5E7712F251939CF52",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Celda bounded de event-to-workflow worker-backed con RF3; no equivale a operación indefinida, HA/SLO ni capacidad de producción. No cierra P11, P13 ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
