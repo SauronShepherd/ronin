@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1751",
+  "date": "2026-11-30",
+  "status": "NOT_PASS_ROUTE_WIDE_BACKLOG_RETRY_LIMIT",
+  "candidate_sha": "6a2225a172734e9a7740de2202a2cdb81c757354",
+  "implementation_commit_sha": "6a2225a172734e9a7740de2202a2cdb81c757354",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1751-live-route-wide-worker-postgres-current-20261130\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1751 --label org.ronin.qualification.run=d1751 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1751-live-route-wide-worker-postgres-current-20261130 -StorageBackend postgres -WorkerImage ronin:qualification-d1751 -RequestTimeoutSeconds 120; docker image rm ronin:qualification-d1751",
+  "result": {"tests": "42 passed, 1 skipped, 1 failed of 44", "failure": "two-partition backlog reached runAttempts=40 while the assertion requires <40", "api_events": 522, "cleanup": "PASS"},
+  "evidence_hashes": {"qualification-summary.json": "4AEDFA483501AD09CDF76F0169374BB0DAE53448AB913FD5434DFB7EBCD9F30B", "browser-live.log": "F9EE01A5AA83D251820E1505A6370BE7B76474FA8AD6ABC0301A4101F0B0053C", "browser-live.xml": "154C4A7D09649E0B55C0493691E13DD1A86E6276A0969DBAF0C3159C9B131F09"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Route-wide candidate is NOT_PASS; the focused D1752 rerun is separate evidence and does not reattribute this failure."]
+}

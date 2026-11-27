@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1752",
+  "date": "2026-11-30",
+  "status": "PASS_LIVE_TWO_PARTITION_BACKLOG_CURRENT",
+  "candidate_sha": "6a2225a172734e9a7740de2202a2cdb81c757354",
+  "implementation_commit_sha": "6a2225a172734e9a7740de2202a2cdb81c757354",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1752-live-two-partition-backlog-worker-postgres-current-20261130\\qualification-summary.json",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1752-live-two-partition-backlog-worker-postgres-current-20261130 -StorageBackend postgres -WorkerImage ronin:qualification-d1751 -TestGrep 'two-partition backlog' -RequestTimeoutSeconds 120",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 76, "correlated_events": 76, "api_outcomes": {"OK": 76}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 92.45},
+  "evidence_hashes": {"qualification-summary.json": "77DD8DADA25C6E5574819F0520D4B4D4D603E7C88EB364D636D0C74DEB0FD010", "live-api-traffic.json": "3DCAD88EB31A5C53AC9560360896E9ACDE070AA31645C149ECBF53B3880585B0", "browser-live.xml": "5A21876F8851A30578BB0DE7CDED1ED49BD26F3E81FCD4B86E808AF1FFDB6261", "browser-live.log": "A3D884AC95BBE06B1E04E1C431090D60858E61333A540D4DCB6A2CEF82DA15ED"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused bounded two-partition backlog evidence; does not certify route-wide performance, indefinite operation, HA, complete P11 or release approval."]
+}
