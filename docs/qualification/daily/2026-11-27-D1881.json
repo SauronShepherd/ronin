@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1881",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "2614b0fb90625f174bf4637f525f4d3febf8eb63",
+  "implementation_commit_sha": "2614b0fb90625f174bf4637f525f4d3febf8eb63",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1881-query-engine-runtime-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_query_engine_local.py tests/test_query_engine_qualification.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "13 passed; 0 skipped; 0 failed",
+    "scope": "local DuckDB query runtime and qualification matrix",
+    "provider_scope": "Local DuckDB/reference runtime only; no QueryFlux or hosted provider certification"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "81A4699BC42E77F9AAD602F6B5FE82C1808C9C4C82B35D2345A5A9F70066ACBC",
+    "pytest.log": "2F5DC06370C5327332D3C9B002F49A5B921B4FDF318909996822487FCCEFB930"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Contract/runtime local evidence only; QueryFlux, hosted providers, HA and indefinite operation remain open.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
