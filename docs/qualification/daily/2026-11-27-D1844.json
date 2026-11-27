@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1844",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "3bf6695140881743bffc40327ed3419a19763405",
+  "implementation_commit_sha": "3bf6695140881743bffc40327ed3419a19763405",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1844b-postgres-catalog-20261127",
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL catalog assets governance, revisions and lineage integration",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "CD8D3A916CB81C52D3A47C4C564AAAEF27A4F21220DB3D3FA0BBEE0EEF78D76D",
+    "pytest-postgres.log": "73FA3C121E6E6E1A655CA9B5A83400E2ED8DEEDCCDC23840FB37618E29B1C4B9",
+    "pytest-postgres.xml": "7E6C2FD81503246E2F96567B4A10EBD0A878674FDCE7FFAB5E7100067B9C1444",
+    "pytest-timings.json": "490EA9B616E67DF573DA6FA8981347F70CD90C7EC6613CB1F26DB978050559B8",
+    "runner-timings.json": "15549DD311B33F69BB1A23135FAE671E3475C7D8BCFA8C0AF9BB6633167D0391"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test only; not the complete catalog suite or complete P11.",
+    "An initial nonexistent TestPath invocation was rejected before resources and is not evidence.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
