@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1977",
+  "date": "2026-11-27",
+  "status": "SKIP_OPT_IN_QUALIFICATION_NOT_ENABLED",
+  "candidate_sha": "875acbebd6a9ed06874fe214d0f05c25349428a9",
+  "implementation_commit_sha": "875acbebd6a9ed06874fe214d0f05c25349428a9",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1977-postgres-appliance-backup-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_appliance_backup_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "0 passed; 1 skipped; 0 failed", "scope": "Opt-in Docker/PostgreSQL appliance backup integration lane", "skip": "Opt-in Docker qualification starts isolated Ronin and PostgreSQL services"},
+  "evidence_hashes": {"pytest-junit.xml": "07E00FFDF94DD2FC412AD6ACC98A045F5CD5248160AB3143341A2066F08020D6", "pytest.log": "6C1354488B75FCE8AE8F52CE39682FFECC3FCDC7A694AA5C30612E4DF3D655AB"},
+  "cleanup": {"containers": "none relevant", "kind_clusters": "none"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This lane is not a PASS and does not certify PostgreSQL backup because the opt-in Docker qualification was not enabled.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
