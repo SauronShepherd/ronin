@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1778",
+  "date": "2026-12-01",
+  "status": "PASS_DOCKER_HELM_KIND_RECOVERY_CURRENT",
+  "candidate_sha": "1cac7801881710dc70a563cedd27f8e06c936e39",
+  "implementation_commit_sha": "1cac7801881710dc70a563cedd27f8e06c936e39",
+  "production_change": "none",
+  "evidence": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1778-docker-current-20261201", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1778-helm-current-20261201"],
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1778-docker-current-20261201 -ImageTag ronin:qualification-d1778-helm-20261201 -KeepImage; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1778-helm-current-20261201 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1778-docker-current-20261201 -ImageRef ronin:qualification-d1778-helm-20261201; docker image rm --force ronin:qualification-d1778-helm-20261201",
+  "result": {"docker": "27/27 passed, 0 skipped, 0 failed", "strict_v01": "15/15 passed, 0 skipped, 0 xfailed, 0 failed", "image_digest": "sha256:bb7fcc824c9deafde8fa5b8efeaa8872e55d93da0884e11a528acc1d529eba9d", "helm": "PASS: lint, render secret boundary, kind install, readiness, upgrade revision 2, rollback revision 1, health/API, durable queued job and deployment restart persistence", "helm_version": "v4.3.1+gc0d08d0", "storage_backend": "sqlite", "cleanup": "PASS"},
+  "evidence_hashes": {"docker-cleanup.json": "69F7446161234183F4F35A22977F1AC73C36D87A0EE425DAF526CEF33E86CCB3", "docker-pytest-output.log": "09FEAE01E5ECB8D7BD8AFE08A1FE3D465346B79F4DDE0EDCA936F22B78BAC4AF", "docker-qualification.log": "5B52FEF3F73EF0D188A0E353A9BA3D12015C7165CDB2C9011B90B760BA6DEB96", "qualification-summary.json": "2BF3331AF4ACC6B0F3B7BEA6A159744447F5FC451057F71801FC2B2C0C8DFB75", "v01-acceptance-strict.json": "C72C1E4E491AEE10330248BB3E549F16C6D1B4E78D118344A6F667D1C46AE3C4", "v01-acceptance.xml": "B4725FBD32991439855318A01D4F56452FAA26A2938223E83D13977DC98189EC", "helm-qualification.json": "D7ECD0C600B1259B5995227129D6B79A177E4771A72645D946FFB8243E8627AF", "helm-qualification.log": "4292203C5C9899DF7D9E7D2230C1188610A93700C971441EEFD86D7303363B45", "kubernetes-resources.txt": "A164C84B05188480563F57AF76F65520EEADE166638153542DE61BE26ECD88AF", "port-forward.log": "C52F96B4AC334D6F1A3E37B5925C2AC2AE8E3C116C343322EB45B8A7FAD82F57", "port-forward-restart.log": "147D18520F12C2BD435F5627821F58115A381280B4C8BFA9E35BCAB107F4AF60"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Current Helm/kind and Docker evidence uses SQLite in the Helm lane; PostgreSQL restart recovery is not applicable there and remains separately bounded. These runs do not prove indefinite operation, complete P11, multi-worker production qualification or release approval. No historical evidence reattributed."]
+}
