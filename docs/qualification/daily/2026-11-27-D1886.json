@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1886",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "04dc20a4e4371384182c58aaab4dc90e76eec5de",
+  "implementation_commit_sha": "04dc20a4e4371384182c58aaab4dc90e76eec5de",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1886-http-timeouts-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_http_timeouts.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "4 passed; 0 skipped; 0 failed",
+    "scope": "HTTP request read deadline, service future cancellation, successful below-deadline call and invalid timeout configuration"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "B44A37E39ED428EAD8409FDF73EACCBD661188B80434ED59B31DCD697AAB2F0F",
+    "pytest.log": "CC839BD3F43BFE8B3373B28896DCDA475EB3FF880FFA138423E37FD16A45F170"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded local HTTP timeout/cancellation evidence only; not hosted provider, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
