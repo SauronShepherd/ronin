@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1828",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "d629b244995947310c4324c7bf79a17509a930dc",
+  "implementation_sha": "d629b244995947310c4324c7bf79a17509a930dc",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1828-docker-azure-blob-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1828-docker-azure-blob-20261127 -ImageTag ronin:qualification-d1828 -TestFilter test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite",
+  "result": {"pytest": "1 passed, 26 deselected, 0 skipped, 0 failed", "criterion": "Azure Blob-compatible discovery, read and snapshot replay", "provider": "Azurite local Blob-compatible service with Azure SDK", "cleanup": "PASS", "image_digest": "sha256:40690ba3928b151fcf7d9a149455a9cbd917c9c2f9a9cc2e93a0ca38a8ac15ea"},
+  "hashes": {"azurite-qualification.log": "88B4AF6502460F039D8288DA12C1D4EE5BCAFC5383F09A0989FE681A2A6DFB30", "docker-cleanup.json": "F52A2CD166DE692CF81315097D22B58DCB9B18677CFF3DB52BF6E8CA1B7613B7", "docker-pytest-output.log": "D7AEC32CF7BA7603E2BFBC53EF792E7C05E54C5A3763DEB3DCD73215EFA2858E", "docker-qualification.log": "5841C8D2C992F913CA3B433DE4FF1BDDFDA5B883BB0AB5CBC4BB01D7013072F6", "v01-acceptance.xml": "E5F92EFE0D17311B90079161C456416BC021DCFA2FA183B3C617540FCE578B2D"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Local Azurite Blob-compatible evidence only; not Azure production certification or SLA evidence.", "Filtered Docker diagnostic; strict v0.1 acceptance was not evaluated. No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
