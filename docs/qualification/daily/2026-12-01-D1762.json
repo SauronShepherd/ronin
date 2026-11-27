@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1762",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_BROKER_RESTART_CURRENT",
+  "candidate_sha": "9ed7d579be4c32386bf4d990943b9b74468452e7",
+  "implementation_commit_sha": "9ed7d579be4c32386bf4d990943b9b74468452e7",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1762-live-broker-restart-worker-postgres-current-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1762 --label org.ronin.qualification.run=d1762 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1762-live-broker-restart-worker-postgres-current-20261201 -StorageBackend postgres -WorkerImage ronin:qualification-d1762 -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 120; docker image rm ronin:qualification-d1762",
+  "result": {"status": "passed", "tests": "1 passed, 0 skipped, 0 failed", "api_events": 11, "correlated_events": 11, "api_outcomes": {"OK": 8, "ERROR": 3}, "expected_errors": "Three HTTP 503 streaming_unavailable responses during intentional broker stop", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 3, "cleanup": "PASS", "elapsed_seconds": 87.07},
+  "evidence_hashes": {"qualification-summary.json": "9AA7821037BAC4A7D220A831B99E52D9E932919FDA7742BAAFFBB5B641A32139", "live-api-traffic.json": "6458DFFADFF0EBBAA9B4FDD504E4B191DD82386EAD070F9EE52172BC8D06B460", "browser-live.xml": "30758C3CC15F8A48780537AD2F320C34E0E142FB73F086BB78C2332278BD71E0", "browser-live.log": "5D30DB01CD813CE209D9557AE2FEB384467C8CDDA323DB192C3F1114EF928FBC"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded single-broker restart/checkpoint recovery; 503s and log errors are expected during intentional stop. No HA, indefinite operation, complete P11 or release approval."]
+}
