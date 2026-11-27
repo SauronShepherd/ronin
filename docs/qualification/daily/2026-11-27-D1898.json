@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1898",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "cb2b42a2870cbf04ab5b532fbfff9cc26fc39fee",
+  "implementation_commit_sha": "cb2b42a2870cbf04ab5b532fbfff9cc26fc39fee",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1898-runner-protocol-security-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_runner_protocol.py tests/test_runner_broker_compose_topology.py tests/test_runner_broker_security.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "29 passed; 0 skipped; 0 failed",
+    "scope": "Runner protocol, broker topology and broker security contract suite"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "48DC0B1FB84A3CD7F28C941F8B3D96E88B2E7BEC63C702FD877F91FB9A009412",
+    "pytest.log": "0DC141F51922939084EC8FF5931DCBB1104CA711B87D310BFAD1F748688B398E"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Contract suite only; no broker deployment, hosted provider, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
