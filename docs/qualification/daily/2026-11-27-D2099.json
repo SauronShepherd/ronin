@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2099",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_RF3_MULTIBROKER_FAILOVER_CURRENT",
+  "candidate_sha": "f8972787957e992eda947fdaa8726380a383ad00",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2099-live-multibroker-failover-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2099 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2099-live-multibroker-failover-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2099 -MultiBroker -TestGrep 'live streaming multi-broker failover' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d2099",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "brokers": 3, "replication_factor": 3, "api_events": 5, "correlated_events": 5, "api_outcomes": {"OK": 5}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS", "elapsed_seconds": 140.88},
+  "evidence_hashes": {"qualification-summary.json": "B0C27DC0FF691F07E509C749FA617FC629B479B8F91932B804CB795B4EC33030", "browser-live.log": "8FC7FB5C43B1B76F311AEEC1925F53DE993A42C87A3E16D039F65B0B2F1462C6", "browser-live.xml": "54738CCB4B585572D47D291CD8897FCC56BF78AA7EEF54D24C3A8ABA18F27AE2", "live-api-traffic.json": "583DF06DF97A45330F6F6156F08C515293E7BBD504789835BFB8670FFD5F1D4B"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused multi-broker diagnostic, not route-wide or indefinite HA certification; no historical evidence is reattributed."]
+}
