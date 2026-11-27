@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1904",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "17934d5fcb17e136245534774739206a566943c8",
+  "implementation_commit_sha": "17934d5fcb17e136245534774739206a566943c8",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1904-architecture-status-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_architecture_contracts.py tests/test_capability_status.py tests/test_generate_public_v1_status.py tests/test_public_v1_status.py tests/test_openapi_snapshot.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "44 passed; 0 skipped; 0 failed",
+    "scope": "Architecture gates, public capability/status generators, OpenAPI snapshot and dependency boundary contracts"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "7E3E1B9307A0755F239EBBAD6B5D26704A3EB93323CD8E1AC7ABCC613A71A797",
+    "pytest.log": "F95A3D590AE9D12841A51E34668CC15F03E15DFC5D97AA3A82B4FC557FE80E16"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local architecture/status contract evidence only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
