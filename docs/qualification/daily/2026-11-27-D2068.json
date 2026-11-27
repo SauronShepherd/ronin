@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2068",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_BROKER_RESTART_CHECKPOINT",
+  "candidate_sha": "734ae70bb4481349f3c1a987ff2091420aa131f2",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2068-live-broker-restart-postgres-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2068-live-broker-restart-postgres-current-20261127-01 -StorageBackend postgres -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 240",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true},
+  "fixture": {"broker_restart": true, "multi_broker": false},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 45.85, "api_events": 11, "correlated_http_logs": 11, "uncorrelated": 0, "outcomes": {"OK": 8, "ERROR_EXPECTED": 3}, "application_logs": {"INFO": 10, "WARN": 0, "WARNING": 0, "ERROR_EXPECTED": 3, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "F523E5E946A88AACAB2BE6AA483791D3AC6D3AA1A9C781199BC0EAC97DEC1B7D",
+    "browser-live.xml": "58A79D6E5489EAB602866F4607AF5EDFD4F55400DA424C2D8BF6C8536EFFCD9A",
+    "live-api-traffic.json": "43C572792DDD8B0F0BECE5EEF1BEB34610F62110059B5CBC144DB6B18F0597CD",
+    "live-python-freeze.txt": "295E1FB5B10B2B875AA12AF20C48001A2365CF7DEC22790AB61BC7A5B201BBEE",
+    "live-server.stderr.log": "8EF77060D7D8E6FD65246B392C93A98B330254D28B550DA3E6A79E19FF9B3FF7",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "847500C77446E55072A4512E4A7717D29E9769A2A476E90B2F53096143CF3BA8",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Celda filtrada y bounded de recuperación single-broker; los 3 errores durante la interrupción son esperados por el escenario y quedan explícitos. No certifica HA/RF3, operación indefinida, P11 completo, P13 ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
