@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1955",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "4bdd5bc0cff56f88633d2867d7deca2f8232a318",
+  "implementation_commit_sha": "4bdd5bc0cff56f88633d2867d7deca2f8232a318",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1955-cloud-compose-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_cloud_studio.py tests/test_cloud_studio_floci_qualification.py tests/test_compose_qualification.py tests/test_docker_qualification_contract.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "72 passed; 0 skipped; 0 failed", "scope": "Cloud Studio, FLOCI qualification, Compose and Docker qualification contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "2B4CA9F1FA6EB5A34E53A227E58D044092FCAA939223C7145F73A8F8A49C6A0F", "pytest.log": "7BB1FD8104843956991B518A74F6493733E46C9573233348DA22935916965363"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local/cloud-studio contract qualification only; no hosted cloud certification or indefinite deployment operation.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
