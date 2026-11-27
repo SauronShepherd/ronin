@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2082",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_FULL_KEEP_FOR_HELM",
+  "candidate_sha": "ff48728ac40fe91e006d57a251529e94c0ffa047",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2082-docker-full-keep-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2082 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2082-docker-full-keep-current-20261127-01 -KeepImage",
+  "result": {"integration_tests": "27 passed; 0 skipped; 0 failed", "strict_v01": "15/15 passed; 0 skipped; 0 failed", "image_digest": "sha256:a04b82064604eb823e75c607f8c07c9600a864ee134c1f067bc277b322ff59c4", "cleanup": "PASS temporary resources; image retained only for D2083 then removed"},
+  "evidence_hashes": {"azurite-qualification.log": "D282E225575B82CAEDD4B035F5E5C7048948B92A6EBC67504B7F495C67E8F473", "docker-cleanup.json": "EEBF1B6B8A99DA10F54AB1C5528BE6966B7315513E0E87B95441FA26272D614D", "docker-pytest-output.log": "D33C8E9E6A51BD31F83B88B4AA6AA9B7960E87423E1C5F02905514CAF4840E09", "docker-qualification.log": "32B719BD6B160597E1E1431688037951E4EBF6094338F52AF93899E3EFB09155", "floci-s3-qualification.log": "A4F9010DBDA4257667421F012B23D2C17E42331FEFD6ED483E99276F1EF91C42", "postgres-qualification.log": "776B00BD15797EBCBFBA5A9EA49BD186CC007EC4E7E7DFED608D5E6EF1DE94A4", "qualification-summary.json": "6ED931D0AF7880A9D7BAAFC89026117F497880F8751826364BF3CDCD15047194", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "A0A2F16119D054CA953285D7E0F6EF3D33226722946715C04A7123166EDAEB92"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Docker full bounded; image retention was explicitly limited to the dependent D2083 Helm lane and was removed afterward. No cloud certification, indefinite operation, complete P11 or release approval."]
+}
