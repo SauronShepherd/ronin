@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2069",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_BACKPRESSURE_8192_POSTGRES",
+  "candidate_sha": "798a5d662fd263834097b29f37316b5ae6f8fb65",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2069-live-backpressure-8192-postgres-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2069-live-backpressure-8192-postgres-current-20261127-01 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 8192 -BackpressureTimeoutSeconds 240 -RequestTimeoutSeconds 180",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true},
+  "fixture": {"backpressure_records": 8192, "backpressure_timeout_seconds": 240, "request_timeout_seconds": 180, "multi_broker": false},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 80.99, "api_events": 12, "correlated_http_logs": 12, "uncorrelated": 0, "outcomes": {"OK": 12}, "application_logs": {"INFO": 14, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "6C26DC1A48DF336271DD5320136C8264D3DC129A550ED1805A33B14138D10FFF",
+    "browser-live.xml": "DE728DAE90C2400AC7B630981F32C7076684D81DDCDF7C3EDCADBB649211483F",
+    "live-api-traffic.json": "52957673C829DC9F50E50B02CE9EAEC0974B076F18F8F98277F2C0C50E0D6CC4",
+    "live-python-freeze.txt": "BA50C2162FFDA3D018AF581EE781914F89250A9986EDA202C34156F3F3F75979",
+    "live-server.stderr.log": "70E587B7B8848C88BCA5847C5B01A6886686A9A53C4CAAFCC2CA377414C8BC73",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "EBD2BB832A63AE3E773C6C60657BD43A82378F636DFC09388FB78C76D12174BF",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Celda única bounded de backpressure con timeout explícito de 240 s; no equivale a operación indefinida ni capacidad de producción. No cierra P11, P13 ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
