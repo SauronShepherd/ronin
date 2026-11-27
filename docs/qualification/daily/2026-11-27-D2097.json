@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2097",
+  "date": "2026-11-27",
+  "status": "PASS_HELM_KIND_POSTGRES_RECOVERY_CURRENT",
+  "candidate_sha": "de756bdeda6f259ec82924e29e16c5973f72907c",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2097-helm-kind-postgres-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2097-helm-kind-postgres-current-20261127-01 -ImageRef ronin:qualification-d2096 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2096-docker-full-current-20261127-01 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55477/ronin -PostgresContainerName ronin-d2097-postgres",
+  "result": {"helm_lint": "PASS", "secret_boundary": "PASS", "kind_install_readiness": "PASS", "upgrade_revision": 2, "rollback_revision": 1, "health": "HTTP 200", "studio_api": "HTTP 200", "persistent_job": "PASS", "postgres_restart_recovery": "PASS", "deployment_restart_persistence": "PASS", "cleanup": "PASS", "helm": "v4.3.1+gc0d08d0"},
+  "evidence_hashes": {"helm-qualification.json": "045F389F884D6B4024888E63D4E65A54DF1DE7E60A9E135CF2FCB8DE3154649C", "helm-qualification.log": "E6DEBFFE1BDCB4B80473C62CD4811DD759441DB37A0ADC099C3DDFB382736490", "kubernetes-resources.txt": "8452552381E360E00FC8AC97C3CFA6A6D5BFC567D45481B298BB532D055EEC8D", "port-forward.log": "156920159C00C0B9864C85391E06B2A633C78735000E5E0D8AB3FA0ABBB07EA8", "port-forward-restart.log": "2D5E6BB786DD65C0B76950E5E3C41242AFE31D4F3314CEF35E560FAA09CE000D"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded single-replica Helm/kind recovery; no HA, indefinite operation, hosted providers, complete P11 or release approval. No historical evidence is reattributed."]
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2096",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_FULL_AND_STRICT_CURRENT",
+  "candidate_sha": "de756bdeda6f259ec82924e29e16c5973f72907c",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2096-docker-full-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2096 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2096-docker-full-current-20261127-01 -KeepImage",
+  "result": {"docker_integration": "27 passed, 0 skipped, 0 failed", "strict_v01": "15 passed, 0 skipped, 0 failed", "fixtures": ["PostgreSQL", "Docker worker", "Floci/S3", "Azurite/Azure"], "cleanup": "PASS for temporary resources; image retained only for D2097", "image_digest": "sha256:3be9224c304ec0f7d9851a8f8683dc07d8258c34e0c127b7ec854a097e76a2dd"},
+  "evidence_hashes": {"qualification-summary.json": "D8F74AB75C3D5F448F2D7F55685B076BD48E6E59F3FBF1DC62AA257DF2C10284", "docker-cleanup.json": "7DFF4EC1B7C5B78C82561E4321697EBC34FD8EBC90EF6057207CC288788C2875", "docker-pytest-output.log": "A0AC686586104C7A881594748D621840D42468ABF28735D4B96051A3E4CF1B5F", "docker-qualification.log": "F4A0A22E415CF5DE0CEDC2DAC6CEBEA384F4ACFD20F917B4277CE1B534315D6E", "floci-s3-qualification.log": "DFC7BCE1BFC9A024F045079FB6A15F3EBAC7B2DDAED0153B54A1C23B64DCC647", "azurite-qualification.log": "2F63A2C1AD9927BA73C3E2326777EE71553AAFECEA8925692FA0160E5285A254", "postgres-qualification.log": "57845EE21D1D391EA84DF82A975C7FB8FD70169EB4D6C0A834E612ABBA4720D6", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "9B4E5EA2EA9E93D3C0B751311D03AEFEB2896E7C19573B18C1413C2DA80B62B2"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded local Docker acceptance; no hosted cloud/IAM, indefinite operation, HA, complete P11 or release approval. No historical evidence is reattributed."]
+}
