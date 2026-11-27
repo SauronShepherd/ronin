@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2019",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_CATALOG_HTTP",
+  "candidate_sha": "5e4a44a719a48bcf23f910dec43c397dc15b7fe1",
+  "implementation_commit_sha": "5e4a44a719a48bcf23f910dec43c397dc15b7fe1",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2019-postgres-catalog-http-direct-20261127",
+  "command": "$env:RONIN_TEST_POSTGRES_DSN='postgresql://postgres:ronin@127.0.0.1:55444/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_local_composed_catalog_http.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "1 passed; 0 skipped; 0 failed", "duration": "13.55s", "scope": "Real PostgreSQL local composition serving authenticated Catalog and governance HTTP routes"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55444", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "FEFFFE57236283BC2D1627082438CE2172A9D01DF09860CD6E0DB6B451EA3ADF", "pytest.log": "044194A8DD639798593ED01B25CB8D37B3CDFB039761FDD707BC57A8215407E7", "postgres.log": "BC9A0640DBD7437FFE99BB6FED60FC1B52C2C0D745225A13EA22E4E13ED5F7ED", "docker-cleanup.log": "14A45C6277D8C69D169E76E6881B364B289B3F61B1B186C1772199F988C004F1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL Catalog HTTP integration only; no provider hosted, indefinite operation, multi-worker or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
