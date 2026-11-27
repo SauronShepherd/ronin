@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1866",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "c08549cf95c46b942ab656019c7731d5c51a9963",
+  "implementation_commit_sha": "c08549cf95c46b942ab656019c7731d5c51a9963",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1866b-live-supervisor-soak-300-postgres-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -StorageBackend postgres -TestGrep 'live streaming supervisor soak drains while records arrive for a bounded duration' -SupervisorSoakSeconds 300 -RequestTimeoutSeconds 600",
+  "result": {
+    "qualification": "PASS: 1/1 selected Playwright case, 0 skipped, 0 failed in 332.03s",
+    "criterion": "PASS: bounded 300-second supervisor soak completed while records arrived and drained",
+    "runtime": "PASS: real PostgreSQL backend, Redpanda broker and Ronin API",
+    "api_traffic": "381/381 events correlated, all OK, 0 unexpected authorization/server/network errors",
+    "cleanup": "PASS: PostgreSQL, broker, volume and network cleaned"
+  },
+  "evidence_hashes": {
+    "browser-live.log": "58471708CF847BD3D6204ABDC50C384281D37C67CDAA346DF4A3E18405397637",
+    "browser-live.xml": "CD5DDAE447EDC27D8F2B0DAE8F70AD52AB2738936A5D7947ADA85D89C879C3BF",
+    "live-api-traffic.json": "70A44FCEFD10DBC0F240502D0E1C7EAD818D2161F64DAD79898D0639F7CBA155",
+    "live-python-freeze.txt": "36540651E282A21FA669DA05739CF11FC48B0D82BB1ACF614B701787843AF2ED",
+    "live-server.stderr.log": "43BF28F6657745EA558D0EDB63D759CC1A9A29DDF902CFF6F2BB2BF11992471D",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "116298DF4749C27639B7B8818A0A95024672BF57460D48C77C85BE0217A95CF3",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is bounded local soak evidence, not indefinite operation, production HA/SLO or multi-worker qualification.",
+    "An earlier 60-second default invocation was excluded; this receipt counts only the explicit 300-second rerun.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
