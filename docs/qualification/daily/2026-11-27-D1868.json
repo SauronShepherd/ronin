@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1868",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "d4b91a1548d1d6548d5f93b64238ab3e9a5f5d16",
+  "implementation_commit_sha": "d4b91a1548d1d6548d5f93b64238ab3e9a5f5d16",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1868-postgres-stream-recovery-20261127b",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory <external-temp-dir> -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {
+    "pytest": "7 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL stream checkpoint/table recovery file",
+    "coverage": "CAS bundle reopen, stale-writer fencing, replay without duplicates, processor reopen, atomic conflict rollback and concurrent idempotent append",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "4C3223EE4116F21C0730A11293C9FDAC7E5F08A4B40AC654EA6A597A50A0BFF6",
+    "pytest-postgres.log": "7FC5182DCDFFEB879A37379953BD897A37813F634F3B9E8B74E587E89B1DD90D",
+    "pytest-postgres.xml": "37849C9EABABC56B4CCC74A949854F81C3D0571C6A1297ABCCC173FDEC8468AD",
+    "pytest-timings.json": "431EBF71701FFDF36FDC9FF9446CB9822CCF0B5D5603AAF838FCCBB567CA5A20",
+    "runner-timings.json": "CFB436FBC8EED7444B262B1A9E30FCCDA7C88694B221C736CD2D237BA48142B7"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered PostgreSQL file diagnostic, not the complete Python/PostgreSQL suite or provider production certification.",
+    "Two preliminary zero-selection/invalid-path invocations were excluded and are not evidence; the valid run used the exact existing test file.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
