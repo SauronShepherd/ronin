@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1865",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "c9032e406237fa394b9a5686f906426368e24171",
+  "implementation_commit_sha": "c9032e406237fa394b9a5686f906426368e24171",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1865-live-route-wide-postgres-20261127",
+  "result": {
+    "playwright": "43 passed; 1 skipped; 0 failed of 44 executed",
+    "scope": "unfiltered live route-wide qualification against real PostgreSQL, Kafka, Ronin API and Docker worker",
+    "routes": "25 active routes audited; 24 API-backed and 1 UI-only",
+    "api_traffic": "485 events; 485 correlated structured HTTP logs; 0 uncorrelated",
+    "cleanup": "PASS; isolated PostgreSQL, broker, network, volume and worker image removed"
+  },
+  "worker_image": "sha256:4af732eca823342550d83b879a3eb2bb8df5450873e43fb1e739a8f7d670754c",
+  "evidence_hashes": {
+    "browser-live.log": "C37371E4B154FE7AB9829189091653D6DC21B4A6B6ECDCF835E2FABCB4E0B6AB",
+    "browser-live.xml": "C16E5547A212C60E653754D1602B0939AF5EFB558CAF79119AC23367403FA35F",
+    "live-api-traffic.json": "8D5EAE470B4E45656C09ECDFCEC6B83145997EC3A26D87BC0CACF5B594801DF1",
+    "live-python-freeze.txt": "DB1751369D57D8D38D118FB34F051255650F92C36EBB14AC122202DBA94D90D6",
+    "live-server.stderr.log": "CA35164179AF66067DC29BC4EB7C92DFF1F0D8D4F6B00B3EE4A4B4A3F32E0EA3",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "AB046D83E1D2A2B079BAC46E91050C8B172CB05891B6BA689FB15C38928E315D",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "The route-wide run is bounded and local; hosted production, HA and indefinite operation remain open.",
+    "One explicitly skipped Playwright case remains a limitation of this lane; no failures occurred.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
