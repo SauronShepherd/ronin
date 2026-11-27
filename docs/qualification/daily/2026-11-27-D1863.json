@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1863",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "134adca481f5e3ee672d7e855d3543a5f59bf0e8",
+  "implementation_commit_sha": "134adca481f5e3ee672d7e855d3543a5f59bf0e8",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1863-floci-terraform-20261127\\qualification.json",
+  "result": {
+    "health": "Floci HTTP 200",
+    "terraform": "1.13.5",
+    "aws_provider": "6.65.0",
+    "lifecycle": "validate, plan, apply S3/SQS fixtures, refresh and destroy PASS",
+    "state": "empty after destroy; residual_resources=[]",
+    "cleanup": "PASS; Floci container, volume, network and Terraform workspace removed"
+  },
+  "evidence_hashes": {
+    "qualification.json": "25149D87C73AC0B0A184E014EB95C6FAB3C63C7744498D87AB585299244BACF7"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local Floci/Terraform provider emulation, not hosted AWS/Azure, external IAM, HA, indefinite operation, complete P11 or release approval.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
