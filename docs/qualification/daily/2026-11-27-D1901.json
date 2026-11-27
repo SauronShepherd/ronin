@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1901",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "5ca4ab1e531d65c21e4c72c777c3775f277fce3e",
+  "implementation_commit_sha": "5ca4ab1e531d65c21e4c72c777c3775f277fce3e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1901-workspace-project-http-full-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_workspace_project_http_api.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "61 passed; 0 skipped; 0 failed",
+    "scope": "Complete local workspace/project HTTP control-plane suite: authorization, persistence, streaming, recovery, pagination and audit behavior",
+    "cleanup": "pytest artifacts completed; lingering parent process was stopped after artifact verification"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "97D5F00BBFE01E0CA4B6B567E502C2164F856746019FD14BF3465EDBE9A986A1",
+    "pytest.log": "377B8F950F6D550E62F6EB03B4EE71D224F4C142318CC92F14B3A21888AED6B8"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local HTTP/SQLite control-plane evidence only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
