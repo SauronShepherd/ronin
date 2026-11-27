@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1947",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "e63050ee11e7b3a3b135adb6cbad6b1e414b0ac0",
+  "implementation_commit_sha": "e63050ee11e7b3a3b135adb6cbad6b1e414b0ac0",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1947-grants-validation-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_grants.py tests/test_grant_scope_projection.py tests/test_grant_survivor_boundaries.py tests/test_domain_validator_fail_closed.py tests/test_security_policy.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "231 passed; 0 skipped; 0 failed", "scope": "Grant, permission-scope, survivor-boundary, fail-closed validator and security-policy contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "42537CA9D7B3F6580061A2ED97A2941F7A07CA9F7A29753E05D793BD1A09DA50", "pytest.log": "9F039677012174F71C59F0E4970A24DACB0E0C975814DED722850DB4F3CCC526"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local authorization/validation contracts only; no production IAM or multi-user certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
