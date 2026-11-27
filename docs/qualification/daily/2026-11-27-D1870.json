@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1870",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "ca74d8e4b48fff680bcd71544d007621ec692858",
+  "implementation_commit_sha": "ca74d8e4b48fff680bcd71544d007621ec692858",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1870-docker-full-current-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory <external-temp-dir> -ImageTag ronin:qualification-d1870",
+  "result": {
+    "integration": "27 passed; 0 skipped; 0 failed",
+    "strict_gate": "15/15 passed; 0 skipped; 0 xfailed; 0 failed; strict_success=true",
+    "scope": "Docker worker/runtime, PostgreSQL, Floci S3, Azurite Azure Blob, appliance backup/restore and v0.1 journeys",
+    "image": "sha256:3f791118551c6cf9fd89e2e232c13735e246b2390dbda83aae23995b27d784bc",
+    "cleanup": "PASS; owned image and all qualification fixtures removed"
+  },
+  "evidence_hashes": {
+    "azurite-qualification.log": "1DA7AAFDE9E3D9EC2194156CD71FF29F9B050A003FB34D14C15E00C9AE3AF6BA",
+    "docker-cleanup.json": "F68630FD0BD6658C3DB3698B2A4001FF46FAED6331B462E075785A44191BC421",
+    "docker-pytest-output.log": "31FA73BFA19ED87F0C238E60D54BCD0BC806151CA7C4380879D8F09FBC76A577",
+    "docker-qualification.log": "36A9998A7F87F0DE5AE513684CC71409637E5AEBEDB822D87CD47832AB73D5A1",
+    "floci-s3-qualification.log": "B967C40845ABDFF2272477BF054D8B70338F2410DC469FC3112A30FDB1324C7A",
+    "postgres-qualification.log": "6CA6CC7A016B210C0FD3AC46DF49E46F3FB81838FD3D1F3E150E01D3B8B8E4D7",
+    "qualification-summary.json": "301B83B2C2BC00CB9AA9047EE643357568359074629537B636A9EE0D0360AB39",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "7F811A70957DCFDA1BF783D7020E1955C69D470070668D17689D4D31620EA625"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local Docker qualification uses Floci/Azurite emulators, not hosted provider certification or external IAM.",
+    "This lane does not prove indefinite operation, HA, complete P11 or human release approval.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
