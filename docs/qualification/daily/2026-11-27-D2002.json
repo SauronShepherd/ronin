@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2002",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "692b27871c6f015d8a6d6d7bb315bdcd626810b4",
+  "implementation_commit_sha": "692b27871c6f015d8a6d6d7bb315bdcd626810b4",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2002-artifact-retention-contracts-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_artifact_store.py tests/test_async_artifact_store.py tests/test_artifact_retention_cli.py tests/test_artifact_qualification.py tests/test_artifact_identity.py tests/test_artifact_paging_contract.py tests/test_artifact_reference_discovery.py tests/test_artifact_writer_inventory.py tests/test_portable_evidence_contract.py tests/test_worker_portable_evidence.py tests/test_s3_artifacts.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "85 passed; 0 skipped; 0 failed", "duration": "8.00s", "scope": "Artifact store, async store, retention CLI, qualification, identity, paging, reference discovery, writer inventory, portable evidence and S3 artifact contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "E7B58DEA4A82547CF73FBA4D16DF387A898B181F3D0E13C77007407F0932DB20", "pytest.log": "002FCE41CB409E06982D408533317CD824E6415E3F9FE283646D4ED87E25906D"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local artifact and retention contracts only; no external object-store certification, hosted provider, indefinite operation or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
