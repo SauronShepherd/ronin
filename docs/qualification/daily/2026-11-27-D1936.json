@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1936",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "9a4f331f4e42d013430e9dedd58518027e015bb0",
+  "implementation_commit_sha": "9a4f331f4e42d013430e9dedd58518027e015bb0",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1936-artifact-container-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_artifact_qualification.py tests/test_artifact_retention_cli.py tests/test_container_resource_observation.py tests/test_container_sbom_boundaries.py tests/test_container_sbom.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "87 passed; 1 skipped; 0 failed", "scope": "Artifact qualification/retention and container resource/SBOM contracts", "skips": "One POSIX child-watcher guard"},
+  "evidence_hashes": {"pytest-junit.xml": "361DE3DC23CD2F9198DA76CAF53AE95B6B54499F6B682E17E1D9FB49380F3222", "pytest.log": "BE5EB5526DFEB456160CCE6FF0B470F4D2100E2A641554AD7AF2C44982A52468"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local artifact/container contracts only; no hosted image registry, cloud provider or indefinite operation certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
