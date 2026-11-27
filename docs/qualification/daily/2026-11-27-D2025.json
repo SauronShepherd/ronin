@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2025",
+  "date": "2026-11-27",
+  "status": "PASS_ROOT_REGRESSION_POST_LEASE_FIX",
+  "candidate_sha": "c14df03b3f6e2fb373c3cad3499b15f4328cdb42",
+  "implementation_commit_sha": "c87d9d768a89f527f1d0ce4ec3280a11dfb722f6",
+  "production_change_boundary": "c87d9d768a89f527f1d0ce4ec3280a11dfb722f6",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2025-root-contracts-post-lease-fix-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests --ignore=tests/integration --ignore=tests/perf --ignore=tests/test_git_source.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "4495 passed; 18 skipped; 0 failed", "duration": "591.87s", "scope": "Broad local root contract regression after scheduler-result lease heartbeat fix; integration/perf and separately diagnosed git-source test excluded"},
+  "evidence_hashes": {"pytest-junit.xml": "FC967A8A96D7493E11B6645E78B3B4D7C5A69AF17DE46843BC58F41F75513D3B", "pytest.log": "7F9612F5BD4B10B81CCAD039C4360E5748DAEDB37EF470EEFF13BF51502C1CAC"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Broad local regression only; integration/performance and separately diagnosed git-source test excluded. Does not prove indefinite operation, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
