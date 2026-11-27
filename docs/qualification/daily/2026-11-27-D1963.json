@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1963",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "9854e5d2ffe7ce9bc5dafe88f83426ffb6a3d1f3",
+  "implementation_commit_sha": "9854e5d2ffe7ce9bc5dafe88f83426ffb6a3d1f3",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1963-bundle-certification-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_bundle_certification.py tests/test_bundle_io.py tests/test_bundle_connection_roundtrip.py tests/test_bundle_project_import_plan.py tests/test_bundle_workflow.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "30 passed; 0 skipped; 0 failed", "scope": "Bundle certification, IO/roundtrip, project import plan and workflow contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "18B72F386E83128BF94FC4298E5E23E9CF79EBE35D772E43DCE54D83699F0B6C", "pytest.log": "D893B88FC066BB37F9D2533EC8B8FDDF8A9BF2EC8D382BF910C1CCF79CCE6C23"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Bundle certification contracts only; no cross-provider production roundtrip certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
