@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2102",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_SUSTAINED_BACKPRESSURE_CURRENT",
+  "candidate_sha": "ebc224cac478ff7972e2b7f738fb041b6d99a23d",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2102-live-sustained-backpressure-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2102 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2102-live-sustained-backpressure-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2102 -TestGrep 'sustained backpressure' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2102",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "configured_records": 256, "api_events": 12, "correlated_events": 12, "api_outcomes": {"OK": 12}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 79.28},
+  "evidence_hashes": {"qualification-summary.json": "6636F6C4B4EEA7F36120A45E5850AF685682080F351C934D2851751919C45BAB", "browser-live.log": "5D97C31ADA333001979599B105A203BF05FA4F8A27E90711B149DED4CC3F2D66", "browser-live.xml": "69BC22D140B1DDE9B30BBA9DD8EE38223C2B7A83CDF4DE119E9FB864AE543C45", "live-api-traffic.json": "9A79EDC85864F90258A4249F9D0BA126A30D5C0ECE451ADFADF05573AB2062EF"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded 256-record backpressure diagnostic, not indefinite operation, HA, multi-worker, complete P11 or release approval. No historical evidence is reattributed."]
+}
