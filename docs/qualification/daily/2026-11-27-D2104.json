@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2104",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_MAX_RECORD_CAP_CURRENT",
+  "candidate_sha": "041dfab405cd22533af7f025b39d9a7fc6846417",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2104-live-max-record-cap-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2104 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2104-live-max-record-cap-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2104 -TestGrep 'max-record cap' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2104",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 8, "correlated_events": 8, "api_outcomes": {"OK": 7, "WARN": 1}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 79.26},
+  "evidence_hashes": {"qualification-summary.json": "C4A0127931EF755760874CDD4FF6B72AFEB0F048FBF964971BB4CB0AB0A39119", "browser-live.log": "F84222629269E0115F3868058F22D7B1CC4F07B55109667F9EB3F253C741603B", "browser-live.xml": "1C6386FA508EA27352A788114FF7854E3A7DDA5B7012B8A5262D15EF5538B954", "live-api-traffic.json": "CA6507C6338A1394483F1B3C9CCD8DC373569424F83D268CC1C032E2DC4A339E"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded max-record-cap and checkpoint replay diagnostic, not indefinite operation, HA, multi-worker, complete P11 or release approval. No historical evidence is reattributed."]
+}
