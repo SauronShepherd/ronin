@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2106",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_RF3_FAILOVER_CURRENT",
+  "candidate_sha": "6980e7a98b22820f30204d8911a8f039fbe151ad",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2106-live-multibroker-failover-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2106 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2106-live-multibroker-failover-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2106 -MultiBroker -TestGrep 'live streaming multi-broker failover' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2106",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 5, "correlated_events": 5, "api_outcomes": {"OK": 5}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 112.7},
+  "evidence_hashes": {"qualification-summary.json": "A3E1A081971FCF88AAE1ACC55861D809548B09881EACAFD3A19DE446820B5BF1", "browser-live.log": "7915D7BF9D1E20BA264AAF35712BF2CDB18D2534021D46CB285D1BEE3C4BE2E7", "browser-live.xml": "83BAF4BB174002ECAB5EC3D209EF23B4A360ADB8B480470F55AAA076F4D5C214", "live-api-traffic.json": "38E7C8E2AAF2203AD681AEFC6FA75DF747A3D0F0495872C277602445637B7299"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded three-broker RF3 failover diagnostic, not indefinite operation, complete HA, hosted provider/IAM certification, complete P11 or release approval. No historical evidence is reattributed."]
+}
