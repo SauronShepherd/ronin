@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1760",
+  "date": "2026-12-01",
+  "status": "PASS_DOCKER_FULL_CURRENT",
+  "candidate_sha": "6912b00441733616efe24a6c3a302cb0cddaef85",
+  "implementation_commit_sha": "6912b00441733616efe24a6c3a302cb0cddaef85",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1760-docker-full-current-20261201",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1760-docker-full-current-20261201",
+  "result": {"status": "passed", "integration_tests": "27 passed, 0 skipped, 0 failed", "strict_v01": "15 passed, 0 skipped, 0 failed", "fixtures": ["PostgreSQL", "Docker worker", "Floci/S3", "Azurite/Azure"], "cleanup": "PASS"},
+  "evidence_hashes": {"docker-qualification.log": "37E548211C38A3407BACE5A03299FF798C6EB79E296E566B869F9E1C6816A270", "docker-pytest-output.log": "7E1407AFDF28D0E342ECD69DB74E4CBB8B952B3D813608A595C3B4EB0B4C26AA", "v01-acceptance.xml": "6496275A4D0A2722D2726E2A66D7C50489A869BECD26B0C465565AD6BF4C40C7", "docker-cleanup.json": "E99D6447725C0D8A334FB973069E5E8E9B412BCE685022E4C902F6D40124FC9B"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded local Docker acceptance; no hosted provider/IAM certification, indefinite operation, complete P11 or release approval."]
+}
