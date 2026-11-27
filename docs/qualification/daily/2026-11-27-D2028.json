@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2028",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_SPARK_IMAGE_UNAVAILABLE",
+  "candidate_sha": "ecb7d8225e399d40ca5a1063453a9596c77b39d4",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2028-spark-connect-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2028-spark-connect-20261127-01",
+  "service": {"image": "sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59", "spark_version": "4.2.0", "started": false},
+  "result": {"pytest": "not started", "cleanup": "not-required", "failure": "Docker could not find the pinned local Spark image"},
+  "evidence_hashes": {"pyspark-client-install.json": "04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97", "qualification.json": "B9776978D8D225920FFFEFC3A782AE4AF934B149C2CD15DB766381FBB8CBD7DF", "qualification.log": "474241EA0B136913E14891B052F004124E222A1FA42280A6F4B1FA7A56C73237"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["The pinned Spark image was unavailable locally, so no provider or integration result is claimed. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
