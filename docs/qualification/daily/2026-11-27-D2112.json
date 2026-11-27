@@ -1,0 +1,13 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2112",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_COVERAGE_COMBINE",
+  "candidate_sha": "adf3a5457e36df765b68ff968616f769413db98b",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2112-python-postgres-full-current-20261127-01",
+  "result": {"pytest_terminal": "not available; runner failed at coverage combine", "observed": "tests reached 99% before coverage database malformed", "cleanup": "PASS", "qualification": "NOT_PASS"},
+  "evidence_hashes": {"pytest-output.log": "9B1295997D1127CE48DE57166646DEDA23B702703B75E091F5F0344CD6879188", "runner-timings.json": "8FBA8B2E220FD3FB5190443F95BEAF9CE8A95B9944FEE5629B97F1A1A9A5657F", ".coverage": "C8DAEB7488A4EED0E34078B873913E1B38CC12675F5BAE502C29D41E93E40B91"},
+  "limitations": ["The runner reported coverage database disk image malformed; no PASS is claimed and no historical evidence is reattributed."]
+}

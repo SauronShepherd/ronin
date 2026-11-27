@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2114",
+  "date": "2026-11-27",
+  "status": "PASS_PYTHON_POSTGRES_FULL_FIXED_CURRENT",
+  "candidate_sha": "ba8ecd5f232ed1e369f206b96ffe1e350f5af992",
+  "implementation_commit_sha": "ba8ecd5f232ed1e369f206b96ffe1e350f5af992",
+  "production_change_boundary": "ba8ecd5f232ed1e369f206b96ffe1e350f5af992",
+  "production_change": "SqliteStreamTable best-effort destructor cleanup; affected regressions 20/20 PASS",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2114-python-postgres-full-fixed-20261127-01",
+  "command": "python -m pytest tests/test_streaming_runtime.py tests/test_streaming_contracts.py tests/test_stream_table.py -q; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2114-python-postgres-full-fixed-20261127-01",
+  "result": {"collected": 4801, "passed": 4770, "skipped": 31, "failed": 0, "warnings": 13, "coverage": "PASS", "runner": "PASS", "cleanup": "PASS", "pytest_seconds": 496.627, "total_seconds": 506.217},
+  "evidence_hashes": {".coverage": "32D2933EF1DE27B8477D9C9727E1EFA7A07EAB8F5BAAA5DF2EFAA3EEDB90B447", "pytest-output.log": "1F00D3095C178D07DA4E6E420F5618C08B98DAF4D744A8F1DBC2FB3B9CE600EE", "pytest-postgres.log": "277BC6A89BF3EBE4A956EC849DA6EEBBA3B55E67A52D809BB816AD667A995D97", "pytest-postgres.xml": "78C0120499DC9CFDE23516B57523664BA3C8C52EFF78792FCE9979965F818899", "pytest-timings.json": "714A9AD33C306CCB029C54764A3127DBE528310198CFACCC950AA34073233DC2", "runner-timings.json": "D8F18E3163059BBFF3E8B8B1721922C351BE0D200C33A52AB6740754EC1FC21D"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Full non-performance Python/PostgreSQL suite with explicit skips and warnings; does not close hosted provider/IAM, indefinite operation, HA, complete P11 or release approval. No historical evidence is reattributed."]
+}

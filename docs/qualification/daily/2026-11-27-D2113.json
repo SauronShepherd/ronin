@@ -1,0 +1,13 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2113",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_RESOURCE_WARNING",
+  "candidate_sha": "adf3a5457e36df765b68ff968616f769413db98b",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2113-python-postgres-full-retry-20261127-01",
+  "result": {"pytest_cases": "4770 passed, 31 skipped, 0 failures", "runner": "NOT_PASS because ResourceWarning unclosed sqlite connection set exit code 1", "cleanup": "PASS", "qualification": "NOT_PASS"},
+  "evidence_hashes": {"pytest-output.log": "2BB982EE384979D291EEA9B0BCBE68FBF2525E56D3C49DF0A95075D562CC0367", "pytest-postgres.xml": "5D68783F003D510AF8A264C47910A28424DA7184D12DB837EC0845E5C7DCF3A6", "runner-timings.json": "A5AB01A8D739E9DB41D5236EEAF4A8ED0627FBA1A594B3B78C2F4BC7D47D04AC", ".coverage": "2B5C2D49000EBEF7851EB9A24DD004E0473E505098FC6F684EDCEAA545B14DE6"},
+  "limitations": ["The runner treated ResourceWarning as a failed qualification despite zero JUnit case failures; no PASS is claimed and no historical evidence is reattributed."]
+}
