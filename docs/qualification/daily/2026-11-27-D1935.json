@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1935",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "6758bc17e048d916eba4692ed0766183c4d4a17f",
+  "implementation_commit_sha": "6758bc17e048d916eba4692ed0766183c4d4a17f",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1935-migration-translation-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_fabric_translation.py tests/test_databricks_translation.py tests/test_dataiku_translation.py tests/test_foundry_translation.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "6 passed; 0 skipped; 0 failed", "scope": "Fabric, Databricks, Dataiku and Foundry deterministic translation contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "3EC50D6E6782CEFE884B90B86FC812C1F603778604597AAD22C6BED9D1BEE9C3", "pytest.log": "A759E26DB106DD2DFDC39CEAA61319B951076C6B048FF746CD752B64EE4D5A0D"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Deterministic local translation contracts only; no authenticated provider discovery or certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
