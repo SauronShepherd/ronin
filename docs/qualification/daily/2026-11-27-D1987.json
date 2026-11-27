@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1987",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "c7bedbf8274834a20ff65ab268203a73d189a2ec",
+  "implementation_commit_sha": "c7bedbf8274834a20ff65ab268203a73d189a2ec",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1987-artifact-retention-recovery-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_artifact_store.py tests/test_async_artifact_store.py tests/test_artifact_writer_inventory.py tests/test_artifact_retention_cli.py tests/test_artifact_reference_discovery.py tests/test_artifact_qualification.py tests/test_artifact_paging_contract.py tests/test_artifact_identity.py tests/test_portable_evidence_contract.py tests/test_runtime_bundle_portability_survivors.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "111 passed; 0 skipped; 0 failed", "scope": "Artifact store/retention, paging, discovery, identity, portable evidence, qualification and bundle portability contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "344C92CE656B2D11008DAA7E37B3043E9906FB297AD29A8F6DDA5FEF468831BB", "pytest.log": "11DA4974F191441F60099710E9D621CC4900FBD31CEF9A3F3807FEB4A52FA367"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local artifact/evidence contracts only; no hosted object store, cloud provider, indefinite operation or complete release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
