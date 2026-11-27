@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2007",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_RETENTION",
+  "candidate_sha": "a7bb506f46fea2931ad9bcae77ccc30b4e416317",
+  "implementation_commit_sha": "a7bb506f46fea2931ad9bcae77ccc30b4e416317",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2007-postgres-retention-direct-20261127",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://postgres:ronin@127.0.0.1:55432/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_artifact_retention_barrier.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "3 passed; 0 skipped; 0 failed", "duration": "4.91s", "scope": "Real PostgreSQL artifact-retention barrier: writer/collector fencing, async writer blocking and bounded referenced-artifact collection"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55432", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "F183937BD29B529984367ED6581A919D3925D225A59CF7A896AC0E3CFA5FDD00", "pytest.log": "52B704043FE049E1C411AD281D9C46ECC617AE7372491D9DC818EB0896169C32", "postgres.log": "E0FBF1BDF38CA259A475D8B2DA2F7DE79D9C3076FE002D244F3A12862D1CD711", "docker-cleanup.log": "2BEB181C87336BA056FE47E014348FD1A8172AE9DDA46772EC6EB50AC44F2318"},
+  "excluded_attempts": ["Docker filter postgres_artifact_retention selected 0/27 tests and exited 5; cleanup PASS", "Docker filter postgres_artifact_retention_barrier selected 0/27 tests and exited 5; cleanup PASS"],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL retention-barrier integration only; no indefinite operation, provider certification or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
