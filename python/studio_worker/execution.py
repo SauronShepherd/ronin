@@ -383,13 +383,25 @@ class DurableWorkerExecution:
     ) -> WorkerExecutionOutcome:
         """Commit one non-notebook scheduler result as durable run evidence."""
 
-        async with self._writer_lease():
-            return await self._run_scheduler_result_under_lease(claim, result)
+        cancellation = CancellationToken()
+        lease_lost = asyncio.Event()
+        heartbeat = asyncio.create_task(self._heartbeat(claim, cancellation, lease_lost))
+        try:
+            async with self._writer_lease():
+                return await self._run_scheduler_result_under_lease(
+                    claim, result, lease_lost=lease_lost
+                )
+        finally:
+            heartbeat.cancel()
+            with suppress(asyncio.CancelledError):
+                await heartbeat
 
     async def _run_scheduler_result_under_lease(
         self,
         claim: ClaimedRun,
         result: SchedulerWorkloadResult,
+        *,
+        lease_lost: asyncio.Event | None = None,
     ) -> WorkerExecutionOutcome:
 
         payload = encode_canonical_json(result.evidence_payload())
@@ -403,6 +415,8 @@ class DurableWorkerExecution:
                 data=payload,
                 media_type="application/vnd.ronin.scheduler-result+json",
             )
+        if lease_lost is not None and lease_lost.is_set():
+            raise WorkerLeaseLost("attempt lease lost before scheduler result evidence")
         now = self.now()
         await self.service.worker_put_evidence(
             claim.attempt_id,
