@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1872",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "d43359503b607a9de7a88e489c99fa9b63f5114e",
+  "implementation_commit_sha": "d43359503b607a9de7a88e489c99fa9b63f5114e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1872-live-route-wide-postgres-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -StorageBackend postgres -WorkerImage ronin:qualification-d1872 -RequestTimeoutSeconds 120",
+  "result": {
+    "playwright": "43 passed; 1 skipped; 0 failed of 44 executed",
+    "scope": "unfiltered exact-head live route-wide qualification with real PostgreSQL, Kafka, Ronin API and Docker worker",
+    "routes": "25 active routes audited; 24 API-backed and 1 UI-only",
+    "api_traffic": "477 events; 477 correlated structured HTTP logs; 0 uncorrelated",
+    "cleanup": "PASS; isolated services, network, volume and worker image removed"
+  },
+  "worker_image": "sha256:c0cf4f561e9cc44bc1fe24e37fe9d44b6672107cdcdbca28df8bc70cfbcf801c",
+  "evidence_hashes": {
+    "browser-live.log": "5A2ACC46E2A98419242AADE2A4EC887EFC283094EE27E9BD189E3CE9F7AD8306",
+    "browser-live.xml": "3982D0CC1FA3C09EE685E1354A7BB1D666DA793069F5184F0CFB14A848957E40",
+    "live-api-traffic.json": "B20DB7138DB0D4133121FA5DF7FF523E31D3377FF46ECC8A5CD634A7FC63E4D2",
+    "live-python-freeze.txt": "E2509C81C55A534B034FF2F3E49F91E42A20B6455A09CDD0DF8A51F1C9931807",
+    "live-server.stderr.log": "E9059F0C1CDCA0EA644A06E76214486ADF444615D132D49D457E806D3DB67585",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "5432581688AEB6CE8143C09E0EB475DC85DEF666755CD369563C998E0BFE4826",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "The run is bounded and local; hosted production, HA, SLO and indefinite operation remain open.",
+    "One explicitly skipped Playwright case remains a limitation; no case failures occurred. API audit records 3 expected application ERROR-level events without uncorrelated or unexpected server/network failures.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
