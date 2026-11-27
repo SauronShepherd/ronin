@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1856",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "618845142083aac66cd4a960d625c36567f1a1e7",
+  "implementation_commit_sha": "618845142083aac66cd4a960d625c36567f1a1e7",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1856-docker-full-20261127",
+  "result": {
+    "pytest": "27 passed; 0 skipped; 0 failed",
+    "strict_v01": "15 passed; 0 skipped; 0 xfailed; 0 failed; strict_success=true",
+    "scope": "full Docker integration acceptance: worker/runtime, PostgreSQL journeys, appliance backup/restore, S3/ML artifacts, Azure Blob, and v0.1 journey",
+    "cleanup": "PASS; owned Ronin image, Compose services, networks and volumes removed"
+  },
+  "evidence_hashes": {
+    "azurite-qualification.log": "96B12C7C80A0AD6B6450EC4A2FFE171E498A7B6640DC29BB22B0B252FA30459D",
+    "docker-cleanup.json": "315396CFCC806E65A4EC71D7D283D82E4843AA0028FCAC9D8409BC027EEAADBA",
+    "docker-pytest-output.log": "FC6F1D1D856DF2A7C0E3ED22A7266F0A3BF6B2B97A04DDE1EBA9FFA14EBD6BC1",
+    "docker-qualification.log": "082DADA72550CF7F5F0431A4FCB6A56311BEDAD7010D3F5F74F29697A85F0ABF",
+    "floci-s3-qualification.log": "F55C5B6FA204F829F6DCDF77791C3736AE84FF95805DA8A6ECDC011EB6A523B6",
+    "postgres-qualification.log": "7EE6CB332FCD06CAE351A77F41B004BD27DE95D548ED54F1A987A24390FF7965",
+    "qualification-summary.json": "ED95CE8EF8DEDC26E2C1643853E04B9FE3CD33FDE9C691C8A350FABF4F057C7D",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "9630F0D18F0923A54B5A9F68B6BBB3ACD43EDAE28F1A16305B0534C8A000A9DD"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is complete Docker acceptance for the current defined suite, not complete P11, indefinite operation, HA/SLO, external cloud-provider certification or release approval.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
