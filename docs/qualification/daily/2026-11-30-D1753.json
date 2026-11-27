@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1753",
+  "date": "2026-11-30",
+  "status": "NOT_PASS_TERRAFORM_VERSION",
+  "candidate_sha": "584c8d31ceb68519b2e48d1ca80b75ce9f7cb91b",
+  "implementation_commit_sha": "584c8d31ceb68519b2e48d1ca80b75ce9f7cb91b",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1753-floci-terraform-20261130\\qualification.json",
+  "command": "python tools/cloud_studio_floci_qualification.py --endpoint http://127.0.0.1:4569 --backend floci --terraform --command-timeout-seconds 300 --workspace C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1753-floci-workspace-20261130 --evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1753-floci-terraform-20261130\\qualification.json --terraform-executable terraform",
+  "result": {"status": "failed", "failure": "Terraform 1.13.5 is required; found 1.16.2", "floci_health": "PASS", "cleanup": "PASS"},
+  "evidence_hashes": {"qualification.json": "BEE4C3AF0E8C9DA61B60E1C30D55578825A3DFD0FCA1BBDADCE3A587385417B4"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No Terraform plan/apply was attempted with the wrong binary; D1754 reran with the exact pinned Terraform 1.13.5 binary."]
+}
