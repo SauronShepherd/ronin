@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1910",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "2562c1c224840a647a95d69ec6769f149d044483",
+  "implementation_commit_sha": "2562c1c224840a647a95d69ec6769f149d044483",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1910-synthetic-data-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_synthetic_data.py tests/test_synthetic_data_async.py tests/test_synthetic_data_persistence.py tests/test_synthetic_data_plugin.py tests/test_synthetic_data_public_surface.py tests/test_synthetic_data_publication.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "40 passed; 0 skipped; 0 failed",
+    "scope": "Synthetic-data runtime, async generation, persistence, plugin, public surface and publication contracts"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "A729868F677051C793E6FD38A71291DA5B88ED82088A61EB593CF07095EEDA03",
+    "pytest.log": "74C48CE74D7BD2DCE2C1F271512DAE88044AB4F5CFE5D476D1471F63521ADDFE"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local synthetic-data contracts only; no external provider, PostgreSQL, hosted object store or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
