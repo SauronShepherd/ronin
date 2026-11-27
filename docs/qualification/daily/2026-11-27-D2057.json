@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2057",
+  "date": "2026-11-27",
+  "status": "PASS_CLOUD_STUDIO_FLOCI_TERRAFORM",
+  "candidate_sha": "4c029b6fd4b7446d5258fa957d331790e9c43970",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2056b-cloud-studio-floci-current-20261127-01",
+  "command": "python tools/cloud_studio_floci_qualification.py --endpoint http://127.0.0.1:4568 --backend floci --terraform --workspace C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2056b-cloud-studio-workspace-20261127-01 --evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2056b-cloud-studio-floci-current-20261127-01\\qualification.json --terraform-executable C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-terraform-1.13.5-d2056\\terraform.exe",
+  "provider": {"name": "Floci", "image": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db", "health": "PASS_HTTP_200"},
+  "terraform": {"version": "1.13.5", "aws_provider_version": "6.65.0", "binary_zip_sha256": "73F97943C93F268AE2C645B2A737D552175AA64D00A5C8B8F5CCC5831C033C8A"},
+  "result": {"status": "PASS", "config_generated": true, "topology_valid": true, "plan": "PASS", "validate": "PASS", "apply": "PASS", "refresh": "PASS", "destroy": "PASS", "floci_resources_after_apply": ["s3://qualification-bucket", "sqs://qualification-queue"], "floci_residual_resources": [], "terraform_state_list": [], "cleanup": "PASS"},
+  "evidence_hashes": {"floci.log": "0008A673000DFA3EC8AE303A6F28E0061D772DFC9C1A544F5CB397440F9BF22A", "qualification.json": "E199D935B4FCE73E4F02E44DBE49476768F92605825FEE2F4BF8C431425C362E"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación Cloud Studio/Terraform bounded contra Floci local y no contra AWS production; no cierra P13, P11 completo ni release. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
