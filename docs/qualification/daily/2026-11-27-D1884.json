@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1884",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "8dfac0f8eb03e79acbfb4dc79a06d73b0dd4225d",
+  "implementation_commit_sha": "8dfac0f8eb03e79acbfb4dc79a06d73b0dd4225d",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1884-http-contention-20261127",
+  "command": "$env:RONIN_PERFORMANCE_ARTIFACT='<external-temp-dir>\\performance.json'; python -m pytest -q -p no:cacheprovider tests/perf/test_http_contention_budgets.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "2 passed; 0 skipped; 0 failed",
+    "scope": "Bounded real HTTP contention: 200 POST and 200 GET samples while one SQLite store worker is blocked; p95 budgets enforced",
+    "metrics": {
+      "POST /v1/jobs": {"samples": 200, "p50_ms": 14.865, "p95_ms": 27.361, "max_ms": 75.698, "budget_ms": 100},
+      "GET /v1/jobs/{id}": {"samples": 200, "p50_ms": 14.111, "p95_ms": 21.763, "max_ms": 26.481, "budget_ms": 30}
+    }
+  },
+  "evidence_hashes": {
+    "performance.json": "0496214CAE9299915DDDD7D37708ED55DAD0CE839B1BB22B490EEC4ADADEC234",
+    "pytest-junit.xml": "C51D2D72F6309DE9DD8CB0505FC835478E0892F649EED4820CBB1DF9F59BAB09",
+    "pytest.log": "223954112D94900D776BF158641EAB7CC01A385EBDC17DC7DA91FAD87D5AFF44"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded local HTTP/SQLite contention only; not an SLO or indefinite production qualification.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
