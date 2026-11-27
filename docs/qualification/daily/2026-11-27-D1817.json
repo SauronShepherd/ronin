@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1817",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "5085b637ccff95ed7eab1b7bb3aba2064d5b9dac",
+  "implementation_sha": "5085b637ccff95ed7eab1b7bb3aba2064d5b9dac",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1817-live-byte-boundaries-rf1-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1817 --label org.ronin.qualification.run=d1817 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1817-live-byte-boundaries-rf1-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1817 -TestGrep 'live streaming enforces near-record and near-batch byte boundaries' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d1817",
+  "result": {"playwright": "1/1 passed", "api_events": "13/13 correlated", "api_ok": 11, "expected_warnings": 2, "unexpected_errors": 0, "cleanup": "PASS", "topology": "single-broker RF1, PostgreSQL, Docker worker"},
+  "hashes": {"browser-live.log": "D0BED4C633BED82E334D688C87F57820C71D38DAFCA64F5949C23CD769581982", "browser-live.xml": "C76C5FD8CD1655BC5D75B436A2568AA40132DB311963562054B42833595F5B79", "live-api-traffic.json": "68DC2C1B9B4723ACF40B5CBAA0A8BE2207C046EDF998702F62349EEC9C70D598", "live-python-freeze.txt": "D212F35956E90900F2A22D262E37914E9E3E8D63AD326F80ACF301C29B54EDB9", "live-server.stderr.log": "FD33B97A942C78CF160CDD9D56DA8AB8FB2AB5782430F53301502F4CDA747F88", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "C5D0308127B78F243442D2023F1C514050933969513FE71F88ECE34EEC919D82", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded RF1 byte-boundary qualification; no HA, indefinite soak, SLO, complete P11, or release evidence.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
