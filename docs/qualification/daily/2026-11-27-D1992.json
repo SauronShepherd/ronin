@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1992",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "c4c9f47425e1990c2f4be3dbc2514ebc687a664e",
+  "implementation_commit_sha": "c4c9f47425e1990c2f4be3dbc2514ebc687a664e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1992-floci-terraform-20261127d",
+  "command": "python tools/cloud_studio_floci_qualification.py --endpoint http://127.0.0.1:55594 --terraform --terraform-executable <Terraform 1.13.5> --workspace <external-temp-dir> --evidence <external-temp-dir>\\qualification.json",
+  "result": {"health": "HTTP 200", "terraform": "1.13.5; AWS provider 6.65.0; validate, plan, apply, refresh and destroy successful", "resources": "S3 bucket and SQS queue visible after apply and absent after destroy", "residual_resources": [], "cleanup": "PASS; Floci container, volume and network removed"},
+  "evidence_hashes": {"qualification.json": "C9E69D6B2398A997222EF9BEF6ABC496FD770576A823863477232450ECAF1863"},
+  "excluded_attempts": ["Initial run used port 55591 without propagating RONIN_FLOCI_PORT; no receipt counted.", "Second run used system Terraform 1.16.2 and was rejected by the harness; no receipt counted.", "Third run referenced an unextracted Terraform archive; no receipt counted."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Floci is a local AWS-compatible emulator, not hosted AWS/IAM certification; no cloud account was used.", "Bounded Terraform provider-emulator evidence only; P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
