@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1837",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "51dc4604ad9f3e7d79bd3a5bbccbd951ff0d0e05",
+  "implementation_commit_sha": "51dc4604ad9f3e7d79bd3a5bbccbd951ff0d0e05",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1837c-floci-terraform-20261127\\qualification.json",
+  "result": {
+    "health": "HTTP 200",
+    "terraform": "1.13.5; AWS provider 6.65.0; validate, plan, apply, refresh and destroy successful",
+    "resources": "S3 bucket and SQS queue visible after apply and absent after destroy; Terraform state empty",
+    "cleanup": "PASS; Floci container, volume, network and temporary image removed"
+  },
+  "evidence_hashes": {
+    "qualification.json": "22CBF6203D36F86651D9EC1515110F3D4E80FBD975B010098BF8145F27EE35A4"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local Floci/Terraform provider-emulator evidence only; not hosted cloud, IAM or provider certification.",
+    "Two prior invocations were rejected before qualification (missing executable, then Terraform 1.16.2); they are not evidence and are not counted.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
