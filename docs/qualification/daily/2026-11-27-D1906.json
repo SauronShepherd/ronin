@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1906",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "11542da756a72ec2ad1c87a9f4e693ed052143a9",
+  "implementation_commit_sha": "11542da756a72ec2ad1c87a9f4e693ed052143a9",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1906-data-engineering-local-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_data_engineering_execution.py tests/test_data_engineering_runtimes.py tests/test_data_engineering_query_engine_runtime.py tests/test_data_engineering_query_execution.py tests/test_data_engineering_qualification.py tests/test_spark_connect_qualification_contract.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "23 passed; 0 skipped; 0 failed",
+    "scope": "Local data-engineering execution/runtime/query-engine contracts and Spark Connect qualification contracts"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "32E3D5D199876DA1B1EC917ADE7E53210B32B5A8A4573CDE390778051CE4E07A",
+    "pytest.log": "42A7D8FFA24DE4C18E6E7DD9D39ABB4B5E8E61DB3B6E50C5E4F8BCB1E1EB6884"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local data-engineering contracts only; no real Spark/Trino cluster, PostgreSQL, hosted provider or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
