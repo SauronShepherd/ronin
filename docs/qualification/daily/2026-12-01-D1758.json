@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1758",
+  "date": "2026-12-01",
+  "status": "PASS_DOCKER_ML_S3_ARTIFACT_CURRENT",
+  "candidate_sha": "1aed1f53e3795eb81974281c4a4e843014172fb8",
+  "implementation_commit_sha": "1aed1f53e3795eb81974281c4a4e843014172fb8",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1758-docker-ml-s3-artifact-current-20261201",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1758-docker-ml-s3-artifact-current-20261201 -TestFilter ml_s3_artifact",
+  "result": {"status": "passed", "tests": "1 passed, 26 deselected, 0 failed", "case": "test_ml_durable_input_output_and_retention_round_trip_through_s3", "floci": "PASS", "cleanup": "PASS"},
+  "evidence_hashes": {"docker-qualification.log": "2C7CC2993BCE271F2B8BDAC565E904A8DA7323D152A50CDC5BB12A1BCC029EA4", "docker-pytest-output.log": "FD9F1D1BBFC5A4480C743AA17BE8AC969B387366E14A612C58B37B7ACEAC45AB", "v01-acceptance.xml": "9CC0624E0DBA691EA8A10DEE184A179BE93860DC79E2C4D8600A546CFB03F3F5"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Floci S3-compatible emulator evidence only; no hosted cloud/IAM certification, complete P11 or release approval."]
+}
