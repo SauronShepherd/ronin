@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1965",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "05c25545bb701a145e7585fb0585d44cd0fe45a1",
+  "implementation_commit_sha": "05c25545bb701a145e7585fb0585d44cd0fe45a1",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1965-root-contracts-ex-git-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests --ignore=tests/integration --ignore=tests/perf --ignore=tests/test_git_source.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "4495 passed; 18 skipped; 0 failed", "scope": "Broad tests regression excluding integration/, perf/ and test_git_source.py", "skips": "18 explicit platform/opt-in/provider guards"},
+  "evidence_hashes": {"pytest-junit.xml": "6A5D8562C85521E4D25EBE4811D41E7F3997795D23C716E49EAB70B7E858B3E1", "pytest.log": "8FFEBAC7359ECDBC0CFE6661D225E39E5872EAE55E22C4A06F4E33F9B419D7AA"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Integration/ and perf/ suites were excluded by command; test_git_source.py was excluded because its full suite remains an explicit NOT_PASS lane from D1917/D1919.", "18 skips are explicit platform/opt-in/provider guards and are not counted as passes.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
