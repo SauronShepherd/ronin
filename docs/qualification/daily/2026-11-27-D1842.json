@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1842",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "80ebfc34b7a7fdd2f7c6ea411b427f7f702562c5",
+  "implementation_commit_sha": "80ebfc34b7a7fdd2f7c6ea411b427f7f702562c5",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1842-postgres-bundle-20261127",
+  "result": {
+    "pytest": "2 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL bundle multi-object atomic/idempotent commit and late-binding conflict rollback",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "A7080D535A8DAA8D6F8B606FC05495DEFE510814C6DBD0D223E45EA4A19F7109",
+    "pytest-postgres.log": "92A1ECCFAF78C1ABE98A1958A42C9C252900390CBBA03585C275249BC6E8F746",
+    "pytest-postgres.xml": "C08F4EDC46E5CC9E6CC1AAC8700B51E17A3346CFC58D8E49FE720D57C27EF11E",
+    "pytest-timings.json": "3CF01155779335435A99159DA592783E5B64162D9BD31D3C559F39343F20ACFC",
+    "runner-timings.json": "7FDB30FBB2742E4BEDBA8BB911012FEFDF0F66A063D62F2A638BCD51EF2DC789"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test file only; not the complete Python/PostgreSQL suite or complete P11.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
