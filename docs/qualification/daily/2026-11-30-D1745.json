@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1745",
+  "date": "2026-11-30",
+  "status": "PASS_LIVE_PARQUET_SINK_CURRENT",
+  "candidate_sha": "7608265bd89b975c854ac239905ad32d83f37937",
+  "implementation_commit_sha": "7608265bd89b975c854ac239905ad32d83f37937",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1745-live-parquet-sink-worker-postgres-current-20261130\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1745 --label org.ronin.qualification.run=d1745 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1745-live-parquet-sink-worker-postgres-current-20261130 -StorageBackend postgres -WorkerImage ronin:qualification-d1745 -TestGrep 'live streaming parquet sink' -RequestTimeoutSeconds 120; docker image rm ronin:qualification-d1745",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 11, "correlated_events": 11, "api_outcomes": {"OK": 11}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 35.67},
+  "evidence_hashes": {"qualification-summary.json": "B3DAB64E7CA58050A71C171331FD3F6FA80CF0ED9EB71AD7E5B0603F4D79A5BC", "live-api-traffic.json": "E491B286425FB7B4863029BE5C2A29955555563465947B65E96495D481CD129D", "browser-live.xml": "C0A90A0080C965D1066EA89D1CE8D098095D8FF1BECEAA27BF031CF99E1E4C60", "browser-live.log": "6814084AC9E311FF8322BEAA90E60FB4F8B58FA8B62818F52632F68F86006501"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded single-broker Parquet sink replay/reset diagnostic; no indefinite operation, HA, hosted provider/IAM certification, complete P11 or release approval."]
+}
