@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1875",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "fb3c7b660be15a05d8379c7971394098bd03498d",
+  "implementation_commit_sha": "fb3c7b660be15a05d8379c7971394098bd03498d",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1875b-spark-connect-provider-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {
+    "pytest": "1 passed; 2 deselected; 0 skipped; 0 failed",
+    "scope": "real Spark Connect 4.2.0 SQL/pipeline/evidence smoke",
+    "image": "apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+    "cleanup": "PASS; Spark Connect container and digest-pinned image removed"
+  },
+  "evidence_hashes": {
+    "pyspark-client-install.json": "04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97",
+    "pytest-timings.json": "FE4ECC4E238428076601AB6DD961D2A1D4DB6E18F29C0C132CB3C4B7C3708DA1",
+    "qualification.json": "4D0EF4D5DD53F0301D3B6C543EB690E4311E37C8992E655F1C3A725030780B56",
+    "qualification.log": "DD569DFB1EAC1A0F72242013CF8454ECF476A8812D8F964F34B6310E8FBEA159",
+    "spark-container.log": "672F5CA77CDD2C335F6C286F8451A6B3FC1E95239371EBA8A8CBCD667A6FC62C",
+    "spark-junit.xml": "9369B5ECE773D854F11A1BDA08738EB0F75827AC283C2A3923E1ABE3B5C257E0"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered Spark Connect smoke, not hosted Spark, HA, indefinite operation, complete P11 or release approval.",
+    "An initial invocation without the local digest-pinned image was excluded; this receipt counts only the explicit pull and valid rerun.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
