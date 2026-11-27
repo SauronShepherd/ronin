@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1950",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "b304feee6f4966d862a03dd83fb44351b659959b",
+  "implementation_commit_sha": "b304feee6f4966d862a03dd83fb44351b659959b",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1950-quality-catalog-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_bundle_quality_ontology.py tests/test_quality_alert_signals.py tests/test_catalog_diagnostics_connection_environment_survivor_boundaries.py tests/test_diagnostics.py tests/test_glossary.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "83 passed; 0 skipped; 0 failed", "scope": "Bundle quality ontology, quality alerts, catalog diagnostics and glossary contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "3C9D33269DEE546C518A5B6CCE1A09548C5F63AA168B78A3AEB2192AC99DF69D", "pytest.log": "5194412C66791789FF25300AA4182ACD9C925D477EEA9369A10D0F7688A0D45F"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local quality/catalog contracts only; no external provider or release-governance certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
