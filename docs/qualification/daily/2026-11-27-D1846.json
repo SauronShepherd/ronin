@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1846",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "7d0dc706d74350302e8ce1807d13b0272500dda6",
+  "implementation_commit_sha": "7d0dc706d74350302e8ce1807d13b0272500dda6",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1846-postgres-audit-store-20261127",
+  "result": {
+    "pytest": "5 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL Audit Store idempotency/conflict, tamper detection, validation, workspace isolation and bounded listing",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "D1AEFCF9932D6D8AC2259FC731BA7EC984B3E88AE40FB79E9276FCD592A4F922",
+    "pytest-postgres.log": "C4447ACE053490CFCD60EF83CAC22E3F3C945C9DC105D80E4539B630F18F85C8",
+    "pytest-postgres.xml": "B7B174F157CD5C49B24791A0A800D17F635FC65074A0DE79C65441A2A8B1DD8C",
+    "pytest-timings.json": "CE94263330E65D4F6857A8CF237DCA0FD1DA8A5CCEB34F95ECC60D44F0193F9E",
+    "runner-timings.json": "AB1BE2BECDE2B715812693D53D9091823FD3F18339CD0194410A1B9EF27E2339"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test file only; not the complete Python/PostgreSQL suite or complete P11.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
