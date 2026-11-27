@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1985",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "acfcfe40dac97432bfdf843ff82923594dc83563",
+  "implementation_commit_sha": "acfcfe40dac97432bfdf843ff82923594dc83563",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1985-http-public-openapi-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_http_length_boundaries.py tests/test_http_access_logging.py tests/test_http_service_timeout.py tests/test_openapi_snapshot.py tests/test_publication_contract.py tests/test_publication_workflows.py tests/test_public_import_smoke.py tests/test_public_v1_status.py tests/test_public_capability_matrix.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "38 passed; 0 skipped; 0 failed", "scope": "HTTP boundaries/logging/timeout, OpenAPI snapshots, publication workflows and public status/capability contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "9E4C172BD93A460535806CEB321638312E02A2AF2FB4F49E40AF93A92E2A2A9B", "pytest.log": "8249614E3B418261A5A6166EAE65C29DD87211CE76F476C27115E68840B6D0DF"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local HTTP/public contract evidence only; no live hosted service, cloud provider, indefinite operation or complete release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
