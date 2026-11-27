@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1839",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "2ac27656266ac43357e2e8bd5adcf2fe53a7c68d",
+  "implementation_commit_sha": "2ac27656266ac43357e2e8bd5adcf2fe53a7c68d",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1839-postgres-control-plane-20261127",
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL connector control-plane discover/preview journey across reopen",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "999276E345CC02DE55DEE461CC70541C2C8A2E4991F960339F30279979CC7340",
+    "pytest-postgres.log": "46EEC90ADD39052B31F2045A53A14D96A504DDE20EF52AD3CB7D97C20707A010",
+    "pytest-postgres.xml": "6856B035AD0E1AF68F585FDBCAD98CCC0B5AABD26C9B665AD66D31D72D95A20E",
+    "pytest-timings.json": "989B6881970E3F55D1F43EE110FFE8B5FC7CDC177D0626DE628409555977B5E1",
+    "runner-timings.json": "E240A0042EEE939E00743226A93E82829964EB63C901BC79AB94EC42526C1BCA"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test file only; not the complete Python/PostgreSQL suite or complete P11.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
