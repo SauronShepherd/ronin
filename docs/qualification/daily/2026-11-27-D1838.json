@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1838",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "29f2ec04d1b388f36f8cd19d3e58c7294a77cda0",
+  "implementation_commit_sha": "29f2ec04d1b388f36f8cd19d3e58c7294a77cda0",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1838-helm-kind-postgres-20261127",
+  "docker_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1838-docker-helm-current-20261127",
+  "result": {
+    "docker_integration": "27 passed; 0 skipped; 0 failed",
+    "strict_v01": "15 passed; 0 skipped; 0 xfailed; 0 failed; 0 errors; 0 missing; 0 unexpected",
+    "helm": "PASS; lint, Secret boundary, kind, image load, install/readiness, upgrade revision 2, rollback revision 1, health/API, PostgreSQL restart recovery and deployment restart persistence",
+    "image": "sha256:02ca0a70722ce67f45a02ff817350b89be8dd4dc762403e4b99a15fe35a8e9ff",
+    "cleanup": "PASS; kind cluster, PostgreSQL container and temporary Ronin/provider images removed"
+  },
+  "evidence_hashes": {
+    "docker-qualification.log": "B908EB2891D564AEF0A26979B25B49F2BE550290B815DE28ED52281559A89801",
+    "docker-pytest-output.log": "BC2504A16465C4EF41B95AB9E79F9FE3A9D812AD293837CAF849535F650D5094",
+    "docker-cleanup.json": "E536263BB99421C0EEB266E1811460B77480389E1A82DF364E5C7F47111FA16C",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "7EFCFEE5ABF3DA129FB02E16A6B031A4A2AB340E016BCC968347A1647CC5E9D5",
+    "qualification-summary.json": "2F0A18E8CEE76A1A0FBFA84F57A392DADB1DABF5FF4E9CBBBB673F92444BF739",
+    "helm-qualification.json": "1D75AA2ACEE204B370B924B2969AA22DC391154E095670990428E21E4E62226B",
+    "helm-qualification.log": "B849473EFE42B8D132569C61D830B200AB9D9A08814018D8C42578850DDA7231",
+    "kubernetes-resources.txt": "FAFC46DE6919C37EB6C7884AB0620D1B88CC3D7FD5CDFB0EFE5AE5D2CB1DF99E",
+    "port-forward.log": "AE507F8F947E64BBC7B3DE1D5BE6BFF0C58FBCA4976C990F96BE63BEE7B71536",
+    "port-forward-restart.log": "A9DA554473270878A0E52C9599A8A3052C82C78552D1E51A936BD2CCFE044D13"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded single-replica Helm/kind PostgreSQL recovery only; no HA, indefinite operation, hosted cloud, complete P11 or release approval.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
