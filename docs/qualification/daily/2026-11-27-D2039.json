@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2039",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_FULL_POSTGRES_WITH_EXPECTED_SKIP",
+  "candidate_sha": "0d34cfdf68b4fbf6a9ea59b9b13d198aa5e6207e",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2039-live-full-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2039-live-full-postgres-20261127-01 -StorageBackend postgres -WorkerImage sha256:fa3e7cd2b58258ba81e5e45b262b3cf1d4a70c5d16166986e94df507a483f078 -SupervisorSoakSeconds 60 -RequestTimeoutSeconds 30",
+  "service": {"postgres": true, "redpanda": true, "ronin_api": true, "worker_image": "sha256:fa3e7cd2b58258ba81e5e45b262b3cf1d4a70c5d16166986e94df507a483f078"},
+  "result": {"playwright": "43 passed; 1 skipped; 0 failed of 44", "routes": "25 audited; 24 API-backed; 1 UI-only", "api_events": "484/484 correlated", "api_event_outcomes": "460 OK; 21 WARN; 3 expected recovery ERROR", "cleanup": "PASS", "duration": "387.38s"},
+  "evidence_hashes": {"browser-live.log": "A3F7AB66719CA0B89A822C0552BE47EB28336E8E5CFCEF79A50348A5ED2EBEB6", "browser-live.xml": "60492FC83D5E6983E1A476A98AC5806B486ADF72824D3821B8ACE69CDA5DDA1A", "live-api-traffic.json": "4023C0576CC03BCBB91401E1049233F6F7D23CD116BC3BB636B479837AE2570B", "qualification-summary.json": "D96335D738A1EC3E91992500E41FE0BC112A51A051701A81A9AA6A1DD407714F"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Full live candidate battery has one explicit skip and expected WARN/ERROR outcomes in recovery scenarios; it is not complete P11, indefinite operation, HA, cloud-provider certification or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
