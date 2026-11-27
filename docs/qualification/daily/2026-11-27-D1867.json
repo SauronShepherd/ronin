@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1867",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "44d88efeed4dd37eda289097edb3a2b7787d5180",
+  "implementation_commit_sha": "44d88efeed4dd37eda289097edb3a2b7787d5180",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1867-live-backpressure-16384-postgres-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory <external-temp-dir> -StorageBackend postgres -TestGrep 'live streaming sustained backpressure drains configured records with reset-safe replay' -BackpressureRecords 16384 -BackpressureTimeoutSeconds 600 -RequestTimeoutSeconds 600",
+  "result": {
+    "qualification": "PASS: 1/1 selected Playwright case, 0 skipped, 0 failed in 96.86s",
+    "criterion": "PASS: 16384-record bounded backpressure drained with reset-safe replay",
+    "runtime": "PASS: real PostgreSQL backend, Redpanda broker and Ronin API",
+    "api_traffic": "13/13 events correlated, all OK, 0 unexpected authorization/server/network errors",
+    "cleanup": "PASS: PostgreSQL, broker, volume and network cleaned"
+  },
+  "evidence_hashes": {
+    "browser-live.log": "D0A3ED55B94351B9DFEDF5C9559DB66DEE4EE37313CD5B9E6FBF755B83389F0F",
+    "browser-live.xml": "263CF16F4AA11A11F5781FD50C7AC8367E81EA3BB11608ED2206CFC094B7C4F9",
+    "live-api-traffic.json": "0573E653BD97B8C0750446C2DE0B09B8F56C7F35AE65275D533CFCECCDB82168",
+    "live-python-freeze.txt": "0878D4E19BE6348AE433267BE220B2EBF7B80C4E1B68DCED367E677534FADBC9",
+    "live-server.stderr.log": "103A12A690F6C3FA024D01DB27D6471EC10E59290E69891BD0F83DA4871E727B",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "2E400AE0226CA516E6EADCC5E7613608079D219172A0E27A279D8AF1B80E4109",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is bounded local load evidence, not indefinite operation, production HA/SLO or multi-worker qualification.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
