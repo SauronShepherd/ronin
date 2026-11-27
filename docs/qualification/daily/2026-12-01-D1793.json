@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1793",
+  "date": "2026-12-01",
+  "status": "PASS_HELM_KIND_POSTGRES_CURRENT",
+  "candidate_sha": "a0bc89b5bf5bae63724c62a554441a747e4174f6",
+  "implementation_commit_sha": "a0bc89b5bf5bae63724c62a554441a747e4174f6",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1793-helm-kind-postgres-current-20261201-rerun\\helm-qualification.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1793-helm-20261201 .; docker run --detach --name ronin-d1793-postgres --publish 127.0.0.1:55432:5432 --env POSTGRES_USER=ronin --env POSTGRES_PASSWORD=ronin --env POSTGRES_DB=ronin postgres:16.4-alpine; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d1793-helm-20261201 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1793-docker-support-current-20261201 -KeepImage; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1793-helm-kind-postgres-current-20261201-rerun -ImageRef ronin:qualification-d1793-helm-20261201 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1793-docker-support-current-20261201 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55432/ronin -PostgresContainerName ronin-d1793-postgres",
+  "result": {"status": "passed", "helm": "v4.3.1", "storage_backend": "postgres", "docker_support": "27/27 integration; strict 15/15", "image_id": "sha256:f1727bd857f4884d39353272600a522193f0d8ed3962696d0450eb252a876b7a", "phases": ["lint", "secret boundary", "kind install/readiness", "upgrade revision 2", "rollback revision 1", "health/API", "queued job durability", "PostgreSQL restart recovery", "deployment restart persistence"], "cleanup": "PASS"},
+  "evidence_hashes": {"helm-qualification.json": "B51C0AD4993DD32CB776688B15646D09447025507449A82AA7A135F2F75C2AF9", "helm-qualification.log": "A9ED418782A940F21C1180CAEFF039EF7E818ABF5C7A3272935690C06D058693", "kubernetes-resources.txt": "637C23C97CE75A987E6C22ADE0F96176F47DAB4B9A23CC76CAA1BCE5638E226E", "port-forward.log": "59543F6CDC5DFACD4B5E9451D12F1200980C4B4F3EBA8E3E3C3B46A97775C6F1", "port-forward-restart.log": "701A5D9DE7A3C1090499828817BCA301726C741B9C051E9A345A9FC8690E57F3", "docker-support-qualification-summary.json": "F16AB9C3FFBFE4C40EC624009BDF91AA8415C691CE0D87DB9257018A9B62AD10", "docker-support-v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C"},
+  "initial_attempt": {"status": "not_counted", "reason": "digest-only ImageRef caused Kubernetes ImagePullBackOff; runner cleanup passed", "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1793-helm-kind-postgres-current-20261201\\helm-qualification.json"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Helm/kind single-replica bounded qualification; no HA, indefinite operation, hosted provider certification, complete P11 or release approval. No historical evidence is reattributed."]
+}
