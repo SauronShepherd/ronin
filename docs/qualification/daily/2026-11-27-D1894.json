@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1894",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "c847bc3be496601f9a7b146b0409dc1af32c9730",
+  "implementation_commit_sha": "c847bc3be496601f9a7b146b0409dc1af32c9730",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1894-azure-blob-contract-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_azure_blob_json_connector.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "14 passed; 0 skipped; 0 failed",
+    "scope": "Azure Blob JSON connector contract: pagination, snapshots, cursor validation, limits and replay"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "314EEC4AFD3049EAF9C045D1253B17CBF375467C1FE8996142F5C9BBE12C2D9C",
+    "pytest.log": "B755E5A9A4FCD311485F733B47E6A4CD9D9BC80232B39486F071EEFE913E6C36"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local Azure Blob adapter contracts only; no Azure hosted endpoint, IAM, network or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
