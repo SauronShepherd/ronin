@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2051",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_FULL_STRICT",
+  "candidate_sha": "ccb8493f51e33b8e708f4003735e6b18472409e9",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2051-docker-full-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2051-docker-full-current-20261127-01",
+  "image": {"digest": "sha256:d62ca4a39b40580bf7a71e66c6c73d23a991677fe4ca617f658077b43a2489cf", "cleanup": "PASS"},
+  "fixtures": ["PostgreSQL + Docker worker", "Floci/S3", "Azurite/Azure"],
+  "result": {"integration_selected": 27, "integration_executed": 27, "integration_passed": 27, "integration_skipped": 0, "integration_failed": 0, "strict_live": 15, "strict_passed": 15, "strict_skipped": 0, "strict_failed": 0, "strict_errors": 0, "strict_success": true, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "azurite-qualification.log": "6B405A9E5440445B9FB8408749EB2D78BBE40F0F3EC3D219AED10180A7557A1B",
+    "docker-cleanup.json": "A3227481EF9A2D7F0BBB6EA5D2825E55DCF5FD8E50B86DD6C8CEFF99D69C8BF6",
+    "docker-pytest-output.log": "CFF4857A976430E29F063E0126B19D1152CF218D531F667890D93EFDCDA40127",
+    "docker-qualification.log": "3FBDC2E3846EB2E149EF06A96FBA9C8C6C674410C9F1116956E0CED733DA633E",
+    "floci-s3-qualification.log": "AA336F1C847F3805BF823F071AFE1634A3E20C05AEE79D72FFAC562168F12884",
+    "postgres-qualification.log": "EA87CBE69AA2844C364DAB6B0FD2B622932085DD4F67E471ECD7BFB7BCA0C448",
+    "qualification-summary.json": "26198ADA9251D820058D6AE3B7F30E4E4ECEEA503BF949C845195B430076B178",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "E53E1637236AC490B331A0A683311D5961F258D6FB0BD61569BCD68A7EAD2FAE"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación Docker completa del candidato, pero no certifica operación indefinida, cloud providers reales, HA, P11 completo ni release. qualification-summary registra medición de recursos unavailable para las observaciones de cancellation/timeout; esas celdas siguen cubiertas por sus resultados de test y cleanup, no por una métrica de recursos. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
