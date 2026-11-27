@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2103",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_SUPERVISED_DRAIN_CURRENT",
+  "candidate_sha": "2b0fc057e3fdafa11607a26ecf4b2d6e158815b0",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2103-live-supervised-drain-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2103 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2103-live-supervised-drain-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2103 -TestGrep 'supervised drain' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2103",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 5, "correlated_events": 5, "api_outcomes": {"OK": 4, "WARN": 1}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 69.03},
+  "evidence_hashes": {"qualification-summary.json": "C9A81CAE633FC079EFA975350E28455CFC8F024009C18E4FC9A912E1A89AE983", "browser-live.log": "B5F846A986304A8F996349C0FA63386A46E95FAEAD4A814369BA21AB0ABA922F", "browser-live.xml": "05857F1CE3BEF35BBC5450FE77154CE591EA28A65B40C5C87FB0BCD207440F00", "live-api-traffic.json": "AFDF2191C81011F0CE636B3728E2CF9E7542028FEF488C3F2FC70CD018B43C7A"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded supervised-drain-at-idle diagnostic, not indefinite operation, HA, multi-worker, complete P11 or release approval. The expected invalid-request warning is retained as observed evidence. No historical evidence is reattributed."]
+}
