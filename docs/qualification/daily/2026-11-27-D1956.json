@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1956",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "3dcdeee74ec12f4740620953e52fa6aaab980383",
+  "implementation_commit_sha": "3dcdeee74ec12f4740620953e52fa6aaab980383",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1956-data-plugin-sdp-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_data_engineering_sdp_adapter.py tests/test_data_engineering_plugin.py tests/test_data_engineering_query_engine_evidence.py tests/test_data_engineering_debugger.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "27 passed; 0 skipped; 0 failed", "scope": "Data Engineering SDP adapter, plugin, query-engine evidence and debugger contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "AB6E6788D3CA869B6FFCE98870C002AC10F09158E993C1BF89DC15781064980E", "pytest.log": "7C88E8D0D156BE28589A15B8F721FD7C21EDC61C4E29FB99BAF1DBAF3DD3AE72"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Data Engineering plugin/adapter contracts only; no provider-hosted qualification or complete Studio journey.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
