@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2000",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "2cb8dffb5004cf522580e85b0aeebf9cbca12ea2",
+  "implementation_commit_sha": "2cb8dffb5004cf522580e85b0aeebf9cbca12ea2",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2000-operator-policy-boundaries-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_operator_survivor_boundaries.py tests/test_operators.py tests/test_policy_actions.py tests/test_transport_policy.py tests/test_security_policy.py tests/test_query_engine_policy.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "57 passed; 0 skipped; 0 failed", "duration": "1.37s", "scope": "Operator survivor boundaries, operator contracts, policy actions, transport/security policy and query-engine policy"},
+  "evidence_hashes": {"pytest-junit.xml": "C0FDC9383427F9C87D76314857C4EB3604674E95F6BD78055E44F600268558BE", "pytest.log": "444A32D6C62FC7E66A7E9CDE26A5E2D6F3A3DB065A01488E0D46FD9D1BB967C7"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local operator and policy contracts only; no hosted provider, indefinite operation or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
