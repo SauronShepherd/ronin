@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2080",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_EMPTY_PARTITION_WORKER_RF3",
+  "candidate_sha": "fd074dbdef52e2b1a2b54e1476c3fa0a90afa6f5",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2080-live-empty-partition-worker-rf3-current-20261127-01",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d2080 --label org.ronin.qualification.run=d2080 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2080-live-empty-partition-worker-rf3-current-20261127-01 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d2080 -TestGrep 'live streaming health reports an empty partition' -RequestTimeoutSeconds 120; docker rmi ronin:qualification-d2080",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true, "worker_image_digest": "sha256:dca8eb856ea522fe7ead423b3985effa8e97d10a05e606aa1d56c6d9689f3f8f"},
+  "fixture": {"empty_partition_health": true, "multi_broker": true, "replication_factor": 3, "request_timeout_seconds": 120},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 36.18, "api_events": 4, "correlated_http_logs": 4, "uncorrelated": 0, "outcomes": {"OK": 4}, "application_logs": {"INFO": 6, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {"browser-live.log": "F077E39FBBB4BF75E9385FF7DBA541ADEB09A7D64CAC7A1DAE3C6616081B2CB3", "browser-live.xml": "250EA716C5C541BEEBAF8072BF1C6DB380683CD6DB24C03B9C2FAF3C19119ED5", "live-api-traffic.json": "8EE5BC9694C945ADE59478619673A4E3F448CFE50E019C2EC7CFBFAE2536F4AF", "live-python-freeze.txt": "9E113F2A9C42E4B8EBAC305CDED2CE924D51ED21528294E0120984E5A8B574BC", "live-server.stderr.log": "365046BE70CC2112E71C97258FFA1564F58F536B820E5CF3CD4904053A22C345", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "6C39C299EE8711A5546375637EC804FBE89223BC0F0036F1F0DB7854231C9242", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Celda bounded de health de partición vacía worker-backed con RF3; no equivale a operación indefinida, HA/SLO ni capacidad de producción. No cierra P11, P13 ni release."]
+}
