@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1896",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "33ec1fd772f645b0890c0465b188f77eeaf4c42a",
+  "implementation_commit_sha": "33ec1fd772f645b0890c0465b188f77eeaf4c42a",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1896-asyncio-runner-cancel-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_asyncio_runner_task_cancellation.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "2 passed; 0 skipped; 0 failed",
+    "scope": "Asyncio command runner cancellation, process kill/reap and resource cleanup contracts"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "4D8870E5D43BE992FB24E6AA5455203DE070D7AB7C5CB5C4D73A54693E468B0C",
+    "pytest.log": "C784D8FE73E17947BA905021BCB05B6C020C3F3F1818D2012BB2CE1D6CC45CA2"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local runner cancellation contracts only; no real container runtime, hosted provider or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
