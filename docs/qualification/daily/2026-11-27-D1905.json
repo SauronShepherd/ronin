@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1905",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "04c65572c75b89301463256679f5a314ca2f36c7",
+  "implementation_commit_sha": "04c65572c75b89301463256679f5a314ca2f36c7",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1905-ml-runtime-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_ml_runner.py tests/test_ml_clustering_runner.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "28 passed; 0 skipped; 0 failed",
+    "scope": "Local ML runner and clustering runtime contracts, checkpoints, limits and deterministic execution behavior",
+    "cleanup": "pytest artifacts completed; lingering parent process stopped after verification"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "48E301D5D37F521C50C658E05AC986CEAEE9D99E9FF1C5FB49AB8C680A82FD76",
+    "pytest.log": "D25956CB322E3BB2DB009B566E7849779D182FE9475F465656185870E0512105"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local ML runtime contract evidence only; no hosted provider, PostgreSQL, GPU, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
