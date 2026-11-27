@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1767",
+  "date": "2026-12-01",
+  "status": "PASS_DOCKER_FULL_CURRENT",
+  "candidate_sha": "4aa7b58ef2797351307834c4594d2726c12ce9ae",
+  "implementation_commit_sha": "4aa7b58ef2797351307834c4594d2726c12ce9ae",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1767-docker-full-20261201",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d1767-20261201 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1767-docker-full-20261201",
+  "result": {"status": "passed", "integration_tests": "27 passed, 0 skipped, 0 failed", "strict_v01": "15/15", "image_id": "sha256:983707f1c2bc6d6ccb1e74b27f913a088dfcdeb57ff2311b707289af38efc95e", "cleanup": "PASS"},
+  "evidence_hashes": {"docker-qualification.log": "2E0316B653383F2A03AD6C33C60AEDC466246203CB3C42B7F1DF5F9CC7861FC1", "docker-pytest-output.log": "DFC43369EDBE6AC6D42B5EBF78A3B8BE142D823F5F228A2AB60F634131022C86", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "8A267CED601912B249A1E914629813EBF7C0376C478EDFA79881E37BE21D1114"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Docker/emulator qualification; not hosted cloud/IAM certification, indefinite operation, HA, complete P11 or release approval. No historical evidence reattributed."]
+}
