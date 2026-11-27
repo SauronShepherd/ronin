@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1979",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "d4ee9da77c221c53bb4cad9a425eac0ad33e948a",
+  "implementation_commit_sha": "d4ee9da77c221c53bb4cad9a425eac0ad33e948a",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1979-coverage-status-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_coverage_file_gate.py tests/test_generate_public_v1_status.py tests/test_capability_status.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "18 passed; 0 skipped; 0 failed", "scope": "Coverage file gate, public-status generator and capability-status contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "3BF5715C682B1EE69E60B6293179096F953B62F18244FBD5093972BEBB945341", "pytest.log": "6BC0235039719EE0E456EEAF74605F8AD8A53166EF613CE7E80B34CCE52081D9"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local status/coverage contracts only; no complete release gate or external-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
