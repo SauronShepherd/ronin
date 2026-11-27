@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1819",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "2bf704e4ae767bf93270375d24b0a93ab454ef52",
+  "implementation_sha": "2bf704e4ae767bf93270375d24b0a93ab454ef52",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1819-live-supervised-drain-rf1-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1819 --label org.ronin.qualification.run=d1819 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1819-live-supervised-drain-rf1-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1819 -TestGrep 'live streaming supervised drain stops at idle' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d1819",
+  "result": {"playwright": "1/1 passed", "api_events": "5/5 correlated", "api_ok": 4, "expected_warnings": 1, "unexpected_errors": 0, "cleanup": "PASS", "topology": "single-broker RF1, PostgreSQL, Docker worker"},
+  "hashes": {"browser-live.log": "A43746EE81DB5EB9E21E1ECC22FFBED27C6C79BAF6BD729B8369201F6524E8B0", "browser-live.xml": "DD3FCAA6C1C39BACC540F7DB89439AE76620A12B215F575EE573F9228E9A8F92", "live-api-traffic.json": "FC5AF67D3D7CDDF4A8E61E5301A1A2DB14BB057016B917BF1E804D1D10D0EDD4", "live-python-freeze.txt": "9C09F2AA561FFA0BC78713F11D3AF30B4F90D33890BB30E638049E1246D0DE9F", "live-server.stderr.log": "36EB2794AC5C8F6C0AF46B7FD7D834BC61380F0CA787D27C7D8C7D8271BBDFC9", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "674A08E5E898B2AD10CE5940934CCBC293FF1728ACB55B3D5EA62E6BA135902C", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded RF1 supervised drain-to-idle qualification; no HA, indefinite soak, SLO, complete P11, or release evidence.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
