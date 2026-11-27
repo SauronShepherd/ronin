@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1813",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "6bc51e971d2a90a77c2ac41b91caaaee3007fe6b",
+  "implementation_sha": "6bc51e971d2a90a77c2ac41b91caaaee3007fe6b",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1813-live-multibroker-failover-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1813 --label org.ronin.qualification.run=d1813 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1813-live-multibroker-failover-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1813 -MultiBroker -TestGrep 'live streaming multi-broker failover' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d1813",
+  "result": {"playwright": "1/1 passed", "api_events": "5/5 correlated", "api_ok": 5, "unexpected_errors": 0, "cleanup": "PASS", "topology": "three-broker RF3, PostgreSQL, Docker worker"},
+  "hashes": {"browser-live.log": "203705281EB6B7E180F83E4B88D5384F8C12ADCD8C684FBCDB2DF2C0EA88C785", "browser-live.xml": "6ED7A65951C8A056104AFF23E6E6CA7D05485B60EF7350DB97C642C45E6AA31B", "live-api-traffic.json": "1207A7C527E94BFEDD9001A9713968EA8573420AA5AB26A5EEE15E634239FE02", "live-python-freeze.txt": "6BD7764224F19D57B7118090868A5E09EF991A47F9E027D4D9C5774F76EA2745", "live-server.stderr.log": "F8C16445A0CAFD5BEE5548F89C0EB3804AF565E96FC214782189C159051A6808", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "C1821B74EE1CD0B546EEBED03E71344590FB133BBA416D0A214951B157DF97A0", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded RF3 failover recovery qualification; no indefinite soak, SLO, complete P11, or release evidence.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
