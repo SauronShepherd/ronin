@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1990",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "fee0b780f6e2a973297f4933a97bf7539ede5861",
+  "implementation_commit_sha": "fee0b780f6e2a973297f4933a97bf7539ede5861",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1990-docker-objectstores-20261127",
+  "commands": ["pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1990-docker-objectstores-20261127"],
+  "result": {"integration": "27 passed; 0 skipped; 0 failed", "strict_v01": "15 passed; 0 skipped; 0 failed", "topology": "real Docker worker/runtime, PostgreSQL, Floci S3-compatible object store and Azurite Azure Blob-compatible store", "cleanup": "PASS; temporary image, containers, networks and volumes removed"},
+  "evidence_hashes": {"docker-cleanup.json": "D8F67AECBAC41ABDFC9380E2F0FFF3389683F4CD0A64D58AAF4E7BED9B14452F", "docker-pytest-output.log": "3442CDBE87A2576F6B7C02E052F177DE978D8ECCD6A3ABEE2205844BA7504124", "docker-qualification.log": "1436737E23691883DC940C3E7FBCA205E06B4FBD4F46712A0816F67AA3D01424", "floci-s3-qualification.log": "A7DC304428FC083AC97BDAD35677B4D54B2D3BF98596414B516C3FD28DCAED60", "azurite-qualification.log": "9884AFEBDB02FD7CE09C822B537BDDBE13286D46D796C3613B3B59AC946625D7", "postgres-qualification.log": "34ED8C75BBC593DF401AF5D737951B8BB0EC0D53A5DEB066BE45814649A906FF", "qualification-summary.json": "5DE344A3FDD523D0585C67F6817ACAF5A089FAB5987423DCD4C2811F129F9725", "v01-acceptance.xml": "F73B5D631E692BB66E13EA1EE3B5797BF28327689E392AB1C6F82E2C67E32223", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Floci and Azurite are local compatible emulators, not hosted AWS/Azure certification; no external IAM or cloud account was used.", "Bounded Docker acceptance only; no indefinite operation, HA or complete P11 claim. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
