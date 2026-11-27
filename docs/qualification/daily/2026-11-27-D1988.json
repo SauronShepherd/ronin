@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1988",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "02179e80912daa2560223eec7f71afafe009798e",
+  "implementation_commit_sha": "02179e80912daa2560223eec7f71afafe009798e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1988-release-supply-chain-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_release_evidence.py tests/test_verify_release_artifacts.py tests/test_supply_chain_evidence.py tests/test_installed_artifact_smoke.py tests/test_performance_artifact.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "65 passed; 1 skipped; 0 failed", "scope": "Release evidence, artifact verification, supply-chain/SBOM, installed artifact smoke and performance artifact contracts"},
+  "skips": ["tests/test_verify_release_artifacts.py:57 — symlinks unavailable on Windows"],
+  "evidence_hashes": {"pytest-junit.xml": "6D2B252CA0A6A3E1CABA5E6044E2CDB9D70AFE80E6EFACAE069A486377701A6F", "pytest.log": "49B96599678949230EEBB65BBA6CAF6A54310B87011943C2AC4EF5D5F546082C"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local release-evidence contracts only; one symlink-specific case skipped by environment. This does not certify the complete release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
