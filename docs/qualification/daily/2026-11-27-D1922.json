@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1922",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "1e76e78f17fb01195b386e86437f60e04af54ba7",
+  "implementation_commit_sha": "1e76e78f17fb01195b386e86437f60e04af54ba7",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1922-secret-resolvers-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_secret_resolvers.py tests/test_mounted_file_secrets.py tests/test_verify_release_artifacts.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "15 passed; 3 skipped; 0 failed",
+    "scope": "Local secret resolver, mounted-secret and release-artifact verification contracts",
+    "skips": "Two symlink/Windows privilege guards and one POSIX mode-bits guard"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "0169E3ECFCD8056BC7E6576E879EEC2F72A0A94F327C45A55E1097B4F34AEF1E",
+    "pytest.log": "C91C70430C1D2097BAD78E44DAEFCBAB222A0881AB072761AF7E1C14BA3FDB52"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local secret/configuration contracts only; no external secret provider, IAM, PostgreSQL, HA or indefinite operation.",
+    "P13 remains blocked because this does not certify an authorized external provider; no historical evidence is reattributed.",
+    "P11 remains in_progress and release remains NO-GO."
+  ]
+}
