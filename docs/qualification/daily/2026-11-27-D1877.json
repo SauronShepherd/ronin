@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1877",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_LOCAL",
+  "candidate_sha": "fe33944c9aae590d23ea3d6ba3859a7fc44fa74a",
+  "implementation_commit_sha": "fe33944c9aae590d23ea3d6ba3859a7fc44fa74a",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1877b-query-engine-local-20261127",
+  "command": "python -m tools.query_engine_qualification --output <external-temp-dir>\\qualification.json",
+  "result": {
+    "status": "qualified",
+    "provider": "ronin-local-sql",
+    "query_state": "succeeded",
+    "row_count": 2,
+    "correctness_digest": "2032c0cffe00f42b6cf39f776b036907ab6ed106530b415ca6965a64a3afcdc7",
+    "matrix": "bounded_preview qualified; invalid_profile and unauthorized_engine rejected; QueryFlux and external provider matrix not configured"
+  },
+  "evidence_hashes": {
+    "qualification.json": "A89351C9877848A938336446387369213DF5B13FD2D4B953BFF64C8D050BD5F0",
+    "qualification.stdout.json": "A89351C9877848A938336446387369213DF5B13FD2D4B953BFF64C8D050BD5F0"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded local DuckDB/reference provider only; QueryFlux, Trino through QueryFlux and external provider certification remain not_configured.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
