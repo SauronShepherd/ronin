@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1780",
+  "date": "2026-12-01",
+  "status": "PASS_FULL_PYTHON_POSTGRES_CURRENT",
+  "candidate_sha": "a0b3f19e5cab044c3d3cc1ef93f8a7c0da18706b",
+  "implementation_commit_sha": "a0b3f19e5cab044c3d3cc1ef93f8a7c0da18706b",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1780-python-postgres-full-20261201",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1780-python-postgres-full-20261201",
+  "result": {"status": "passed", "collected": 4801, "passed": 4770, "skipped": 31, "failed": 0, "warnings": 13, "pytest_elapsed_seconds": 605.87, "cleanup": "PASS"},
+  "evidence_hashes": {".coverage": "608DF038988FF084C337DEFA69E8093F459F290A8EF426DF1A9D98C0418DE2B8", "pytest-output.log": "A840728B3F22F03F5F7C5CDD9170D1FA2024F4F9CD3BCE995C8A64532D7D8C93", "pytest-postgres.log": "CBF7462ADAD00B079BCAFBC8BC7C47407DB1D9006EA7242C1124E59128887420", "pytest-postgres.xml": "858F8991852B39009A176FFFC542F311B1B4B5128D78A34B48EE0C15AE126AF9", "pytest-timings.json": "7774A0E46F0769A6D56772A6D9D42630CD415090328AA0DE430B080F58D40BEF9", "runner-timings.json": "FFB9D3A6EFCAB62571B2B62F71150EA692FDDDFAB49361791129A014E612E2F9"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Suite full non-performance Python/PostgreSQL; 31 explicit skips remain for platform privileges or opt-in external/Docker/hosted services. This does not prove complete P11 or release approval. No historical evidence reattributed."]
+}
