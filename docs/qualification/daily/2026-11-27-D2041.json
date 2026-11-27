@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2041",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_HELM_POSTGRES_READINESS",
+  "candidate_sha": "e5144f7463cd5a19b88f9deb430af55ebb8f517f",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2041-helm-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2041-helm-postgres-20261127-01 -ImageRef ronin:qualification-d2041 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2041-docker-full-20261127-01 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@127.0.0.1:55432/ronin -PostgresContainerName ronin-d2041-postgres",
+  "result": {"helm_lint": "PASS", "secret_boundary": "PASS", "kind_cluster": "created and removed", "docker_strict_acceptance": "15/15", "deployment_readiness": "NOT_PASS; pod exited 2 and restarted", "cleanup": "PASS", "failure": "Ronin deployment did not become ready"},
+  "evidence_hashes": {"helm-qualification.json": "CBAC9E83232EF2F2C8CB2A1FC1C5F49ED6AB733691BF45EAE9119B14C0D146DA", "helm-qualification.log": "17D9AEA5A54750B8FEA56FB67C65D04008B0F5B9A0BD4AD24F40FA772796D481"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Helm PostgreSQL deployment did not reach readiness because the external DSN was not reachable from the kind pod; no deployment, persistence or restart claim is made. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
