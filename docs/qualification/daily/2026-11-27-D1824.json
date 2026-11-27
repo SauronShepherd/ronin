@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1824",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "24eacf14f8f22a42c64df3c741249cdae664659f",
+  "implementation_sha": "24eacf14f8f22a42c64df3c741249cdae664659f",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1824-live-rf3-streaming-battery-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1824-live-rf3-streaming-battery-20261127 -StorageBackend postgres -MultiBroker -TestGrep streaming -RequestTimeoutSeconds 240",
+  "result": {"playwright": "11/11 passed", "api_events": "235/235 correlated", "api_ok": 227, "expected_warnings": 8, "unexpected_errors": 0, "cleanup": "PASS", "topology": "three-broker Redpanda RF3, PostgreSQL, Ronin API/worker runtime", "coverage": "RF3 streaming battery including health/lag, failover, checkpoint/replay, backpressure, Parquet, event workflow and byte boundaries"},
+  "hashes": {"browser-live.log": "FDDA302BBE229EFB2F296F8EB394A668E1DF6BB10C604C283B98BAF474E808C5", "browser-live.xml": "39EF589D594863A0C49F125390D7F78375A015517F01AD43D1FD90A1651BBC9E", "live-api-traffic.json": "C1C4CD3E85465E7CDE5FBCC4758B17FEAC36E16D1A12475F308FABFCE21AE9F6", "live-python-freeze.txt": "3D8B25E3FB832762544C91D246895FDD066A172DE153408D1B0BA0DAF3996133", "live-server.stderr.log": "2808A9AB3A392914B942A7FCE1C54A047628FE6CED0717576938B6F3310849ED", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "8C9E0753E5C1FCD450105DB6EBACCC33CE834ABA55C120A3E5AAF0858558D13E", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded RF3 battery; no worker image, indefinite operation, SLO or cloud-provider certification.", "Does not close complete P11 or release approval; no production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
