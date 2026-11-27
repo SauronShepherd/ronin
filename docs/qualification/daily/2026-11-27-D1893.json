@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1893",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "99bb4b3b016d9a55325566e9727866bdddd601c0",
+  "implementation_commit_sha": "99bb4b3b016d9a55325566e9727866bdddd601c0",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1893-artifact-checkpoint-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_connector_checkpoint.py tests/test_artifact_reference_discovery.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "27 passed; 0 skipped; 0 failed",
+    "scope": "Local checkpoint fencing, atomic rollback, output evidence and artifact-reference discovery contracts"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "C7C4ED2B252B10211364EB2CFEC6496B0BF1DA01B07C0ABA94FCD04E5E50AA16",
+    "pytest.log": "40F610E285A0E806D3F21026702CF6C3EA87FCB2CCA3119BCBA562973C7C0F37"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local checkpoint/artifact contracts only; no external object store, PostgreSQL, hosted provider or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
