@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1949",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "271a545b5ef1c8165d8d77eb8dbd1d6574a6469f",
+  "implementation_commit_sha": "271a545b5ef1c8165d8d77eb8dbd1d6574a6469f",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1949-cli-artifact-smoke-20261127b",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_agent_skill_scripts.py tests/test_agent_skills.py tests/test_installed_artifact_smoke.py tests/test_cli.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "46 passed; 0 skipped; 0 failed", "scope": "Agent skill scripts/skills, installed artifact smoke and CLI contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "A7EA6BF4F1372E9EB2F404B62C2C33DF780DD53AD080BE7E35CFC944B880BF15", "pytest.log": "E121EB128C8FD66FCCF35AEB70BFC9E69931D7F006B7F392D71567FC263D7203"},
+  "excluded_attempts": ["Initial invocation named nonexistent tests/test_cli_contracts.py and ran 0 tests; not counted as evidence."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local CLI/artifact smoke contracts only; no hosted packaging or external-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
