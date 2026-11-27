@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2092",
+  "date": "2026-11-27",
+  "status": "PASS_AZURE_BLOB_AZURITE_CURRENT",
+  "candidate_sha": "ff429aeb39d3fd665cee5b320bd2bf3ef2e9c718",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2092-docker-azure-blob-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2092 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2092-docker-azure-blob-current-20261127-01 -TestFilter 'test_azure_blob'",
+  "result": {"tests": "1 passed, 26 deselected, 0 skipped, 0 failed", "fixture": "Azurite 3.35.0", "cleanup": "PASS", "strict_v01": "not evaluated"},
+  "evidence_hashes": {"azurite-qualification.log": "EF9CC80DF36D473676EFFB98630EE6DB1045791E3EB5080F80864743A295CCC4", "docker-cleanup.json": "965ECE1C5EC9E2BA15F49C29F755F51C38D2C0C7CA1E1862DDF0ED95E8313929", "docker-pytest-output.log": "C482FCA7D625C05082B946A01B27AC5B856B8772A836D5685C5F6C046023EEAA", "docker-qualification.log": "029E9961BC94BF21C9F32802CA41A1452DC7AD3F8971E806AA46599AB02A35C3", "v01-acceptance.xml": "D4432FA725A012034C8F7BFE64C7A5ACE22F7B50318C5174E2D9151DC892E974"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Azurite is a local Azure Blob emulator, not hosted Azure cloud/IAM certification; filtered Docker diagnostic omits strict v0.1 acceptance. No historical evidence is reattributed."]
+}
