@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2054",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_BACKPRESSURE_8192_POSTGRES",
+  "candidate_sha": "bdf943a134b9b283f6f071b21ed75d6e86eadca3",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2054-live-backpressure-8192-postgres-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2054-live-backpressure-8192-postgres-current-20261127-01 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 8192 -BackpressureTimeoutSeconds 240 -RequestTimeoutSeconds 180",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true},
+  "fixture": {"backpressure_records": 8192, "backpressure_timeout_seconds": 240, "request_timeout_seconds": 180},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 89.91, "api_events": 12, "correlated_http_logs": 12, "uncorrelated": 0, "outcomes": {"OK": 12}, "application_logs": {"INFO": 14, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "A21DF2698D1BCE9469692D56DA123F345650526C8AFD44F052D19C1C756274EA",
+    "browser-live.xml": "8C4C0FEE906B83F92A76838B1848BD815566DDF4CE9C38D59B9CB54CC24B8ABE",
+    "live-api-traffic.json": "A98679FF6EE1BAB76E16474FE1F31312D0A4F938D6FDC36AFD16A27EC9EBB4E3",
+    "live-python-freeze.txt": "F786BB9C22523E5AC47520C3668FB5630C43AD88BCA7B00EF6FCCC91BA1A86CF",
+    "live-server.stderr.log": "37CF79E3D5C4782CCEA957FD15776F216B15B33F933CBABC8AB7AA30CF936237",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "B28FA1A7289FBE31699BBB5372E5EE6111E564D3F436A40362E616A4C3C48DC4",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación live filtrada y bounded de backpressure a 8192 registros con timeout explícito; no certifica operación indefinida, capacidad de producción, HA, P11 completo, P13 ni release. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
