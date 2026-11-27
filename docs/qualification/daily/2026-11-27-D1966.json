@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1966",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_INTEGRATION",
+  "candidate_sha": "585d32ad9c9abd27e1724f9d3ddd7734edb4ee71",
+  "implementation_commit_sha": "585d32ad9c9abd27e1724f9d3ddd7734edb4ee71",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1966-http-submit-status-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_http_submit_status.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "8 passed; 0 skipped; 0 failed", "scope": "Bounded HTTP submit/status integration lane"},
+  "evidence_hashes": {"pytest-junit.xml": "DA2040C5249DAB899E516A65F55474DEAEBF15E01E7EC0C84207EF9B3BCAE110", "pytest.log": "2E2375178C778C567D001A414BA2238A45EB24AC2535CBCCEFC84C97FDD4B5E3"},
+  "cleanup": {"containers": "none relevant", "kind_clusters": "none"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded local integration only; no indefinite operation, HA, cloud-provider certification or full release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
