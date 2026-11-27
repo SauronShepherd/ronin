@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1809",
+  "date": "2026-11-27",
+  "status": "NOT_PASS",
+  "candidate_sha": "0246c330387baf187a210c61f33552934d918159",
+  "implementation_sha": "0246c330387baf187a210c61f33552934d918159",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1809-live-broker-restart-rerun-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1809 --label org.ronin.qualification.run=d1809 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1809-live-broker-restart-rerun-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1809 -MultiBroker -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d1809",
+  "result": {"playwright": "0/0 executed", "api_events": "0", "failure_stage": "seed live data and start Ronin server", "failure": "Could not seed the isolated live Kafka stream fixture", "cleanup": "PASS after manual removal of residual broker/network"},
+  "hashes": {"live-python-freeze.txt": "796E4F0EE027BF0A559A71BCBFEDF585387E05920FB25DF1108764EFB6648B6B", "live-server.stderr.log": "B67B02784434687444A1A00ED746D3C3BFCC1ED5C0977FFF0EE1079D121DB61D", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "D7D2E58ADB7021FC2C946D5A894F2A7CA56002F0176CD308CFAE79711EBC631D"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Clean rerun reproduced the D1808 seed failure; the broker-restart case was not reached.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
