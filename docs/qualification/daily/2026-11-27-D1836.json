@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1836",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "0aab73bd03b0b4d17addd2f88a9e47bc47f20b8e",
+  "implementation_commit_sha": "0aab73bd03b0b4d17addd2f88a9e47bc47f20b8e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1836b-live-supervisor-soak-600-worker-rf3-20261127",
+  "result": {
+    "tests": "11/11 passed; 0 skipped; 0 failed",
+    "supervisor_soak_seconds": 600,
+    "topology": "three Redpanda brokers RF3, real PostgreSQL, Ronin APIs and Docker worker",
+    "api_events": "897/897 correlated; 889 OK; 8 expected WARN; 0 uncorrelated; 0 unexpected errors",
+    "worker_image": "sha256:04c77dcd8baa55147d00969eade67e81753e441525fe9baa21628d095cf19fa5",
+    "cleanup": "PASS; worker image, brokers, PostgreSQL, volume, network and live processes removed"
+  },
+  "evidence_hashes": {
+    "browser-live.log": "7549FDFACF2614BB3DB445BF6D24F732A0FFF010EEA8D82C36A47B9AA7BCBE72",
+    "browser-live.xml": "C6BEB8D7C48656E5686E0FA46EFA6A3968568220A2A182D0CC8028C2F10BFA5D",
+    "live-api-traffic.json": "AF43A83CC72577EA068729F5A526C00FC914FDE29CFE9A60091ECC4B563AB97C",
+    "live-python-freeze.txt": "DCD2A964AAC5E82175CAD7682B8F61A9C0B187F87F8D16D89E4562BC6226C076",
+    "live-server.stderr.log": "087D93CD9865FEBD4978607A2E313EA97F366F5E681612345ECF002D6180F73B",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "4A476943E5F6CDC3DEB2C88222F027303783966C31CD0910A9E9A217BF42EE96",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded 600-second worker-backed RF3 evidence only; it is not indefinite operation, HA/SLO, hosted-cloud certification, complete P11 or release approval.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
