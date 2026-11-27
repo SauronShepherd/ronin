@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2033",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_PARQUET_RESET_REPLAY_POSTGRES",
+  "candidate_sha": "f7f71765399dce3f81ce3d3bdb17c1fddf3f64b1",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2033-live-parquet-replay-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2033-live-parquet-replay-postgres-20261127-01 -StorageBackend postgres -TestGrep 'live streaming parquet sink' -SupervisorSoakSeconds 60",
+  "result": {"playwright": "1 passed; 0 skipped; 0 failed", "api_events": "11/11 correlated", "api_event_outcomes": "11 OK", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS", "assertion": "Parquet sink preserves reset replay across bounded runs"},
+  "evidence_hashes": {"browser-live.log": "616798C8C285F61F3A14146DE7B4A345096BA2AB9A08746106E4F571202C5496", "browser-live.xml": "7030A3882827BC9F7E130AF00E7940765E2C7291480F2898966B1613BC4C2308", "live-api-traffic.json": "1DB04CD63771B350C22E93A15CA97F7001F46BA58A2DFC9001937DD801E19B37", "qualification-summary.json": "19BF339660CE779443DE19FAE7FEA307E3A14DA7FF970A19E6DDF692D0FAF2D7"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single bounded Parquet reset/replay case; route-wide audit was not run and this does not certify indefinite operation, HA, cloud providers, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
