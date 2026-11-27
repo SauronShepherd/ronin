@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2001",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "65047586c44ceefd439842c2d2c24ddfde136272",
+  "implementation_commit_sha": "65047586c44ceefd439842c2d2c24ddfde136272",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2001-streaming-p11-contracts-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_streaming_contracts.py tests/test_streaming_kafka.py tests/test_streaming_runtime.py tests/test_streaming_health.py tests/test_streaming_windows.py tests/test_stream_table.py tests/test_stream_scheduler_bridge.py tests/test_streaming_bundle.py tests/test_source_checkpoints.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "53 passed; 0 skipped; 0 failed", "duration": "15.45s", "scope": "Streaming contracts, Kafka polling, runtime, health/lag, event-time windows, stream tables, scheduler bridge, bundles and source checkpoints"},
+  "evidence_hashes": {"pytest-junit.xml": "12C1ABD4FDA06778BFECAA6F9A183950C0787EADB7B407EB292882270D1F3C62", "pytest.log": "D8A900AA28E2499AC303808365ED284D78714EF6C31B5640DC2046E63F36B4B4"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local P11 streaming contracts only; no live broker, hosted provider, indefinite operation, HA, multi-worker or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
