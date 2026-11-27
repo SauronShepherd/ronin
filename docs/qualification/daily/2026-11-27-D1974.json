@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1974",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_INTEGRATION",
+  "candidate_sha": "fd0c5873372c626c69ad9bbb07e96ff839d2cbe1",
+  "implementation_commit_sha": "fd0c5873372c626c69ad9bbb07e96ff839d2cbe1",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1974-data-engineering-http-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_data_engineering_http.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "5 passed; 0 skipped; 0 failed", "scope": "Bounded Data Engineering HTTP integration lane"},
+  "evidence_hashes": {"pytest-junit.xml": "569DC6438CE8C231921459317CCFBCBB9A8ECB827CE3DCC52B6AC9A7F52264A0", "pytest.log": "A58D25BA297195DDB68361A674D93A618A70A536D0BC2CDAD9FE4E9869797AAD"},
+  "cleanup": {"containers": "none relevant", "kind_clusters": "none"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded local Data Engineering HTTP integration only; no indefinite operation, HA, cloud-provider certification or full release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
