@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1925",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "d8e69235170dc7d2dab87641d1e12ce6c11b5c1a",
+  "implementation_commit_sha": "d8e69235170dc7d2dab87641d1e12ce6c11b5c1a",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1925-plugin-governance-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_plugin_lockfile.py tests/test_plugin_cli_lock.py tests/test_plugin_audit.py tests/test_classification_policy.py tests/test_license_policy_profile.py tests/test_performance_policy.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "18 passed; 0 skipped; 0 failed", "scope": "Plugin lock/audit, classification, license-profile and performance-policy contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "2692FD4C98463EC6DEB5B013F42F48C8B66F19D465B320846586DBB3E2E16E7F", "pytest.log": "218C5399837662E20652C7A5906DE8E689DD9995098C34057DA698B86FEA459F"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local governance contracts only; no provider certification or release approval.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
