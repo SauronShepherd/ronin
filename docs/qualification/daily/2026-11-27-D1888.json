@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1888",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "f25fabbc950a9331c131ab13b04119874ddf6798",
+  "implementation_commit_sha": "f25fabbc950a9331c131ab13b04119874ddf6798",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1888-worker-regression-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_worker_runtime.py tests/test_worker_execution.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "27 passed; 0 skipped; 0 failed",
+    "scope": "Expanded local worker runtime and worker execution regression contracts"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "518E8FB4779CA6453A28D68E5C0CD516FF8FE33D63E10604B5BADAFD2BAC9FE6",
+    "pytest.log": "6FF66AC441B4A7BF86D139C7B3120C838739E13B65B0009D236E0FB993B4A143"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local regression contracts only; no real Docker, PostgreSQL, hosted provider or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
