@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2056",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_TERRAFORM_PROVIDER_DOWNLOAD_DISK_FULL",
+  "candidate_sha": "59b35ead07410137656820cdbfc1d40c09fcbe06",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2056-cloud-studio-floci-current-20261127-01",
+  "command": "python tools/cloud_studio_floci_qualification.py --endpoint http://127.0.0.1:4567 --backend floci --terraform --workspace C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2056-cloud-studio-workspace-20261127-01 --evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2056-cloud-studio-floci-current-20261127-01\\qualification.json --terraform-executable C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-terraform-1.13.5-d2056\\terraform.exe",
+  "provider": {"name": "Floci", "image": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db", "health": "PASS_HTTP_200"},
+  "terraform": {"required_version": "1.13.5", "observed_version": "1.13.5", "binary_zip_sha256": "73F97943C93F268AE2C645B2A737D552175AA64D00A5C8B8F5CCC5831C033C8A"},
+  "result": {"status": "NOT_PASS", "terraform_config_generated": true, "topology_valid": true, "init_started": true, "plan_started": false, "apply_started": false, "failure": "Failed to install hashicorp/aws v6.65.0: Espacio en disco insuficiente", "residual_terraform_state": [], "cleanup": "PASS"},
+  "evidence_hashes": {"floci.log": "C8791329133281C35B2841CCF71290AD1999C30B6E1F408E370A90B2AD6E2629", "qualification.json": "C2EE2D98ED5298E3B98E6D1B4C89328F7A7955C3E5246AB5717736C06C7662CE"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Terraform 1.13.5 sí fue verificado, pero el provider AWS 6.65.0 no pudo descargarse porque C: quedó sin espacio; no se ejecutaron plan/apply/refresh/destroy. Floci y cleanup fueron PASS. No se certifica Cloud Studio/Terraform, P13, P11 completo ni release. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
