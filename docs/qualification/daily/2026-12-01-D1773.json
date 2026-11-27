@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1773",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_SUSTAINED_BACKPRESSURE_CURRENT",
+  "candidate_sha": "bcce0201e637174c1636599d1896eb1bd38e3ceb",
+  "implementation_commit_sha": "bcce0201e637174c1636599d1896eb1bd38e3ceb",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1773-live-backpressure-postgres-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1773-live-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1773-live-backpressure-postgres-20261201 -StorageBackend postgres -WorkerImage ronin:qualification-d1773-live-20261201 -TestGrep 'sustained backpressure' -BackpressureRecords 256 -BackpressureTimeoutSeconds 240 -RequestTimeoutSeconds 120; docker image rm --force ronin:qualification-d1773-live-20261201",
+  "result": {"status": "passed", "configured_records": 256, "tests": "1 passed, 0 skipped, 0 failed", "api_events": 12, "correlated_events": 12, "api_outcomes": {"OK": 12}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 47.13},
+  "evidence_hashes": {"qualification-summary.json": "07BAF542E18760A1025ACEB494F4D939BDDA594ED64FB2AAB8CD156745A6FA36", "live-api-traffic.json": "C10B2316F63DAB90E23F62D06DE4E9AF78677FEA67FF6036776A2893A1AA98F2", "browser-live.xml": "86FA6DD5359625C5099CC911602605484AEE19DA26E64E2485D0CE71FB675D58", "browser-live.log": "C506513714C859480E923F019BF108B1F35731CB886BD3903481C4BDDC2ADD10"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live backpressure diagnostic with single broker and 256 configured records; not HA, indefinite operation, complete P11 or release approval. No historical evidence reattributed."]
+}
