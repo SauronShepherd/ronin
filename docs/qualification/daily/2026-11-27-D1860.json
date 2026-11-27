@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1860",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "3179ba763288e04b233784521940c12b7d11393f",
+  "implementation_commit_sha": "3179ba763288e04b233784521940c12b7d11393f",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1860-helm-postgres-20261127",
+  "result": {
+    "helm": "PASS; lint, secret boundary, install, upgrade revision 2, rollback revision 1",
+    "runtime": "health 200; Studio 200; authorized jobs API 200",
+    "recovery": "PostgreSQL restart preserved queued job; deployment restart preserved same queued job ID",
+    "backend": "PostgreSQL 16.4 isolated Docker container plus kind v1.37.0 cluster",
+    "cleanup": "PASS; kind cluster, retained qualification image and PostgreSQL container removed"
+  },
+  "image": "sha256:5438c88e04ecd5a5039a31ff756ac50ecdf6eb197e1b2e04817f23901535406e",
+  "docker_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1860-docker-helm-source-20261127",
+  "evidence_hashes": {
+    "helm-qualification.json": "171F8FF364B7DA380318EE6F66D3C00E048A7A663136CF58D42AA59B135CD529",
+    "helm-qualification.log": "2A9DE244C2D758FD124A55CF096A598715623B81FB29B82CF6B09213DFFAF9D9",
+    "kubernetes-resources.txt": "5AF8EADBC33487C4D0B17C0B4B55E0EBD46F7914C27D051F5187EF80350972C1",
+    "port-forward-error.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "port-forward-restart-error.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "port-forward-restart.log": "765778700956C8E929ADD99F9D9472C421F056F0B93F69B3E73EBB8A1DD0FC31",
+    "port-forward.log": "445E93812CC39742E73D03714BB085B442C1657B756A1025738A66F86A6ED366"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Candidate-bound Helm/PostgreSQL recovery evidence; not complete P11, HA/multi-replica, indefinite operation, external cloud-provider certification or release approval.",
+    "Two preliminary invocations were rejected/failed before valid execution: digest-only ImageRef and sqlite without PostgreSQL restart target; neither is counted as PASS evidence.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
