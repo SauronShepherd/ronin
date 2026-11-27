@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1928",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "1ad314a7c01ad443ed52f967023d65a40fddf97f",
+  "implementation_commit_sha": "1ad314a7c01ad443ed52f967023d65a40fddf97f",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1928-ml-artifact-provider-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_ml_canonical_artifact_security.py tests/test_ml_provider_adapters.py tests/test_generate_public_v1_status.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "20 passed; 0 skipped; 0 failed", "scope": "Canonical ML artifact security, ML provider adapters and public-status generator contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "194C19CD1AFB75E52B68817799EE46B693BBA76E8B6CA5010D6C667953266F46", "pytest.log": "7F29CD102F8CCAE49DC2FDAD2C842F355C973CD9D2C37F329C011D5C42156C23"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local ML/artifact contracts only; no external provider certification or release approval.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
