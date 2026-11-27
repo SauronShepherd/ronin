@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1964",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "e29f6ddd2f2f7db754becbbae91c7684b2ee1a11",
+  "implementation_commit_sha": "e29f6ddd2f2f7db754becbbae91c7684b2ee1a11",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1964-audit-store-boundaries-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_postgres_audit_store_unit.py tests/test_audit.py tests/test_mutation_audit.py tests/test_http_length_boundaries.py tests/test_http_access_logging.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "83 passed; 0 skipped; 0 failed", "scope": "PostgreSQL audit-store unit, audit/mutation audit and HTTP boundary/logging contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "76E29D5AFDF4F7BCA4625216C344ED1126D1706109B6F258ED9D082AB238D4A9", "pytest.log": "5439EBCAD2DD162853F48EF0BC1C4F18CABC5CC0E090E787736A764469637BE5"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local audit-store and HTTP boundary contracts only; no live PostgreSQL or external-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
