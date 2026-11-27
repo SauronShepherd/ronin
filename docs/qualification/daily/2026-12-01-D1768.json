@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1768",
+  "date": "2026-12-01",
+  "status": "PASS_FLOCI_TERRAFORM_CURRENT",
+  "candidate_sha": "37af74882e8048e09080ee2a731a31843dc7d7f4",
+  "implementation_commit_sha": "37af74882e8048e09080ee2a731a31843dc7d7f4",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1768-floci-20261201\\qualification.json",
+  "command": "docker compose -p ronin-d1768-floci -f examples/cloud-studio/compose.floci.yaml up -d floci; python tools/cloud_studio_floci_qualification.py --endpoint http://127.0.0.1:4566 --backend floci --terraform --terraform-executable C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1753-terraform-bin\\terraform.exe --workspace C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1768-floci-workspace --evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1768-floci-20261201\\qualification.json; docker compose -p ronin-d1768-floci -f examples/cloud-studio/compose.floci.yaml down --volumes --remove-orphans",
+  "result": {"status": "passed", "health": 200, "terraform": "1.13.5", "aws_provider": "6.65.0", "resources_after_apply": ["s3://qualification-bucket", "sqs://qualification-queue"], "residual_resources_after_destroy": [], "terraform_state_after_destroy": [], "cleanup": "PASS"},
+  "evidence_hashes": {"qualification.json": "FBE42B22A28FB0E3E13CE6D0691057D98C770F89434364F4686496D969A55C07"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Floci/local emulator provider qualification only; not hosted AWS/IAM certification, complete P11 or release approval. No historical evidence reattributed."]
+}
