@@ -305,7 +305,7 @@ try {
         $brokerTopology = if ($multiBrokerDiagnostic) { "three-broker" } else { "single-broker" }
         if ($postgresRequired) {
             Write-Output "Streaming-only diagnostic: starting $brokerTopology Redpanda plus requested PostgreSQL backend."
-            if ($multiBrokerDiagnostic -and $TestGrep -ne "live streaming broker restart") {
+            if ($multiBrokerDiagnostic) {
                 docker compose @composeFiles -p $composeProject --profile $composeProfile up -d --wait --wait-timeout 120 postgres @composeServices
             } else {
                 docker compose -p $composeProject --profile qualification-streaming up -d --wait --wait-timeout 120 postgres streaming-broker
