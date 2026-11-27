@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1859",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "ca5de5a3b2435bdd9736ecf64bddbf9d57bced93",
+  "implementation_commit_sha": "ca5de5a3b2435bdd9736ecf64bddbf9d57bced93",
+  "production_boundary_sha": "9c6c8a0f99773ce2b0d862f87f428a635011bad0",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1859-docker-full-corrected-20261127",
+  "result": {
+    "pytest": "27 passed; 0 skipped; 0 failed",
+    "strict_v01": "15 passed; 0 skipped; 0 xfailed; 0 failed; strict_success=true",
+    "scope": "full Docker integration acceptance on corrected artifact replacement candidate",
+    "cleanup": "PASS; owned Ronin image, Compose services, networks and volumes removed"
+  },
+  "evidence_hashes": {
+    "azurite-qualification.log": "3BB8C4A092E27AF8D49C120EB8874596966768558F871B09AEE5D8AD2A803CF0",
+    "docker-cleanup.json": "090A3FF5D1E1F9ED2A175C7769E3A085CFB6BC1C452D6DA7AFF50CDFDE151E99",
+    "docker-pytest-output.log": "E328961CB02ECF753B3164C71918205717F7DCD140F8FCEC2A92C33D690DE8BF",
+    "docker-qualification.log": "E7FACA77062D2448A13F832BE36A9DC7BD0C377C9C017657602AD21476E0A419",
+    "floci-s3-qualification.log": "EBB14CDFDE557A62A3D326735BA4FF8FEAD583CD4F9F572510283A43F7A2386D",
+    "postgres-qualification.log": "3F9BA5E75ABF4C278936682C80D69748EA5C051813F292E1852F9483FA13042E",
+    "qualification-summary.json": "396C914B50A19647BC9CD8654D92D6B28EDC4408B0319FB3640A530CE94E69BA",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "67E35F3AC98CAB19BF5AB230A308885758F1142FDCE462889D8360B6BE5F5B43"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is full Docker acceptance for the defined suite after the Windows replacement fix, not complete P11, HA/SLO, indefinite operation, external cloud-provider certification or release approval.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
