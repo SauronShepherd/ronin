@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2012",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_WORKFLOW_STORE",
+  "candidate_sha": "88147955013131a4f5f36e26b29fde8f2e1be778",
+  "implementation_commit_sha": "88147955013131a4f5f36e26b29fde8f2e1be778",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2012-postgres-workflow-store-direct-20261127",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://postgres:ronin@127.0.0.1:55437/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_workflow_store_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "21 passed; 0 skipped; 0 failed", "duration": "9.42s", "scope": "Real PostgreSQL workflow/scheduler store: persistence/reopen, leases/fencing, outbox/inbox, cancellation, backfill, bundle atomicity, migrations and durable HTTP adapters"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55437", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "AF68CA3D417F01F2B96388A08C663A4DE38B88E6D7AFEC2EADA58CDF9BC68B43", "pytest.log": "92B112D6C30A64F4E1214D4E7161D6DF16E23D17821579A07D74117F265C5C25", "postgres.log": "07F540C84A4555DF066EC780E9136125B874C3CC11FA8A6AE341879F1021728C", "docker-cleanup.log": "160525D5373E20CEDEA307A3E23E64655E66BE07A8B6F8D1C5DB6F72E41DD42F"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL workflow/scheduler integration only; no indefinite operation, HA, multi-worker or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
