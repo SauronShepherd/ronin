@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1826",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "9a2090773bb8795d3dcfef8b66d2165a35dc7050",
+  "implementation_sha": "9a2090773bb8795d3dcfef8b66d2165a35dc7050",
+  "worker_image_digest": "sha256:38a855e5244384303570e5ccfe38bf8b0a0d77d0e3eb176ddd277dc80ae7ab0b",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1826-live-rf3-worker-event-workflow-20261127",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1826 --label org.ronin.qualification.run=d1826 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1826-live-rf3-worker-event-workflow-20261127 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d1826 -TestGrep live streaming event workflow -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d1826",
+  "result": {"playwright": "1/1 passed", "api_events": "11/11 correlated", "api_ok": 11, "unexpected_errors": 0, "cleanup": "PASS", "topology": "three-broker Redpanda RF3, PostgreSQL, Docker worker", "coverage": "explicit streaming event workflow triggered by a committed record"},
+  "hashes": {"browser-live.log": "F653B8F16DB15C2859A0954B1027D5B34A1640C4C8104D3224D3B2883824D4BD", "browser-live.xml": "2232FC1CCFB3144EA45DF7A326AEEF23763C1C5323A57B2488E145CBBF6A5C91", "live-api-traffic.json": "79EF9BA52780D49750DBF5A9F394D7DE3720E6E53AB04E46CDBB53636F15D949", "live-python-freeze.txt": "A8157D97BFA48E8315C8C56B810E7DA83D00C0AD6C46BD3D4F2B75D47D4EC3F2", "live-server.stderr.log": "7164AA25EE75185D0A3B812849956FB3FFEE9A5B288FAC3A59EAC05F96B0BC7C", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "0A74D2B0EA779B94E540775D49A4398C77FEE5D48DBA548927DB116E79036C2B", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Single explicit bounded event-workflow case; no indefinite operation, SLO or cloud-provider certification.", "Does not close complete P11 or release approval; no production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
