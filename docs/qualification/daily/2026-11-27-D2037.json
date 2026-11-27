@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2037",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_BYTE_BOUNDARIES_POSTGRES",
+  "candidate_sha": "bcd5216f30bebfd3306a962e54ab968e875b2d78",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2037-live-byte-boundaries-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2037-live-byte-boundaries-postgres-20261127-01 -StorageBackend postgres -TestGrep 'near-record and near-batch byte boundaries' -SupervisorSoakSeconds 60",
+  "result": {"playwright": "1 passed; 0 skipped; 0 failed", "api_events": "13/13 correlated", "api_event_outcomes": "11 OK; 2 expected WARN", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS", "assertion": "near-record and near-batch byte boundaries enforced safely"},
+  "evidence_hashes": {"browser-live.log": "E6C7CCC9A37F280691EDB75186BDEB43F5D13318458A2AF4D3C07146470895DB", "browser-live.xml": "BA532357B708778A7E3F71BB3A1A6581D0C6F3C75E30268302D6008F4B2B5A60", "live-api-traffic.json": "EC866A3DDD33861C1DBECE9D30E7D90B94D91F4BE2C99CF6F8DD2A65FA86A6DD", "qualification-summary.json": "F62BF6E6C4A54A64E9FCDF04D524BB54B8AB7CA89DE728076E659F785DBC8452"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single bounded byte-boundary case; route-wide audit was not run and this does not certify indefinite operation, HA, cloud providers, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
