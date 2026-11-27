@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1953",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "194c42ca8b55e2765d6abde301445816c78be7da",
+  "implementation_commit_sha": "194c42ca8b55e2765d6abde301445816c78be7da",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1953-ir-canonical-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_canonical_json.py tests/test_canonical_json_edges.py tests/test_canonical_json_survivor_boundaries.py tests/test_ir_survivor_boundaries.py tests/test_ir_rql_openlineage_boundaries.py tests/test_changed_surface.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "92 passed; 0 skipped; 0 failed", "scope": "Canonical JSON, IR/RQL/OpenLineage boundaries and changed-surface contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "96B964E8719B8F06DE78D1ECC3859E8D88542FDE1A3AC993045332194ACAF0E3", "pytest.log": "B64C24238067F3A702308723C9E446312E84B7921955FF731AE0DC6288243346"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local serialization/IR contracts only; no full external provider or release certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
