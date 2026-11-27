@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1991",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "f23da126ff1e155531b60ab42c1a69788d0a229b",
+  "implementation_commit_sha": "f23da126ff1e155531b60ab42c1a69788d0a229b",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1991-helm-kind-postgres-20261127",
+  "docker_evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1991-docker-helm-base-20261127c",
+  "commands": ["pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1991-docker-helm-base-20261127c -ImageTag ronin:qualification-d1991-base -KeepImage", "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1991-helm-kind-postgres-20261127 -ImageRef ronin:qualification-d1991-base -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1991-docker-helm-base-20261127c -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55489/ronin -PostgresContainerName ronin-d1991-postgres"],
+  "result": {"docker": "27 passed; 0 skipped; 0 failed; strict v0.1 15/15", "helm": "PASS; lint, Secret boundary, kind, image load, install/readiness, upgrade revision 2, rollback revision 1, health/API, PostgreSQL restart recovery and deployment restart persistence", "cleanup": "PASS; kind cluster, PostgreSQL container, temporary image, Floci/Azurite containers, networks and volumes removed"},
+  "evidence_hashes": {"docker-cleanup.json": "B4BC10E591CED3E8DCB5262D6440ACEE34E4DC8C172BD60C74C6F78089669735", "docker-pytest-output.log": "87856A74B6F73938058EFF86456661F297FE9C2151F52D6E5B8CAC32886BA28E", "docker-qualification.log": "AE0F76BA22B2C1486F6C1A90B458B4C03E738A601A632DF384A5BE3AA7F37DFC", "v01-acceptance.xml": "810F2718D2FCF15946D1C40E79B6B486143CBA7FEE7805939E21BEE25464DE6D", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "helm-qualification.json": "FB38B78D5C29ECB50AEBF26F0AD7756EC555358968C1450FE5C2C1CE21869E81", "helm-qualification.log": "B49A28EB84635AE89DD52E9E8C81FF8051A4DCAB62E7C83BC786897D47D3CD18", "kubernetes-resources.txt": "49907B4E04B6D62D9E895D5363522A2895D3F9B243487866627F0FBEF5302F85", "port-forward.log": "AD184132ABE5E506CA7203CBCCED715A617C6DEF52D6BA699162DE2D5A342027", "port-forward-restart.log": "1246BC4F51E32E40255B8FA5333709ECDE378D53CFCF9E96A94021244B97BBE0"},
+  "excluded_attempts": ["Helm invocation without Docker evidence directory was rejected; invocation against D1990 evidence was rejected for SHA mismatch. Neither was counted."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded single-replica Helm/kind recovery and local Docker acceptance; no HA, indefinite operation, hosted cloud/IAM certification or complete P11 claim.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
