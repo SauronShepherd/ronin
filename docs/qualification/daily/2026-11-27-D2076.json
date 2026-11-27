@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2076",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_WORKER_BROKER_RESTART_POSTGRES",
+  "candidate_sha": "e5955683acea5abb13d466dfa9210860aa808465",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2076-live-broker-restart-worker-postgres-current-20261127-01",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d2076 --label org.ronin.qualification.run=d2076 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2076-live-broker-restart-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2076 -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 120; docker rmi ronin:qualification-d2076",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true, "worker_image_digest": "sha256:af4335ef1e5014b2f30976fb35ffe5252b176294df936cbe33bb5dc6ba028278"},
+  "fixture": {"broker_restart": true, "multi_broker": false, "replication_factor": 1, "request_timeout_seconds": 120},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 43.39, "api_events": 11, "correlated_http_logs": 11, "uncorrelated": 0, "outcomes": {"OK": 8, "ERROR": 3}, "expected_restart_errors": 3, "application_logs": {"INFO": 10, "WARN": 0, "WARNING": 0, "ERROR": 3, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {"browser-live.log": "E3F9002B166F97E863A433067C9ADEFD6FB8636475F4FADACEA0D2673C09CB76", "browser-live.xml": "7F3E0994A3A9C651B0C14A737797681E3CCA0316217494A0DD331AE24E7DD435", "live-api-traffic.json": "532E98C338D8025244A6A7294988DF5C4C868C207578FD2D6546DF28FD81DF54", "live-python-freeze.txt": "6A14E4523BB6BD6EC8496D7F431239AB1568CFAB220CA6613A1D4AE11DB584F1", "live-server.stderr.log": "C4BC8DCBA4BAA7C792590B0A6811FB6DA0ADC3F0092F637F62E966028AA7DDB5", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "562E3270672A266E51E0457D8DCF0C43E7ECE1BD241A2A76BECC385D8558ED5C", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Celda bounded de broker restart/checkpoint worker-backed single-broker; los 3 errores son respuestas esperadas durante la interrupción y están correlacionados. No equivale a HA RF3, operación indefinida ni capacidad de producción. No cierra P11, P13 ni release."]
+}

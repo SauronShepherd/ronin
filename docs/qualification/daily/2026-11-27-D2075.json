@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2075",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_LIVE_BROKER_RESTART_WRONG_TOPOLOGY",
+  "candidate_sha": "e5955683acea5abb13d466dfa9210860aa808465",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2075-live-broker-restart-worker-rf3-current-20261127-01",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d2075 --label org.ronin.qualification.run=d2075 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2075-live-broker-restart-worker-rf3-current-20261127-01 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d2075 -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 120",
+  "result": {"failure_phase": "seed live data and start Ronin server", "selected": 0, "executed": 0, "passed": 0, "skipped": 0, "failed": 0, "api_events": 0, "correlated_http_logs": 0, "cleanup": "PARTIAL_THEN_MANUAL_PASS", "failure": "Could not seed the isolated live Kafka stream fixture: broker restart case requires single-broker topology; -MultiBroker left an incompatible fixture."},
+  "evidence_hashes": {"live-python-freeze.txt": "6A14E4523BB6BD6EC8496D7F431239AB1568CFAB220CA6613A1D4AE11DB584F1", "live-server.stderr.log": "A9512D3866A60C52ECA8365EA0E553CB8834065A684D115921C35ADE44FE40B4", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "9B00631A6E3D13156DB47664DA1C14F2AFEA000284DEAC0C7E55152A6A6F8411"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No qualification result counted. This is a reproducible invocation/topology failure, preserved explicitly; D2076 is the corrected single-broker rerun. P11 remains in_progress, P13 blocked and release NO-GO."]
+}
