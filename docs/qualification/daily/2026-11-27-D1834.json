@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1834",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "06b2afb8d53b920ae989aed59a2971a7fa0c1c0c",
+  "implementation_commit_sha": "06b2afb8d53b920ae989aed59a2971a7fa0c1c0c",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1834b-docker-full-current-20261127",
+  "result": {
+    "docker_integration": "27 passed; 0 skipped; 0 failed",
+    "strict_v01": "15 passed; 0 skipped; 0 xfailed; 0 failed; 0 errors; 0 missing; 0 unexpected",
+    "scope": "full Docker acceptance: real worker/runtime, PostgreSQL, backup/restore, Floci S3, Azurite Azure Blob and strict v0.1 journeys",
+    "worker_image": "sha256:e0681bf6701f3122a374ce358ff56abf0e45bfc0926aef74f35c569be5190c8e",
+    "cleanup": "PASS; owned image, containers, volumes and networks removed"
+  },
+  "evidence_hashes": {
+    "azurite-qualification.log": "6FAF9F448A61E92E0D3726F04AAD7A2200F03F9009BA734E7C8A986FC4FD841F",
+    "docker-cleanup.json": "8DA1AF175F3B75BEE24F836CE3F1B905DD2891EED049E45EDBB42A67A873EFA6",
+    "docker-pytest-output.log": "EF6A821120B05D898DF55424E2BA1D3823B4008690EBFCFD1187533373DC4F6F",
+    "docker-qualification.log": "05B0796F6C25E459221415FB40A239885863DA3C92DB9C605351CC4F196AA542",
+    "floci-s3-qualification.log": "C53A5ED07BE526AE839035B7D00A1A78CA1A97DB0EDF99859B20BD01CBAB30BE",
+    "postgres-qualification.log": "7CF4F62EE68669DA5F3B7ACCBC22A9A4575020BCEDDE7848C167C940688FB4EE",
+    "qualification-summary.json": "7A8C45A5393102B7B78DA4BE89FC376CC8E7ED40FD606AAA4CEE729128C0D676",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "0F4B6DB0BCEE5C42243BED38685E9C5BC99BC285A1E3FC2FDC168E5E3B5488C2"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded Docker acceptance only; no hosted-cloud certification, indefinite operation, HA, complete P11 or release approval.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
