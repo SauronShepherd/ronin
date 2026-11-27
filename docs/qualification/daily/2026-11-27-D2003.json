@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2003",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_EXTERNAL_S3",
+  "candidate_sha": "740820a1928d537c69f319962fe82c1ce9497b2a",
+  "implementation_commit_sha": "740820a1928d537c69f319962fe82c1ce9497b2a",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2003-docker-s3-20261127",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory <external-temp-dir> -TestFilter 's3_json'",
+  "result": {"pytest": "1 passed; 26 deselected; 0 skipped; 0 failed", "duration": "4.64s", "scope": "Real S3-compatible Floci provider: S3 JSON sink write/read, response-loss retry, digest/metadata and discovery"},
+  "provider": {"name": "Floci", "image": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db", "ronin_image": "sha256:697cee25c72f14ae02cf644c00877237033ecf0038ac23471aca1beb65ff6672"},
+  "evidence_hashes": {"v01-acceptance.xml": "2ABB64E800F4DFC9BF67637DD2C7673EC64B75A536289E97288DF9AF8C7BDCD6", "docker-pytest-output.log": "CE95DB487F63C8BDAABD663CD238E1818134F26E9976959D69AB8E79D412CED2", "floci-s3-qualification.log": "0CCB7F943AD413C83278DFF684ABC61EE1B98183063B2177EFC3D72FBE961469", "docker-cleanup.json": "06F48B50A0BD6EFAE19306144D8F999F4575C25937C220EA52705ADC0B5506FB"},
+  "cleanup": "PASS; Floci project/container/network/volume and temporary Ronin image removed",
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded S3-compatible provider diagnostic only; strict v0.1 acceptance was omitted by the filtered run. Does not certify AWS/Azure production, indefinite operation or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
