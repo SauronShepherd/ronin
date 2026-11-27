@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2105",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_ROUTE_WIDE_CURRENT",
+  "candidate_sha": "be0362c9b936e74d2d4f9abb38fdef781590759c",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2105-live-route-wide-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2105 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2105-live-route-wide-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2105 -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2105",
+  "result": {"tests": "43 passed, 1 skipped, 0 failed", "api_events": 483, "correlated_events": 483, "api_outcomes": {"OK": 459, "WARN": 21, "ERROR": 3}, "route_coverage": {"active_routes": 25, "api_backed_routes": 24, "ui_only_routes": 1}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 3, "expected_errors": "Three HTTP 503 streaming_unavailable responses during intentional broker restart; no critical logs.", "cleanup": "PASS", "elapsed_seconds": 440.67},
+  "evidence_hashes": {"qualification-summary.json": "4C1D295438731B3D2B95CC830948608DAF1EB8A6DE4CA308CD99B80D0E552524", "browser-live.log": "A31BE004B7727BB2952FE6257B3BC3D53097BD86E101849E7786341F85F7D703", "browser-live.xml": "DC65F0ADBA2C26C54D3EE8BC3857FBD43E8FBCB8AF365E24983A93BAA65C89FD", "live-api-traffic.json": "B6FE20B3A57F0D21072FA34DE777502A37AB7E0A795937B3A72FE2401025A23E"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Route-wide bounded live qualification, not indefinite operation, HA, hosted provider/IAM certification, complete P11 or release approval. No historical evidence is reattributed."]
+}
