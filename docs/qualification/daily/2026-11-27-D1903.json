@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1903",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "9b75e70b67e0aba11f5d5decc5f8e11de65cd51c",
+  "implementation_commit_sha": "9b75e70b67e0aba11f5d5decc5f8e11de65cd51c",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1903-cli-regression-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_cli.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "23 passed; 0 skipped; 0 failed",
+    "scope": "Complete public CLI regression: project/workspace operations, HTTP selection, artifacts, streaming and error contracts"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "265985AF3970AF8D76DE52226DECB9990872E3A6DB09256A724B2E3548750482",
+    "pytest.log": "78E8A641BE475DC67A4ED124C45D2AB1396B78E5735B11743FE537C5BE9269DD"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local CLI/HTTP contract evidence only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
