@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2034",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_SUPERVISED_DRAIN_POSTGRES",
+  "candidate_sha": "1a3df9797b946204d432b340c1540a68a61faddd",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2034-live-supervised-drain-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2034-live-supervised-drain-postgres-20261127-01 -StorageBackend postgres -TestGrep 'supervised drain' -SupervisorSoakSeconds 60",
+  "result": {"playwright": "1 passed; 0 skipped; 0 failed", "api_events": "5/5 correlated", "api_event_outcomes": "4 OK; 1 expected WARN", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS", "assertion": "supervised drain stops at idle with durable checkpoint progress"},
+  "evidence_hashes": {"browser-live.log": "7AE5CF9D4DD1BB76A2EBB6087BADC11F2FBB4CD2A461BCA36241CCBAD5F26DF2", "browser-live.xml": "8D02B9431913677FB169F3437F5794DC8FF9905573BA1D107A65DAE7456C3F7C", "live-api-traffic.json": "5451F1B643CC6FC7CBBB3DCD6985C32B3B368A527ABC53783474311A4A1A7BC7", "qualification-summary.json": "8A680BB6579DED72EF32929EAF7988E9C8227B59E9DE3CE10481A5816612AE77"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single bounded supervised-drain case; route-wide audit was not run and this does not certify indefinite operation, HA, cloud providers, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
