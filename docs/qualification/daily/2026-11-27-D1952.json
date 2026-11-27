@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1952",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "40228cb186546ce094ecef4dadf7f647a1433287",
+  "implementation_commit_sha": "40228cb186546ce094ecef4dadf7f647a1433287",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1952-data-ui-lineage-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_data_engineering_ui.py tests/test_data_engineering_revisions.py tests/test_data_engineering_ide.py tests/test_data_engineering_debugger.py tests/test_data_engineering_lineage.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "15 passed; 0 skipped; 0 failed", "scope": "Data Engineering UI, revisions, IDE, debugger and lineage contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "094CEBF8EBB2273B2FF9B79ED4F33A1ED37992FF66E01C3F66A580C03F06CFBD", "pytest.log": "C35735C316751A7EE553D873058C6953E36A67A0EB1127BD794C3644B47A3970"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Data Engineering UI/lineage contracts only; no complete browser journey or external provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
