@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2016",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_FULL_STRICT",
+  "candidate_sha": "8e68fe3fe71c321131d559665e13e2ac02593bf0",
+  "implementation_commit_sha": "8e68fe3fe71c321131d559665e13e2ac02593bf0",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2016-docker-full-20261127",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {"docker_integration": "27 passed; 0 skipped; 0 failed", "strict_v01": "15 passed; 0 skipped; 0 xfailed; 0 failed; 0 errors", "integration_duration": "189.19s", "scope": "Real Docker worker/runtime, PostgreSQL journeys and appliance backup/restore, Floci S3, Azurite Blob, v0.1 E2E and strict acceptance"},
+  "images": {"ronin": "sha256:6f2a5734707b431f92b0f43cc68e39a7f98dc7ba9ecb1abf2a76b1156a935783", "floci": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db", "azurite": "mcr.microsoft.com/azure-storage/azurite:3.35.0@sha256:647c63a91102a9d8e8000aab803436e1fc85fbb285e7ce830a82ee5d6661cf37"},
+  "evidence_hashes": {"v01-acceptance.xml": "36171598F5DEAB830D2B70955054A02C8004577E8563719ED83B7BD54C105CF4", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "docker-pytest-output.log": "8221CEA8D3B8AAFF2AE3463F73664AFF734487D1F62660A95CC5A1303106D29F", "docker-cleanup.json": "1D5403AE76173DB45D44F814800A2E438A737EF1204490612C1BCC8E8ADF2837", "docker-qualification.log": "0CCE1AA73F16271FFC0E0F4441F9B3100D6ACD8A78F18E3B28689F9A69B74687", "postgres-qualification.log": "5AD22CC61E9F4E8AA06A47B5D05EEA0846C1D6CD11792F2F1CD49D210A3E02AA", "floci-s3-qualification.log": "CB3C4CBAECDA85A286727D281FD1C5C8E39F0E301C6DA393ED108AB034ABE76E", "azurite-qualification.log": "A9DA037B1A26EAF3C0986F23C583F244F3A2E2C145C500E5C6310B4BE88F9A6F"},
+  "cleanup": "PASS; PostgreSQL, Docker worker, Floci, Azurite, networks, volumes and temporary Ronin image removed",
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded clean-candidate Docker/strict qualification; does not prove indefinite operation, HA, multi-worker, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
