@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2086",
+  "date": "2026-11-27",
+  "status": "PASS_FLOCI_TERRAFORM_DYNAMIC_PORT",
+  "candidate_sha": "78715a3bfc0326c2bffed75ed77db45b56731096",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2086-floci-terraform-current-20261127-01\\qualification.json",
+  "command": "docker compose -p ronin-d2086 -f examples/cloud-studio/compose.floci.yaml up -d floci; resolve published port with docker port ronin-d2086-floci-1 4566/tcp; python tools/cloud_studio_floci_qualification.py --endpoint http://127.0.0.1:4566 --terraform --terraform-executable C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1992-terraform-1.13.5-extracted\\terraform.exe --command-timeout-seconds 300 --workspace C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2086-floci-workspace-20261127-01 --evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2086-floci-terraform-current-20261127-01\\qualification.json; docker compose ... down --volumes --remove-orphans",
+  "result": {"health": "HTTP 200", "terraform": "Terraform 1.13.5/AWS provider 6.65.0 validate, plan, apply S3+SQS, refresh, destroy all passed; state list empty", "resources_after_apply": ["s3://qualification-bucket", "sqs://qualification-queue"], "residual_resources": [], "cleanup": "PASS"},
+  "evidence_hashes": {"qualification.json": "3DF86CD605A48327806C6E00DBDB46CB0D19666A76F26F273653E68BCDBCDDE9"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Evidence is local Floci/provider-emulator Terraform, not hosted cloud/IAM certification. No historical evidence is reattributed; P11 remains in_progress, P13 blocked and release NO-GO."]
+}

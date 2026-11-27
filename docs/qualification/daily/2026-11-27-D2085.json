@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2085",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_FLOCI_FIXED_ENDPOINT",
+  "candidate_sha": "78715a3bfc0326c2bffed75ed77db45b56731096",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2085-floci-terraform-current-20261127-01",
+  "command": "docker compose -p ronin-d2085 -f examples/cloud-studio/compose.floci.yaml up -d floci; python tools/cloud_studio_floci_qualification.py --endpoint http://127.0.0.1:55542 --terraform --terraform-executable C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1992-terraform-1.13.5-extracted\\terraform.exe --command-timeout-seconds 300 --workspace C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2085-floci-workspace-20261127-01 --evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2085-floci-terraform-current-20261127-01\\qualification.json; docker compose ... down --volumes --remove-orphans",
+  "result": {"failure_phase": "Floci health check", "status": "failed", "failure": "fixed endpoint 127.0.0.1:55542 timed out because compose published a different port", "terraform": "not executed", "cleanup": "PASS; compose project, volume and network removed"},
+  "evidence_hashes": {"qualification.json": "B05BD0110F8575CB7203324160A91F6F8B298326653E9811218008C7F505442F"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No provider qualification counted. Failure is preserved explicitly; D2086 is the corrected dynamic-port rerun. P11 remains in_progress, P13 blocked and release NO-GO."]
+}
