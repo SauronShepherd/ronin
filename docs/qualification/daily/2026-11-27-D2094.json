@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2094",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_FULL_AND_STRICT_CURRENT",
+  "candidate_sha": "a4e0e0b8b22c96b92c9b5ded929513824a078d52",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2094-docker-full-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2094 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2094-docker-full-current-20261127-01",
+  "result": {"docker_integration": "27 passed, 0 skipped, 0 failed", "strict_v01": "15 passed, 0 skipped, 0 failed", "fixtures": ["PostgreSQL", "Docker worker", "Floci/S3", "Azurite/Azure"], "cleanup": "PASS", "image_digest": "sha256:90854ef935f62dea78f8a0e547865021b6cf7e224fe36dc8aeb8daa0cf1566c6"},
+  "evidence_hashes": {"qualification-summary.json": "D8D648486F22DB2EBE3055E67CFB020458F0986074E06794B9B8F531325C8A82", "docker-cleanup.json": "72680519DC6FC1EAEB767E7785329812F1CFB8C4C28B6BD532EA53C2C5A94AC7", "docker-pytest-output.log": "6B0F5679DF69AEDFAD221E13AF68354323CA93AF300297DB5750600B5FDDDBA5", "docker-qualification.log": "F5092C6613925AAA801BBEF3F972D7569C61BB1C7E9CDD4858FE1C81A2E5A18F", "floci-s3-qualification.log": "A218527CB35F5E75B1FFF19C14AAD567265F623C847D30E649785314AAFC36A6", "azurite-qualification.log": "2F3667BA2869FE6C7C00F54148E867F9BA97BF7B49368BF862AE9A0117979734", "postgres-qualification.log": "67A2AF5BA48C02C6447CD10909BCB80A842051C1976D1D0523C2F8417E66D238", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "A522935337A5F32B67A73A400727C046A50BE612700D23EAF43630FB2ABD19E2"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Current Docker acceptance is bounded and local; it does not prove hosted cloud/IAM certification, indefinite operation, HA, complete P11 or release approval. No historical evidence is reattributed."]
+}
