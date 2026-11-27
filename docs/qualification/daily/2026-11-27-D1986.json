@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1986",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "50f8be2b9ebc3fc9e302f0ce409299ede2778e12",
+  "implementation_commit_sha": "50f8be2b9ebc3fc9e302f0ce409299ede2778e12",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1986-sql-ontology-quality-migration-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_sql_http.py tests/test_ontology_http.py tests/test_quality_http.py tests/test_migration_studio_api.py tests/test_migration_studio_openapi.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "61 passed; 0 skipped; 0 failed", "scope": "SQL HTTP, ontology HTTP, quality HTTP and Migration Studio API/OpenAPI contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "CE14E45D35E196FD81BA474A11CE5EF623A4886309635B6F8FEDCD9A1486A525", "pytest.log": "84D944643E55FAE6BA148D796964F1BCDE1719FAE33824C6B6B8A68773F60A79"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local product-surface contracts only; no hosted provider, live external service, indefinite operation or complete release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
