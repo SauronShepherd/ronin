@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1994",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "289e5de12f6fc5853cd3fff1c75abe2c8d3f20df",
+  "implementation_commit_sha": "289e5de12f6fc5853cd3fff1c75abe2c8d3f20df",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1994-root-contracts-current-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests --ignore=tests/integration --ignore=tests/perf --ignore=tests/test_git_source.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "4495 passed; 18 skipped; 0 failed", "duration": "503.12s", "scope": "Root contract suite excluding integration/perf and the separately tracked non-deterministic Git source suite"},
+  "skips": ["SDP/Spark external CLI endpoints not configured", "symlink/POSIX-specific cases unavailable on Windows", "opt-in live Docker/E2E acceptance cases"],
+  "evidence_hashes": {"pytest-junit.xml": "55F6EFCA379ED8EE0761292428FBC11F71C0C400A3DA6CB0580AA9E2EAF20AAF", "pytest.log": "0B34E583BB6F2E48CF1C4E1EED4385B2B00CFD6D1C4A358E05A1A466FD1A14E4"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is broad local contract evidence, not the complete release suite; integration/perf and Git source suite remain separately scoped.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
