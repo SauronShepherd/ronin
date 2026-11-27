@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1933",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "b0d7d2991cc47be26cd476a88e82b045bd502316",
+  "implementation_commit_sha": "b0d7d2991cc47be26cd476a88e82b045bd502316",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1933-execution-backend-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_backend_configuration.py tests/test_execution_backend.py tests/test_durable_execution_service.py tests/test_async_job_store.py tests/test_job_store_conformance.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "52 passed; 0 skipped; 0 failed", "scope": "Backend configuration/execution, durable execution, async job store and job-store conformance contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "48475E79021BC57D67A642CEF7F8F288F1EB58C2E1E15368757D134FCCBC07DB", "pytest.log": "29E32219298E67286DF5F2B19B4C4D0B287C432F3B47D2AC9D45E814F94F4CE5"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local execution/backend contracts only; no live multi-node or external-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
