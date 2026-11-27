@@ -31,6 +31,36 @@ class GitRevision:
             raise ValueError("dirty patch digest must be lowercase SHA-256 hex")
 
 
+def _git_environment() -> dict[str, str]:
+    """Remove ambient repository/config overrides before invoking Git."""
+
+    environment = os.environ.copy()
+    controlled = {
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_COMMON_DIR",
+        "GIT_CONFIG",
+        "GIT_CONFIG_PARAMETERS",
+        "GIT_CONFIG_COUNT",
+        "GIT_CONFIG_SYSTEM",
+        "GIT_CONFIG_GLOBAL",
+        "GIT_SSH",
+        "GIT_SSH_COMMAND",
+        "GIT_ASKPASS",
+        "SSH_ASKPASS",
+        "GIT_TERMINAL_PROMPT",
+        "GCM_INTERACTIVE",
+    }
+    for name in tuple(environment):
+        if name in controlled or name.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")):
+            environment.pop(name, None)
+    environment.update({"GIT_TERMINAL_PROMPT": "0", "GCM_INTERACTIVE": "Never"})
+    return environment
+
+
 def checkout_detached(path: Path, commit: str) -> GitRevision:
     """Checkout an exact commit only from a clean local worktree.
 
@@ -121,6 +151,7 @@ def _git(path: Path, *args: str, timeout: float = 10.0) -> bytes:
             stdin=subprocess.DEVNULL,
             capture_output=True,
             timeout=timeout,
+            env=_git_environment(),
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise GitCaptureError("Git command could not be executed") from exc

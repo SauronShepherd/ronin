@@ -1,3 +1,4 @@
+import os
 import subprocess
 from pathlib import Path
 
@@ -7,11 +8,28 @@ from studio_execution import GitSourceAdapter, GitSourceError
 
 
 def _git(path: Path, *args: str) -> str:
+    environment = os.environ.copy()
+    for name in tuple(environment):
+        if name in {
+            "GIT_DIR",
+            "GIT_WORK_TREE",
+            "GIT_INDEX_FILE",
+            "GIT_OBJECT_DIRECTORY",
+            "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+            "GIT_COMMON_DIR",
+            "GIT_CONFIG",
+            "GIT_CONFIG_PARAMETERS",
+            "GIT_CONFIG_COUNT",
+            "GIT_CONFIG_SYSTEM",
+            "GIT_CONFIG_GLOBAL",
+        } or name.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")):
+            environment.pop(name, None)
     result = subprocess.run(  # noqa: S603
         ("git", "-C", str(path), *args),  # noqa: S607
         check=True,
         capture_output=True,
         text=True,
+        env=environment,
     )
     return result.stdout.strip()
 
