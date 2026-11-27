@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2043",
+  "date": "2026-11-27",
+  "status": "PASS_HELM_KIND_SQLITE_POST_RUNNER_FIX",
+  "candidate_sha": "d7cfba7e0abc2f7c703964c67e394f542bfce649",
+  "implementation_commit_sha": "d7cfba7e0abc2f7c703964c67e394f542bfce649",
+  "production_change_boundary": "d7cfba7e0abc2f7c703964c67e394f542bfce649",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2043-helm-sqlite-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2043-helm-sqlite-20261127-01 -ImageRef ronin:qualification-d2043 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2043-docker-full-20261127-01 -StorageBackend sqlite",
+  "implementation_change": "tools/run_helm_qualification.ps1 now gates PostgreSQL restart recovery on StorageBackend=postgres; SQLite records not-applicable and continues deployment restart/persistence checks.",
+  "affected_regressions": {"docker_full": "27/27 passed; 0 skipped; 0 failed", "docker_strict_v01": "15/15 passed; 0 skipped; 0 failed", "helm_script_parse": "0 parse errors"},
+  "result": {"helm": "PASS", "helm_version": "v4.3.1+gc0d08d0", "kind": "install/readiness/upgrade/rollback/restart PASS", "health": 200, "studio": 200, "authorized_jobs": 200, "persistent_job_after_pod_restart": true, "cleanup": "PASS"},
+  "evidence_hashes": {"helm-qualification.json": "CC119CC102F9D0508AA089F4EB79548027AF1EF905A0B5309169CB0854B93728", "helm-qualification.log": "A85B5C0EFDB07AB669477E29E55EAB2F749520DC64C964D23A91D9B9E346DE53", "kubernetes-resources.txt": "8129D88E2448F61D3AD81176BB4BCEFCBFDE1D991384571744D063CF661EEA03", "docker-cleanup.json": "F7C883330A123451C25F01FD8D1EF9604481FBD977D8A831D7469F304615FBB8", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Helm evidence is SQLite single-replica deployment; PostgreSQL restart recovery remains separately unqualified after D2041's unreachable-DSN failure. This does not close complete P11, HA, cloud providers or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
