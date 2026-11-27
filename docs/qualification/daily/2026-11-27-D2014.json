@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2014",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_REVISIONS",
+  "candidate_sha": "414cb77abb0abcc372883b4a9dd10cfc094e231b",
+  "implementation_commit_sha": "414cb77abb0abcc372883b4a9dd10cfc094e231b",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2014-postgres-revisions-direct-20261127",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://postgres:ronin@127.0.0.1:55439/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_data_engineering_revisions_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "1 passed; 0 skipped; 0 failed", "duration": "0.87s", "scope": "Real PostgreSQL Data Engineering revision inventory discovers all project artifacts"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55439", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "7A2CADCA8C131FC7F2ED4DD89506F6A1D90D3EAB731D6C391A8D337020A2C22D", "pytest.log": "604AD87756724BB897894CA29E6AD257B51A1992E5D2148E7FAEEEC1D9F5D182", "postgres.log": "94961F3243DED13F585B9AE8705E94535354151EEBFF0C080083C0DC969A5549", "docker-cleanup.log": "E217A832BD5A40D6523B4FF5B6D901B3DAD076F963B05B48AD91E10F887CAC24"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL Data Engineering revision integration only; no provider hosted, indefinite operation, multi-worker or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
