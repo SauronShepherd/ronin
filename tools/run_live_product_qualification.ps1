@@ -515,7 +515,7 @@ try {
                 "--workers=1",
                 "--grep=$TestGrep"
             )
-            if ($multiBrokerDiagnostic) {
+            if ($multiBrokerDiagnostic -and $TestGrep -ne "live streaming broker restart") {
                 # The single-broker restart case intentionally asserts exactly
                 # one broker; exclude it from RF3 diagnostics so topology
                 # selection cannot create a false multi-broker failure.
