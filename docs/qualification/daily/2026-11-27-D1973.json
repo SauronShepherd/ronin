@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1973",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_INTEGRATION",
+  "candidate_sha": "00cd0b200de080ec7e9a31f8478e688d35631c2b",
+  "implementation_commit_sha": "00cd0b200de080ec7e9a31f8478e688d35631c2b",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1973-http-timeouts-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_http_timeouts.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "4 passed; 0 skipped; 0 failed", "scope": "Bounded HTTP timeout/cancellation integration lane"},
+  "evidence_hashes": {"pytest-junit.xml": "24973B3AD9442E5FBFA41CB9298B9437C5C3CDBBA69B5C4102B3C942119C7AD6", "pytest.log": "6A8E709386E872360CA2C5D84DF8E5E46C280CEFE8BEFFE0090AC44E184AE1F6"},
+  "cleanup": {"containers": "none relevant", "kind_clusters": "none"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded local HTTP timeout integration only; no indefinite operation, HA, cloud-provider certification or full release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
