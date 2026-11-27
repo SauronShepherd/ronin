@@ -103,6 +103,15 @@ class SqliteStreamTable:
     def close(self) -> None:
         self._connection.close()
 
+    def __del__(self) -> None:
+        """Best-effort cleanup for callers that do not retain the table."""
+        connection = getattr(self, "_connection", None)
+        if connection is not None:
+            try:
+                connection.close()
+            except Exception:
+                pass
+
 
 class _PostgresConnectionAdapter:
     def __init__(self, connection: object) -> None:
