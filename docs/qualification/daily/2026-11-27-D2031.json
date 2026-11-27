@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2031",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_BACKPRESSURE_512_POSTGRES",
+  "candidate_sha": "9ad752343c6c6e54ca00d49331a30ff868fd23d5",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2031-live-backpressure-512-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2031-live-backpressure-512-postgres-20261127-01 -StorageBackend postgres -TestGrep 'sustained backpressure' -BackpressureRecords 512 -BackpressureTimeoutSeconds 240",
+  "result": {"playwright": "1 passed; 0 skipped; 0 failed", "backpressure_records": 512, "api_events": "12/12 correlated", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS"},
+  "evidence_hashes": {"browser-live.log": "80281C0EA34ED0CC82ACFA72CFED2F9DF4C53CE23E171676C70EB36885D20249", "browser-live.xml": "2C9AD5D61C41058782337B385DA66BCA8CD3E4B107E1F2AEB466BFC25BED4DAA", "live-api-traffic.json": "59A4574C59073243581B245F9DBD9A2B6F2F74CFC3415E1069BBD5BE745FC43F", "qualification-summary.json": "71A98F4735C4E8FDA0A88DC10536EDB6465FB5563174D2942076FBC51830AF46"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single bounded backpressure case; route-wide audit was not run and this does not certify indefinite operation, HA, cloud providers, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
