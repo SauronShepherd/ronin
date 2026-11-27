@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1959",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "ec81be199929ecbff9f6fdcd6faabcbb613b119d",
+  "implementation_commit_sha": "ec81be199929ecbff9f6fdcd6faabcbb613b119d",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1959-http-domain-surfaces-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_sql_http.py tests/test_ontology_http.py tests/test_quality_http.py tests/test_publication_contract.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "49 passed; 0 skipped; 0 failed", "scope": "SQL, ontology, quality HTTP and publication surface contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "40A4FD06C16440F525B27E042E1B208907AC2CE1DF22C1E7E9DB8E0FE2A786CC", "pytest.log": "22950E298E846D165B7CF507133BC3F7DAC285A63C604095BE33A38C5A911B4A"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local HTTP domain-surface contracts only; no live integration or external-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
