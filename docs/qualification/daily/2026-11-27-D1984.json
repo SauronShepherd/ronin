@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1984",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "4ff3cc6b8138810fbcf344c6181aa223fc3b350c",
+  "implementation_commit_sha": "4ff3cc6b8138810fbcf344c6181aa223fc3b350c",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1984-runner-broker-cancellation-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_asyncio_runner_task_cancellation.py tests/test_runners.py tests/test_runner_broker_compose_topology.py tests/test_runner_broker_security.py tests/test_runner_protocol.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "35 passed; 0 skipped; 0 failed", "scope": "Async runner cancellation/cleanup, runner protocol, broker security and compose topology contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "65623BF2FCD6ACA912172FDA70783BC70E7BC04DEDF9DC6EC6330359D76E03EF", "pytest.log": "96B365A5D576B783A5476B1B46C701298C02FB3DD10F1A8887A99EA18C4A6985"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local runner/backend contracts only; no live multi-worker, hosted provider, indefinite operation or complete release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
