@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1912",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "3bb3ec459c0b9467c7eaeee77d788c50dc32bdc2",
+  "implementation_commit_sha": "3bb3ec459c0b9467c7eaeee77d788c50dc32bdc2",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1912-data-ui-revisions-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_data_engineering_ui.py tests/test_data_engineering_revisions.py tests/test_data_engineering_sdp_adapter.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "10 passed; 0 skipped; 0 failed",
+    "scope": "Data-engineering UI, revisions and SDP adapter contracts"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "0942B54134839521D12942FE0F77AEB8168405BF5C538E7D6AB04DBDEC60E613",
+    "pytest.log": "4164C24E3F5AFF00736AD482461DB61499B752242CA93F5248F0DB37916E579D"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local UI/revision/adapter contracts only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
