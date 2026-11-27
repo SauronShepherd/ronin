@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1833",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "aa7e4a883173a205db55607e665b5451c0771153",
+  "implementation_commit_sha": "aa7e4a883173a205db55607e665b5451c0771153",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1833-python-full-clean-env-20261127",
+  "result": {
+    "pytest": "4712 passed; 90 skipped; 0 failed",
+    "scope": "complete Python regression on current main with process-local GIT_* variables removed",
+    "cleanup": "PASS; no containers or kind clusters created"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "3F4B37C33AE25306DBA3D893BE2F3C3A81E5BAD87CD5C545976B042438110193"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "90 skips are explicit optional-provider, external-service or Windows privilege limitations.",
+    "This is complete Python regression evidence, not hosted-cloud certification, HA, indefinite operation, complete P11 or release approval.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}

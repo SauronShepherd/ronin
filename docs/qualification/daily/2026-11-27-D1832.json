@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1832",
+  "date": "2026-11-27",
+  "status": "NOT_PASS",
+  "candidate_sha": "aa7e4a883173a205db55607e665b5451c0771153",
+  "implementation_commit_sha": "aa7e4a883173a205db55607e665b5451c0771153",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1832-python-full-current-20261127",
+  "result": {
+    "pytest": "4680 passed; 89 skipped; 33 failed",
+    "scope": "complete Python regression attempted on current main",
+    "failure_classification": "process-local GIT_* configuration contaminated Git/VCS, worker and public-status tests; not counted as qualification PASS",
+    "cleanup": "PASS; no containers or kind clusters created"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "0D980EF9659D5A48A0EFA878E69B7A7F5283B84C9ECBC84EAC362132D230EDC9"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This run is retained as NOT_PASS and is not evidence of a product regression.",
+    "D1833 is the corrected clean-environment rerun; no historical evidence is reattributed.",
+    "P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
