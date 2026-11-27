@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1821",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "ae8caf8d41b8996a5e9f9a93f8083f5709a4fe1c",
+  "implementation_sha": "ae8caf8d41b8996a5e9f9a93f8083f5709a4fe1c",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1821-live-max-record-cap-rf1-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1821 --label org.ronin.qualification.run=d1821 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1821-live-max-record-cap-rf1-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1821 -TestGrep 'live streaming max-record cap' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d1821",
+  "result": {"playwright": "1/1 passed", "api_events": "8/8 correlated", "api_ok": 7, "expected_warnings": 1, "unexpected_errors": 0, "cleanup": "PASS", "topology": "single-broker RF1, PostgreSQL, Docker worker"},
+  "hashes": {"browser-live.log": "1F60E7341D52EDC9E9425E8D0C1CADE5AFAEE0C28F0430C1D5FEC175F716BD87", "browser-live.xml": "2AC70405BA9BDE58DC74BF5B1E0C850A06432AA3716F6B5E04CFEC89F7094CE5", "live-api-traffic.json": "866526104C8C46D96862AD74B8B756CEA93490BE08FD1044ABAB4754FB736383", "live-python-freeze.txt": "B376277731C71A2097F31FC2B00F52EFC5D9D41CED7B9CBC0306D205CDE58AF9", "live-server.stderr.log": "5F435FE6B2BFCF0C8B3C7CB087C9AF66A7980339E1B570891E90B04D00D8443F", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "01547E5BCD93E414E2E0E8B294653C9DDFAAC754CE4F1AE97459613CED02D2B5", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded RF1 max-record cap and checkpoint resume qualification; no HA, indefinite soak, SLO, complete P11, or release evidence.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
