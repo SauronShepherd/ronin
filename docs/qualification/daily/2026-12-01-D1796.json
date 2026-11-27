@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1796",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_RF3_FAILOVER_CURRENT",
+  "candidate_sha": "9a1a0046f22fdb0d281becae24ab8d6c4f85490c",
+  "implementation_commit_sha": "9a1a0046f22fdb0d281becae24ab8d6c4f85490c",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1796-live-rf3-current-20261201-rerun\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1796-rf3-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1796-live-rf3-current-20261201-rerun -StorageBackend postgres -WorkerImage ronin:qualification-d1796-rf3-20261201 -MultiBroker -TestGrep 'streaming multi-broker failover' -RequestTimeoutSeconds 240; docker image rm --force f68dc6eb38c295b049aaaed9ceec7555cee8d63d5541d2f7ccb76d13ce86d570",
+  "result": {"status": "passed", "tests": "1 passed, 0 skipped, 0 failed", "brokers": 3, "api_events": 5, "correlated_events": 5, "api_outcomes": {"OK": 5}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "worker_image_digest": "sha256:f68dc6eb38c295b049aaaed9ceec7555cee8d63d5541d2f7ccb76d13ce86d570", "cleanup": "PASS", "elapsed_seconds": 56.06},
+  "evidence_hashes": {"qualification-summary.json": "5353CBFB030031CEE55B89F91EC9D803B8EB1C442DCDE3C8EF1FF904EA51922E", "live-api-traffic.json": "F6A8F361548874380AA3FC2703398257ABC7B7DE7E8DCB5728E5A83B16861867", "browser-live.xml": "26E6A0C9204116EE5F53DA4F2472F6B38DE22B852F6B00F1BB102E8B8AD49D6A", "browser-live.log": "4E15F9AB52DF1E367110DEB713267956A8A036C30FFFD3BB0C6096EDA3A5E7EB", "live-server.stderr.log": "2B693417D05D7023B2EA3BD6F97C17AA0F13F734A7C3F316E28744CD6035227B", "live-python-freeze.txt": "1D13D2708539012F42FDF81E7B496973D9A019CB173B67DE1C08A80DA365E72A", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "initial_attempt": {"status": "not_counted", "reason": "-MultiBroker filter lacked the required streaming selector; no services started"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Failover bounded con tres brokers, PostgreSQL y un worker; no demuestra HA completa, operación indefinida, multi-worker productivo, hosted providers, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
