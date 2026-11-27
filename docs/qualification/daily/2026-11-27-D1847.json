@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1847",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "f9e17517acff205948bec88ebcfb769a133afeef",
+  "implementation_commit_sha": "f9e17517acff205948bec88ebcfb769a133afeef",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1847-postgres-quality-store-20261127",
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL Quality Store durability, scope isolation and chronological ordering integration",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "6E9AF8B4DB50B1FF580731366FAB8E205326EEB362710344157AB4A2571D234E",
+    "pytest-postgres.log": "5736B7A7D71B6DAAFDD75C1A12F6DA0F318CED4D641008C5022B4D592E2732C2",
+    "pytest-postgres.xml": "B091B31E218359B90062198B0DFFB8D528724AD40975F66E36CD61B4CAD5F7EE",
+    "pytest-timings.json": "3BF24F46C61F5225EA714D1B49DC7A5BD57FCA5EB7F838B3F194972AA6D7F59C",
+    "runner-timings.json": "0EB4A3CAD14AE2E99B15404E5C1F3A2D2D1FA0BF7BDB5E71F0534875903F33ED"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test file only; not the complete Python/PostgreSQL suite or complete P11.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
