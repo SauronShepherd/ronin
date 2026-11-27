@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1989",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "e743bad6afa09ae53cd154fcb973e98a63672139",
+  "implementation_commit_sha": "e743bad6afa09ae53cd154fcb973e98a63672139",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1989-scheduler-recovery-notifications-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_scheduler_notifications.py tests/test_scheduler_execution_outbox.py tests/test_scheduler_leadership.py tests/test_scheduler_fencing.py tests/test_scheduler_timeouts.py tests/test_notification_dispatcher.py tests/test_backup_manifest.py tests/test_postgres_backup.py tests/test_sqlite_backup.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "40 passed; 0 skipped; 0 failed", "scope": "Scheduler outbox/notifications, fencing/leadership/timeouts and SQLite/PostgreSQL backup contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "CE79CFAC66D1F1511716105BCFE19C187B125DD5690480C07FEC689176C8FEFE", "pytest.log": "A8A35B8799D6BDEFDB9948C360E1927E61ABCA24A89B408068A60E3388DD0C07"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local bounded scheduler/backup contracts only; no live HA, indefinite operation, hosted provider or complete release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
