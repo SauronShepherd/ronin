@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2049",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_ML_S3_ARTIFACT_FLOCI",
+  "candidate_sha": "ec648b53fcf6b092fd0b71f9f79080580ff17fb6",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2049-docker-ml-s3-artifact-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2049-docker-ml-s3-artifact-current-20261127-01 -TestFilter 'ml_s3_artifact'",
+  "provider": {"name": "Floci", "scope": "isolated S3-compatible local provider", "fixture": "Floci/S3"},
+  "image": {"digest": "sha256:a992cb2b9f5a7519db068a4a16ed36958026def5b3df46fee23b555ad8046dd3", "cleanup": "PASS"},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "cleanup": "PASS", "strict_v01_acceptance": "NOT_RUN_FILTERED_DIAGNOSTIC"},
+  "coverage": "ML durable input/output and unreferenced-artifact retention round trip through S3",
+  "evidence_hashes": {
+    "docker-cleanup.json": "6E6132889DF424F342C799F3A9ACA4E824B4AC8D32D5A24CAD020E84AE0410A4",
+    "docker-pytest-output.log": "D3F1D0D948B466E4F1DFE2F50D105793BC0D25684013DD2455916624723B8C3C",
+    "docker-qualification.log": "C28A86D34D33C07A3DB76292D78608548ABA8ACF20BD93C05DAED6DBE9E0E172",
+    "floci-s3-qualification.log": "8430AC1521A7A9929A20F80872369F9B9F57AE3E8FF8211BA1035D1D9211ABC1",
+    "v01-acceptance.xml": "11D76C249ACA543C9720C85B490A5B937B3F4DED39556AAE29602E1A56A96D4B"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Diagnóstico Docker filtrado de un único flujo ML durable sobre S3-compatible/Floci; no certifica AWS cloud, la matriz completa de proveedores, P13, P11 completo ni release. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
