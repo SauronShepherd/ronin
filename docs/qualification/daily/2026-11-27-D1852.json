@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1852",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "99b5ed34273e8610f89fb45e3964f54e8bb94f19",
+  "implementation_commit_sha": "99b5ed34273e8610f89fb45e3964f54e8bb94f19",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1852-s3-json-20261127",
+  "result": {
+    "pytest": "1 passed; 26 deselected; 0 skipped; 0 failed",
+    "scope": "filtered real S3 JSON connector against Floci object store",
+    "backend": "Floci S3-compatible object store in isolated Docker Compose resources",
+    "cleanup": "PASS; owned Ronin image, Floci container, network and volume removed"
+  },
+  "evidence_hashes": {
+    "docker-cleanup.json": "F29E12D19F71B12B89D248750B3DD4315018AD17A86CA035797F188C9C899888",
+    "docker-pytest-output.log": "215E4BD7A9DDCD7DAFB116B4A263C5743FA99ED4A7990CBE893086B08096D165",
+    "docker-qualification.log": "250C5B583F1B24F956A557667445FB71E6F2ED67A207F20E5DAB0753CA366EB5",
+    "floci-s3-qualification.log": "679C63615E4DA334F20C381630D6585117DC987F43DB70CE333811398C575B49",
+    "v01-acceptance.xml": "9FF2A1AA707F24404563025F4DA84F295D857642FF227C6BAB30236082F3DEE5"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one S3 JSON integration test; 26 tests were deselected and strict v0.1 acceptance was not evaluated.",
+    "This is local S3-compatible evidence, not cloud-hosted provider or external IAM certification.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
