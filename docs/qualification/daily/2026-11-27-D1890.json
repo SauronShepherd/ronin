@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1890",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "7bd9a1205290e57cf98dead1ba89f41517cfb3bc",
+  "implementation_commit_sha": "7bd9a1205290e57cf98dead1ba89f41517cfb3bc",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1890-streaming-regression-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_streaming_runtime.py tests/test_streaming_contracts.py tests/test_streaming_health.py tests/test_streaming_bundle.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "32 passed; 0 skipped; 0 failed",
+    "scope": "Local streaming runtime, contracts, health and bundle persistence/replay regression"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "BD5B09895A39469DF37B662F1E7EC691DC6A2B5DEE941F4D2D848A5AD90705EF",
+    "pytest.log": "09C9CCC14CBABAF76F030EDC42BE0677AAC8196006D511252C1FA80A2F166CE7"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local streaming regression only; no real Kafka/PostgreSQL, hosted provider or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
