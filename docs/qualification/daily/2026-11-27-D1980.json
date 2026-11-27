@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1980",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "abb879fac157d8394170fc949cf8515afbd11130",
+  "implementation_commit_sha": "abb879fac157d8394170fc949cf8515afbd11130",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1980-streaming-health-tables-20261127b",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_streaming_health.py tests/test_streaming_kafka.py tests/test_stream_scheduler_bridge.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "23 passed; 0 skipped; 0 failed", "scope": "Streaming health, Kafka table/local contracts and scheduler bridge"},
+  "evidence_hashes": {"pytest-junit.xml": "BEE807326D8629157485322E3B591716F6F1B4DE95CD9C224FD24B93603293C1", "pytest.log": "54BEBB148444E04A9BAEB8C82BC2AB8FF8C50D461B12E7EE7A2814FBD590F6B8"},
+  "excluded_attempts": ["Initial command referenced nonexistent tests/test_streaming_kafka_table.py and ran 0 tests; excluded from qualification."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local streaming contracts only; no live Kafka/broker certification or external-provider qualification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
