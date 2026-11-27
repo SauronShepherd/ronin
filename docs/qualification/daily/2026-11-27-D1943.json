@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1943",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "e47464d3f6385cc847c292d0ca2d551e41d9d62c",
+  "implementation_commit_sha": "e47464d3f6385cc847c292d0ca2d551e41d9d62c",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1943-scheduler-recovery-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_scheduler_backfill_cancellation.py tests/test_scheduler_backfill_http.py tests/test_scheduler_backfill_runtime.py tests/test_scheduler_backfill_store.py tests/test_scheduler_fencing.py tests/test_scheduler_leader_services.py tests/test_scheduler_leadership.py tests/test_scheduler_execution_bridge.py tests/test_scheduler_execution_outbox.py tests/test_scheduler_pools.py tests/test_scheduler_timeouts.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "60 passed; 0 skipped; 0 failed", "scope": "Scheduler backfill, fencing, leadership, execution bridge/outbox, pools and timeout contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "D89EEA84E98C0869304F13F89C6A21D359F89F9A6F851D3E27A5FBB65119A811", "pytest.log": "9D7341103693AFF602EC1431F1FADA7F85676388B67E059BB620A4532627F94F"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local bounded scheduler recovery contracts only; no indefinite operation, HA or external notification-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
