@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1996",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "816c4ec33d14661d1a709eb367d205b2f6410270",
+  "implementation_commit_sha": "816c4ec33d14661d1a709eb367d205b2f6410270",
+  "production_change": "studio_vcs.git now strips ambient GIT_DIR/GIT_CONFIG_* and credential/prompt overrides before local Git commands; test helpers use the same isolation boundary.",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_git_source.py tests/test_vcs_git.py tests/test_source_control.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "35 passed; 3 skipped; 0 failed", "scope": "Git source adapter, VCS Git capture/branch operations and source-control path contracts"},
+  "skips": ["POSIX executable-mode assertion", "two Windows symlink cases"],
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1996-vcs-production-fixed-20261127",
+  "evidence_hashes": {"pytest-junit.xml": "896FCBEF80DC9419EF0C9E2EEC940C5E3FA247B7DA0EF573F4BCA43D0B0AEF68", "pytest.log": "0E3D0BF466B09A19C660E4E3039EB46A714E9AE2CF87ED0F36EF0C3AC6790882"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This closes the ambient Git configuration failure in affected local contracts; the historical D1917/D1919 evidence remains unchanged and is not reattributed.", "No hosted VCS certification or complete release gate. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
