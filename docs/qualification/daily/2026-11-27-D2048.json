@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2048",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_AZURE_BLOB_AZURITE",
+  "candidate_sha": "b01e9aca6b287bff20554036c0f7dfaa0c7c164f",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2048-docker-azure-blob-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2048-docker-azure-blob-current-20261127-01 -TestFilter 'test_azure_blob'",
+  "provider": {"name": "Azurite", "scope": "isolated Azure Blob-compatible emulator", "fixture": "Azurite/Azure"},
+  "image": {"digest": "sha256:542a551d9e15d3f0a4c0da0d845c7dcbc8773111b7d3aa81a58e7cd9530dd4d0", "cleanup": "PASS"},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "cleanup": "PASS", "strict_v01_acceptance": "NOT_RUN_FILTERED_DIAGNOSTIC"},
+  "evidence_hashes": {
+    "azurite-qualification.log": "AF9E34329893F1D5669BAA5F9BE18BAA7AF3FC3F97C016D309D68EECE7F16C58",
+    "docker-cleanup.json": "C1EBAF9F76D442B4B41CABFD2A2717B927FCC6E0126E5ED393713E697B34DF40",
+    "docker-pytest-output.log": "2AF4BA68C9A79876BD8E8BC34E51CBE3C7621341DF33416FBE051656936EDE93",
+    "docker-qualification.log": "2FBE8AB96C89596D98285BE25677A8F99BAEC11D0CC13C5323A3E8C2C9E12ED5",
+    "v01-acceptance.xml": "3C1A51F39DE9AA70ED0192195B1F42CE931F8DE1B5201F1E4687C903994A5728"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Diagnóstico Docker filtrado de un único round-trip Azure Blob JSON contra Azurite aislado; no certifica Azure cloud, la matriz completa de object stores, P13, P11 completo ni release. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
