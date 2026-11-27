@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1978",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "b03e2d0a6abc64f74e4b552f2f6982a8c880a175",
+  "implementation_commit_sha": "b03e2d0a6abc64f74e4b552f2f6982a8c880a175",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1978-migration-benchmark-contract-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_migration_studio_benchmark.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "5 passed; 0 skipped; 0 failed", "scope": "Local Migration Studio benchmark-contract tests; not a performance gate"},
+  "evidence_hashes": {"pytest-junit.xml": "8FCE28A3800B8B6630066F096FC3202AF25CBFD14EC7641C1F69EC2B5E432144", "pytest.log": "3CF7E22155C08FDE5C45E28D1AD247DCFF5B545F7B7BB91E1D65A15A45BB89BB"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is a local contract lane, not a performance gate or indefinite-load certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
