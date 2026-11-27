@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2101",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_BROKER_RESTART_CHECKPOINT_CURRENT",
+  "candidate_sha": "e911e398659ffd6fbd2871b606a26ffcdca9b1fe",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2101-live-broker-restart-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2101 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2101-live-broker-restart-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2101 -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d2101",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 11, "correlated_events": 11, "api_outcomes": {"OK": 8, "ERROR": 3}, "expected_errors": "3 x HTTP 503 streaming_unavailable while broker was intentionally stopped", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors": 3, "log_critical": 0, "cleanup": "PASS", "elapsed_seconds": 79.32},
+  "evidence_hashes": {"qualification-summary.json": "C24F6A6307518091F33B7FCB1F4D2FCF7BBE50ECFD89D471D1B50E4FF039EC28", "browser-live.log": "E0323E1D520639B4A55D6C1B79D8265A572AB478EF98692B9F52138554D72867", "browser-live.xml": "D859958BDB946EE2F9C4F2846152026F747B922C9134EB8B2A9708F122AAFAFF", "live-api-traffic.json": "3AF80C62B74C4BD258FE0252C99FB5AF2169B1E86243892DFE90A46386ECC84B"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused single-broker restart diagnostic; expected 503s are intentional and classified. Not indefinite operation, HA, multi-worker, complete P11 or release approval. No historical evidence is reattributed."]
+}
