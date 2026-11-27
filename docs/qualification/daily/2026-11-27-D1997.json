@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1997",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "274140c1bd71c1b827cdbaa5a9b45c8919ba2fb9",
+  "implementation_commit_sha": "816c4ec33d14661d1a709eb367d205b2f6410270",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_git_source.py tests/test_vcs_git.py tests/test_vcs_source.py tests/test_source_control.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "46 passed; 4 skipped; 0 failed", "duration": "33.53s", "scope": "Expanded Git source, VCS Git, VCS source and source-control regression after ambient-config isolation fix"},
+  "skips": ["POSIX executable mode", "three Windows symlink cases"],
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1997-vcs-expanded-20261127",
+  "evidence_hashes": {"pytest-junit.xml": "90C4F2966ACD772705654D9C8C29A753B3184DD0176EC07802CA7F02F5EF99C1", "pytest.log": "EAC5F930B60D4CE15529BA5BC4B21E6DE97CA8B44AB261200562A50DB7B2C6C1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local VCS regression only; no hosted VCS certification or complete release gate. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
