@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2064",
+  "date": "2026-11-27",
+  "status": "PASS_HELM_KIND_POSTGRES_RECOVERY",
+  "candidate_sha": "47e52a4a2358b9b720ff00b9d418fdf2c4906b29",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2064-helm-postgres-current-20261127-01",
+  "command": "docker support: tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2064-docker-helm-current-20261127-01 -ImageTag ronin:qualification-d2064 -KeepImage; Helm: tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2064-helm-postgres-current-20261127-01 -ImageRef ronin:qualification-d2064 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2064-docker-helm-current-20261127-01 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55475/ronin -PostgresContainerName ronin-d2064-postgres",
+  "services": {"postgres": true, "kind": true},
+  "fixture": {"helm_version": "v4.3.1+gc0d08d0", "postgres_image": "postgres:16.4-alpine", "ronin_image": "sha256:404a5b3151fc82c4b99e596d14fa5cb93d8dac87e580a7d6dbb4530abe67a079"},
+  "result": {"helm_lint": "PASS", "secret_boundary": "PASS", "install_readiness": "PASS", "upgrade_revision": 2, "rollback": "PASS", "health_http": 200, "studio_http": 200, "authorized_jobs_http": 200, "persistent_job_create": "PASS", "postgres_restart_recovery": "PASS", "deployment_restart": "PASS", "persistent_job_after_restart": "PASS", "docker_strict": "15/15", "cleanup": "PASS"},
+  "evidence_hashes": {
+    "helm-qualification.json": "D7645AB448BE8CB2FFFE9A7F3A80B8CDC0950B50AD5A849452492FFB8B68C307",
+    "helm-qualification.log": "9E3DE0A0D8CE7DE8133D25526BC61BD626EAF82A797C13A61C4D7FC8DABBD2FD",
+    "kubernetes-resources.txt": "577008F66EAB4C89E4EA4618239143F973831ED7D78D2825B336111ABC5A196B",
+    "docker-cleanup.json": "7721992D47ED5D318E3F3879ED4AE62D165EC7786624E76D8F97DB8E0294A3E3",
+    "docker-pytest-output.log": "3E85CF78D28BB6A5EFDA4C268B8ECF77F5E44A9B8CBB70B5DC50B3110BF2C1D0",
+    "docker-qualification.log": "A3C611CD45282FDA723F7036CDD3119082DD95DA1CBFE1CB4A1BE7A5D6E6DBA2",
+    "qualification-summary.json": "9FBECD43555DEAD72FE5972467EFDBC9A3A693A803D23CAEA57D03CEAD665221",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "8B6AFC82E4D2DFF58650D719E4A187058F99B7884DD92191B1A4D9DE68772F01"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación Helm/kind bounded single-replica con PostgreSQL real aislado; no certifica HA, multi-worker, operación indefinida, cloud providers, P11 completo ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
