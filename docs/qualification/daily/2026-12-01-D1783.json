@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1783",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_BACKPRESSURE_16384_CURRENT",
+  "candidate_sha": "3d1a942c30c4d42b904edb3344539603b0b50eae",
+  "implementation_commit_sha": "3d1a942c30c4d42b904edb3344539603b0b50eae",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1783-live-backpressure-16384-worker-postgres-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1783-live-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1783-live-backpressure-16384-worker-postgres-20261201 -StorageBackend postgres -WorkerImage ronin:qualification-d1783-live-20261201 -TestGrep 'live streaming sustained backpressure drains configured records with reset-safe replay' -BackpressureRecords 16384 -BackpressureTimeoutSeconds 600 -RequestTimeoutSeconds 180; docker image rm --force ronin:qualification-d1783-live-20261201",
+  "result": {"status": "passed", "configured_records": 16384, "tests": "1 passed, 0 skipped, 0 failed", "api_events": 13, "correlated_events": 13, "api_outcomes": {"OK": 13}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "worker_image_digest": "sha256:0e280a278b5a54b9e36e2f8142b0f70d1eb3a8418dcf88c95eaae2ac6ea2bbc6", "cleanup": "PASS", "elapsed_seconds": 169.57},
+  "evidence_hashes": {"qualification-summary.json": "589F6BBFB112F783DA8D33A57B6C5EE2AD157FEAE0DA832A04E45C22A73856CF", "live-api-traffic.json": "48AAD75096525AB186AAC73FAB3298D22CDD2F8201087AB8BAAC26E2ACF82579", "browser-live.xml": "C2314FE613E9BC789E424BC557674CF549DA547A77F8181B115995EEC46229E0", "browser-live.log": "28B51655A8EF99F92A8862587EF740DB0509CD94BB6761D972537476D39F46DB", "live-server.stderr.log": "3B52212E58C9FA7570E557A8592E64B6B46CED692FC88AD31BD3D93498FE0C17", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-python-freeze.txt": "7DFA309427F3A8647A6D6A91B9C80234B2498334AED1C36553D8447E5497B902", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded 16,384-record live pressure run with one broker, PostgreSQL and one Docker worker; it does not prove indefinite operation, HA, multi-worker production qualification, complete P11 or release approval. No historical evidence reattributed."]
+}
