@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1746",
+  "date": "2026-11-30",
+  "status": "NOT_PASS_SETUP_FAILURE",
+  "candidate_sha": "80f06dde8f5844defb1c6f62b30723122d10dc3b",
+  "implementation_commit_sha": "80f06dde8f5844defb1c6f62b30723122d10dc3b",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1746-live-rf3-broker-restart-worker-postgres-current-20261130\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1746 --label org.ronin.qualification.run=d1746 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1746-live-rf3-broker-restart-worker-postgres-current-20261130 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d1746 -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 120; docker image rm ronin:qualification-d1746",
+  "result": {"tests": "0 executed, 0 passed, 0 failed", "failure_phase": "seed live data and start Ronin server", "failure": "Could not seed the isolated live Kafka stream fixture", "api_events": 0, "cleanup": "PASS after manual removal of the surviving broker container and network"},
+  "evidence_hashes": {"qualification-summary.json": "39DF0CBF70517670526AEE47D78554C9E1BE8531CFC346510CCFEEC42DA1D1A2"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No test case or API event ran; this is a setup failure, not qualification evidence.", "The RF3 broker-restart lane remains unqualified for this candidate. No historical evidence is reattributed."]
+}
