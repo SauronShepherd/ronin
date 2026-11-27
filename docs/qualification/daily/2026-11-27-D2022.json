@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2022",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "c0e9377d352db408b22dd0841e52e4724339e03f",
+  "implementation_commit_sha": "c0e9377d352db408b22dd0841e52e4724339e03f",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2022-worker-lease-contracts-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_worker_runtime.py tests/integration/test_worker_runtime_contention.py tests/test_fenced_sqlite_job_store.py tests/test_storage_fenced_legacy_calls.py tests/test_orchestrator_lease_instants.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "35 passed; 0 skipped; 0 failed", "duration": "8.38s", "scope": "Local worker lease/heartbeat contracts, contention, fenced SQLite job store, legacy-call rejection and lease instants"},
+  "evidence_hashes": {"pytest-junit.xml": "6995033DBAE8FB6A6972740AF350AB270DDD3A66A2C4B3015D17E3409C7CD204", "pytest.log": "854A4F46AA68824D109736E58126BAB9645D28D324F0A3ACBABDC204309AB0E1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local lease/heartbeat contracts only; D2021 Trino/SIGKILL replacement-worker NOT_PASS remains unresolved. No hosted provider, indefinite operation or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
