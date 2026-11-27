@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1902",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "ade8e8f7f3eef12117839e8a58eb4f6191784ee0",
+  "implementation_commit_sha": "ade8e8f7f3eef12117839e8a58eb4f6191784ee0",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1902-http-submit-status-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_http_submit_status.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "8 passed; 0 skipped; 0 failed",
+    "scope": "Public HTTP/SDK submit, status, events, SQL typing/limits, authorization and idempotency contract suite"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "9DABBCC53A0FAC3E0141CDB699060EA107CFF67D9389C63DA983A0FE6C06A7C9",
+    "pytest.log": "ED2F922AC224D1EC3F9478E6BA589603422805DF012CF1A9865CFDB17B24BC60"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local HTTP/SQLite/SDK contract evidence only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
