@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2030",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_EMPTY_PARTITION_HEALTH_POSTGRES",
+  "candidate_sha": "5c212f5cf6e7beaecff682111a8de2b4089bd024",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2030-live-empty-partition-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2030-live-empty-partition-postgres-20261127-01 -StorageBackend postgres -TestGrep 'live streaming health reports an empty partition' -SupervisorSoakSeconds 60",
+  "service": {"postgres": "isolated Docker service", "broker": "single-broker Redpanda fixture"},
+  "result": {"playwright": "1 passed; 0 skipped; 0 failed", "api_events": "4/4 correlated", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS", "assertion": "empty partition reports health without false lag"},
+  "evidence_hashes": {"browser-live.log": "F9A1879FAF493E23F3D29E2A0AAD66DC21429A92E4540D7621B1EF5F5F2B5B88", "browser-live.xml": "5E6C8D963C84D326C121048828BE34F730A095D2CF35ADDF5EBF0C5F5D56ABB1", "live-api-traffic.json": "21F0A145BA4E7EE576C65BD25E588D0EA2E6C92498C7873C431D4F3AB7134DAB", "qualification-summary.json": "674110AACB11BE9E9345807E98BF337DA7C270000231A208D2C02FA3711D27D8"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single bounded live health case; route-wide audit was not run and this does not certify indefinite operation, HA, cloud providers, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
