@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1945",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "1863374d92c01144a4cbf88cda7728a33856bfa8",
+  "implementation_commit_sha": "1863374d92c01144a4cbf88cda7728a33856bfa8",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1945-scheduler-state-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_scheduler_branch_state.py tests/test_scheduler_branching.py tests/test_scheduler_cancellation.py tests/test_scheduler_events.py tests/test_scheduler_sql.py tests/test_scheduler_store_branch_decisions.py tests/test_stream_scheduler_bridge.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "33 passed; 0 skipped; 0 failed", "scope": "Scheduler branch state/decisions, cancellation, events, SQL and stream bridge contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "5276760ECEFC9F9ECAC4C66A195EE64057DF7DAFFE7B8E5D37366B3E96306B5E", "pytest.log": "F01438536E6BD3574F1D8BEB8C88B92678FB5DF0B7F76DE7EDD8A0C19E543246"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local bounded scheduler state contracts only; no indefinite operation, HA or external provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
