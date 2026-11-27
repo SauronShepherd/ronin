@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2116",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_BROKER_RESTART_CURRENT",
+  "candidate_sha": "0a8b4a87e14d57817ef3dd188cf9d00797bd73f4",
+  "implementation_commit_sha": "ba8ecd5f232ed1e369f206b96ffe1e350f5af992",
+  "production_change_boundary": "ba8ecd5f232ed1e369f206b96ffe1e350f5af992",
+  "production_change": "SqliteStreamTable best-effort destructor cleanup; affected regressions 20/20 PASS",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2116-live-broker-restart-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2116 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2116-live-broker-restart-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2116 -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2116",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 11, "correlated_events": 11, "api_outcomes": {"OK": 8, "ERROR": 3}, "expected_errors": "Three HTTP 503 streaming_unavailable responses during intentional broker stop", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 3, "cleanup": "PASS", "elapsed_seconds": 36.06},
+  "evidence_hashes": {"qualification-summary.json": "D30D28C7E28E9B953CBFF780494AC26575B9C8CBAB8D500EC108CFC9CF44F6EC", "browser-live.log": "28E11B8B204110A96B4F5FF75FD4CC50F98CC2D9825538E4F0B1564851822E99", "browser-live.xml": "98B8333585B6C2E0FD7223FCA69871F2211DD467946E535388C6976A76465A18", "live-api-traffic.json": "9F67F8C4EE8E90DF56CF2E91844B8CC55A55127B2A8336FE8C7987CAE751CA3C"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded single-broker restart/checkpoint diagnostic; expected 503s are retained, not hidden. No indefinite operation, HA, hosted provider/IAM certification, complete P11 or release approval."]
+}
