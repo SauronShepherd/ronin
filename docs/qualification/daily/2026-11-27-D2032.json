@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2032",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_BROKER_RESTART_POSTGRES",
+  "candidate_sha": "3d4d073528573c43e81b39a3a8c4c7579f5b85fa",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2032-live-broker-restart-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2032-live-broker-restart-postgres-20261127-01 -StorageBackend postgres -TestGrep 'live streaming broker restart' -SupervisorSoakSeconds 60",
+  "result": {"playwright": "1 passed; 0 skipped; 0 failed", "api_events": "11/11 correlated", "api_event_outcomes": "8 OK; 3 expected interruption ERROR events", "log_errors_or_critical": 3, "cleanup": "PASS", "assertion": "stream resumes from durable checkpoint after broker restart"},
+  "evidence_hashes": {"browser-live.log": "D1B31FD85DB5538CDB397AD7177D0904B59CF6B0237634643ACFF1EF13F91DB1", "browser-live.xml": "B19EC1E059674038959B55D1601FFFE8412B866B96FA555A7E681B8800C90DDA", "live-api-traffic.json": "2310CE5EB353DE1974074043733E40B23E07496828838295DA198009BDE3DE27", "qualification-summary.json": "E374BBA6199B4EFAEC707BD37DF6A95D95344CDA514F5F5720F031AC7EA43B62"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single bounded broker-restart case; expected interruption errors are present and route-wide audit was not run. This does not certify zero-error failover, indefinite operation, HA, cloud providers, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
