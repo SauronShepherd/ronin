@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2017",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_QUALITY_FINOPS_CATALOG",
+  "candidate_sha": "61365525ab12ddd79840c12b78807f63e38b50b8",
+  "implementation_commit_sha": "61365525ab12ddd79840c12b78807f63e38b50b8",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2017-postgres-quality-finops-catalog-rerun-20261127",
+  "command": "$env:RONIN_TEST_POSTGRES_DSN='postgresql://postgres:ronin@127.0.0.1:55442/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_quality_store.py tests/integration/test_postgres_finops_real.py tests/integration/test_postgres_catalog_store.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "3 passed; 0 skipped; 0 failed", "duration": "1.96s", "scope": "Real PostgreSQL Quality store durability, FinOps idempotent pricing/budget persistence and Catalog governance/revisions/lineage"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55442", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "DC6396AD638598C92F6B0E3559A17F55D91F73C2B3AC8D61475F32F8010B990B", "pytest.log": "1D5CC7122CEAC53364CB4E1D626BF4961C1BBFC99B15DE4DD617CD55830C6EB0", "postgres.log": "61609F8C381B34416DD7F7C88B643C355243DCCAC7385E25D199C11D66185829", "docker-cleanup.log": "C2DE6E8A766C0B7B950FE7ED5C62F166DACEB0105882C2B8BA3EE6E9AFC28026"},
+  "excluded_attempt": {"evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2017-postgres-quality-finops-catalog-20261127", "reason": "suite requires RONIN_TEST_POSTGRES_DSN; initial run used RONIN_POSTGRES_TEST_DSN and produced 3 skips", "pytest_log_sha256": "D6B431A80C0161B6407670B1BCBA57BE272D63D4DB62F09D1CE47B58D5765CC8"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL Quality/FinOps/Catalog integration only; no provider hosted, indefinite operation, HA, multi-worker or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
