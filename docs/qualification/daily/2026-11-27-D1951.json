@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1951",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "6caaf8ac883122db549658f26f7489960ca58407",
+  "implementation_commit_sha": "6caaf8ac883122db549658f26f7489960ca58407",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1951-workspace-project-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_project_configuration.py tests/test_project_manifest_survivor_boundaries.py tests/test_project_manifest.py tests/test_project_ui_contract.py tests/test_project_workspace_survivor_boundaries.py tests/test_projects.py tests/test_source_control_survivor_boundaries.py tests/test_workspace_plugin_events.py tests/test_workspace_plugin_ports.py tests/test_workspace_project_services.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "142 passed; 0 skipped; 0 failed", "scope": "Project/workspace configuration, manifests, UI, source-control boundaries and workspace services contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "FA198696401193F06B0B020A07A53455AF7E03AFAE0D59045756E84F7E3CC51A", "pytest.log": "7217656ABEE8179BCBF7C91B6F1BD66D389D232611785BD548B3BA1866D965D1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local workspace/project contracts only; Git full-suite instability and live HTTP integration remain separate evidence lanes.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
