@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1812",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "b74db68aa9c3d0334148b59a3f4297f7d6492ddc",
+  "implementation_sha": "b74db68aa9c3d0334148b59a3f4297f7d6492ddc",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1812-live-broker-restart-rf1-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1812 --label org.ronin.qualification.run=d1812 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1812-live-broker-restart-rf1-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1812 -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d1812",
+  "result": {"playwright": "1/1 passed", "api_events": "11/11 correlated", "api_ok": 8, "expected_errors": 3, "unexpected_errors": 0, "cleanup": "PASS", "topology": "single-broker RF1, PostgreSQL, Docker worker"},
+  "hashes": {"browser-live.log": "E54DFB058492736F9097FDB78904E7A15866AC3C9A1552CE7BD584305934F9F5", "browser-live.xml": "6B486F6E11414A3498218E3C73A1F63C8CF609F6143EDE83505F3CA400E25728", "live-api-traffic.json": "281ACD71DB00F18C2FD4F85E98C5773A49E6775C6CF43C5DEE0F8360D4CCC360", "live-python-freeze.txt": "CAA57D1D1BA36B9929D4727F43ACA78E7E8CF82922F576A906C36AF0AFC4AE29", "live-server.stderr.log": "2E143A1996645A85F09893E2708A5424DB671EA99C99E628E07890F2706C6D90", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "E57ADC5BCE1AC0F18D24D79B08E65C88F15140FD3E494ECE91840987F7DB627C", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded single-broker restart recovery qualification; it does not provide RF3 HA, indefinite soak, SLO, complete P11, or release evidence.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
