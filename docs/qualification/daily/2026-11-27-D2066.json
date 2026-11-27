@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2066",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_RF3_MULTIBROKER_FAILOVER",
+  "candidate_sha": "27857b7c89cf6f8c8504a21cecb61ddf32460d28",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2066-live-rf3-multibroker-postgres-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2066-live-rf3-multibroker-postgres-current-20261127-01 -StorageBackend postgres -TestGrep 'live streaming multi-broker failover' -MultiBroker -RequestTimeoutSeconds 240",
+  "services": {"postgres": true, "redpanda_brokers": 3, "ronin_api": true},
+  "fixture": {"replication_factor": 3, "multi_broker": true},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 70.93, "api_events": 5, "correlated_http_logs": 5, "uncorrelated": 0, "outcomes": {"OK": 5}, "application_logs": {"INFO": 7, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "A097856DB48F013B952F256FC6E04574F2366ED3E5FFD609E8B999FE17DC8120",
+    "browser-live.xml": "C323DDBBCABC3DEA4A1BAA701C5620B597E50C1202D312A29A9DCD679D7737C7",
+    "live-api-traffic.json": "5460BC0723D562BC4FF1284872E5A0DC28EC7D7EA23232D0D3D64688B3247C95",
+    "live-python-freeze.txt": "5DC206563B6460C96B235BB6B69391F4D468D122BDA969A2671D8626426E469A",
+    "live-server.stderr.log": "E87B67EFA847B6851161025A0D60C488330EC19EFF6BE436B177E353C41050E4",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "5DF4AA15735604BEF7E6A8A8919F417FB87AA178032A6FCBA9158AD198775742",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Celda filtrada y bounded de failover RF3; no certifica HA indefinida, operación multi-worker, cloud providers, P11 completo, P13 ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
