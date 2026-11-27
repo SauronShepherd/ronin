@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2088",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_REPRODUCED_TWO_PARTITION_BACKLOG",
+  "candidate_sha": "631e98107fc6d694019f00b1898c287e9b497cbc",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2088-live-two-partition-backlog-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2088-live-two-partition-backlog-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2088 -TestGrep 'live streaming drains a two-partition backlog' -RequestTimeoutSeconds 180",
+  "result": {"tests": "0 passed, 0 skipped, 1 failed", "failure": "tests/product-live.spec.mjs:1495 expected runAttempts < 40, received 40", "api_events": 82, "correlated_events": 82, "api_outcomes": {"OK": 82}, "cleanup": "PASS"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Evidence is bound only to candidate 631e9810; no historical evidence is reattributed. The qualification image was removed after the run."]
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2089",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_TWO_PARTITION_BACKLOG_FIXED",
+  "candidate_sha": "7c468481d1c628a6d1f9cd75192c77254808a278",
+  "implementation_commit_sha": "7c468481d1c628a6d1f9cd75192c77254808a278",
+  "production_change_boundary": "7c468481d1c628a6d1f9cd75192c77254808a278 changes Kafka bounded polling: after records arrive, subsequent fills are non-blocking; prior D2087/D2088 evidence remains bound to 631e9810.",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2089-live-two-partition-backlog-worker-postgres-fixed-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2089 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2089-live-two-partition-backlog-worker-postgres-fixed-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2089 -TestGrep 'live streaming drains a two-partition backlog' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d2089",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 78, "correlated_events": 78, "api_outcomes": {"OK": 78}, "log_errors_or_critical": 0, "cleanup": "PASS", "records": 64, "run_attempt_bound": "passed"},
+  "regressions": {"command": "python -m pytest tests/test_streaming_kafka.py tests/test_streaming_runtime.py -q", "result": "29 passed"},
+  "evidence_hashes": {"qualification-summary.json": "9EF9231FABC347B987F072E4DA9DEBADFAAA2A0E6FF1C6CA0AB540A37A6FC7D6", "browser-live.log": "593AF62074A6A10CC42F1986CE33227D5486FEA06C43616380263AED0F34427E", "browser-live.xml": "B61D909BAF4AE5A1D9AA68D444779250CB252A8EDC70F308087A74B70115A840", "live-api-traffic.json": "F7DF05A2FA6DA71140B4B582F7AD39D4A58EA1E2C828466B63662B69B1FDA214"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused live diagnostic, not route-wide release qualification; no hosted cloud/IAM certification. P11 remains in_progress, P13 blocked and release NO-GO."]
+}
