@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1971",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_INTEGRATION",
+  "candidate_sha": "9f6fc961612068a51838a86163617f08f603ea7c",
+  "implementation_commit_sha": "9f6fc961612068a51838a86163617f08f603ea7c",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1971-http-control-plane-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_http_json_control_plane_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "1 passed; 0 skipped; 0 failed", "scope": "Bounded real HTTP JSON control-plane integration lane"},
+  "evidence_hashes": {"pytest-junit.xml": "A0BB153B42B9582D58AA30E8F7E8418995B772F98680BBCD30DDB909D05F6891", "pytest.log": "0B400B9CAE083028859563F2D2FC0A6F22AD3293C9971A2F1E2ACEFEA1D04196"},
+  "cleanup": {"containers": "none relevant", "kind_clusters": "none"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded local HTTP control-plane integration only; no indefinite operation, HA, cloud-provider certification or full release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
