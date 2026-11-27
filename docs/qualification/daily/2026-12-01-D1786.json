@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1786",
+  "date": "2026-12-01",
+  "status": "PASS_SPARK_CONNECT_PROVIDER_CURRENT",
+  "candidate_sha": "78593c1f9efe6b078fa9b07438d6ca423d09d9eb",
+  "implementation_commit_sha": "78593c1f9efe6b078fa9b07438d6ca423d09d9eb",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1786-spark-connect-provider-current-20261201-rerun\\qualification.json",
+  "command": "docker pull apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1786-spark-connect-provider-current-20261201-rerun -ImageRef sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59; docker image rm --force 84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "result": {"status": "passed", "service": "Spark Connect 4.2.0", "client": "pyspark-client 4.2.0", "image": "apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59", "tests": "1 passed, 0 skipped, 0 failed; 2 deselected", "cleanup": "PASS", "elapsed_seconds": 19.378},
+  "evidence_hashes": {"qualification.json": "3387E73D3DE3755D1B95F50A6D8187C43DAFABC48D7313AF7B78624FEEC573EF", "qualification.log": "88B3ADD4A00FE86EFE5A4F449106FFE9D42294659145E901061D7B6D3CDC2CCA", "spark-junit.xml": "C21E2F4C719E5EE29D7D9B2FD787A869155C79481381738B30F83BF8F06A5007", "pytest-timings.json": "D60D7F952FAE22AC6DC527ACDC5DBFD528A5B2B41D73BF5125D93DA0DB3CEFB2", "spark-container.log": "7B5DCA73A3CD0D8F3ED66AB1528831B4426251F3768A49AC1A89A4E9DC484E48", "pyspark-client-install.json": "04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97"},
+  "initial_attempt": {"status": "not_counted", "reason": "digest-only image was not local; no service started", "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1786-spark-connect-provider-current-20261201\\qualification.json"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación de Spark Connect local aislado y fijado por digest; no certifica Spark hospedado, SDP externo, SLA de producción, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
