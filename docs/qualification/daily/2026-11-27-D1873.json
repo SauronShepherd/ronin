@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1873",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "43d19bf76d62041fe7b9980c31ee5f5cf386e12e",
+  "implementation_commit_sha": "43d19bf76d62041fe7b9980c31ee5f5cf386e12e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1873-trino-provider-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_trino_qualification.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {
+    "pytest": "4 passed; 0 skipped; 0 failed",
+    "scope": "real Trino 484 provider: prepared scalar bindings, byte-budget boundary, terminal evidence persistence and worker SIGKILL reclaim",
+    "image": "trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f",
+    "cleanup": "PASS; Trino container and digest-pinned image removed"
+  },
+  "evidence_hashes": {
+    "pytest-timings.json": "A8BD1DF5DA64FB38AAD8C445D16355D8D3B2FA78983F19C282A661D7135865EA",
+    "qualification.json": "6E3D41C6D6FD4C1D1FCBDAB118218DB823EB2EA832EFF429B4A5F02C12F13F0F",
+    "qualification.log": "54AFE63B035116D4373380319E8BDF42887019420AB0F11FC062204212D6169C",
+    "trino-container.log": "EC655B44C9C257D7F2A8E86DCF8720F1A7C9E06883C503F5BAFA515266644DF1",
+    "trino-junit.xml": "0B492A55248E3F682C6ADEDE84B627461A942B0AA019324628B0EE39290830AA"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded local Trino provider evidence, not hosted Trino/cloud-provider certification, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
