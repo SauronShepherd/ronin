@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1941",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "1760558204988fdd5b607274c66dfdf05b024b8a",
+  "implementation_commit_sha": "1760558204988fdd5b607274c66dfdf05b024b8a",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1941-ui-governance-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_govern_studio_application.py tests/test_govern_studio_formats.py tests/test_backfill_ui_contract.py tests/test_context_bar.py tests/test_discovery_pages.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "23 passed; 0 skipped; 0 failed", "scope": "Govern Studio, formats, backfill UI, context bar and discovery-page contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "1872A44055EF0722BD39BA5BE6E5AE7A8994FC31E30CC99983726FBADFA82A37", "pytest.log": "39B31244F73EDD5970438BE24BAA4892161624E3DDDA916814416C2D77DCBD10"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local UI/governance contracts only; no complete visual review or production browser qualification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
