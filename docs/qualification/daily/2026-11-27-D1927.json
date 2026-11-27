@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1927",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "16f0d7e5150cd20c2fa9a249dc4d5a1ee4ffaf4e",
+  "implementation_commit_sha": "16f0d7e5150cd20c2fa9a249dc4d5a1ee4ffaf4e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1927-ledger-recovery-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_policy_actions.py tests/test_kernel_event_ledger_recovery.py tests/test_bundle_multi_object_import.py tests/test_bundle_multi_object_commit.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "29 passed; 0 skipped; 0 failed", "scope": "Policy actions, kernel event-ledger recovery and bundle multi-object recovery contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "CBF140FFF46AEA2FA254A8029FBBDF77C8013B1DE61836C67B76C68D11C4B250", "pytest.log": "DE67AAC7AEE677E66754F82B1EBF58F9BEEA47AC936EB1E92B7934F93CF1C9FD"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local recovery contracts only; no live multi-node or external-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
