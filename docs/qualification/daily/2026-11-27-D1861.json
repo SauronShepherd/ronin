@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1861",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "59ef6aedd14fa133df14a9d7f34799204174a7f5",
+  "implementation_commit_sha": "59ef6aedd14fa133df14a9d7f34799204174a7f5",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1861-live-rf3-failover-postgres-20261127",
+  "result": {
+    "playwright": "1 passed; 0 skipped; 0 case failures",
+    "scope": "filtered live RF3 multi-broker failover resumes from durable checkpoint",
+    "api_events": "5/5 correlated structured HTTP events; 5 OK; 0 unexpected authorization gaps; 0 unexpected server/network errors",
+    "topology": "real PostgreSQL, three Redpanda brokers, Ronin API and Chromium",
+    "cleanup": "PASS; PostgreSQL, brokers, volume and network removed"
+  },
+  "evidence_hashes": {
+    "browser-live.log": "91DFE78FB3388933D4F57DC0DBC615D71611D14F8C26E1A22D27861FA3379F0E",
+    "browser-live.xml": "EB642EFFC8CF6166EEBEDE0F339947AF3071938E5D1BC6DC28F2B4E4C58EBF98",
+    "live-api-traffic.json": "317B2709CF88B04C723534F479DD3689FCFD00C5F252614F0FAD1F773A3D8EF6",
+    "live-python-freeze.txt": "F509A847060B81584CB30BB4A5AB6616DF2029CF1AEC77036F9DAF04BE14AEE9",
+    "live-server.stderr.log": "1C7BCFD8E9FCBDF1CCE13634240DD7F9813AEAA34A347C429E1051D70B6519BB",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "E6617567F2134878AA2E7FE7F7B3210C0B227FB37125AF7FDB380650A53DFE4C",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered single Playwright live case; route-wide audit, indefinite operation, HA/SLO, complete P11 and release approval remain open.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
