@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1775",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_NOTEBOOK_DOCKER_WORKER_POSTGRES_CURRENT",
+  "candidate_sha": "f499bff657597e263b91192707dcdfe52ac0c6ed",
+  "implementation_commit_sha": "f499bff657597e263b91192707dcdfe52ac0c6ed",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1775-live-notebook-worker-postgres-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1775-live-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1775-live-notebook-worker-postgres-20261201 -StorageBackend postgres -WorkerImage ronin:qualification-d1775-live-20261201 -TestGrep 'live Notebook Studio creates, versions and executes a notebook on a Docker worker' -RequestTimeoutSeconds 180; docker image rm --force ronin:qualification-d1775-live-20261201",
+  "result": {"status": "passed", "tests": "1 passed, 0 skipped, 0 failed", "api_events": 18, "correlated_events": 18, "api_outcomes": {"OK": 18}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 51.64},
+  "evidence_hashes": {"qualification-summary.json": "3F06E4862268632D28F62FEBEE16DF0E25E5D7E35651D7D607CCD826715C2B6D", "live-api-traffic.json": "13C8767F952FC157156CE2F95A322CEEA2EF3CB0045ECF922550F1E9E99CDF75", "browser-live.xml": "C094345B221E6256418FA193A2DFBE5754AD585DFAA6747F3625B114E0C162F2", "browser-live.log": "AC2A638A05493A45C4212B047559FEB418CC3CD5AE76A3A6C8D6747F3147AECE", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live Notebook Studio diagnostic with one Docker worker and PostgreSQL; bounded runtime/backend evidence only, not multi-worker, indefinite operation, complete P11 or release approval. No historical evidence reattributed."]
+}
