@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1911",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "57e7a2ace0b1967956c9156109f1d35d22664353",
+  "implementation_commit_sha": "57e7a2ace0b1967956c9156109f1d35d22664353",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1911-data-plugin-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_data_engineering_plugin.py tests/test_data_engineering_ide.py tests/test_data_engineering_debugger.py tests/test_data_engineering_lineage.py tests/test_data_engineering_compilations.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "40 passed; 0 skipped; 0 failed",
+    "scope": "Data-engineering plugin, IDE, debugger, lineage and compilation contracts"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "210E0C68AF4E0D3562DAC8332510090B05BFE37EB059B9DF5BF238F34969F786",
+    "pytest.log": "EB4F2CEE248648CCD5B1C244C5E9D5077DEFCD7F01F3F9EDFEE20909C18D8D5C"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local plugin/IDE/debug/lineage contracts only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
