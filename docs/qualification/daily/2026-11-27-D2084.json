@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2084",
+  "date": "2026-11-27",
+  "status": "PASS_PYTHON_POSTGRES_FULL_CURRENT",
+  "candidate_sha": "530b4754d479f0ffa76c751e5d08e26120e14005",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2084-python-postgres-full-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2084-python-postgres-full-current-20261127-01",
+  "result": {"tests": "4770 passed; 31 skipped; 0 failed; 23 warnings", "collected": "4798 items / 3 collection skips", "duration_seconds": 1042.06, "service": "isolated PostgreSQL 16.4 Alpine", "cleanup": "PASS"},
+  "evidence_hashes": {".coverage": "9BCD9187C542AE3774698F83D1BF096CDE86DD26B52AF9E106D5C3827E13E993", "pytest-output.log": "13A64AB26BA356A3FEBE98AE69C8F2F62209A706DC38FCA7DCE55AA4CD7DB419", "pytest-postgres.log": "CBFE8E8D79844A34E3055F8EA9364C74761DB96F725F2247355BCA7DA1FC349B", "pytest-postgres.xml": "E4DC9308FC93441A355C58FDA5F699AF08AFAE7F4B9D2D0B306DA0A5598BE19", "pytest-timings.json": "67C56A901B7F7A719CBC3DD400189155C4588B889511205140D28C31CBE950AA", "runner-timings.json": "7FDA156216AE64AB5E327A6A5CD16B3B667AD1E6FBF6FA820980292952C7688C"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Suite completa no-performance con 31 skips ambientales/opt-in y 23 warnings explícitos; no equivale a certificación cloud, operación indefinida, HA completa, P11 completo ni release approval. No reatribuye evidencia histórica."]
+}
