@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1759",
+  "date": "2026-12-01",
+  "status": "PASS_POSTGRES_STREAMING_CHECKPOINT_CURRENT",
+  "candidate_sha": "e36f46adfec8ba073e8d2950c0e702f3f88fd915",
+  "implementation_commit_sha": "e36f46adfec8ba073e8d2950c0e702f3f88fd915",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1759-postgres-streaming-checkpoint-current-20261201",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1759-postgres-streaming-checkpoint-current-20261201 -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {"status": "passed", "tests": "7 passed, 0 skipped, 0 failed", "coverage": "disabled for filtered diagnostic", "scope": ["PostgreSQL checkpoint bundle CAS/reopen", "concurrent stale-writer fencing", "stream table replay/idempotency", "atomic conflict rollback", "processor durable checkpoint reopen"], "cleanup": "PASS"},
+  "evidence_hashes": {"pytest-output.log": "6C499133690AE794C4036EECB1FBF539F8627DE3DC8B5B42A2EFBAC540B7B67D", "pytest-postgres.xml": "89856CDCB6EE2A52FBD24A05E0A3C5A0621E08C59FD6CC4FE30EB660FA1632F2"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered PostgreSQL streaming diagnostic, not the complete Python/PostgreSQL suite or full coverage; no indefinite operation, complete P11 or release approval."]
+}
