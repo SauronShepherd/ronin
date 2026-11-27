@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1843",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "1d05c4b046e972121aa11bae458e01fc172bd3f5",
+  "implementation_commit_sha": "1d05c4b046e972121aa11bae458e01fc172bd3f5",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1843-postgres-data-engineering-revisions-20261127",
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL Data Engineering revision inventory discovers all project artifacts",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "0CF69637FC49C670952D06B48878995C841278C87A8AF3FA8CFF3FA65CF37B66",
+    "pytest-postgres.log": "D539B0D9B5FDDEDE09E6E4EDFAE8CD9215876FD99379E814B2A4780DBD585C3A",
+    "pytest-postgres.xml": "901114E94F5E2F449B57841485E0FD50D28DE767F200A8F386511AFEE002A1A1",
+    "pytest-timings.json": "7CCB499ADD3734EB87A9EE62DDF16824394B30F461A81CF6C80B94E82D1DF810",
+    "runner-timings.json": "5F96DF7323875430C56005B3630B5A095C7B96AB104BC8D30524434AC530B4B2"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test only; not the complete Data Engineering suite or complete P11.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
