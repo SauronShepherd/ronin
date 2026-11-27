@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1791",
+  "date": "2026-12-01",
+  "status": "PASS_PYTHON_POSTGRES_FULL_CURRENT",
+  "candidate_sha": "18398a4d38ac40dd61ce08db203932dc803c4a84",
+  "implementation_commit_sha": "18398a4d38ac40dd61ce08db203932dc803c4a84",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1791-python-postgres-full-current-20261201\\pytest-postgres.xml",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1791-python-postgres-full-current-20261201",
+  "result": {"status": "passed", "service": "PostgreSQL 16.4-alpine", "junit_cases": 4801, "passed": 4770, "skipped": 31, "failed": 0, "warnings": 13, "pytest_seconds": 542.28, "coverage": "runner coverage generated", "cleanup": "PASS"},
+  "evidence_hashes": {".coverage": "AA6EAED002AA8A6EFC659D29ED13DF6E72A7F80122EF9608972F1E097B2703DE", "pytest-output.log": "580EB836371F93051404F16CB9E4DCFBC89BB0C810C1F6621D26C71A7FFC13F1", "pytest-postgres.log": "55E78AE386B1C1ECD4F9605F67BA36F2B7B5506224CB85A6CA523AAC7FBC3D07", "pytest-postgres.xml": "42D25D9CDA22DA8EDC5469B27C413979A345EBBE92FC1FE5628D4DB529C95C23", "pytest-timings.json": "398E2EDB269346FB477D28CC48613272E6ACE89F5027EEF219FBC386F5312D60", "runner-timings.json": "81C0A1F6D7B017BD09D9E111DF6806BA2B71D36687A9CBAEB76B30C9CADF0881"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Suite completa Python/PostgreSQL del runner en Windows: 31 skips explícitos por Docker/worker/provider opt-in, proveedores externos no configurados y límites POSIX/symlink del host; 13 warnings ResourceWarning. No certifica esas superficies omitidas, operación indefinida, HA/multi-worker, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
