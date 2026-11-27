@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1899",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "5e8ac6e7c4817a3fb5cc904e20685863d4ebde1d",
+  "implementation_commit_sha": "5e8ac6e7c4817a3fb5cc904e20685863d4ebde1d",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1899-portable-evidence-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_portable_evidence_contract.py tests/test_artifact_writer_inventory.py tests/test_container_sbom_boundaries.py tests/test_container_sbom.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "55 passed; 0 skipped; 0 failed",
+    "scope": "Portable evidence, artifact writer inventory and container SBOM boundary contracts",
+    "cleanup": "pytest wrote complete PASS artifacts; an anomalously lingering parent pytest process was explicitly stopped after artifact verification"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "71BB8E163E7CEE31D913F0CF1941EFF51DE028F689CDB9928BD5D1A8EF47C01F",
+    "pytest.log": "ADF658E5273BE0B3DAFD18D5CD79715742E1C9AA7E69FAA28E1216E146104FF5"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local evidence/SBOM contracts only; no external provider, real Docker qualification or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
