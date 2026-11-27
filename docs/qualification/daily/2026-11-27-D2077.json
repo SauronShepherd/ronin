@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2077",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_LIVE_BACKPRESSURE_WRONG_FILTER",
+  "candidate_sha": "12e81389b5fd8cf4b59f84e6c44d8857e51ba9fb",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": null,
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d2077 --label org.ronin.qualification.run=d2077 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2077-live-backpressure-8192-worker-rf3-current-20261127-01 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d2077 -TestGrep 'sustained backpressure' -BackpressureRecords 8192 -BackpressureTimeoutSeconds 240 -RequestTimeoutSeconds 180",
+  "result": {"failure_phase": "runner argument validation", "selected": 0, "executed": 0, "passed": 0, "skipped": 0, "failed": 0, "cleanup": "PASS_IMAGE_REMOVED", "failure": "-MultiBroker requires a focused streaming -TestGrep; sustained backpressure alone is rejected before services start."},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No qualification result counted and no runner evidence directory was produced. Failure is preserved explicitly; D2078 is the corrected streaming-filtered rerun. P11 remains in_progress, P13 blocked and release NO-GO."]
+}

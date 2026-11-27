@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2078",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_STREAMING_8192_WORKER_RF3",
+  "candidate_sha": "12e81389b5fd8cf4b59f84e6c44d8857e51ba9fb",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2078-live-streaming-8192-worker-rf3-current-20261127-01",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d2078 --label org.ronin.qualification.run=d2078 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2078-live-streaming-8192-worker-rf3-current-20261127-01 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d2078 -TestGrep streaming -BackpressureRecords 8192 -BackpressureTimeoutSeconds 240 -RequestTimeoutSeconds 180; docker rmi ronin:qualification-d2078",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true, "worker_image_digest": "sha256:72abbcc66242d39c3bece07d0ac14731b84ec53328c92e82c0ce1eb6c837b474"},
+  "fixture": {"backpressure_records": 8192, "backpressure_timeout_seconds": 240, "multi_broker": true, "replication_factor": 3, "request_timeout_seconds": 180},
+  "result": {"selected": 11, "executed": 11, "passed": 11, "skipped": 0, "failed": 0, "duration_seconds": 230.43, "api_events": 235, "correlated_http_logs": 235, "uncorrelated": 0, "outcomes": {"OK": 227, "WARN": 8}, "application_logs": {"INFO": 284, "WARN": 0, "WARNING": 8, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {"browser-live.log": "5C663DBA6AA7860E52FE20FE19CCD4BD339B72659BA9019502F1F3C88D119988", "browser-live.xml": "8001B6829D4986583B2E6FD2008D93CEB62A0BDBA56E01F747D855CE5DB14A93", "live-api-traffic.json": "6D1EF28F8E4BE34748C805E17EE19777070432C2F5890CE8EEEF8BD013710D78", "live-python-freeze.txt": "BB5CCB289741C3AA76ECDF6E2BC443E0E9ED8E6D4DB8436E99450608DC97C8B1", "live-server.stderr.log": "75D293D35832B9F5391C60E7DAB98AC23E82E825B418A3714FE36258E2C456B8", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "BA605537395EC6AD9E7D6688EEEB168B2ED5B15E79B6C5BE3E82F0FA00E59E85", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Suite streaming bounded con RF3 y worker Docker, con backpressure 8192 y timeout explícito de 240 s; 8 WARN son outcomes esperados del battery. No equivale a operación indefinida, HA/SLO ni capacidad de producción. No cierra P11, P13 ni release."]
+}
