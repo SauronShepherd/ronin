@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1757",
+  "date": "2026-12-01",
+  "status": "PASS_DOCKER_S3_JSON_CURRENT",
+  "candidate_sha": "1cdc66941d780b8a76e31aa19f5cfded444f6db4",
+  "implementation_commit_sha": "1cdc66941d780b8a76e31aa19f5cfded444f6db4",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1757-docker-s3-json-current-20261201",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1757-docker-s3-json-current-20261201 -TestFilter s3_json",
+  "result": {"status": "passed", "tests": "1 passed, 26 deselected, 0 failed", "case": "test_s3_json_sink_put_read_and_retry_round_trip", "floci": "PASS", "cleanup": "PASS"},
+  "evidence_hashes": {"docker-qualification.log": "DF912A04A37ECE4EC82F22A791CFBF2335F257531D740CF5BD25B2CC00E280B9", "docker-pytest-output.log": "FD55687F5603758842808682C62E21FBE834E20759D8E98F02339FD34B1EB363", "v01-acceptance.xml": "EDFABA03C3FCD2D6B24497829D836D581A7D04E76CC5E2475672FC16B5028DA2"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Floci S3-compatible emulator evidence only; no hosted cloud/IAM certification, complete P11 or release approval."]
+}
