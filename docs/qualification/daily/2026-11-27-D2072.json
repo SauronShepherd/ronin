@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2072",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_WORKER_RF3_SUPERVISOR_SOAK_120",
+  "candidate_sha": "961198e01e0f7ecc374308fbe1e798b05ab4de1c",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2072-live-supervisor-soak-120-worker-rf3-current-20261127-01",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d2072 --label org.ronin.qualification.run=d2072 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2072-live-supervisor-soak-120-worker-rf3-current-20261127-01 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d2072 -TestGrep 'streaming supervisor soak' -SupervisorSoakSeconds 120 -RequestTimeoutSeconds 120; docker rmi ronin:qualification-d2072",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true, "worker_image_digest": "sha256:587039a6cabd4874b696f0093df5181d0cb70698d91dfccc8532ebedb6c0c9b2"},
+  "fixture": {"supervisor_soak_seconds": 120, "multi_broker": true, "replication_factor": 3, "request_timeout_seconds": 120},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 168.61, "api_events": 147, "correlated_http_logs": 147, "uncorrelated": 0, "outcomes": {"OK": 147}, "application_logs": {"INFO": 150, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "C0A2CF82342EABC05D0248B15FD2E993A00C5EA37548930BA1DE66D5BF8C63D5",
+    "browser-live.xml": "7556CCEA84BC8B0C861AB2678E84C4DABF47EDC22333B694F9841C6D2E937900",
+    "live-api-traffic.json": "FA7D5F3AC41DD3C5F31F2E993FEEAC8D01C2C5823FF87C76B8EA8D7F86124762",
+    "live-python-freeze.txt": "50F989820B78C8F13F5340D9FB633B8656C4103B7F1983E3FD71DBD296C5F3BF",
+    "live-server.stderr.log": "2D17776D1A572C69E7B879257C3FCB4D87DD431E5B49A28CD434ACB5CB1C7C4F",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "156F9B9842A57BE45CC39F3E3A902FB0D9F220FDF44A0BC72708A41C5756EEF7",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Celda bounded de supervisor soak worker-backed con RF3 y 120 s; no equivale a operación indefinida, HA/SLO ni capacidad de producción. No cierra P11, P13 ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
