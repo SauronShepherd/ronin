@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1929",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "0983267fc5c2ec365dda9ad861ad852e88b6292e",
+  "implementation_commit_sha": "0983267fc5c2ec365dda9ad861ad852e88b6292e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1929-ops-governance-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_alert_state_contract.py tests/test_backup_manifest.py tests/test_finops_allocation.py tests/test_finops_forecast.py tests/test_helm_chart_structure.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "12 passed; 0 skipped; 0 failed", "scope": "Alert state, backup manifest, FinOps allocation/forecast and Helm chart structure contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "886A281720EB3B282E032833C96BE8A42D0540011416D4EB9043CC08EF460711", "pytest.log": "2720E0C006B308EE52A79BFC23D9259A81EB68F794C11238421C49A66F0196B3"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local operational contracts only; no live backup/restore, cloud or Helm cluster certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
