@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1895",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "1384cdf122837cb612ff7f0b770681b04d1cc52d",
+  "implementation_commit_sha": "1384cdf122837cb612ff7f0b770681b04d1cc52d",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1895-s3-object-contract-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_artifact_paging_contract.py tests/test_s3_artifacts.py tests/test_s3_json_connector.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "26 passed; 0 skipped; 0 failed",
+    "scope": "Local S3/object-store paging and JSON connector contracts: cursors, limits, replay and validation"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "2454EDC886936B5C7A1B95CB2B6060F4FBCD52A07D8D35D9E6B02462B93AAA12",
+    "pytest.log": "90A4F7B5C76F2FCDE411B59BFE23CD596404495E3D2A2284562239B051F60A1C"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local adapter/contract evidence only; no AWS S3 endpoint, IAM, network or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
