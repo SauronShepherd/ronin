@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1914",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "048c9d5679f0eedb5b54f2ea5c6f5a64ad94af9b",
+  "implementation_commit_sha": "048c9d5679f0eedb5b54f2ea5c6f5a64ad94af9b",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1914-data-engineering-full-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider <explicit list of tests/test_data_engineering_*.py files> --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "97 passed; 0 skipped; 0 failed",
+    "scope": "Complete local data-engineering test battery: execution, runtime, query, UI, worker, lineage, revisions, plugin, evidence and qualification"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "A54CC6169EC6C866C33F12F840CC3CE4F713B46E0566F2AA98EF7A8D152E2DB2",
+    "pytest.log": "E6645059CB2878DD48D7EB16BEF83E22497334E1E36EC98892B7195245B86018"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local data-engineering battery only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "The initial PowerShell wildcard invocation exited 4 without collecting tests and is excluded; this receipt covers only the explicit-file rerun.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
