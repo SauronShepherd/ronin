@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1942",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "4ebee1cef989c1a6f2415fd277e9005b16111178",
+  "implementation_commit_sha": "4ebee1cef989c1a6f2415fd277e9005b16111178",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1942-scheduler-core-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_scheduler_adapters.py tests/test_scheduler_controller.py tests/test_scheduler_cron.py tests/test_scheduler_daemon.py tests/test_scheduler_notifications.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "73 passed; 0 skipped; 0 failed", "scope": "Scheduler adapters/controller/cron/daemon/notification contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "707395C5BC4D0E93C73A5F651902B5D500BA3F8E7737BF69DF2F3760D3D501BF", "pytest.log": "A97D4B984E1DE1DE3FC98BA1A78AF11872034DF5FE06CBBA9DC53300590E2B7D"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local bounded scheduler contracts only; no indefinite daemon, HA leader or external notification-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
