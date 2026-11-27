@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1750",
+  "date": "2026-11-30",
+  "status": "PASS_LIVE_RF3_SUPERVISOR_SOAK_900_CURRENT",
+  "candidate_sha": "b7a103d48b56127364dc04b4b1c422694539b1eb",
+  "implementation_commit_sha": "b7a103d48b56127364dc04b4b1c422694539b1eb",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1750-live-rf3-supervisor-soak-900-worker-postgres-current-20261130\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1750 --label org.ronin.qualification.run=d1750 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1750-live-rf3-supervisor-soak-900-worker-postgres-current-20261130 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d1750 -TestGrep 'streaming supervisor soak' -SupervisorSoakSeconds 900 -RequestTimeoutSeconds 120; docker image rm ronin:qualification-d1750",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "supervisor_window_seconds": 900, "api_events": 1139, "correlated_events": 1139, "api_outcomes": {"OK": 1139}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 933.61},
+  "evidence_hashes": {"qualification-summary.json": "A483E2A7636EB878C9320839006A2F9606DA6677183C9D48FBAE459540A48FBB", "live-api-traffic.json": "D4FB48BD88DCF73E228EDAAF57ABBB3C25B02D431F7A7EAE9D2A4243329E61CB", "browser-live.xml": "F1EB2D9D2F31F8A45E54ADCE03E8D2F892DBC7AA766FF02CF8BA5C8E400C6CCD", "browser-live.log": "BA508D5123D617A46DB37639F5E7CAA1F7EB67D707F38F169A453CE4990A88C6"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded 900-second RF3 supervisor soak; no indefinite operation, formal HA/SLO, hosted provider/IAM certification, complete P11 or release approval."]
+}
