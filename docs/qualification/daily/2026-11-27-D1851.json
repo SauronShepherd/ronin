@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1851",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "8470a1e6e82a665caad2b9e171c5b046b0f6a22d",
+  "implementation_commit_sha": "8470a1e6e82a665caad2b9e171c5b046b0f6a22d",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1851-postgres-connector-20261127",
+  "result": {
+    "pytest": "2 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL connector integration",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "AAAEE2EADF815626274B6D6AA3A87B9224036E1D867263012D51C700A06DCCDA",
+    "pytest-postgres.log": "5CA0E35563A70CBB39CE45296BCAA072107B240086CCF967D14F9EA589AEAA43",
+    "pytest-postgres.xml": "12235FE64A589FC3C92B75B84800F8316241DB3D473AF9F421737443F91C2EF9",
+    "pytest-timings.json": "4F5503089952C9D82EAF56BD40EAE386C6D9668BC5B4C74D2AE3F78FB6F1AAFA",
+    "runner-timings.json": "AB57CCA9C0AF050B33903B96CD04852A564F3503B0B03CF14377B45E41265471"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test file only; not the complete Python/PostgreSQL suite or complete P11.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
