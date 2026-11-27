@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2110",
+  "date": "2026-11-27",
+  "status": "PASS_HELM_KIND_POSTGRES_RECOVERY_CURRENT",
+  "candidate_sha": "2dc738381e55875a61b4d0ca424ad943b1559c78",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2110-helm-kind-postgres-current-20261127-01",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2110 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2110 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2110-docker-full-current-20261127-01 -KeepImage; docker run --detach --name ronin-d2110-postgres --publish 127.0.0.1:55477:5432 --env POSTGRES_DB=ronin --env POSTGRES_USER=ronin --env POSTGRES_PASSWORD=ronin postgres:16.4-alpine; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2110-helm-kind-postgres-current-20261127-01 -ImageRef ronin:qualification-d2110 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2110-docker-full-current-20261127-01 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55477/ronin -PostgresContainerName ronin-d2110-postgres",
+  "result": {"docker_integration": "27/27 passed", "docker_strict_v01": "15/15 passed", "helm_lint": "PASS", "secret_boundary": "PASS", "kind_install_readiness": "PASS", "upgrade_revision": 2, "rollback_revision": 1, "health": "HTTP 200", "studio_api": "HTTP 200", "persistent_job": "PASS", "postgres_restart_recovery": "PASS", "deployment_restart_persistence": "PASS", "cleanup": "PASS", "helm": "v4.3.1+gc0d08d0"},
+  "evidence_hashes": {"helm-qualification.json": "94F265097AF7387226A77B3AB5D1195EA14C290C9BAC2D6031756B1E50F3B4D9", "helm-qualification.log": "706EEFBD89DEBC54B6F47A43A4B0A0C0CB7A7E2051330B7102BB19D06E8F51DE", "kubernetes-resources.txt": "2F1F3174A91A96F3DC898C6373D68D1360D983E8D799AF382EBF56111D9C1715", "port-forward.log": "26888F0007E5BFCFE51F2FC1F171517FFD433E544CC7528706672FF4B899D531", "port-forward-restart.log": "1498DD037F313168B66A7075D0FD0C7B264069F5E9834ACDFB36BB56AB4AEFA2", "docker-qualification.log": "39320B8AE69AA7F8AB446C4E8AE26B301964E53616624C03D370CE07F727087E", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded single-replica Helm/kind recovery with external local PostgreSQL; no HA, indefinite operation, hosted provider certification, complete P11 or release approval. No historical evidence is reattributed."]
+}
