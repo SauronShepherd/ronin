@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2042",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_HELM_SQLITE_RUNNER_RESTART_PATH",
+  "candidate_sha": "beb0d928cbe7cad3af8bf52c2953bda84f267e62",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2042-helm-sqlite-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2042-helm-sqlite-20261127-01 -ImageRef ronin:qualification-d2042 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2042-docker-full-20261127-01 -StorageBackend sqlite",
+  "result": {"docker_strict_acceptance": "15/15", "helm_lint": "PASS", "secret_boundary": "PASS", "kind_cluster": "PASS", "deployment_readiness": "PASS", "upgrade": "PASS", "rollback": "PASS", "health_and_api": "PASS", "persistent_job_create": "PASS", "final_result": "NOT_PASS", "failure": "Runner attempted docker restart with empty PostgreSQL container name on sqlite backend", "cleanup": "PASS"},
+  "evidence_hashes": {"helm-qualification.json": "5518917ACFE1EF3D2F05385B21ED2B273F5822C7C65004758720D381408CC68D", "helm-qualification.log": "98ACCE4988F56C8F57059D66A6F9149267BB5A08BF9A597328485971AD7184EF", "kubernetes-resources.txt": "B7AEB27987D78A741AFBEBD2C501C968168ABD9978170CB419CEF7F8CF811DB"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Deployment/runtime checks passed through persistent job creation, but the runner's PostgreSQL restart path is not gated by storage backend and caused the final result to be NOT_PASS. No complete Helm gate is claimed. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}

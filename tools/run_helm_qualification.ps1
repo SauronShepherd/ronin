@@ -317,23 +317,27 @@ server:
     if ($beforeRestart.state -ne "queued") { throw "New Helm smoke job did not start queued." }
     Add-Phase "persistent_job_create" "passed (HTTP 201; job remains queued without a worker)"
 
-    & docker restart $PostgresContainerName
-    if ($LASTEXITCODE -ne 0) { throw "Could not restart PostgreSQL container '$PostgresContainerName'." }
-    $postgresDeadline = (Get-Date).AddSeconds(60)
-    $postgresReady = $false
-    do {
-        $readyOutput = (& docker exec $PostgresContainerName pg_isready -U ronin -d ronin 2>&1 | Out-String).Trim()
-        if ($LASTEXITCODE -eq 0 -and $readyOutput -match "accepting connections") { $postgresReady = $true }
-        if (-not $postgresReady) { Start-Sleep -Seconds 2 }
-    } while (-not $postgresReady -and (Get-Date) -lt $postgresDeadline)
-    if (-not $postgresReady) { throw "PostgreSQL did not become ready after container restart." }
-    $afterPostgresRestart = Invoke-RestMethod "http://127.0.0.1:$port/v1/jobs/$restartJobId" `
-        -Headers @{ Authorization = "Bearer $token" } -TimeoutSec 10
-    if ($afterPostgresRestart.id -ne $restartJobId -or $afterPostgresRestart.state -ne "queued") {
-        throw "Queued job was not durable after PostgreSQL restart."
+    if ($StorageBackend -eq "postgres") {
+        & docker restart $PostgresContainerName
+        if ($LASTEXITCODE -ne 0) { throw "Could not restart PostgreSQL container '$PostgresContainerName'." }
+        $postgresDeadline = (Get-Date).AddSeconds(60)
+        $postgresReady = $false
+        do {
+            $readyOutput = (& docker exec $PostgresContainerName pg_isready -U ronin -d ronin 2>&1 | Out-String).Trim()
+            if ($LASTEXITCODE -eq 0 -and $readyOutput -match "accepting connections") { $postgresReady = $true }
+            if (-not $postgresReady) { Start-Sleep -Seconds 2 }
+        } while (-not $postgresReady -and (Get-Date) -lt $postgresDeadline)
+        if (-not $postgresReady) { throw "PostgreSQL did not become ready after container restart." }
+        $afterPostgresRestart = Invoke-RestMethod "http://127.0.0.1:$port/v1/jobs/$restartJobId" `
+            -Headers @{ Authorization = "Bearer $token" } -TimeoutSec 10
+        if ($afterPostgresRestart.id -ne $restartJobId -or $afterPostgresRestart.state -ne "queued") {
+            throw "Queued job was not durable after PostgreSQL restart."
+        }
+        $postgresRestartRecovery = $true
+        Add-Phase "postgres_restart_recovery" "passed (PostgreSQL container restarted and queued job remained durable)"
+    } else {
+        Add-Phase "postgres_restart_recovery" "not-applicable (storage backend is $StorageBackend)"
     }
-    $postgresRestartRecovery = $true
-    Add-Phase "postgres_restart_recovery" "passed (PostgreSQL container restarted and queued job remained durable)"
 
     Stop-Process -Id $forward.Id -Force
     $forward = $null
