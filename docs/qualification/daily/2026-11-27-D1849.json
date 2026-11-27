@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1849",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "4717a56e0402b6d3dec48eac38635708cc3eb6d1",
+  "implementation_commit_sha": "4717a56e0402b6d3dec48eac38635708cc3eb6d1",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1849-postgres-ml-20261127",
+  "result": {
+    "pytest": "12 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL ML registry bundles, rollback/replay, checkpoints, job fencing and ML lab round trips",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "10FF440A1E67D6FBEB837FD178EBF89E6531179FB6B76E9C12473DD2F2D1C5BC",
+    "pytest-postgres.log": "2751849D8B0B9623E71F2E7A527CCF2D44BA5299A9BC1E3BD5839A820198FD43",
+    "pytest-postgres.xml": "60568A8B009DB0FF2A41EEBBE0F4BBCE31C4A1B6B761E761019E8B3F7F6DAFE6",
+    "pytest-timings.json": "85DEDE19673A9BDC7E2723C698AA2DF5BB52688500C3F66C0641E5471677256A",
+    "runner-timings.json": "8A814226E265A544BBBEB5871ABA3F0EC747C657918BADE2596C562E362D4832"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test file only; not the complete Python/PostgreSQL suite or complete P11.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
