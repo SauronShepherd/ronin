@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1879",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "f4e1acd08e37ec3057127f95f85f6b06330fadfc",
+  "implementation_commit_sha": "f4e1acd08e37ec3057127f95f85f6b06330fadfc",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1879-ozone-contract-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_ozone_connector.py --junitxml <external-temp-dir>\\ozone-junit.xml",
+  "result": {
+    "pytest": "3 passed; 0 skipped; 0 failed",
+    "scope": "Ozone profile endpoint validation and fail-closed at-least-once sink contract",
+    "provider_scope": "No Apache Ozone gateway, endpoint or credentials configured; external provider certification not claimed"
+  },
+  "evidence_hashes": {
+    "ozone-junit.xml": "892A519CAA019210F7E2EF6FB9B95F44B7D20C220B2DAD7FFFF2AF4916FFAA55",
+    "pytest.log": "B3B556BDC772374684C2F61417FCAC7559112F7972A2C41E0210026098C1AC31"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Contract-only local evidence; no Ozone gateway or external object-store qualification.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
