@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1818",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "57c83c7fddaea157695db29c54107f352a945a66",
+  "implementation_sha": "57c83c7fddaea157695db29c54107f352a945a66",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1818-live-two-partition-backlog-rf1-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1818 --label org.ronin.qualification.run=d1818 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1818-live-two-partition-backlog-rf1-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1818 -TestGrep 'live streaming drains a two-partition backlog' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d1818",
+  "result": {"playwright": "1/1 passed", "api_events": "38/38 correlated", "api_ok": 38, "unexpected_errors": 0, "cleanup": "PASS", "topology": "single-broker RF1, PostgreSQL, Docker worker"},
+  "hashes": {"browser-live.log": "D0FA44B4A0697AA7358FA6370DD90BAF1A15D9E93F180B5787D0BADCDA6939B0", "browser-live.xml": "8CBCC04500DF99DAB104A0D0842335C9B4D0870FEAFE32AE619AAC69585DB71B", "live-api-traffic.json": "09B80F114E0AA96AD0E7D13BF51CF6B9AA1DBA2009A8C36D4770A5081D7036CF", "live-python-freeze.txt": "58F7D576D25308515BF589D6F63DAE043F2B7386A5CB88BC307395B2435E42ED", "live-server.stderr.log": "E666B6B767A9A5E87E4A74DCBB977BD209A1C0AACF443BAAFC49AA1AA5223B30", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "DD67BDBB8FDE87F665E1F23B28DCE12C3382373456A47EF23C1318674F75EE1E", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded RF1 two-partition backlog qualification; no HA, indefinite soak, SLO, complete P11, or release evidence.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
