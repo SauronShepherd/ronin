@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2090",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_ROUTE_WIDE_POST_FIX",
+  "candidate_sha": "0a5b114e712c62d4395688e773a522163dd32f7d",
+  "implementation_commit_sha": "7c468481d1c628a6d1f9cd75192c77254808a278",
+  "production_change_boundary": "7c468481 changes Kafka bounded polling; D2090 is the first full route-wide live qualification on the resulting published candidate.",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2090-live-route-wide-worker-postgres-fixed-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2090 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2090-live-route-wide-worker-postgres-fixed-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2090 -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d2090",
+  "result": {"tests": "43 passed, 1 skipped, 0 failed", "route_cases": 44, "active_routes": 25, "api_contract_routes": 24, "ui_only_routes": 1, "api_events": 501, "correlated_events": 501, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS"},
+  "regressions": {"command": "python -m pytest tests/test_streaming_kafka.py tests/test_streaming_runtime.py -q", "result": "29 passed", "receipt": "D2089"},
+  "evidence_hashes": {"qualification-summary.json": "53DF858324816B651224E03DF7F0F9B46DC0160B7B9EF13690A15C52878AB7F1", "browser-live.log": "1DA9FDCC631C0893AC6F5A1FAAF69D8A755637DB07D212BFE44EC1F6F908196A", "browser-live.xml": "06214E063BAB3ADA64E84A192CCDE9D90B8218A5533D42FCDD6CAA2E1D685F9A", "live-api-traffic.json": "7531F05D8478FB3F20F2CD5C558AB8A99C966F83C1D9EB44456459C462724B62"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["One deliberate skipped case remains in the route-wide suite; this does not constitute complete P11 or release approval. No hosted cloud/IAM certification, indefinite operation or HA evidence is claimed."]
+}
