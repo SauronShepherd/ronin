@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2060",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_S3_OBJECT_STORE",
+  "candidate_sha": "901f8809a2cbc2c63a815227e4cb15a433984cdd",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2060-docker-s3-object-store-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2060-docker-s3-object-store-current-20261127-01 -TestFilter 's3_json or ml_s3_artifact'",
+  "services": {"floci": true, "postgres": false, "azurite": false},
+  "fixture": {"provider": "Floci", "image": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db", "ronin_image": "sha256:2b1bc1d8781a836368bf5dc09f644c8429019f3253cddd2d9e084d3bbc03ac3b"},
+  "result": {"selected": 2, "executed": 2, "passed": 2, "skipped": 0, "failed": 0, "duration_seconds": 6.19, "tests": ["test_s3_json_sink_put_read_and_retry_round_trip", "test_ml_durable_input_output_and_retention_round_trip_through_s3"], "cleanup": "PASS"},
+  "evidence_hashes": {
+    "docker-cleanup.json": "A205D3D10E637A63F8A3E1DA48E79827B00D36260DB44C6EF051144CD7378B42",
+    "docker-pytest-output.log": "6B6FEF4405C3B41DC154406DE879AAC5F154BC75CA8535BA0CCE8CD1D59E4286",
+    "docker-qualification.log": "745C94251D5E39DEE41474264FA042941CBE93164BBFFA1D2F5602470E39C998",
+    "floci-s3-qualification.log": "D8CD445202FB2641A56C12063E7E2298C70D32B9C3152F5753FEA7C5357251F4",
+    "v01-acceptance.xml": "48A93758D1C03A4BFC913BB03F1EF169B44136FB4E94AB55C0189B0FFEB57C85"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación filtrada y bounded contra S3-compatible local Floci; no equivale a AWS/producción, no cubre la matriz completa de providers, ni cierra P11, P13 o release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
