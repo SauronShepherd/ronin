@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1755",
+  "date": "2026-12-01",
+  "status": "NOT_PASS_EMPTY_FILTER",
+  "candidate_sha": "1af84533f0d8db54918899cced76e4253bd4e3f9",
+  "implementation_commit_sha": "1af84533f0d8db54918899cced76e4253bd4e3f9",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1755-docker-azure-blob-current-20261201",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1755-docker-azure-blob-current-20261201 -TestFilter azure_blob_jsonl",
+  "result": {"status": "not_pass", "tests_selected": 0, "tests_deselected": 27, "failure": "filter selected no tests", "azurite": "started", "cleanup": "PASS"},
+  "evidence_hashes": {"docker-qualification.log": "0DD3BAEA64FA7EE3549AB1AF841F981B501C921DD250B4EA558F8DA431F9AE20", "docker-pytest-output.log": "D7C1D3E63D8727260A67071D4D84E82F12F254E1C24A41A9E1F115F3373169D3"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No test executed; D1756 reran with the exact integration-test name filter."]
+}
