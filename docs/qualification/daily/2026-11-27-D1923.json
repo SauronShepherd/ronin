@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1923",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "4350f5eff595a40f975db610dd2734761c095919",
+  "implementation_commit_sha": "4350f5eff595a40f975db610dd2734761c095919",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1923-small-contracts-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_small_contract_survivors.py tests/test_runner_broker_security.py tests/test_container_resource_limits.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "43 passed; 1 skipped; 0 failed",
+    "scope": "Small surviving contract, runner/broker security and container resource-limit contracts",
+    "skips": "One symlink capability guard on Windows"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "CEBAB3AA2F8172C7F804103B03806D5CE69A1F1DCAC2AA75CAA2010ED0EF1C52",
+    "pytest.log": "220981D2BD99E3986122C8C6FB919F68A938F94F579288557A0D86599541F81D"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local contract qualification only; no external provider, IAM, PostgreSQL, HA or indefinite operation certification.",
+    "P13 remains blocked; no historical evidence is reattributed.",
+    "P11 remains in_progress and release remains NO-GO."
+  ]
+}
