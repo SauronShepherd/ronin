@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2038",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_TWO_PARTITION_BACKLOG_POSTGRES",
+  "candidate_sha": "319e34ead5890fdbc9698eb61c67b21e83b68552",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2038-live-two-partition-backlog-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2038-live-two-partition-backlog-postgres-20261127-01 -StorageBackend postgres -TestGrep 'two-partition backlog' -SupervisorSoakSeconds 60",
+  "result": {"playwright": "1 passed; 0 skipped; 0 failed", "api_events": "46/46 correlated", "api_event_outcomes": "46 OK", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS", "assertion": "two-partition backlog drains in bounded micro-batches"},
+  "evidence_hashes": {"browser-live.log": "CB5EE16C921D05228370293B0FB2AA62993142A1A7501B3F08E9F9DBAC734CB2", "browser-live.xml": "689EEEF14D46AF89EC5D4B508572E852A4AAE1E5BBEC527C4FD7F264A6080C2E", "live-api-traffic.json": "8A039552E06CDFED9FD4728FCC04D83E10B66AF17EFF461B5FDBEE66C60C4EC3", "qualification-summary.json": "A1E56D790A3CA678A374C5392B25909DC3B5D082E4461C2EB53DB5CCFE847613"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single bounded two-partition backlog case; route-wide audit was not run and historical backlog receipts are not reattributed. This does not certify indefinite operation, HA, cloud providers, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
