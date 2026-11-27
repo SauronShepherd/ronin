@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1939",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "6ade9e5f6d67fe629c694e14144a5f7dd1085a21",
+  "implementation_commit_sha": "6ade9e5f6d67fe629c694e14144a5f7dd1085a21",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1939-graph-core-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_graph_executor.py tests/test_graph_executor_survivor_boundaries.py tests/test_graph_runtime.py tests/test_core_ir.py tests/test_core_ir_invariant_edges.py tests/test_core_integer_invariants.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "173 passed; 0 skipped; 0 failed", "scope": "Graph executor/runtime and core IR/invariant contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "69A727A0A1C9F7B31E783D36C8916EB14EF3E8C252A427B52AFA599D97B55BF8", "pytest.log": "ABFAB717F36E99BB26E502D570A67B84A4D5D3049D4001F8B706F2219345CFF9"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local graph/core contracts only; no live multi-worker or external-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
