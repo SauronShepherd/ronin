@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2058",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_600_POSTGRES",
+  "candidate_sha": "f069321379167df170a57e66cdbcb28a5c95e181",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2058-live-supervisor-soak-600-postgres-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2058-live-supervisor-soak-600-postgres-current-20261127-01 -StorageBackend postgres -TestGrep 'supervisor soak' -SupervisorSoakSeconds 600 -RequestTimeoutSeconds 660",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true},
+  "fixture": {"supervisor_soak_seconds": 600, "request_timeout_seconds": 660},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 697.81, "api_events": 699, "correlated_http_logs": 699, "uncorrelated": 0, "outcomes": {"OK": 699}, "application_logs": {"INFO": 701, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "9FBCBE276F9CDD3F22BC97439D5F2120FDC7786091AC3ED377B3777959AD9203",
+    "browser-live.xml": "5D039AFD777DF06712EFCA4ECA0AD9BA00125566F477D52C4B062DD096EB69A3",
+    "live-api-traffic.json": "DD3626BE278A5747889A6299AD10E10A2BC2A4B600909E55096DFC4060ED0875",
+    "live-python-freeze.txt": "A679EFB3100D960F7FF45458678D6CC91C98529B75F6FA0A449F1141BEE1A18C",
+    "live-server.stderr.log": "C02E2670298F788AC4A308179F10CE629DB37A4FA2DD82931478956BE1BEAB59",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "65EF40BA1B910F02F57A9C1E8BD164938D8726E4FC64FF76E65C2AA1FC3CB6D5",
+    "web-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación live filtrada y bounded de supervisor soak a 600 s; amplía D2046 sin certificar operación indefinida, HA, cloud providers, P11 completo, P13 ni release. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
