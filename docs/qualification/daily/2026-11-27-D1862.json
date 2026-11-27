@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1862",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "a6bdbc2802abfc38f5f2a9a8661152f90350fcd7",
+  "implementation_commit_sha": "a6bdbc2802abfc38f5f2a9a8661152f90350fcd7",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1862-otlp-20261127",
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed",
+    "scope": "real OTLP/HTTP collector accepts traces, metrics and logs",
+    "collector": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621",
+    "cleanup": "PASS; collector container removed"
+  },
+  "evidence_hashes": {
+    "collector-config.yaml": "6D631511413384DE11D3AED2AA852697EF9C696B5B2BB9B3AEFA3464EE89F07F",
+    "collector-container.log": "B80FA4686F5EA11D98D2AA2143642AC761BDB3034E7C23A567081F8BD3703B04",
+    "otlp-junit.xml": "FC2450A4047B84D481597D158FD0C6F03EA50352F55CA906DC8F72E6EC641D04",
+    "pytest-timings.json": "CFCFBD967EA4F10719DD11E691F8598E67901B241EE06DD46145E10918DC048C",
+    "qualification.json": "26B1CC003EAB6A812176D1E71F268BC4FABDD4A406D9A40E54F554B7DEDB9B17",
+    "qualification.log": "B01E584AFC7B62D84C1BE3E21F48DAC7F4261332886FCC4F24708B6BFA7CF818"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered single OTLP provider integration; no hosted collector, HA, indefinite operation, complete P11 or release approval.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
