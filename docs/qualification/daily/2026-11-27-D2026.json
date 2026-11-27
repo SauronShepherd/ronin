@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2026",
+  "date": "2026-11-27",
+  "status": "PASS_OTLP_EXTERNAL_COLLECTOR",
+  "candidate_sha": "70d4ca2113727117ac2be1505dd62fd5780fb452",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2026-otlp-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_otlp_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2026-otlp-20261127-01",
+  "service": {"image": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621", "protocol": "OTLP/HTTP"},
+  "result": {"pytest": "1 passed; 0 skipped; 0 failed", "scope": "Real external OpenTelemetry Collector acceptance for traces, metrics and logs", "cleanup": "PASS"},
+  "evidence_hashes": {
+    "collector-config.yaml": "70FADB1729B17CE44D54A68864049B4B8A922D8656F29EEA66373B19343AA811",
+    "collector-container.log": "1B2F0F6E0E8AD35F13DBF06A2CB6D060B0F1D77CE035BB1E8452E42945569C6E",
+    "otlp-junit.xml": "E204F0C1E3A364C02C58E1A4BFB838FBC60EA128A69A112FE431EA7B2EA2183F",
+    "pytest-timings.json": "47947627B8B8E0E626721FFEF301369A175A1B6CA0CE494367B8166B6E4A63F4",
+    "qualification.json": "02E6B67F08FA853ADA99F51FA47EF091CE3D68F5CDE618713C79C9E41035AE30",
+    "qualification.log": "8339C01CBF1D4E44BC985C069D52236552D294919985476F1548AA584B83DA91"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single bounded OTLP collector acceptance; does not certify indefinite operation, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
