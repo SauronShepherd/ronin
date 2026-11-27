@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1995",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_DIAGNOSTIC",
+  "candidate_sha": "919fc875a04633b997c2c6abcf260dfcb01ad7f1",
+  "implementation_commit_sha": "919fc875a04633b997c2c6abcf260dfcb01ad7f1",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1995-git-source-order-diagnostic-20261127",
+  "commands": ["python -m pytest -q -p no:cacheprovider tests/test_git_source.py --junitxml <external-temp-dir>\\default.xml", "python -m pytest -q -p no:cacheprovider -p no:randomly tests/test_git_source.py --junitxml <external-temp-dir>\\pytest-junit.xml"],
+  "result": {"deterministic_run": "19 passed; 1 skipped; 0 failed", "randomized_runs": "intermittent failures at helper git init -q before production adapter paths; not counted as PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "4A16FBABDF2C572CED6EFB7589E3E11D863184B7529FEA9895CA8A2452A3E205", "pytest.log": "29B1949AF96A17978458BE4BDA967CCFA12D3E10FA87E4349C338476E1CB7881"},
+  "diagnosis": "pytest-randomly ordering/environment interaction affects the test helper's git init -q; isolated test and full file with pytest-randomly disabled pass. No production code changed.",
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is diagnostic evidence and does not promote the historical Git source suite to PASS; D1917/D1919 remain unchanged and are not reattributed.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
