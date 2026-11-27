@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1919",
+  "date": "2026-11-27",
+  "status": "NOT_PASS",
+  "candidate_sha": "3ea1da58b740017e6f283597ba30457372afce86",
+  "implementation_commit_sha": "3ea1da58b740017e6f283597ba30457372afce86",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1919-git-source-full-isolated-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_git_source.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "7 passed; 13 failed; 0 skipped",
+    "scope": "Complete isolated Git source contract file",
+    "failures": "13 failures all originate at git init -q returning exit status 128 in pytest temporary repositories",
+    "host_probe": "git init -q succeeds in a direct temporary-directory probe with Git 2.56.1.windows.1; failure remains specific to the pytest/host context"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "00C8EA3F52F0295E3FFA1FCA82DB0C1A54C4D00E50D33A8F35920540CC72ECA7",
+    "pytest.log": "65FB819DE9C96D36B20DDC92DD4B9D3CFD18114F85B311B3827F3943CB605101"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is NOT_PASS evidence and is not used to qualify a family or gate.",
+    "No production change and no historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
