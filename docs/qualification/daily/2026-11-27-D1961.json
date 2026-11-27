@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1961",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "ef600f98bed08838b0e41247dfc9b45d2e25df39",
+  "implementation_commit_sha": "ef600f98bed08838b0e41247dfc9b45d2e25df39",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1961-public-plugin-package-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_public_plugin_testkit_package.py tests/test_publication_workflows.py tests/test_public_capability_matrix.py tests/test_public_import_smoke.py tests/test_dependency_surfaces.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "13 passed; 0 skipped; 0 failed", "scope": "Public plugin testkit/package, publication workflow, capability/import and dependency surface contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "F1BCD158881DB2C29747BF07AA5E9CDD5938B15157F7EA22AD6F9A12995DEE76", "pytest.log": "42C650D8F4F25F06A80674B695FA06B3290A57A97AEC4982DE1E678E4A4B99BF"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local public-package/testkit contracts only; no hosted distribution or external-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
