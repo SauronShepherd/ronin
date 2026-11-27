@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2061",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_AZURE_BLOB",
+  "candidate_sha": "0644a202ce191776cd5c0aa0a4b8c5be2ea40fc5",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2061-docker-azure-blob-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2061-docker-azure-blob-current-20261127-01 -TestFilter 'test_azure_blob'",
+  "services": {"azurite": true, "postgres": false, "floci": false},
+  "fixture": {"provider": "Azurite", "image": "mcr.microsoft.com/azure-storage/azurite:3.35.0", "ronin_image": "sha256:d06cbd7727547474514ba3dc136b86f66b0022e06f7dcdfc920a5ee736bc6450"},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 3.98, "tests": ["test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite"], "cleanup": "PASS"},
+  "evidence_hashes": {
+    "azurite-qualification.log": "51FD5F35E1DB0E66257D8FB1B91412B9CE4D85436D9EC2888CE4420E1CC525D2",
+    "docker-cleanup.json": "0CC443E38C359B2DC9B546A7C38650763302FAD6860B5A49F2732B40C2ED91E2",
+    "docker-pytest-output.log": "5FB95A0D852C505C4C767D6B6AE4FE82169AE9C1EF46337527886CEB09C7DE15",
+    "docker-qualification.log": "4C826B4B481598365B734B0C85239E700F3B0A07EC472729DAE1980FAFD27D2A",
+    "v01-acceptance.xml": "A4F9A8A5717BCF2FFF026724B72821D0F30920BBB1ED95CBB33715FD34BCED1A"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación filtrada y bounded contra emulador Azure Blob local Azurite; no equivale a Azure cloud/producción ni cierra la matriz completa de providers, P11, P13 o release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
