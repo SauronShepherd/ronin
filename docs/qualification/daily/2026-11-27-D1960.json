@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1960",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "0f85fee107af05e6bda8083db1d29dcd6294df7d",
+  "implementation_commit_sha": "0f85fee107af05e6bda8083db1d29dcd6294df7d",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1960-migration-studio-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_migration_certification.py tests/test_migration_fixture_certification.py tests/test_migration_inventory.py tests/test_migration_profiles.py tests/test_migration_qualification.py tests/test_migration_registry.py tests/test_migration_sql.py tests/test_migration_studio_analysis.py tests/test_migration_studio_codegen.py tests/test_migration_studio_evidence.py tests/test_migration_studio_iics.py tests/test_migration_studio_runtime.py tests/test_migration_studio_session_store.py tests/test_migration_studio_session.py tests/test_migration_studio_spark_validation.py tests/test_migration_studio_validation.py tests/test_migration_validation_cli.py tests/test_migration_vendor_golden.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "73 passed; 0 skipped; 0 failed", "scope": "Migration inventory/profiles/registry/SQL and Migration Studio analysis, codegen, evidence, runtime, sessions and validation contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "90F5718F05B6525B83D65CBC78F2D195B473FCC7C76F973EF124FBDC74060315", "pytest.log": "23F868D6A306CD48A9A98A88D524C4EF7F330DE76F401173A6BAA0AB130004DD"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local deterministic Migration Studio contracts only; no authenticated provider discovery or live integration certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
