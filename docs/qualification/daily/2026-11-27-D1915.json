@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1915",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "ede19eac466bb06279a50729fc48803098878d48",
+  "implementation_commit_sha": "ede19eac466bb06279a50729fc48803098878d48",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1915-migration-studio-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_migration_studio_acceptance.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed",
+    "scope": "Local Migration Studio acceptance composition and compatibility boundary"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "26351C677C311F1628E25C16785604E9D2772C3C4F42B7FCF7261255047D2308",
+    "pytest.log": "4B5C292F1C5D1B8A55B35A5CBAF582EC92C0A4DBB4679F6AA1D8CED87FFD132D"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local migration acceptance only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
