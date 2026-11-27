@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2004",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_EXTERNAL_AZURE_BLOB",
+  "candidate_sha": "9bfcf4bb4e11ac7a9393f670bb8fb2cb2e5f480e",
+  "implementation_commit_sha": "9bfcf4bb4e11ac7a9393f670bb8fb2cb2e5f480e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2004-docker-azure-20261127",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory <external-temp-dir> -TestFilter 'azure_blob'",
+  "result": {"pytest": "1 passed; 26 deselected; 0 skipped; 0 failed", "duration": "2.36s", "scope": "Real Azure Blob-compatible Azurite provider: discovery, read and snapshot replay"},
+  "provider": {"name": "Azurite", "image": "mcr.microsoft.com/azure-storage/azurite:3.35.0@sha256:647c63a91102a9d8e8000aab803436e1fc85fbb285e7ce830a82ee5d6661cf37", "ronin_image": "sha256:77bc72c4d8dae8facd4ccfdd9a3174ba8deadf3bf730675466036f71e81e326a"},
+  "evidence_hashes": {"v01-acceptance.xml": "2B7047D6AA7A2B6F4E6E2A4AF1CE4F7D5EC1776503845D710D59512C1A547F37", "docker-pytest-output.log": "94A0E41625AA53E5D4D5EF87E93EDD696FA78E7ED54146B2A578437168FF596B", "azurite-qualification.log": "66C9A74EFADA6121E231776F8E4AABB4F70B59404EC28A62181CEDA54398E26C", "docker-cleanup.json": "21892CBE2744C63159612A05012E2EC6FDFF85ABADF038FFDD84E59F607C13EC"},
+  "cleanup": "PASS; Azurite project/container/network/volume and temporary Ronin image removed",
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded Azure Blob-compatible provider diagnostic only; strict v0.1 acceptance was omitted by the filtered run. Does not certify Azure production, indefinite operation or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
