@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2050",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_POSTGRES_APPLIANCE_RECOVERY",
+  "candidate_sha": "00e51803bef6ce6f72af5c346731d861985ab858",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2050-docker-postgres-appliance-recovery-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2050-docker-postgres-appliance-recovery-current-20261127-01 -TestFilter 'appliance'",
+  "services": {"postgres": true, "docker_worker_runtime": true},
+  "image": {"digest": "sha256:e1f72ae6a255c9abf3e1992a27778d45ccf1883a2c30be05c632cb97fcf1989a", "cleanup": "PASS"},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "pytest_seconds": 27.55, "cleanup": "PASS", "strict_v01_acceptance": "NOT_RUN_FILTERED_DIAGNOSTIC"},
+  "coverage": "PostgreSQL appliance backup, mutation, restore, database verification and local data-volume restoration",
+  "evidence_hashes": {
+    "docker-cleanup.json": "0F12434462A9CA9DB4F43D9810C445577B16CDFC4C04D6C06232834585306EE4",
+    "docker-pytest-output.log": "44726176E248C4B48C5F4A30FAD4AB0E37CE260177FDFC0C16536254B136C00B",
+    "docker-qualification.log": "2BFA23FB6D292B503576A6252ABAFFC796A00AA1423CF03310CCC51A58FB701A",
+    "postgres-qualification.log": "BAC1A4F0726D4040AE986B9D957DF619259368EAE057E253B6B879BB2378BDE2",
+    "v01-acceptance.xml": "25A40574A04ADD2E1A2A52486B7A147758C2223844249FC6FBC70AF04A6ED3CE"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Diagnóstico Docker filtrado de una única recuperación bounded de appliance PostgreSQL y volumen local; no certifica P14 completo, recuperación externa/cloud, operación indefinida, P11 completo ni release. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
