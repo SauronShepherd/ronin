@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2010",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_ML",
+  "candidate_sha": "027b762c7ebda671c9357df0db8837c53472846b",
+  "implementation_commit_sha": "027b762c7ebda671c9357df0db8837c53472846b",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2010-postgres-ml-direct-20261127",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://postgres:ronin@127.0.0.1:55435/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_ml_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "12 passed; 0 skipped; 0 failed", "duration": "3.10s", "scope": "Real PostgreSQL ML registry, bundle atomicity/replay/rollback, jobs, node checkpoints, conflicts, archived workspace guards and bounded references"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55435", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "86AC64439E44312C39A06D0670151B2887D4992C0B286385D41F57829A6C3A19", "pytest.log": "C8DDC98AF06D5004FAD9908C8C2950D3F2E219212176F9C456C7C79BA5EC2D07", "postgres.log": "00DF3B04D00639E42CA4EEE9C0313CEC9283254FF467019CE1FB926386CCC101", "docker-cleanup.log": "8DF4CE88F31CE013FF07BD6FEB4282A3CA830B41F2EA3D585C35F1913465DB8B"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL ML integration only; no hosted provider, indefinite operation, multi-worker or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
