@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1857",
+  "date": "2026-11-27",
+  "status": "NOT_PASS",
+  "candidate_sha": "19f4949f756bd45455a97cea45662193dafb1f12",
+  "implementation_commit_sha": "19f4949f756bd45455a97cea45662193dafb1f12",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1857-python-postgres-full-20261127",
+  "result": {
+    "pytest": "4796 passed; 31 skipped; 2 failed",
+    "scope": "full Python/PostgreSQL regression before Windows replacement retry fix",
+    "failures": [
+      "tests/test_worker_execution.py::test_corrupt_checkpoint_artifact_forces_reexecution_after_reclaim: WinError 5 during atomic artifact replacement",
+      "tests/test_normalize_release_sdist.py::test_normalizer_cli_normalizes_and_returns_usage_error: WinError 5 during atomic sdist replacement"
+    ],
+    "cleanup": "PASS; isolated PostgreSQL container, volume and network removed"
+  },
+  "evidence_hashes": {
+    ".coverage": "27E3440564B6D3943B735EA5B688AEDD263714D7ECDA65794FA08B5487EFC98A",
+    "pytest-output.log": "8A13FF5B4D38B1161D4902E929C655A1A35731AD86BCB349AD77FB789D950419",
+    "pytest-postgres.log": "5D008091AD96B80A320BA51DCFDFAA808D11B8ACC1ACD6D31610D5923F32C5F5",
+    "pytest-postgres.xml": "4D16104295322CFDC3F694A8CDFB702EA9EF21860D9ADC7ACD2CC8F9386C79F7",
+    "pytest-timings.json": "E98B038F7AF939AFAB5D94A2EF7D9270A0B3D201F2595E84F039D8B4B50F9B89",
+    "runner-timings.json": "E2E79B29328C752EC7499B61B5E5BB76F3CA3A3645C4A798F3595D7E9318562C"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This failed full regression is recorded exactly and is not reattributed; D1858 is the corrected rerun.",
+    "P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}

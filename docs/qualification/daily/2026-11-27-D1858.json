@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1858",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "9c6c8a0f99773ce2b0d862f87f428a635011bad0",
+  "implementation_commit_sha": "9c6c8a0f99773ce2b0d862f87f428a635011bad0",
+  "production_boundary_sha": "9c6c8a0f99773ce2b0d862f87f428a635011bad0",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1858-python-postgres-full-20261127",
+  "result": {
+    "pytest": "4770 passed; 31 skipped; 0 failed; 23 warnings",
+    "scope": "full Python/PostgreSQL regression after Windows replacement retry fix; 4801 collected",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "affected_regressions": "25 passed: full worker_execution and normalize_release_sdist modules plus focused failing cases",
+    "cleanup": "PASS; isolated PostgreSQL container, volume and network removed"
+  },
+  "evidence_hashes": {
+    ".coverage": "D7CA3E93F248970307D6B0876EDD8EE053A8DCF3184E91061413087A39B59992",
+    "pytest-output.log": "AD4EDF2C5AC3B9C3D34F083C2D2F9D8F3B1226A4F25D7A54B39703B68B891E8F",
+    "pytest-postgres.log": "52BF62F02B43219C4A979DAA3CE98D1691F8AD0BC3D2E08E477A2905DEC7B099",
+    "pytest-postgres.xml": "58AD021A827761E862D85911DB3C1FE4E8BF1530347A35C98E78BBD7A85D6BFF",
+    "pytest-timings.json": "502F42AB8625D893F08DD4EDBE6DC96C2CC93CF36D956B40A8260860243046B6",
+    "runner-timings.json": "9A49821B2D3A228E64A3AD11DB12F9CFED1B03FB21B5B06E72DDEBDA4130E1AF"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "31 skips are explicit environment/optional-provider skips recorded in the JUnit/log evidence; this is not complete P11, HA, indefinite operation, external-provider certification or release approval.",
+    "D1857 remains a historical NOT_PASS and is not reattributed; D1858 is the corrected candidate result.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
