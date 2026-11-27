@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1830",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "983fe9406c46c4950b0a4cb2e57d0c6cf94b0a2e",
+  "implementation_sha": "983fe9406c46c4950b0a4cb2e57d0c6cf94b0a2e",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1830-python-postgres-streaming-full-file-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1830-python-postgres-streaming-full-file-20261127 -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {"pytest": "7/7 passed, 0 deselected, 0 skipped, 0 failed", "criterion": "Complete PostgreSQL streaming checkpoint and table persistence/replay/conflict file", "service": "isolated PostgreSQL 16.4", "cleanup": "PASS"},
+  "hashes": {"pytest-output.log": "6850A11655C712B7E5372D6B0352C12138F06FF4D1DDC882085FE5745303315F", "pytest-postgres.log": "3B01EB946C613281697F7EBA57D1F0A02E00776D0BCB3003DA40CA4EDE6072CD", "pytest-postgres.xml": "2642BB8A3F9210094F1049F456A1E8DD72CD3E5DB74AC8F48BA6040430646410", "pytest-timings.json": "12A2AD42D4E00D34534BFE27C8AD50DD2AAF52DB5465E57FA587ED76812AF961", "runner-timings.json": "2EC099BAFDF4D79956BB41516F8368FE59F5A6745F351EDB9AA3D8ECFBC3B563"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Filtered single-file PostgreSQL diagnostic; full Python suite and coverage were not run.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
