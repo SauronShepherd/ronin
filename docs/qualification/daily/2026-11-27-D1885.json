@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1885",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "88fbb54789c5788da5ec803fd441051ca30af42a",
+  "implementation_commit_sha": "88fbb54789c5788da5ec803fd441051ca30af42a",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1885-http-restart-recovery-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_workspace_project_http_api.py -k archive_requires_key_and_replays_after_service_restart --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "1 passed; 60 deselected; 0 failed",
+    "scope": "Local HTTP workspace/project archive persistence and replay after service restart",
+    "provider_scope": "Local SQLite/HTTP composition; no external provider certification"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "A2FB061521FBB0C74C918EF4AD491B87CDA205769B5A84D2F0FB9ED7BFA4651A",
+    "pytest.log": "EEFF17E3AF192FB1CE60CB68D952B76B0CC702E12955D2AA3AE165A8434213B5"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded local persistence/restart evidence only; not PostgreSQL, hosted provider, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
