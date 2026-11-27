@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1993",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "a14f023c391c0fdf274351c4161f81718b2c5e49",
+  "implementation_commit_sha": "a14f023c391c0fdf274351c4161f81718b2c5e49",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1993-notification-delivery-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_webhook_notifications.py tests/test_smtp_notifications.py tests/test_notification_dispatcher.py tests/test_scheduler_notifications.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "24 passed; 0 skipped; 0 failed", "scope": "Webhook TLS/DNS/pinning, SMTP bounds/redaction and durable notification dispatcher/retry contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "63EB7D1F261EDBFED98E68A4E6A7576C654BA089814804B489C78FF9FC7F87F2", "pytest.log": "D946B71B13438A13069F438262946C1F60351D24D65D65248EBC7B37792A7DF6"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local notification/delivery contracts only; no real webhook or SMTP destination was contacted and no hosted provider was certified.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
