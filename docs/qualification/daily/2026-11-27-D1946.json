@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1946",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "b542765fdb7f619b212071a76ec5f2b2bccb6905",
+  "implementation_commit_sha": "b542765fdb7f619b212071a76ec5f2b2bccb6905",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1946-provider-profiles-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_jdbc_connector.py tests/test_azure_blob_json_connector.py tests/test_delta_profile.py tests/test_iceberg_profile.py tests/test_connector_capabilities.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "67 passed; 0 skipped; 0 failed", "scope": "JDBC, Azure Blob JSON, Delta/Iceberg profile and connector-capability contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "00A0A1B1FDE91C3C62D13B01408A4400AFC9A39440374D5DFB65215394BE2F2F", "pytest.log": "BA7E10C59F30914CA53E8BED6DCE494F005BA658F1C9EB93D26C59DCDF46DE4B"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local connector/profile contracts only; no authenticated cloud/provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
