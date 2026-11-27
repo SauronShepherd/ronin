@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2107",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_S3_OBJECT_STORE_CURRENT",
+  "candidate_sha": "eab108229fc2411268a153dd14999a32831470ea",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2107-docker-s3-object-store-current-20261127-01\\docker-qualification.log",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2107 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2107 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2107-docker-s3-object-store-current-20261127-01 -TestFilter 's3_json or ml_s3_artifact'; docker image rm ronin:qualification-d2107",
+  "result": {"tests": "2 passed, 25 deselected, 0 skipped, 0 failed", "cases": ["test_s3_json_sink_put_read_and_retry_round_trip", "test_ml_durable_input_output_and_retention_round_trip_through_s3"], "fixture": "Floci S3-compatible", "cleanup": "PASS", "image_cleanup": "PASS"},
+  "evidence_hashes": {"docker-cleanup.json": "5880E65C27DE53C80BED722A227CE701822A3A3D8561E92D5D6C7B24D4CF4CA6", "docker-pytest-output.log": "5CF59513BBAA463EB3A1DE421D6827ECBC1E7EA15E076EC13280218DC7CE59EA", "docker-qualification.log": "FC660774AA4AD7D3D85E3656B8C2E734BF9102B41B816C9F5032C1A715522BD8", "floci-s3-qualification.log": "9239AE166D6D407112875B07685FEC0B9BB658968065EDD02AA7156FA9BF40C8", "v01-acceptance.xml": "A7C04D20F9E37713ED8FA20BDBDD47E679524FD266B0F65A0401C88656F64531"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Floci S3-compatible emulator only; no AWS/cloud IAM certification, strict v0.1 gate, complete P11 or release approval. No historical evidence is reattributed."]
+}
