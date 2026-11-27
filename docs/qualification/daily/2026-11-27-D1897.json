@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1897",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "0bb8fc5fd3c07a0390e4cee6118c9e38eecc171e",
+  "implementation_commit_sha": "0bb8fc5fd3c07a0390e4cee6118c9e38eecc171e",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1897-container-contracts-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_container_kernel_executor.py tests/test_container_resource_limits.py tests/test_container_resource_observation.py tests/test_runners.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "36 passed; 1 skipped; 0 failed",
+    "scope": "Local container executor, resource limits/observation and runner contracts",
+    "skip": "POSIX child-watcher-specific test skipped on Windows by platform guard"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "E077BE83CB1F9CF08E168E65E5D98E091C7965F40712AD488F48145E6500799C",
+    "pytest.log": "001776C51C8F189EE871D57530F007DD594A958333404924CE4E049F6532A8DF"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local executor contracts only; real Docker qualification is opt-in and was not run, no hosted provider or indefinite operation.",
+    "The single skip is an explicit Windows platform guard and is not counted as PASS.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
