@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2006",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_EXTERNAL_S3_COMBINED",
+  "candidate_sha": "5833bcaa633ace15b365fbcc13b18a0edc15ad1f",
+  "implementation_commit_sha": "5833bcaa633ace15b365fbcc13b18a0edc15ad1f",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2006-docker-s3-combined-rerun-20261127",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory <external-temp-dir> -TestFilter 's3_json or ml_s3_artifact'",
+  "result": {"pytest": "2 passed; 25 deselected; 0 skipped; 0 failed", "duration": "2.10s", "scope": "Combined real S3-compatible Floci qualification for S3 JSON connector retry/read/discovery and ML durable artifact input/output/retention"},
+  "provider": {"name": "Floci", "image": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db", "ronin_image": "sha256:29dc3a4db2fefd819da5ce867b345d0de37056d4f61b914950bd72a1e90b835e"},
+  "evidence_hashes": {"v01-acceptance.xml": "5EB76E58E48176F065A862A56FBFDC7CA7964E8D35AAFFF65EB3FCA9C7169656", "docker-pytest-output.log": "031D91D4EC78862DF9501B62C3BDD4C6E6C93DC9DFA09A05312905A71FAC1409", "floci-s3-qualification.log": "F017585E35C3CEAC3EBA6EB94E2A63491BD07672FF92353C134DAB2BA328B135", "docker-cleanup.json": "2652FB146BBB7633435E6EE792E18D0256BAA47AFBF04B1FC6FE1EBB8DA8278D"},
+  "cleanup": "PASS; Floci project/container/network/volume and temporary Ronin image removed",
+  "excluded_attempt": {"evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2006-docker-s3-combined-20261127", "reason": "pytest -k expression used invalid '|' syntax; runner failed before tests and cleanup passed", "runner_log_sha256": "C259F4F00213724B8FA0CDF5ECD47119F73D7B179BC677BE1B63877CBFFA7E8D"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded combined S3-compatible diagnostic only; strict v0.1 acceptance was omitted by the filtered run. Does not certify AWS production, indefinite operation or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
