@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1850",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "07189d6b917fa8f7cbfbf786ab68c59534fec7bd",
+  "implementation_commit_sha": "07189d6b917fa8f7cbfbf786ab68c59534fec7bd",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1850-postgres-local-catalog-http-20261127",
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL local-composed catalog and governance over HTTP integration",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "FF200B563B1356BDDFCC49FC84C2DA88771F080D90751AD1B5C94C6061C4D2F4",
+    "pytest-postgres.log": "2D8FF337CC02756E604EDE540E96DAB3F1EE43B709360FA533529204FD46DC9D",
+    "pytest-postgres.xml": "DD47F1776E7B743F5648BCAF8AAA88496B6A3B6D9A037BAE9AA6452FF6C699EE",
+    "pytest-timings.json": "62CE2505B45D7B4BE9A748330FFAF17A590669B716C7DF5A8D118E626AD36492",
+    "runner-timings.json": "7393BDBEDD06F108971443220C625B489D8F1F77D70B6A1E5C2354E447E4016D"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test file only; not the complete Python/PostgreSQL suite or complete P11.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
