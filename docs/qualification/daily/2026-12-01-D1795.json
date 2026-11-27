@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1795",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_BACKPRESSURE_65536_CURRENT",
+  "candidate_sha": "837f1913b41c05a98ffcb9d85da3f6b071ae6c02",
+  "implementation_commit_sha": "837f1913b41c05a98ffcb9d85da3f6b071ae6c02",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1795-live-backpressure-65536-current-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1795-live-backpressure-65536-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1795-live-backpressure-65536-current-20261201 -StorageBackend postgres -WorkerImage ronin:qualification-d1795-live-backpressure-65536-20261201 -TestGrep 'sustained backpressure' -BackpressureRecords 65536 -BackpressureTimeoutSeconds 600 -RequestTimeoutSeconds 240; docker image rm --force 79e5ac72430affe73e9c1b501c7bde3b2612ae08e86209e3b70c1de1d8d6063b",
+  "result": {"status": "passed", "configured_records": 65536, "tests": "1 passed, 0 skipped, 0 failed", "api_events": 19, "correlated_events": 19, "api_outcomes": {"OK": 19}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "worker_image_digest": "sha256:79e5ac72430affe73e9c1b501c7bde3b2612ae08e86209e3b70c1de1d8d6063b", "cleanup": "PASS", "elapsed_seconds": 227.45},
+  "evidence_hashes": {"qualification-summary.json": "1250D015A2AE69970483FF2FB9971363BE772F55CB1C4D9219CEDFA0D87685AC", "live-api-traffic.json": "F363C891C9DE1E3C4BA14511BB0F8598608B0D17B74512AB9C4BC51CA8603860", "browser-live.xml": "C804E94A4B113D121F201A265D24A1B079A683E0E5201FA0F866565352570731", "browser-live.log": "D70F4ED8A574EC62D735B9ABD908A3921087B19AC61C3608FE1885B7E484994E", "live-server.stderr.log": "ABF42823EDA85BB9FB6CA7C2D60874A50229608B3A51BAC8929CEB7F71502975", "live-python-freeze.txt": "781D18045842D8C285FC70036580FDCBEE15F4FD877A8D7AF98F256668AA09CD", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Backpressure bounded de 65.536 registros con un broker, PostgreSQL y un worker Docker; no demuestra operación indefinida, HA/multi-worker productivo, hosted providers, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
