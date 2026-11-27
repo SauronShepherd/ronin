@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1926",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "3e640bd5106d2c03f3e091f40e5bd78ae614731c",
+  "implementation_commit_sha": "3e640bd5106d2c03f3e091f40e5bd78ae614731c",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1926-web-query-policy-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_browser_audit_routes.py tests/test_studio_web_audit.py tests/test_query_engine_policy.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "17 passed; 0 skipped; 0 failed", "scope": "Browser audit routes, Studio web audit and query-engine policy contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "92E546B098D57D1658DE1248DF5FCF0D74C942B73497C4862CB76D7C41C651DD", "pytest.log": "ED6CB1C18D37E5E70A5DD745353D88E9F590D00C3D9C10CD78F0ADE87A206078"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local web/audit/policy contracts only; no full browser journey or external-provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
