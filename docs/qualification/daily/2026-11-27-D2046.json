@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2046",
+  "date": "2026-11-27",
+  "status": "PASS_SUPERVISOR_SOAK_300_POSTGRES",
+  "candidate_sha": "b0e836fe20ac7813d22f9507e691b6922257a3ce",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2046-live-supervisor-soak-300-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2046-live-supervisor-soak-300-postgres-20261127-01 -StorageBackend postgres -TestGrep 'supervisor soak' -SupervisorSoakSeconds 300",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true},
+  "result": {
+    "playwright": "1 passed; 0 skipped; 0 failed",
+    "duration_seconds": 364.18,
+    "supervisor_soak_seconds": 300,
+    "api_events": 339,
+    "correlated_http_logs": 339,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 339},
+    "application_log_levels": {"INFO": 341, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0},
+    "cleanup": "PASS",
+    "temporary_containers": "REMOVED",
+    "temporary_images": "NONE"
+  },
+  "evidence_hashes": {
+    "browser-live.log": "B4412BC46FD28620D1BF8E95B874F9AD19FC905FDB9157B5466A51A452E13FD5",
+    "browser-live.xml": "48C56E6AC0626CEB468E6CAC829FF24DE93F51ED850500C04D86F06967B949EB",
+    "live-api-traffic.json": "9A8DA50A444CF3170FF35CD279F9E52344351CC62BC871BA14E8AA955EA0DE9D",
+    "live-python-freeze.txt": "9D5095E113B690F0AE572D294413FC5512A6C508A749A30FC4D9DBF1FFF77B80",
+    "live-server.stderr.log": "6A005C821427C73D7C20037D12D632260A3A84B51B39BAE3C33E3BF295057724",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "397764B98FE06039A4E49A77E4B481BCFE9050898FF6A64A8A0ED6369A36C0E4",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Una única prueba live bounded de supervisor soak con PostgreSQL y Redpanda; no certifica operación indefinida, matriz completa de proveedores, P11 completo, P13 ni release. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
