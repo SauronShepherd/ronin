@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1772",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_EMPTY_PARTITION_HEALTH_CURRENT",
+  "candidate_sha": "b5dd9028404ed0e2b1923218fda5c95907eb1827",
+  "implementation_commit_sha": "b5dd9028404ed0e2b1923218fda5c95907eb1827",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1772-live-empty-partition-health-postgres-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1772-live-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1772-live-empty-partition-health-postgres-20261201 -StorageBackend postgres -WorkerImage ronin:qualification-d1772-live-20261201 -TestGrep 'live streaming health reports an empty partition' -RequestTimeoutSeconds 120; docker image rm --force ronin:qualification-d1772-live-20261201",
+  "result": {"status": "passed", "tests": "1 passed, 0 skipped, 0 failed", "api_events": 4, "correlated_events": 4, "api_outcomes": {"OK": 4}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 47.46},
+  "evidence_hashes": {"qualification-summary.json": "35F85A1C78094C4C6374EBDDB69816334B06105555DA2E2066839B162C741194", "live-api-traffic.json": "9C937001F92BC5A28A355259016ADD0AA5E4BEC803749E24499AB94752400329", "browser-live.xml": "6D09F509BBE75D3E79F4494B86610BB8CA5B87712471AB09CC57F3C289D88C77", "browser-live.log": "1D78A8A91EB2A97F4F034907D40B96000D78E105057D8B33AAACAE440FEEBCAF"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live empty-partition health diagnostic with single broker; not HA, indefinite operation, complete P11 or release approval. No historical evidence reattributed."]
+}
