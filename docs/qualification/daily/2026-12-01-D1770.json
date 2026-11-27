@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1770",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_CURRENT",
+  "candidate_sha": "d95b9f2c01b795fbaaef4163d4c9f943163e7324",
+  "implementation_commit_sha": "d95b9f2c01b795fbaaef4163d4c9f943163e7324",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1770-live-event-workflow-postgres-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1770-live-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1770-live-event-workflow-postgres-20261201 -StorageBackend postgres -WorkerImage ronin:qualification-d1770-live-20261201 -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 120; docker image rm --force ronin:qualification-d1770-live-20261201",
+  "result": {"status": "passed", "tests": "1 passed, 0 skipped, 0 failed", "api_events": 11, "correlated_events": 11, "api_outcomes": {"OK": 11}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 66.43},
+  "evidence_hashes": {"qualification-summary.json": "7F4CED594AE60296402491CD709D53029905C96517DDDC09DEDE4BDC243C1C23", "live-api-traffic.json": "6AF13FC517A92205DB5203BB43A236ADD6B231018E3966EB6D6456D26AC4165F", "browser-live.xml": "3681F6FB41C886DE4A6B4E0B6A30FF03A4ADE262A6BC8AD74A6DB3B17DB9A029", "browser-live.log": "9F964E479243200274AEA136B12B00D5EDF47EC3A7839704B2215432DC326E97"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live event→workflow diagnostic with single broker; not HA, indefinite operation, complete P11 or release approval. No historical evidence reattributed."]
+}
