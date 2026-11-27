@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2055",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_TERRAFORM_VERSION_PREREQUISITE",
+  "candidate_sha": "e4f81dfca6e452074792ce98fe7f5ea132338db0",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2055-cloud-studio-floci-current-20261127-01",
+  "command": "python tools/cloud_studio_floci_qualification.py --endpoint http://127.0.0.1:4566 --backend floci --terraform --workspace C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2055-cloud-studio-workspace-20261127-01 --evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2055-cloud-studio-floci-current-20261127-01\\qualification.json --terraform-executable terraform",
+  "provider": {"name": "Floci", "image": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db", "health": "PASS_HTTP_200"},
+  "result": {"status": "NOT_PASS", "terraform_required": "1.13.5", "terraform_observed": "1.16.2", "terraform_config_generated": true, "topology_valid": true, "plan_started": false, "apply_started": false, "residual_terraform_state": [], "cleanup": "PASS"},
+  "evidence_hashes": {"floci.log": "EF67DADEBF66FE7821F3291F709D52C608249C7897A6BDEB86B492371B420E1A", "qualification.json": "23BED2897B0273E5C127121A1E0D045C598F096CDD4D139A14A3AB5B507EA248"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No se ejecutaron plan/apply/refresh/destroy porque el runner fail-closed detectó Terraform 1.16.2 donde exige 1.13.5. Floci fue saludable y el cleanup fue PASS; esta evidencia no certifica Cloud Studio/Terraform ni P13, P11 completo o release. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
