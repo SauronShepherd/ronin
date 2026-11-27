@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1831",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "c60571684bc3d0c767728a47a2fe09502061b4fc",
+  "implementation_sha": "c60571684bc3d0c767728a47a2fe09502061b4fc",
+  "worker_image_digest": "sha256:07fa3396928515975eb2ae9e6e7ac4002fa268fb4d1507c9ceceb2f465b1f61e",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1831-live-rf3-worker-parquet-20261127",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1831 --label org.ronin.qualification.run=d1831 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1831-live-rf3-worker-parquet-20261127 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d1831 -TestGrep live streaming parquet sink -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d1831",
+  "result": {"playwright": "1/1 passed", "api_events": "11/11 correlated", "api_ok": 11, "unexpected_errors": 0, "cleanup": "PASS", "topology": "three-broker Redpanda RF3, PostgreSQL, Docker worker", "criterion": "Parquet sink preserves reset replay across bounded runs"},
+  "hashes": {"browser-live.log": "FE9FBE75D1DFEE30451962AFDAEEE87A162E4AA6A9DF6D9DD1BB8F74EF8C203A", "browser-live.xml": "95E0C6E54AF2EB4FF900A883B9B2CF2A8A5941F511C8725125C869345F09FBF8", "live-api-traffic.json": "989C677FA0BE6FA1CF5442A0049D6DE82C3982C7611187180042FCEE29B8068E", "live-python-freeze.txt": "56B85B3909AC8AB2EDC36601D9E072425453F157B2589459FE4B513B1FBFF5E5", "live-server.stderr.log": "676C3C5DDCB3CDF17F9CCC2DEE13FC7B518623141EEC17A3395ECF1A1BF8B1F3", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "D3726A8A258B78ACF42127F5FEBC7E32FA549ABB2B70F8EFD1949766503E45B8", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Single bounded Parquet reset/replay case; no indefinite operation, SLO or cloud-provider certification.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
