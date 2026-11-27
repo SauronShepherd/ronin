@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2079",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_WORKER_RF3_SUPERVISOR_SOAK_300",
+  "candidate_sha": "13bb259fa32774bfad03c6210fc908e201a45ea1",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2079-live-supervisor-soak-300-worker-rf3-current-20261127-01",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d2079 --label org.ronin.qualification.run=d2079 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2079-live-supervisor-soak-300-worker-rf3-current-20261127-01 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d2079 -TestGrep 'streaming supervisor soak' -SupervisorSoakSeconds 300 -RequestTimeoutSeconds 120; docker rmi ronin:qualification-d2079",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true, "worker_image_digest": "sha256:48af673b440941a1f6611b73632ebb0acff2502489ab2da5bc2462acfa8d33c9"},
+  "fixture": {"supervisor_soak_seconds": 300, "multi_broker": true, "replication_factor": 3, "request_timeout_seconds": 120},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 341.36, "api_events": 379, "correlated_http_logs": 379, "uncorrelated": 0, "outcomes": {"OK": 379}, "application_logs": {"INFO": 381, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {"browser-live.log": "BF2698E77C3DE84050890A49B046B5920017A58AE2521CAAE4BC7DA5A17E039D", "browser-live.xml": "E11E0E1AC2145FAD41B31CF516CAD2AE055A77E5AA34718344DFE1CB50C119ED", "live-api-traffic.json": "409BBE6D6E0BDE7A5E3CA7E793DDEB1E684EA3CEFD1F2B52770837B91721019E", "live-python-freeze.txt": "61864F84B6E2490BDFBFC58F15373757A7123550CDA8A4DD53D043EDF8B024DE", "live-server.stderr.log": "D9B51FA80BEDA7653966C8F76837F76D881371E2B9BB284D831EEB2312DE944A", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "73FAB44FBA91B4ED90C4A25B2B1BEE442E465A0CF762A614679AF91711303EAC", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Soak bounded de 300 s con worker y RF3; no equivale a operación indefinida, HA/SLO ni capacidad de producción. No cierra P11, P13 ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
