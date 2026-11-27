@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1907",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "67736fdde8e52dbc09675cb0999c69093be0db86",
+  "implementation_commit_sha": "67736fdde8e52dbc09675cb0999c69093be0db86",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1907-data-engineering-http-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_data_engineering_http.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "5 passed; 0 skipped; 0 failed",
+    "scope": "Local data-engineering HTTP integration: project/runtime selection, query execution and evidence exposure"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "7774BC4FD44E8DED66492D8F17B12752903E93C0157D5BD08EE4E461F1F751BB",
+    "pytest.log": "842B98BF1760E89CBA7A5085DA40B070DB2C2F573DAE483860650938C197CA09"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local HTTP/data-engineering composition only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
