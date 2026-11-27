@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2100",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_CURRENT",
+  "candidate_sha": "4e8a8366d73e0e7feb32e69d90fd4dc91dd2548f",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2100-live-event-workflow-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2100 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2100-live-event-workflow-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2100 -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d2100",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 11, "correlated_events": 11, "api_outcomes": {"OK": 11}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 69.11},
+  "evidence_hashes": {"qualification-summary.json": "26E5610CCA5DFC3AFF4737A5A3DD1A97D147E72F873FFC7529A444BD7672703E", "browser-live.log": "C02E6A8D8C457F8077EBC57EC89B60A68C07E4B3FB80D2AE4C7400DB2F48FB4B", "browser-live.xml": "BEF31163E54194177A51C8701093DFB3F3760E22E77BC6CF7F00EF112D00F3DC", "live-api-traffic.json": "A28F1CD1D03A90718CE5AFB4AF359ED49BE2345643CA159835175EA7ED667FD1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused event-to-workflow diagnostic, not indefinite operation, HA, multi-worker, complete P11 or release approval. No historical evidence is reattributed."]
+}
