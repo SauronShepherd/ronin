@@ -511,10 +511,10 @@ try {
                 "--workers=1",
                 "--grep=$TestGrep"
             )
-            if ($multiBrokerDiagnostic) {
-                # The single-broker restart case intentionally asserts exactly
-                # one broker; exclude it from RF3 diagnostics so topology
-                # selection cannot create a false multi-broker failure.
+            if ($multiBrokerDiagnostic -and $TestGrep -ne "live streaming broker restart") {
+                # The single-broker restart case is excluded from broader RF3
+                # diagnostics; the exact focused filter is supported by the
+                # multi-broker restart qualification below.
                 $playwrightArguments += "--grep-invert=live streaming broker restart"
             }
             npm exec -- playwright test @playwrightArguments 2>&1 |
