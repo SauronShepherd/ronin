@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2108",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_AZURE_BLOB_CURRENT",
+  "candidate_sha": "5e1ccd29c88afab5b2f935dc5f7e3fad0b315596",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2108-docker-azure-blob-current-20261127-01\\docker-qualification.log",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2108 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2108 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2108-docker-azure-blob-current-20261127-01 -TestFilter 'test_azure_blob'; docker image rm ronin:qualification-d2108",
+  "result": {"tests": "1 passed, 26 deselected, 0 skipped, 0 failed", "case": "test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite", "fixture": "Azurite Azure Blob-compatible", "cleanup": "PASS", "image_cleanup": "PASS"},
+  "evidence_hashes": {"docker-cleanup.json": "32211C78D23D725ED2B96E19AFCACAB297EC027FBFC8A4C2E344DD8BE9710B29", "docker-pytest-output.log": "805AB2589461B9B6B4F4D802085A384075BA55661ED67AE3B8FA506E20D48A7C", "docker-qualification.log": "2282E0D65D56491CEF14EC5ABB9210DF6FA75066273851E6D3970E420732AE26", "azurite-qualification.log": "A54AC407F578C41AD399491AE9E0850B5D173ED9397517E825F1740A812A1EFD", "v01-acceptance.xml": "19A8EC0EFA2CDD819CAE8A4CCB34772B2CBF347F4D3E8BC19761426EF0ABC936"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Azurite emulator only; no Azure cloud/IAM certification, strict v0.1 gate, complete P11 or release approval. No historical evidence is reattributed."]
+}
