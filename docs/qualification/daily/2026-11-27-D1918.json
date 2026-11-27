@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1918",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "c202d1234b11a04b6d2465c8aeb4763067928030",
+  "implementation_commit_sha": "c202d1234b11a04b6d2465c8aeb4763067928030",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1918-git-source-repro-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_git_source.py -k 'git_fast_forward_rejects_divergent_history or git_sync_rejects_unsafe_subdirectory_before_changing_head' plus the complementary two-test isolated invocation",
+  "result": {
+    "pytest": "4 passed; 0 skipped; 0 failed across two isolated invocations",
+    "scope": "Isolated reproduction of the four D1917 Git source failures",
+    "interpretation": "All four cases pass in isolation; D1917 failures are not deterministic in isolated execution and are retained as NOT_PASS host/suite evidence"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "C225B44C440B94566B9186EF56792E30BBFD4681E4F04E8FA7A0DB16DFD1D42A",
+    "pytest.log": "5843D700E7A8A120B67B40841DCA2BCE5C6776966F73E1B1751E4B5643966578",
+    "pytest-junit-2.xml": "0132406B37E8BB01FC213C8426C6026EE20A32300646978101A46E3B51F0CEE6",
+    "pytest-2.log": "C00B2CAD9A848ADBB7FE714673ADA478BE58654931B314DE8B064618C3EC651A"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Isolated local Git contract evidence only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "D1917 remains NOT_PASS and is not reattributed or converted into PASS by this isolated reproduction.",
+    "P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
