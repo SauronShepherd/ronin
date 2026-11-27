@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1797",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_CURRENT",
+  "candidate_sha": "ce497b2bcc6b75b92401119de30c398d4c72d021",
+  "implementation_commit_sha": "ce497b2bcc6b75b92401119de30c398d4c72d021",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1797-live-event-workflow-current-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1797-event-workflow-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1797-live-event-workflow-current-20261201 -StorageBackend postgres -WorkerImage ronin:qualification-d1797-event-workflow-20261201 -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 240; docker image rm --force 76db6b3f5419199802e2223553f8e3e1a340a6cd7855ddacdb80a648bf1b25ab",
+  "result": {"status": "passed", "tests": "1 passed, 0 skipped, 0 failed", "api_events": 12, "correlated_events": 12, "api_outcomes": {"OK": 12}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "worker_image_digest": "sha256:76db6b3f5419199802e2223553f8e3e1a340a6cd7855ddacdb80a648bf1b25ab", "cleanup": "PASS", "elapsed_seconds": 28.92},
+  "evidence_hashes": {"qualification-summary.json": "94F5ED2DC2F0DDB7056946B3684A76004D0444F8A36BC385053735417F3D9285", "live-api-traffic.json": "B5DB272F568F92C301650E44BAD3583526003A7D26E31478142EDC714F33C8F3", "browser-live.xml": "349102A9272EBF32CAA40B48EC090336451EAEC59456431EADC4FFECEF24A751", "browser-live.log": "3B6CC802D90C7E4D79137254160AA293AFB153A6C033A2D559829B0D7F98F7E9", "live-server.stderr.log": "3A74F6D2E4173DBDCD121D9D11D227D5B76493F9CC13B6DF7C956D88A0268E7C", "live-python-freeze.txt": "2299E0C13E355655376B67164B4EC115C27AAC1DF3E66304893D0CF778003483", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Propagación bounded evento→workflow con un broker, PostgreSQL y un worker Docker; no demuestra operación indefinida, HA/multi-worker productivo, hosted providers, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
