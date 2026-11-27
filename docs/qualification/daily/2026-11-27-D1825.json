@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1825",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "dd865fd438cc4bda339cdfb928b3ca17637bf8a0",
+  "implementation_sha": "dd865fd438cc4bda339cdfb928b3ca17637bf8a0",
+  "worker_image_digest": "sha256:ef7942305f6a594bd02c4ff95d35efcf2d720294aa3e22c2179546944c0102c3",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1825-live-rf3-worker-streaming-20261127",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1825 --label org.ronin.qualification.run=d1825 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1825-live-rf3-worker-streaming-20261127 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d1825 -TestGrep streaming -RequestTimeoutSeconds 300; docker image rm ronin:qualification-d1825",
+  "result": {"playwright": "11/11 passed", "api_events": "235/235 correlated", "api_ok": 227, "expected_warnings": 8, "unexpected_errors": 0, "cleanup": "PASS", "topology": "three-broker Redpanda RF3, PostgreSQL, Docker worker", "coverage": "RF3 streaming battery with real worker runtime: health/lag, failover, checkpoint/replay, backpressure, Parquet, event workflow and byte boundaries"},
+  "hashes": {"browser-live.log": "7D1464E336A0C5441BFCF10A650476CFE592A8CAA7444CBF210B5699AEE5A997", "browser-live.xml": "DF0D0919BFDE33EF605D798EBA6D414866E748640AF2247E8D03C447C3383DB9", "live-api-traffic.json": "9BD6C1EF6B576A4A7E968D05F8DBF07652C1EB9FEFF0F011C183D8467441245C", "live-python-freeze.txt": "D3DD38581D868AC9938A8FC215D6EE67CFFAA36F86D3462278E1A6375E813A82", "live-server.stderr.log": "3B522D1767E55374823248815DC378F98D4037C4E3C96437438EAF341EC8F977", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "7CB7940504DAB7CB56590BE74AD8233CFD3579DADBFEAFD4FDC5136C793E9C4E", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded RF3 worker qualification; no indefinite operation, SLO or cloud-provider certification.", "Does not close complete P11 or release approval; no production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
