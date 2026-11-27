@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1876",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "fe33944c9aae590d23ea3d6ba3859a7fc44fa74a",
+  "implementation_commit_sha": "fe33944c9aae590d23ea3d6ba3859a7fc44fa74a",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1876b-posix-runtime-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_posix_contract_qualification.ps1 -EvidenceDirectory <external-temp-dir> -ImageRef sha256:5a11ab7005705c46b4c4d3c5ba9ff8f0c76577b55f404ee4603b37103a60302e",
+  "result": {
+    "pytest": "8 passed; 0 skipped; 0 failed",
+    "scope": "POSIX/Linux runtime contract tests in isolated Ronin qualification image",
+    "image": "sha256:5a11ab7005705c46b4c4d3c5ba9ff8f0c76577b55f404ee4603b37103a60302e",
+    "cleanup": "PASS; temporary Ronin image and Linux test container removed"
+  },
+  "evidence_hashes": {
+    "git-version.txt": "0EFF67955296E123526D7F9B9146FFF8D8DC8D6DBF4F49BA5F838923D2B4AF71",
+    "posix-junit.xml": "8FE1E108A627EE7393043C0B75B426AF38FC6EA75933068AD4C765F83D780D06",
+    "pytest-timings.json": "67DA0067F6B9CCCB59DA41FDD41CB02A36254A2B364B38412D4B9E45A0599426",
+    "qualification.json": "0FB1796999F5B6D935AF34E8BEC09CB7A80E26431E6F837D657C69CCC6C92035",
+    "qualification.log": "497F895DBFD89C43D480BB52F0828807D8650707C199D0677DD077DBE923630C"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded POSIX/Linux contract evidence, not supported-platform matrix completion, HA, indefinite operation or complete P11/release qualification.",
+    "An initial invocation without a locally built digest image was excluded; this receipt counts only the valid exact-digest rerun.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
