@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1854",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "0810177c000ef88dc93361ca808d11eec0bc0ea3",
+  "implementation_commit_sha": "0810177c000ef88dc93361ca808d11eec0bc0ea3",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1854-ml-s3-artifact-20261127",
+  "result": {
+    "pytest": "1 passed; 26 deselected; 0 skipped; 0 failed",
+    "scope": "filtered real ML durable artifact store round-trip through S3",
+    "backend": "Floci S3-compatible object store in isolated Docker Compose resources",
+    "cleanup": "PASS; owned Ronin image, Floci container, network and volume removed"
+  },
+  "evidence_hashes": {
+    "docker-cleanup.json": "0251D3505BDFFC3B0A092423BA1C1384C227CE31EACC97EF2492B9DC49FAF662",
+    "docker-pytest-output.log": "9FC42E462AADA87AB7442C0C54A5CAC1C6137F52D9BD41D68E7B63ABC86F3763",
+    "docker-qualification.log": "B99193D5993FD6626F8F0BB89AC6C6A35385B0EB6A0D8EFF6E536348D76D2A65",
+    "floci-s3-qualification.log": "8C6189E39B0869232F9BAEC8DC1BEE83F13AB175ADA4DB120091F1BAAD2F15B3",
+    "v01-acceptance.xml": "BE18064DE465CC1B7978C1C5FDA42BE8AB4A8FD5BD56C3E403E93499E1D16093"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one ML S3 artifact integration test; 26 tests were deselected and strict v0.1 acceptance was not evaluated.",
+    "This is local S3-compatible evidence, not cloud-hosted provider or external IAM certification.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
