@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1787",
+  "date": "2026-12-01",
+  "status": "PASS_POSTGRES_SCHEDULER_RECOVERY_CURRENT",
+  "candidate_sha": "5dbc1a37d2892532b2eecfcc0f58103ae7d2c4d3",
+  "implementation_commit_sha": "5dbc1a37d2892532b2eecfcc0f58103ae7d2c4d3",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1787-scheduler-recovery-current-20261201\\pytest-postgres.xml",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1787-scheduler-recovery-current-20261201 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire or test_postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate\"",
+  "result": {"status": "passed", "service": "PostgreSQL 16.4-alpine", "tests": "2 passed, 0 skipped, 0 failed; 19 deselected", "coverage": "disabled for filtered diagnostic", "cleanup": "PASS"},
+  "evidence_hashes": {"pytest-output.log": "A366B2297B28E3551D74F7D7FA5A899D972B7E724748501311889CAB14485678", "pytest-postgres.log": "C0BB38FEA5D4CD1DD400D9616A7C08C050493FAAD4249084BF2A59F4A1A2C11D", "pytest-postgres.xml": "272B28447674AAA616CA797FD35579A827C982EEB86C734668532A62F6277778", "pytest-timings.json": "D6FEE27A2C953984B1203B34C518FBA9648B3D5DB90EEEF1B7918E5CFDBAAB8E", "runner-timings.json": "60E401F01F06AE643A71710C9C52EC323DC592EEDA3E119F8CF4267AB48EC613"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Diagnóstico filtrado y bounded de recuperación del scheduler; no demuestra suite completa, operación indefinida, HA/multi-worker, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
