@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2081",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_FULL_CURRENT",
+  "candidate_sha": "b7ae9a9348942b931f456ddd592fc6f422e10e77",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2081-docker-full-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2081 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2081-docker-full-current-20261127-01",
+  "result": {"integration_tests": "27 passed; 0 skipped; 0 failed", "strict_v01": "15/15 passed; 0 skipped; 0 failed", "image_digest": "sha256:da61a1a11cd6ecf55b391bf9a94588fad2737f94e2107f0686b8c24b970b16b0", "fixtures": "PostgreSQL, Docker worker, Floci/S3-compatible, Azurite/Azure Blob", "cleanup": "PASS"},
+  "evidence_hashes": {"azurite-qualification.log": "3468824640E1A8A0543B67DFB24500FB2738994CEF5A0070791117FFF8402A5D", "docker-cleanup.json": "22A4118AF524E1335971500F7D589FF1EF850AAE1FEEA91BBD3C498CB926334B", "docker-pytest-output.log": "C03F5A55B4C6E7A4E5DF8F56EF384B0B6F38CC3B958D2F2B6D872D502A635540", "docker-qualification.log": "00B82E43C809CC28DF6019D625242771533EFB37E90092F768D50B8682A83B67", "floci-s3-qualification.log": "EDD64F1CCDC8296934132AFB03E3186766628D90763B09FF64E104EA6C78F04C", "postgres-qualification.log": "E641654BA1881358B780B798634D821B014D3565524957CC21BB3843B4384FBA", "qualification-summary.json": "9F04CEF0977D2925E152D0C0138E6717FDC3D10D9A0C684F965B535FE1E02805", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "0489D2F5E5E5D1A34B0E2DA5A6CD0617F403E9C8CEF8E39391AB2248EDA33E5A"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación Docker completa y bounded; no demuestra certificación cloud hospedada, operación indefinida, HA completa, P11 completo ni aprobación de release. No reatribuye evidencia histórica; P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
