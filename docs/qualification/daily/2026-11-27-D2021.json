@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2021",
+  "date": "2026-11-27",
+  "status": "NOT_PASS_TRINO_RECOVERY",
+  "candidate_sha": "0208cb879d0dfaedf0612c3fb1b3d734cbe86961",
+  "implementation_commit_sha": "0208cb879d0dfaedf0612c3fb1b3d734cbe86961",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2021-trino-20261127",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_trino_qualification.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {"pytest": "3 passed; 0 skipped; 1 failed", "duration": "10.50s pytest; 146.089s total qualification", "scope": "Digest-pinned Trino 484: prepared scalar bindings, result byte budget, terminal evidence persistence and QueryFlux worker SIGKILL reclaim"},
+  "provider": {"name": "Trino", "image": "trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f", "version": "484"},
+  "failure": "test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate failed: replacement worker exited 2 after attempt lease ownership was lost while writing evidence; ValueError('attempt lease ownership lost').",
+  "evidence_hashes": {"trino-junit.xml": "D966FDCB2622E2FBDD9DCE4B8F14F7ACF555B36D5E64C6085DD8E0AB445C6467", "qualification.log": "0A3D7200FD125C30AEDCF8962099F206C1D6BE898B99FE62246A47651753A3A1", "trino-container.log": "D42F90393EAB8C31F4F97DB9F77E682B038C6BCF59151BBDF8010DC471315348", "runner.log": "3E68A6EC4D829673AD08C32970329A30DF30DC70082C5033C479D83D5D06290A"},
+  "cleanup": "PASS; Trino container and qualification resources removed; image remains only as local digest-pinned cache",
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["NOT_PASS evidence: 3/4 selected Trino cases passed, but SIGKILL replacement-worker recovery failed at lease ownership during evidence write. No release gate or P11 closure is claimed. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
