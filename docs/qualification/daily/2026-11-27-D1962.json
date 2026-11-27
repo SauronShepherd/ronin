@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1962",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "cf696c91c9eef9b9cd1131c6d2592c7af4722dc8",
+  "implementation_commit_sha": "cf696c91c9eef9b9cd1131c6d2592c7af4722dc8",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1962-fenced-async-runner-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_fenced_sqlite_job_store.py tests/test_instance_keys.py tests/test_asyncio_runner_task_cancellation.py tests/test_async_artifact_store.py tests/test_async_job_store.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "26 passed; 0 skipped; 0 failed", "scope": "Fenced SQLite job store, instance-key and async runner/store cancellation contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "7FE686791778AC686EF954835EE4704B1D979554FF1583E65D9E8167A819238C", "pytest.log": "D4773768A67E7894822B3698572D421CD0DBEFE97ED981A37FA487ED1D360745"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local store/cancellation contracts only; no multi-node or indefinite-operation certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
