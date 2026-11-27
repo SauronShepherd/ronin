@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2111",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_900_CURRENT",
+  "candidate_sha": "6deb874b7db69e9b9ce5fdf0340724afe77f3ca2",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2111-live-supervisor-soak-900-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2111 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2111-live-supervisor-soak-900-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2111 -TestGrep 'supervisor soak' -SupervisorSoakSeconds 900 -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2111",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "soak_seconds": 900, "api_events": 1119, "correlated_events": 1119, "api_outcomes": {"OK": 1119}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 955.17},
+  "evidence_hashes": {"qualification-summary.json": "224931E8743D708A24A803E19D8456E15DEF13882B72DDD2D3776B571DA39881", "browser-live.log": "7795777DA8C7B4A8BE6C8ECFC637EEFCA8A3D691129A72E723DA5EDD41F47628", "browser-live.xml": "31C10EFFC483B05F982AB8030E53C3B7BA9FE5629BA764110F2899AC4104D7F1", "live-api-traffic.json": "285A5AB12EF5DEFE7C6A3834A432D10047FC1D0C34B2868F4615B0B2EFBF98D9"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded 900-second supervisor soak, not indefinite operation, complete HA, multi-worker certification, complete P11 or release approval. No historical evidence is reattributed."]
+}
