@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1869",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "13ec588785141a0a53f6da9f4b8d3584eff2623b",
+  "implementation_commit_sha": "13ec588785141a0a53f6da9f4b8d3584eff2623b",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1869-python-postgres-full-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {
+    "pytest": "4770 passed; 31 skipped; 0 failed; 23 warnings",
+    "scope": "full non-performance Python/PostgreSQL suite",
+    "duration": "558.49s pytest; 564.655s total runner",
+    "cleanup": "PASS; isolated PostgreSQL 16.4 container and volume removed"
+  },
+  "evidence_hashes": {
+    ".coverage": "F26588FAF3C7B4432DCFAB0AD820EA3B76DF98737E5BCC6DA32632549DB26A3D",
+    "pytest-output.log": "8246364E337132C4AB597B1B217C93B3336A73CDC6F0B67C87CE7579027AD71E",
+    "pytest-postgres.log": "B329E38C9ED2DC87F89054F6934C14C4E4BE45678DD5CDDD52ADCC513DC95952",
+    "pytest-postgres.xml": "A1793C9DAE62BF369C20D8CE1360D73B2938578AB7E031F80A044DB8DF7D664C",
+    "pytest-timings.json": "0688D827E3E8D29D99107C3BD93C5784C9CAEDA6289EA8AA3482327E4331FC33",
+    "runner-timings.json": "06FD11BD338408949419324A1CC02C36F78E35A1A0403348E604DB907FAA93DE"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "The suite retains 31 explicit platform/provider skips; these are recorded, not converted to passes.",
+    "This is full local Python/PostgreSQL evidence, not hosted provider certification, indefinite operation, HA or complete P11/release qualification.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
