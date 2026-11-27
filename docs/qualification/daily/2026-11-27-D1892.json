@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1892",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "1a56ad731a5d9aae11e93601f2a3eaa28ad33242",
+  "implementation_commit_sha": "1a56ad731a5d9aae11e93601f2a3eaa28ad33242",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1892-stream-supervisor-recovery-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_workspace_project_http_api.py -k bounded_supervised_drain or stream_bundle_api_export_plan_import_reset_and_resume_are_audited --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "2 passed; 59 deselected; 0 failed",
+    "scope": "Bounded supervised stream drain plus audited bundle export/import/reset/resume and checkpoint recovery"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "3D6BAE9AA91BC7A7B5F67D7C4EC2EC117C5D8D413D9F91055590B86E25207327",
+    "pytest.log": "764B22457AE47BE9C31F7DB650EBD5D667EF1D1EED954367FE2F84C30C3628FD"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded local HTTP/supervisor evidence only; no real broker, PostgreSQL, hosted provider or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
