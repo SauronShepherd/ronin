@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1827",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "9761e46991f1a48d9edf1a2fa6fa6a1c1a58496e",
+  "implementation_sha": "9761e46991f1a48d9edf1a2fa6fa6a1c1a58496e",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1827-docker-s3-json-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1827-docker-s3-json-20261127 -ImageTag ronin:qualification-d1827 -TestFilter s3_json_sink_put_read_and_retry_round_trip",
+  "result": {"pytest": "1 passed, 26 deselected, 0 skipped, 0 failed", "criterion": "S3-compatible JSON sink PUT/read round-trip with simulated lost response and idempotent retry", "provider": "Floci local S3-compatible service", "cleanup": "PASS", "image_digest": "sha256:20b360bdc67b60bc974c78ac475720456b1c8b42a2cc192e66183a566b734db6"},
+  "hashes": {"docker-cleanup.json": "B2C7F0635B2FF9484ACA317946619C4245F15B4695E75B01B342C98988778BA8", "docker-pytest-output.log": "440F7BB3671DA7F4143824380B1E73108CCE1DD8366488F1684AA46524E37856", "docker-qualification.log": "490C2F9C007B9A7FC50324ADA4BD1C4AAD8611912CBBEFDBD1DD795AB110C7E5", "floci-s3-qualification.log": "B72F3B2DFEA96C0C4F5BAC13EC3539B5F5CC178EABC79E068CA90DF9EC092CFF", "v01-acceptance.xml": "4CD6C7C493ADD9A6A10AF7FCC9120737924173205BF9CF3CBA73A5D337F007B8"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Local Floci S3-compatible evidence only; not AWS/Azure/GCP certification or SLA evidence.", "Filtered Docker diagnostic; strict v0.1 acceptance was not evaluated. No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
