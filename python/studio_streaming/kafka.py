@@ -232,7 +232,18 @@ class KafkaJsonSource:
             first_poll = True
             partial_batch_grace_used = False
             while len(records) < limit:
-                remaining = timeout_seconds if first_poll else max(0.0, deadline - time.monotonic())
+                # Once a fetch has yielded records, only drain data already
+                # available to this consumer. Waiting the remaining provider
+                # timeout after a partial fetch turns a bounded micro-batch
+                # into repeated underfilled API calls when another assigned
+                # partition is already queued locally.
+                remaining = (
+                    timeout_seconds
+                    if first_poll and not records
+                    else 0.0
+                    if records
+                    else max(0.0, deadline - time.monotonic())
+                )
                 is_first_poll = first_poll
                 first_poll = False
                 if remaining <= 0:
