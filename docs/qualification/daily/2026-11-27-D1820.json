@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1820",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "db638d425249d3b3195c86912f2225890ec522f8",
+  "implementation_sha": "db638d425249d3b3195c86912f2225890ec522f8",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1820-live-event-workflow-rf3-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1820 --label org.ronin.qualification.run=d1820 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1820-live-event-workflow-rf3-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1820 -MultiBroker -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d1820",
+  "result": {"playwright": "1/1 passed", "api_events": "9/9 correlated", "api_ok": 9, "unexpected_errors": 0, "cleanup": "PASS", "topology": "three-broker RF3, PostgreSQL, Docker worker"},
+  "hashes": {"browser-live.log": "6DC43539DE58791B6AD2FC2A0EABBC47243F6F9BCC70261BC655C7E97B74205E", "browser-live.xml": "FE95875017BD04277E74FB34447F2ED916C9858D99D6DCFECAFC58F0EA3828A3", "live-api-traffic.json": "FCC1F56CC7D4601540C32F67C7C0C1B75AC70F7F68DE499187B6F97A16CC7570", "live-python-freeze.txt": "12A7A7ADD86D28F2E56E0500E2DE8210B59BBD12DBC1AC9AFF8A483BC2769BA0", "live-server.stderr.log": "504F873C5D40C39C2300617026681352ACFCE1C380929F6E5B6280D13B8781FB", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "212608A26C6D035AD7944041A6AE52A7FD853C38B0D99069003216AE093F4D92", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded RF3 event-trigger workflow qualification; no indefinite soak, SLO, complete P11, or release evidence.", "D1805 historical RF3 NOT_PASS remains unchanged and is not reattributed. P11 remains in_progress and P13 remains blocked."]
+}
