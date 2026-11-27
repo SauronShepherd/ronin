@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2070",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_PARQUET_POSTGRES",
+  "candidate_sha": "576dbebaa763b587981a34610d0a732735b21ede",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2070-live-parquet-postgres-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2070-live-parquet-postgres-current-20261127-01 -StorageBackend postgres -TestGrep 'live streaming parquet sink' -RequestTimeoutSeconds 180",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true},
+  "fixture": {"parquet_sink": true, "request_timeout_seconds": 180, "multi_broker": false, "event_workflow": false},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 55.88, "api_events": 11, "correlated_http_logs": 11, "uncorrelated": 0, "outcomes": {"OK": 11}, "application_logs": {"INFO": 13, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "23A04AA8EDA6AD15783E34FB58F664DE2E09061348961747CDAEF2036EC9D0C3",
+    "browser-live.xml": "66D7B205ABC684268B2462CE47A44C1A6B5F6D45DBB41C7C115B7B7CDEBCEC03",
+    "live-api-traffic.json": "DA2B21D4F3A9681579E4654C2513A8C86E46DB5F5EBBC0EB34E845C216AC03A8",
+    "live-python-freeze.txt": "998384E894C5040337D67487661E53C5106B0DD204B5CB43F627E2FCE670C50C",
+    "live-server.stderr.log": "0CD17B63ADAE504E951780A56E2C0AD9BBB70C1367FCE3CAF5F7A92D62E79DFE",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "127C42E71D82C5B492A5C53083FA4E5B250E4A62081EA53388EB09A52220A781",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Celda única bounded de sink/replay Parquet sobre PostgreSQL y Redpanda single-broker; no equivale a operación indefinida, HA ni capacidad de producción. No cierra P11, P13 ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
