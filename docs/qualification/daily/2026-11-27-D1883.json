@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1883",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "72a88d863f1c603056c370df5118fb5c54c36da2",
+  "implementation_commit_sha": "72a88d863f1c603056c370df5118fb5c54c36da2",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1883-http-control-plane-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_http_json_control_plane_real.py tests/integration/test_http_authorized_pagination.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "4 passed; 0 skipped; 0 failed",
+    "scope": "HTTP control-plane preview over a real local JSON service plus authorization and project-scoped pagination rules",
+    "provider_scope": "Local real HTTP service fixture; no hosted provider certification"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "B77550D39FC5C09CAD8B9DD91F24BE6F9777221BBAEEB80A31ECFE3C0463185D",
+    "pytest.log": "2FBCD116F726373D5498505C05AF95750A3022F805950D211E897059137D2ED9"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local HTTP integration evidence only; not hosted provider/IAM, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
