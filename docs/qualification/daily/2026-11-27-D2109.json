@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2109",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_FULL_CURRENT",
+  "candidate_sha": "e50c30974acb03558e75ee5bcde25177b710aa7c",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2109-docker-full-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2109 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2109 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2109-docker-full-current-20261127-01; docker image rm ronin:qualification-d2109",
+  "result": {"integration_tests": "27 passed, 0 skipped, 0 failed", "strict_v01": "15 passed, 0 skipped, 0 xfailed, 0 failed, 0 errors", "fixtures": ["PostgreSQL", "Docker worker", "Floci/S3", "Azurite/Azure Blob"], "cleanup": "PASS", "image_cleanup": "PASS", "elapsed_seconds": 168.03},
+  "evidence_hashes": {"qualification-summary.json": "9C7ED615C8C3F5878289C46C913A172DD91C70720B46D887F251D99A88632530", "docker-cleanup.json": "8A2D306B7664AEA62E8712AC0D3245048104685072FF434DE1D865400F212519", "docker-pytest-output.log": "3646245C50811C3C5B5EC70D8A8F87DCF927541195D893C8A3EDA5F2A8D5A8E2", "docker-qualification.log": "329C58B027B668141BA04D414ACC109E95229914B0F4856823CDE9F0E8DC547C", "floci-s3-qualification.log": "B88831E578308F1A68D352305A65943B04893F74415674CF37AAB70193B8A3E1", "azurite-qualification.log": "9B14FAB1E66203B63C580E8BCC0E936F4A667B1DC2397EC75B3144F9DDC672FE", "postgres-qualification.log": "37B8B6BE03F89A0099C0327DA88D650F3B1188131CF9F67B4A61ECC49380055E", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "8C79BFD42252F8EB9C96EE6AB08F930603197F4FF48F2D6A3DCADAC7EA6BA309"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Current Docker integration and strict v0.1 qualification; does not prove hosted cloud/IAM certification, indefinite operation, complete P11 or release approval. No historical evidence is reattributed."]
+}
