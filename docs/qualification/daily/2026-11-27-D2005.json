@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2005",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_EXTERNAL_ML_S3",
+  "candidate_sha": "2f340c810ee615d5705d4af232f1c29aa2866ec8",
+  "implementation_commit_sha": "2f340c810ee615d5705d4af232f1c29aa2866ec8",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2005-docker-ml-s3-20261127",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory <external-temp-dir> -TestFilter 'ml_s3_artifact'",
+  "result": {"pytest": "1 passed; 26 deselected; 0 skipped; 0 failed", "duration": "3.20s", "scope": "ML durable artifact input/output and retention round-trip through real S3-compatible Floci"},
+  "provider": {"name": "Floci", "image": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db", "ronin_image": "sha256:b4a49cceb8693becb7b23464f32dc5096b60e2e89fb4fe0b6dc2c3e8bc4f5647"},
+  "evidence_hashes": {"v01-acceptance.xml": "FE845316AF884B5BB3FA38D6A2CCA3F348BF463BC405ABDC1812115CCE40AD52", "docker-pytest-output.log": "2B9BF7A3C4F191B3B35877322537E57F5C6A004876BFD103BD14433E85CC03C6", "floci-s3-qualification.log": "B60343D378DB72FE4FAEA2A53B181BFF4245C712A2CFFB74A46F2E4ADBD480CE", "docker-cleanup.json": "53EAC606D33CC9601246065B1C0317055DF900B970ABA86F12F384EAC445D0CF"},
+  "cleanup": "PASS; Floci project/container/network/volume and temporary Ronin image removed",
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded ML artifact/object-store diagnostic only; strict v0.1 acceptance was omitted by the filtered run. Does not certify AWS production, indefinite operation or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
