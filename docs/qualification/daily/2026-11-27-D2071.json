@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2071",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_EMPTY_PARTITION_POSTGRES",
+  "candidate_sha": "6bf6a07b6f936e519f51f1776fb037814e6de7df",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2071-live-empty-partition-postgres-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2071-live-empty-partition-postgres-current-20261127-01 -StorageBackend postgres -TestGrep 'live streaming health reports an empty partition' -RequestTimeoutSeconds 180",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true},
+  "fixture": {"empty_partition_health": true, "request_timeout_seconds": 180, "multi_broker": false},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 58.2, "api_events": 4, "correlated_http_logs": 4, "uncorrelated": 0, "outcomes": {"OK": 4}, "application_logs": {"INFO": 6, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "F98AEE22451167175072C6DA3471F3A5CD8BD294E16D533C6DD8B5849F6E08F8",
+    "browser-live.xml": "C822A10F2B4819C4315045AFE0386610E295CF50F4BF91A323D04BDC4FA339DE",
+    "live-api-traffic.json": "D2A2DE338B8652A2350C9B8F5BD30ECDB672BCF0EFC49947BED6A4FD398C04F0",
+    "live-python-freeze.txt": "6E5763FCA4A7283A307F74AAEC0E6FF61EF30E0CF0152D4376BC2A899979F305",
+    "live-server.stderr.log": "C7833750460F45CE08B4CE234475F643AAE2476ABAEBC13DDD302834CB932371",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "933A8908D833F75CE0D4E8820D2F217D0E57996B9A08498633F743B538A8BC5A",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Celda única bounded de health de partición vacía sobre PostgreSQL y Redpanda single-broker; no equivale a operación indefinida, HA ni capacidad de producción. No cierra P11, P13 ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
