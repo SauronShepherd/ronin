@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1853",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "ad9fb7f7ca974b9003dd71af01c83050833b15f3",
+  "implementation_commit_sha": "ad9fb7f7ca974b9003dd71af01c83050833b15f3",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1853-azure-blob-20261127",
+  "result": {
+    "pytest": "1 passed; 26 deselected; 0 skipped; 0 failed",
+    "scope": "filtered real Azure Blob connector against Azurite",
+    "backend": "Azurite Blob-compatible object store in isolated Docker Compose resources",
+    "cleanup": "PASS; owned Ronin image, Azurite container, network and volume removed"
+  },
+  "evidence_hashes": {
+    "azurite-qualification.log": "EA4879EB40ED2DE24705354D047A76CC84FED910E618B3D342A964CDF4CB8804",
+    "docker-cleanup.json": "29B69EF76D8E289BF2DF800A7B1C6E6B914E53FDDC68F208ED21C1CE1D349D67",
+    "docker-pytest-output.log": "6A8B5D644400D29CF6B378C94FBA18AE16621AEA5B9A4DC254FE0A3884842243",
+    "docker-qualification.log": "591B0EE1BFB2AD93C263FF3742A280D76121D1C3423BCE32468EE85EB743621A",
+    "v01-acceptance.xml": "225E758DBEC1EDE06BF3218381189CD33C9A492FF8CDBA7A73D48F791C3BB9A0"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one Azure Blob integration test; 26 tests were deselected and strict v0.1 acceptance was not evaluated.",
+    "This is local Azurite-compatible evidence, not Azure-hosted provider or external IAM certification.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
