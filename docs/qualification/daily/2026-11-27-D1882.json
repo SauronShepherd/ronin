@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1882",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "5cc0a478c0426610284961d4928ce42e82ba34e3",
+  "implementation_commit_sha": "5cc0a478c0426610284961d4928ce42e82ba34e3",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1882-http-connector-real-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_http_json_connector_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "8 passed; 0 skipped; 0 failed",
+    "scope": "HTTP JSON real-service connector: pagination, snapshot replay, 503 retry, redirects, response byte limits and cross-origin next-page rejection",
+    "provider_scope": "Local real HTTP service fixture; no hosted provider certification"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "5079C1DAEBE1BB67C5F56CAABA6821DC4EE910F26AE1A71895EB578D495F6A00",
+    "pytest.log": "A336392916C1DFCB30257854ED962F5125AD7D8DA42CB37E3AFC9D65BA16F051"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local HTTP integration evidence only; not hosted provider/IAM, HA or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
