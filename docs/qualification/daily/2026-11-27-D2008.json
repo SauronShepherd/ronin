@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2008",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_CHECKPOINT",
+  "candidate_sha": "a9c6191fd3e222e7c305dd89af9e221fc1b11a60",
+  "implementation_commit_sha": "a9c6191fd3e222e7c305dd89af9e221fc1b11a60",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2008-postgres-checkpoint-direct-20261127",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://postgres:ronin@127.0.0.1:55433/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_connector_checkpoint_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "3 passed; 0 skipped; 0 failed", "duration": "5.06s", "scope": "Real PostgreSQL connector checkpoint fencing/inventory/restart, shared local composition and scoped sync-worker checkpoint advancement"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55433", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "0F39ACAAB6C67DE03DA8BE5D7B1CBA22871B27D845DCA5025A6ECFEB0211BAA7", "pytest.log": "FD6C2D836976ACC35F10E5BD3288EAE5EAAEEDE108D85E9F57EC73E58E089B02", "postgres.log": "FE7E6CCD709C2301B9B76267E1677DAD89B1FA6A8ECD7A9BD78383A62C19DAD6", "docker-cleanup.log": "0FA32B96EEA9DB34E58F7A5F135455899005BDA1ED828847F31F8C40FCC3BA61"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL connector checkpoint integration only; no indefinite operation, hosted provider or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
