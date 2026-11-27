@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1790",
+  "date": "2026-12-01",
+  "status": "PASS_POSTGRES_WORKFLOW_STORE_CURRENT",
+  "candidate_sha": "066b026b25d1d45fe94903efe9aa1ff816334d93",
+  "implementation_commit_sha": "066b026b25d1d45fe94903efe9aa1ff816334d93",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1790-postgres-workflow-store-current-20261201\\pytest-postgres.xml",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1790-postgres-workflow-store-current-20261201 -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "result": {"status": "passed", "service": "PostgreSQL 16.4-alpine", "tests": "21 passed, 0 skipped, 0 failed, 0 deselected", "coverage": "disabled for filtered diagnostic", "cleanup": "PASS", "pytest_seconds": 9.47},
+  "evidence_hashes": {"pytest-output.log": "8757B97DD2BDF57713C4FC2684CC0E608CB508A8BE86DF824DAEA35BAF483025", "pytest-postgres.log": "17C165C109C05E228526097DF34810FDA62B4AD68F844718FFB556FBB7C66DB3", "pytest-postgres.xml": "0249EB2DD6524565E37D9343862287C430A9CF056B08EF819B4B56171E8E8AC5", "pytest-timings.json": "C35476BCFA85AE5F781F2C10231FF05897974399901E0021A121B9BF94346614", "runner-timings.json": "1CA9B2A387CD1F1725A139B9F65CFB8F46962FCA831019365EADA4DC0DEA3F94"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación completa de un archivo de integración del scheduler contra PostgreSQL real, pero no suite Python completa ni cobertura completa; no demuestra operación indefinida, HA/multi-worker, proveedores hospedados, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
