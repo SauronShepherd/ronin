@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1774",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_RF3_MULTI_BROKER_FAILOVER_CURRENT",
+  "candidate_sha": "1a3cba91c7d34a0da1ca214a63726e0da64ce9d7",
+  "implementation_commit_sha": "1a3cba91c7d34a0da1ca214a63726e0da64ce9d7",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1774-live-rf3-failover-postgres-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1774-live-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1774-live-rf3-failover-postgres-20261201 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d1774-live-20261201 -TestGrep 'live streaming multi-broker failover resumes from the durable checkpoint' -RequestTimeoutSeconds 120; docker image rm --force ronin:qualification-d1774-live-20261201",
+  "result": {"status": "passed", "tests": "1 passed, 0 skipped, 0 failed", "api_events": 5, "correlated_events": 5, "api_outcomes": {"OK": 5}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 89.11},
+  "evidence_hashes": {"qualification-summary.json": "25F8303941C994132B3E02D588950F7D9B8CD2DE837CC55F1E6DE45DBD339289", "live-api-traffic.json": "491D41DAA984AFE58327DA1E27FEFA7D9089ED50621560CD5E72A223C8C9AAA4", "browser-live.xml": "F401D1BE8679D469D6A1EADB9B3AB3559E4A99B4DA28FBBC349D4DFB6B42BB36", "browser-live.log": "E3D154F0D1B8CCE8FA4CEF0E18346C7C10CCB18C78D58A3CF8E25D56EC21365B"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live RF3 multi-broker failover diagnostic with PostgreSQL and durable checkpoint; bounded HA evidence only, not indefinite operation, multi-worker certification, complete P11 or release approval. No historical evidence reattributed."]
+}
