@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2091",
+  "date": "2026-11-27",
+  "status": "PASS_PYTHON_POSTGRES_FULL_CURRENT",
+  "candidate_sha": "402537f9aa9fa860059e9ba1c98b9677f59cced3",
+  "implementation_commit_sha": "7c468481d1c628a6d1f9cd75192c77254808a278",
+  "production_change_boundary": "7c468481 changes Kafka bounded polling; D2091 is the full non-performance Python/PostgreSQL regression on the resulting main lineage.",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2091-python-postgres-full-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2091-python-postgres-full-current-20261127-01",
+  "result": {"collected": 4798, "collection_skips": 3, "passed": 4770, "skipped": 31, "failed": 0, "warnings": 23, "duration_seconds": 1251.56, "postgres_cleanup": "PASS"},
+  "evidence_hashes": {".coverage": "46D9B116D95DCDBF62FD802D3E44B977AA286582ABB6C23C46B46C7AB742C621", "pytest-output.log": "47A1660BDA9A327DD4C124A052D9CD42075CCB3A14E1D75259DB1BE94C2D0D36", "pytest-postgres.log": "7892D60186CA59F8DDB81E0F92B87A9732F857398C0AE198513B7992613AE536", "pytest-postgres.xml": "2923CAE0363C9ADA18D5022D8845C74FEB4D5FCED988E81701B43350BFA6532A", "pytest-timings.json": "A1D58C741B49B12349D7F0697BBF943885F272B76F485345C9E1249399C54A77", "runner-timings.json": "82292E65D84AB35C581888BC10075A11A448D0094CC111CB5BC663EDD63994E3"},
+  "skips": ["3 collection skips: Docker executor, streaming multi-broker real, worker runtime real", "28 explicit skips include platform symlink constraints, opt-in Docker/cloud/object-store/OTLP/Trino/SDP/Spark checks"],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is full local Python/PostgreSQL regression evidence, not complete P11, cloud-provider certification, indefinite operation, HA or release approval."]
+}
