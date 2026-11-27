@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2015",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_BUNDLE",
+  "candidate_sha": "38d89657e5d520ed17151c3066fe676f294e48f6",
+  "implementation_commit_sha": "38d89657e5d520ed17151c3066fe676f294e48f6",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2015-postgres-bundle-direct-20261127",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://postgres:ronin@127.0.0.1:55440/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_bundle_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "2 passed; 0 skipped; 0 failed", "duration": "0.76s", "scope": "Real PostgreSQL Bundle multi-object atomic/idempotent commit and late-binding conflict rollback"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55440", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "980F6075CEAC1F803553BC544E419EF9B7C440F6B3F378DE249E4E71C2E88771", "pytest.log": "4FA86DB8968A4A78C97AB793ED235566299D3512746F501079BDFC5BCC964549", "postgres.log": "DE13B0927D752404E7EC4FCC9CA93D1E305100AC748F8A8A7FC07AC312398FE1", "docker-cleanup.log": "C5F203F43B36F05A9D08B13315D89E5B42E318040C592E32E16A87B68165EE17"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL Bundle integration only; no provider hosted, indefinite operation, HA, multi-worker or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
