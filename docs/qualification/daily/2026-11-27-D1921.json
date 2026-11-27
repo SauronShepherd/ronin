@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1921",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "dff8704244da397817b845ce5f482b9acdc79e4f",
+  "implementation_commit_sha": "dff8704244da397817b845ce5f482b9acdc79e4f",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1921-local-ingestion-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_local_file_ingestion.py tests/test_ingestion_sync.py tests/test_connector_checkpoint.py --junitxml <external-temp-dir>\\pytest-junit-valid.xml",
+  "result": {
+    "pytest": "45 passed; 1 skipped; 0 failed",
+    "scope": "Local file ingestion, ingestion sync and connector checkpoint/security-boundary contracts",
+    "skip": "One symlink-security test skipped because Windows symlink privilege is unavailable"
+  },
+  "evidence_hashes": {
+    "pytest-junit-valid.xml": "454C48F8B88354E082BACF9E7ACB839DEB79DDD484684C66B94B854EF995D097",
+    "pytest-valid.log": "8D28062C225FC1A7EB58FF1F5505A26F37EC0CB0B91E0A8E708C5E31DBB8C3FA"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local ingestion/checkpoint contracts only; no hosted provider, PostgreSQL, HA or indefinite operation.",
+    "An initial invalid command naming a nonexistent test file exited 4 and is excluded from this receipt.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
