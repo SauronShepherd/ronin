@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1938",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "7f2af184a83272fc15c95b6cd5585a2c60337dde",
+  "implementation_commit_sha": "7f2af184a83272fc15c95b6cd5585a2c60337dde",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1938-data-query-runtime-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_data_engineering_compilations.py tests/test_data_engineering_query_execution.py tests/test_data_engineering_query_engine_runtime.py tests/test_data_engineering_sqlite.py tests/test_data_engineering_execution.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "30 passed; 0 skipped; 0 failed", "scope": "Data Engineering compilation, query execution/runtime, SQLite and execution contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "BDFB9DC72427DF48C83F92288553A85CC2DF51B5450B0B0064E33C45EC882D1E", "pytest.log": "AA9B33E69AEDB8D993D61A31BFB76D237ACDBC7FDE4D4919E20935C913B7C340"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local query/runtime contracts only; no hosted data provider or indefinite operation certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
