@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2053",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_RF3_MULTIBROKER_POSTGRES",
+  "candidate_sha": "1974cbfcd58eedac39102a785daea93ce998cd1f",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2053-live-multibroker-postgres-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2053-live-multibroker-postgres-current-20261127-01 -StorageBackend postgres -TestGrep 'live streaming multi-broker failover' -MultiBroker",
+  "services": {"postgres": true, "redpanda_brokers": 3, "replication_factor": 3, "ronin_api": true},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 56.47, "api_events": 5, "correlated_http_logs": 5, "uncorrelated": 0, "outcomes": {"OK": 5}, "application_logs": {"INFO": 7, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "D7ADBCAD4EB1441503EA762CC85A809935DADCEA250BD9717C831F2092A17551",
+    "browser-live.xml": "F789E0247BEFC46196B01AF127446011EB82734861D2657CEEF8F6C31F424E5B",
+    "live-api-traffic.json": "E3DBBAE36E6B938A378E2C713B9DF9F7ED63CD2E4ACF5F7F4BFAEDEB1EBB6677",
+    "live-python-freeze.txt": "ECDABF474277F277D8ECD216B37B97D5563BC4A5603CEE51141BD8CC960914FA",
+    "live-server.stderr.log": "076196478320D5EDDE6152AC7045C213C3B016DD93871B27D1F607259C14BD57",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "5E9F688E6C91FB8A1037C337864814FAF6E4A993F97E7FC6E59F5FF616454B5E",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación live filtrada de un único failover RF3 con tres brokers; complementa y no reatribuye el skip de D2052. No certifica HA indefinida, matriz completa de providers, P11 completo, P13 ni release. P11 permanece in_progress, P13 permanece blocked y release permanece NO-GO."]
+}
