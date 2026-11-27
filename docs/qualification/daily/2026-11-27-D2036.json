@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2036",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_120_POSTGRES",
+  "candidate_sha": "d17f29c9dce94bc792876c826a906ff25179fdcf",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2036-live-supervisor-soak-120-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2036-live-supervisor-soak-120-postgres-20261127-01 -StorageBackend postgres -TestGrep 'supervisor soak' -SupervisorSoakSeconds 120",
+  "result": {"playwright": "1 passed; 0 skipped; 0 failed", "supervisor_duration_seconds": 120, "api_events": "151/151 correlated", "api_event_outcomes": "151 OK", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS"},
+  "evidence_hashes": {"browser-live.log": "C0A2CF82342EABC05D0248B15FD2E993A00C5EA37548930BA1DE66D5BF8C63D5", "browser-live.xml": "D281C9F13D0064FE1698CC114C723A0D3B145334DB052B65A2E424A9F6868D5C", "live-api-traffic.json": "02C682912CB08C9C0124C12A147D88EB2C3D1E07C8636AD6BFD52AFA6EBC36D7", "qualification-summary.json": "56B8F0FF5C1CFC580DE71988EF52817C55732140ADFAE95BABEAC6CDD17AB279"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded 120-second supervisor soak only; it does not certify indefinite operation, HA, cloud providers, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
