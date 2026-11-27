@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1937",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "19feb58b4a98b719e026e78efb8a5fbd10416b37",
+  "implementation_commit_sha": "19feb58b4a98b719e026e78efb8a5fbd10416b37",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1937-http-boundaries-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_control_plane_pagination.py tests/test_http_access_logging.py tests/test_http_length_boundaries.py tests/test_http_service_timeout.py tests/test_connection_service.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "40 passed; 0 skipped; 0 failed", "scope": "Control-plane pagination, HTTP logging/length/timeout and connection-service contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "AE07FC5646666FFBAD00A90644077EA2377F1688805BA131D07378EE80E7B22B", "pytest.log": "F4171478DF9D9B393BF3B1C61927E882BDE976226C6701562323DEEAE46E425F"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local HTTP/control-plane contracts only; no full live browser/API production journey or external provider certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
