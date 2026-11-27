@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1748",
+  "date": "2026-11-30",
+  "status": "NOT_PASS_TEST_TOPOLOGY_CONSTRAINT",
+  "candidate_sha": "c7a0e7a8cde70a85132463b48e7d19aef1ea0379",
+  "implementation_commit_sha": "c7a0e7a8cde70a85132463b48e7d19aef1ea0379",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1748-live-rf3-broker-restart-worker-postgres-current-20261130\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1748 --label org.ronin.qualification.run=d1748 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1748-live-rf3-broker-restart-worker-postgres-current-20261130 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d1748 -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 120; docker image rm ronin:qualification-d1748",
+  "result": {"tests": "0 passed, 1 failed", "failure": "Existing single-broker restart test asserted exactly one broker and received three in RF3 topology", "api_events": 2, "correlated_events": 2, "cleanup": "PASS"},
+  "evidence_hashes": {"qualification-summary.json": "C55E10BBF8875ABB8C499029126D34AED93191CA53C01700E6276B63B367196D", "browser-live.log": "97BFE41BC9DB4FE8EFAD280E5E7C3D6D2DD733F1C273E3E1B6A84F7B5B41FA1E", "browser-live.xml": "E545056DEA23878EF6167B2FE88D33ED99EB9D0095B47A41E3E20F69565F4771", "live-api-traffic.json": "760B694F431319DC1D11FBFB78F994CC7EBA2285A3C45670807962725C84C570"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["The existing test is single-broker by contract; RF3 broker-restart qualification requires a distinct test case and was not promoted.", "No historical evidence is reattributed. The temporary harness experiment was reverted and its contract tests remain PASS."]
+}
