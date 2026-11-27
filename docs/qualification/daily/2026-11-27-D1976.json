@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1976",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_INTEGRATION",
+  "candidate_sha": "6320ff04d7f2a94c8cd731c9eca0a3a4a1f757b3",
+  "implementation_commit_sha": "6320ff04d7f2a94c8cd731c9eca0a3a4a1f757b3",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1976-migration-studio-http-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_migration_studio_http.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "2 passed; 0 skipped; 0 failed", "scope": "Bounded Migration Studio HTTP integration lane"},
+  "evidence_hashes": {"pytest-junit.xml": "CCB95C49735BAA57D9EF1E287A5B5F51E76E4E01E723BEA38CD8FB789B18F8FD", "pytest.log": "A24F180AB09682BAF2750EA19A95B28FB9369C8B8C1001B8B59582648EEA9286"},
+  "cleanup": {"containers": "none relevant", "kind_clusters": "none"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded local Migration Studio HTTP integration only; no indefinite operation, HA, cloud-provider certification or full release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
