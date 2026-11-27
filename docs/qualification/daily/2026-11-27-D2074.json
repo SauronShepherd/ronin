@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2074",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_WORKER_PARQUET_RF3",
+  "candidate_sha": "375b0cc13961488d9e3ca2ba0edbedab0a4acb3a",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2074-live-parquet-worker-rf3-current-20261127-01",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d2074 --label org.ronin.qualification.run=d2074 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2074-live-parquet-worker-rf3-current-20261127-01 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d2074 -TestGrep 'live streaming parquet sink' -RequestTimeoutSeconds 120; docker rmi ronin:qualification-d2074",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true, "worker_image_digest": "sha256:4be455d57a11af6ae543e1d6dbfe6df4b090319e1743fdbf27b421d76f374926"},
+  "fixture": {"parquet_sink": true, "multi_broker": true, "replication_factor": 3, "request_timeout_seconds": 120},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 52.3, "api_events": 11, "correlated_http_logs": 11, "uncorrelated": 0, "outcomes": {"OK": 11}, "application_logs": {"INFO": 13, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "6E7959CB8BF20126EF6BD945252BFE4DFBBE01F76CEAE84636932CE1E6DD1E68",
+    "browser-live.xml": "E8BC52298320BEC4FFBD68F0129E5BD14FFB4B88B0B2F6187EC3401D8A51F6FC",
+    "live-api-traffic.json": "31B0C36ACD432430B518DADE05667C076BCE18C8E50F670E6C8B4DBA269C32BB",
+    "live-python-freeze.txt": "66649E7B26F6B09558EE2A560E456DFF3CA627349345EDD7B031AF45B5CF0C7D",
+    "live-server.stderr.log": "A10809AAAA2C58E88D87A4022CF7C9C7A9FDECF4BA669D4DF4D78849AE10EF78",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "C67AADF180EB4A22D02908AE05C2317D6CB9479503801E41B75239C5C7C4818B",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Celda bounded de Parquet reset/replay worker-backed con RF3; no equivale a operación indefinida, HA/SLO ni capacidad de producción. No cierra P11, P13 ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
