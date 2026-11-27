@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2035",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_RECORD_CAP_POSTGRES",
+  "candidate_sha": "b31653dcd291d342f4015c0d22b7b4e1274a2639",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2035-live-record-cap-postgres-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2035-live-record-cap-postgres-20261127-01 -StorageBackend postgres -TestGrep 'max-record cap' -SupervisorSoakSeconds 60",
+  "result": {"playwright": "1 passed; 0 skipped; 0 failed", "api_events": "8/8 correlated", "api_event_outcomes": "7 OK; 1 expected WARN", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS", "assertion": "max-record cap resumes durable checkpoint without replay"},
+  "evidence_hashes": {"browser-live.log": "0979C007B4C2884F1EC76DD9683AEA4EAC6AFD1560794658320793482EA32BCF", "browser-live.xml": "FE3D1CA103C332B20FA0340AB9A9D024C02BD4BA76961ED240B543CDD3BE1C04", "live-api-traffic.json": "CE3B91E8F0657B77EAA949266C4C732CA909CEDBA5F56AB9E8BD75B1931D95B2", "qualification-summary.json": "DF1816992ED06344767700D42D93D3CD1BD5F37F43F1BE02F12EDC5727C406CF"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single bounded record-cap/replay case; route-wide audit was not run and this does not certify indefinite operation, HA, cloud providers, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
