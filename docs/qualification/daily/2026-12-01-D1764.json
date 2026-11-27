@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1764",
+  "date": "2026-12-01",
+  "status": "PASS_POSTGRES_SCHEDULER_LEASE_RECOVERY_CURRENT",
+  "candidate_sha": "9ef361d20a30ab3c38860ae22c91f5b5161746e4",
+  "implementation_commit_sha": "9ef361d20a30ab3c38860ae22c91f5b5161746e4",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1764-scheduler-recovery-20261201-retry",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1764-scheduler-recovery-20261201-retry -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire",
+  "result": {"status": "passed", "selected_tests": "1 passed, 0 skipped, 0 failed", "deselected": 20, "cleanup": "PASS"},
+  "evidence_hashes": {"pytest-postgres.log": "D8E4EB70A92C35EBD68FB632470FB795FFCFA551BEB60B5417480340B465DC34", "pytest-output.log": "EECCD8D9F8C59D6E7A8293ABF12F98F4B02109CA5FD7E4FFC03C995D9F493194", "pytest-postgres.xml": "FE38DD56744BD53479B139481978B44DE981D2DD4D5257DD9886929754199A1D", "pytest-timings.json": "5F6BFAB2AE5AB9FFFBCBAC2C4CFD98B0F7BB270EFA1B75AC9C3713DC8189F7CE"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused scheduler lease-recovery diagnostic only; it does not certify the complete scheduler matrix, indefinite operation, HA, complete P11 or release approval. No historical evidence reattributed."]
+}
