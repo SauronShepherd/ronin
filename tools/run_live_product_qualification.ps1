@@ -305,7 +305,11 @@ try {
         $brokerTopology = if ($multiBrokerDiagnostic) { "three-broker" } else { "single-broker" }
         if ($postgresRequired) {
             Write-Output "Streaming-only diagnostic: starting $brokerTopology Redpanda plus requested PostgreSQL backend."
-            docker compose @composeFiles -p $composeProject --profile $composeProfile up -d --wait --wait-timeout 120 postgres @composeServices
+            if ($multiBrokerDiagnostic -and $TestGrep -ne "live streaming broker restart") {
+                docker compose @composeFiles -p $composeProject --profile $composeProfile up -d --wait --wait-timeout 120 postgres @composeServices
+            } else {
+                docker compose -p $composeProject --profile qualification-streaming up -d --wait --wait-timeout 120 postgres streaming-broker
+            }
         } elseif ($multiBrokerDiagnostic) {
             Write-Output "Streaming-only diagnostic: starting $brokerTopology Redpanda without unrelated PostgreSQL fixtures."
             docker compose @composeFiles -p $composeProject --profile $composeProfile up -d --wait --wait-timeout 120 @composeServices
@@ -511,10 +515,10 @@ try {
                 "--workers=1",
                 "--grep=$TestGrep"
             )
-            if ($multiBrokerDiagnostic -and $TestGrep -ne "live streaming broker restart") {
-                # The single-broker restart case is excluded from broader RF3
-                # diagnostics; the exact focused filter is supported by the
-                # multi-broker restart qualification below.
+            if ($multiBrokerDiagnostic) {
+                # The single-broker restart case intentionally asserts exactly
+                # one broker; exclude it from RF3 diagnostics so topology
+                # selection cannot create a false multi-broker failure.
                 $playwrightArguments += "--grep-invert=live streaming broker restart"
             }
             npm exec -- playwright test @playwrightArguments 2>&1 |
