@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1816",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "b957a3a4af588df4c361b7386ad5fd1fe0dd5424",
+  "implementation_sha": "b957a3a4af588df4c361b7386ad5fd1fe0dd5424",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1816-live-supervisor-soak-rf1-20261127",
+  "command": "docker build --file docker/Dockerfile --tag ronin:qualification-d1816 --label org.ronin.qualification.run=d1816 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1816-live-supervisor-soak-rf1-20261127 -StorageBackend postgres -WorkerImage ronin:qualification-d1816 -TestGrep 'supervisor soak' -SupervisorSoakSeconds 60 -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d1816",
+  "result": {"playwright": "1/1 passed", "api_events": "79/79 correlated", "api_ok": 79, "unexpected_errors": 0, "cleanup": "PASS", "topology": "single-broker RF1, PostgreSQL, Docker worker", "soak_seconds": 60},
+  "hashes": {"browser-live.log": "CE51F18D97A0CB02BDC039AE7059ADEE06B1426B89206E06CE7B6ED930C9BA53", "browser-live.xml": "2F6AF30C3FFA42AC811513016B51C13071F6A2F2897A1368AD4F124BEE9C18E1", "live-api-traffic.json": "B1D25019F6C7CE7B7F794F8B13AFCD843C5E2B149AFBD3962C15C8E512BD498A", "live-python-freeze.txt": "95152DAF2CD7BC0301263B97DB966A2D7C1B323D2E5CB6880ABDEA808F0F8715", "live-server.stderr.log": "BD061BF55C093F4518AAF727A614EF3FCB7BCFDA48C048C267AE2B0BA5A2209D", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "F5FE1AC913A8930ED009F34BC256C274CDB51077104947BBEF25C721EDBC8696", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded 60-second RF1 supervisor soak; no HA, indefinite soak, SLO, complete P11, or release evidence.", "No production change and no historical evidence reattribution. P11 remains in_progress and P13 remains blocked."]
+}
