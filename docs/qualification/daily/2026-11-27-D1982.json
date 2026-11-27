@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1982",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "f888e064e05be1da819762a55d275080413ed0b8",
+  "implementation_commit_sha": "f888e064e05be1da819762a55d275080413ed0b8",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1982-worker-runtime-evidence-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_worker_runtime.py tests/test_worker_execution.py tests/test_worker_preparation.py tests/test_worker_portable_evidence.py tests/test_worker_inflight_cancellation.py tests/test_runner_protocol.py tests/test_runner_broker_security.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "69 passed; 0 skipped; 0 failed", "scope": "Worker runtime/execution/preparation, portable evidence, cancellation and runner security contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "A76B259420CA6213FBC51F783854BCB064CA43BE7D406D8C779F044E44D0A124", "pytest.log": "2C22F99E3C9A01B3F2CA6F162456BE7B454801EAC81A31C329FFFEF0E1B9F58B"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local contract evidence only; no live multi-worker, hosted provider, indefinite operation or complete release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
