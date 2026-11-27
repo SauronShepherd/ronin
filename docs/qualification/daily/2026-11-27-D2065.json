@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2065",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_900_POSTGRES",
+  "candidate_sha": "27e6e59ecbd2981f65c9dee8b0069a0a70192d0b",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2065-live-supervisor-soak-900-postgres-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2065-live-supervisor-soak-900-postgres-current-20261127-01 -StorageBackend postgres -TestGrep 'supervisor soak' -SupervisorSoakSeconds 900 -RequestTimeoutSeconds 960",
+  "services": {"postgres": true, "redpanda": true, "ronin_api": true},
+  "fixture": {"supervisor_soak_seconds": 900, "request_timeout_seconds": 960, "multi_broker": false},
+  "result": {"selected": 1, "executed": 1, "passed": 1, "skipped": 0, "failed": 0, "duration_seconds": 955.54, "playwright_duration_seconds": 909.93, "api_events": 997, "correlated_http_logs": 997, "uncorrelated": 0, "outcomes": {"OK": 997}, "application_logs": {"INFO": 999, "WARN": 0, "WARNING": 0, "ERROR": 0, "CRITICAL": 0}, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "browser-live.log": "79E27E74C07D57CCA9925D93032473FD832EB665B9EC69FDD233189533188258",
+    "browser-live.xml": "99E5730C1741FBE2716B358956669AD22F0ACC9D4C1567A19D70E355B56FFBCE",
+    "live-api-traffic.json": "219301918D7F8B6D35EE9E8AD710FFD1A516273104E73A08DBCDED5987737294",
+    "live-python-freeze.txt": "689812877E1208B08467ABA8172675FFF5F7F755600543BAA94B1B2B00C125EB",
+    "live-server.stderr.log": "6FEE566A54878E569EA3A1DA4CC8FD2A8982362AE8371D35765FCA314A63EEC4",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "3D32C544CC3EF3FC3F5384695C9385551B5D1D8AD7AEF2BF5516016838E7D1C3",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Soak live bounded de 900 s en single-broker; amplía D2058 sin certificar operación indefinida, HA, multi-broker, P11 completo, P13 ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
