@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2018",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_AUDIT",
+  "candidate_sha": "bb961abd7a7155878c760f4fc9f491fb533be972",
+  "implementation_commit_sha": "bb961abd7a7155878c760f4fc9f491fb533be972",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2018-postgres-audit-direct-20261127",
+  "command": "$env:RONIN_TEST_POSTGRES_DSN='postgresql://postgres:ronin@127.0.0.1:55443/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_audit_store.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "5 passed; 0 skipped; 0 failed", "duration": "1.47s", "scope": "Real PostgreSQL audit round-trip/idempotency/conflict, bounded listings, tamper detection, unknown workspace and outcome validation"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55443", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "84D27988CA8BFA872EE60E61CFC1DA0140F18D028F120AC098E6AAF141369CC0", "pytest.log": "88FAA5A97F92B8DCE91DF99F33D4EA5022C49E339C08CBCFAA128D5DADCAF786", "postgres.log": "AC0405290BFA1BD0ECDD028B86BFCB699AFD2083151196E70DD8864AAA202E94", "docker-cleanup.log": "19213D250BF7815668C0ECCB6A18D4934812B13CF3CD6C63799AB81CC7FD6C5E"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL audit integration only; no external provider, indefinite operation, multi-user production or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
