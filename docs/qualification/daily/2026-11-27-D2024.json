@@ -1,0 +1,19 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2024",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_FULL_POST_LEASE_FIX",
+  "candidate_sha": "4d9873eb58c7e76f9265217749de9cfea6b9f51a",
+  "implementation_commit_sha": "c87d9d768a89f527f1d0ce4ec3280a11dfb722f6",
+  "production_change_boundary": "c87d9d768a89f527f1d0ce4ec3280a11dfb722f6",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2024-docker-full-post-lease-fix-20261127",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {"docker_integration": "27 passed; 0 skipped; 0 failed", "strict_v01": "15 passed; 0 skipped; 0 xfailed; 0 failed; 0 errors", "integration_duration": "173.59s", "scope": "Post-fix Docker worker/runtime, PostgreSQL journeys and appliance backup/restore, Floci S3, Azurite Blob, v0.1 E2E and strict acceptance"},
+  "images": {"ronin": "sha256:517c4cdb3e4bbceeea6cb5715bf283638e5bc42d301356e7f96005beda6ffcfe", "floci": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db", "azurite": "mcr.microsoft.com/azure-storage/azurite:3.35.0@sha256:647c63a91102a9d8e8000aab803436e1fc85fbb285e7ce830a82ee5d6661cf37"},
+  "evidence_hashes": {"v01-acceptance.xml": "846AA14FBC69D345F970E401E59A6AB6DA49A869CE031AE947D04073EEC240F3", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "docker-pytest-output.log": "2A1F27E3B45C7825970B7F35A49444C5E1E33A3BADC166AC7571CD16F5627626", "docker-cleanup.json": "EEC825B7E6572ACA79F300AA0D856F6769BA9AFC771C4DE776946C437B0E16DF", "docker-qualification.log": "4CBC63FB254085C8645F51706FBD918F0031D09694CDA7F0304D4C48F831CFDB", "postgres-qualification.log": "5556C1497D17850904D6E7BF253C7CFD95A89836447DA8F3776C19F7178D6530", "floci-s3-qualification.log": "F9CD84CC8B8188E165C3B030E47756F15BDEBF666C5ACB71A6F894CB3D276C95", "azurite-qualification.log": "3690BDB5C2B49428CE3E2E2A6BCAFC1F0A91F6D6AF0D5FF0AC93A76D81C3B60A"},
+  "cleanup": "PASS; PostgreSQL, Docker worker, Floci, Azurite, networks, volumes and temporary Ronin image removed",
+  "recovery_confirmation": "Both Docker worker SIGKILL reclaim cases passed after c87d9d76 heartbeat fix",
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded post-fix Docker/strict qualification; does not prove indefinite operation, HA, multi-worker, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
