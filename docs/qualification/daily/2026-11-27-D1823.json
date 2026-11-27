@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1823",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "9e6a5507f50ac08924959439dbdd7e1d767f0f12",
+  "implementation_sha": "9e6a5507f50ac08924959439dbdd7e1d767f0f12",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1823-live-streaming-battery-20261127",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1823-live-streaming-battery-20261127 -StorageBackend postgres -TestGrep streaming -RequestTimeoutSeconds 180",
+  "result": {"playwright": "11/12 passed, 1 skipped", "api_events": "244/244 correlated", "api_ok": 234, "expected_warnings": 8, "expected_errors": 2, "unexpected_errors": 0, "cleanup": "PASS", "topology": "single-broker RF1, PostgreSQL, Ronin API/worker runtime", "coverage": "streaming battery including poison/oversized, health/lag, checkpoint/replay, backpressure, Parquet and event workflow"},
+  "hashes": {"browser-live.log": "7DC8C5212FD92C9AEDC455F40EB03FBF0D739D5B4C05E8C00EEC42766C8F0905", "browser-live.xml": "84127411435EEA04543CBD8BC91968D31B18C69EC0C262B9793B04DB8D08806E", "live-api-traffic.json": "5BEBC9A9B8A6B38F8F304D62BC9CFAF5D6F4320F4EB9AFB32C045F09B529B4D0", "live-python-freeze.txt": "E11339A7A3A348DD27692E92510D0384A51AADD2F38537536F4B4ED0EFBF562C", "live-server.stderr.log": "A87C9FBF397478A13040C3B701B11FD37EFCBC2610C2FD5713AFD2C64F3C4B35", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "qualification-summary.json": "2408D3B199B7389EA1213FAE46B817544F1C207243A16BF67DC0A9D2EA44AE02", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress": {"before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}, "after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"}},
+  "limitations": ["Bounded single-broker streaming battery; the one skipped case and expected API errors remain explicit.", "Does not prove RF3/HA, indefinite operation, SLO, cloud-provider certification, complete P11 or release approval; no production change and no historical evidence reattribution."]
+}
