@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1848",
+  "date": "2026-11-27",
+  "status": "PASS",
+  "candidate_sha": "9d41cab46dcfbbfb3ad190c9babe4ae7defff080",
+  "implementation_commit_sha": "9d41cab46dcfbbfb3ad190c9babe4ae7defff080",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1848-postgres-finops-20261127",
+  "result": {
+    "pytest": "1 passed; 0 skipped; 0 failed; 0 deselected",
+    "scope": "filtered real PostgreSQL FinOps Store write idempotency, pricing and budget persistence integration",
+    "postgres": "postgres:16.4-alpine isolated loopback container",
+    "cleanup": "PASS; isolated PostgreSQL container and volume removed"
+  },
+  "evidence_hashes": {
+    "pytest-output.log": "7E1EA6685CFD86BD49B9B6E6BB99516514B726F09200DB3CE7437891E3C01DA3",
+    "pytest-postgres.log": "217E7B893D1BB403F1EAF793B08A7768B5B7F0EF02507317740817C8641A930F",
+    "pytest-postgres.xml": "7C1E7CB5885CE0452B9511409029E12E4397DEC230D503775210E12B4F2E14D4",
+    "pytest-timings.json": "96730AE2E3AF2402CD4619DD87A60F9AC3F8C796F635488F931D9CB749427948",
+    "runner-timings.json": "91312F49F2E61BD2638FAC683D91B6551958FE65CBB8380C53B1803294F5083D"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Filtered diagnostic of one integration test file only; not the complete Python/PostgreSQL suite or complete P11.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
