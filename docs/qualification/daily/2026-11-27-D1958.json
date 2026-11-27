@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1958",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "fe927cea36482c0040efffa2452aaa92974f04ae",
+  "implementation_commit_sha": "fe927cea36482c0040efffa2452aaa92974f04ae",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1958-ml-synthetic-public-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_ml_http_transport.py tests/test_ml_plugin_artifact_api.py tests/test_ml_plugin_execution_api.py tests/test_synthetic_data_public_surface.py tests/test_synthetic_data_publication.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "51 passed; 0 skipped; 0 failed", "scope": "ML HTTP transport/plugin APIs and synthetic-data public/publication contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "1EAE68A59BB8C1638960315BA4C073A71D723C3C74A24C4EC725C4D1512CFE2C", "pytest.log": "1F004F5DDB6382CA6793110845B07B880390C76B2B466B011EB0D3624C485CB0"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local ML/synthetic public contracts only; no live provider or complete Studio journey certification.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
