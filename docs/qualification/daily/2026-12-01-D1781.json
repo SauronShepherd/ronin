@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1781",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_ROUTE_WIDE_WORKER_POSTGRES_CURRENT",
+  "candidate_sha": "0b54753fcbfc478dedb7040c61c77fb5ab1c5404",
+  "implementation_commit_sha": "0b54753fcbfc478dedb7040c61c77fb5ab1c5404",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1781-live-route-worker-postgres-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1781-live-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1781-live-route-worker-postgres-20261201 -StorageBackend postgres -WorkerImage ronin:qualification-d1781-live-20261201 -RequestTimeoutSeconds 180; docker image rm --force ronin:qualification-d1781-live-20261201",
+  "result": {"status": "passed", "playwright": "43 passed, 1 skipped, 0 failed out of 44", "active_routes": 25, "api_contract_routes": 24, "ui_only_routes": 1, "api_events": 511, "correlated_events": 511, "api_outcomes": {"OK": 487, "WARN": 21, "ERROR": 3}, "expected_error_events": "3 streaming_unavailable 503 responses during broker restart, authorizationKind=expected", "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "cleanup": "PASS", "elapsed_seconds": 331.87},
+  "evidence_hashes": {"qualification-summary.json": "C0E085F2DFC76B2458976A4F03087C37B716AF1CE5291F175C484A9A9C343A30", "live-api-traffic.json": "7D0D808D83F73D77C7867CED0E38A7BD3F9A7A2EBCC1B3DCA156D7872B3F7682", "browser-live.xml": "9D15E61CA3AF7947BD98280BA22375EC88848150A769BC493AC28ED7011D241C", "browser-live.log": "93A1198B06834AE4CDA03D62D3C0265BBC3CC91562025C89437E98B176F5E1CE", "live-server.stderr.log": "FB4B760403670EA605A81FCC1B727E7068B8E42B2D04B8969171C83157A3049C", "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", "live-python-freeze.txt": "A91ACF873DDD46DDC985F65B8C19E4A8338021F6600DD04E20A93D73A650A085", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["The full live route-wide run is bounded and uses one broker plus one Docker worker; the multi-broker case is the explicit one skipped here and remains separately qualified by D1774. Three broker-restart 503 errors are expected and classified as such. This does not prove indefinite operation, complete P11, multi-worker production qualification or release approval. No historical evidence reattributed."]
+}
