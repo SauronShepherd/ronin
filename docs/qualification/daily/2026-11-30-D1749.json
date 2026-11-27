@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1749",
+  "date": "2026-11-30",
+  "status": "PASS_LIVE_RF3_STREAMING_CURRENT",
+  "candidate_sha": "3a286e12b5472bdb9c2037241e58f63e8a9c8282",
+  "implementation_commit_sha": "3a286e12b5472bdb9c2037241e58f63e8a9c8282",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1749-live-rf3-streaming-worker-postgres-current-20261130\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1749 --label org.ronin.qualification.run=d1749 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1749-live-rf3-streaming-worker-postgres-current-20261130 -StorageBackend postgres -MultiBroker -WorkerImage ronin:qualification-d1749 -TestGrep streaming -RequestTimeoutSeconds 120; docker image rm ronin:qualification-d1749",
+  "result": {"tests": "11 passed, 0 skipped, 0 failed", "api_events": 237, "correlated_events": 237, "api_outcomes": {"OK": 229, "WARN": 8}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS", "elapsed_seconds": 187.09},
+  "evidence_hashes": {"qualification-summary.json": "BE414C6CA963EAA55B458064C16913573A393F02D5398235101AD690470D2850", "live-api-traffic.json": "4165B419760E9A3AB8E4EEAEB4A2AE90C390C13D5E53778906E010DD58632341", "browser-live.xml": "584CC6DF1E53DE1ABB78BDE6EEA890B64B48C5AEE5419596527530965720DBE1", "browser-live.log": "820B54E1B930E5C9F051BD39922092E1FFA972E6BB6757DB7E9B02B0AAA44959"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded RF3 streaming diagnostic; no indefinite operation, HA/SLO, hosted provider/IAM certification, complete P11 or release approval.", "The focused RF3 failover case is covered; the separate single-broker restart case remains single-broker by contract."]
+}
