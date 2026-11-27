@@ -1,0 +1,19 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2023",
+  "date": "2026-11-27",
+  "status": "PASS_TRINO_RECOVERY_AFTER_FIX",
+  "candidate_sha": "c87d9d768a89f527f1d0ce4ec3280a11dfb722f6",
+  "implementation_commit_sha": "c87d9d768a89f527f1d0ce4ec3280a11dfb722f6",
+  "production_change_boundary": "c87d9d768a89f527f1d0ce4ec3280a11dfb722f6",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2023-trino-fixed-20261127",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_trino_qualification.ps1 -EvidenceDirectory <external-temp-dir>",
+  "result": {"pytest": "4 passed; 0 skipped; 0 failed", "duration": "11.10s pytest; 140.32s total qualification", "scope": "Digest-pinned Trino 484: prepared scalar bindings, result byte budget, terminal evidence persistence and QueryFlux worker SIGKILL reclaim"},
+  "provider": {"name": "Trino", "image": "trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f", "version": "484"},
+  "evidence_hashes": {"trino-junit.xml": "AD24DADF7DB3B724BBF8D720FEA318870F3037705AA10CD6A0F47135B7A41404", "pytest-timings.json": "9B9FF61BD88334586DFFA7B1E4BFBC5DAD69F672017F9A7F9ECA790481F6DDD1", "qualification.log": "28F33DF75058D0AA6E561601FAD92189F3C3E032034E0CDEBE8E084755D073BB", "trino-container.log": "9F2371F9AD84ABDFAAA64CA01A34D10B93E711446E5FEB8705E7BF4419CE395B", "runner.log": "820C2593EBD0396360F8AE3EAEA7C0D8C170363636D76B38C7650EC7A1B6E6DD"},
+  "cleanup": "PASS; Trino container and resources removed; digest-pinned image cache removed after qualification",
+  "regression": {"scope": "tests/test_worker_runtime.py tests/integration/test_worker_runtime_contention.py tests/test_fenced_sqlite_job_store.py tests/test_storage_fenced_legacy_calls.py tests/test_orchestrator_lease_instants.py", "result": "35 passed; 4 deselected; 0 failed"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded Trino/provider recovery qualification after an exact production fix; does not prove indefinite operation, HA, multi-worker, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
