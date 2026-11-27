@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1970",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_INTEGRATION",
+  "candidate_sha": "91955baaa0971d90095e3eac5cfdbedefc2b9a63",
+  "implementation_commit_sha": "91955baaa0971d90095e3eac5cfdbedefc2b9a63",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1970-http-json-connector-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_http_json_connector_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "8 passed; 0 skipped; 0 failed", "scope": "Bounded real HTTP JSON connector integration lane"},
+  "evidence_hashes": {"pytest-junit.xml": "F12A23FCD1214559105A0AD97E8E14A34388E423E6FF4CAB3EF3FD32ACF8CD78", "pytest.log": "70BEE4431001ACAC543B3612F001A1CB5D39E0137BD1768AC247838479FB49E3"},
+  "cleanup": {"containers": "none relevant", "kind_clusters": "none"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded local HTTP connector integration only; no external provider, indefinite operation or release gate.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
