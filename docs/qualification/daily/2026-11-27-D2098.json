@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2098",
+  "date": "2026-11-27",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_600_CURRENT",
+  "candidate_sha": "c9cbda98ff3c23a47e25b59360850dd9d2e085c6",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2098-live-supervisor-soak-600-worker-postgres-current-20261127-01\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2098 .; powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2098-live-supervisor-soak-600-worker-postgres-current-20261127-01 -StorageBackend postgres -WorkerImage ronin:qualification-d2098 -TestGrep 'live streaming supervisor soak' -SupervisorSoakSeconds 600 -RequestTimeoutSeconds 180; docker image rm ronin:qualification-d2098",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "supervisor_soak_seconds": 600, "elapsed_seconds": 702.49, "api_events": 649, "correlated_events": 649, "api_outcomes": {"OK": 649}, "log_errors_or_critical": 0, "cleanup": "PASS"},
+  "evidence_hashes": {"qualification-summary.json": "BD29FFD0519F176F859B1E2F2167EF47CA9D8189AD93EB876E0666027CA49A92", "browser-live.log": "9FBCBE276F9CDD3F22BC97439D5F2120FDC7786091AC3ED377B3777959AD9203", "browser-live.xml": "34CEE48AF390046AC639774609BB00B39FB82CD74E305CAC0242B95C50B23076", "live-api-traffic.json": "39786F41A823B54DB88309C31CA1733BAD19C5A6BB7A529F608B75BF63F94700"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded 600-second single-worker/single-broker soak, not indefinite operation, HA, multi-worker certification, complete P11 or release approval. No historical evidence is reattributed."]
+}
