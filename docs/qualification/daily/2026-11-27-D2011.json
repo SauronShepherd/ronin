@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2011",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_CONNECTOR_CONTROL_PLANE",
+  "candidate_sha": "3faac25cd7e333f2ebb941101a4282343750c8d4",
+  "implementation_commit_sha": "3faac25cd7e333f2ebb941101a4282343750c8d4",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2011-postgres-connector-control-direct-20261127",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://postgres:ronin@127.0.0.1:55436/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_connector_control_plane_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "1 passed; 0 skipped; 0 failed", "duration": "6.14s", "scope": "Real PostgreSQL connector control-plane discovery and preview persistence across service reopen"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55436", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "D931D8993A0FB59F5A8C3081F1C125210FA4576F9D7D352170DDAACCE63E2B89", "pytest.log": "EC90DC4532C7F06B8448C234DF16289C46079282AB14D580BA91D40F7AEBE22C", "postgres.log": "A368D173962AD0BA99307CEB31CB80FC1EB8596AA1F36EBEAEFB1970FA0004E9", "docker-cleanup.log": "232861E202909648ADDF1E29F4D72F3A71A1022B6519DEA1274BE60C827CE5F7"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL connector control-plane integration only; no hosted provider, indefinite operation, multi-worker or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
