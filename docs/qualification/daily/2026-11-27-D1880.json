@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1880",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "37939e5602e50aa8d8b47c9039d0d85b7b2dcb17",
+  "implementation_commit_sha": "37939e5602e50aa8d8b47c9039d0d85b7b2dcb17",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1880-qualification-contracts-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_query_engine_qualification.py tests/test_data_engineering_qualification.py tests/test_cloud_studio_floci_qualification.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "20 passed; 0 skipped; 0 failed",
+    "scope": "qualification contracts for query engines, Data Engineering and Floci/Terraform Cloud Studio behavior",
+    "provider_scope": "Contract-only; no external gateway, cloud IAM or live Floci resources"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "C1E2B045AA21488D46B3AE62694E28958526FCD92359E71CED7BD054DB8F3F36",
+    "pytest.log": "F20270BFEC22650A19E484E409E0D81091367B967BF6BEEA24A344979BE2115E"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Contract-only local evidence; not external provider certification, hosted IAM, HA or complete P11/release qualification.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
