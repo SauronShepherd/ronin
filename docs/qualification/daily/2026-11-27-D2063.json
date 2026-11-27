@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2063",
+  "date": "2026-11-27",
+  "status": "PASS_DOCKER_FULL_STRICT",
+  "candidate_sha": "8e98fd9fe6986fe693c4ebbb757c9ae6091ad13f",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2063-docker-full-current-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2063-docker-full-current-20261127-01",
+  "services": {"postgres": true, "docker_worker": true, "floci": true, "azurite": true},
+  "fixture": {"ronin_image": "sha256:23da20e7fcbe54c55faba9e9c056dc7c59e05afd0f5d2b5e315c00bd8aad68aa"},
+  "result": {"integration_selected": 27, "integration_passed": 27, "integration_skipped": 0, "integration_failed": 0, "strict_selected": 15, "strict_passed": 15, "strict_skipped": 0, "strict_failed": 0, "strict_success": true, "integration_duration_seconds": 339.49, "cleanup": "PASS"},
+  "evidence_hashes": {
+    "azurite-qualification.log": "EBD11A000FCFC2271EC8B37D1868B720F0CABDC40C6C9B7DADB51C390A9EED21",
+    "docker-cleanup.json": "BE1F8F85B05A9918EB1603B5C5AD99403CC3F9C84C83A214AEEAE54A38FDFC81",
+    "docker-pytest-output.log": "DFB2969EA6EDB975232F5D23EA04C33CE06D5AA74D4AE89BDA34BF6AED6E6DA6",
+    "docker-qualification.log": "85D146F118AE3C3D3AEF5FFCCA6292D666CA348710BCB383957EC80508F4AD0A",
+    "floci-s3-qualification.log": "E3E143242563D8F015520CDBBB9F4EBEBA5582D601F5A34BFCFA4E9AD10787D0",
+    "postgres-qualification.log": "1DDF2F3E0A8A67CADED72986DF64B0BDD5E36154A879939ED8AEE587EC57C8CA",
+    "qualification-summary.json": "1E5CA4646F4982F5B0E37FBCFE8FB71102F6D2BAAD0092A80694EA7786657074",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "FC581578DDDD6302295673749A81805CA8091CB4C78C3FB24819F01D251A9BB7"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Aceptación Docker bounded con providers locales/emulados; no certifica cloud providers reales, operación indefinida, HA, P11 completo ni release. P11 permanece in_progress, P13 blocked y release NO-GO."]
+}
