@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1917",
+  "date": "2026-11-27",
+  "status": "NOT_PASS",
+  "candidate_sha": "1c5ab87b271b0bb5cbca0779246885e6973ca227",
+  "implementation_commit_sha": "1c5ab87b271b0bb5cbca0779246885e6973ca227",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1917-root-contract-suite-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests --ignore=tests/integration --ignore=tests/e2e --ignore=tests/perf --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "4500 passed; 10 skipped; 4 failed",
+    "scope": "Root unit/contract suite excluding integration, e2e and perf directories",
+    "failures": "Four tests in tests/test_git_source.py failed because git init -q returned exit status 128 in the Windows host environment",
+    "skips": "10 explicit platform/privilege skips, including symlink and POSIX child-watcher guards"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "7424B69D2E1A5CBFF365ED2BE0791B50D0B58150E7D8F8C9F7B13661BAD3D50D",
+    "pytest.log": "6A88C1ECE8633E0AAB911017DC8F1F2044D444F6DB23D069487A67AD1BC9334E"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "This is NOT_PASS evidence and is not used to qualify a family or gate.",
+    "No production change and no historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
