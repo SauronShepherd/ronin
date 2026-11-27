@@ -1,0 +1,17 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2045",
+  "date": "2026-11-27",
+  "status": "PASS_SPARK_CONNECT_EXTERNAL",
+  "candidate_sha": "9ba081429d8d0799cac883b015617eb581a33b93",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2045-spark-connect-20261127-01",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2045-spark-connect-20261127-01 -ImageRef sha256:fc64959c04bd87b0ac686be9aaa9008b69cdb1afc695400528279c8b01f43d89",
+  "service": {"image": "sha256:fc64959c04bd87b0ac686be9aaa9008b69cdb1afc695400528279c8b01f43d89", "spark_version": "4.2.0", "pyspark_client_version": "4.2.0"},
+  "result": {"pytest": "1 passed; 0 skipped; 0 failed", "selected": 1, "executed": 1, "cleanup": "PASS", "image_cleanup": "PASS"},
+  "evidence_hashes": {"pyspark-client-install.json": "04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97", "spark-junit.xml": "0A56871B55B663C5C7513DF3C081715798E9D6FAD09F237E5257E059D0F2C6FF", "pytest-timings.json": "17F7100916BFAA853667EAB083A8276DBE18B0B3067E20326614EBF2402C270A", "spark-container.log": "A136EB8183CB5DB108EEF71AE021489ECC4703B816C43B318DC99636EBABF90B", "qualification.json": "D112DC5CA6C313C15F98CB82CE429D8FBFF57BFC785A19E2504D3DBE04C0CC06"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single bounded Spark Connect external smoke case; does not certify full Spark provider breadth, indefinite operation, cloud providers, complete P11 or release approval. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
