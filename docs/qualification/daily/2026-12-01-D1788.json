@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1788",
+  "date": "2026-12-01",
+  "status": "PASS_POSTGRES_OUTBOX_INBOX_RECOVERY_CURRENT",
+  "candidate_sha": "616322436c10ee4931e20964645332c165aea4d6",
+  "implementation_commit_sha": "616322436c10ee4931e20964645332c165aea4d6",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1788-outbox-inbox-recovery-current-20261201\\pytest-postgres.xml",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1788-outbox-inbox-recovery-current-20261201 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles or test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries\"",
+  "result": {"status": "passed", "service": "PostgreSQL 16.4-alpine", "tests": "2 passed, 0 skipped, 0 failed; 19 deselected", "coverage": "disabled for filtered diagnostic", "cleanup": "PASS"},
+  "evidence_hashes": {"pytest-output.log": "F34E6519F46AE0D00FDD4E2C8DFA0C20805673539A5A2BD4872869A719ADB18B", "pytest-postgres.log": "7D04A7671372DB14E7F3DDEACCB3AD49DDB2A0951DD094314A7166EE002E2577", "pytest-postgres.xml": "E6D3FAEAF2247D3BDDA16B7192FD3FC7A44FC162620CD0B12E492B0002E154F1", "pytest-timings.json": "EAF921D71B7C610D2DB588EB9E5268E79973E566C0F966764A2BAC41DAA07F45", "runner-timings.json": "BFCD40F93D7613ED82EFE316F17C23E75A3379572E99F01C87B3CCAC5D729D18"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Diagnóstico filtrado y bounded de ejecución outbox e inbox; no demuestra suite completa, operación indefinida, HA/multi-worker, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
