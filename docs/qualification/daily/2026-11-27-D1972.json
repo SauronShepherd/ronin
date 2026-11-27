@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1972",
+  "date": "2026-11-27",
+  "status": "SKIP_ENVIRONMENT_NOT_CONFIGURED",
+  "candidate_sha": "c171aa822ca69ba7ca714a05cfe143ea198f5be8",
+  "implementation_commit_sha": "c171aa822ca69ba7ca714a05cfe143ea198f5be8",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1972-postgres-catalog-http-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_local_composed_catalog_http.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "0 passed; 1 skipped; 0 failed", "scope": "Bounded composed local PostgreSQL catalog HTTP lane", "skip": "RONIN_TEST_POSTGRES_DSN is not configured"},
+  "evidence_hashes": {"pytest-junit.xml": "98092E6529057C94193002274269A37302AB653C6935207299F681D45FB7B998", "pytest.log": "790A6844CDE5290069F402AB4BB6900C3C9B23895088332E069636CBC2AE4FE9"},
+  "cleanup": {"containers": "none relevant", "kind_clusters": "none"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This lane is not a PASS and does not certify PostgreSQL because RONIN_TEST_POSTGRES_DSN was absent.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
