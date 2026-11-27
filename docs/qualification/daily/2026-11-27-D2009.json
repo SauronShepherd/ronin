@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2009",
+  "date": "2026-11-27",
+  "status": "PASS_BOUNDED_POSTGRES_STREAMING",
+  "candidate_sha": "d867f4a8086051daf2492818c7fb1d06b2c37e8c",
+  "implementation_commit_sha": "d867f4a8086051daf2492818c7fb1d06b2c37e8c",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2009-postgres-streaming-direct-20261127",
+  "command": "$env:RONIN_POSTGRES_TEST_DSN='postgresql://postgres:ronin@127.0.0.1:55434/ronin'; python -m pytest -q -p no:cacheprovider tests/integration/test_postgres_streaming_checkpoint_real.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "7 passed; 0 skipped; 0 failed", "duration": "2.14s", "scope": "Real PostgreSQL streaming checkpoints/tables: CAS/reopen, stale-writer fencing, append replay/idempotency/atomic conflict and durable processor reopen"},
+  "postgres": {"image": "postgres:16.4-alpine", "dsn_scope": "isolated loopback port 55434", "container_cleanup": "PASS"},
+  "evidence_hashes": {"pytest-junit.xml": "F6F7AE54511E72914A783F6B41BFAC5065E1EB9CC127FBE55EA3A0259A2166B2", "pytest.log": "67F3E9F1E485D9395EFFE8A5650D61711C734F24DCC291C10FD28EA32E2265F1", "postgres.log": "049E933410863F1760BF20508E4A940247550D6095FAFB9B8F44267DEE6E3B67", "docker-cleanup.log": "826B96FC21781D7B4392CF79AC41E81A886B36190840096341229305F93C5513"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded real-PostgreSQL streaming recovery integration only; no live broker, indefinite operation, HA, multi-worker or release gate closure. P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
