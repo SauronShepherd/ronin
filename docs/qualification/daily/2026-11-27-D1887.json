@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1887",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "c791be9d62badd6a48511675f4b161e63b72ff27",
+  "implementation_commit_sha": "c791be9d62badd6a48511675f4b161e63b72ff27",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1887-worker-contention-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/integration/test_worker_runtime_contention.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {
+    "pytest": "2 passed; 0 skipped; 0 failed",
+    "scope": "Local worker runtime heartbeat renewal during SQLite/artifact contention and expired-attempt reclaim with durable artifact verification contention"
+  },
+  "evidence_hashes": {
+    "pytest-junit.xml": "9038B1F1FA9990D7B7363EA07D27C5038D29B57824568BD9352AD6613A4F16AD",
+    "pytest.log": "CEBB3BC8AF7535E3B8F254A5316A644080F02C1260C9DE36E84A73668C6AD5AE"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded local worker/SQLite/artifact contention only; no real Docker, PostgreSQL, hosted provider or indefinite operation.",
+    "No historical evidence is reattributed; P11 remains in_progress, P13 remains blocked and release remains NO-GO."
+  ]
+}
