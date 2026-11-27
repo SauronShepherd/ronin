@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1934",
+  "date": "2026-11-27",
+  "status": "PASS_CONTRACT_ONLY",
+  "candidate_sha": "f454559ecd58b5f6bf3fa8c5ec110cb8c3eb6518",
+  "implementation_commit_sha": "f454559ecd58b5f6bf3fa8c5ec110cb8c3eb6518",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1934-catalog-bundle-20261127",
+  "command": "python -m pytest -q -p no:cacheprovider tests/test_bundle_catalog_commit.py tests/test_bundle_catalog_subgraph.py tests/test_catalog_asset_families.py tests/test_catalog_ownership.py tests/test_catalog_search.py tests/test_catalog_plugin_event_boundaries.py --junitxml <external-temp-dir>\\pytest-junit.xml",
+  "result": {"pytest": "50 passed; 0 skipped; 0 failed", "scope": "Bundle catalog commit/subgraph and catalog asset, ownership, search and event-boundary contracts"},
+  "evidence_hashes": {"pytest-junit.xml": "6369C832D6452DCFF56A7CF7A6FCF052BCAF47701830E12B504C1A514EDACC05", "pytest.log": "F39696DF1C79BC6D5910C20FA33E6C4CB48687373621EB676285A9A8E5ECE851"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local catalog/Bundle contracts only; no full provider certification or release approval.", "P11 remains in_progress, P13 remains blocked, and release remains NO-GO."]
+}
