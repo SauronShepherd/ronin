@@ -1,0 +1,46 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2284",
+  "date": "2026-11-28",
+  "status": "NOT_PASS_LIVE_STREAMING_SUITE_CURRENT_CANDIDATE",
+  "candidate_sha": "b5253c4b54a8185acc9136e6239911ffa0381c3d",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "integral live streaming journeys with PostgreSQL and single-broker Redpanda",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2284-live-streaming-suite-postgres-current-20261128 -StorageBackend postgres -TestGrep 'streaming' -RequestTimeoutSeconds 300"
+  },
+  "result": {
+    "playwright_executed": 12,
+    "playwright_passed": 10,
+    "playwright_skipped": 1,
+    "playwright_failed": 1,
+    "failed_case": "live streaming drains a two-partition backlog in bounded micro-batches",
+    "failure_assertion": "Expected runAttempts < 40; received 40",
+    "api_events": 282,
+    "correlated_http_logs": 282,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 271, "WARN": 8, "ERROR": 3},
+    "application_errors": 3,
+    "application_warnings": 8,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2284-live-streaming-suite-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "17cb95d82ed1056138bca61a608a70e76bcaf1309eae08ebf7312ec867e9df23",
+    "browser-live.xml": "aa1596d48946bdd87285e0732e3dcd073e4f459c112cf60a16fdea162ee1f626",
+    "live-api-traffic.json": "ed61909bbb99e108a4a3989ac880215c47657220e4d56ae2ac1f7fcc4906faae",
+    "live-server.stderr.log": "f43a997814f47afa05c485a34dde0f5e2e9b2a84ac781a5f4bd5166cb5c1e157",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "0fe2146d2cf296cd3ee65b41bc25af1b85af9cdbf26cfb2e7f6e637993c56644",
+    "live-python-freeze.txt": "0e5d78ffad9847668d8961327cbe9c831e2c77ee38d22bc0a673d1258895b3a3"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This integral suite is NOT_PASS: the two-partition backlog case reached exactly 40 attempts while requiring fewer than 40. The 3 ERROR outcomes and 8 WARN outcomes remain explicit in the traffic evidence.", "This diagnostic failure is not promoted to P11 or a release gate and does not reattribute D83-D2283."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
