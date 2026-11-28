@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2188",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_BROKER_RESTART_RECOVERY_CURRENT",
+  "candidate_sha": "578cbb978490702643c8020d7114aa579b743b30",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live single-broker restart and durable-checkpoint recovery journey with PostgreSQL, Redpanda, Ronin API and Docker worker",
+  "worker_image_digest": "sha256:b784da04fcd74f93ed32935e84435223d0bba5b895c7a8092718e1eb9acd9e87",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2188-live-broker-restart-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2188-live-broker-restart-current-20261128-rerun -StorageBackend postgres -WorkerImage ronin:qualification-d2188-live-broker-restart-current-20261128 -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 90; docker image rm ronin:qualification-d2188-live-broker-restart-current-20261128",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 11, "correlated_events": 11, "api_outcomes": {"OK": 8, "ERROR": 3}, "expected_broker_restart_outages": 3, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "application_error_logs": 3, "unexpected_error_or_critical_logs": 0, "duration_seconds": 67.26, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2188-live-broker-restart-current-20261128-rerun",
+  "evidence_sha256": {
+    "browser-live.log": "04473C03AC6DAB79975156F2809A4140A4B55F9A62B31BAB6AF994AA0098D9CC",
+    "browser-live.xml": "BBD1806C6C309637A459B38DF7F516FFF216228FB604A67BDB8DBD626568FABA",
+    "live-api-traffic.json": "B96EE13A67F48A87E6828217EFFA65BBFC3A952DB0681B6C6FEB5E688B147D42",
+    "live-python-freeze.txt": "3270517104C96DF5BF419AA9C8BBE4515D71822733CD6A17F9BD907D77B2D56C",
+    "live-server.stderr.log": "CA902ACA2C1030C18E51B061F7785C0830FA49FBBFBF108DB97A5C36F6393031",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "D5D1E63F357AF070DA0B2492CEE2ADE4777F65C2AA95BBF8C8185AF980D149E4",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Recuperación bounded single-broker; los 3 errores HTTP/log ERROR son outages esperados durante la parada intencional. No demuestra RF3/HA, operación indefinida, multi-worker productivo, hosted providers, P11 completo ni aprobación de release.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
