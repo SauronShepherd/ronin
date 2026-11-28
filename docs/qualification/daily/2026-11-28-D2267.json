@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2267",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SINGLE_BROKER_RESTART_CURRENT_CANDIDATE",
+  "candidate_sha": "06cb6d7c666e50cd51523ea4f1c3cd98357093c3",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "live single-broker restart, fail-closed unavailability and durable checkpoint recovery with PostgreSQL",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2267-live-broker-restart-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming broker restart resumes from the durable checkpoint' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 11,
+    "correlated_http_logs": 11,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 8, "EXPECTED_UNAVAILABLE_503": 3},
+    "expected_unavailable_error_code": "streaming_unavailable",
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2267-live-broker-restart-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "f21f1334870c6f5eece80ba890325cb1b548ddeb2314c35c7bcb1f257decbd41",
+    "browser-live.xml": "1e0741e295adae22c7330750e03564af684e10392e8cb31dc3c51ddf31f986f1",
+    "live-api-traffic.json": "84d25b03c464c1e0808feec4fce9a879a2d9d4d84e1318746c496574f7b0bd1e",
+    "live-server.stderr.log": "3550c2c1a0276e052324f141d8f35d15e5e0f37135471ef40c797d67f5082da2",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "eaec6d3893255beb38fd33ab65fcd13a33fb03889bd954d88e15f50a0259be7f",
+    "live-python-freeze.txt": "6f0cd87692691d3350d6c1caadb7a33a2507bea74072cd33717576d572551a51"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is bounded local single-broker recovery evidence; the three 503s are expected fail-closed behavior during restart. It does not certify hosted Kafka/IAM, indefinite HA, complete P11 or release.", "No historical D83-D2266 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
