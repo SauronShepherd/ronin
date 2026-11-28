@@ -1,0 +1,46 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2260",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_TWO_PARTITION_BACKLOG_FIXED_CURRENT_CANDIDATE",
+  "candidate_sha": "a5f8edc426aa6f1cc66a673a477bd845ff8d12e6",
+  "implementation_commit_sha": "a5f8edc426aa6f1cc66a673a477bd845ff8d12e6",
+  "production_change": true,
+  "scope": "live bounded two-partition backlog drain regression with PostgreSQL, Kafka and real Docker worker",
+  "commands": {
+    "regression": "python -m pytest -q tests/test_streaming_kafka.py tests/test_streaming_runtime.py",
+    "build": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2260-live-two-partition-backlog-fixed-20261128 --label org.ronin.qualification.run=d2260 .",
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2260-live-two-partition-backlog-fixed-postgres-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2260-live-two-partition-backlog-fixed-20261128 -TestGrep 'live streaming drains a two-partition backlog in bounded micro-batches' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "regression_tests": "29 passed",
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 42,
+    "correlated_http_logs": 42,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 42},
+    "worker_image_id": "sha256:d0997786987816b596ae785c00e644bd5bdfa72444e81d81124480094547c954",
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true,
+    "bounded_backlog_assertion": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2260-live-two-partition-backlog-fixed-postgres-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "52b3e9f8a8d5f5b6570e7585904db6599caf0d1a333a6bf73983456037b43a5b",
+    "browser-live.xml": "acd40e6a9570b19be54c927243e945fd8dcbd603544e9ce2b06ba49049db4372",
+    "live-api-traffic.json": "fd3327c2aa3bb30723555ce223fdcd36f2fa222c9f2d444ce7079c4934cd66c6",
+    "live-server.stderr.log": "59f3cb20b1fcffb3d90ac571bb7daf2f6971f59148736749bda06c020e76afaf",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "bade8dd92f366d5945d0c74e20bda5e1ae3702bbff49b3e242e1706c7a5fd2f5",
+    "live-python-freeze.txt": "bec0c541de2a8326fe5bb087f35d3317b9f97ec7a7f04107439df1dba1ef39fc"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This bounded runtime qualification closes only the newly tested two-partition backlog timing regression; it does not certify hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2259 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
