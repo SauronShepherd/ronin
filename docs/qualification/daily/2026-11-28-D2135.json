@@ -1,0 +1,41 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2135",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_EXTERNAL_OBJECT_STORES_DIAGNOSTIC",
+  "candidate_sha": "40c0f369ae9b72a60c229643ae00f9b65b432fdd",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered Docker qualification against isolated S3-compatible Floci and Azure Blob-compatible Azurite providers.",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2135-docker-object-stores-20261128 -TestFilter \"test_s3_json_sink_put_read_and_retry_round_trip or test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite\"",
+  "image": "sha256:d344cbd042ecc250d9d2bc8156ba2fe7af1c7c03963cc540a9f47a702b703b91",
+  "service_profile": "isolated Floci/S3-compatible and Azurite/Azure Blob-compatible",
+  "result": {
+    "selected_passed": 2,
+    "deselected": 25,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "pytest_duration": "2.08s",
+    "cases": [
+      "test_s3_json_sink_put_read_and_retry_round_trip",
+      "test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite"
+    ]
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2135-docker-object-stores-20261128",
+  "evidence_sha256": {
+    "azurite-qualification.log": "c6eb9270c472fcde5b77322f2856e4a73a64fdc5e41aac6a116bc8b5a19b9f1b",
+    "docker-cleanup.json": "b8edb48d701faa8106b87fe1e9d447c1ca0929576146997f4ab2bc356cc338df",
+    "docker-pytest-output.log": "f95a2831b48718b820fbcf15bfe69e2f2a118741091f1c457b3bbf09f454b77a",
+    "docker-qualification.log": "cb7922dfd41972ea1eeafbe6da56b9015e56f325f9ef006ad5c9a89919a323b4",
+    "floci-s3-qualification.log": "399359ac96223ba6bfa493e7045e315299ba7e9f5e73acbbd686ef042a5278bc",
+    "v01-acceptance.xml": "40c43ada9edadb9143a2d712bf368cab5d33b3d4ffdbfbdeb2cc0b25d4fc893d"
+  },
+  "cleanup": "Docker runner reported PASS; the owned Ronin image, Floci, Azurite, volumes, networks and containers were removed. No kind cluster remains.",
+  "limitations": "Filtered diagnostic only; 25 cases were deselected, providers are local emulators rather than hosted certification, and strict v0.1 acceptance was not evaluated.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
