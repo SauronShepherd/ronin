@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1813",
+  "status": "NOT_PASS_SUPPLY_CHAIN_REAL_ARTIFACTS",
+  "candidate_sha": "c9e75caa628c759e9486e34d339d65fad8754664",
+  "implementation_commit_sha": "c9e75caa628c759e9486e34d339d65fad8754664",
+  "production_change": "docker/apk-probe.lock refreshed for current Alpine package resolution",
+  "regression": "29/29 PASS: tests/test_docker_qualification_contract.py and tests/test_posix_qualification_contract.py",
+  "result": {
+    "wheel": "PASS",
+    "sdist": "PASS",
+    "runtime_image": "PASS",
+    "probe_image": "PASS",
+    "cyclonedx_sbom": "2/2 PASS",
+    "trivy_scan": {"runtime": "NOT_PASS exit 1", "probe": "PASS exit 0"},
+    "license_qualification": "NOT_PASS: 22 locked-graph review decisions missing",
+    "artifact_identity": "PASS",
+    "bound_sbom": "2/2 PASS",
+    "release_sbom": "PASS and verify PASS",
+    "provenance": "PASS",
+    "supply_chain_evidence": "PASS",
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1813-supply-chain-real-20261201",
+  "evidence_hashes": {
+    "artifact-identity.json": "5183bf8146cf4e20602282402045c7b40ae173b4806b27514647886e5c2b2c5f",
+    "runtime-trivy-findings.json": "710aa053458ff30e6e672cd0a305315d1e0ea094a2f378d8a65b26a13438081f",
+    "probe-trivy-findings.json": "72e53bc6f5b87d076ed6f3d0ad77a862ea709f8c16ab32c1a57e0a0dd5067b7d",
+    "ronin.cdx.json": "3d80c3b87277e72fe35d57bd9a3ae680ac02f61442075f5a023615dc64d15c7a",
+    "provenance.json": "ba81c6859973e9c847b83235581caf068e10b02732555069b554649ca4bdb3b0",
+    "supply-chain.json": "cd4f2fea5ce0cee23c64999caf674fc25739da9be86b1dc0f7cddcebbf33cd63",
+    "runtime-image.tar": "edb84ea240d86a81f92559e079970ddabb9e1e6833c959c6eed444753252d47d",
+    "probe-image.tar": "32ddbf768d1de40cd3edd279825871763140868a5daceb63e0fcdcea870a325f"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["runtime Trivy threshold failed", "license policy lacks 22 current locked-graph review decisions", "not promoted as release PASS", "no historical evidence reattributed"]
+}
