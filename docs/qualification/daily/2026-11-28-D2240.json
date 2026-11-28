@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2240",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_CATALOG_HTTP_FOCUSED_CURRENT_CANDIDATE",
+  "candidate_sha": "75e99d6a67acb09c5d4d7aa456e89a6de40e8d60",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded focused real PostgreSQL catalog and governance HTTP composition qualification",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2240-postgres-catalog-http-current-20261128 -TestPath tests/integration/test_postgres_local_composed_catalog_http.py",
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "selection": "path=tests\\integration\\test_postgres_local_composed_catalog_http.py",
+    "coverage": "disabled",
+    "postgres_image": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c",
+    "pytest_wall_seconds": 12.392,
+    "total_wall_seconds": 36.364,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2240-postgres-catalog-http-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "3168b492e6f7d5e88c26a3b7903ee728c0b43b307d708662d007ebbc7fc8f4af",
+    "pytest-postgres.log": "2c63d7f436a526d893f13b04521c06513d1bcfd09c9797e30a11664e32bf9083",
+    "pytest-postgres.xml": "f56029876ffc39093d8a9797979c3b2d61889737215525f12e690c02ecc637b4",
+    "pytest-timings.json": "0bd73c9fb8af9f12f9ddfc4e28f33e159fe3e05fca450eb165f807d13701464d",
+    "runner-timings.json": "3f5addce1e02fd6b638807820976634cbd12ed251e62111e73892c1322e2f1f9"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused file qualification with coverage disabled is diagnostic evidence, not the complete Python/PostgreSQL suite or a release gate.", "Evidence is bounded to one PostgreSQL 16.4 container and one process; it does not certify hosted providers, HA, multi-worker, indefinite operation or complete P11.", "D210 evidence remains separately bound to its historical candidate; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
