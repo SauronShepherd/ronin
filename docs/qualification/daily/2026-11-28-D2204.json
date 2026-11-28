@@ -1,0 +1,19 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2204",
+  "date": "2026-11-28",
+  "status": "PASS_SPARK_CONNECT_LOCAL_CURRENT",
+  "candidate_sha": "c5fa3cf6b1c1072471ef6dfbea4e45815871cd42",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded local Spark Connect 4.2.0 provider qualification on current main",
+  "provider_image": "apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "command": "docker pull apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2204-spark-connect-current-20261128 -ImageRef sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59; docker image rm apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "result": {"spark_version": "4.2.0", "client_version": "4.2.0", "tests_expected": 1, "tests_passed": 1, "tests_skipped": 0, "tests_failed": 0, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2204-spark-connect-current-20261128",
+  "evidence_sha256": {"pyspark-client-install.json": "04ea59f524787a12685dca8fb1c6a8b052f8cb1f17b27c42b9b609bb0f028b97", "spark-junit.xml": "fb8408383c2c5227eee26b298fb36a6d67902094b7ae306505ed02be87c10b92", "pytest-timings.json": "0786c41b005ca52409111edd91ba71d018281c2bd94eb01984f10337cdde3055", "spark-container.log": "e45f76e7df7f9046d5a4db536d54d16acc2c1c81e59614891dd644ab6b276ffe", "qualification.log": "a7eefc97cecaf65f87ffaaa269c82928d43c4a8cad85ea419b125d64d28c1076", "qualification.json": "4d9596b60b73cbae47d30a43d97df149775c410badbc6afd76ac00ea34c69c37"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Spark Connect only; no hosted Spark, HA, external IAM, indefinite operation or SLA claim.", "This bounded lane does not complete P11 or qualify release.", "No historical evidence was reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
