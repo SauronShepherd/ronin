@@ -1,0 +1,45 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2252",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_INGESTION_WATERMARK_CURRENT_CANDIDATE",
+  "candidate_sha": "8e730dc832412d59b85ddf4a1dd2f194677bac15",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered live PostgreSQL/Kafka/worker qualification of Ingestion Studio watermark bootstrap, advance and replay deduplication",
+  "commands": {
+    "build": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2252-live-ingestion-watermark-20261128 --label org.ronin.qualification.run=d2252 .",
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2252-live-ingestion-watermark-postgres-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2252-live-ingestion-watermark-20261128 -TestGrep 'Ingestion Studio bootstraps and advances a PostgreSQL watermark without replay duplication' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "api_events": 15,
+    "correlated_http_logs": 15,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 15},
+    "worker_image_id": "sha256:6338e401aeb4fc4299d5be1c4eb8dd3e21fb14efdef2c88df1f751f2db9d9733",
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2252-live-ingestion-watermark-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "a89e3c42ce65462d5e9a80eba034f4a40a2890316103d1d7d81a65ebe712d24d",
+    "browser-live.xml": "f312df9ed291ffd70278483e3be3c7633e5fe61733fb5bd639247687e2bde396",
+    "live-api-traffic.json": "00606bbd56ef7fda243af31d00e6265e7cd9a7f8990e86870486489c91b27395",
+    "live-server.stderr.log": "00813423346fec025dbee73181c9f61b66d847d71de521ecb2d87f63a44ac86e",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-worker.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-worker.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "8e26fcaa698be1ab045e16a8cdfac02b12aa279a698ac85f715660547a20b702",
+    "live-python-freeze.txt": "2b4c043c07f197e4806d68b2d94ba433e8d2f73d067f730f40a0869d0690bf3f"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered bounded live diagnostic only; it does not certify the full suite, hosted provider/IAM, indefinite operation, or release.", "No historical D83-D2251 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
