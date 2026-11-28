@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2170",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_FULL_CURRENT",
+  "candidate_sha": "6ee52b599cf7d1d1d3afa620162b07cf972ff77d",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Full Docker integration and strict v0.1 acceptance against the current clean main candidate, including PostgreSQL, Docker worker, Floci S3-compatible, Azurite Azure-compatible and frozen v0.1 journeys.",
+  "image_id": "sha256:34e592d03fc7c54954b5478af020cce359dae6bf5eb394a07082e91cb84202b5",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2170-docker-full-current-20261128",
+  "result": {"integration_tests": "27 passed; 0 skipped; 0 failed", "strict_v01": "15 passed; 0 skipped; 0 failed; strict_success=true", "scope": "Docker worker/runtime, PostgreSQL journeys and backup/restore, Floci S3-compatible, Azurite Azure-compatible and strict v0.1", "pytest_duration_seconds": 153.31, "cleanup": "PASS; containers, networks, volumes and temporary Ronin image removed"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2170-docker-full-current-20261128",
+  "evidence_sha256": {
+    "azurite-qualification.log": "820D80E5E7BB5818496D2040A2BAB958ED1B4A4E1C554C880750B72B40B6C435",
+    "docker-cleanup.json": "33C5AD5004074988288E0DFE897058FF6FCF6FB141D6042C167A164958037D0A",
+    "docker-pytest-output.log": "A4A4F89BFA35D9337B10A99E15A4AA874BB0C91A1C95B0652A455640FFB0801F",
+    "docker-qualification.log": "5AA70ED9CFCA954BA3D1B032A016BBFC919E47357F662698F663535E8E08739B",
+    "floci-s3-qualification.log": "A4D1CAE25D714C72E42BEBE7586E69DA930065671313C485BB0C8F5C8D8E7B76",
+    "postgres-qualification.log": "95A6C09416279C9C8DCA36D6624E2BF41F09651275C5333DF2965A7B72B9808F",
+    "qualification-summary.json": "6E89D713E8B795B6556F92AEF274542C21ED4887410AFD67F6DF0738C4BAA720",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "175E527243EE8000F8B6312A3C7CA1CBB1535D0E06D318E8FE1AB6DD84A76800"
+  },
+  "limitations": ["Local Docker qualification with Floci/Azurite emulators; not hosted AWS/Azure IAM certification, indefinite operation, HA/multi-worker production, complete P11 or release approval.", "No production code changed and no historical evidence was reattributed."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
