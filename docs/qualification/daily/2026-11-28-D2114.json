@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2114",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_600_CURRENT",
+  "candidate_sha": "6cbdc5e208174fe4ea1f957fe2838addd94a4e03",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2114-live-supervisor-soak-600-current-20261128\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2114-live-supervisor-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2114-live-supervisor-soak-600-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2114-live-supervisor-20261128 -TestGrep 'live streaming supervisor soak' -SupervisorSoakSeconds 600 -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2114-live-supervisor-20261128",
+  "result": {
+    "tests": "1 passed, 0 skipped, 0 failed",
+    "supervisor_soak_seconds": 600,
+    "api_events": 767,
+    "correlated_events": 767,
+    "api_outcomes": {"OK": 767},
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "log_errors_or_critical": 0,
+    "cleanup": "PASS",
+    "elapsed_seconds": 630.06
+  },
+  "worker_image_digest": "sha256:4c65badb61456d9dcd8f0393e99fdad676a68613bede5d29593669fc45e72e39",
+  "evidence_sha256": {
+    "qualification-summary.json": "47116847d6e4bd6f150ed270a8145da399693ea7e3b8c1de655d98427a347ebd",
+    "browser-live.xml": "f3d7fb14c88ebe432f127e8667bd4afaeb986d05979235ebd06d4c24a9488649",
+    "browser-live.log": "2319fa7298d8fbb1d84084982e5603d9a37ea1afef817b1d84f111d406d21fb8",
+    "live-api-traffic.json": "bd06302a77017d8d99af79676b0a110197edff6d48032ec704d2202e08f70a5e",
+    "live-server.stderr.log": "ff19e985815875eefa94b66203fb242bbf87a4e742b2eccd0acd110b66520d9a",
+    "live-python-freeze.txt": "4fb0a6c03ba2f62d4802a27bf4438ab3774f4887f3d2919e9582c1568978c9bb"
+  },
+  "status_after_receipt": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"},
+  "limitations": [
+    "Soak bounded de 600 s con un broker, PostgreSQL y un worker Docker; no demuestra operación indefinida, HA ni multi-worker productivo.",
+    "No certifica providers hosted, P11 completo ni aprobación de release.",
+    "No hubo cambios de producción ni reatribución de evidencia histórica."
+  ]
+}
