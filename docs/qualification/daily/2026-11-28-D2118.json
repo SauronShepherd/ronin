@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2118",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUSTAINED_BACKPRESSURE_CURRENT",
+  "candidate_sha": "432a4adf437c6605002bd0cb992ebbe9bcb14297",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2118-live-sustained-backpressure-current-20261128\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2118-live-sustained-backpressure-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2118-live-sustained-backpressure-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2118-live-sustained-backpressure-20261128 -TestGrep 'sustained backpressure' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2118-live-sustained-backpressure-20261128",
+  "result": {
+    "tests": "1 passed, 0 skipped, 0 failed",
+    "configured_records": 256,
+    "api_events": 12,
+    "correlated_events": 12,
+    "api_outcomes": {"OK": 12},
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "log_errors_or_critical": 0,
+    "cleanup": "PASS",
+    "elapsed_seconds": 41.05
+  },
+  "worker_image_digest": "sha256:b4d0c3d4fa89fc05dc9e756ef17be47cecdb8c3f76e95890f753e9849d13f771",
+  "evidence_sha256": {
+    "qualification-summary.json": "5de2f702a1a6fa23d3bff6048e33440c5ba982cfe2a66f896737b6149ee77aae",
+    "browser-live.xml": "53ea0d5bd60526c1608a625f49554fb298756eb3781fe5eec774e5af0bb4ce66",
+    "browser-live.log": "f37ce5d3d6c6304e97cf861459e04d494016a5474d6e3983fd4a17f10425b8c6",
+    "live-api-traffic.json": "34d1c7f9e5ef988e8eb79d5612cbe2135180153d403d75acebcda2d3efe1ad0b",
+    "live-server.stderr.log": "8de6815c209e4f89740699aca7f2d8635255e0b4e2997e18199c418dc22c53f2",
+    "live-python-freeze.txt": "f9cba80aaff4a690ca69cac2a5433172d7ab2276021db93383b212068761a5b7"
+  },
+  "status_after_receipt": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"},
+  "limitations": [
+    "Diagnóstico filtrado bounded de 256 registros; no demuestra operación indefinida, HA ni multi-worker productivo.",
+    "No certifica providers hosted, P11 completo ni aprobación de release.",
+    "No hubo cambios de producción ni reatribución de evidencia histórica."
+  ]
+}
