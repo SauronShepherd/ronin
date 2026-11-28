@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2237",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_ARTIFACT_RETENTION_FOCUSED_CURRENT_CANDIDATE",
+  "candidate_sha": "f1420e9e350613b1990353831737542127260d49",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded focused real PostgreSQL artifact retention barrier and collector lease qualification",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2237-postgres-artifact-retention-current-20261128 -TestPath tests/integration/test_postgres_artifact_retention_barrier.py",
+  "result": {
+    "selected": 3,
+    "passed": 3,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "selection": "path=tests\\integration\\test_postgres_artifact_retention_barrier.py",
+    "coverage": "disabled",
+    "postgres_image": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c",
+    "pytest_wall_seconds": 8.71,
+    "total_wall_seconds": 35.876,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2237-postgres-artifact-retention-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "c637c9733f440db623581c972634e75c30cf874e2a2903909a7a1fd29812c233",
+    "pytest-postgres.log": "e96ceefa5f6a5f9f5a4f29d9a808ebf7a90a5a204c0e6f494693938647dac353",
+    "pytest-postgres.xml": "d45bf85106095b45db022a1725a1fb06bde7c8786226473e25ef68ebe13b4c82",
+    "pytest-timings.json": "aa0016ad3e379a6f6d5b0be07c84111e6a3eb2453e8ff73bbfc3e6c87c9828fb",
+    "runner-timings.json": "544e3585a0f784fafa110c55aa0a0cf762d53ac74222690211f4be12ab260626"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused file qualification with coverage disabled is diagnostic evidence, not the complete Python/PostgreSQL suite or a release gate.", "Evidence is bounded to one PostgreSQL 16.4 container and one process; it does not certify external object stores, multi-worker, HA, indefinite operation or complete P11.", "No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
