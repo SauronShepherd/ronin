@@ -1,0 +1,34 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2220",
+  "date": "2026-11-28",
+  "status": "PARTIAL_PASS_SUPPLY_CHAIN_CURRENT_IMAGES_AND_CONTRACTS_TRIVY_NOT_RUN",
+  "candidate_sha": "ab84acdc2ef438e0e04598a98390aa416bbd92f7",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "current-candidate runtime/probe image builds and supply-chain contract regression",
+  "commands": [
+    "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2220-runtime-current-20261128 .",
+    "docker build --pull=false --file docker/Dockerfile.probe --tag ronin:qualification-d2220-probe-current-20261128 .",
+    "python -m pytest -q --junitxml C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2220-supply-chain-images-current-20261128\\supply-chain-contract-junit.xml tests/test_artifact_identity.py tests/test_container_sbom.py tests/test_release_supply_chain_generators.py tests/test_supply_chain_evidence.py tests/test_artifact_qualification.py"
+  ],
+  "result": {
+    "runtime_image_build": "PASS",
+    "probe_image_build": "PASS",
+    "runtime_image_manifest_digest": "sha256:16f4640fc665bf3fbc591b92dbd5c88265678735e61e158ff10d10f61ef17b19",
+    "probe_image_manifest_digest": "sha256:6dea56acc3742c9656ce2b48765db49e6f34cca7e397b9da287bf255db67ec27",
+    "contract_tests": "123 passed",
+    "trivy_scan": "NOT_RUN: trivy executable unavailable on host",
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2220-supply-chain-images-current-20261128",
+  "evidence_sha256": {
+    "runtime-build.log": "86b40571c2dfd8210b407dace28348c7c8c12d69ec0c5281020dda9d3e14155b",
+    "probe-build.log": "b380a22d0fd1f22563ac3453617f3a3c6ec31945cc4dd37764d3656e93ee8bfd",
+    "supply-chain-contract-junit.xml": "f1d9cffeb62eae829dbb873678f3227f95b28b78e7fca75aef5eb20d5de12776"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["No runtime/probe Trivy SBOM or vulnerability threshold was produced because trivy is not installed on this host.", "No license decisions were invented; the 22 locked-graph human reviews remain open.", "Build/contract evidence is local and bounded and does not complete P11 or release approval; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
