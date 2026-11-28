@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2274",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_PARQUET_RESET_REPLAY_CURRENT_CANDIDATE",
+  "candidate_sha": "5abde24927929301011369cfaf60cda0f2e80142",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "live Parquet sink reset replay across bounded runs with PostgreSQL and Kafka",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2274-live-parquet-reset-replay-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming parquet sink preserves reset replay across bounded runs' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 11,
+    "correlated_http_logs": 11,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 11},
+    "application_errors": 0,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2274-live-parquet-reset-replay-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "e3eb4ea78803925134bc5975e8fdb09b0b4613a32a1dd1f2e831e14220c15f39",
+    "browser-live.xml": "8e344ed616717c814667afba6f8b2741f4348ad454095aa13f79f66e84c62552",
+    "live-api-traffic.json": "f1a3fc145203cf746b553903e7773bb5ecb800db0d6ec0e595846cd14d6f282b",
+    "live-server.stderr.log": "74a9cedcee2086c78061764b8691c72f51313202f28c8fe19be2345f6bab406b",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "c191de1657e4d87f0cb43b3e87afdb46d911da4509200fec3e3e30da6dc4279a",
+    "live-python-freeze.txt": "9c63124a87b9506ebdbf1f75564459dbd6d278e8af02237957c67aa55977b5d0"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is bounded local Parquet reset/replay evidence; it does not certify hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2273 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
