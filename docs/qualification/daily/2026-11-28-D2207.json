@@ -1,0 +1,19 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2207",
+  "date": "2026-11-28",
+  "status": "PASS_PYRONIN_ARTIFACT_CURRENT",
+  "candidate_sha": "1d9f2713bd7ce2cd61b50cf7a322901bc8a5cc31",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded isolated pyronin artifact build/install and contract qualification on current main",
+  "command": "python -m tools.artifact_qualification --checkout . --output C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2207-artifact-current-20261128.json",
+  "result": {"package": "pyronin", "version": "0.0.1a0", "wheel": "PASS", "sdist": "PASS", "isolated_site_packages_import": "PASS", "contract_tests": "92/92 PASS", "cleanup": "PASS; temporary work root removed"},
+  "evidence_file": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2207-artifact-current-20261128.json",
+  "evidence_sha256": "09cd7a6ca727547526b8d341bb85f93706fad0016f424125043a9bf15878651e",
+  "artifact_sha256": {"wheel": "9da82704a4ce2f372f535ee8138d798e3002ca6b7e42f43c658928edb1dbec2d", "sdist": "6486ce3248a26c4e48457f7f2532f94af617ca9cce8600f467716c3ca4ed9800", "wheel_record": "5f38cb2415674e859ec5077fb5a15535fb6d6675d0dab12131898c6285b7df3b"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["PyRonin artifact lane only; it does not qualify hosted providers, runtime HA, P11 complete or release approval.", "No historical evidence was reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
