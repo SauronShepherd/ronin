@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2120",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_BYTE_BOUNDARIES_CURRENT",
+  "candidate_sha": "6771723a8aa1d797e2ebfe5675fab28d22ce2b9f",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2120-live-byte-boundaries-current-20261128\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2120-live-byte-boundaries-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2120-live-byte-boundaries-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2120-live-byte-boundaries-20261128 -TestGrep 'near-record and near-batch byte boundaries' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2120-live-byte-boundaries-20261128",
+  "result": {
+    "tests": "1 passed, 0 skipped, 0 failed",
+    "api_events": 13,
+    "correlated_events": 13,
+    "api_outcomes": {"OK": 11, "WARN": 2},
+    "expected_warnings": "two bounded byte-boundary warnings retained by the diagnostic",
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "log_errors_or_critical": 0,
+    "cleanup": "PASS",
+    "elapsed_seconds": 30.12
+  },
+  "worker_image_digest": "sha256:a0bb5c9703c5bdf7e6541ef501f731222c8c89fc002d8b8c638ba5c76c507916",
+  "evidence_sha256": {
+    "qualification-summary.json": "993110383201852e0858c96c636578a0644d1f15808ea275e7376ec2a1db0d87",
+    "browser-live.xml": "c0d94ab1b2d72f52e9b919117a89a2cc5574ba43a717254ead2731d4e7be6967",
+    "browser-live.log": "07eb8e5d0d1c417ea14b21ed1865171de4479825e7df610f10ab45867edfc4d4",
+    "live-api-traffic.json": "c9ef88af520549c92c1457615af359ee365d04d39b522f5c65c1624973a528dc",
+    "live-server.stderr.log": "128346fd6644e03c09437aec5573ad26bf3d901f935f4e21a55e0bc2066d7a6b",
+    "live-python-freeze.txt": "9dbb4ff76b86c53cb453698027f3d3bfdb6f07918be30cea6d2bb4822ed6de5d"
+  },
+  "status_after_receipt": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"},
+  "limitations": [
+    "Diagnóstico filtrado bounded de fronteras de bytes; los dos WARN quedan conservados y no se convierten en OK.",
+    "No demuestra operación indefinida, HA, multi-worker productivo, providers hosted, P11 completo ni release.",
+    "No hubo cambios de producción ni reatribución de evidencia histórica."
+  ]
+}
