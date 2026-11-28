@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2238",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_FINOPS_FOCUSED_CURRENT_CANDIDATE",
+  "candidate_sha": "8ec496d32a3eed903d541f89b24a331c018c1c14",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded focused real PostgreSQL FinOps idempotency, pricing and budget persistence qualification",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2238-postgres-finops-current-20261128 -TestPath tests/integration/test_postgres_finops_real.py",
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "selection": "path=tests\\integration\\test_postgres_finops_real.py",
+    "coverage": "disabled",
+    "postgres_image": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c",
+    "pytest_wall_seconds": 6.492,
+    "total_wall_seconds": 26.189,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2238-postgres-finops-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "248bb750d610fd6a193bc860c89beb42cfeea7b04367e340a3765ce59e598a15",
+    "pytest-postgres.log": "dc89bc3bee27cde59bc1e14becc1df885f38b785ef823a902b35ab5d3059ddc2",
+    "pytest-postgres.xml": "cc0e2967eeb70183760e48e6e459f9ed6a1f4289c93711e20d8ace185dbaf5e7",
+    "pytest-timings.json": "03d7395682dc394ede5f301f3cc03258146210c6d199463a56c233c8b0c18fc2",
+    "runner-timings.json": "58ec4f331ea163b7498c86a7ae71d6a93f614326c9eb6471a09515dd128b2896"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused file qualification with coverage disabled is diagnostic evidence, not the complete Python/PostgreSQL suite or a release gate.", "Evidence is bounded to one PostgreSQL 16.4 container and one process; it does not certify notification providers, HA, multi-worker, indefinite operation or complete P11.", "D221 evidence remains separately bound to its historical candidate; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
