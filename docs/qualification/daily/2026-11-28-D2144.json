@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2144",
+  "date": "2026-11-28",
+  "status": "PASS_HELM_KIND_CURRENT_SQLITE",
+  "candidate_sha": "041bec010dc80b6e502e3f4dbf26e1d9fd9dfe45",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Helm/kind deployment recovery qualification using the exact D2143 Docker candidate image.",
+  "command": "pwsh -NoProfile -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2144-helm-current-20261128 -ImageRef ronin:qualification -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2143-docker-kept-current-20261128 -StorageBackend sqlite",
+  "image_id": "sha256:1e44fffe86b8d49a471b2e9f4ce63b86e93967d5059688b917b4d8174a3d4516",
+  "result": {"helm_version": "v4.3.1+gc0d08d0", "rendered_resources": 4, "health_http": 200, "studio_http": 200, "authorized_jobs_http": 200, "upgrade_revision": 2, "rollback": "passed (restored revision 1)", "restart_persistence": true, "postgres_restart_recovery": "not-applicable (sqlite)", "cleanup": "passed"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2144-helm-current-20261128",
+  "evidence_sha256": {
+    "helm-qualification.json": "0186F614CED1987DAB7D1E767F1E2FCBBC96BA18E88BAC8C7512877D041DF49D",
+    "helm-qualification.log": "EA31F7754F6CDA05BAD5EB4D7C533033D1330834EA36E1BACC03EE3DD69CC957",
+    "kubernetes-resources.txt": "92C73A5F3511E09163103270043FBC91DFD649657BD804CA88A0EAFFA810B940",
+    "port-forward-error.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "port-forward-restart-error.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "port-forward-restart.log": "21069C38DE6EEF7AAD25948549D376121DBC313E2261B1F5F9FD7620D8D0F4A7",
+    "port-forward.log": "A9A87EECBB8FACCA4A0059D9EA31C4B41DBEC02AB07E4655A9A65BA17DEF5C5F"
+  },
+  "cleanup": "The isolated kind cluster was removed; Docker image was removed after the dependent lane; no containers remain.",
+  "limitations": "SQLite backend only; PostgreSQL restart recovery remains not-applicable in this lane and this does not complete P11.",
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}

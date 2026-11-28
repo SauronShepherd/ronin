@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2143",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_FULL_CURRENT_KEPT_IMAGE",
+  "candidate_sha": "041bec010dc80b6e502e3f4dbf26e1d9fd9dfe45",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Full Docker integration and strict v0.1 acceptance against the current clean main candidate, retaining the built image for the dependent Helm qualification.",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2143-docker-kept-current-20261128 -KeepImage",
+  "image_id": "sha256:1e44fffe86b8d49a471b2e9f4ce63b86e93967d5059688b917b4d8174a3d4516",
+  "result": {"tests": 27, "passed": 27, "skipped": 0, "failed": 0, "strict_v01_expected": 15, "strict_v01_passed": 15, "strict_v01_skipped": 0, "strict_v01_failed": 0, "pytest_duration": "155.31s"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2143-docker-kept-current-20261128",
+  "evidence_sha256": {
+    "azurite-qualification.log": "F899BB2D5E0D1DB665448A3D3F6806B50B821BE30E781DA992F48358DFE61D3E",
+    "docker-cleanup.json": "707A7F3A33807D1071E15E6403B6C3DEA0E0E6CF8897771E24A3FB965BD4928C",
+    "docker-pytest-output.log": "3F00329B27B55FC24F4FCBD83FDC21458B5B20D192E11B63F09779FC1AEA9BBC",
+    "docker-qualification.log": "60B6FBFEFF6E0BF2DEEDE9E143055B1CC93889A942B0BA2064A6E270792F8591",
+    "floci-s3-qualification.log": "7F47D25F9B4848DFF12B173FDEC29E6F71692653ED89DFE633A7792025652255",
+    "postgres-qualification.log": "68606C9BF197FDF3E0D5995D9F6A127631965050BD0C3AD7AB9D2748CED7338C",
+    "qualification-summary.json": "8715205D6047D199591166B1518F301A77FF9E584FE3DAEA764D0F704E55F695",
+    "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "v01-acceptance.xml": "42532A531BC6756103E0D5CD917BFFB3942647C47713563688AF541F3801C2C2"
+  },
+  "cleanup": "Temporary Docker containers, networks and volumes cleaned successfully; the image was intentionally retained for D2144 and removed after D2144 completed.",
+  "limitations": "Local Docker qualification; does not certify hosted IAM or complete P11.",
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
