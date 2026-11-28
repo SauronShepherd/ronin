@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2128",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_CONNECTOR_REAL_DIAGNOSTIC",
+  "candidate_sha": "08ce777094752571b60a8b0151c3a3756c58e1ab",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered real PostgreSQL connector qualification for typed reads and incremental watermark pagination.",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2128-postgres-connector-real-20261128 -TestPath tests/integration/test_postgres_connector_real.py",
+  "service_profile": "isolated postgres:16.4-alpine",
+  "result": {
+    "selected_passed": 2,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "deselected": 0,
+    "pytest_duration": "0.89s",
+    "cases": [
+      "test_postgres_connector_real_watermark_pages_same_timestamp_without_loss",
+      "test_postgres_connector_real_schema_null_timezone_and_large_value"
+    ]
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2128-postgres-connector-real-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "2d1b311164592c6d95756f934bf22a01d75f8b9eb62502329085f5860d6cba59",
+    "pytest-postgres.log": "149311208ff8a918fda642fb64d7d197e966089165dc8ce02ce1f60ddd0885e3",
+    "pytest-postgres.xml": "7c17c6db7ea704f7e095cf7abdeaf0c8b1d4365ecc615282d7b263a0b0c49008",
+    "pytest-timings.json": "490d0c67f89b1be6ce3b5f9c14438dc89e19e43d61af1f2401ceee59225371e6",
+    "runner-timings.json": "fec1492359dc14026cb8a7b016d0c70b4e3af63787d074d62501765ae72ef552"
+  },
+  "cleanup": "The isolated PostgreSQL container and runner resources were removed; no qualification container or kind cluster remains.",
+  "limitations": "Filtered diagnostic only; this does not certify hosted PostgreSQL, complete connector breadth, indefinite HA or complete P11.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
