@@ -1,0 +1,45 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2258",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_RF3_FAILOVER_CURRENT_CANDIDATE",
+  "candidate_sha": "b2da70bd48e17c07f4b9386c8aa06b6e6d40c5a9",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered live three-broker RF3 failover and durable checkpoint recovery with PostgreSQL and real worker",
+  "commands": {
+    "build": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2258-live-rf3-failover-20261128 --label org.ronin.qualification.run=d2258 .",
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2258-live-rf3-failover-postgres-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2258-live-rf3-failover-20261128 -MultiBroker -TestGrep 'live streaming multi-broker failover resumes from the durable checkpoint' -RequestTimeoutSeconds 240"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "multi_broker": true,
+    "replication_factor": 3,
+    "api_events": 5,
+    "correlated_http_logs": 5,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 5},
+    "worker_image_id": "sha256:404dcada696ad000f5bd764f1283268b032f2afce9dcc4d7015eb3c0859614fc",
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2258-live-rf3-failover-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "e384c841c2e9e46dc99942b3c4bf3e0a3f9f7884fc7a843d967badcd8e65b3ee",
+    "browser-live.xml": "253620411054bafae022f4cdd1b605fd7524b8a08f79708f21cd8691c8b43f39",
+    "live-api-traffic.json": "185f4cc79152a26aa4f1d2e34f2434f768f147644028598745992307254e28f8",
+    "live-server.stderr.log": "c1024c3cc84f78d9573c652fbb2bd27fd716a627c127549b7e17691921d0ea12",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "39f0cbda220fc6bfe40fafdc3976b14ee5aada0e073ff8b140ff61f0a31a31d7",
+    "live-python-freeze.txt": "116bebc3ac71273ed1b972b8fa8c37427a670b7f1b30588e5e35b6fe479092a1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded RF3 failover diagnostic only; it does not certify complete HA, indefinite operation, hosted providers, complete P11 or release.", "No historical D83-D2257 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
