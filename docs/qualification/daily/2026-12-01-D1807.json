@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1807",
+  "date": "2026-12-01",
+  "status": "PASS_SPARK_CONNECT_PROVIDER_CURRENT",
+  "candidate_sha": "1fdb61551225c5503f449da8c98df3dc78b30fe1",
+  "implementation_commit_sha": "1fdb61551225c5503f449da8c98df3dc78b30fe1",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1807-spark-connect-provider-current-20261201\\qualification.json",
+  "command": "docker pull apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1807-spark-connect-provider-current-20261201 -ImageRef sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59; docker image rm --force sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "result": {"tests": "1 passed; 0 skipped; 0 failed; 2 deselected", "scope": "Spark Connect 4.2.0 real service, SQL smoke, pipeline execution and content-addressed evidence persistence", "client": "pyspark-client 4.2.0", "image": "apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59", "cleanup": "PASS", "elapsed_seconds": 17.744},
+  "evidence_hashes": {"qualification.json": "3E1CCD454793731B466365C0818E071D388DEB5D64979709292D252EFA32428F", "qualification.log": "5368C65EDE969CD1D26D52B27EAFF1F8755A7FE3AF631D096415015B5D218897", "pyspark-client-install.json": "04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97", "pytest-timings.json": "EA5FF8C6AE777DA1ED081BE97F0565B23D75D6549A853A11145674C4FEFDD454", "spark-container.log": "DFF0F5CA530B102579AD1F001449ACDD213BEDC69EAF5A961BABC1FFE030111B", "spark-junit.xml": "49075BCE00FA56D9280320D12145479AC32B1BF803D2E43F08ABBD35D81E85DD"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Provider Spark Connect local bounded y digest-pinned; 2 casos de la suite externa quedaron deseleccionados por el filtro; no certifica SDP/Spark hosted, HA, operación indefinida, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
