@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2205",
+  "date": "2026-11-28",
+  "status": "NOT_PASS_SDP_CLI_BOOTSTRAP",
+  "candidate_sha": "3142054aff3e0e1cd6b3d3945990d8fbbee08ab4",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded SDP Studio official CLI qualification attempt on current main",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_sdp_cli_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2205-sdp-cli-current-20261128",
+  "result": {"tests": "not executed", "cleanup": "PASS; no project or external runtime was created", "failure": "sdpstudio.exe failed at startup with ModuleNotFoundError: sdpstudio_cli"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2205-sdp-cli-current-20261128",
+  "evidence_sha256": {"qualification.json": "6b27b6ec35d52d75ad6217e3d228c975d06f62561a712ba09fcac110fd500c3e", "qualification.log": "8375f0195b93b804df815d621941e2ba0a888751308b191fda90d03e48175732"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["The installed SDP Studio launcher is not executable in this environment; no positive SDP evidence was produced.", "This result does not complete P11, P13 or release qualification.", "No historical evidence was reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
