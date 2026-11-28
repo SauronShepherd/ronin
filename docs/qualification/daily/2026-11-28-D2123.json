@@ -1,0 +1,32 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2123",
+  "date": "2026-11-28",
+  "status": "PASS_PYTHON_FULL_CURRENT",
+  "candidate_sha": "dbef88ca5450ae75c1088f9a5cae3a49fa7739a3",
+  "implementation_commit_sha": "dbef88ca5450ae75c1088f9a5cae3a49fa7739a3",
+  "production_change_boundary": null,
+  "production_change": false,
+  "test_only_change": "tests/test_vcs_source.py now strips ambient Git repository/config overrides before fixture repository commands, matching the existing isolation used by adjacent Git test helpers.",
+  "scope": "Complete Python regression suite on clean main candidate after correcting test-fixture Git environment isolation.",
+  "command": "$env:RONIN_TEST_EXECUTION_MODE='python-full-d2123'; $env:RONIN_TEST_SOURCE_COMMIT='dbef88ca5450ae75c1088f9a5cae3a49fa7739a3'; python -m pytest -q --junitxml=full-junit.xml",
+  "result": {
+    "passed": 4712,
+    "skipped": 90,
+    "failed": 0,
+    "duration": "396.19s",
+    "skips": "Explicit environment/platform skips only, including Docker, PostgreSQL, provider, symlink and external SDP lanes.",
+    "prior_d2122_failures_resolved": 4
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2123-python-full-current-20261128",
+  "evidence_sha256": {
+    "full-junit.xml": "6359d747463f7e6ef997be55cd58c2cb68114b722091f39f90461816cdbacffd",
+    "pytest.log": "23ae64e89820aed978752a7df6bfecc5068adc85311f41a96e0c2f96750c62ac"
+  },
+  "cleanup": "Python-only run; no qualification containers, temporary images or kind clusters were created. Cleanup was verified after execution.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
