@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1811",
+  "status": "PASS_SUPPLY_CHAIN_CONTRACTS",
+  "candidate_sha": "c92f7f65e9e1cf045d34009d67df6d9c217e40e9",
+  "implementation_commit_sha": "c92f7f65e9e1cf045d34009d67df6d9c217e40e9",
+  "production_change": "none",
+  "command": "python -m pytest -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1811-supply-chain-contract-current-20261201\\supply-chain-junit.xml tests/test_artifact_identity.py tests/test_container_sbom.py tests/test_release_supply_chain_generators.py tests/test_supply_chain_evidence.py tests/test_artifact_qualification.py",
+  "result": {"tests": "123/123 passed, 0 skipped, 0 failed", "cleanup": "not applicable; no external runtime"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1811-supply-chain-contract-current-20261201",
+  "evidence_hashes": {"supply-chain-junit.xml": "4ea1a363a246cd14d15213f7e18804f7c4d138c9177c7de00f492b75bcc885d2"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["contract/unit qualification only", "real final artifacts and image SBOM/provenance remain open", "no historical evidence reattributed"]
+}
