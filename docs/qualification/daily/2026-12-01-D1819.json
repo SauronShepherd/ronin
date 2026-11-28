@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1819",
+  "status": "PASS_LOCAL_QUALITY_TARGETS",
+  "candidate_sha": "6753e9b238f70ebd23676f066c199a8b1c24211b",
+  "implementation_commit_sha": "6753e9b238f70ebd23676f066c199a8b1c24211b",
+  "production_change": "none",
+  "result": {"gates_negative": "PASS", "openapi": "PASS", "route_consistency": "PASS, 200 operations", "studio_surface": "PASS", "web_lint": "PASS", "web_budget": "PASS", "canonical_json": "PASS, 10 vectors and 5 rejections", "runner_protocol": "PASS, 2 fixtures", "dependency_surfaces": "PASS", "cleanup": "PASS; no external runtime"},
+  "make_limitation": "GNU Make unavailable; targets were executed directly where possible",
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1819-quality-targets-current-20261201",
+  "evidence_hashes": {"gates-negative.log": "5d3fd2116ee9e1d690a2bd7340da8e3f3b4011561048caa1d9ff4d461fa42653", "openapi.log": "e5731bdd429df5cafb4c79c323a71b45d83a425c39a10773d45625653fc5eb0c", "route-consistency.log": "cae10f5ecbd9b1e9c132c05d62a8a8710209468f6294c0bc81cf56a390f48160", "studio-surface.log": "6694b0a67c1bbc96eda2773f73d0217516f601007a34c0bd16a919eba5edbf4e", "web-lint.log": "71ed2ea9d8a2d617e885ad0d5e00aa4b3d0faf9c170582bf48f1207bcbd484f7", "web-budget.log": "55c312631c374ed31ef78a79d5df65ce550e08236981fde2a8f89e9fcc4c9de9", "canonical-json.log": "cd867ab2de1f6bb50ae5be9755b2bf77e01a5650264d93779277542853748673", "runner-protocol.log": "1a86f32756d2c339f4ac0219ecb0816535bd6df78066ffeea0759f9d4453026d"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["direct targets do not substitute for unavailable GNU Make orchestration", "does not close license review, SDP, P11 or release approval", "no historical evidence reattributed"]
+}
