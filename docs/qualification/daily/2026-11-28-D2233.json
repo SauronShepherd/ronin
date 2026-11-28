@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2233",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_ML_FOCUSED_CURRENT_CANDIDATE",
+  "candidate_sha": "67a828b3b456704b2b3288ce5e6e8be860441afa",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded focused real PostgreSQL ML persistence, registry, lab, checkpoints and concurrency qualification",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2233-postgres-ml-current-20261128 -TestPath tests/integration/test_postgres_ml_real.py",
+  "result": {
+    "selected": 12,
+    "passed": 12,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "selection": "path=tests\\integration\\test_postgres_ml_real.py",
+    "coverage": "disabled",
+    "postgres_image": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c",
+    "pytest_wall_seconds": 18.4,
+    "total_wall_seconds": 44.578,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2233-postgres-ml-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "5db58279664097178ede370f2bfe09b44389df391308f0acc93b0aacc2bb2121",
+    "pytest-postgres.log": "da425388bac34e5e3ae1fe69f684f8467bae279d59ff16af893cdefbc26cff63",
+    "pytest-postgres.xml": "3dd88cd980a98e8c48892fbdc7294648542fc69f5bcf5d42af0d19de35748b4b",
+    "pytest-timings.json": "f686adf80eee996944d51c23c3c771cc23f0eedcee2412fdbf200d11266735be",
+    "runner-timings.json": "051bef2065d6d571fbc2cde81ed189493ed94e0ba935cff9a888824b0f37eecd"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused file qualification with coverage disabled is diagnostic evidence, not the complete Python/PostgreSQL suite or a release gate.", "Evidence is bounded to one PostgreSQL 16.4 container and one process; it does not certify hosted ML providers, HA, multi-worker, indefinite operation or complete P11.", "No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
