@@ -1,0 +1,20 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2210",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_AZURE_BLOB_CURRENT_CANDIDATE_FILTERED",
+  "candidate_sha": "7f9491c0c5cab4db3797e6f236b4e0d5ffa2f5a8",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered Docker Azure Blob connector qualification against local digest-pinned Azurite on current candidate",
+  "provider_image_digest": "sha256:647c63a91102a9d8e8000aab803436e1fc85fbb285e7ce830a82ee5d6661cf37",
+  "worker_image_digest": "sha256:5a6c0d9ee3a789ed8f21ccc0a7e57d56b9f5b4851206ccbf7b92aee607c14909",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2210-docker-azure-blob-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2210-docker-azure-blob-current-20261128 -TestFilter azure_blob",
+  "result": {"tests": "1 passed, 26 deselected, 0 skipped, 0 failed", "selected_test": "tests.integration.test_azure_blob_connector_real::test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite", "fixture": "Azurite Azure Blob local emulator", "cleanup": "PASS", "strict_v01_gate": "not evaluated"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2210-docker-azure-blob-current-20261128",
+  "evidence_sha256": {"azurite-qualification.log": "be4a66648336e1712013de22f6f0007b42a05335de48c1b4464f9b9bb90d5df4", "docker-cleanup.json": "0669902fb1d6f4df95df01e01d69d0be1eb1d12acf1e2ae3104816517f485223", "docker-pytest-output.log": "31686bbad729fa70ee6fe8a5ac8239b3cd13d00a2256895bc032eb0722aed64f", "docker-qualification.log": "7cb0e9b0f848a98555b48f890d10006f5399cf41515f55cefddfb27a5ccbaa89", "v01-acceptance.xml": "16635a2c7a3fba62cd22a50bfe053c516637a659ceffa7b8e269504d18a63e98"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Azurite es un emulador local; no certifica Azure hosted, IAM externo, red/latencia productiva, P11 completo ni release.", "La selección fue filtrada y el strict v0.1 no se evaluó; los casos deseleccionados no se promocionan.", "D2191 permanece ligado a su candidato histórico; no se reatribuyó evidencia."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
