@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2150",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_CURRENT",
+  "candidate_sha": "cd81294df13befee183caba68931b33f7f425f4d",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live streaming event-to-workflow propagation with real PostgreSQL, single-broker Redpanda, Ronin API and Docker worker.",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2150-live-event-workflow-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2150-live-event-workflow-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2150-live-event-workflow-current-20261128 -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2150-live-event-workflow-current-20261128",
+  "worker_image_digest": "sha256:545128b2d40aea42159314459ce147ced180f8092326605a02e42edf82f4141b",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 12, "correlated_events": 12, "api_outcomes": {"OK": 12}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 29.09, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2150-live-event-workflow-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "6DC43539DE58791B6AD2FC2A0EABBC47243F6F9BCC70261BC655C7E97B74205E",
+    "browser-live.xml": "202C0A8D2FC6E4653C719FDF7C530EAC81B0F6431473E7E8C7AE653872F92A8B",
+    "live-api-traffic.json": "29FB7F7EE86FBBEC5CA11643683C336963914915CD512AEDB6DAB18DECF48123",
+    "live-python-freeze.txt": "D81DDB0FCB46B26F870EF1C2C7AE914CFA1BFDC66D641D1834701D24C2F8AF3A",
+    "live-server.stderr.log": "D2C9961298F58E534167937306E6137513EBE134F6B2B14CC73974367C5E0B02",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "946921E91AAF3671B88327FA8D5A7CA7610745660F578FCD68A59563FA971B2E",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "cleanup": "Runner removed PostgreSQL, Redpanda, volume, network, live processes and temporary worker image.",
+  "limitations": ["Single-broker bounded event-to-workflow diagnostic; does not prove indefinite operation, HA, multi-worker operation, hosted providers or complete P11.", "This receipt is bound to the current candidate and does not reattribute D2115 or earlier evidence."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
