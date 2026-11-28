@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2147",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_RF3_FAILOVER_CURRENT",
+  "candidate_sha": "71e15dc1671e7ab0213583b5faa44ef0bc6e4ebb",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live RF3 multi-broker failover and durable checkpoint recovery with real PostgreSQL, three Redpanda brokers, Ronin API and Docker worker.",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2147-live-rf3-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2147-live-rf3-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2147-live-rf3-current-20261128 -MultiBroker -TestGrep 'live streaming multi-broker failover' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2147-live-rf3-current-20261128",
+  "worker_image_digest": "sha256:6d0dfe413857ef66e1d5a4c0613c10e2261e45c46cffe9159e4891748a6a012a",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 5, "correlated_events": 5, "api_outcomes": {"OK": 5}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 45.72, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2147-live-rf3-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "9D59CF29FA94FF7BA66C3982B24CBD44E268621D984DE94326A956659C02C35A",
+    "browser-live.xml": "A55509BCE814D37CBADDCE96218F4F8D70F7C7EA1127FFCC5279E233664CC7EB",
+    "live-api-traffic.json": "60E737F9DA9328A7C41337F988E415555DCD91B79184DAB34BF21CEC702E0377",
+    "live-python-freeze.txt": "20CCB0A28ABAD3FF4E89344FF7E31236AEAC23E195E023945CDEDF28DB10592C",
+    "live-server.stderr.log": "6D2EFB42B1FD2090155BF164DCC86E4EBBA5924199BDF3C01B448F26CD7CD278",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "D3C725EB03513FBD0C2FA7E77045594EE64493617691979A5D5A0449EBA54967",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "cleanup": "Runner removed three Redpanda brokers, PostgreSQL, volume, network, live processes and temporary worker image.",
+  "limitations": ["Single bounded RF3 diagnostic; does not prove indefinite operation, production HA/SLO, multi-worker operation, hosted providers or complete P11.", "This receipt is bound to the current candidate and does not reattribute D1165 or D2113."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
