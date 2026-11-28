@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2301",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_FLOCI_S3_FILTERED_CURRENT_CANDIDATE",
+  "candidate_sha": "fd15982722a4322add3590a86d04c79fbcf38972",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered Docker S3-compatible connector qualification against isolated Floci",
+  "commands": {"qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2301-docker-s3-floci-current-20261128 -ImageTag ronin:qualification-d2301-s3 -TestFilter s3_json"},
+  "result": {
+    "selected_tests": 1,
+    "selected_passed": 1,
+    "selected_failed": 0,
+    "selected_skipped": 0,
+    "deselected": 26,
+    "pytest_case": "tests.integration.test_s3_json_connector_real::test_s3_json_sink_put_read_and_retry_round_trip",
+    "floci": true,
+    "executed_image_sha256": "fdf11b271c92b816555f51581863cd6166f0367626d3d0b28172d380ebe86a90",
+    "cleanup": "PASS",
+    "owned_image_removed": true,
+    "containers_remaining": [],
+    "qualification_images_remaining": [],
+    "kind_clusters_remaining": []
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2301-docker-s3-floci-current-20261128",
+  "evidence_sha256": {
+    "docker-cleanup.json": "cd1dacd0ccbfdf7c73850aac7ccbad0358666767f5197287f3a22026b5775ab3",
+    "docker-pytest-output.log": "e1c78174bae61bac0e41609d1aca4a728cbb297ea49e13adf25e8b1c26f0900c",
+    "docker-qualification.log": "cad4bf3db5653e15b5b7e44005836324e5e40738f564e2127c88494b0f20eedb",
+    "floci-s3-qualification.log": "15f349ea9542224eba23f2aa770cb7b8c9da296f5bf15ade347ed3a311ef6efc",
+    "v01-acceptance.xml": "78b6d7a1de53e5c669c9bb5e96f000168412a4dae394cdb9f5d10fea1fa65338"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered Docker diagnostic only: 1 selected test and 26 deselected; strict v0.1 acceptance was not evaluated.", "Floci is a local S3-compatible emulator, not hosted AWS/provider certification; this does not close P13 or complete P11/release approval.", "No historical D83-D2300 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
