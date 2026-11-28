@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2169",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUSTAINED_BACKPRESSURE_1024_CURRENT",
+  "candidate_sha": "dedf6f7d4af4e01710bf3571b9b031117558fc8c",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live sustained-backpressure streaming journey with 1,024 configured records, reset-safe replay, PostgreSQL, Redpanda, Ronin API and Docker worker.",
+  "worker_image_digest": "sha256:65cb5be1addeef9a7efd1267cc51a21a62210715c109b4f1d9f531d761594485",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2169-live-backpressure-1024-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2169-live-backpressure-1024-current-20261128-rerun -StorageBackend postgres -WorkerImage ronin:qualification-d2169-live-backpressure-1024-current-20261128 -TestGrep 'sustained backpressure' -BackpressureRecords 1024 -BackpressureTimeoutSeconds 480 -RequestTimeoutSeconds 540; docker image rm ronin:qualification-d2169-live-backpressure-1024-current-20261128",
+  "result": {"tests": "1 passed; 0 skipped; 0 failed", "configured_records": 1024, "api_events": 12, "correlated_events": 12, "api_outcomes": {"OK": 12}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 57.06, "cleanup": "PASS; PostgreSQL, broker, volume/network, live processes and temporary worker image removed"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2169-live-backpressure-1024-current-20261128-rerun",
+  "evidence_sha256": {
+    "browser-live.log": "B5E597905AF2625810C1239290B6811D6338DFA3D90F6DB9A90C6CC736004E8A",
+    "browser-live.xml": "7AD5D97F4A8E5FC1FAD40D569749D83EEF9C243D867753C741AEE9372086D9B2",
+    "live-api-traffic.json": "E2ED5D7A618F58BF1D55936D7C521147F3DE5751F6FDF55C9C1FF79700C8F298",
+    "live-python-freeze.txt": "ECADBA9FE5C183D4E987E96CFCD46C50F84AA989A2CB8D18235C36EA32E1536B",
+    "live-server.stderr.log": "2F660933CCD32444EBF61F6653BA3105E4CDD060B1D059C49DA287D600729557",
+    "qualification-summary.json": "E3A4F1BBBED7B6CE4C2B2AA3ADD5B78D26E900AEE236559BD397CD0A00B3B605",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE"
+  },
+  "limitations": ["Bounded 1,024-record backpressure diagnostic only; it does not prove indefinite operation, HA/RF3, multi-worker production, hosted providers, complete P11 or release readiness."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
