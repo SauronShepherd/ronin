@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1800",
+  "date": "2026-12-01",
+  "status": "PASS_FULL_PYTHON_POSTGRES_CURRENT",
+  "candidate_sha": "62de7b48f03c04a530403fe439e441e5558e5713",
+  "implementation_commit_sha": "62de7b48f03c04a530403fe439e441e5558e5713",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1800-python-postgres-full-current-20261201",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1800-python-postgres-full-current-20261201",
+  "result": {"pytest": "4770 passed; 31 skipped; 0 failed; 13 warnings", "collected": 4801, "elapsed_seconds": 490.2, "scope": "complete non-performance Python/PostgreSQL regression with isolated PostgreSQL 16.4", "cleanup": "PASS; isolated PostgreSQL container and volume removed"},
+  "evidence_hashes": {".coverage": "026A85D2EC78579328F667BDB865C896BD272CB4D3BB510B855F05CAf3482AC", "pytest-output.log": "834B91584C3580BE27C936943D5CEF69E947CA4C10F22970F860B0E2C1767FDF", "pytest-postgres.log": "2CF3B288395DB6945389AB563B66471325C75841E358EA5AA2BB7D40CCF1D423", "pytest-postgres.xml": "257EA3314806DC7B00BC054A05F6B632715B477919D7EAC2264A4E874256AFAB", "pytest-timings.json": "7F3797EA64F0FD500434012B5A7700BF3A512A014789A1D0FAC2397E997ECDD5", "runner-timings.json": "7C612EF29AAF9B2417BF295627CF33BF1431428779FCE73AC856978A614C92B0"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["31 skips son explícitos y permanecen sin promocionar: Docker/worker/multi-broker opt-in, SDP/Spark/Trino/OTLP y S3/Azure sin endpoints, symlinks/POSIX no disponibles en Windows y backup appliance opt-in. La regresión no demuestra operación indefinida, HA/multi-worker productivo, proveedores hosted, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
