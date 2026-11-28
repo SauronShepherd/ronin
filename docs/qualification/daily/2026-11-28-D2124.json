@@ -1,0 +1,44 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2124",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_STREAMING_CHECKPOINT_DIAGNOSTIC",
+  "candidate_sha": "7236f4523354b1f174c5980b4fa0b3a7fc02a2a8",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered real PostgreSQL qualification for streaming checkpoints, durable stream tables and processor reopen/replay.",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2124-postgres-streaming-checkpoint-20261128 -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "service_profile": "isolated postgres:16.4-alpine",
+  "result": {
+    "selected_passed": 7,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "deselected": 0,
+    "pytest_duration": "1.64s",
+    "cases": [
+      "test_postgres_stream_table_concurrent_duplicate_append_is_idempotent",
+      "test_postgres_stream_table_conflict_rolls_back_mixed_batch_atomically",
+      "test_postgres_stream_checkpoint_bundle_cas_and_reopen",
+      "test_postgres_stream_processor_reopens_with_durable_checkpoint",
+      "test_postgres_stream_checkpoint_concurrent_cas_fences_stale_writer",
+      "test_postgres_stream_table_append_replay_and_conflict",
+      "test_postgres_stream_table_reopen_replays_without_duplicate_rows"
+    ]
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2124-postgres-streaming-checkpoint-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "79803ead1b2e6f343010b1a99e5c6e3f77172fb41107ade3c33bbdd76d1ef927",
+    "pytest-postgres.log": "901c8ba33cb2d055ed3d4f8f5976493d6668caa672fc4208744d09bd4eed5fae9",
+    "pytest-postgres.xml": "ed44fa431c720ae5479969c509e6c95a66bb32d62103636f9f3dc25713e5f877",
+    "pytest-timings.json": "88d10e44286ac344490b49cb4490b3de2095caf09c8c132fef9382a4d67da9e5",
+    "runner-timings.json": "b28102f49d9f8905e246072d37589698edb0afbf71b019af2cc0aadfead7fd0c"
+  },
+  "cleanup": "The isolated PostgreSQL container and runner resources were removed. No kind cluster or Ronin qualification image remains; the shared base image postgres:16.4-alpine remains available.",
+  "limitations": "Filtered diagnostic only; this does not certify the complete Python/PostgreSQL suite, hosted PostgreSQL, indefinite HA or complete P11.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
