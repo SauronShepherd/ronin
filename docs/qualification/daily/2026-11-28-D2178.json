@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2178",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_AZURE_BLOB_CURRENT",
+  "candidate_sha": "4d9f4b8582e0d8891ae1f0e15fedfd145a92a89d",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered Docker worker/runtime Azure Blob connector journey against digest-pinned Azurite",
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2178-docker-azure-current-20261128-rerun",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2178-docker-azure-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2178-docker-azure-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2178-docker-azure-current-20261128-rerun -TestFilter azure_blob; docker image rm ronin:qualification-d2178-docker-azure-current-20261128",
+  "service_profile": {"service": "Azurite 3.35.0", "image": "mcr.microsoft.com/azure-storage/azurite:3.35.0@sha256:647c63a91102a9d8e8000aab803436e1fc85fbb285e7ce830a82ee5d6661cf37", "worker_image_digest": "sha256:698553f1e3696860ae0ee13d7048d6ce17c7a07f4b4d3639ab021efdd8076d68"},
+  "result": {"tests": "1 passed, 26 deselected, 0 skipped, 0 failed", "selected_fixtures": ["Azurite/Azure"], "cleanup": "PASS", "strict_v01": "not evaluated because filtered diagnostic"},
+  "evidence_sha256": {
+    "azurite-qualification.log": "1B2857A5E64227DC44B13B1E52EE21741C070A11A01DDD4EEAF76AC7F4A42E8F",
+    "docker-cleanup.json": "448F420FE33C1875532DB5C0F586189240D77D0442D2E51B8AC5CFFD56C56CEA",
+    "docker-pytest-output.log": "49924E94FCDB3357C4D8CEA522BF440E3CCE2D57682FC4F75AC5BD8F684F9D0A",
+    "docker-qualification.log": "C1680E0DCDAF44970CEFC0D6F1BD300A6AE44D6CE212680E8C14C2752A1D71B7",
+    "v01-acceptance.xml": "483D28892617FB484496CA8270E9E9098AE44A88D9D84601CF25EAFF842DCE26"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered Docker diagnostic; strict v0.1 acceptance was not evaluated and the runner emits no qualification-summary.json for this mode.", "Local Azurite evidence only; not Azure cloud certification, complete P11, HA, indefinite operation or release approval.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
