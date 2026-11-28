@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2195",
+  "date": "2026-11-28",
+  "status": "PASS_SPARK_CONNECT_LOCAL_CURRENT",
+  "candidate_sha": "5aa5ebe2d36007e0ef061007591584c33b42d4ca",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "real local Spark Connect 4.2.0 provider qualification with digest-pinned Apache Spark and hash-locked pyspark-client",
+  "provider_image": "apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "command": "docker pull apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2195-spark-connect-current-20261128-rerun2 -ImageRef sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59; docker image rm sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "result": {"tests": "1 passed, 2 deselected, 0 skipped, 0 failed", "selected_test": "tests/e2e/test_data_engineering_external.py::test_spark_connect_external_smoke", "spark_version": "4.2.0", "pyspark_client_version": "4.2.0", "elapsed_seconds": 19.638, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2195-spark-connect-current-20261128-rerun2",
+  "evidence_sha256": {
+    "pyspark-client-install.json": "04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97",
+    "pytest-timings.json": "E0E973ADEA29BD324C3116A4A8682DE96C402786F0A7212D975B3DC2EC5D8BCC",
+    "qualification.json": "81D16DFBDFA993A3F0737E6CD2EA4522E68C73CECEF730BAC130C62ACD0BF8B8",
+    "qualification.log": "1D6F7FD2B9095D9197EC65660B9667E949382EB278D4A217B94705E4EC259314",
+    "spark-container.log": "C067E9C303CA7204CBA1625F4ECCE52CC950CE8E815DEBAD1DFA8A6C9E7004E8",
+    "spark-junit.xml": "8CFFCE4B43C958A5B7510B5FA4517B3C74BD8A913B7D59A1A856DA6C0AAEBC08"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación de Spark Connect local; no certifica Spark hosted, HA, IAM externo, operación productiva indefinida, P11 completo ni aprobación de release.", "El primer intento sin imagen local no se cuenta como evidencia; este receipt cubre el pull explícito y la repetición válida.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
