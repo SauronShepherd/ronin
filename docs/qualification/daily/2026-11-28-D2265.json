@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2265",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_FULL_STRICT_CURRENT_CANDIDATE",
+  "candidate_sha": "77a5c7ca28a408673fd0dc991d6c46156d63da88",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "full Docker integration and strict v0.1 acceptance with PostgreSQL, worker, Floci/S3 and Azurite/Azure fixtures",
+  "commands": {
+    "build": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2265-docker-full-current-20261128 --label org.ronin.qualification.run=d2265 .",
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2265-docker-full-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2265-docker-full-current-20261128"
+  },
+  "result": {
+    "integration_selected": 27,
+    "integration_passed": 27,
+    "integration_skipped": 0,
+    "integration_failed": 0,
+    "strict_selected": 15,
+    "strict_passed": 15,
+    "strict_skipped": 0,
+    "strict_failed": 0,
+    "worker_image_id": "sha256:2886743f4a7f6ccfe9afd89e1a8f879edbbda4b11090a38eec5cb2c5af0779b2",
+    "fixtures": ["PostgreSQL", "Docker worker", "Floci/S3", "Azurite/Azure"],
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2265-docker-full-current-20261128",
+  "evidence_sha256": {
+    "azurite-qualification.log": "e42588ff867f3ca2131f896fe208be659c5f5984196c385ddfb1c799bb618eed",
+    "docker-cleanup.json": "77e50f5741bfc91fc41f9f1dc242d3ee635dbaba0aed73a12f0312843df7918f",
+    "docker-pytest-output.log": "fe2f7a0b1f8f13454ff5a8091c70d29fe33ab036df63e01d778992b1d4bff861",
+    "docker-qualification.log": "7f8aee3025ed462a5b1274a40eb4196047b4113223a8eff30dcfc7f5b5180a49",
+    "floci-s3-qualification.log": "6d7083649382fa5eb9849be7305ff725a9d4b1a6ac9601db95caa9a0eefc3da9",
+    "postgres-qualification.log": "5370b050f556d495356bc4893d5dc12f10b95015e729e1fed87ef54e29bfed61",
+    "qualification-summary.json": "306c47b74ca26e9be62964f2f3245c801fd4cdfe4e329b719d2a21cd24eec20d",
+    "v01-acceptance-strict.json": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c",
+    "v01-acceptance.xml": "19b8315a1825462712f4ecfe3d46bcd0da633405f01b80a8189802beeade3877"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Docker/emulator qualification is bounded and does not certify hosted IAM/providers, indefinite operation, complete P11 or release approval.", "No historical D83-D2264 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
