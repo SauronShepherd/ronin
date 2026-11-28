@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2193",
+  "date": "2026-11-28",
+  "status": "PASS_TRINO_LOCAL_CURRENT",
+  "candidate_sha": "8b88cf1a37389db7070831e3599b77af4e33bee9",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "real local Trino provider qualification with digest-pinned Trino 484 and QueryFlux worker recovery tests",
+  "provider_image": "trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_trino_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2193-trino-current-20261128-rerun",
+  "result": {"tests": "4 passed, 0 skipped, 0 failed", "selected_tests": ["test_trino_real_prepared_scalar_bindings", "test_trino_real_result_byte_budget_accepts_exact_limit_and_rejects_one_byte_less", "test_queryflux_worker_runner_real_trino_persists_terminal_evidence", "test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate"], "trino_version": "484", "elapsed_seconds": 79.809, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2193-trino-current-20261128-rerun",
+  "evidence_sha256": {
+    "pytest-timings.json": "73FF6CD2B487C51BDF262ADF73E6A3074B93FC283B071A1CBBE6227487CCDD4D",
+    "qualification.json": "0BE807F3652C6AD92F3AE6914BFDBE4724F1BE82B8A5A0B2054E728F22B2CBA6",
+    "qualification.log": "6058EB1E7B56A0AC8F6DE9A7BF3843786DAC8FC44F68A3EC068DEAF744133548",
+    "trino-container.log": "99AFFF0FC56EB094715A171E1FB7D88A0C5E4804F055A5C32EC97BCF8FD46F61",
+    "trino-junit.xml": "DC858347F008B225A4591CD946342F1FA93EA328EB8AFFE88D5FB7F843DB7D7B"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación de Trino local; no certifica Trino hosted, cluster HA, IAM externo, operación productiva indefinida, P11 completo ni aprobación de release.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
