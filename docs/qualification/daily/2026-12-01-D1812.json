@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1812",
+  "status": "NOT_PASS_REAL_ARTIFACT_SUPPLY_CHAIN",
+  "candidate_sha": "edc4d3e00f8b697d53b433658223136bfd840025",
+  "implementation_commit_sha": "edc4d3e00f8b697d53b433658223136bfd840025",
+  "production_change": "none",
+  "command": "python -m build --wheel --sdist; python -m tools.normalize_release_sdist; docker build --file docker/Dockerfile --tag ronin:qualification-edc4d3e00f8b-20261201 .; docker build --file docker/Dockerfile.probe --tag ronin:probe-edc4d3e00f8b-20261201 .",
+  "result": {"wheel": "PASS", "sdist": "PASS", "runtime_image": "built partially and removed", "probe_image": "NOT_PASS", "failure": "Alpine locked-package conflict: zstd-libs, libexpat, shadow"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1812-supply-chain-real-20261201",
+  "evidence_hashes": {"wheel": "cb4d89297e14ecd8300a45a5205a5df2251614ff7fd9b0dafdd2566012b4b0d7", "sdist": "263145acddbed8daed6e4a8a6b6d28a1d3ba6603f4182f85bc37971109bfe6d2"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["no final image archives, Trivy SBOM or provenance", "not promoted as PASS", "no historical evidence reattributed"]
+}
