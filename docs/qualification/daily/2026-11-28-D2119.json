@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2119",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_PARQUET_REPLAY_CURRENT",
+  "candidate_sha": "b923aa21fa0699a217caf7fdc0d04efc1ecae97d",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2119-live-parquet-replay-current-20261128\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2119-live-parquet-replay-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2119-live-parquet-replay-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2119-live-parquet-replay-20261128 -TestGrep 'parquet sink' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2119-live-parquet-replay-20261128",
+  "result": {
+    "tests": "1 passed, 0 skipped, 0 failed",
+    "api_events": 11,
+    "correlated_events": 11,
+    "api_outcomes": {"OK": 11},
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "log_errors_or_critical": 0,
+    "cleanup": "PASS",
+    "elapsed_seconds": 36.03
+  },
+  "worker_image_digest": "sha256:8412433310f130c833b1b0585120cc2127ce4a16315e02d6e2d477aec8771979",
+  "evidence_sha256": {
+    "qualification-summary.json": "703d221970e76a2fcab71be5ff8242ab582f0ee3b4cebc63ce04a9347dba4838",
+    "browser-live.xml": "6367ca0354525a38da91d62bd7c6046c220baa59f25c846bddd964f6d382a665",
+    "browser-live.log": "ad5a483d890f798d47af2b6a8601246cd5d2b1492d835ef3b973b47dfcac3047",
+    "live-api-traffic.json": "58d6185375741a68a9d02a43a5916f48800185c49fe25acc2826046002084b61",
+    "live-server.stderr.log": "e8d8675cf720a8c4bbe6547bc9061795872619264042481ec52257a52aa05a1e",
+    "live-python-freeze.txt": "851bb07ed1b2b7e64bab19a3776cae364e52f713c1dea4bb528e42e675b75ce2"
+  },
+  "status_after_receipt": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"},
+  "limitations": [
+    "Diagnóstico filtrado bounded del sink Parquet y reset/replay; no demuestra operación indefinida, HA ni multi-worker productivo.",
+    "No certifica providers hosted, P11 completo ni aprobación de release.",
+    "No hubo cambios de producción ni reatribución de evidencia histórica."
+  ]
+}
