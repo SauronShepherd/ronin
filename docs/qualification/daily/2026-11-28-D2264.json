@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2264",
+  "date": "2026-11-28",
+  "status": "PASS_PYTHON_POSTGRES_FULL_CURRENT_CANDIDATE",
+  "candidate_sha": "abd5fa6d35e0024321df103b05bfc9725da12687",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "full non-performance Python/PostgreSQL qualification against isolated PostgreSQL 16.4",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2264-python-postgres-full-current-20261128"
+  },
+  "result": {
+    "collected": 4798,
+    "passed": 4770,
+    "skipped": 31,
+    "failed": 0,
+    "warnings": 13,
+    "duration_seconds": 699.28,
+    "coverage": "enabled",
+    "postgres": "postgres:16.4-alpine isolated container",
+    "cleanup": "PASS",
+    "explicit_skip_families": ["Docker/worker", "multi-broker", "S3/Azure", "Trino", "OTLP", "external SDP/Spark", "symlink/Windows POSIX capabilities"]
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2264-python-postgres-full-current-20261128",
+  "evidence_sha256": {
+    ".coverage": "4084e458ca0e6c0f9d8fd795cf5687dfa75687d6b32558a47709d06cafcd6158",
+    "pytest-output.log": "fda2f477d495ba1b012538c813c2d2c52c1bea794f8db67ed607187e45b7ab8f",
+    "pytest-postgres.log": "e28aaaae76444ad3a8db0aeb1701dc0c9212dccc13a4b0a80894fd55aed160bd",
+    "pytest-postgres.xml": "f6ed629017a1ff67c0e6323b4ff0b17aec893f5ddf416f0b1a3ebccd6c3d292d",
+    "pytest-timings.json": "7f1b5d9d724c191f1e99438f68d606461e23622dfe419be2d52a631f5cec2fb4",
+    "runner-timings.json": "11ec8d4f682847a34733c387115bccab86eddcc99b7f0910e102441b969c182d"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Full non-performance Python/PostgreSQL evidence does not include opt-in Docker, hosted provider, multi-broker, indefinite operation or complete P11/release gates; all 31 skips remain explicit.", "No historical D83-D2263 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
