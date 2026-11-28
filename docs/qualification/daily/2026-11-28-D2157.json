@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2157",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_STREAMING_SUITE_RF3_CURRENT",
+  "candidate_sha": "806cf362d86619f11480cc9891bfe65a930a5399",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Current-candidate live streaming suite under three-broker RF3: route health, failover, backlog, supervised drain, caps, backpressure, Parquet, soak, event workflow and byte boundaries against PostgreSQL and Redpanda.",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2157-live-streaming-suite-rf3-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2157-live-streaming-suite-rf3-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2157-live-streaming-suite-rf3-current-20261128 -MultiBroker -TestGrep streaming -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2157-live-streaming-suite-rf3-current-20261128",
+  "worker_image_digest": "sha256:43d5ca36f8c7542acc4202d220b4930df59b4fec3dfd5c3ab729bc92c423b1a0",
+  "result": {"playwright_executed": 11, "passed": 11, "skipped": 0, "failed": 0, "api_events": 237, "correlated_events": 237, "api_outcomes": {"OK": 229, "WARN": 8}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 177.9, "cleanup": "PASS"},
+  "expected_non_ok": {"warnings": "invalid_request and stream_input_rejected responses from intentional negative/cap/idle cases", "errors": "none"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2157-live-streaming-suite-rf3-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "D20303228D8095882EC526D75A483A05AF07F66876389905C1A2B9A667BC1577",
+    "browser-live.xml": "5B49DA17B47759993179B24218C443CA88F93E77B2A8D604372778D0577F7CE7",
+    "live-api-traffic.json": "2CDE122833107408A612FCC00314F63DED6B39773C0A64B9C4CF2CE6B0DD95AA",
+    "live-python-freeze.txt": "D20050042D4CB05668F148F9CABE97F9DC08861152368EE24681B61D0FF9D470",
+    "live-server.stderr.log": "18E1A4F19EBAE80131E1E0E43E62DDE5A89C3733868CE7798CC4B93A52FA6FBB",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "E6A57D85149A446E5A58605AC6B20F84B0042197F9F480452C9EED2DEBAFC036",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "cleanup": "Runner removed three Redpanda brokers, PostgreSQL, volume, network, live processes and temporary worker image.",
+  "limitations": ["Broad but bounded RF3 suite; does not prove indefinite operation, production SLO/HA, multi-worker operation, hosted providers, complete P11 or release.", "This receipt is bound to the current candidate and does not reattribute D2147 or D2113."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
