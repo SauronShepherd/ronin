@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2191",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_AZURE_BLOB_AZURITE_CURRENT_FILTERED",
+  "candidate_sha": "109d7f0e52939a9b275898e5a9ee7c19e9fe456e",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered Docker Azure Blob JSON connector qualification against local digest-pinned Azurite with isolated cleanup",
+  "provider_image_digest": "sha256:647c63a91102a9d8e8000aab803436e1fc85fbb285e7ce830a82ee5d6661cf37",
+  "worker_image_digest": "sha256:466fc7af08602bc8fe5183448b43be7af4faaffac30652c5732663c3d649c780",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2191-docker-azure-blob-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2191-docker-azure-blob-current-20261128-rerun -TestFilter 'azure_blob'",
+  "result": {"tests": "1 passed, 26 deselected, 0 skipped, 0 failed", "selected_test": "tests.integration.test_azure_blob_connector_real::test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite", "fixture": "Azurite Azure Blob local emulator", "pytest_seconds": 1.87, "cleanup": "PASS", "strict_v01_gate": "not evaluated", "health_probe_transients": 2},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2191-docker-azure-blob-current-20261128-rerun",
+  "evidence_sha256": {
+    "azurite-qualification.log": "D761F4D7379F9CA640B50C0CC9F369E9576F89740BE50E79F32DD666CD3F4F5B",
+    "docker-cleanup.json": "2AA8726D18D87809EC9169EC9C26AB105B4FD2676804220030DEFC7961791134",
+    "docker-pytest-output.log": "B44645E1CD74B338520EB50C57CA8C1B4E0F2F8B69867975D20F145BCD03A8C5",
+    "docker-qualification.log": "FDB55D3A9529B092B4CACCFA42534A81F836BB99E20E854D344E2A333828278F",
+    "v01-acceptance.xml": "C5FB54C4BAE10BA888AF52858D282313C36B4BA50A489203BF0A05181FE08B29"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Azurite es un emulador Azure Blob local; no certifica Azure hosted, IAM externo, red/latencia productiva, P11 completo ni aprobación de release.", "La selección fue filtrada; strict v0.1 no se evaluó. Los avisos de health probe quedan conservados y no afectaron al test PASS.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
