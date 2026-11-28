@@ -1,0 +1,56 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2200",
+  "date": "2026-11-28",
+  "status": "PASS_HELM_KIND_POSTGRES_CURRENT",
+  "candidate_sha": "017843c3927e6405f36e65252bda239648d2fe28",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded Helm/kind single-node deployment and PostgreSQL restart recovery on current main, with exact current-candidate Docker acceptance support",
+  "worker_image_digest": "sha256:f0b835662dbd06f67bae63f664d6d8e78547af7acb66263ef05c933f9b172cf5",
+  "docker_support_image_digest": "sha256:f0b835662dbd06f67bae63f664d6d8e78547af7acb66263ef05c933f9b172cf5",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2200-helm-current-20261128 .; docker run --detach --name ronin-d2200-postgres --publish 127.0.0.1:55432:5432 --env POSTGRES_USER=ronin --env POSTGRES_PASSWORD=ronin --env POSTGRES_DB=ronin postgres:16-alpine; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2200-helm-kind-postgres-current-20261128 -ImageRef ronin:qualification-d2200-helm-current-20261128 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2200-docker-helm-support-current-20261128 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55432/ronin -PostgresContainerName ronin-d2200-postgres",
+  "result": {
+    "docker_support": "27/27 integration, 15/15 strict v0.1",
+    "helm_lint": "PASS",
+    "secret_boundary": "PASS; 4 resources; token confined to Secret",
+    "install_readiness": "PASS",
+    "upgrade_revision": 2,
+    "rollback": "PASS; restored revision 1",
+    "health_api": "PASS; HTTP 200",
+    "studio_and_authorized_api": "PASS; Studio HTTP 200; jobs API HTTP 200",
+    "persistent_job_create": "PASS",
+    "postgres_restart_recovery": "PASS",
+    "deployment_restart": "PASS",
+    "persistent_job_after_restart": "PASS; same queued job ID survived pod restart",
+    "cleanup": "PASS",
+    "helm_version": "v4.3.1+gc0d08d0",
+    "kind_cluster": "single-node isolated"
+  },
+  "evidence_directories": {
+    "helm": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2200-helm-kind-postgres-current-20261128",
+    "docker": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2200-docker-helm-support-current-20261128"
+  },
+  "evidence_sha256": {
+    "helm-qualification.json": "204de37b7a5342c8408f060e004e35759c1f009d9f5a1a9d9749782d17d3a0b2",
+    "helm-qualification.log": "aa849b571fc0143311762c73d731b27944f4b3852cecc9576bd184e19696f99d",
+    "kubernetes-resources.txt": "b58f2794be213a23dcb08ce14e86676cace73a013c4028c791fdc0a0a5af71b8",
+    "port-forward.log": "079430ffe435dc9925610e5725ffc0530c393163f124949ea361f3af11756e40",
+    "port-forward-restart.log": "72868efb56336e856eaa709a1e79b5cc85020fd1edeb39061dc6bc5532d9cb2a",
+    "port-forward-error.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "port-forward-restart-error.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docker/qualification-summary.json": "985e65c86075936ca1ee6728ddc67c3ad9ee2ae0437debd3793e688ce6a4979f",
+    "docker/v01-acceptance-strict.json": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c",
+    "docker/docker-qualification.log": "52bb2b1e3aeef3966f9f9acfc253ac84c5062d7a74ee689ab4a4564d076aa02a",
+    "docker/docker-pytest-output.log": "66ca5e887b68794501ca8262aa82764cf00620d00d6b1de3c41be4c609b1aaee",
+    "docker/docker-cleanup.json": "16b252050dbb6826b13cbde410d1d472a143cbfc4b260da228cd2f79738104ea"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Single-node bounded Helm/kind qualification; no HA, indefinite operation, hosted provider certification or multi-worker production claim.",
+    "The initial disposable build with a non-matching image digest was rejected by the runner and is not counted; the retained-image support run and Helm run are the counted evidence.",
+    "No historical evidence was reattributed."
+  ],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
