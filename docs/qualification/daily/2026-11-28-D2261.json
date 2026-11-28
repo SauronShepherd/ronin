@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2261",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_STREAMING_CHECKPOINT_CURRENT_CANDIDATE",
+  "candidate_sha": "4b9b29b848dd5b9b6d0a529a140a33a2e89ce9d0",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered real PostgreSQL runtime qualification for streaming checkpoints, table sinks and processor reopen/replay",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2261-postgres-streaming-checkpoint-current-20261128 -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py"
+  },
+  "result": {
+    "selected": 7,
+    "passed": 7,
+    "skipped": 0,
+    "failed": 0,
+    "coverage": "disabled for filtered diagnostic",
+    "postgres": "postgres:16.4-alpine isolated container",
+    "cleanup": "PASS",
+    "cases": [
+      "checkpoint bundle CAS and reopen",
+      "checkpoint concurrent CAS fences stale writer",
+      "table append replay and conflict",
+      "table concurrent duplicate append is idempotent",
+      "table conflict rolls back mixed batch atomically",
+      "table reopen replays without duplicate rows",
+      "processor reopens with durable checkpoint"
+    ]
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2261-postgres-streaming-checkpoint-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "def8a2863457a6d795c767b3bf2df745123f4443241948e5d413c2e9e78534e8",
+    "pytest-postgres.log": "1612bfbf85da84a0578ff687c3fd03c517917145e59b75b0acb4d87277d976c3",
+    "pytest-postgres.xml": "3bd03ecf9d92961bd4462d59ff742861a27640214c043adb96471da3e554516c",
+    "pytest-timings.json": "b64e0c7c9f1b6fe7300df05c6db2a209e0a394fd19c2405cea9ba1348ded83df",
+    "runner-timings.json": "f0d8a710f16aad969f5ca23f160d50c4a8a80474e30354756a32f75b1103866c"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered PostgreSQL diagnostic only; it does not certify the full Python suite, hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2260 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
