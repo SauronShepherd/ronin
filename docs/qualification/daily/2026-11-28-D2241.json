@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2241",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_REVISION_INVENTORY_FOCUSED_CURRENT_CANDIDATE",
+  "candidate_sha": "5ef2d135781d184ce38c3e7efe1355f2edf6c92c",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded focused real PostgreSQL Data Engineering revision inventory qualification on the current candidate",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2241-postgres-revision-inventory-current-20261128 -TestPath tests/integration/test_postgres_data_engineering_revisions_real.py",
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "selection": "path=tests\\integration\\test_postgres_data_engineering_revisions_real.py",
+    "coverage": "disabled",
+    "postgres_image": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c",
+    "pytest_wall_seconds": 6.06,
+    "total_wall_seconds": 29.559,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2241-postgres-revision-inventory-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "ab1da0a6080ef65e6b5dc5838ee3a2059f5ce50a38d91025b14de9cdd8c4d4a2",
+    "pytest-postgres.log": "2aa3d4f48be06080797c97490280f44c62b4bc0a238e01737d57701a4f50835d",
+    "pytest-postgres.xml": "a401e852008463ff19acb6c74891578bdecd95ce9b83092be3ae29a478bb38cb",
+    "pytest-timings.json": "82f61bbcf912e3e166a87c99a85dbb4aafffef55889df106d72f6c3885b9d78f",
+    "runner-timings.json": "bc2cedc8f111aeb63531025f6ffea440089ee64f76e7bdb35ce09c6c89cfc3b0"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused file qualification with coverage disabled is diagnostic evidence, not the complete Python/PostgreSQL suite or a release gate.", "Evidence is bounded to one PostgreSQL 16.4 container and one process; it does not certify full Data Engineering CRUD, hosted providers, HA, multi-worker, indefinite operation or complete P11.", "D2234 remains separately bound to its earlier candidate; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
