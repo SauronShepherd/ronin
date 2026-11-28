@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2129",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_JOBSTORE_DIAGNOSTIC",
+  "candidate_sha": "23bdbe93c38a11d7d52c0a60564ea9f5e19295ef",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered real PostgreSQL JobStore qualification for durable lifecycle and bounded listing.",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2129-postgres-jobstore-20261128 -TestPath tests/integration/test_postgres_jobstore_real.py",
+  "service_profile": "isolated postgres:16.4-alpine",
+  "result": {
+    "selected_passed": 2,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "deselected": 0,
+    "pytest_duration": "0.90s",
+    "cases": [
+      "test_postgres_jobstore_list_filters_and_keyset_pagination",
+      "test_postgres_jobstore_complete_lifecycle"
+    ]
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2129-postgres-jobstore-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "0f60cd61a3611b61f4b0f992a80160eefb1acac5e7021316f8160bf65f808631",
+    "pytest-postgres.log": "def8d0f49a70a9218907e8eb2ab2776da49cf0530949f4d7b1ef9ef5870be463",
+    "pytest-postgres.xml": "292df8bd24902c5ab56e059edae4a948a045d33dff798c4af5644fe10081d92f",
+    "pytest-timings.json": "9f6ecb6cd99416999b48758fca5d2a238a49eb83a7575d86610385dc63113d9a",
+    "runner-timings.json": "6258ae1916677b42c5e5e10fd0b96c1ee34098fb0c3e299ca4d56134f15eba20"
+  },
+  "cleanup": "The isolated PostgreSQL container and runner resources were removed; no qualification container or kind cluster remains.",
+  "limitations": "Filtered diagnostic only; this does not certify hosted PostgreSQL, complete runtime breadth, indefinite HA or complete P11.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
