@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2172",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_RF3_FAILOVER_CURRENT",
+  "candidate_sha": "96f4c2698102b49c73ce7982f5f43e2b83c8ee0d",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live RF3 multi-broker streaming failover with PostgreSQL, three Redpanda brokers, Ronin API and Docker worker on the current main candidate.",
+  "worker_image_digest": "sha256:44732dbd86afb59d316e92617aac165e7b6997ecd70889a0122663953a37f0e8",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2172-live-rf3-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2172-live-rf3-failover-current-20261128-rerun -StorageBackend postgres -WorkerImage ronin:qualification-d2172-live-rf3-current-20261128 -MultiBroker -TestGrep 'live streaming multi-broker failover' -RequestTimeoutSeconds 300; docker image rm ronin:qualification-d2172-live-rf3-current-20261128",
+  "result": {"tests": "1 passed; 0 skipped; 0 failed", "api_events": 5, "correlated_events": 5, "api_outcomes": {"OK": 5}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS; three brokers, PostgreSQL, volume/network, live processes and temporary worker image removed"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2172-live-rf3-failover-current-20261128-rerun",
+  "evidence_sha256": {
+    "browser-live.log": "1BB91BC4553606787E5C1E5A514F8E614CB8417B7AB999965D1683BF5F29EE81",
+    "browser-live.xml": "F602BF100C680DF515F6698DF7BE138D0655266CE9D1A1F2A8A6FE25E1693FB0",
+    "live-api-traffic.json": "4B08A9323250ADFD7D276D76956B37F5724F9BB39164CF22BC40D13F1AE9E3E6",
+    "live-python-freeze.txt": "37005996352E3E150438619BB8EEFF24B05B40494D497A46F34B19E797896D11",
+    "live-server.stderr.log": "AC3E0541E0801FFA0FD1633EB28C76085862FFA9C06460F90CBD554FC7C1275F",
+    "qualification-summary.json": "9DF2CD060599E582A1B4826515190F334AA27328E75068AEFE065F44536E671C",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE"
+  },
+  "limitations": ["Focused bounded RF3 failover diagnostic; does not certify indefinite operation, production HA/SLO, multi-worker operation, hosted providers, complete P11 or release readiness."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
