@@ -1,0 +1,45 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2255",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_CURRENT_CANDIDATE",
+  "candidate_sha": "dbf21fdd160656008ad955dd6c8e6f096cfc0882",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered live PostgreSQL/Kafka/worker qualification of committed-record event to durable workflow propagation",
+  "commands": {
+    "build": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2255-live-event-workflow-20261128 --label org.ronin.qualification.run=d2255 .",
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2255-live-event-workflow-postgres-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2255-live-event-workflow-20261128 -TestGrep 'live streaming event workflow is triggered by a committed record' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "api_events": 12,
+    "correlated_http_logs": 12,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 12},
+    "worker_image_id": "sha256:019e3bdb7a57a6101aaf0007511a2f662a56a94ffb326d9a1231edea159b353c",
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2255-live-event-workflow-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "ff6169601ab3002d64ea4a747bff894a702ede934a29ca21f4b864564a0de623",
+    "browser-live.xml": "409e1710cdd68bb4a0d6bc2e863c95e8654cfcd35b0c7f509fbfcadc973810e4",
+    "live-api-traffic.json": "7f241148de44a028f8d588a3face9ddbe3fdb346fb5caa3cb2ad4f4d13e75ada",
+    "live-server.stderr.log": "a591c604097310440081f7151b2e1e4a816fee774a258cd243971344d83b3a65",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-worker.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-worker.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "fe1b9510565670ae06cb8f04b28a45343234e49a021268076456414ad1a75723",
+    "live-python-freeze.txt": "5b84d39433e61a0257b785dcdb04f9b0adcd8fb7ed9336390548162f28609476"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered bounded live diagnostic only; it does not certify the full suite, indefinite operation, hosted IAM, or release.", "No historical D83-D2254 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
