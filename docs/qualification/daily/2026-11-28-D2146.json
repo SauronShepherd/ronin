@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2146",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_BROKER_RESTART_CURRENT",
+  "candidate_sha": "31dceb495ad11c9017971be155552f68573e350e",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live streaming broker restart and durable checkpoint recovery with real PostgreSQL, single-broker Redpanda, Ronin API and Docker worker.",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2146-live-broker-restart-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2146-live-broker-restart-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2146-live-broker-restart-20261128 -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2146-live-broker-restart-20261128",
+  "worker_image_digest": "sha256:422a7b72750407fd1f085547c87a66e8950da6b9f9250078974f950acc309606",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 10, "correlated_events": 10, "api_outcomes": {"OK": 8, "expected_streaming_unavailable": 2}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "duration_seconds": 34.66, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2146-live-broker-restart-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "6BB1B8DACEC0244BDAD61E62DDE3003742FE482040D92A65BFA271F3B22F7EDB",
+    "browser-live.xml": "123AB8B5DAD650B38B628FB39A143B90F5A70C5D1606AD8CB86D2B74FAFC5061",
+    "live-api-traffic.json": "B384C2F5056E52D6EEB20219B83779193952DCD5E4447678A1319517C66F2331",
+    "live-python-freeze.txt": "05641D1769E73BD6414414D100097E9614CEFE3793C5C8A74D48FEC11C08AD76",
+    "live-server.stderr.log": "1E84BC619466402FC380A7FD0968FEFBDDE2BC95AE2EB6B160F0440DED097066",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "1ADCDF6BAD61AC90A947C684779C873128CFA39C89C944D7BCD7812C5A00A5A4",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "cleanup": "Runner removed PostgreSQL, Redpanda, volume, network, live processes and temporary worker image.",
+  "limitations": ["Single-broker bounded diagnostic; does not prove indefinite operation, HA, multi-worker operation, hosted providers or complete P11.", "The two HTTP 503 responses during broker restart were expected streaming_unavailable outcomes and were correlated; they are not unexpected failures."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
