@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2187",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_CURRENT",
+  "candidate_sha": "b9d355c58a3076055a1a31f31fc5943c9bddf419",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live event-to-workflow propagation journey with PostgreSQL, Redpanda, Ronin API and Docker worker",
+  "worker_image_digest": "sha256:f55d7827c2c450b274b10998efc1c2e36c4f4fa547e0e9d171b81a8126e80458",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2187-live-event-workflow-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2187-live-event-workflow-current-20261128-rerun -StorageBackend postgres -WorkerImage ronin:qualification-d2187-live-event-workflow-current-20261128 -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 60; docker image rm ronin:qualification-d2187-live-event-workflow-current-20261128",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 12, "correlated_events": 12, "api_outcomes": {"OK": 12}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 66.05, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2187-live-event-workflow-current-20261128-rerun",
+  "evidence_sha256": {
+    "browser-live.log": "0214238773D9A47419211E6857C407DF8C45B3528075A8225578EC8418E37EB2",
+    "browser-live.xml": "BD2FDD872D3AE4D0592536DD69FBB1F447F037CD60683C48B5F13230664B8ED4",
+    "live-api-traffic.json": "E41F24037D27D41042C9C5B38B7539C533C72D5992CF4D871F3F84305DEDA69A",
+    "live-python-freeze.txt": "54788EB065902263CD51437433DC1CAD08EFECE0965125185A7AEDA2B11099A5",
+    "live-server.stderr.log": "7471428D770909CDE8CDBEB9D8A12DFA78C4BDCE78A61E89C537B3531673D29B",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "7F0A67AFF87966B1ACFE67A813E55665D81C8BBFCB407C1E05D00FC1823B8DCE",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Propagación bounded de un workflow por evento; no demuestra operación indefinida, HA/RF3, multi-worker productivo, hosted providers, P11 completo ni aprobación de release.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
