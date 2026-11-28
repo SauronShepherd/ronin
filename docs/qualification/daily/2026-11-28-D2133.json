@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2133",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_V01_JOURNEY_DIAGNOSTIC",
+  "candidate_sha": "c5056c99095994803393bbab0289a49db0fdef2a",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered Docker v0.1 journey execution for the 15 frozen operational steps.",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2133-docker-v01-journey-20261128 -TestFilter \"test_step_\"",
+  "image": "sha256:46da599412da7694be7d670bf29fbb0e79e8d2537b81b91f81b538200b7f9722",
+  "service_profile": "Docker v0.1 journey with selected operational fixtures",
+  "result": {
+    "selected_passed": 15,
+    "deselected": 12,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "pytest_duration": "52.62s",
+    "selection": "tests/e2e/test_v01_journey.py::test_step_*"
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2133-docker-v01-journey-20261128",
+  "evidence_sha256": {
+    "docker-cleanup.json": "b560c8be7b0f10690eb5898d6ea4f397685a3c3dc891dafc5231520aaa631563",
+    "docker-pytest-output.log": "e25c65d50542e9778c04edb8e4c270cd70cb3a37d68100141f04d6d33e916971",
+    "docker-qualification.log": "9b040b75c3f6335e8b10bc5372b90c6d884d3e66da1faaddf5c08af636aca6d6",
+    "v01-acceptance.xml": "6e3d19fe31a657918b3061fed88e331817c24c47bc7e0e26b0f0679dee59e7ac"
+  },
+  "cleanup": "Docker runner reported PASS; the owned Ronin image and all journey resources were removed. No containers, temporary Ronin qualification image or kind cluster remains.",
+  "limitations": "Filtered diagnostic only; 12 cases were deselected and strict v0.1 acceptance was not evaluated. This does not close complete P11 or release gates.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
