@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2168",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_300_CURRENT",
+  "candidate_sha": "57420a9ddbe66f921d7ce9d5f9d7f832039f9daf",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded 300-second live streaming supervisor soak with PostgreSQL, Redpanda, Ronin API and Docker worker on the current main candidate.",
+  "worker_image_digest": "sha256:713a2c1f174ff36aea74576b803470401c13b98a130a365479332eaf0e872cad",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2168-live-supervisor-300-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2168-live-supervisor-300-current-20261128-rerun -StorageBackend postgres -WorkerImage ronin:qualification-d2168-live-supervisor-300-current-20261128 -TestGrep 'supervisor soak' -SupervisorSoakSeconds 300 -RequestTimeoutSeconds 480; docker image rm ronin:qualification-d2168-live-supervisor-300-current-20261128",
+  "result": {"tests": "1 passed; 0 skipped; 0 failed", "supervisor_soak_seconds": 300, "api_events": 387, "correlated_events": 387, "api_outcomes": {"OK": 387}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 330.27, "cleanup": "PASS; PostgreSQL, broker, volume/network, live processes and temporary worker image removed"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2168-live-supervisor-300-current-20261128-rerun",
+  "evidence_sha256": {
+    "browser-live.log": "58471708CF847BD3D6204ABDC50C384281D37C67CDAA346DF4A3E18405397637",
+    "browser-live.xml": "436BCB896B4FBFD6138E0E3E7C15B0A3159617A8B943527D69A51DB5A11CCE34",
+    "live-api-traffic.json": "8C6BD292F7B4DB3AC3EAD553381CD2F32AE5C38F54F93EE5CCF0D3A01047012F",
+    "live-python-freeze.txt": "C82B0537C17F574124686910BBF4A6F07F83DC0F72528F44489052EDB113CE90",
+    "live-server.stderr.log": "761342905A87587AB3B52E044CB849107D1663C158E3BD3F416E490664F8736B",
+    "qualification-summary.json": "EF71FD81F5107B7D8030952BC76A08DB2B1815B2DA13B7AA7DCF4C8F2AF2C277",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE"
+  },
+  "limitations": ["Bounded 300-second soak only; it does not prove indefinite operation, HA/RF3, multi-worker production, hosted providers, complete P11 or release readiness."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
