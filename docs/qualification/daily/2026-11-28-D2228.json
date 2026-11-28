@@ -1,0 +1,46 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2228",
+  "date": "2026-11-28",
+  "status": "PASS_HELM_KIND_POSTGRES_RECOVERY_CURRENT_CANDIDATE",
+  "candidate_sha": "adeff215cfa8790a39498204fbe0004fcddc6621",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded Helm/kind runtime and PostgreSQL restart recovery qualification on the current candidate",
+  "commands": {
+    "docker_dependency": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2228-docker-full-current-20261128 -ImageTag ronin:qualification-d2228 -KeepImage",
+    "helm": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2228-helm-kind-postgres-current-20261128 -ImageRef ronin:qualification-d2228 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2228-docker-full-current-20261128 -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55432/ronin -PostgresContainerName ronin-d2228-postgres"
+  },
+  "result": {
+    "docker_dependency": "27/27 integration PASS; 15/15 strict v0.1 PASS; cleanup PASS",
+    "helm_lint": "PASS",
+    "secret_boundary": "PASS",
+    "kind_cluster": "PASS",
+    "helm_install": "PASS",
+    "deployment_readiness": "PASS",
+    "helm_upgrade": "PASS revision 2",
+    "helm_rollback": "PASS restored revision 1",
+    "health_endpoint": "PASS HTTP 200",
+    "studio_and_authorized_api": "PASS HTTP 200/200",
+    "persistent_job_create": "PASS HTTP 201",
+    "postgres_restart_recovery": "PASS PostgreSQL container restarted and queued job remained durable",
+    "deployment_restart": "PASS",
+    "persistent_job_after_restart": "PASS same queued job ID",
+    "cleanup": "PASS"
+  },
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2228-docker-full-current-20261128", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2228-helm-kind-postgres-current-20261128"],
+  "evidence_sha256": {
+    "docker/qualification-summary.json": "6efff1689b61152945006c272cd68584d3bd7e06495c420558e3fe79d1f5bf75",
+    "docker/docker-cleanup.json": "edd28062b9fd32c5845f9e7d0adbeb6602f961396114d36ed55c3ecf5b835a85",
+    "docker/v01-acceptance.xml": "7d910b527c36eefda743cd0145bfb22c19bc83cf05348e65a6347a3aa59b18e4",
+    "helm/helm-qualification.json": "a7d98ec1211416c491be3004df303e4d506ef277a0f14f827e34264f675bdbb2",
+    "helm/helm-qualification.log": "365f485679fc852f648b89abfc54dc4cffc0234afbc0f61602a5f979939329e1",
+    "helm/kubernetes-resources.txt": "0756ca079df3052ffca895a920a5aab3bceb82b3f581ea7fb2fadb9f710f8557",
+    "helm/port-forward.log": "6d6ab129ca9780515605edbfa0ee482657ff9490bdb50e42580dc782eb95c30f",
+    "helm/port-forward-restart.log": "775d59b4a6abb6f8c884b3df35a893e964166bdbe6549bafd8671996090e8c4b"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is local single-node kind and one PostgreSQL container recovery, not HA, multi-worker, indefinite operation or production Kubernetes certification.", "External provider certification and broader P11/P13/release gates remain open. No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
