@@ -1,0 +1,44 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2280",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_60_CURRENT_CANDIDATE",
+  "candidate_sha": "16fbafafc4957ea3ea8af31074eb4a78e5a15166",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "live 60-second streaming supervisor soak draining while records arrive with PostgreSQL and Kafka",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2280-live-supervisor-soak-60-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming supervisor soak drains while records arrive for a bounded duration' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 71,
+    "correlated_http_logs": 71,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 71},
+    "application_errors": 0,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "supervisor_soak_seconds": 60,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2280-live-supervisor-soak-60-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "ce8964f5828e7e0a2ee0aa9f5932c4ac32dc6d5f9f6b0e9988131b23f4ef7061",
+    "browser-live.xml": "688adb2d0d79594b5361239efcc3481e4adc08b379f17381b74d0f11b0b1b3e3",
+    "live-api-traffic.json": "771a9d1ed504e0e9adc41321c8e9d3f0c34237978c2d99a7ca4da0fd0d3382d3",
+    "live-server.stderr.log": "e5a3a7e4d58221c68e2c2a13b2f45ea441c38f4875222b38bc561e31e9019b0d",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "ae2966404a287c00844b8816319a22b7091ac0a87606ae1c86ae04c383d30037",
+    "live-python-freeze.txt": "b9d0c4604e53f108c519f428905020c1bf521d9a98f9ca5f7721ad0f5f3516b2"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is bounded local 60-second supervisor-soak evidence; it does not certify hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2279 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
