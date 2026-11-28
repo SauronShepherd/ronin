@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2163",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_CONNECTOR_CHECKPOINT_CURRENT",
+  "candidate_sha": "10487b8a5d10c7914e3810de8529be525de521d0",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered real-PostgreSQL connector checkpoint, local composition and sync-worker qualification on the current main candidate.",
+  "service_profile": "postgres:16.4-alpine",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2163-postgres-connector-checkpoint-current-20261128 -TestPath tests/integration/test_postgres_connector_checkpoint_real.py -AllowDirtyWorktree",
+  "result": {"pytest": "3 passed; 0 selected skipped; 0 selected failed; 0 deselected; 0 unrelated collection skips", "scope": "PostgreSQL connector checkpoint fencing/restart, shared ingestion composition and sync worker output/checkpoint/lineage/rollback", "cleanup": "PASS; isolated PostgreSQL container, volume and network removed by runner"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2163-postgres-connector-checkpoint-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "739FC743BDFB5E8AD317CE25A2870BA3CA19054AD98482ED25CCF98754ADE269",
+    "pytest-postgres.log": "02FAA06D43A0F023934E7D894FDB8D4C395BD14FF8A55504A4D3C2229A846204",
+    "pytest-postgres.xml": "04057DB5CFF679DD13B40EBB8F477957D099A74079002614A79F9029AEB689D1",
+    "pytest-timings.json": "A457E2D6AD819E6BE6D7A17097D49F9CB8777FA31E1BCE9EDE799F2CCE7484B4",
+    "runner-timings.json": "1CB55F04C097DA0850F5DE45A6EB608A230C58363F1A32914D16FDC11E066A78"
+  },
+  "limitations": ["Filtered PostgreSQL connector diagnostic only; not the complete Python/PostgreSQL suite or full P11 qualification.", "This evidence does not certify hosted providers, indefinite operation, HA/multi-worker production or release readiness."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
