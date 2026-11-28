@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2306",
+  "date": "2026-11-28",
+  "status": "NOT_PASS_LIVE_API_TRAFFIC_FILTER_MISMATCH_CURRENT_CANDIDATE",
+  "candidate_sha": "124822ebbe7d8f9958843df24c1ebf8b40c8326a",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "attempted bounded live API traffic contract diagnostic",
+  "commands": {"qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2306-live-api-traffic-contract-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live API traffic contains route, method, and response status without credentials' -RequestTimeoutSeconds 240"},
+  "result": {
+    "playwright_executed": 0,
+    "playwright_passed": 0,
+    "playwright_failed": 0,
+    "playwright_skipped": 0,
+    "failure": "No tests found: supplied grep included a comma after method; exact test name uses 'route, method and response status'.",
+    "api_events": 0,
+    "correlated_http_logs": 0,
+    "cleanup": "PASS",
+    "browser_media_cleanup": "PASS",
+    "containers_remaining": [],
+    "qualification_images_remaining": [],
+    "kind_clusters_remaining": []
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2306-live-api-traffic-contract-postgres-current-20261128",
+  "evidence_sha256": {
+    "qualification-summary.json": "43042e98eea886cabe40eed3b568cfd73f76c0d39d3db1e3873b04f73c85bb17",
+    "browser-live.log": "98287cabe76633920bea2ca26647127556c9d0e1e95b2cd9be23d44bda426cc5",
+    "browser-live.xml": "9f6cd9670bbbe85f15de78efd9d8690e933abc3ffbfbdb4640417c39b3849e85",
+    "live-server.stderr.log": "aff4093a1973c9641a4c904b67b0c07b835e5e2a4b201fc32a62c59dc5886336",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-python-freeze.txt": "b53e4192e296615536fe10626342926d870be9a28975b7afd1a32e880c25000a",
+    "web-test-dependency-cache.json": "8dc49380e156de0e68480e71c76fb0b0b986c0949246a7eaf21d4457c7e51ce1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["NOT_PASS: no test executed and no API traffic was generated because the supplied filter did not match the exact Playwright test name.", "This is a harness/filter diagnostic, not evidence of product behavior; a corrected retry must use a new exact candidate and receipt.", "No historical D83-D2305 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
