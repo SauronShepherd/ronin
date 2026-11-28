@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2160",
+  "date": "2026-11-28",
+  "status": "PASS_ML_S3_ARTIFACT_FLOCI_CURRENT",
+  "candidate_sha": "743d18cdf24b4e05140a58264951498aa596c738",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "ML durable S3 artifact input/output and unreferenced-object retention round trip against digest-pinned Floci on the current main candidate.",
+  "service_profile": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2160-ml-s3-artifact-current-20261128-rerun -TestFilter ml_s3_artifact -AllowDirtyWorktree",
+  "result": {"pytest": "1 passed; 26 deselected; 0 skipped; 0 failed", "scope": "ML durable input/output, digest verification and retention cleanup through S3ArtifactStore", "cleanup": "PASS; Floci, network, volume and temporary Ronin image removed by runner"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2160-ml-s3-artifact-current-20261128-rerun",
+  "evidence_sha256": {
+    "docker-cleanup.json": "9A6C88145EF10DB5B9854C40762CDAC07775CD2554831D123DB312B47735DD08",
+    "docker-pytest-output.log": "D7E3BBC3437DAA4BB8A8CAB8288C93FEE41ABB0CCF35CEB3E4AC098C51F38E56",
+    "docker-qualification.log": "5F26102D44B23496A12FE26E14938C6A3D0988381342D2F99FC26A11DAA6E862",
+    "floci-s3-qualification.log": "5960989A662E395C6DFE264AB012BF330CA82B1ED0CFC23C3CCF27E76B69581",
+    "v01-acceptance.xml": "38F2C619D925CDCA1DE5AF17AE833CB554EDEDBB1F42A4D57723328F1E6E5728"
+  },
+  "diagnostic_attempts": [
+    {"status": "NOT_RUN", "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2160-ml-s3-artifact-current-20261128", "cause": "The filter contained only the long test name; the runner's infrastructure selector did not recognize it, so Floci was not started and the test was skipped. Cleanup passed.", "evidence_sha256": {"docker-cleanup.json": "E7CCAA26628A47B6E2992D3BD4F20EC623C2AD8CC092D04744593D9F7C02C933", "docker-pytest-output.log": "42CC45414C306EA332CAFF611002D57F2A94E0E2A1E8B53977D14F8C4F95013F", "docker-qualification.log": "B072346AA753F9A27861A88B8D7D9688726F53653F41624FB07A95E4AF96ACA7", "v01-acceptance.xml": "AB11A597497C43DE58D20EA900DE32490861AA5D31C70F4E75457DB4596A50CE"}
+  ],
+  "limitations": ["Local Floci S3-compatible provider evidence only; not AWS/cloud IAM certification or complete P11.", "The corrected rerun is the promoted result; the initial skipped attempt is retained and not reclassified as failure."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
