@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2235",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_JOBSTORE_FOCUSED_CURRENT_CANDIDATE",
+  "candidate_sha": "53997693df404fef77eeb3bafb1affb6c77a19b8",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded focused real PostgreSQL JobStore lifecycle and keyset pagination qualification",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2235-postgres-jobstore-current-20261128 -TestPath tests/integration/test_postgres_jobstore_real.py",
+  "result": {
+    "selected": 2,
+    "passed": 2,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "selection": "path=tests\\integration\\test_postgres_jobstore_real.py",
+    "coverage": "disabled",
+    "postgres_image": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c",
+    "pytest_wall_seconds": 7.652,
+    "total_wall_seconds": 32.785,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2235-postgres-jobstore-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "c14ded0e356536a4b51b5268bf53ae24d7043031a179e018158b401b6ca80925",
+    "pytest-postgres.log": "90e2d0e61caf3f2d0e02ec3eafb411327008c5f723336061497ddd5daa0d094d",
+    "pytest-postgres.xml": "c2018215ad6638fc395cf9b95ca554a4cc3e843e6a93d49aec0e610dc6c0ac65",
+    "pytest-timings.json": "3c674511a64a2cf9df0e342323af969a53b7848f50761d87ea327fdea77f060c",
+    "runner-timings.json": "7ad2f8d989cedca06a2c0d1ee6b9f50f043b6fab1ccd32381a11b102b83faf4b"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused file qualification with coverage disabled is diagnostic evidence, not the complete Python/PostgreSQL suite or a release gate.", "Evidence is bounded to one PostgreSQL 16.4 container and one process; it does not certify multi-worker, HA, indefinite operation, hosted providers or complete P11.", "No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
