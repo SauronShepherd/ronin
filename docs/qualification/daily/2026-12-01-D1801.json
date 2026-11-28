@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1801",
+  "date": "2026-12-01",
+  "status": "PASS_DOCKER_FULL_CURRENT",
+  "candidate_sha": "97b4b8b96548c462eb351ef6988af35bc22dbe3e",
+  "implementation_commit_sha": "97b4b8b96548c462eb351ef6988af35bc22dbe3e",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1801-docker-full-current-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1801-docker-full-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d1801-docker-full-20261201 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1801-docker-full-current-20261201",
+  "result": {"integration_tests": "27 passed; 0 skipped; 0 failed", "strict_v01": "15 passed; 0 skipped; 0 failed; strict_success=true", "scope": "Docker worker/runtime, PostgreSQL journeys and backup/restore, Floci S3-compatible, Azurite Azure Blob-compatible and strict v0.1", "worker_image_digest": "sha256:283540c93ed3aca3f5dd3ae8429fcbcc041db5616dac201bacb0e5aa5af64a5f", "cleanup": "PASS", "elapsed_seconds": 160.21},
+  "evidence_hashes": {"qualification-summary.json": "A1A44004871BA08D2B4EF074FEBE391EEA4438F85C16E14173DC553817A52408", "docker-pytest-output.log": "DFAE20D03910B6D7B304BCF3E26DFE34EBE7B3D6F36675191141D31109E73D66", "docker-qualification.log": "05E3EA5D605DF2D74E921A97F1BF9F6AB2B1CAC35DF881D9EA010DC4311A1F72", "postgres-qualification.log": "87CEB10E79044C19A5E35B2AD0622DD66117C74B2C1577E8A03DBE7AD80DE3D1", "floci-s3-qualification.log": "181F5A01C5A48B6DCC21FFFECF64622A165D694A344F97DB8CFE72E9A47E3453", "azurite-qualification.log": "5DBDDA347C913C77E87AA6B38B28FCA2FCBC3702BDE3362FF6108D4D19E7E2EB", "v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C", "v01-acceptance.xml": "969B6A2939601D3836E35AE01D07E4951B00AD10EC362CED0CCEFF19D4AF6F77", "docker-cleanup.json": "017AA6614086438064959568E200A63834C09A3310ED11B8698ABEA19CDB226BB"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación Docker local bounded con providers emulados Floci/Azurite; no certifica AWS/Azure hosted o IAM externo, operación indefinida, HA/multi-worker productivo, P11 completo ni aprobación de release. El summary conserva observaciones internas unavailable de medición final en casos timeout/cancelación, aunque no quedaron contenedores residuales y cleanup fue PASS. No se reatribuye evidencia histórica."]
+}
