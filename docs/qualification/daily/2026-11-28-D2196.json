@@ -1,0 +1,46 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2196",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_FULL_CURRENT",
+  "candidate_sha": "3f9a51736daac43475a9500b7e4ae291072068ef",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "Docker full qualification on current main candidate: integration, PostgreSQL-backed journeys, Floci S3, Azurite Azure Blob, real Docker worker/runtime and strict v0.1 acceptance.",
+  "worker_image_digest": "sha256:773b2c5e534e2b2b95fad3452656380fcb91761ef62d13d9e70f4e3c1257b7b9",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2196-docker-full-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2196-docker-full-current-20261128-rerun",
+  "result": {
+    "integration_total": 27,
+    "integration_passed": 27,
+    "integration_failed": 0,
+    "integration_skipped": 0,
+    "strict_total_expected": 15,
+    "strict_live": 15,
+    "strict_passed": 15,
+    "strict_failed": 0,
+    "strict_skipped": 0,
+    "pytest_elapsed_seconds": 161.88,
+    "cleanup": "PASS",
+    "providers": ["postgresql", "floci-s3", "azurite-azure-blob"]
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2196-docker-full-current-20261128-rerun",
+  "evidence_sha256": {
+    "azurite-qualification.log": "1dc1c74a30edb81f6a469356e2d9c59721c777b10aeb172f131d15a2bca78a0a",
+    "docker-cleanup.json": "d097384bc3e4b2661f6c7fcc9c153b34eb645a8be14e8f690e46791496023050",
+    "docker-pytest-output.log": "5222b058c17443268ffa0a43741b39bce08a4857fae8d748d0f1d0949142abd3",
+    "docker-qualification.log": "02e669da95511af1fceb39c5dd14d9c1555e367316b037e21ec045b0993b4607",
+    "floci-s3-qualification.log": "56c770ab6219b9cee8caed70acf3aada9f5bff023bb128f9b22c6dbd423e83a4",
+    "postgres-qualification.log": "7769ea06c88d364527235a629c818337b7ff35e21c80937309b60f1ebf6c8ee5",
+    "qualification-summary.json": "d09795ab31a889fabdcb6660b3b1af14dbabeab076f3f173361772c8c4da8dc6",
+    "v01-acceptance-strict.json": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c",
+    "v01-acceptance.xml": "b974c04950238fcfb09bd2ba8ca9b3b951672393dc46b219035a8b4b0137b391"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local emulators/providers only; no hosted cloud IAM, network, quota, or provider SLA evidence.",
+    "This is one bounded current-candidate run and does not complete P11 or qualify release.",
+    "No historical D83-D1165 evidence was reattributed."
+  ],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
