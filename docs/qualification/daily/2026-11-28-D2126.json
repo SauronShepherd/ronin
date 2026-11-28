@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2126",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_SCHEDULER_RECOVERY_DIAGNOSTIC",
+  "candidate_sha": "1ab626d75ecfb3b96d3cb571d3075ba02c31345d",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered real PostgreSQL scheduler/workflow recovery qualification.",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2126-postgres-scheduler-recovery-20261128 -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"reacquires_after_expired_lease or replays_job_after_process_crash or attempts_leases_fence_workers_and_reclaim_expiry or execution_outbox_survives_expiry_and_reconciles\"",
+  "service_profile": "isolated postgres:16.4-alpine",
+  "result": {
+    "selected_passed": 3,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "deselected": 18,
+    "pytest_duration": "4.02s",
+    "cases": [
+      "test_postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate",
+      "test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire",
+      "test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles"
+    ]
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2126-postgres-scheduler-recovery-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "2a143f16edf1f18eaba93f91d578d4a48638c478dfb576bd044d6ddb91e5fc80",
+    "pytest-postgres.log": "8cfc627a13eb96fbd27f12cf2d0c12c922048553d1d41d544543320a04abcab4",
+    "pytest-postgres.xml": "237778650f44b079a5f6aa600d8d68c9580ea7221b4b92c96bd8a3de4fbe57be",
+    "pytest-timings.json": "5a38ad147972576ea53667a6fe8800793c62acc4a4f4021acd8a6d377a3a2d27",
+    "runner-timings.json": "02aa9fd57e61ad0c0e7a59745448a5d86654a1a1aaf83164a5c92eb76c7aefd6"
+  },
+  "cleanup": "The isolated PostgreSQL container and runner resources were removed; no qualification container or kind cluster remains.",
+  "limitations": "Filtered diagnostic only; 18 file cases were deselected and this does not certify complete scheduler conformance, hosted PostgreSQL, indefinite HA or complete P11.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
