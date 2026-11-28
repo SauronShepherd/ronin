@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2158",
+  "date": "2026-11-28",
+  "status": "PASS_S3_JSON_FLOCI_CURRENT",
+  "candidate_sha": "25bc5a9dee7d226e7504a84ef740d286feab5a7a",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "S3 JSON connector write/read/retry round trip against the digest-pinned Floci 2.1.0 S3-compatible service on the current main candidate.",
+  "service_profile": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db",
+  "command": "docker compose -p ronin-d2158b-s3 -f examples/cloud-studio/compose.floci.yaml up -d floci; $env:RONIN_FLOCI_PORT=4567; $env:RONIN_TEST_S3_ENDPOINT=http://127.0.0.1:4567; python -m pytest -q tests/integration/test_s3_json_connector_real.py --junitxml C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2158-s3-floci-current-20261128-rerun\\pytest-junit.xml; docker compose -p ronin-d2158b-s3 -f examples/cloud-studio/compose.floci.yaml down --volumes --remove-orphans",
+  "result": {"pytest": "1 passed; 0 skipped; 0 failed", "scope": "S3 JSON sink/read/retry round trip", "cleanup": "PASS; container, volume and network removed"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2158-s3-floci-current-20261128-rerun",
+  "evidence_sha256": {
+    "compose-down.log": "8665FD3259C090BE52D019E5ED3AF1E8C038E2F5A1FE71E9F909216D66F9A22A",
+    "compose-up.log": "2AC9DBAAC2933BE772D4B07F51B773DE3FD2FCF88192A69AA194551D02BCFFF9",
+    "floci.log": "82861BFDECDD59B615B472F044864ED858BA60CAC982010792B8962F6B9FB695",
+    "pytest-junit.xml": "1F3759F429494E9110453148E747AD9C21589809649E004FC37062A285C11DDD",
+    "pytest.log": "3F9E4181641A1530CD89ED23A080B4335AB8F2594C702D38226DEC0694B865A2"
+  },
+  "initial_attempt": {"status": "NOT_RUN", "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2158-s3-floci-current-20261128", "cause": "PowerShell passed the literal --junitxml=(Join-Path...) argument; pytest collected no tests and exited 4. Compose cleanup still passed.", "evidence_sha256": {"compose-down.log": "B2DF8820CF70518759A4D75A2BA0C88F6B49973161D2A6B736FFC1FF456CDF23", "compose-up.log": "6546CD0E38AB110ED2DE05757F7AD67990ADADE992A7D6D0BC2E73CCE8F8F67A", "floci.log": "DDB85C9507E0A7D18B6E710DEEEBD3F8B5C604C32E0E8E467EFA8EE5D8CD91A7", "pytest.log": "395599AEE0EB4FC12379C56985B932D9867AE9E4D51D7F760FD74C6941B886F9"}},
+  "limitations": ["Local Floci S3-compatible provider evidence only; not cloud-provider certification or complete P11.", "The corrected rerun is the promoted result; the initial not-run attempt is retained and not reclassified as a failure."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
