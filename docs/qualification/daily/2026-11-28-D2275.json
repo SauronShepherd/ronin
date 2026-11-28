@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2275",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_EMPTY_PARTITION_HEALTH_CURRENT_CANDIDATE",
+  "candidate_sha": "f0290ea818e2725926d64381292d35053cc865d9",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "live streaming health reports an empty partition without false lag with PostgreSQL and Kafka",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2275-live-empty-partition-health-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming health reports an empty partition without false lag' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 4,
+    "correlated_http_logs": 4,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 4},
+    "application_errors": 0,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2275-live-empty-partition-health-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "54e490d7907f803d713349bd74dcb20d0eac617a35880885f785a2829b658880",
+    "browser-live.xml": "6f345978156bf123c9d3d6cb49d1f6658598ed4abceff8a106f080890fc8dab5",
+    "live-api-traffic.json": "ba8ad3ccbba31ed21575f4af6158b4f43578d4b083988efc56e7fb7ca75be7b7",
+    "live-server.stderr.log": "b4384ef353252b3316eeafac74ecbf4f981c4a1385ec36504c46bad855a3031f",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "fa7231cbac06512779508d9e06ca8157d02b8db04efcd76835c131aad8a79b62",
+    "live-python-freeze.txt": "c8fc6a1ce0a74555ea54cde7437157d9aec410fb449dec3f487b777c87e31af9"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is bounded local health/lag evidence for an empty partition; it does not certify hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2274 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
