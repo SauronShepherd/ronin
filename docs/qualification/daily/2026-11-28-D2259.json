@@ -1,0 +1,47 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2259",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_ROUTE_WIDE_CURRENT_CANDIDATE",
+  "candidate_sha": "36eea1dbe67e9dcf9fd57777f64c0c02155bf4cc",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "full current live product route-wide qualification with PostgreSQL, Kafka and real Docker worker",
+  "commands": {
+    "build": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2259-live-route-wide-20261128 --label org.ronin.qualification.run=d2259 .",
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2259-live-route-wide-postgres-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2259-live-route-wide-20261128 -RequestTimeoutSeconds 240"
+  },
+  "result": {
+    "playwright_executed": 44,
+    "playwright_passed": 43,
+    "playwright_skipped": 1,
+    "playwright_failed": 0,
+    "skipped_case": "live streaming multi-broker failover resumes from the durable checkpoint (separate -MultiBroker lane; current evidence D2258)",
+    "active_routes": 25,
+    "api_backed_routes": 24,
+    "ui_only_routes": 1,
+    "api_events": 486,
+    "correlated_http_logs": 486,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 462, "WARN": 21, "ERROR": 3},
+    "worker_image_id": "sha256:ea304a45ba5fa7a2d69bce5aead4574ecd030948f304964d1bfce616afc13a4f",
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2259-live-route-wide-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "ae9b27e7cb4a8b9a8e6dc8a616547cb960d7c25452aa77d85aa29d3e237a36b8",
+    "browser-live.xml": "9eb310beeb35d972c71ecca716e0e2771f43165e47bd62bcc76483651c41ce84",
+    "live-api-traffic.json": "70bc3c829f379254b9b3db8d9e94d19fdac4b70198c5ab85c4ca3471016ad1bc",
+    "live-server.stderr.log": "0db5cc996d7cf305be67466d4d1fc16509ca3db5205f11d6615a8796335925e6",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "e96958109a54c1e2a8e7e4bcc9e2c4cb482610153cb77df75b7d070c0fba8b85",
+    "live-python-freeze.txt": "909e755ba9b3525912524a52d4cb32a12ef9a4fb8aad524b75b520537f97a6f9"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Current route-wide bounded diagnostic; the one multi-broker skip is intentionally covered by D2258 and this run does not certify hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2258 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
