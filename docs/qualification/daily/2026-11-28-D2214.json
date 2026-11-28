@@ -1,0 +1,19 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2214",
+  "date": "2026-11-28",
+  "status": "PASS_OTLP_LOCAL_CURRENT_CANDIDATE",
+  "candidate_sha": "f9534ee5b3a78a70aaae6f007e453a8b3ad40506",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "real local OTLP/HTTP Collector qualification for traces, metrics and logs on current candidate",
+  "provider_image": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_otlp_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2214-otlp-current-20261128",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "selected_test": "tests.integration.test_otlp_collector_real::test_real_otlp_collector_accepts_traces_metrics_and_logs", "protocol": "OTLP/HTTP", "signals": ["traces", "metrics", "logs"], "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2214-otlp-current-20261128",
+  "evidence_sha256": {"collector-config.yaml": "6d631511413384de11d3aed2aa852697ef9c696b5b2bb9b3aefa3464ee89f07f", "collector-container.log": "785fcde551b109e8e3959a91c37c2760afad313dfa27ad38d9ae4a8814127dd5", "otlp-junit.xml": "91c8887f53e41bea2e05985fc3d772053474157fd0af1aa13c099fe403459d4e", "pytest-timings.json": "1974265d4173efcc4ec20fff4a3dadc57c8583a276a8a923c8bbf718d3cabc3d", "qualification.json": "125f3e5840a0c15c6f95c563fc8277175f6d69ea0fa5fa5210ae14d18365f828", "qualification.log": "d761476774c28938f7af81777557ba81cc14940931c5b9b7e580b3ce5bb7f93f"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación Collector OTLP local; no certifica backend observability hosted, HA, IAM externo, operación indefinida, P11 completo ni release.", "D2194 permanece ligado a su candidato histórico; no se reatribuye evidencia."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
