@@ -1,0 +1,14 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1817",
+  "status": "NOT_PASS_LOCAL_QUALITY_TOOLCHAIN",
+  "candidate_sha": "e28b897ed2484d496249f9e9a94bc3b0dde0c309",
+  "implementation_commit_sha": "e28b897ed2484d496249f9e9a94bc3b0dde0c309",
+  "production_change": "none",
+  "result": {"make_check": "NOT_RUN: GNU Make unavailable on Windows host", "ruff_format": "NOT_PASS: 3 files unformatted", "ruff_check": "NOT_PASS: existing import/order and exception findings", "mypy": "NOT_PASS: 18 errors in 2 files", "architecture": "PASS", "dependency_surfaces": "PASS", "cleanup": "PASS; no external runtime"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1817-local-quality-current-20261201",
+  "evidence_hashes": {"ruff-format.log": "77a22aab73e3d8f5ee55ede67673f8d583e1f3fd960d36ecba9233e0a731f8f1", "ruff-check.log": "84fed9e79bbb987b83bed5e2affa2b501312c2221dfedd008181b008ac19bb8a", "mypy.log": "96d34e01900431248421ef589aeccd7de504c1014c4bbc0827793964d10599ad", "dependency-surfaces.log": "7888b6631fa23e035fdabbd70f1863e53eda0552ab486281485f1d0a6850a104"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["no production edits were made", "failures are not promoted as PASS", "no historical evidence reattributed"]
+}
