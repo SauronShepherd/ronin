@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1802",
+  "date": "2026-12-01",
+  "status": "PASS_POSIX_LINUX_CURRENT",
+  "candidate_sha": "3b54514e36ba17931afd2243773a7a06bfcb8543",
+  "implementation_commit_sha": "3b54514e36ba17931afd2243773a7a06bfcb8543",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1802-posix-current-20261201\\qualification.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1802-posix-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_posix_contract_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1802-posix-current-20261201 -ImageRef sha256:640351e02fca7668977f8d81c1a0f12f42d12449fd0dbe907e2ce7fa73127b2a; docker image rm --force sha256:640351e02fca7668977f8d81c1a0f12f42d12449fd0dbe907e2ce7fa73127b2a",
+  "result": {"tests": "8 passed; 0 skipped; 0 failed", "scope": "POSIX/Linux symlink, permissions, executable mode and process-reaping contracts in isolated Docker", "image": "sha256:640351e02fca7668977f8d81c1a0f12f42d12449fd0dbe907e2ce7fa73127b2a", "cleanup": "PASS", "elapsed_seconds": 12.277},
+  "evidence_hashes": {"qualification.json": "45955CAD7349008C65C70AAA0D414C20F855AE7DF6886378501EEeb8C433AE7F", "qualification.log": "E411809397CD5777B94252115B5E5D22F9D6F2955B538293BE2E662C22B370E1", "posix-junit.xml": "493CC0CD504BD04D8B9ADBBB3D74A4943FC33D651C39F2AF571DCB4FC13AA260", "pytest-timings.json": "7D95D1ACEC0D3E8A026B381BB38934B9210CAFBD884A9F17E4663B4CA5FD26DF", "git-version.txt": "0EFF67955296E123526D7F9B9146FFF8D8DC8D6DBF4F49BA5F838923D2B4AF71"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Lane POSIX/Linux bounded y aislado en contenedor; no demuestra operación indefinida, HA/multi-worker productivo, providers hosted, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
