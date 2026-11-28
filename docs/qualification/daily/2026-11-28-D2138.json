@@ -1,0 +1,45 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2138",
+  "date": "2026-11-28",
+  "status": "PASS_TRINO_REAL_CURRENT",
+  "candidate_sha": "08231cf9a81cb202b85b4522511f766bd4efcfd9",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Complete Trino real-service qualification file against the digest-pinned Trino 484 provider.",
+  "command": "pwsh -NoProfile -File tools/run_trino_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2138-trino-current-20261128",
+  "service_profile": "trinodb/trino version 484, digest-pinned",
+  "image": "trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f",
+  "result": {
+    "expected": 4,
+    "collected": 4,
+    "passed": 4,
+    "skipped": 0,
+    "failed": 0,
+    "missing": 0,
+    "unexpected": 0,
+    "pytest_duration": "6.96s",
+    "cases": [
+      "test_trino_real_prepared_scalar_bindings",
+      "test_trino_real_result_byte_budget_accepts_exact_limit_and_rejects_one_byte_less",
+      "test_queryflux_worker_runner_real_trino_persists_terminal_evidence",
+      "test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate"
+    ]
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2138-trino-current-20261128",
+  "evidence_sha256": {
+    "pytest-timings.json": "0494c1a73c969ccddabdab967b0ea653ced58f45bb679cbeba66ba46585e6c20",
+    "qualification.json": "0849fba20c9075f57f1d06f1f419866bd0be867635b0553fc377f4e0a7d37f7e",
+    "qualification.log": "b822a63a8988c58148ddc268dcb0622258e9877b3b2691773d77d77c83b3cfe4",
+    "trino-container.log": "0d73c1c0e396518a06d11c4f507a9d14748363aa22552c4fdc41eba0349b1358",
+    "trino-junit.xml": "a4adadd9864d6af2e172f7d3273c85bf5c1de4ae953368e1a6aa961d33214d2f"
+  },
+  "cleanup": "Trino runner reported cleanup_status=succeeded; the temporary Trino container was removed. The digest-pinned base image remains cached, with no running container or kind cluster.",
+  "limitations": "Local digest-pinned provider qualification only; this does not certify hosted Trino/IAM, full query-engine breadth, indefinite HA or complete P11.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
