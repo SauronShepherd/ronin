@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2192",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_ML_S3_ARTIFACT_FLOCI_CURRENT_FILTERED",
+  "candidate_sha": "046468353191ade7dc2430f8d105abd6fd236555",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered Docker ML durable artifact input/output and retention round-trip against local digest-pinned Floci with isolated cleanup",
+  "worker_image_digest": "sha256:b6e301ed915d70c584b164b5e3a8c91a769f3ff72e3d611ee048fc679a6606a4",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2192-docker-ml-s3-artifact-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2192-docker-ml-s3-artifact-current-20261128-rerun -TestFilter 'ml_s3_artifact'",
+  "result": {"tests": "1 passed, 26 deselected, 0 skipped, 0 failed", "selected_test": "tests.integration.test_ml_s3_artifact_store_real::test_ml_durable_input_output_and_retention_round_trip_through_s3", "fixture": "Floci S3 local emulator", "pytest_seconds": 2.0, "cleanup": "PASS", "strict_v01_gate": "not evaluated"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2192-docker-ml-s3-artifact-current-20261128-rerun",
+  "evidence_sha256": {
+    "docker-cleanup.json": "CE15B3131CF888EA781269A9A805FCD43B0E4FA9386AB7EADDD8EB905D83A303",
+    "docker-pytest-output.log": "C0FDD9204ACBEA2930DAABF4526C0477E53B8B2775617BD5F99ADF5F405EF707",
+    "docker-qualification.log": "AE261EA3A0F3F5CD5829960FD0F6A29869108A8A91AFDFA3D8D9F3E4049C6D3B",
+    "floci-s3-qualification.log": "3CDFF7486D790B94912B80E152F720820AC839790FE38060D54C50A13CFC9046",
+    "v01-acceptance.xml": "902AE2AE88736CA7E16200808E7514F68174F7BCD820B48F929A1026BA68F509"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Floci es un emulador S3 local; no certifica AWS/S3 hosted, IAM externo, red/latencia productiva, P11 completo ni aprobación de release.", "La selección fue filtrada; strict v0.1 no se evaluó.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
