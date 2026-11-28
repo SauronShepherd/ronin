@@ -1,0 +1,42 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2270",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_CURRENT_CANDIDATE",
+  "candidate_sha": "384daa1c24a2a569f070803a8aceae4f67d0cf7a",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "live committed streaming record to workflow propagation with PostgreSQL",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2270-live-event-workflow-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming event workflow is triggered by a committed record' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 12,
+    "correlated_http_logs": 12,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 12},
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2270-live-event-workflow-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "cf4a438d2bf335fffa36a130e48b775396a0cd2fb9d197c16545376677ae7225",
+    "browser-live.xml": "d4dae03e35494ccfbc168fce8e04438404f1ac36bc0c26e678ee0bc2a23fd98a",
+    "live-api-traffic.json": "4653353af8a132018078de2410620d88b3d7c4b7c5520a2af539da1d0ed91d15",
+    "live-server.stderr.log": "5e37fd200cf3cbd4d18f41acbb1bc9d5e9fdfd77022699ed3e43d54f9f68d63c",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "07be7f90601376c9b64c563abb5cd90808d8c01d093e775adcc5cf8927c8dbeb",
+    "live-python-freeze.txt": "f34e20c9a47aa3e4ee3dd30976e6ff17d4e97b4f24c38d9ff911f16ba507b444"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is bounded local event-to-workflow evidence; it does not certify hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2269 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
