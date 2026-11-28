@@ -2741,8 +2741,13 @@ test('live Notebook Studio creates, versions and executes a notebook on a Docker
   expect(calls.some(call => call.status >= 500 || call.status === 0)).toBe(false);
   await flushLiveTraffic();
 });
-test('live API traffic contains route, method and response status without credentials', async () => {
+test('live API traffic contains route, method and response status without credentials', async ({ page }) => {
   test.skip(!liveReady, 'Run via npm run test:live with a live Ronin API and PostgreSQL fixture.');
+  // The contract must remain independently runnable when Playwright is filtered
+  // to this case; otherwise it depended on traffic accumulated by earlier tests.
+  installLiveApiProxy(page);
+  await connectLiveStudio(page);
+  await page.goto('./#home');
   await flushLiveTraffic();
   const reportPath = process.env.RONIN_LIVE_API_TRAFFIC_OUTPUT;
   const traffic = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
