@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2166",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_CURRENT",
+  "candidate_sha": "2bbff215dc71599330a14ccb6583bbea398bbe02",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live streaming event-to-workflow qualification with PostgreSQL, single-broker Redpanda, Ronin API and Docker worker on the current main candidate.",
+  "worker_image_digest": "sha256:4b6a2494391f5da3095b53c0028985512b0d310fcb5ec71d2df9baea35533f26",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2166-live-event-workflow-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2166-live-event-workflow-current-20261128-rerun -StorageBackend postgres -WorkerImage ronin:qualification-d2166-live-event-workflow-current-20261128 -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2166-live-event-workflow-current-20261128",
+  "result": {"tests": "1 passed; 0 skipped; 0 failed", "api_events": 12, "correlated_events": 12, "api_outcomes": {"OK": 12}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "cleanup": "PASS; brokers, PostgreSQL, volume/network and temporary worker image removed"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2166-live-event-workflow-current-20261128-rerun",
+  "evidence_sha256": {
+    "browser-live.log": "6DC43539DE58791B6AD2FC2A0EABBC47243F6F9BCC70261BC655C7E97B74205E",
+    "browser-live.xml": "292FDE5CDED31CA65B95A8BA1F3981211D32652F0BDA1165CF6EFDF5606F209E",
+    "live-api-traffic.json": "8354C129E8F23FA30534F0C8FFB889987A0535E7877BE24685C41E40CA13D4F7",
+    "live-python-freeze.txt": "06A8A245D870618CFF09DF26F9256B45A51B6906176B05183CEDFF687D00DDD6",
+    "live-server.stderr.log": "18AD7E356F2D0F8D5E56B10EF7B69B4AABB6203554F85E0062C1EEFCC0C31BDC",
+    "qualification-summary.json": "EC7C4043663223197AE765B57E34B996182E8306B6DCAD7D8A7077AB30E3D96F",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE"
+  },
+  "diagnostic_attempts": [{"status": "NOT_RUN", "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2166-live-event-workflow-current-20261128", "cause": "The live runner requires a nonexistent or empty evidence directory; precreating it caused an immediate validation rejection. No live service started and the worker image was removed.", "evidence_sha256": {"docker-build.log": "D687E172EE29D9D9457430DE3E1E1AB5BEEA5B25134818FCE9880EBAAE730AAE", "image-cleanup.log": "1F271423E701C6ACAD0534258292C4DC0E1CAA8559724B13546EF4FE89B406B1"}}],
+  "limitations": ["Focused bounded live event-workflow diagnostic; not indefinite operation, HA/multi-worker production, hosted-provider certification or complete P11.", "The corrected rerun is the promoted result; the initial validation rejection is retained and not reclassified as a test failure."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
