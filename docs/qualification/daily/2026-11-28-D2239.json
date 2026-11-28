@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2239",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_CONNECTOR_INCREMENTAL_FOCUSED_CURRENT_CANDIDATE",
+  "candidate_sha": "726829257f1d38851f5ab293567c31248a47efd2",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded focused real PostgreSQL connector schema and same-timestamp watermark pagination qualification",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2239-postgres-connector-incremental-current-20261128 -TestPath tests/integration/test_postgres_connector_real.py",
+  "result": {
+    "selected": 2,
+    "passed": 2,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "selection": "path=tests\\integration\\test_postgres_connector_real.py",
+    "coverage": "disabled",
+    "postgres_image": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c",
+    "pytest_wall_seconds": 4.613,
+    "total_wall_seconds": 26.628,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2239-postgres-connector-incremental-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "0e4b235106a61925720465050caf58ca0f22bb49019a38c32018ca21c735b63b",
+    "pytest-postgres.log": "ce22c12f3c58d93f7deffe69f4092038afe0ef425e6368d98e1a561cc0a46b4c",
+    "pytest-postgres.xml": "15f278832c26e5edc8c720d02f07ee74a57d39c7709fe05d4ce70c0be6bee4c0",
+    "pytest-timings.json": "0739dda12d2d5c394d799c03b7826247231bd9f072758bfacfb5b368938f17c9",
+    "runner-timings.json": "87ad24b33dcc6354a502383e452131fe23cdef6f0a95b99e90341cc54008074c"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused file qualification with coverage disabled is diagnostic evidence, not the complete Python/PostgreSQL suite or a release gate.", "Evidence is bounded to one PostgreSQL 16.4 container and one process; it does not certify hosted providers, HA, multi-worker, indefinite operation or complete P11.", "D209 evidence remains separately bound to its historical candidate; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
