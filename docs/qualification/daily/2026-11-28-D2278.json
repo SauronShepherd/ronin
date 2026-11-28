@@ -1,0 +1,44 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2278",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_BACKPRESSURE_CURRENT_CANDIDATE",
+  "candidate_sha": "dcaf36a218dd0743049f26b9476276ec165d70bb",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "live sustained backpressure drains 256 configured records with reset-safe replay on PostgreSQL and Kafka",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2278-live-backpressure-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming sustained backpressure drains configured records with reset-safe replay' -RequestTimeoutSeconds 300"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 12,
+    "correlated_http_logs": 12,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 12},
+    "application_errors": 0,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "configured_records": 256,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2278-live-backpressure-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "91748dda6c484b3ff937364a70ff7d449b83b5c71c6a403476c1166aec1b70c2",
+    "browser-live.xml": "60a00c99eb94dddbc19b2304bc142407dedca83ab0ea51a2a48ab4d94b3ee558",
+    "live-api-traffic.json": "245d7fd1562ec0502a93224922e0e6d5e1f7ef4e32b0a5ae74cc4a9af8e28663",
+    "live-server.stderr.log": "89c9d7ea41e8950922c9cf26d5985b55e81b7735da0df0534917837438f0aa98",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "430f7e2307d7228668aad216e00e635df8ea9873051f6b366c280fe93696eb93",
+    "live-python-freeze.txt": "80da282030c7d91d54bc69fdfc154535c11a6888fdd0693a988f8730fcba5c2f"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is bounded local backpressure evidence for 256 configured records; it does not certify hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2277 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
