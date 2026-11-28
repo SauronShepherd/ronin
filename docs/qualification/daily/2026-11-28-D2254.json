@@ -1,0 +1,41 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2254",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_FULL_CURRENT_CANDIDATE",
+  "candidate_sha": "ecc9bca11bf80c8b4d157d80c0c9be91bf0c94da",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "full Docker integration and strict v0.1 acceptance with PostgreSQL, worker, Floci/S3 and Azurite/Azure fixtures",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2254-docker-full-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2254-docker-full-current-20261128"
+  },
+  "result": {
+    "integration_selected": 27,
+    "integration_passed": 27,
+    "integration_skipped": 0,
+    "integration_failed": 0,
+    "strict_selected": 15,
+    "strict_passed": 15,
+    "strict_skipped": 0,
+    "strict_failed": 0,
+    "ronin_image_id": "sha256:2ca825686035ecb824fe75c7d47c4633f7b7ba0a4be44696faa01fa597a4ea2d",
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2254-docker-full-current-20261128",
+  "evidence_sha256": {
+    "azurite-qualification.log": "5268f30baaafea5aa33b901bf854a76395728dbf3f5b4cd05a354678c1e22cb1",
+    "docker-cleanup.json": "21bec59e3966f7fb5c9d65094816c5eb7f3569e22b8573caa871b9150a9ebda4",
+    "docker-pytest-output.log": "c4f81f00d8ea38b29fcccbc497e8fbff14e2f87a79352962ac2323d549d94778",
+    "docker-qualification.log": "9bc5630a5a0b53faed25ac3af6fb1c8c1940f7e7dafcb5d553d39b1078d190c1",
+    "floci-s3-qualification.log": "af94c57bfd823d43dd67da6440a1b849cac3564951960b769ab189a32c96976c",
+    "postgres-qualification.log": "cf329de10292093efdac41970d55ccb1055a03ea1bce0a59bc67ede65f5922e6",
+    "qualification-summary.json": "2110c02fe74c05f256a7a4df3a694d54520de829f8a458374f4f9d59e636b543",
+    "v01-acceptance-strict.json": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c",
+    "v01-acceptance.xml": "e438c1371f3ed9200305f8d0a02bc810d025c73da7cd0b4d04206a4ed02b0304"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Docker acceptance uses digest-pinned emulators and does not certify hosted cloud/IAM, indefinite operation, or release approval.", "No historical D83-D2253 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
