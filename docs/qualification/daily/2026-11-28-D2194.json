@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2194",
+  "date": "2026-11-28",
+  "status": "PASS_OTLP_LOCAL_CURRENT",
+  "candidate_sha": "56699d5e8c7a9bf1ce92df5cdf4969ff81abab82",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "real local OTLP/HTTP Collector qualification for traces, metrics and logs using a digest-pinned OpenTelemetry Collector",
+  "provider_image": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_otlp_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2194-otlp-current-20261128-rerun2",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "selected_test": "tests.integration.test_otlp_collector_real::test_real_otlp_collector_accepts_traces_metrics_and_logs", "protocol": "OTLP/HTTP", "elapsed_seconds": 3.988, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2194-otlp-current-20261128-rerun2",
+  "evidence_sha256": {
+    "collector-config.yaml": "6D631511413384DE11D3AED2AA852697EF9C696B5B2BB9B3AEFA3464EE89F07F",
+    "collector-container.log": "64A7BDF4280AF401513D6A3881D0D5B63B42E51C35DC1A674F0D42465C1954A9",
+    "otlp-junit.xml": "21C36F9B96EE7632CBFEEC70AE50EC2846F7766D6679BFC35744095F028C6345",
+    "pytest-timings.json": "7EB32CA7435D76944C6881CF9F143E14DDE9A42901D0E62548D79D4C035A3A4B",
+    "qualification.json": "399E016AB3BCDE12385DF2D7F57C794BCBBE028A3EE7FC48A909A2C87ED3958F",
+    "qualification.log": "D9D7AE5B1F9CFB7FCB9768C62A2F244DA11BD6E3B31F368372A6C69A5CBA19F9"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación de Collector OTLP local; no certifica backend observability hosted, HA, IAM externo, operación productiva indefinida, P11 completo ni aprobación de release.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
