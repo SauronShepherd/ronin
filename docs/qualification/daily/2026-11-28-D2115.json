@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2115",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_EVENT_WORKFLOW_CURRENT",
+  "candidate_sha": "31b9e29f666126022da0138dfa77709bbc6cb46a",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2115-live-event-workflow-current-20261128\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2115-live-event-workflow-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2115-live-event-workflow-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2115-live-event-workflow-20261128 -TestGrep 'live streaming event workflow' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2115-live-event-workflow-20261128",
+  "result": {
+    "tests": "1 passed, 0 skipped, 0 failed",
+    "event_workflow": true,
+    "api_events": 13,
+    "correlated_events": 13,
+    "api_outcomes": {"OK": 13},
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "log_errors_or_critical": 0,
+    "cleanup": "PASS",
+    "elapsed_seconds": 52.88
+  },
+  "worker_image_digest": "sha256:b7a536a49b09ac81e7d1ab29ca90db4037f5df7b788f2e1e85c5524934c24497",
+  "evidence_sha256": {
+    "qualification-summary.json": "718d01cbf5dbb9d2bdf3f08a5b5199c9c0dd73cff5644ff3b77a6e81bb7681ba",
+    "browser-live.xml": "d4c47becc23ff290df4a14980ea6ff969c35f8536506bf444943d38322d3b494",
+    "browser-live.log": "9228f54d57116ef8d5778b5bcfd98c30ebe620d2e9ce368278126bc4d3fda18f",
+    "live-api-traffic.json": "4c838abd9dab8741849d0136b9e85b55f905198f78031ae2c9a61e0cb5e32125",
+    "live-server.stderr.log": "6c7f5704ebccd418728680c649b849843770ef6ab5144cd0c6ba8f2cc8cc228e",
+    "live-python-freeze.txt": "1934154c9b95a34721b7920ed9e95aa247430c28b1105f918d0c8983ce8558ba"
+  },
+  "status_after_receipt": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"},
+  "limitations": [
+    "Diagnóstico filtrado de propagación evento→workflow; no ejecuta route-wide ni multi-broker en la misma corrida.",
+    "No demuestra operación indefinida, HA, multi-worker productivo, providers hosted, P11 completo ni release.",
+    "No hubo cambios de producción ni reatribución de evidencia histórica."
+  ]
+}
