@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2253",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_INGESTION_DISCOVERY_CURRENT_CANDIDATE",
+  "candidate_sha": "8354a14813dff9ea683ace81eec0e546af754c33",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered live PostgreSQL/Kafka/worker qualification of Ingestion Studio PostgreSQL asset discovery",
+  "commands": {
+    "build": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2253-live-ingestion-discovery-20261128 --label org.ronin.qualification.run=d2253 .",
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2253-live-ingestion-discovery-postgres-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2253-live-ingestion-discovery-20261128 -TestGrep 'Ingestion Studio discovers real PostgreSQL pages through the live API' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "api_events": 13,
+    "correlated_http_logs": 13,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 13},
+    "worker_image_id": "sha256:1433fdc0801a10e703c01813fd01febdba5d81271bf631428716306999983a10",
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2253-live-ingestion-discovery-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "d4d30ae22e470f345e558d8625076cd675be1fe12356922e4f4132ba54ada046",
+    "browser-live.xml": "67a7b090c57d34e94ca4af74a13d5acf69aa59884302f6d6a086ad48818a1d78",
+    "live-api-traffic.json": "344e2059bdffa9598c482390da126f73393339e6fa9a29bb752148b0dbc0a819",
+    "live-server.stderr.log": "b5f6d126896acb98852df4901194816555acdf1e5edf99a39f5a4595c6648301",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "53b60e545874525a6eb48ec91909961009a9f7a83ac0104a83f7e01da0f98f94",
+    "live-python-freeze.txt": "f4c03590ef5c1ea0ff7100986fa23df0b4d1a3121c695f748486b805a3c9c135"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered bounded live diagnostic only; it does not certify the full suite, hosted provider/IAM, indefinite operation, or release.", "No historical D83-D2252 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
