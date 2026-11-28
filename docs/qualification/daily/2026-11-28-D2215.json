@@ -1,0 +1,19 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2215",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_FULL_CURRENT_CANDIDATE",
+  "candidate_sha": "ae8465b0f8d750abe2f443edc1fdc7e483d34a62",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "full Docker integration and strict v0.1 qualification on current candidate",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2215-docker-full-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2215-docker-full-current-20261128",
+  "provider_images": {"postgres": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c", "floci": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db", "azurite": "mcr.microsoft.com/azure-storage/azurite:3.35.0@sha256:647c63a91102a9d8e8000aab803436e1fc85fbb285e7ce830a82ee5d6661cf37"},
+  "result": {"integration_tests": "27 passed, 0 skipped, 0 failed", "strict_v01": "15 passed, 0 skipped, 0 xfailed, 0 failed", "cleanup": "PASS", "coverage": ["PostgreSQL", "Docker worker/runtime", "appliance backup/restore", "Floci S3", "Azurite Azure Blob", "v0.1 E2E"]},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2215-docker-full-current-20261128",
+  "evidence_sha256": {"azurite-qualification.log": "364ff376d6086243d8caf09472565c5928a329737b9b24268186a589ee3c7ca0", "docker-cleanup.json": "8fa00b643c1fde5773ca1113615a885a550722f80a94e2a6431103a7ab3217ec", "docker-pytest-output.log": "7826dc0962290773d1c5c8e4b9bc0c037091c13ce0938b2bc56fe2f366bc378e", "docker-qualification.log": "9587db7906195dbd132d70f6448a5d29205d8df6f9086be1e7d7a36a142f5d3c", "floci-s3-qualification.log": "8797e8e784d51a251f7cafc7a10f87fbfdd1cae7dd7e99a1049bbe8532f7a094", "postgres-qualification.log": "00519e5bc6971f5a63c8957e51f2672982d1c9b9be1c468e4b6eada22d9efd97", "qualification-summary.json": "858581ceae3d7c155e3865fdf74c790174d70c9a334b7379d1ef6adb7b4d7460", "v01-acceptance-strict.json": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c", "v01-acceptance.xml": "aadaad3bafb4af164c8cd332f371a6891dee1b0d4c51f43dd7af3088152da1f8"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Docker/local emulator qualification only; no hosted cloud/IAM, HA, indefinite operation, complete P11 or release approval.", "D2196 remains bound to its historical candidate; no evidence was reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
