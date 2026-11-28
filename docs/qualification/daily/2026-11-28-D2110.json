@@ -1,0 +1,44 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2110",
+  "date": "2026-11-28",
+  "status": "PASS_TRINO_REAL_CURRENT",
+  "candidate_sha": "acc07ac876a2d240ad3485c9ad741046ec62dc8b",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2110-trino-current-20261128\\qualification.json",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_trino_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2110-trino-current-20261128",
+  "provider": {
+    "image": "trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f",
+    "version": "484",
+    "digest_verified": true
+  },
+  "result": {
+    "tests": "4 passed, 0 skipped, 0 failed",
+    "cases": [
+      "test_trino_real_prepared_scalar_bindings",
+      "test_trino_real_result_byte_budget_accepts_exact_limit_and_rejects_one_byte_less",
+      "test_queryflux_worker_runner_real_trino_persists_terminal_evidence",
+      "test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate"
+    ],
+    "cleanup": "PASS",
+    "elapsed_seconds": 88.295
+  },
+  "evidence_sha256": {
+    "qualification.json": "2da25a50872a36741d68809d8b31b70957bc7ae840235715b00c909275e80ca6",
+    "trino-junit.xml": "05761049dfb98d2a2c0819f857cd4f8710beb50c74d461cee3073460802c18bd",
+    "pytest-timings.json": "088e9ebd4f526cccd43c76ed199ee38f23ce68bce048b5aed228ae07c4c7ef93",
+    "qualification.log": "20b34456094a4d6bd2eb4e5e667b30f48ff20a13e902136a0260bb05500984d3",
+    "trino-container.log": "175c2a7542ee263bda9fa152a6a408eb95678ac86b87c877d92f8d112aaf77df"
+  },
+  "status_after_receipt": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "Local single-node Trino qualification only; it does not certify hosted Trino, HA, indefinite operation or production credentials.",
+    "No production code changed and no historical evidence D83-D2109 was reattributed."
+  ]
+}
