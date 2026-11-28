@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2222",
+  "date": "2026-11-28",
+  "status": "PASS_LICENSE_QUALIFICATION_CLEAN_VENV_CURRENT_CANDIDATE",
+  "candidate_sha": "af607d06387454c22d51e0a0e1f8f07880bc0f43",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "clean virtual-environment license inventory and locked-graph qualification for the current candidate",
+  "commands": [
+    "python -m venv C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2222-license-clean-current-20261128\\venv",
+    "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2222-license-clean-current-20261128\\venv\\Scripts\\python.exe -m pip install --requirement requirements-dev.lock",
+    "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2222-license-clean-current-20261128\\venv\\Scripts\\python.exe -m tools.license_qualification --root . --lock requirements-dev.lock --write-inventory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2222-license-clean-current-20261128\\license-inventory.json"
+  ],
+  "result": {
+    "install": "PASS",
+    "license_qualification": "PASS",
+    "packages": 56,
+    "inventory_sha256": "5acea33c8c179642b555fbf056ecb3325becbe5f5a3ce2419ff848ce0cf10ead",
+    "lock_sha256": "f1b904db278b805118f91044e667166282ac824cbb7346a32d939324655b80d0",
+    "cleanup": "PASS_EXTERNAL_VENV_RETAINED_AS_EVIDENCE"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2222-license-clean-current-20261128",
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This removes the host duplicate-distribution blocker and qualifies the current locked graph, but it does not by itself approve release, complete P11 or certify hosted providers, HA or indefinite operation.", "The external venv is retained only as reproducibility evidence; no containers or kind clusters were created. No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
