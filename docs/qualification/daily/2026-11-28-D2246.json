@@ -1,0 +1,42 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2246",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_MAX_RECORD_CAP_POSTGRES_CURRENT_CANDIDATE",
+  "candidate_sha": "85123e8a90628312dca41fdd1fc2e920465a523c",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live stream max-record cap with durable checkpoint resume and no replay on PostgreSQL and Redpanda",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2246-live-max-record-cap-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming max-record cap resumes the durable checkpoint without replay' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "api_events": 8,
+    "api_events_correlated": 8,
+    "api_events_ok": 7,
+    "api_events_warn": 1,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "elapsed_seconds": 74.53,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2246-live-max-record-cap-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "ab02fe41acc05480dfa356e45ad8653f89c4f41d4b495f7c2eb4119cb9015666",
+    "browser-live.xml": "3b3f5477a74319ba773a1ef84d273ab08ee868461f8ba993d2db2d7a9bd5212c",
+    "live-api-traffic.json": "578bcb0af3a4dffd35231d236b23080d818a2282f21eac7839d078d997d657ea",
+    "live-python-freeze.txt": "95f16ad2376d71f07cd75b8c88f38b4c4a3fe4f5729fb1d8d560c3d3970ae846",
+    "live-server.stderr.log": "7501222c94a9383fd7ed78a27405a9b94a61a8e75eeef05c7c547f0d39f13668",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "c9d75cc490a387fed3352d0a3a5b6ed939d33f6906f497224cdb25ff8f2691af",
+    "web-test-dependency-cache.json": "8dc49380e156de0e68480e71c76fb0b0b986c0949246a7eaf21d4457c7e51ce"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is one filtered bounded live journey; route-wide and indefinite qualification were not run.", "The result does not close P11 or certify hosted providers, HA, multi-worker operation or release.", "D2244 remains a separate NOT_PASS boundedness gap; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
