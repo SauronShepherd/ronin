@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2154",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_MAX_RECORD_CAP_CURRENT",
+  "candidate_sha": "bffee714b23158d0a78ba4a19bcf73b96f204d93",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live max-record-cap enforcement and durable checkpoint resume without replay, with real PostgreSQL, single-broker Redpanda, Ronin API and Docker worker.",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2154-live-max-record-cap-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2154-live-max-record-cap-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2154-live-max-record-cap-current-20261128 -TestGrep 'max-record cap' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2154-live-max-record-cap-current-20261128",
+  "worker_image_digest": "sha256:cdac9adf5583acdc479422e072cda3b39d3e1d56170ce740781f735112faa4d6",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 8, "correlated_events": 8, "api_outcomes": {"OK": 7, "WARN": 1}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 34.07, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2154-live-max-record-cap-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "55185CD281DD5ED84757C7E651F7C99E68272A607521B6DC3BC95F6D01BDF4BB",
+    "browser-live.xml": "9A162336D4DCF91BBAE6244614D955807D6A095D85A1EF9958CA65228E026635",
+    "live-api-traffic.json": "8D4C8A2A93ACC1BC39919916E6FDEB728928655B234B1C8A41CED69F70E9300F",
+    "live-python-freeze.txt": "789ACEEF2F33442CAF871B73DF49A118E0FF126F97648C8CEF1ABC60C818F960",
+    "live-server.stderr.log": "B7A4C72A0D01E743188FBC0A10D013E9F57DA3778F3F58D4460CD203A90CEA13",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "475B5CBA95111B7C12390FED662AFA4F3D98156E26E359F2B95FE8BCCB86F38E",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "cleanup": "Runner removed PostgreSQL, Redpanda, volume, network, live processes and temporary worker image.",
+  "limitations": ["Single-broker bounded cap diagnostic; does not prove indefinite operation, HA, multi-worker operation, hosted providers or complete P11.", "The WARN outcome is the expected oversized-record rejection; no unexpected server/network or log errors were recorded. This receipt is bound to the current candidate and does not reattribute D2117."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
