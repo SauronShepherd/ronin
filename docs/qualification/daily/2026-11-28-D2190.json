@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2190",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_S3_JSON_FLOCI_CURRENT_FILTERED",
+  "candidate_sha": "257c037605ec5c89e5178feefe64a8d874466022",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered Docker S3 JSON connector qualification against local digest-pinned Floci with isolated cleanup",
+  "worker_image_digest": "sha256:759aee932735681cb27a1916ff880d1bcd2efe13eccc7e9074bda09cce2902c6",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2190-docker-s3-json-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2190-docker-s3-json-current-20261128-rerun -TestFilter 's3_json'",
+  "result": {"tests": "1 passed, 26 deselected, 0 skipped, 0 failed", "selected_test": "tests.integration.test_s3_json_connector_real::test_s3_json_sink_put_read_and_retry_round_trip", "fixture": "Floci S3 local emulator", "pytest_seconds": 2.98, "cleanup": "PASS", "strict_v01_gate": "not evaluated"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2190-docker-s3-json-current-20261128-rerun",
+  "evidence_sha256": {
+    "docker-cleanup.json": "B83EACDFE525AE3565418474B103D9EAB32C2F0DCC9FE4393C8BADDCCA768E85",
+    "docker-pytest-output.log": "A24D59FDC62E94196711F6DAF21FD92934EC0360CA14B16C5EA435582879950C",
+    "docker-qualification.log": "60920B2E0A4DA7A9E3BA1E55B9A738A455A10786A19FD1AA369B6FE7EF97F43A",
+    "floci-s3-qualification.log": "03DF066F5D49B1720ADFDE621FF17CD7349A82ABBDFD9B44947DB864BD957AF6",
+    "v01-acceptance.xml": "83DC336E044CF5FDE7FB69966AFD9D7EAC2239C5EF8F2AA8D179D368F87BCEA3"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Floci es un emulador S3 local; no certifica AWS/S3 hosted, IAM externo, red/latencia productiva, P11 completo ni aprobación de release.", "La selección fue filtrada; strict v0.1 no se evaluó.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
