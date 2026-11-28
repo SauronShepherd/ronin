@@ -16,7 +16,12 @@ MAX_KAFKA_BATCH_BYTES = 8_388_608
 _KAFKA_PROTOCOL_OVERHEAD_BYTES = 512
 _KAFKA_METADATA_PROBE_TTL_SECONDS = 5.0
 _KAFKA_METADATA_PROBE_CACHE_LIMIT = 256
-_KAFKA_PARTIAL_BATCH_GRACE_SECONDS = 0.05
+# Allow the broker a bounded scheduling window to surface records from another
+# assigned partition after a partial fetch.  Fifty milliseconds was below the
+# observed clean live scheduling jitter and made a two-partition backlog drain
+# exactly at its retry cap; keep the grace to one non-blocking fetch so the HTTP
+# operation remains bounded while making the partition fairness window explicit.
+_KAFKA_PARTIAL_BATCH_GRACE_SECONDS = 0.2
 _kafka_metadata_probe_cache: OrderedDict[tuple[str, str, tuple[int, ...]], float] = OrderedDict()
 
 
