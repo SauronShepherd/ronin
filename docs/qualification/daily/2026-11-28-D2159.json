@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2159",
+  "date": "2026-11-28",
+  "status": "PASS_AZURE_BLOB_AZURITE_CURRENT",
+  "candidate_sha": "a64a2436f2b3aa67446df3b9f3f81e034f08235b",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Azure Blob JSON connector discovery, read and snapshot replay against the digest-pinned Azurite 3.35.0 local emulator on the current main candidate.",
+  "service_profile": "mcr.microsoft.com/azure-storage/azurite:3.35.0@sha256:647c63a91102a9d8e8000aab803436e1fc85fbb285e7ce830a82ee5d6661cf37",
+  "command": "$env:RONIN_AZURITE_PORT=10010; docker compose -p ronin-d2159-azurite -f examples/connectors/compose.azurite.yaml up -d azurite; $env:RONIN_AZURITE_ENDPOINT=http://127.0.0.1:10010; python -m pytest -q tests/integration/test_azure_blob_connector_real.py --junitxml C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2159-azure-blob-current-20261128\\pytest-junit-final.xml; docker compose -p ronin-d2159-azurite -f examples/connectors/compose.azurite.yaml down --volumes --remove-orphans",
+  "result": {"pytest": "1 passed; 0 skipped; 0 failed", "scope": "Azure Blob JSON connector against Azurite", "cleanup": "PASS; container, volume and network removed"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2159-azure-blob-current-20261128",
+  "evidence_sha256": {
+    "compose-down-final.log": "FA7407C762A38F548231891F4DF6C95AC65C9C1009839313428D0C3B1AAD9E46",
+    "compose-up-final.log": "78EDEB0917AE900D8B393EDDE56B811FCE5D22B04AA900848B655C77B9940EB5",
+    "azurite-final.log": "D5E989AD47636D00FDA165791E39E749C5C3152D0BA2ADBA476E88F94A178551",
+    "pytest-final.log": "3F9E4181641A1530CD89ED23A080B4335AB8F2594C702D38226DEC0694B865A2",
+    "pytest-junit-final.xml": "F8E11370A57A670E67BC84B015879562F35C4CB8FE02F792EBE18A1678037A1C"
+  },
+  "diagnostic_attempts": [
+    {"status": "NOT_RUN", "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2159-azure-blob-current-20261128\\attempt-1-missing-azure", "cause": "The declared azure-storage-blob dependency was absent; pytest failed at import. Cleanup passed."},
+    {"status": "NOT_RUN", "cause": "Host port 10000 was occupied; the isolated rerun used port 10010."},
+    {"status": "FAIL_DIAGNOSTIC", "cause": "The first manual key value was abbreviated/incorrect and Azurite returned AuthorizationFailure; the final run used the exact key from tools/run_docker_qualification.ps1."}
+  ],
+  "limitations": ["Local Azurite evidence only; not Azure cloud certification or complete P11.", "No production code changed; the promoted result is the final corrected run."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
