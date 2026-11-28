@@ -1,0 +1,42 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2131",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_WORKER_RECOVERY_DIAGNOSTIC",
+  "candidate_sha": "3f368b9307708d6f72ff5f801031c964a335632c",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered Docker worker/runtime qualification for clean execution, PostgreSQL-backed execution and SIGKILL recovery.",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2131-docker-worker-recovery-20261128 -TestFilter \"real_docker_worker_executes_clean_container_demo or real_docker_worker_executes_demo_against_postgres or real_process_sigkill_reclaims_same_run_and_reuses_three_cells or real_process_sigkill_reclaims_postgres_run_and_reuses_three_cells\"",
+  "image": "sha256:fd1ad94686c7c9c17fe669546652b0a6386e6dc137ace5b53b2a51d33bf26b35",
+  "service_profile": "Docker worker plus isolated PostgreSQL",
+  "result": {
+    "selected_passed": 4,
+    "deselected": 23,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "pytest_duration": "81.28s",
+    "cases": [
+      "test_real_docker_worker_executes_demo_against_postgres",
+      "test_real_process_sigkill_reclaims_same_run_and_reuses_three_cells",
+      "test_real_docker_worker_executes_clean_container_demo",
+      "test_real_process_sigkill_reclaims_postgres_run_and_reuses_three_cells"
+    ]
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2131-docker-worker-recovery-20261128",
+  "evidence_sha256": {
+    "docker-cleanup.json": "ae67c185e65a4ff1319554e5c4691feb68992f71c3067cfab2b6f6e33d36cb9e",
+    "docker-pytest-output.log": "45fb70117615957ba861d9f930b233cdf3cf0a7a35964ab4f12184f9333e85a1",
+    "docker-qualification.log": "dbad114a5d207c3f65f3572c04735de21039ff3f8b168cdf63dac882ba82cd6b",
+    "postgres-qualification.log": "f0897ceb23f3555fc60f9abb864654c0f531bdef2efd1aa6cadccd40f52b852e",
+    "v01-acceptance.xml": "35f9077ff9686a9cd4034a04c60f70783036accf6bb2b633d1db7443daf1090a"
+  },
+  "cleanup": "Docker runner reported PASS; the owned Ronin image and PostgreSQL/worker resources were removed. No containers, temporary Ronin qualification image or kind cluster remains.",
+  "limitations": "Filtered diagnostic only; 23 cases were deselected and strict v0.1 acceptance was not evaluated. This does not close complete P11 or release gates.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
