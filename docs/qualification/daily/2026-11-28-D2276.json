@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2276",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_TWO_PARTITION_BACKLOG_CURRENT_CANDIDATE",
+  "candidate_sha": "dbff07413587643df0d252efe6fb186361ee896c",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "live two-partition backlog drain in bounded micro-batches with PostgreSQL and Kafka",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2276-live-two-partition-backlog-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming drains a two-partition backlog in bounded micro-batches' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 46,
+    "correlated_http_logs": 46,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 46},
+    "application_errors": 0,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2276-live-two-partition-backlog-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "ce755deaecad26fb52fa6da74df544c79a425c84cf764ef8e279d3960814cdba",
+    "browser-live.xml": "254550d868fba08929a4303c728a8093442e99850b669772a1fba534293f623a",
+    "live-api-traffic.json": "aa2c0c380a5e6ae4d6af0b924a4335d5d267dab948829b4b328ba576cdb0f3a3",
+    "live-server.stderr.log": "518be80cf998ba7e0a25382a050f3b74742f28969a6e81adcbb8370f92fce8cd",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "5097fd79440e0f955eeddada27217df33c2bbbd70d57fa6f33dabea6ed70621d",
+    "live-python-freeze.txt": "88067d55e36634acc261195a6ce91e33d0f766a1f71ee06f8f04a66b4b1ba3cd"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is bounded local two-partition backlog evidence; it does not certify hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2275 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
