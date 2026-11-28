@@ -1,0 +1,48 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2197",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_EMPTY_PARTITION_HEALTH_CURRENT",
+  "candidate_sha": "9bc49554940f0b0a116dcb2f9a190052f0c5c5f0",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live streaming health diagnostic for an empty partition without false lag, using PostgreSQL, single-broker Redpanda, Ronin API and Docker worker",
+  "worker_image_digest": "sha256:0cb6dc3c30187a87901afb2e15bb82748ebdfb5ae516e7ed94cc07568a3c7a2c",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2197-live-empty-partition-health-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2197-live-empty-partition-health-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2197-live-empty-partition-health-current-20261128 -TestGrep 'live streaming health reports an empty partition' -RequestTimeoutSeconds 90; docker image rm ronin:qualification-d2197-live-empty-partition-health-current-20261128",
+  "result": {
+    "tests": "1 passed, 0 skipped, 0 failed",
+    "api_events": 4,
+    "correlated_events": 4,
+    "api_outcomes": {"OK": 4},
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "application_log_errors": 0,
+    "unexpected_error_or_critical_logs": 0,
+    "duration_seconds": 42.02,
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2197-live-empty-partition-health-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "c9373ca355036a581f97593a3bb1157aef3ad0320f4245ac3b93c8925b4946a3",
+    "browser-live.xml": "1e6cc6a8cfdd3764edab164b525045c89d9e4e49c46f170c476cd7211026e103",
+    "live-api-traffic.json": "b6fb386bcf6cfce75b0528d693abb6e23d5712a8260d8ff82d5d470cdc9b24ad",
+    "live-python-freeze.txt": "bcda4aedf97ddb3557bed8d0d68dc243ec1d574a416daafc6f66733f29462dbb",
+    "live-server.stderr.log": "a5b0d3fbd4789a4704008ee8a42ba583d1c2f450e02a5381c5c193d6b80c8a1d",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-worker.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-worker.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "62d0314404fabe75fa4237d1975ef4d0ea405ecc407458dda023c723b7ccd8ed",
+    "web-test-dependency-cache.json": "8dc49380e156de0e68480e71c76fb0b0b986c0949246a7eaf21d4457c7e51ce1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Diagnóstico live bounded de una sola partición vacía y un broker; no demuestra HA/RF3, operación indefinida, multi-worker productivo ni hosted providers.",
+    "No completa P11 ni habilita ningún gate de release.",
+    "No se reatribuye evidencia histórica."
+  ],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
