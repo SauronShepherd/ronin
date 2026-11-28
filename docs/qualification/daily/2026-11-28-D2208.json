@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2208",
+  "date": "2026-11-28",
+  "status": "PASS_MIGRATION_FIXTURES_CURRENT",
+  "candidate_sha": "23c51deb6559136186cb626b43c1805ea4a24a55",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "credential-free migration fixture certification with SQLite bundle round-trips on current main",
+  "command": "python -m tools.migration_fixture_certification --output C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2208-migration-current-20261128",
+  "result": {"profiles": ["fabric", "databricks", "foundry", "dataiku"], "profiles_passed": "4/4", "workflow_import_and_reexport": "4/4", "roundtrip_digests": "stable", "cleanup": "PASS; external runtime not used"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2208-migration-current-20261128",
+  "evidence_sha256": {"fabric-certification.json": "07455dfb39a725d19b7f8dbe50a1c34c64434d00bf7a6d6cb8a45dc77cb3d18f", "databricks-certification.json": "0a994fc0bd7a6fda996ad6398d42d5dec2efff69856adc06d8ec143e43f5eb10", "foundry-certification.json": "985a51830f35a561ee19a10fbee16eb7ecca0da12f04edd949a932fe13383d65", "dataiku-certification.json": "31dcca6d486ad575e00ff3b1f473b401f3fdee1b30aa83d532cc37245c1bed1c", "fabric.roninbundle": "bf1173a62241780bafc9edcfacad888087f8350f64aa8966f3ff53b99e63fcb8", "databricks.roninbundle": "250f9f735622652489d0910be19cb9d488e2046851e544405fd75fa7f2999c98", "foundry.roninbundle": "868c5b2e4d23a1169ef1b314ec95e3f482fb12b161860c01d486a196412e0df9", "dataiku.roninbundle": "942933b469c2063a4568d1826db8fd41aa12731e5cd42ea76a701189a6fe4ada"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Credential-free golden fixtures only; no authenticated Fabric, Databricks, Foundry or Dataiku provider certification.", "Classification results remain explicit, including unsupported objects; this does not complete P11 or qualify release.", "No historical evidence was reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
