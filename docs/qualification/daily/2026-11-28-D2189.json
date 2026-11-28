@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2189",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_RF3_MULTI_BROKER_FAILOVER_CURRENT",
+  "candidate_sha": "3d2d3f72d7722f16694542277e512cc14ff7b70e",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live RF3 three-broker failover and durable-checkpoint recovery journey with PostgreSQL, Redpanda, Ronin API and Docker worker",
+  "worker_image_digest": "sha256:6b13bee03c8b1eb6a16cd9d0c5b5b2c27feaab74e229102c46a8cb647c607052",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2189-live-rf3-failover-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2189-live-rf3-failover-current-20261128-rerun -StorageBackend postgres -WorkerImage ronin:qualification-d2189-live-rf3-failover-current-20261128 -MultiBroker -TestGrep 'live streaming multi-broker failover' -RequestTimeoutSeconds 120; docker image rm ronin:qualification-d2189-live-rf3-failover-current-20261128",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 5, "correlated_events": 5, "api_outcomes": {"OK": 5}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 88.94, "cleanup": "PASS", "broker_count": 3, "replication_factor": 3},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2189-live-rf3-failover-current-20261128-rerun",
+  "evidence_sha256": {
+    "browser-live.log": "176FFB2E3C9385070F2CE6A045C7638164F3659337CCF0797B91C352CB20179F",
+    "browser-live.xml": "5A91C89D3D803D8D08F855A0F46B088F04CA22C7F6D10FCF5D24FFFC16B08880",
+    "live-api-traffic.json": "CCAFA918EA9A5FE45A03CE990322066766EE1466CD5B1A96764773F783299BD8",
+    "live-python-freeze.txt": "C03F9D81BC0973F75DE34C825E09DF507CA002A43C56107798E4896FFB44B688",
+    "live-server.stderr.log": "0FB47FE24BEEA32CCBFEF87329694CCE4B4B419AE40CCC61EEB3E4ABF0FCDFDF",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "939CA6F56B2B7B74BA42D9CA777C5948A9244E85B79824ABF7A707DC94A7B283",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Failover bounded RF3 de tres brokers; no demuestra operación indefinida, HA/SLO completo, multi-worker productivo, hosted providers, P11 completo ni aprobación de release.", "No se reatribuye evidencia histórica, incluida D1165."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
