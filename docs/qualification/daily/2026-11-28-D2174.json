@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2174",
+  "date": "2026-11-28",
+  "status": "PASS_TRINO_PROVIDER_CURRENT",
+  "candidate_sha": "0606b0e52e981d8b8412b41d9b8f961aaa1fd6bf",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2174-trino-provider-current-20261128-rerun\\qualification.json",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_trino_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2174-trino-provider-current-20261128-rerun",
+  "provider": {"service": "Trino 484", "image": "trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f"},
+  "result": {"tests": "4 passed, 0 skipped, 0 failed", "collected": 4, "executed": 4, "cleanup": "PASS", "elapsed_seconds": 20.074},
+  "evidence_hashes": {
+    "qualification.json": "8567BA3CACDBD1D97DD08D3E98D13965FC6A640FCC48BAF2D7EBA5504D12A9CC",
+    "qualification.log": "4FE6F8FC75BEA2A7039B41939D55ACA7DC806F0CD0EA9B575265EB0EBF8A1892",
+    "pytest-timings.json": "E87AA8BDA17F082688DD71BE421D364C5C6236926DF9F89CD3852F4176819022",
+    "trino-container.log": "1EBD303B6E598AF713DC837AE0624CEFA4A741CA83351CF588B0275531A236CC",
+    "trino-junit.xml": "6DD862A3418AB8B38B52C895C835E8725B090D1AF485A00B3B593AF90E9734C5"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Provider Trino local aislado y digest-pinned; no certifica Trino hospedado/cloud, SLA productivo, HA, operación indefinida, P11 completo ni aprobación de release.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
