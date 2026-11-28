@@ -1,0 +1,44 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2256",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_60_CURRENT_CANDIDATE",
+  "candidate_sha": "b5ce844646a9690181c7708d1799430f79473207",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered live 60-second supervisor soak with records arriving, PostgreSQL/Kafka and real worker",
+  "commands": {
+    "build": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2256-live-supervisor-soak-20261128 --label org.ronin.qualification.run=d2256 .",
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2256-live-supervisor-soak-postgres-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2256-live-supervisor-soak-20261128 -TestGrep 'live streaming supervisor soak drains while records arrive for a bounded duration' -SupervisorSoakSeconds 60 -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "supervisor_soak_seconds": 60,
+    "api_events": 71,
+    "correlated_http_logs": 71,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 71},
+    "worker_image_id": "sha256:3e9b2a878aeda0c63bd45dbd242f6e48a8cf9635bbbdd09cebfeb74bd07ce15c",
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2256-live-supervisor-soak-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "32eabe96a246f8504a76763da9d2a2167e2857f233e0d68b788dda5b943b4c9c",
+    "browser-live.xml": "ce3c8d51e0288995088e65adb0d963e9d7f5f405ebc52cc935b28acb62904436",
+    "live-api-traffic.json": "b6d0c93539eafec0368767cb308babed0dcf5856eb3c3e306c02d4d30bb6132a",
+    "live-server.stderr.log": "4b7762fde731e250faaf84905802e51ca2e09981501b1cbb372cbfa484a72a82",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "34dbf8e1fc6c5d0008bf4c657d4e79d158c524825adcd322589be24549c924ed",
+    "live-python-freeze.txt": "d5206b22f18ef676b8a6a01319d7be42b52160f9c175b891cc49e5b33a7270f6"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Bounded 60-second live diagnostic only; it does not certify indefinite operation, HA, hosted providers, complete P11 or release.", "No historical D83-D2255 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
