@@ -1,0 +1,19 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2209",
+  "date": "2026-11-28",
+  "status": "PASS_FLOCI_TERRAFORM_CURRENT_CANDIDATE",
+  "candidate_sha": "b1f0ba9a759235a7a406cc0eb597d4e5f91b8a23",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "current-candidate local Floci Terraform provider qualification",
+  "command": "docker compose -p ronin-d2209-floci -f examples/cloud-studio/compose.floci.yaml up -d floci; python tools/cloud_studio_floci_qualification.py --endpoint http://127.0.0.1:4566 --backend floci --terraform --terraform-executable C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1753-terraform-bin\\terraform.exe --workspace C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2209-floci-terraform-current-20261128\\workspace --evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2209-floci-terraform-current-20261128\\qualification.json; docker compose -p ronin-d2209-floci -f examples/cloud-studio/compose.floci.yaml down --volumes --remove-orphans",
+  "provider": {"service": "Floci 2.1.0", "image": "floci/floci:2.1.0@sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db", "terraform": "1.13.5", "aws_provider": "6.65.0"},
+  "result": {"health": "HTTP 200", "stages": ["plan", "validate", "apply", "refresh", "destroy", "state list"], "fixture_resources_after_apply": ["s3://qualification-bucket", "sqs://qualification-queue"], "residual_resources_after_destroy": [], "cleanup": "PASS"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2209-floci-terraform-current-20261128",
+  "evidence_sha256": {"qualification.json": "d8bd07d2ea61a7d5e3cbb0a409e7dc8b9cfdc370bd7b6367608f07c56e27960d", "workspace/.terraform.lock.hcl": "c4127c840d7d8d8e56195ffcdfac4cdc39cef8415fa927a6d176cb1a9ab932cf", "workspace/main.tf": "3f4ca7660853c434c4b9f66f34bff848d25ccd456ac01df41a4437b01605ab48", "workspace/provider.tf": "25b1009bd0a9faf2e36f5b6b9243bff2c01fb177d27fb54632cdf8cf61a512a0", "workspace/resources.tf": "fec8f8a4232dd7029525bfcda7703ad6b1d87cf383d59ac99c9bc1f09e84ea83", "workspace/variables.tf": "96301c086ead9439511c2e0a3079431910b2d90c954fee784765efed18c604e3"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local Floci bounded provider/object-store evidence only; no AWS hosted/IAM certification, Azure hosted certification, HA, indefinite operation, complete P11 or release approval.", "D2177 remains bound to its own historical candidate; no evidence was reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
