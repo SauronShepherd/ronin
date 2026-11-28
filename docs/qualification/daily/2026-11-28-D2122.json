@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2122",
+  "date": "2026-11-28",
+  "status": "NOT_PASS_PYTHON_FULL_CURRENT",
+  "candidate_sha": "546ef9dc88ecde51764e550dac326893aa08845c",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Full Python regression suite on the current main candidate, followed by focused VCS-source reproduction.",
+  "commands": [
+    "$env:RONIN_TEST_EXECUTION_MODE='python-full-d2122'; $env:RONIN_TEST_SOURCE_COMMIT='546ef9dc88ecde51764e550dac326893aa08845c'; python -m pytest -q --junitxml=full-junit.xml",
+    "$env:RONIN_TEST_EXECUTION_MODE='python-focused-d2122'; $env:RONIN_TEST_SOURCE_COMMIT='546ef9dc88ecde51764e550dac326893aa08845c'; python -m pytest -q tests/test_vcs_source.py --junitxml=vcs-focused.xml"
+  ],
+  "result": {
+    "full_suite": "4708 passed, 90 skipped, 4 failed in 473.23s",
+    "full_suite_failures": [
+      "tests/test_vcs_source.py::test_capture_source_revision_matches_remote_identity_and_subdirectory",
+      "tests/test_vcs_source.py::test_capture_source_revision_rejects_subdirectory_mismatch",
+      "tests/test_vcs_source.py::test_capture_source_revision_rejects_origin_mismatch",
+      "tests/test_vcs_source.py::test_capture_source_revision_matches_local_file_remote_uri"
+    ],
+    "focused_vcs_source": "11 passed, 1 skipped in 2.47s",
+    "interpretation": "The focused file passes while the full-suite run reproduces four failures in the same file; no qualification PASS is promoted."
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2122-python-full-current-20261128",
+  "evidence_sha256": {
+    "full-junit.xml": "b0a003ffcd0262959ceecd57212c52d56a70631f1d0ebdc0c962c580e3e68e84",
+    "pytest.log": "3ab33dd8140d98590e99cb95db00c3ef6893d0648335bcfa2118ce0cc94129c6",
+    "vcs-focused.log": "2b6f17c95df7a4ff33819c482e89a879930cf33560a46101239e231bd1e02117",
+    "vcs-focused.xml": "f6acc760ff801bac40f05460179312d927c5f551138449ad1f06ad4d8f8b87ed"
+  },
+  "cleanup": "No qualification containers or temporary Docker resources were created by this Python-only run; environment cleanup was verified after execution.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
