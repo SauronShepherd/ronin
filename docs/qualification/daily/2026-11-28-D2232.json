@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2232",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_BUNDLE_FOCUSED_CURRENT_CANDIDATE",
+  "candidate_sha": "500e11c2d4e2b79e94fc4c60805472686a4150bd",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded focused real PostgreSQL Bundle atomicity and late-binding rollback qualification",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2232-postgres-bundle-current-20261128 -TestPath tests/integration/test_postgres_bundle_real.py",
+  "result": {
+    "selected": 2,
+    "passed": 2,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "selection": "path=tests\\integration\\test_postgres_bundle_real.py",
+    "coverage": "disabled",
+    "postgres_image": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c",
+    "pytest_wall_seconds": 8.813,
+    "total_wall_seconds": 34.211,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2232-postgres-bundle-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "93c91801e7e057f9ebdece198c492c5388b2949ccaee8a303a957a2854cb8cd8",
+    "pytest-postgres.log": "61e4085ad2924ab794c287db65622524eef25f425f132ab39699c1aa8edcd4c5",
+    "pytest-postgres.xml": "1a19f2e7fe7c5d4043d3eb4b080f467f7799c7bd43408bbcb52dc59cc743068b",
+    "pytest-timings.json": "dc7f7dab2786d74635ac29a4475da4c3f6653e7126084c75e06e39d7844e138c",
+    "runner-timings.json": "43b8b31ff5d7db4e7db0f7b42020e9516296a5395c67113c0903070bd5e95115"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused file qualification with coverage disabled is diagnostic evidence, not the complete Python/PostgreSQL suite or a release gate.", "Evidence is bounded to one PostgreSQL 16.4 container and one process; it does not certify cross-domain Bundle breadth, hosted providers, HA, multi-worker, indefinite operation or complete P11.", "No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
