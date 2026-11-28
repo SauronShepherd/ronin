@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2112",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_ROUTE_WIDE_CURRENT",
+  "candidate_sha": "a4addcf510273da1a1e9b4556b446d226bc093de",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2112-live-route-wide-current-20261128\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2112-live-route-wide-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2112-live-route-wide-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2112-live-route-wide-20261128 -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2112-live-route-wide-20261128",
+  "result": {
+    "playwright": "43 passed, 1 skipped, 0 failed of 44",
+    "active_routes": 25,
+    "api_backed_routes": 24,
+    "ui_only_routes": 1,
+    "api_events": 481,
+    "correlated_events": 481,
+    "uncorrelated_events": 0,
+    "api_outcomes": {"OK": 457, "WARN": 21, "ERROR": 3},
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "log_critical": 0,
+    "cleanup": "PASS",
+    "elapsed_seconds": 253.8
+  },
+  "services": ["PostgreSQL", "Redpanda/Kafka", "Ronin API", "Docker worker"],
+  "worker_image_digest": "sha256:f69cfb3cd3986be2548ac51c36589a05a66be9388c3d9d8fa6f13dcfefaefa8a",
+  "evidence_sha256": {
+    "qualification-summary.json": "fccf1f61afbe01c7d5ef2c0f0f4b94152c65e8033c58e9fdd936abda844f184b",
+    "browser-live.xml": "16625263f13c3453918da31616ee13a7519709a246d5dbb79128ef723a8ef485",
+    "browser-live.log": "7ab54eda16b5a1e3cee9652d7988d5dc189d4a7664e52681748c085d37557358",
+    "live-api-traffic.json": "4f1254490a8bb7bd7139704e00316d5efaf93f9df3eb85dd99f590f64604333d",
+    "live-server.stderr.log": "61f9c0dbcb671e48356c25cf8cce4965d3a058f025cdba4da8384bf16d987bef",
+    "live-python-freeze.txt": "c6b519ac645b427d433f20e74d7ad07a53f09f1a0abca1718810db28065a8d06"
+  },
+  "status_after_receipt": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"},
+  "limitations": [
+    "Cobertura route-wide bounded local; la suite observó 3 respuestas ERROR y 21 WARN documentados, sin errores inesperados ni críticos.",
+    "Esta ejecución no activa multi-broker ni event-workflow en el fixture route-wide; no demuestra HA, operación indefinida, multi-worker productivo ni hosted providers.",
+    "No hubo cambios de producción ni reatribución de evidencia histórica."
+  ]
+}
