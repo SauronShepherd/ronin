@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1803",
+  "date": "2026-12-01",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_1200_CURRENT",
+  "candidate_sha": "03d2b64e8d5bb9b8cc30149a42718f6e4da2db3b",
+  "implementation_commit_sha": "03d2b64e8d5bb9b8cc30149a42718f6e4da2db3b",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1803-live-supervisor-soak-1200-current-20261201\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1803-live-soak-1200-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1803-live-supervisor-soak-1200-current-20261201 -StorageBackend postgres -WorkerImage ronin:qualification-d1803-live-soak-1200-20261201 -TestGrep 'supervisor soak' -SupervisorSoakSeconds 1200 -RequestTimeoutSeconds 240; docker image rm --force sha256:6bc403b1cfde3211519fd7bdb00bbcfc1bad8c05f777656867136f5e493fca5c",
+  "result": {"status": "passed", "tests": "1 passed; 0 skipped; 0 failed", "supervisor_soak_seconds": 1200, "api_events": 1523, "correlated_events": 1523, "api_outcomes": {"OK": 1523}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "worker_image_digest": "sha256:6bc403b1cfde3211519fd7bdb00bbcfc1bad8c05f777656867136f5e493fca5c", "cleanup": "PASS", "elapsed_seconds": 1230.66},
+  "evidence_hashes": {"qualification-summary.json": "6767983B59A9754FBE67853B064D106CF74BD8A8EDDCECE504D2099116CAA293", "live-api-traffic.json": "0AD941C21E4AFF484EB37216BA5B6F932C16C2FE6FF44274AB47E4A3A574DC19", "browser-live.xml": "E904515AFC1B1B9F8D336954969D36C4229F0AA67C4DFD24C50124EA6AD0E6FD", "browser-live.log": "BE19CB68660ACAA5D46976148F6C694EB5249FC7E3D486AAA003B3614DC2FF7C", "live-server.stderr.log": "4A4C2C9EAFBD68E52898F2E32F0BF87E1C0BCD6E170E5789A61F1516E9060D32", "live-python-freeze.txt": "43000AF7AAAD54226D4EE78DFDF3DC9A7C17256FEC4A082E0E547BBB05A5625E", "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Soak live bounded de 1.200 s con PostgreSQL, Redpanda single-broker y worker Docker; no demuestra operación indefinida, HA/multi-worker productivo, hosted providers, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
