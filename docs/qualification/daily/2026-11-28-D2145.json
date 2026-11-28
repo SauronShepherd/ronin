@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2145",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_PARQUET_SINK_CURRENT",
+  "candidate_sha": "04316eecb6110104684cef2e7fca65800c004da7",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live streaming Parquet sink reset/replay journey with real PostgreSQL, single-broker Redpanda, Ronin API and Docker worker.",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2145-live-parquet-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2145-live-parquet-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2145-live-parquet-20261128 -TestGrep 'live streaming parquet sink' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2145-live-parquet-20261128",
+  "worker_image_digest": "sha256:fb4f39beb722b1f889c913a2be70d169cfded1eb03e30105218ffd5819a52247",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 11, "correlated_events": 11, "api_outcomes": {"OK": 11}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 47.68, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2145-live-parquet-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "B0CA456D1C13D5C08082D87434CF9C86FD06569EDB219D926C9E6961BCE02272",
+    "browser-live.xml": "7E7D997D24350CDCD1198CA2BC1AB49894286895E3188B33F020BE0E1C76DE4D",
+    "live-api-traffic.json": "754B1F00C9E6213FCDE8A72911C6CA2D3A6DE71F5F2DB15F63E452194649CAF9",
+    "live-python-freeze.txt": "9A928C8050F3FE78C3FCFA9258A50CCED0ED9055A7D838B0C218D5F8B13436A2",
+    "live-server.stderr.log": "C3D9164FE3696C0F233A0857A78BAAC7FDD34659A2AAE0856390CE52C084D069",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "3480D4A88CEE1AC40591B2E09CF47BC34AACED63E8DCFFE875F0B64BE418E341",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "cleanup": "Runner removed PostgreSQL, Redpanda, volume, network, live processes and temporary worker image.",
+  "limitations": ["Single-broker bounded diagnostic; does not prove indefinite operation, HA, multi-worker operation, hosted providers or complete P11.", "Route-wide audit was not run for this filtered case."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
