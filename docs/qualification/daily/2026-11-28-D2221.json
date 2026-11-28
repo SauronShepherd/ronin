@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2221",
+  "date": "2026-11-28",
+  "status": "PARTIAL_PASS_SUPPLY_CHAIN_BOUND_SBOM_PROVENANCE_LICENSE_NOT_PASS",
+  "candidate_sha": "ab84acdc2ef438e0e04598a98390aa416bbd92f7",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "current-candidate end-to-end local supply-chain evidence with Python artifacts, runtime/probe image TARs, Trivy 0.76.2, release SBOM, provenance and license qualification",
+  "trivy_image": "aquasec/trivy@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb",
+  "result": {
+    "runtime_trivy": "PASS: 0 vulnerabilities detected",
+    "probe_trivy": "PASS: 0 vulnerabilities detected",
+    "release_sbom": "PASS and verify PASS",
+    "bound_container_sbom": "2/2 PASS",
+    "provenance": "PASS",
+    "supply_chain_evidence": "PASS",
+    "license_qualification": "NOT_PASS: host has multiple installed distributions for pytest; no review decisions invented",
+    "cleanup": "PASS"
+  },
+  "evidence_directories": {
+    "full": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2221-supply-chain-full-current-20261128",
+    "trivy": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2221-supply-chain-trivy-current-20261128"
+  },
+  "artifact_digests": {
+    "runtime_image_tar": "3f075b5a9f46d6af978f5f4e61a9123dd03bb0b60878e511296ef61924e7d5b5",
+    "probe_image_tar": "bac7dc1480ec8e4a7f959f189f0b88a9538d22bb706626f47e1d941b5f9c4801",
+    "runtime_trivy_cdx": "907f3008123e87dd1c1a5dba1e910a9b487d7743e922e39c4f8cffc9b4296511",
+    "probe_trivy_cdx": "3f8f28a6fe5c32e0fb783b294321fd11ad3461d9164ac692c2fb7bb9a79a08a1",
+    "release_sbom": "5b181747eb3dac120c176e9f2977aa01ec93ae3fe1e41a115157ac07e4fe40e5",
+    "provenance": "8ebfe0ce4926e171eed6bf0628e1eee09575683fd97ac86633831b8fcd7f20ed",
+    "supply_chain": "549cdfbfda0439f8c654551d45f7ee4d916065f597edc2c45b5474731c598b5d"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["License qualification did not pass on this host because duplicate installed pytest distributions prevent inventory generation; no human license decisions were fabricated.", "Local unsigned provenance and digest-pinned local scans do not certify a trusted hosted builder, cloud IAM, HA, indefinite operation, P11 complete or release approval.", "D2220 and all earlier receipts remain bound to their exact candidates; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
