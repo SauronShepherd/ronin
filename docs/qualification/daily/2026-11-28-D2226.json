@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2226",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_RUNTIME_CURRENT_CANDIDATE",
+  "candidate_sha": "33fbd65e8e0284be8e58945a083bbced4846fc12",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded Docker runtime/backend acceptance with PostgreSQL, Docker worker, Floci S3, Azurite Azure Blob, appliance backup/restore and strict v0.1 journeys",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2226-docker-runtime-current-20261128",
+  "result": {
+    "docker_integration_selected": 27,
+    "docker_integration_passed": 27,
+    "docker_integration_skipped": 0,
+    "docker_integration_failed": 0,
+    "v01_live_passed": 15,
+    "v01_live_skipped": 0,
+    "v01_live_failed": 0,
+    "v01_strict_success": true,
+    "pytest_wall_seconds": 223.01,
+    "ronin_image_id": "sha256:8230b2d17211c55e5bda70456efce9d94a2374cd7e1ba452b98b379668593d57",
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2226-docker-runtime-current-20261128",
+  "evidence_sha256": {
+    "azurite-qualification.log": "25221082da4afbce9f21402329b9c7c04f67a30394cab467ca9f2aacc3a30cb7",
+    "docker-cleanup.json": "728441e89322e7db40bb4c6ef3c1982a1e9cc915c934f1a33e36ea3c1c43d746",
+    "docker-pytest-output.log": "1d2b50d95380cfaffbffa32f3b944ce856520b9ed696f065592cdf093ae7f269",
+    "docker-qualification.log": "6d359a56a188dcfa33b3d7318b0644dea7321c009c2601f6c39915eef3a74ecf",
+    "floci-s3-qualification.log": "ef3684c4e9f3c770fe2fc90a868f8b4d20fdfef97db31f1265f21eb160efae94",
+    "postgres-qualification.log": "c73e86b7ad4df5c5d104093d1c3eb33d56cff0d0de936df6277181695a25fefc",
+    "qualification-summary.json": "dc5d640b71e9f108cd8ef32b565236cb5d416bb4d565189e63520591b873a5b2",
+    "v01-acceptance-strict.json": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c",
+    "v01-acceptance.xml": "e6acb50b4898f14d2fe7f115d02ced3defb5f1686262a34bd70a9d84187ff38c"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local emulators Floci and Azurite are not cloud-provider certification.", "The qualification summary records deliberately exercised timeout/cancellation paths as their own expected failure evidence; the 27 selected integration tests and 15 strict live journeys all passed.", "Bounded local Docker evidence does not certify indefinite operation, HA, hosted providers, P11 complete or release. No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
