@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2176",
+  "date": "2026-11-28",
+  "status": "PASS_SPARK_CONNECT_PROVIDER_CURRENT",
+  "candidate_sha": "e7ca484b8308655db3291c6bdba86658605f61e2",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2176-spark-connect-provider-current-20261128-rerun\\qualification.json",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2176-spark-connect-provider-current-20261128-rerun -ImageRef sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "provider": {"service": "Spark Connect 4.2.0", "client": "pyspark-client 4.2.0", "image": "apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59"},
+  "result": {"tests": "1 passed, 2 deselected, 0 skipped, 0 failed", "collected": 1, "executed": 1, "cleanup": "PASS", "elapsed_seconds": 22.533},
+  "evidence_hashes": {
+    "pyspark-client-install.json": "04EA59F524787A12685DCA8FB1C6A8B052F8CB1F17B27C42B9B609BB0F028B97",
+    "pytest-timings.json": "83645D81435D5198881757CA33CFD12F66B767A84D3B1459F66866DF9ED8FA43",
+    "qualification.json": "622CA70D835C57DF92F45ECA013A3D7C61A0B5072D8B859AD6A0A01DAEC26566",
+    "qualification.log": "276DC78D91B5D4881FCF81AE9CC1EF1FE47F988B888A8237EE25B8D8EB6F6155",
+    "spark-container.log": "CB0B7E816F9EE2E9B3F64B69AEC46B821A26627C82C691B3F2B24AA51A95F415",
+    "spark-junit.xml": "8B9DC7E57793486D47069507F7C149370943DBF4D7443E2851F0D59E26B684BC"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Spark Connect local aislado y digest-pinned; dos casos quedaron fuera por selección explícita; no certifica SDP/Spark hospedado, SLA productivo, HA, operación indefinida, P11 completo ni aprobación de release.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
