@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2164",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_CONNECTOR_CONTROL_PLANE_CURRENT",
+  "candidate_sha": "411fac3bdad3548c5f429a63caa25b1bb0578dd0",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered real-PostgreSQL connector control-plane discovery/preview and composition-reopen qualification on the current main candidate.",
+  "service_profile": "postgres:16.4-alpine",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2164-postgres-connector-control-plane-current-20261128 -TestPath tests/integration/test_postgres_connector_control_plane_real.py -AllowDirtyWorktree",
+  "result": {"pytest": "1 passed; 0 selected skipped; 0 selected failed; 0 deselected; 0 unrelated collection skips", "scope": "Authenticated control-plane connection creation, PostgreSQL discovery pagination validation, preview, and preview after composition restart", "cleanup": "PASS; isolated PostgreSQL container, volume and network removed by runner"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2164-postgres-connector-control-plane-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "CE20074FC435DD79FE29DC6DC77215307059A6CA78B6D88AFF2733C76F14B3FD",
+    "pytest-postgres.log": "660890E8E8A5FC6B9EAAC879D5E7F12F2C0D3FCEBAF359B06713EBCAFE2AFA28",
+    "pytest-postgres.xml": "5116DBA5CF17E6C4CD62089B0DB209D21DFCF17FBBC2D25751D3FC33E4FCAB65",
+    "pytest-timings.json": "2B95712E2AA598377F6D4463627D45B1185B1DA6A64DB60C257B19DE3D25B228",
+    "runner-timings.json": "20FA00DA9AD32BC7A88EF8315FE7ED5A0DEED77497C4C5FB5DB97D7763AB52C1"
+  },
+  "limitations": ["Filtered PostgreSQL control-plane diagnostic only; not the complete Python/PostgreSQL suite or full P11 qualification.", "This evidence does not certify hosted providers, indefinite operation, HA/multi-worker production or release readiness."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
