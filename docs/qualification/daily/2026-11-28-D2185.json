@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2185",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUSTAINED_BACKPRESSURE_65536_CURRENT",
+  "candidate_sha": "9419cbe25495f065e809b4bdf743506f43505df7",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live sustained-backpressure streaming journey with 65536 configured records, reset-safe replay, PostgreSQL, Redpanda, Ronin API and Docker worker",
+  "worker_image_digest": "sha256:74e94caa2771ead9797342cffb53cbea2d97e2bc9c3b409a53b4461127328de4",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2185-live-backpressure-65536-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2185-live-backpressure-65536-current-20261128-rerun -StorageBackend postgres -WorkerImage ronin:qualification-d2185-live-backpressure-65536-current-20261128 -TestGrep 'sustained backpressure' -BackpressureRecords 65536 -BackpressureTimeoutSeconds 1800 -RequestTimeoutSeconds 1860; docker image rm ronin:qualification-d2185-live-backpressure-65536-current-20261128",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "configured_records": 65536, "api_events": 19, "correlated_events": 19, "api_outcomes": {"OK": 19}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 361.75, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2185-live-backpressure-65536-current-20261128-rerun",
+  "evidence_sha256": {
+    "browser-live.log": "FFE03E981CB5AA0F52B1D33D12C484777E50205C8ED154AD75AB2F0638A32D71",
+    "browser-live.xml": "75C85621EBD6AF2C7983025C73CCBFC2D5558207B000681F75DB0D2649BD9517",
+    "live-api-traffic.json": "ABBE9FB34EE44316D9271979E67B0219F361A65E41ED5827F8E8FB3FD90E7CFC",
+    "live-python-freeze.txt": "4C397D2AF86D8B45B0E931FA9116504C249CCBAA6875A932AC813C3141652196",
+    "live-server.stderr.log": "5A58AB3FF0A6E9779B094FA201E98A54C5D566BE17AE68CE1637D3344A8BA9DD",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "9B4E5483E5213061688439888375BF555213AF64F82F6A7B7615C481D951C61D",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Backpressure bounded de 65536 registros; no demuestra operación indefinida, HA/RF3, multi-worker productivo, hosted providers, P11 completo ni aprobación de release.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
