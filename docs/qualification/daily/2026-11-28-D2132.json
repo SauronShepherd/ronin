@@ -1,0 +1,42 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2132",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_RESOURCE_OBSERVATION_DIAGNOSTIC",
+  "candidate_sha": "4b6e30639ee717901c073bdb7e2846df1cdbb75a",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered Docker resource-boundary and usage-observation qualification.",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2132-docker-resource-observation-20261128 -TestFilter \"real_docker_memory_swap_capped or real_docker_records_observed_cpu_and_memory or real_docker_isolation_limits_usage_and_cleanup\"",
+  "image": "sha256:7d1c22ae34d824ba825c0e9ed40b526b90c157a1e3a1f13042cbb758e40aca79",
+  "service_profile": "Docker worker/resource executor plus isolated PostgreSQL fixture",
+  "result": {
+    "selected_passed": 3,
+    "deselected": 24,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "pytest_duration": "4.56s",
+    "cases": [
+      "test_real_docker_memory_swap_capped",
+      "test_real_docker_records_observed_cpu_and_memory",
+      "test_real_docker_isolation_limits_usage_and_cleanup"
+    ]
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2132-docker-resource-observation-20261128",
+  "evidence_sha256": {
+    "docker-cleanup.json": "9536fecf70cfeba8012b411056cedede8a836c23e83a30c8645af2208a89a58b",
+    "docker-pytest-output.log": "c75cfff1992cacf19d43eb1d116a5e1adf7ab35158a004e91aa0cb93973334ae",
+    "docker-qualification.log": "8f22b9c76fbae601ce240a8518e3d7397e7669203c2dbb2693fdcd387469d197",
+    "postgres-qualification.log": "fd0b68dd3d7a46ff8e37849d0dd2a142a95b13b0308c14091ce3b46560080a6d",
+    "qualification-summary.json": "cdacb52a940f439706356cda68926cc1cb18844209c653146926e08107191297",
+    "v01-acceptance.xml": "62a90a6e1262e88b8d5ba7f7eb43ead837e51311fb4edbb3e34603a0eb3bcd04"
+  },
+  "cleanup": "Docker runner reported PASS; the owned Ronin image and fixture resources were removed. No containers, temporary Ronin qualification image or kind cluster remains.",
+  "limitations": "Filtered diagnostic only; 24 cases were deselected and strict v0.1 acceptance was not evaluated. This does not close complete P11 or release gates.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
