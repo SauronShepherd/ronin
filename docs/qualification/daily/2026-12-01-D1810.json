@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1810",
+  "status": "NOT_PASS_SDP_CLI_BOOTSTRAP",
+  "candidate_sha": "f932052b7c2366767998633bd087cd59c488fae1",
+  "implementation_commit_sha": "f932052b7c2366767998633bd087cd59c488fae1",
+  "production_change": "none",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_sdp_cli_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1810-sdp-cli-current-20261201",
+  "result": {"tests": "not executed", "cleanup": "PASS; no project or external runtime was created", "failure": "sdpstudio.exe failed at startup with ModuleNotFoundError: sdpstudio_cli"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1810-sdp-cli-current-20261201",
+  "evidence_hashes": {"qualification.json": "3397e9c0eef627e91b7986b2d14b2a79fc69d666a9620d52763f24b074352019", "qualification.log": "36f32f96056bde0ac2de440810c8a2ce7838d0792fd1f727c551f14821b11612"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["provider CLI installation is incomplete on this host", "no project or test was executed", "not promoted as PASS", "no historical evidence reattributed"]
+}
