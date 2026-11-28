@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1815",
+  "status": "PASS_INSTALLED_ARTIFACT",
+  "candidate_sha": "aa3af85277bf3ce8876897c27289359e41d168b4",
+  "implementation_commit_sha": "aa3af85277bf3ce8876897c27289359e41d168b4",
+  "production_change": "none",
+  "command": "python -m tools.artifact_qualification --checkout . --work-root C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1815-installed-artifact-current-20261201\\work --output C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1815-installed-artifact-current-20261201\\qualification.json",
+  "result": {"wheel": "PASS", "sdist": "PASS", "isolated_site_packages_import": "PASS", "contract_tests": "92/92 PASS, 0 skipped, 0 failed", "cleanup": "PASS; no external runtime"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1815-installed-artifact-current-20261201",
+  "evidence_hashes": {"qualification.json": "b41eb4bc4f3caec361a9e01424b6a5e7022ebb7e0c5a6181046a126a415db254", "wheel": "a688f59eb558dc06cde4964f876aa0f01d43c5334773e46cf9b739a81fc28a8b", "sdist": "124b443dbae5da42f4a5f383549b6e3271d0f9915ac4c00bd39fd860b21ca38a"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["installed artifact gate only", "license review and complete P11/release evidence remain open", "no historical evidence reattributed"]
+}
