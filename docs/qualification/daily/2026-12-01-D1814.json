@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1814",
+  "status": "PASS_RUNTIME_TRIVY_REMEDIATION",
+  "candidate_sha": "560ed0406849697523a786207d40248b3c2079a2",
+  "implementation_commit_sha": "560ed0406849697523a786207d40248b3c2079a2",
+  "production_change": "docker/apk-runtime.lock refreshed for current Alpine package resolution",
+  "regression": "29/29 PASS: tests/test_docker_qualification_contract.py and tests/test_posix_qualification_contract.py",
+  "command": "docker build runtime/probe; docker save; trivy 0.76.1 image scan --scanners vuln,secret --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL --exit-code 1",
+  "result": {"runtime_scan": "PASS exit 0, 0 vulnerabilities", "probe_scan": "PASS exit 0, 0 vulnerabilities", "runtime_image": "PASS", "probe_image": "PASS", "cleanup": "PASS"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1814-runtime-scan-current-20261201",
+  "evidence_hashes": {"runtime-findings.json": "d031a9aca1516e7bb17e12aaed7007622b90b2a5cd3eb8a2e62c8f1d81ebc593", "probe-findings.json": "3ca641ae44cbf978ecc87a08ecaad81bad80ca9f03ace2baa9bf5c4a77f82e3d", "runtime-image.tar": "9519e865b1bcbb10ced9b4f395c443b56c394f631b4dc61c49be6454f6acd78f", "probe-image.tar": "42f17bffc70d38e1603906aa13b297b2bd387bdc3396a64c8d27c675416a3131"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["license policy still lacks 22 human review decisions", "this scan does not close complete P11 or release approval", "no historical evidence reattributed"]
+}
