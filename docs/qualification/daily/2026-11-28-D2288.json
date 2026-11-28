@@ -1,0 +1,47 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2288",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_FULL_CURRENT_CANDIDATE",
+  "candidate_sha": "a8ee6eb24c9fac4be69cacf5c0ffe7166fbe9aad",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "full Docker integration, PostgreSQL, Docker worker, Floci/S3, Azurite/Azure and strict v0.1 acceptance",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2288-docker-full-current-20261128 -ImageTag ronin:qualification-d2288"
+  },
+  "result": {
+    "integration_tests": 27,
+    "integration_passed": 27,
+    "integration_failed": 0,
+    "integration_skipped": 0,
+    "strict_tests": 15,
+    "strict_passed": 15,
+    "strict_failed": 0,
+    "strict_skipped": 0,
+    "cleanup": "PASS",
+    "owned_image_removed": true,
+    "executed_image_sha256": "9335051e7e07065e86d13735e5732c796da212c119cea337701fde395f8376fb",
+    "postgres": true,
+    "floci_s3": true,
+    "azurite_azure": true,
+    "cleanup_summary_timeout_fixture_failure": true,
+    "cleanup_summary_timeout_containers_remaining": []
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2288-docker-full-current-20261128",
+  "evidence_sha256": {
+    "qualification-summary.json": "e63ecbdc180266abef113536dd9f22161dfde0326cab5cde2632a0c7ee618eba",
+    "docker-qualification.log": "b979578002922ede2fb1bc7205af3f333da1eaedce0cfe20fd531465ceb7cc5c",
+    "docker-pytest-output.log": "57e79dd52aa22cff8b3f14da539888574f60ac1a5cffc7a735b185cc4a811316",
+    "v01-acceptance-strict.json": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c",
+    "v01-acceptance.xml": "b499d2bd964161273c1b1ae1fd72768d95903b5af6d757ef65be3dd1ebb6f68d",
+    "docker-cleanup.json": "dd01beb66bdb6e0c6c2c26c55d457053ce34409fb6da7a575fc459c24de69fc3",
+    "floci-s3-qualification.log": "39c8a94d7af8431f53bcde9b2607127c513cc2026b29cda2b8ba55b6a6237e7c",
+    "azurite-qualification.log": "737c34e4570ab383e655d3f4233ac47ed6c71884ae060cb30711fe9ff1ce7a93",
+    "postgres-qualification.log": "a272b72a1eee35bb18558b466694ffdba6729d5ba5a155aad3a6f9faec99154c"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Docker acceptance is bounded local qualification, not hosted-provider certification or complete P11/release approval.", "The qualification summary records a timeout fixture failure but zero remaining timeout/cancellation containers; final runner cleanup and owned-image removal both passed. This distinction remains explicit.", "No historical D83-D2287 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
