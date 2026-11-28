@@ -1,0 +1,24 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2179",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_OUTBOX_INBOX_RECOVERY_CURRENT",
+  "candidate_sha": "1db99e02fa5aa4015238c728602298249d7cc6f1",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2179-postgres-outbox-inbox-recovery-current-20261128-rerun\\pytest-postgres.xml",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2179-postgres-outbox-inbox-recovery-current-20261128-rerun -TestPath tests/integration/test_postgres_workflow_store_real.py -TestFilter \"test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles or test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries\"",
+  "service_profile": "PostgreSQL 16.4-alpine real isolated service",
+  "result": {"tests": "2 passed, 19 deselected, 0 skipped, 0 failed", "selected": 2, "executed": 2, "coverage": "disabled for filtered diagnostic", "cleanup": "PASS"},
+  "evidence_sha256": {
+    "pytest-output.log": "D92DC35DB1140DBF278FAE3EAE14510B00F0D9C010AE113B2FBDCF3D57D1F52C",
+    "pytest-postgres.log": "F7873DA795B72E36AB3F137B2680D398008F26853BE0F3474405E819FA3E3482",
+    "pytest-postgres.xml": "EA0CB1B6E53788779455245C6D1B7CA5CEB4E6D01C6521354CC04CC80925B467",
+    "pytest-timings.json": "7BEDF31BCAD25EDF2D62A4D84D14CDD0E2B5A0A9940CD26296FB015D303B189F",
+    "runner-timings.json": "0E74E3B49CBC20C107858ED5D7833B3FB2035F6BBCF0BF8BCC3953EA92616225"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Diagnóstico filtrado y bounded de execution outbox/event inbox; no demuestra suite completa, operación indefinida, HA/multi-worker, P11 completo ni aprobación de release.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
