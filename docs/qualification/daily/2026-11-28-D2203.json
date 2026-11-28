@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2203",
+  "date": "2026-11-28",
+  "status": "PASS_OTLP_LOCAL_CURRENT",
+  "candidate_sha": "7a80d7ea4cc5e7b8935e8b28cee69e5fb1abc0b3",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded local OTLP/HTTP Collector qualification for traces, metrics and logs on current main",
+  "collector_image": "otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_otlp_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2203-otlp-current-20261128 -ImageRef otel/opentelemetry-collector-contrib@sha256:45392d534c1edcc809c2d112394029246bc679d2ae5ea7081414a1fc74f2c621",
+  "result": {
+    "tests_expected": 1,
+    "tests_passed": 1,
+    "tests_skipped": 0,
+    "tests_failed": 0,
+    "signals": ["traces", "metrics", "logs"],
+    "cleanup": "PASS"
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2203-otlp-current-20261128",
+  "evidence_sha256": {
+    "collector-config.yaml": "6d631511413384de11d3aed2aa852697ef9c696b5b2bb9b3aefa3464ee89f07f",
+    "collector-container.log": "bb91d45a4a79094ec8b2ea45f7e5218544da833e625c14996cf0d49eb053414c",
+    "otlp-junit.xml": "1ac9a3f0f9cfd748705883ea86e3c9c550d88c7e2a2cebe66efd89386bd328ca",
+    "pytest-timings.json": "f82a7cc5de3ed89df124a4cf09fcebb8c62a487716a3aeefd33b570678233c91",
+    "qualification.json": "22e0b034465bcaac8c6a9640d325b12b3ead2b4d51d804729326767243cbb99e",
+    "qualification.log": "c003a78fe349720b7e568ee5b93fcfc74165d35090f343b9f75f32dd32d35b13"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local Collector only; no hosted observability backend, HA, external IAM, indefinite operation or SLA claim.",
+    "This bounded signal lane does not complete P11 or qualify release.",
+    "No historical evidence was reattributed."
+  ],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
