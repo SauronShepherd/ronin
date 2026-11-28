@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2137",
+  "date": "2026-11-28",
+  "status": "PASS_PYTHON_POSTGRES_FULL_CURRENT",
+  "candidate_sha": "ce0e2aeccd851f1db2fc1549764c540768485738",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Complete non-performance Python/PostgreSQL suite on the current clean main candidate, with coverage enabled.",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2137-python-postgres-full-current-20261128",
+  "service_profile": "isolated postgres:16.4-alpine",
+  "result": {
+    "passed": 4770,
+    "skipped": 31,
+    "failed": 0,
+    "warnings": 13,
+    "pytest_duration": "502.14s",
+    "coverage_enabled": true,
+    "cleanup_status": "succeeded",
+    "skips": "Explicit Docker/provider/external-service and platform/symlink prerequisites; no skipped case was promoted to PASS."
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2137-python-postgres-full-current-20261128",
+  "evidence_sha256": {
+    ".coverage": "f27138b60c8c3c3fb78fb73b920c43161688e2d24e47f2afc0b9dd6520a4db99",
+    "pytest-output.log": "844466ca76e889f701aa54a0532ae5a8ce648833c2010e9db2ccf75190713801",
+    "pytest-postgres.log": "cd72490fb332b385ca1f0e5b10d8d4c01735daead46235542121214a29cc96ee",
+    "pytest-postgres.xml": "e8e5e47d37aa1079be68278d4ca9c9de4ff3b78ecac29679ff71d626c0085f18",
+    "pytest-timings.json": "45b50b32227d5a8f49100ff71e9977eaade559c964a2aa7acea3431270961555",
+    "runner-timings.json": "13cc27925f1548718f0f3560df028e99dbb73d775c366bf54e3e65a5461b2ba7"
+  },
+  "cleanup": "The isolated PostgreSQL container and runner resources were removed; cleanup status succeeded, with no containers or kind cluster remaining.",
+  "limitations": "Non-performance Python/PostgreSQL coverage only; 31 explicit environment/platform skips and 13 warnings remain. This does not certify hosted providers, indefinite HA or complete P11.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
