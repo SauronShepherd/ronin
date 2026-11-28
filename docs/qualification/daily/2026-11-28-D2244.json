@@ -1,0 +1,41 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2244",
+  "date": "2026-11-28",
+  "status": "NOT_PASS_LIVE_TWO_PARTITION_BACKLOG_CURRENT_CANDIDATE",
+  "candidate_sha": "0b0edcc27c014b57faef248002a8070ac2caa222",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live P11 two-partition backlog drain with PostgreSQL and single Redpanda broker",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2244-live-two-partition-backlog-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming drains a two-partition backlog in bounded micro-batches' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "failure": "runAttempts reached exactly 40; contract requires fewer than 40, although remaining lag reached 0 and 64 records were consumed",
+    "api_events": 82,
+    "api_events_correlated": 82,
+    "api_events_ok": 82,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2244-live-two-partition-backlog-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "a75d74a3692fef9efb31e76c3ba6f197547c07d9fe75ac2d80c49b7d44624208",
+    "browser-live.xml": "9b38a7774f25e0a3770304cdc316f5ca5c81e9b10cb894185b5286ceda21d245",
+    "live-api-traffic.json": "8e02b2d69cccc8f6c02add7e2beed6b03a657c1e20f4661fa93f64839c56c84e",
+    "qualification-summary.json": "66e173ebcec961a7d3d5bf819782eab6d2688238b480b1e87b6c402bc8f2c119"
+  },
+  "diagnostic_recheck": {
+    "mode": "DIRTY-WORKTREE DIAGNOSTIC",
+    "result": "PASS: 1/1, 22 cycles, 64 records, 46/46 correlated API events",
+    "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2246-live-two-partition-backlog-postgres-debug-20261128",
+    "not_release_evidence": true
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Two clean repetitions exposed a timing-sensitive boundedness failure; no production code was changed.", "The dirty diagnostic pass is not candidate evidence and does not close P11.", "No historical D83-D2243 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
