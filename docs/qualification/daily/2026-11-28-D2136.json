@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2136",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_FULL_CURRENT",
+  "candidate_sha": "bd60f4b7ff49e00ecb1253a104787e21872516d0",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Complete Docker integration qualification and strict v0.1 acceptance on the current clean main candidate.",
+  "command": "pwsh -NoProfile -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2136-docker-full-current-20261128",
+  "image": "sha256:839355e4d774e34dae7d6738157d06067e5ab51b8d373d538a0d866e6f81c7dc",
+  "service_profile": "PostgreSQL + Docker worker, Floci/S3, Azurite/Azure Blob and appliance fixtures",
+  "result": {
+    "integration_passed": 27,
+    "integration_skipped": 0,
+    "integration_failed": 0,
+    "strict_v01_passed": 15,
+    "strict_v01_skipped": 0,
+    "strict_v01_failed": 0,
+    "strict_v01_unexpected": 0,
+    "pytest_duration": "150.12s"
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2136-docker-full-current-20261128",
+  "evidence_sha256": {
+    "azurite-qualification.log": "b79fa2ff0dbb6cd3854300e410eff3415d3dd9f46100a26a1e0a9e34cc497761",
+    "docker-cleanup.json": "e7e662c645aa2fd04b61f34f120276e46a051ecbd5cc0262abba64bd192f9874",
+    "docker-pytest-output.log": "35233527b338ae3c8b6cf97d6066735a193daad39c4c921dc3468985cef5f6cd",
+    "docker-qualification.log": "34cf89417b52a4e1c9c353b7f754298b86c2e46d74974273b99b8530df047b67",
+    "floci-s3-qualification.log": "29fd714c4e6941088f8f7757464411618f4a106df38144aa991d0ef96016ec12",
+    "postgres-qualification.log": "da238d3f23ce26cefdf38fb34d27e50557d32d113bb2bcd64dae1141152271ef",
+    "qualification-summary.json": "6c73297db74eaff32f3443062dd7bffb1a0fc62135aca8c5537c95562368ea82",
+    "v01-acceptance-strict.json": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c",
+    "v01-acceptance.xml": "f3d348aca741a2a16d711e76956c16f0d1eeb27586445ad10447fc4bd3cb8560"
+  },
+  "cleanup": "Docker runner reported PASS; the owned Ronin image, PostgreSQL, Floci, Azurite, volumes, networks and containers were removed. No kind cluster remains.",
+  "limitations": "This current Docker candidate closes only the bounded Docker/strict lanes; hosted provider certification, indefinite operation, HA/multi-worker breadth and complete P11 remain open.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
