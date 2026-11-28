@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2121",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_EMPTY_PARTITION_HEALTH_CURRENT",
+  "candidate_sha": "9f9b120791987dab954818ae188d970be5c32158",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2121-live-empty-partition-current-20261128\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2121-live-empty-partition-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2121-live-empty-partition-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2121-live-empty-partition-20261128 -TestGrep 'live streaming health reports an empty partition' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2121-live-empty-partition-20261128",
+  "result": {
+    "tests": "1 passed, 0 skipped, 0 failed",
+    "api_events": 4,
+    "correlated_events": 4,
+    "api_outcomes": {"OK": 4},
+    "empty_partition_health": "passed without false lag",
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "log_errors_or_critical": 0,
+    "cleanup": "PASS",
+    "elapsed_seconds": 28.1
+  },
+  "worker_image_digest": "sha256:7996b39a1c32b59250e07d05294709b487810180add3af9c8fb205c5d9a7acfe",
+  "evidence_sha256": {
+    "qualification-summary.json": "534a0f60eaf97f01099dd5af6793bdd2212393ee02cf9bc9e133476468ff5581",
+    "browser-live.xml": "07c378925c394b0597587c95d4cf41039ca3445d39f7a61269e96a3e573fb0a3",
+    "browser-live.log": "0aeac56083472c766beb6d3503eb8e2d5ac0d65adc0f1fbb21205065898b5785",
+    "live-api-traffic.json": "2d60cdd0d0bae2094f27254c1f6aa39cd3c59a8d47e821889729d1bbcb00a1ed",
+    "live-server.stderr.log": "511232626931463def03f7b77d0f06b10d8cd7c42c75b1bd93b9ffcd2294c30b",
+    "live-python-freeze.txt": "d1340f90058b89f58780fff8bdf83c403d30db5e77d93e70472aba1ae96a8a05"
+  },
+  "status_after_receipt": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"},
+  "limitations": [
+    "Diagnóstico filtrado de partición vacía y health/lag; no demuestra operación indefinida, HA ni multi-worker productivo.",
+    "No certifica providers hosted, P11 completo ni aprobación de release.",
+    "No hubo cambios de producción ni reatribución de evidencia histórica."
+  ]
+}
