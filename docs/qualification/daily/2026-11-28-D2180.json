@@ -1,0 +1,29 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2180",
+  "date": "2026-11-28",
+  "status": "PASS_HELM_KIND_POSTGRES_CURRENT",
+  "candidate_sha": "3a2da59caf516b5daaea39e3a58afae29d08bd0e",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2180-helm-kind-postgres-current-20261128-rerun\\helm-qualification.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2180-helm-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2180-helm-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2180-docker-support-current-20261128-rerun -KeepImage; docker run --detach --name ronin-d2180-postgres --publish 127.0.0.1:55432:5432 --env POSTGRES_USER=ronin --env POSTGRES_PASSWORD=ronin --env POSTGRES_DB=ronin postgres:16-alpine; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2180-helm-kind-postgres-current-20261128-rerun -ImageRef ronin:qualification-d2180-helm-current-20261128 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2180-docker-support-current-20261128-rerun -StorageBackend postgres -PostgresDsn postgresql://ronin:ronin@host.docker.internal:55432/ronin -PostgresContainerName ronin-d2180-postgres; docker rm --force --volumes ronin-d2180-postgres; docker image rm ronin:qualification-d2180-helm-current-20261128",
+  "service_profile": {"helm": "v4.3.1+gc0d08d0", "storage_backend": "postgres", "kind": "single-node isolated cluster", "worker_image_digest": "sha256:71890f70398314e6d967ff081f445ebe0ee3dafc24038b2a057ccb94a72d2e29"},
+  "result": {"helm_lint": "PASS", "secret_boundary": "PASS; 4 resources; token confined to Secret", "install_readiness": "PASS", "upgrade_revision": 2, "rollback": "PASS; restored revision 1", "health_api": "PASS; HTTP 200", "persistent_job_create": "PASS", "postgres_restart_recovery": "PASS", "deployment_restart": "PASS", "persistent_job_after_restart": "PASS; same queued job ID survived pod restart", "docker_support": "27/27 integration; strict 15/15", "cleanup": "PASS"},
+  "evidence_sha256": {
+    "helm-qualification.json": "6F7CED21BA317EDE9BD6A1F31CF9F6B2116E08F8FAC8395919A3E0742AE2CECE",
+    "helm-qualification.log": "834E65026414940DE02C01ADFBAC7F582EFFFD68761E5708821C76E07B142E71",
+    "kubernetes-resources.txt": "06BDC72F51D5FAAF476CAFD49E0698F8DCA839EB2BE92CF2FB2FA0BE65D059D1",
+    "port-forward.log": "07780A768F7D7335F31DB484549A8E1D2C660052CF0D43905E5BBC9EE1ABF",
+    "port-forward-restart.log": "5CBA306563AB17C4060537CEADD24FC16F60596E60261AC5CB159AA9D7BB41A2",
+    "docker/qualification-summary.json": "42A24AD574C62E705233D4CD63C515A57D7394910C4397B971598275A2979AA5",
+    "docker/v01-acceptance-strict.json": "5DA1B46C5A62AB1F23A067BC5ECB3B5CB60CC79D770F5E515E6821346C7A9B2C",
+    "docker/docker-qualification.log": "0D52D22C0C555D5D94ACA4FEF7042396F6E281F7E1262018C9BF3EF636602D87",
+    "docker/docker-pytest-output.log": "20C06D4DDD4FF6DBE724FED0805048AD994BCAAA50C8A0ED911F7154DF7207FB",
+    "docker/docker-cleanup.json": "3F44ED613F7B29CD93A5AC0C0C5DE2A2D8F038293E6DE2507DE366FBE5877213"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Helm/kind single-replica bounded qualification; no HA, operación indefinida, hosted provider certification, P11 completo ni aprobación de release.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
