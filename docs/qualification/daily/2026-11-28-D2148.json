@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2148",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUSTAINED_BACKPRESSURE_CURRENT",
+  "candidate_sha": "2e313515c31ec808cec841f439a30ef103e072e3",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live sustained-backpressure streaming journey with configured records, reset-safe replay, real PostgreSQL, single-broker Redpanda, Ronin API and Docker worker.",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2148-live-backpressure-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2148-live-backpressure-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2148-live-backpressure-current-20261128 -TestGrep 'sustained backpressure' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2148-live-backpressure-current-20261128",
+  "worker_image_digest": "sha256:09e123242f460ece3d7fd4da127919c8b339e6332592788f5523b369234cb5d9",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "configured_records": 256, "api_events": 12, "correlated_events": 12, "api_outcomes": {"OK": 12}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 34.0, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2148-live-backpressure-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "79B0F9D58B4A55453C6DCD2750520431A72EDCFE33353F5A576BEC3ADD1EDCA9",
+    "browser-live.xml": "89B83BB53C91F7839AA6765DC22DE8EAE6F9923FF23260862B1BF0C0144E4BD1",
+    "live-api-traffic.json": "0634D332C21DC8F85CC1B76AFFD3798DA106C2B83CA2F76512543B7992D89DF8",
+    "live-python-freeze.txt": "461B75ED2EA3A30C57D05ADDA45901BCE0B9A6FF37679E57379B62BF901993DD",
+    "live-server.stderr.log": "CA0C4EBE133B74C73DCE780F8B1B87ABC2C822E1F3E1AC6E9B14722B9CFC8D65",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "1BBFE174B5D6F184B7D1582FA913E308ABB917DDDCCF9FEDB9A3D5BE5FC5ACD0",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "cleanup": "Runner removed PostgreSQL, Redpanda, volume, network, live processes and temporary worker image.",
+  "limitations": ["Single-broker bounded diagnostic; does not prove indefinite operation, HA, multi-worker operation, hosted providers or complete P11.", "This receipt is bound to the current candidate and does not reattribute D2118 or earlier evidence."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
