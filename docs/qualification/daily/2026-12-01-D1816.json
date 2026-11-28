@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1816",
+  "status": "PASS_SECURITY_LOCAL",
+  "candidate_sha": "5a97f384cd79ec544b868015cec4314fae1daf73",
+  "implementation_commit_sha": "5a97f384cd79ec544b868015cec4314fae1daf73",
+  "production_change": "none",
+  "commands": ["gitleaks dir --redact --report-format json --report-path gitleaks-working-tree.json .", "gitleaks git --redact --report-format json --report-path gitleaks-history.json .", "python -m pip_audit -r requirements-dev.lock --require-hashes --strict --format json", "python -m pip_audit -r requirements-test.lock --require-hashes --strict --format json"],
+  "result": {"gitleaks_working_tree": "PASS, 0 leaks", "gitleaks_history": "PASS, 0 leaks across 6683 commits", "pip_audit_dev": "PASS, no known vulnerabilities", "pip_audit_test": "PASS, no known vulnerabilities", "cleanup": "PASS; no external runtime"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1816-security-current-20261201",
+  "toolchain": {"gitleaks": "8.30.1", "pip_audit": "2.10.1"},
+  "evidence_hashes": {"gitleaks-working-tree.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570", "gitleaks-history.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570", "pip-audit-dev.json": "3990a8ef58ef94b8918921908c67c9b96c1cbf1b6fa299660e1dcee124d122e9", "pip-audit-test.json": "89566a3084bb3e72302f6fb9593ef99e7234f2561bae16eaf7b766d796dc5634"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["does not replace manual security review or license approvals", "does not complete P11 or release approval", "no historical evidence reattributed"]
+}
