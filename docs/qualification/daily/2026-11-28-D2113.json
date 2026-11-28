@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2113",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_RF3_FAILOVER_CURRENT",
+  "candidate_sha": "c2a9bf013311f0d89c0605374bf7a4143e36e2fc",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2113-live-rf3-current-20261128\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2113-live-rf3-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2113-live-rf3-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2113-live-rf3-20261128 -MultiBroker -TestGrep 'live streaming multi-broker failover' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2113-live-rf3-20261128",
+  "result": {
+    "tests": "1 passed, 0 skipped, 0 failed",
+    "brokers": 3,
+    "replication_factor": 3,
+    "api_events": 5,
+    "correlated_events": 5,
+    "api_outcomes": {"OK": 5},
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "log_errors_or_critical": 0,
+    "cleanup": "PASS",
+    "elapsed_seconds": 55.04
+  },
+  "worker_image_digest": "sha256:06c53c455c480000d4e51f45ebbd353baa039760eef2997d7b9e044bb5396cb7",
+  "evidence_sha256": {
+    "qualification-summary.json": "bd2114aaf87db5c2a1ffe9bad7b1afecad5e41fb16a4d03700dcbbbc7c911bac",
+    "browser-live.xml": "4fc3ec0d9c9889142138d110e6d539efade50efa4102d600469625f477bb0363",
+    "browser-live.log": "78fdb1886a22a24f4669c2dd652c4ef67982ae1f3edea94e56f7ec57a908a5b7",
+    "live-api-traffic.json": "6df84834b9110cd66508956808294cfb8bd0f3ead2ab1e0280e7d6e7badb15f9",
+    "live-server.stderr.log": "e42291070b7f9f59f7550d7042607ed8061c056119f2c227ec1a5f377599d107",
+    "live-python-freeze.txt": "fae8a32c94fb60fe94fb7c452d59d32778c12835b1e530e0c2d7c5b261b19df6"
+  },
+  "status_after_receipt": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"},
+  "limitations": [
+    "Diagnóstico filtrado de failover RF3; no ejecuta route-wide ni event-workflow en la misma corrida.",
+    "No demuestra HA completa, operación indefinida, multi-worker productivo, providers hosted, P11 completo ni release.",
+    "No hubo cambios de producción ni reatribución de evidencia histórica."
+  ]
+}
