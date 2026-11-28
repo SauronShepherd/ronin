@@ -1,0 +1,42 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2247",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_BYTE_BOUNDARIES_POSTGRES_CURRENT_CANDIDATE",
+  "candidate_sha": "c5b696c7cbc915249bdeb9ef96367bde8762cd8c",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live stream near-record and near-batch byte boundary enforcement with PostgreSQL and Redpanda",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2247-live-byte-boundaries-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming enforces near-record and near-batch byte boundaries' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "api_events": 13,
+    "api_events_correlated": 13,
+    "api_events_ok": 11,
+    "api_events_warn": 2,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "elapsed_seconds": 46.31,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2247-live-byte-boundaries-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "dd7af7c56e881c435b73a22191474d8f31dbe1f47aeee7013704c90d5a2195e3",
+    "browser-live.xml": "ca38a20d9a507170a97ac1e1f86fb7f94f0f3176a28c0ec28b37df7ce2ea2672",
+    "live-api-traffic.json": "8b6d9c80a5df8d11936c80e8172e2f31e87c84790ebc192486f12c12aa73605b",
+    "live-python-freeze.txt": "07cc56c7e6849c8635f690f5863cc2111be764fc2def76b6eaafeb7366297773",
+    "live-server.stderr.log": "9ab220fde11f9e6279d9211ba2d5b3be8df616f7805c456555504b48f2ad7744",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "04dc8c5c948cdc84fcb42ab79f5eb8929beba3f78a2d9895d363aa5a7a3dfdf9",
+    "web-test-dependency-cache.json": "8dc49380e156de0e68480e71c76fb0b0b986c0949246a7eaf21d4457c7e51ce"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is one filtered bounded live journey; route-wide and indefinite qualification were not run.", "The result does not close P11 or certify hosted providers, HA, multi-worker operation or release.", "D2244 remains a separate NOT_PASS boundedness gap; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
