@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2139",
+  "date": "2026-11-28",
+  "status": "NOT_RUN_SPARK_IMAGE_UNAVAILABLE",
+  "candidate_sha": "899edacbaa794ad6464d28a34aa842bbd0855fac",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Initial Spark Connect runner attempt; no test was executed.",
+  "command": "pwsh -NoProfile -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2139-spark-connect-current-20261128",
+  "image": "sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "result": {
+    "tests_executed": 0,
+    "failure": "docker run could not resolve the image ID because the digest-pinned image was not cached locally",
+    "qualification_promoted": false
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2139-spark-connect-current-20261128",
+  "evidence_sha256": {
+    "pyspark-client-install.json": "04ea59f524787a12685dca8fb1c6a8b052f8cb1f17b27c42b9b609bb0f028b97",
+    "qualification.json": "d5d6098f897c9e870b416980b7c33dedae7baf1b9ff5f49320da11b64192189f",
+    "qualification.log": "4725115de895f89428f8b878dcfba794e10eed9a9cbad60543eac1af35a0d4d2"
+  },
+  "cleanup": "No container started; no test resources were created.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}

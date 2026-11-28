@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2140",
+  "date": "2026-11-28",
+  "status": "PASS_SPARK_CONNECT_CURRENT",
+  "candidate_sha": "899edacbaa794ad6464d28a34aa842bbd0855fac",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Spark Connect 4.2.0 real-service smoke against the exact digest-pinned Apache Spark image.",
+  "command": "docker pull apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59; pwsh -NoProfile -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2140-spark-connect-current-20261128 -ImageRef sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "image": "apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "service_profile": "Apache Spark Connect 4.2.0",
+  "result": {
+    "expected": 1,
+    "collected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "deselected": 2,
+    "pytest_duration": "8.72s",
+    "case": "test_spark_connect_external_smoke"
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2140-spark-connect-current-20261128",
+  "evidence_sha256": {
+    "pyspark-client-install.json": "04ea59f524787a12685dca8fb1c6a8b052f8cb1f17b27c42b9b609bb0f028b97",
+    "pytest-timings.json": "31704d99715e29d5026b4e310279ebed218e20e7819ae5130b6503bca6e9634c",
+    "qualification.json": "2d27fb01e7cb698a369b708b3c7e6daded02cc7b3a0461767797a6a8ec51de89",
+    "qualification.log": "43e850a76d3a3a0ef94aa3c7fc42cab01d01408dd6ec8e2b696b7bbba80ceb20",
+    "spark-container.log": "1182366d181bf9eb799af462cfb1b645e823ec42ce5a22701b6271bc3dfcc001",
+    "spark-junit.xml": "f78bb6fcb48f9935ecd90480e3a3d20c66c5b3689fef3e21c6db752af01c25a3"
+  },
+  "cleanup": "Spark runner reported cleanup_status=succeeded; the temporary Spark Connect container was removed. The digest-pinned base image remains cached, with no running container or kind cluster.",
+  "limitations": "Single smoke case only; two external SDP cases were deselected and this does not certify hosted Spark/IAM, full data-engineering breadth or complete P11.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
