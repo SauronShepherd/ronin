@@ -1,0 +1,46 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2227",
+  "date": "2026-11-28",
+  "status": "PASS_HELM_KIND_RUNTIME_RECOVERY_CURRENT_CANDIDATE",
+  "candidate_sha": "084d302e11ccd0095b41bbef91c6ae011ef56f74",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded Helm/kind runtime and recovery qualification using the exact current candidate image and full Docker acceptance evidence",
+  "commands": {
+    "docker_dependency": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2227-docker-full-current-20261128 -ImageTag ronin:qualification-d2227 -KeepImage",
+    "helm": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_helm_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2227-helm-kind-current-20261128 -ImageRef ronin:qualification-d2227 -DockerEvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2227-docker-full-current-20261128 -StorageBackend sqlite"
+  },
+  "result": {
+    "docker_dependency": "27/27 integration PASS; 15/15 strict v0.1 PASS; cleanup PASS",
+    "helm_lint": "PASS",
+    "secret_boundary": "PASS",
+    "kind_cluster": "PASS",
+    "helm_install": "PASS",
+    "deployment_readiness": "PASS",
+    "helm_upgrade": "PASS revision 2",
+    "helm_rollback": "PASS restored revision 1",
+    "health_endpoint": "PASS HTTP 200",
+    "studio_and_authorized_api": "PASS HTTP 200/200",
+    "persistent_job_create": "PASS HTTP 201",
+    "deployment_restart": "PASS",
+    "persistent_job_after_restart": "PASS same queued job ID",
+    "postgres_restart_recovery": "NOT_APPLICABLE storage_backend=sqlite",
+    "cleanup": "PASS"
+  },
+  "evidence_directories": ["C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2227-docker-full-current-20261128", "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2227-helm-kind-current-20261128"],
+  "evidence_sha256": {
+    "docker/qualification-summary.json": "cd0b625d36bc017af64042f47e2f0d9cd80932cbed5a5ecef731bae7122078bb",
+    "docker/docker-cleanup.json": "731bf0efd319390e19259edb64f60bc9a9633eaf74e73dc2ba961213ef7a4014",
+    "docker/v01-acceptance.xml": "fbfa1a17dd8865e24cf40b132ecbd2af414baba996b483e0362424b407c37bc0",
+    "helm/helm-qualification.json": "78927b3cfc9a621b57bcdb3b90ee16d4a96e3a113600a0198c950f0aa063f2bc",
+    "helm/helm-qualification.log": "f9e7a90b6be832a834243efd2ca9b13827c62368a517cf7929827608ec055413",
+    "helm/kubernetes-resources.txt": "e8d8f817ff81ee9023083e269d7d4bf3c1ff2c276ec02ecf33cdb0d8dc7c960a",
+    "helm/port-forward.log": "42f664c3eb3f1d25b2872e8f1aff4c89bcc14f2fd4ea32d116f13cf8727ed02c",
+    "helm/port-forward-restart.log": "a2d67d7690915b5deceba453ac06fe6b7c99527966f5c49c16288cbd75af4373"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["The PostgreSQL restart branch is explicitly not applicable because this bounded run selected SQLite; PostgreSQL recovery remains separately evidenced and open at broader scope.", "kind is single-node local recovery evidence, not HA, multi-worker or production Kubernetes certification.", "A filtered preparatory Docker attempt was rejected by Helm precondition and is not counted; the receipt uses the subsequent complete Docker evidence directory. No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
