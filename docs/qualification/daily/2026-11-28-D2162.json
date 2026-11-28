@@ -1,0 +1,26 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2162",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_STREAMING_RECOVERY_CURRENT",
+  "candidate_sha": "9653f6bf3924b6393be7e3eaa74ab010a1135f1d",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered real-PostgreSQL streaming checkpoint/table recovery qualification on the current main candidate.",
+  "service_profile": "postgres:16.4-alpine",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2162-postgres-streaming-current-20261128 -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py -AllowDirtyWorktree",
+  "result": {"pytest": "7 passed; 0 selected skipped; 0 selected failed; 0 deselected; 0 unrelated collection skips", "scope": "PostgreSQL checkpoint CAS, durable stream table append/replay/conflict and processor reopen recovery", "cleanup": "PASS; isolated PostgreSQL container, volume and network removed by runner"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2162-postgres-streaming-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "909FB89A30AD59889E1364A704CFD5F4111508EA0822B44261279C6DDFC1D146",
+    "pytest-postgres.log": "9A88937AC62D741DFC4C7BE59A646F1388C4A3CFA017F09C3742CBA05851467C",
+    "pytest-postgres.xml": "708277EAD69F400420F428F7FD65D0049AD975F76B9D45CF3F0EE1D62CEAB6BD",
+    "pytest-timings.json": "DEE2D7259716494395273F27DD632830FEAA027E425269F1E7482D5BFF83A00F",
+    "runner-timings.json": "3F014ECEF8B708418E5DE241077B0988F3650FF917A5F94EDDACF9C655F4DC9C"
+  },
+  "limitations": ["Filtered PostgreSQL streaming diagnostic only; not the complete Python/PostgreSQL suite or full P11 qualification.", "This evidence does not certify hosted providers, indefinite operation, HA/multi-worker production or release readiness."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
