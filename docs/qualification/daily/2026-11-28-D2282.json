@@ -1,0 +1,44 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2282",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_RF3_FAILOVER_CURRENT_CANDIDATE",
+  "candidate_sha": "4c8b1de4d38a507ee04b1e6dd2adf8af4d781b41",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "live three-broker RF3 failover with durable checkpoint recovery using PostgreSQL and Redpanda",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2282-live-rf3-failover-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming multi-broker failover resumes from the durable checkpoint' -MultiBroker -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 5,
+    "correlated_http_logs": 5,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 5},
+    "application_errors": 0,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 3,
+    "replication_factor": 3,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2282-live-rf3-failover-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "6978b7bd6d26880126e82263bfd3f462cb6f585b47d10bab4817d311fb02a1f7",
+    "browser-live.xml": "b61a7b50367ac1682883db30585f5269caff5a4a922ba20af1b0d272fbc8c680",
+    "live-api-traffic.json": "09e867121e22040a372fe4e8e97bb8c43396a8892ecafb1059a69e6fcef95f5e",
+    "live-server.stderr.log": "ce71565f50c6f61e3cdb94770c3bdf9121cd28704cecb2d3156c1a60cc29a81c",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "0f96340a1282b606b675ac06e6b30472f1d740a721ea273e95991d87d4d7e2eb",
+    "live-python-freeze.txt": "7e8d8e53eb81b558a5cd61b7643616c8a32fb304acfce56f24c285ddfc567828"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is bounded local RF3 failover evidence; it does not certify hosted Kafka/IAM, indefinite HA, multi-worker operation, complete P11 or release.", "No historical D83-D2281 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
