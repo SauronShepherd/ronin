@@ -1,0 +1,41 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2250",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_OPERATOR_AUTHORIZATION_CURRENT_CANDIDATE",
+  "candidate_sha": "d9ea43029173dcf689081bfc292e7732646f346d",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered live PostgreSQL/Kafka qualification of single-operator token and workspace-scope authorization decisions",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2250-live-operator-authorization-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live single-operator authorization shows OK and WARN for token and workspace scope decisions' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "api_events": 10,
+    "correlated_http_logs": 10,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 7, "WARN": 3},
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2250-live-operator-authorization-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "5b9ef8dc6b0148a1b1811418fe009a6fc3b340d0743edbb654cf5fca8a00b880",
+    "browser-live.xml": "c9ccde11bf6b835b7b97b793a32d9abbc7e91b7937803523fac491ed3a026aa5",
+    "live-api-traffic.json": "e177458f030fc69107f0a0bc5b2e0b2338f4cfc6579a9fa03028188e29cdbad0",
+    "live-server.stderr.log": "729a92c18c2c1b159beb943e1a9ebecfd85f69cfc3c106d27ffe0b52cd27c58a",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "0b73d529c22cfce2fe5eb80b7f268a5a07df856cc36676a157335ec4461a48ad",
+    "live-python-freeze.txt": "34497075e45c30f1d91b095b5a232451aca5022bac1c52ab63772e18a2a88479"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live diagnostic only; it does not certify the full qualification suite, hosted identity/IAM, production deployment, or release.", "No historical D83-D2249 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
