@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2116",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_BROKER_RESTART_CHECKPOINT_CURRENT",
+  "candidate_sha": "26f3d8958ba7754bf6916df8f5661897153e251b",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2116-live-broker-restart-current-20261128\\qualification-summary.json",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2116-live-broker-restart-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2116-live-broker-restart-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2116-live-broker-restart-20261128 -TestGrep 'live streaming broker restart' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2116-live-broker-restart-20261128",
+  "result": {
+    "tests": "1 passed, 0 skipped, 0 failed",
+    "api_events": 11,
+    "correlated_events": 11,
+    "api_outcomes": {"OK": 8, "ERROR": 3},
+    "expected_errors": "3 HTTP 503 streaming_unavailable responses during intentional broker restart",
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "log_errors": 3,
+    "log_critical": 0,
+    "cleanup": "PASS",
+    "elapsed_seconds": 35.55
+  },
+  "worker_image_digest": "sha256:5b25b1db699583bbfe5936abefbf751d954b856401a451e2c92ce23a5f9a68e0",
+  "evidence_sha256": {
+    "qualification-summary.json": "1cccb73628b3ae3f0294876f3020150b66165e4732e7be83ca7356e378135475",
+    "browser-live.xml": "4b3e2f04f3082200ee1ad77334467612208d5384fd81fb42db611ea9457c90d8",
+    "browser-live.log": "c69080cc9e1b32521e97550fd6200ea87a262be1d7cfcb4a79a76692c157583e",
+    "live-api-traffic.json": "2f3bc898db3a46c9cd0605607dcecc96b886247988a0999dcb9cd58c8ab1210e",
+    "live-server.stderr.log": "d685a35736a11ba12b0f79239507b94e23740a155b2a581e3945a576faa3b051",
+    "live-python-freeze.txt": "8fbf801dd8e44a71ef9daf7aaa6b58a3c9b2041dba5ddc5563701e0458305010"
+  },
+  "status_after_receipt": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"},
+  "limitations": [
+    "Diagnóstico filtrado single-broker; los 3 errores son outages HTTP esperados durante el reinicio intencional y quedan conservados.",
+    "No demuestra HA/RF3, operación indefinida, multi-worker productivo, providers hosted, P11 completo ni release.",
+    "No hubo cambios de producción ni reatribución de evidencia histórica."
+  ]
+}
