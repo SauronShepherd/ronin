@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2134",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_CATALOG_HTTP_DIAGNOSTIC",
+  "candidate_sha": "6cb8b3a826d13a1f3d58ac59d1a2195897dd8d7b",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered real PostgreSQL local-composed catalog and governance HTTP journey.",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2134-postgres-catalog-http-20261128 -TestPath tests/integration/test_postgres_local_composed_catalog_http.py",
+  "service_profile": "isolated postgres:16.4-alpine",
+  "result": {
+    "selected_passed": 1,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "deselected": 0,
+    "pytest_duration": "6.74s",
+    "case": "test_postgres_composition_serves_catalog_and_governance_over_real_http"
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2134-postgres-catalog-http-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "fef36a365e2ef556c453c6cb09f0d5e313b2ebcc2e395636600938e39b5fad36",
+    "pytest-postgres.log": "988ab90e862dea2b3fb97b86e23455dc599c9d7585a3a00a52624602dfaa6201",
+    "pytest-postgres.xml": "8d8a6de36744a417b0c396101a44cd6d63f78ab4d0ace4e7a08c557ff8a9a6db",
+    "pytest-timings.json": "26a3fac61eed7bf2dc0b3f0287886e875a5fdf7a59b15a0ec6383c3405b74bc6",
+    "runner-timings.json": "118d496daa5d3f52fc7d552087b3a720b6d43b259a79a26633672344743942a3"
+  },
+  "cleanup": "The isolated PostgreSQL container and runner resources were removed; no qualification container or kind cluster remains.",
+  "limitations": "Filtered diagnostic only; this does not certify hosted PostgreSQL, complete catalog/API breadth, indefinite HA or complete P11.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
