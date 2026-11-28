@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2285",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_TWO_PARTITION_BACKLOG_REPRO_CURRENT_CANDIDATE",
+  "candidate_sha": "3292e829f6bf7204bf6868b533857dd77d26a245",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "isolated reproduction of the two-partition bounded micro-batch backlog case after D2284 integral-suite NOT_PASS",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2285-live-two-partition-backlog-repro-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming drains a two-partition backlog in bounded micro-batches' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 46,
+    "correlated_http_logs": 46,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 46},
+    "application_errors": 0,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2285-live-two-partition-backlog-repro-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "793ec04bf3f80dd0679adc3486915a548830d253f558a4c09b45363203879c30",
+    "browser-live.xml": "0d37938dbc10769e6e0a4d025f0f40bd8d735f016859486a8a0a42cdd6d502e1",
+    "live-api-traffic.json": "a2a5efd24bd8c9edee2954a5917da4df8ffd969eb207d4cb280d4f10fb7ad9ae",
+    "live-server.stderr.log": "630510287528973b637d2c56d6850ef30db0e397f880aefc8fbdef48c3cfa503",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "2a7a146889be489d3dab60bac0f5a8c5af9c78d350a6250c3c91be0d166892be",
+    "live-python-freeze.txt": "3cc1d8aaf15ed7ad48354dc23310e4d13b77ae437bd70278134dc64befb654f1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This isolated reproduction passes, but it does not erase or reattribute the D2284 integral-suite NOT_PASS; the suite-level failure remains authoritative for that broader scope.", "This bounded local evidence does not certify hosted providers, indefinite operation, complete P11 or release."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
