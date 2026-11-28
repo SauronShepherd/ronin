@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1822",
+  "status": "NOT_PASS_FULL_SUITE_VCS_ENVIRONMENT",
+  "candidate_sha": "b1b7b27f69e7b86cd56d5349948bc97ab7478708",
+  "implementation_commit_sha": "b1b7b27f69e7b86cd56d5349948bc97ab7478708",
+  "production_change": "none",
+  "command": "python -m pytest --ignore=tests/perf -q",
+  "result": {"full_suite": "4703 passed, 90 skipped, 4 failed", "failure_surface": "four tests/test_vcs_source.py cases failed during git init with exit 128 under the long full-suite run", "focused_rerun": "tests/test_vcs_source.py: 11 passed, 1 skipped", "cleanup": "PASS; no external runtime"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1822-python-full-repeat-20261201",
+  "evidence_hashes": {"pytest-full-repeat.log": "7ea8e40a6b422baa96738fb2327807873621c05b29a8aefa2f003e1a1f44c175", "vcs-focused.log": "f403c1e2581545948ab749e3014fbf78a662007b44025840fabcf20b8d97669b"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["full suite not promoted as PASS", "focused VCS file passes but does not erase full-suite failures", "no historical evidence reattributed"]
+}
