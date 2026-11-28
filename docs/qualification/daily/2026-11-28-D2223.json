@@ -1,0 +1,28 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2223",
+  "date": "2026-11-28",
+  "status": "NOT_PASS_SDP_CLI_BOOTSTRAP_CURRENT_CANDIDATE",
+  "candidate_sha": "7640a14cfbf8f1436b33dc2ce6aeb77e1d7ac0e3",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "current-candidate official SDP Studio CLI bootstrap diagnostic",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_sdp_cli_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2223-sdp-cli-current-20261128-rerun",
+  "result": {
+    "runner_exit": 1,
+    "cli_path": "C:\\Users\\angel.alvarez\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\sdpstudio.exe",
+    "failure": "Could not read SDP Studio CLI version: ModuleNotFoundError: No module named 'sdpstudio_cli'",
+    "project_created": false,
+    "tests": "not executed",
+    "cleanup": "PASS_NO_PROJECT_CREATED"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2223-sdp-cli-current-20261128-rerun",
+  "evidence_sha256": {
+    "qualification.json": "4a85f11d932c91ce89a83c8f33e071555f5b7ab06d1655cb9879a1ae1bcee6be",
+    "qualification.log": "23f8681c0e362f6b3dd108a0e21d7dc1f7fee7468c3a974e590be133fc0c34b7"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["The official external CLI package is incomplete on this host; no substitute compiler or mock was counted.", "No project or pytest case ran, so this is not provider PASS and does not close P11 or release. No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
