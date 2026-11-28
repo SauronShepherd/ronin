@@ -1,0 +1,35 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2224",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_DIAGNOSTIC_NOT_PERF_CURRENT_CANDIDATE",
+  "candidate_sha": "158f2065571a384249c1b417f780fa56ef29bee6",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded non-performance Python/PostgreSQL diagnostic against the current clean candidate",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2224-python-postgres-full-current-20261128 -MarkerExpression 'not perf'",
+  "result": {
+    "selected": 4801,
+    "passed": 4770,
+    "skipped": 31,
+    "failed": 0,
+    "errors": 0,
+    "selection": "marker=not perf",
+    "postgres_image": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c",
+    "pytest_wall_seconds": 698.525,
+    "total_wall_seconds": 724.247,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2224-python-postgres-full-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "ded61a6ac88fabd44c2f90084593e93549fe6f8d11eca796a91a2df404c00a7b",
+    "pytest-postgres.log": "ca48799e448cb9592b8bad1a9d12491058d04d0b8be9b7541302b07bd0045652",
+    "pytest-postgres.xml": "ceac0218e6099468ae619cd28f21eea8c949f420dbec3ec0b9a7988fb238a712",
+    "pytest-timings.json": "392351b7ec41881b4fd19ebefcba73394ffcd32302f8904ad9bcfa9412378710",
+    "runner-timings.json": "facd5590d5f1b2ba77f914ff213de2361e672063badff610df84b5069f2b9a97"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is a filtered non-performance diagnostic with coverage disabled, not the complete full-suite/release qualification.", "31 skips remain explicit for unavailable providers, Docker/worker, hosted services and host limitations; they are not PASS.", "Bounded local PostgreSQL evidence does not certify hosted providers, HA, indefinite operation, P11 complete or release. No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
