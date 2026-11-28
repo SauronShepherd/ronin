@@ -1,0 +1,31 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2173",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_PARQUET_CURRENT",
+  "candidate_sha": "064c875096d7c4519a38bfced3251318f3af864d",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "bounded live Parquet sink/checkpoint/reset with PostgreSQL, Redpanda, Ronin API and Docker worker",
+  "worker_image_digest": "sha256:0ffef17282af8fefcf7df26ee5a8da546af490b9df9668426e1bf7e6f6675fce",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2173-live-parquet-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2173-live-parquet-current-20261128-rerun -StorageBackend postgres -WorkerImage ronin:qualification-d2173-live-parquet-current-20261128 -TestGrep 'live streaming parquet sink' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2173-live-parquet-current-20261128",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 11, "correlated_events": 11, "api_outcomes": {"OK": 11}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 36.01, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2173-live-parquet-current-20261128-rerun",
+  "evidence_sha256": {
+    "browser-live.log": "D1B75F6C18C875D5C2BAF71D736451D55FB8A72BD6CC2B6418CAB01E9074E124",
+    "browser-live.xml": "C0F7D0BE34660D06D923B795ACB7BB1A04620CD375BFD8CC5FA21781452ADD81",
+    "live-api-traffic.json": "DB28622922BBEE0ACA8E06B0F3159D6E81ADD7D13B5ED531B346D59CDD622974",
+    "live-python-freeze.txt": "50F02579C8087E7F538CC0252185D0E47CAAA607F9E9DFD49DE2080ACB1FCFC2",
+    "live-server.stderr.log": "ABBBB0C8D332E123E683C058EEA735B63966658A68A1ED12AD4B5C263B9585B8",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "9162FF6C073369EB11A6216694B23ACBDB8E4EE0F1AEE3A7064F16D5D0619275",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "limitations": ["bounded single-broker live evidence", "no indefinite operation, HA, multi-worker, hosted provider, complete P11 or release certification"],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
