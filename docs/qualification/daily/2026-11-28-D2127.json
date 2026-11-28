@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2127",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_WORKFLOW_STORE_FILE",
+  "candidate_sha": "ddd5bcaf52370f1d353119ab8ac31e9273f0ebdb",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Complete real PostgreSQL qualification file for workflow store and scheduler runtime behavior.",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2127-postgres-workflow-store-full-20261128 -TestPath tests/integration/test_postgres_workflow_store_real.py",
+  "service_profile": "isolated postgres:16.4-alpine",
+  "result": {
+    "selected_passed": 21,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "deselected": 0,
+    "pytest_duration": "10.08s",
+    "cases": "All 21 tests in tests/integration/test_postgres_workflow_store_real.py"
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2127-postgres-workflow-store-full-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "b7a64d9543b075a954c8b8c3e6d3ec132d2a25d24a3bb6e3229c7b6f8cf49651",
+    "pytest-postgres.log": "57e802e097b54e522171a11866068917e2aa950be1a7c2ef109e78d31828eee2",
+    "pytest-postgres.xml": "b99c4d3a1aa5b0c782a3b5e744dc173a5eebf41194f2cf57719e661eff4bede8",
+    "pytest-timings.json": "640af4f16d276ccddff73246134c4021a54c3236a53d1507e6e38dfb629be25b",
+    "runner-timings.json": "c28988952d493cd02f9cd1adcc02dca84988bd067b41d6867e19683d84b8f008"
+  },
+  "cleanup": "The isolated PostgreSQL container and runner resources were removed; no qualification container or kind cluster remains.",
+  "limitations": "File-scoped diagnostic only; this does not certify hosted PostgreSQL, complete Python/PostgreSQL coverage, indefinite HA or complete P11.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
