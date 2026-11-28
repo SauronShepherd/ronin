@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2199",
+  "date": "2026-11-28",
+  "status": "PASS_PYTHON_POSTGRES_FULL_CURRENT",
+  "candidate_sha": "9737d36af8dacd7ba6f0161b9c423d00ce2c3ef1",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "complete non-performance Python/PostgreSQL regression on clean current main candidate with isolated PostgreSQL 16.4 and coverage enabled",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2199-python-postgres-full-current-20261128",
+  "result": {
+    "tests_passed": 4770,
+    "tests_skipped": 31,
+    "tests_failed": 0,
+    "warnings": 12,
+    "pytest_seconds": 755.94,
+    "total_wall_seconds": 773.445,
+    "coverage_enabled": true,
+    "service_profile": "isolated-postgres-16.4",
+    "cleanup": "PASS"
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2199-python-postgres-full-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "33c6b3a74882fb47a650f7b501edcc223d0a6192ea9956b9eb2c2ad9a5928108",
+    "pytest-postgres.log": "85cb8b135b9c17d63952f1db65cc2bd6a32e4ee9ca03d1eb788932f002e4bc42",
+    "pytest-postgres.xml": "d12c248046f5bb9be8a457c18271de6cb2d8acb67cbf3f213464b7ba6238344b",
+    "pytest-timings.json": "bf6e67d1a9bc9ca11f71c4c1c7625875d0521925359cc14341c1bd924e5fb6cf",
+    "runner-timings.json": "b13b23b57d72212d2a00d7b5fd51d672cea972182912c99e082d4e5caedbadb9"
+  },
+  "skips": [
+    "Windows symlink/executable-mode limitations",
+    "optional hosted/provider endpoints not configured",
+    "Docker/live acceptance is covered by dedicated runners"
+  ],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Full non-performance regression is not hosted-provider, HA, indefinite-operation or release certification.",
+    "31 skips remain explicit in the JUnit/log evidence and are not converted into passes.",
+    "No historical evidence was reattributed."
+  ],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
