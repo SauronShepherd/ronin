@@ -1,0 +1,20 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2212",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_ML_S3_ARTIFACT_CURRENT_CANDIDATE_FILTERED",
+  "candidate_sha": "6335a1410fdbad80fd28130510946aa5b695d069",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered Docker ML durable artifact input/output and retention round-trip against local digest-pinned Floci on current candidate",
+  "provider_image_digest": "sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db",
+  "worker_image_digest": "sha256:df28b400aa582d98e8c3e0e50a4a7c5c4281a0c32fe6c7f5b0f600127dfe33e1",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2212-docker-ml-s3-artifact-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2212-docker-ml-s3-artifact-current-20261128 -TestFilter ml_s3_artifact",
+  "result": {"tests": "1 passed, 26 deselected, 0 skipped, 0 failed", "selected_test": "tests.integration.test_ml_s3_artifact_store_real::test_ml_durable_input_output_and_retention_round_trip_through_s3", "fixture": "Floci S3 local emulator", "cleanup": "PASS", "strict_v01_gate": "not evaluated"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2212-docker-ml-s3-artifact-current-20261128",
+  "evidence_sha256": {"docker-cleanup.json": "17a0107d223df3664a7725b5ee040a5ecd813271168ad7ae182bfcc0d18a7e1e", "docker-pytest-output.log": "cc36ef90d910ff450c852ba940677551eb2f56c7c7c570ea6ac4d8acd2c5ed62", "docker-qualification.log": "4ddd0e63fa7bd4734a7a2bc922ab5004971e523b39fe3399742b7d112ae8779a", "floci-s3-qualification.log": "948c3604b2c49899a5b1a2ab2c182f208567d2094c2d1f1eb1b21a75b4c67fa0", "v01-acceptance.xml": "71b60b2a3fb36f81bede393c46405915c9d12eec3dd790b0e49dd931c7fc5e13"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Floci es un emulador S3 local; no certifica AWS/S3 hosted, IAM externo, producción, P11 completo ni release.", "La selección fue filtrada y strict v0.1 no se evaluó; los casos deseleccionados no se promocionan.", "D2192 permanece ligado a su candidato histórico; no se reatribuye evidencia."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
