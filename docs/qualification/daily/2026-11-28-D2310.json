@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2310",
+  "date": "2026-11-28",
+  "status": "NOT_PASS_LIVE_API_TRAFFIC_CONTRACT_NO_INITIAL_FILE_CURRENT_CANDIDATE",
+  "candidate_sha": "f7aabcea70b471bc36e0b664115bcb9f1b966a7d",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "isolated retry of live API traffic contract diagnostic after clearing inherited environment",
+  "commands": {"qualification": "$env:RONIN_LIVE_API_TRAFFIC_OUTPUT=$null; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2310-live-api-traffic-contract-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live API traffic contains route, method and response status without credentials' -RequestTimeoutSeconds 240"},
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 0,
+    "playwright_failed": 1,
+    "playwright_skipped": 0,
+    "failure": "The exact test resolved the current traffic path but failed before requests because live-api-traffic.json is not created until recordTraffic; the test reads it before any record exists.",
+    "api_events": 0,
+    "correlated_http_logs": 0,
+    "cleanup": "PASS",
+    "browser_media_cleanup": "PASS",
+    "containers_remaining": [],
+    "qualification_images_remaining": [],
+    "kind_clusters_remaining": []
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2310-live-api-traffic-contract-postgres-current-20261128",
+  "evidence_sha256": {
+    "qualification-summary.json": "0ce60b50d83adf00725e5f66842e18ecca543b09ff3300fbd916cd1c759e14cf",
+    "browser-live.log": "b1b659a950af87d264fe42d67807897904955d376a112afa3fe72a6bfe9baf6c",
+    "browser-live.xml": "6262b167d4d4c946eb11fb5f192295d57b853be55ef444dbbe5a1d12033a60ee",
+    "live-server.stderr.log": "017f4ea9065e4e4609cbcc2f9d37c414fc63b4453ea6fdce571812d555b7ce57",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-python-freeze.txt": "c431a79ba42303547c33f2c88887fffcc2863a70ae01ddb88f0435b42ede9858",
+    "web-test-dependency-cache.json": "8dc49380e156de0e68480e71c76fb0b0b986c0949246a7eaf21d4457c7e51ce1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["NOT_PASS: the path was correct, but the diagnostic test reads live-api-traffic.json before recordTraffic creates it; no API traffic claim is made.", "This is a test/harness ordering failure, not product evidence. A code fix would require a separate bounded runner/test change and regression.", "No historical D83-D2309 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
