@@ -1,0 +1,39 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2307",
+  "date": "2026-11-28",
+  "status": "NOT_PASS_LIVE_API_TRAFFIC_HARNESS_PATH_CURRENT_CANDIDATE",
+  "candidate_sha": "66bd18bce7daec54252a125743821d717e558af5",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "correctly filtered live API traffic contract diagnostic",
+  "commands": {"qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2307-live-api-traffic-contract-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live API traffic contains route, method and response status without credentials' -RequestTimeoutSeconds 240"},
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 0,
+    "playwright_failed": 1,
+    "playwright_skipped": 0,
+    "failure": "Test read RONIN_LIVE_API_TRAFFIC_OUTPUT pointing at the prior D2306 evidence path; the current D2307 path had no live-api-traffic.json.",
+    "api_events": 0,
+    "correlated_http_logs": 0,
+    "cleanup": "PASS",
+    "browser_media_cleanup": "PASS",
+    "containers_remaining": [],
+    "qualification_images_remaining": [],
+    "kind_clusters_remaining": []
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2307-live-api-traffic-contract-postgres-current-20261128",
+  "evidence_sha256": {
+    "qualification-summary.json": "17b4a8e5bc3db7d697992d9f199470656ba207153136900efbfa1663b31490dc",
+    "browser-live.log": "37a5609514353fe5fc4ab921aafda3458677528da6727274557367f307dad003",
+    "browser-live.xml": "bc97479e145835eac06c7bf6b1eb7d899a0d7656d8024e60a6c3909da90fcb0b",
+    "live-server.stderr.log": "da7d0f60f6d9a93c789ffa5354d258237f84f11c27c68b0f18141b874cb6c1ef",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-python-freeze.txt": "76d4ef2dea17546c3d6ee41f0fea13f1112f19fb6ab197355c39ec2d9f6db02f",
+    "web-test-dependency-cache.json": "8dc49380e156de0e68480e71c76fb0b0b986c0949246a7eaf21d4457c7e51ce1"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["NOT_PASS: the exact test ran but failed before making requests because the runner/test environment resolved the traffic output path to the previous D2306 directory.", "This is a qualification harness/path isolation failure, not evidence of product behavior; no API traffic claim is made.", "No historical D83-D2306 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
