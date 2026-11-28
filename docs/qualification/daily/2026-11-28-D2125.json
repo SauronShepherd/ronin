@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2125",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_CONNECTOR_CHECKPOINT_DIAGNOSTIC",
+  "candidate_sha": "490e12be5ae37deff6d080b5c9622109068a1fc6",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered real PostgreSQL qualification for connector checkpoint fencing, local composition and sync-worker persistence.",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2125-postgres-connector-checkpoint-20261128 -TestPath tests/integration/test_postgres_connector_checkpoint_real.py",
+  "service_profile": "isolated postgres:16.4-alpine",
+  "result": {
+    "selected_passed": 3,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "deselected": 0,
+    "pytest_duration": "7.17s",
+    "cases": [
+      "test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpoint",
+      "test_postgres_local_composition_mounts_shared_connector_ingestion",
+      "test_postgres_connector_checkpoint_fencing_inventory_and_restart"
+    ]
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2125-postgres-connector-checkpoint-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "e108b8d64b735eb25693a07290185e77b52bc64c9dee419f3d3ad9ae4c3e21e1",
+    "pytest-postgres.log": "75bce1d184ae4c9437e6f85a661a6bff9a340ff058beda40a27960521f850518",
+    "pytest-postgres.xml": "dc1ccff510141ad5d91bd7c04871da558f4c4b43399aa45330524e118590ea67",
+    "pytest-timings.json": "bc769cf97c91ac3dea56a1328def42a7e94248a1f26c3b8722a0a4026117be7e",
+    "runner-timings.json": "ff2b356828497c5090cf7bd06307a46f0b92476c0286bbdccd6b900cb28f01d2"
+  },
+  "cleanup": "The isolated PostgreSQL container and runner resources were removed; no qualification container or kind cluster remains.",
+  "limitations": "Filtered diagnostic only; this does not certify hosted PostgreSQL, the complete Python/PostgreSQL suite, indefinite HA or complete P11.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
