@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2111",
+  "date": "2026-11-28",
+  "status": "PASS_SPARK_CONNECT_PROVIDER_CURRENT",
+  "candidate_sha": "f3fd9d15e8c189279539277d108432f26836ad5d",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2111-spark-connect-current-20261128\\qualification.json",
+  "command": "docker pull apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_spark_connect_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2111-spark-connect-current-20261128 -ImageRef sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59; docker image rm --force sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+  "provider": {
+    "service": "Spark Connect 4.2.0",
+    "image": "apache/spark@sha256:84a4eedb1abcf36a90808d5a1310e3e910b78c85d85aaa1599e31af5f862ed59",
+    "client": "pyspark-client 4.2.0",
+    "digest_verified": true
+  },
+  "result": {
+    "selected_tests": "1 passed, 0 skipped, 0 failed",
+    "deselected": 2,
+    "case": "tests/e2e/test_data_engineering_external.py::test_spark_connect_external_smoke",
+    "cleanup": "PASS",
+    "elapsed_seconds": 14.025
+  },
+  "evidence_sha256": {
+    "qualification.json": "5c1830bcac8e7a1af123abe5b5bf7995b2b0a871752f4f57abb958b8c9fa9d0e",
+    "qualification.log": "c16b54d4a9af071f5b03eaf00623e291cfefb3d4aa5f80818d05ba0d732773f4",
+    "spark-junit.xml": "78482684791f4002966ad4d48a9dbf54dad5a7cd9836327c5d5e3e69dfeec19e",
+    "pytest-timings.json": "d504185ff299e2ec9e4ad930cde3a5d97b2ecf61f9558e6cf34d20d4f5c54ad7",
+    "spark-container.log": "c793f06a7aeca00ad613277ee8de7b5a319f504619b539af898af328e67fc89d",
+    "pyspark-client-install.json": "04ea59f524787a12685dca8fb1c6a8b052f8cb1f17b27c42b9b609bb0f028b97"
+  },
+  "status_after_receipt": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "Provider local aislado y digest-pinned; dos casos adicionales quedaron deseleccionados por el runner.",
+    "No certifica SDP/Spark hospedado, SLA de producción, HA, operación indefinida, P11 completo ni release.",
+    "No hubo cambios de producción ni reatribución de evidencia histórica."
+  ]
+}
