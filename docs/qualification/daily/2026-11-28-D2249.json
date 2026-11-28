@@ -1,0 +1,41 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2249",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_PARQUET_RESET_REPLAY_CURRENT_CANDIDATE",
+  "candidate_sha": "18c10b4a2ccb15e1e0b6168f0daac7ff80138832",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered live PostgreSQL/Kafka qualification of Parquet sink reset and replay across bounded runs",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2249-live-parquet-reset-replay-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming parquet sink preserves reset replay across bounded runs' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "api_events": 11,
+    "correlated_http_logs": 11,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 11},
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2249-live-parquet-reset-replay-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "143861aa6c1680af76be7ea05b993df0ddcb3cc16107400487e23f727f152153",
+    "browser-live.xml": "52fc6a4fdd03f405702875b7dfed277a51c23fbb80b077c87b0395ed58a2c748",
+    "live-api-traffic.json": "1d85b2b79661e03c9d8238664097ff85b7d79740c79f8f7f0b926889b17218c7",
+    "live-server.stderr.log": "3dbb92d8ed235b317e890e6870bff214250fb6a2df2786be9a2c4ea69874fae4",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "e64cff2ba9bf6fb34fdc767700a2bf22deab347b4230548e7a69e3fdf836e3b3",
+    "live-python-freeze.txt": "16748db4c25b86a78a0b7ebea0e875d31e4f692b9057c9742c531b24a9fa5ddf"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered live diagnostic only; it does not certify the full qualification suite, hosted provider, production deployment, or release.", "No historical D83-D2248 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
