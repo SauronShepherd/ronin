@@ -1,0 +1,44 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2286",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_STREAMING_SUITE_REPRO_CURRENT_CANDIDATE",
+  "candidate_sha": "e4778b99eb4c0245e27fc18ed7a8d7e2b4bf73ba",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "repeat integral live streaming journeys after D2284 NOT_PASS with PostgreSQL and single-broker Redpanda",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2286-live-streaming-suite-repro-postgres-current-20261128 -StorageBackend postgres -TestGrep 'streaming' -RequestTimeoutSeconds 300"
+  },
+  "result": {
+    "playwright_executed": 12,
+    "playwright_passed": 11,
+    "playwright_skipped": 1,
+    "playwright_failed": 0,
+    "api_events": 254,
+    "correlated_http_logs": 254,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 243, "WARN": 8, "ERROR": 3},
+    "application_errors": 3,
+    "expected_error_context": "three streaming_unavailable fail-closed responses during single-broker restart; no unexpected server/network errors",
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2286-live-streaming-suite-repro-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "21115e2e56c0e8ae76883436f001d014df837513d90e2f5f4b297dd734eefb26",
+    "browser-live.xml": "5a5721994ede8f19f859fc33cbd8f221cea85ede84ac70c8f90c3cae73825ace",
+    "live-api-traffic.json": "81a4ad492a02fb68070876d071510c53318db27de48fa8e032910f4c510d383e",
+    "live-server.stderr.log": "075c978607fc28317f488ea001c6ef6ae8dc6f8a4158adbf12a92b5f381d0e84",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "fa5b73487d53380908bfa006c1cd6010c131f31c4555aca4ba0e41d2d56052cf",
+    "live-python-freeze.txt": "0ef02e92683406538003648d46bfeef13f43bc0af79a775edacef379f7e0d69a"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This repeat passes the integral suite and shows D2284 was intermittent; D2284 remains retained as NOT_PASS and is not erased or reattributed.", "The three ERROR outcomes are explicitly tied to expected fail-closed streaming_unavailable responses during broker restart; this does not certify hosted providers, indefinite operation, complete P11 or release."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
