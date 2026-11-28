@@ -1,0 +1,38 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2302",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_AZURITE_AZURE_FILTERED_CURRENT_CANDIDATE",
+  "candidate_sha": "58f4c06a046dc24b233c7d15aa64d84417395f6e",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered Docker Azure Blob-compatible connector qualification against isolated Azurite",
+  "commands": {"qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2302-docker-azure-blob-current-20261128 -ImageTag ronin:qualification-d2302-azure -TestFilter azure_blob"},
+  "result": {
+    "selected_tests": 1,
+    "selected_passed": 1,
+    "selected_failed": 0,
+    "selected_skipped": 0,
+    "deselected": 26,
+    "pytest_case": "tests.integration.test_azure_blob_connector_real::test_azure_blob_discovers_reads_and_replays_snapshot_against_azurite",
+    "azurite": true,
+    "executed_image_sha256": "f2d5bb21809e1fe3eb5366c8fa09b0358b0d6e0f28dfd7e6ec67d51c551760b8",
+    "cleanup": "PASS",
+    "owned_image_removed": true,
+    "containers_remaining": [],
+    "qualification_images_remaining": [],
+    "kind_clusters_remaining": []
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2302-docker-azure-blob-current-20261128",
+  "evidence_sha256": {
+    "azurite-qualification.log": "4fa8a7064f4de28eccf53c85580e4147d131071d99cfb0513ba7869caf6e53f3",
+    "docker-cleanup.json": "d95d37d29c3fa6275775b3d8df5e14400fdcbd29cba06bb472d084f655c524a4",
+    "docker-pytest-output.log": "ff278a315de178a67829f4c3bc2a50dc0c4452108881d4949674c8aad646d50e",
+    "docker-qualification.log": "5a156e53edd9f332a2ee7b6782b65a484ff12eade46faf554d9069fc2dfbc5be",
+    "v01-acceptance.xml": "76cf05d8eaa454aa92568a49f3e83284b975a075b329b09591ce022bb5450f58"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Filtered Docker diagnostic only: 1 selected test and 26 deselected; strict v0.1 acceptance was not evaluated.", "Azurite is a local Azure Blob emulator, not hosted Azure/provider certification; this does not close P13 or complete P11/release approval.", "No historical D83-D2301 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
