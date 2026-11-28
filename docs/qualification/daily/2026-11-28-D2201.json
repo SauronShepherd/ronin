@@ -1,0 +1,45 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2201",
+  "date": "2026-11-28",
+  "status": "PASS_POSIX_CONTRACT_CURRENT",
+  "candidate_sha": "b0bf3338ff6f881ac3415931314a18141bf297a0",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded POSIX Linux contract qualification in an isolated Docker container on current main",
+  "worker_image_digest": "sha256:9af8ab9f891314d50e58371695b38dfb0ef35f38c88a76dd3e4db2052f3d7538",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2201-posix-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_posix_contract_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2201-posix-current-20261128 -ImageRef sha256:9af8ab9f891314d50e58371695b38dfb0ef35f38c88a76dd3e4db2052f3d7538; docker image rm sha256:9af8ab9f891314d50e58371695b38dfb0ef35f38c88a76dd3e4db2052f3d7538",
+  "result": {
+    "tests_expected": 8,
+    "tests_passed": 8,
+    "tests_skipped": 0,
+    "tests_failed": 0,
+    "pytest_seconds": 13.63,
+    "cleanup": "PASS",
+    "platform": "Linux container"
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2201-posix-current-20261128",
+  "evidence_sha256": {
+    "git-version.txt": "0eff67955296e123526d7f9b9146fff8d8dc8d6dbf4f49ba5f838923d2b4af71",
+    "posix-junit.xml": "0fe778bf4f0cdf40b530bda5386b37ce699a9cdafefc771c709d6aabaabc9526",
+    "pytest-timings.json": "bb26cca8efe319bfa30d022ac116b9485782defecb763d2b1b9487eed540bff4",
+    "qualification.json": "73781cabe3d29b4b093d27f5a7ae482fd4578e02437226505cb2b40d0eee65d2",
+    "qualification.log": "ab5626f58e18d08220452863846fd1f1dc01f79f2ecfbcc90124134b56c885c8"
+  },
+  "coverage": [
+    "POSIX process returncode fallback without polling/reaping native process",
+    "symlink-safe checkout/source paths and traversal rejection",
+    "mounted-file secret symlink and broad-permission rejection",
+    "NUL-safe source text",
+    "connector symlink rejection",
+    "untracked executable mode dirty identity"
+  ],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Bounded Linux-in-Docker contract evidence from a Windows host; no production OS matrix claim.",
+    "Does not qualify HA, indefinite operation, hosted providers, complete P11 or release approval.",
+    "No historical evidence was reattributed."
+  ],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
