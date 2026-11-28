@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2272",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_MAX_RECORD_CAP_CURRENT_CANDIDATE",
+  "candidate_sha": "ffc35852a7c5bdefdda6751ff1d787bdebddad78",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "live max-record cap, durable checkpoint resume and no-replay recovery with PostgreSQL",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2272-live-max-record-cap-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming max-record cap resumes the durable checkpoint without replay' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 8,
+    "correlated_http_logs": 8,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 7, "WARN": 1},
+    "application_errors": 0,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2272-live-max-record-cap-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "d08ed7ebe09642ef39e47779a3c8fac4a4b015d24340ac368515ec8cb261012b",
+    "browser-live.xml": "4d230e64222dfb59f5d70e51de27abd6bd22711699eaedc42d60937de780125f",
+    "live-api-traffic.json": "3e8401751f6a2178814e28c9677d5afa5923cf7c089f8d6542d5a5588ef41e5e",
+    "live-server.stderr.log": "70c5dae07dbb6666e5e103d9c21123577e3c64a27ccc236044ef38d77e049e01",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "e500e5af4f18f0fde35221a2394b9d6ea8316208353faf4e234a31859cbbe19b",
+    "live-python-freeze.txt": "35a4c2a84d7a9fa886f382a74d3273b3e3cbef6eb2903ccb2fd2a803cb477b42"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is bounded local max-record/replay evidence; the WARN remains explicit and this does not certify hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2271 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
