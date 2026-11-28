@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1818",
+  "status": "PASS_LOCAL_QUALITY_REPAIR",
+  "candidate_sha": "53285d19e7dac8bf39146aa2ba8dd14e3310b43f",
+  "implementation_commit_sha": "53285d19e7dac8bf39146aa2ba8dd14e3310b43f",
+  "production_change": "typed streaming seeders, deterministic DB guard, cleanup suppression, and formatting/lint corrections",
+  "regression": "60/60 PASS: streaming Kafka/runtime, Helm structure, Docker contract and POSIX contract tests",
+  "result": {"ruff_format": "PASS, 939 files", "ruff_check": "PASS", "mypy": "PASS, 453 source files", "pytest": "60/60 PASS, 0 skipped, 0 failed", "architecture": "PASS", "dependency_surfaces": "PASS"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1818-streaming-quality-fixed-20261201",
+  "evidence_hashes": {"ruff-format.log": "7295985bf15867e540ba905e71e4333c37b5891281797ff6d180d390caffe74e", "ruff-check.log": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0", "mypy.log": "1ed3e25441324c4e72cc516f5c453e77abb9d07f6df2933b1bf77996dd1e313f", "pytest.log": "ee6db4ec5a73d9b6a7afe3c087062b8db55f29a153b5b3b45b8fe7f6c6225a41"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["GNU Make remains unavailable on this host", "does not close license review, SDP, P11 or release approval", "no historical evidence reattributed"]
+}
