@@ -1,0 +1,27 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2171",
+  "date": "2026-11-28",
+  "status": "PASS_FULL_PYTHON_POSTGRES_CURRENT",
+  "candidate_sha": "b6863f80e57f4615567b89008f7bdec4cda5deca",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Full non-performance Python/PostgreSQL regression on the current clean main candidate, with coverage enabled and isolated PostgreSQL 16.4.",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2171-python-postgres-full-current-20261128",
+  "result": {"pytest": "4770 passed; 31 explicit skipped; 0 failed; 13 warnings", "collected": 4798, "coverage": "enabled", "pytest_seconds": 544.08, "cleanup": "PASS; isolated PostgreSQL container, volume and network removed by runner"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2171-python-postgres-full-current-20261128",
+  "evidence_sha256": {
+    ".coverage": "E829CAA76E81BEEF835F6285D10984131A831B5549F9A5B44780289AC155467A",
+    "pytest-output.log": "3366D8A6B404F64C3D9247C79CEEE93BCECC757831620D19AE480AECA80654AF",
+    "pytest-postgres.log": "A455BD0E35A7923C707BAF6B28789952524F517B52FF047FA7A5CE39B9D3A95",
+    "pytest-postgres.xml": "216B1419AAD127773B1C6AE6688D1E77C383BB9E6B47C65F8D83A90652814D38",
+    "pytest-timings.json": "5FEC2E57CFE59CC967B002EA08D83BD728EB7B22DC7F336CE256899ED1C9DC02",
+    "runner-timings.json": "B16DB78D382ABD433088458BD62258AB534991A89C17125B367D7B5F7D699DE9"
+  },
+  "skip_policy": {"count": 31, "promoted": false, "categories": ["opt-in Docker/live lanes", "S3/Azure external endpoint lanes", "SDP/Spark/Trino/OTLP endpoints", "Windows symlink/POSIX limitations"]},
+  "limitations": ["Full non-performance Python/PostgreSQL regression, not complete hosted-provider certification or complete P11.", "Explicit skips remain open evidence gaps and are not reclassified as passes; release remains NO-GO."],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
