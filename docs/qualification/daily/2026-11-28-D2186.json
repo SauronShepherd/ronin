@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2186",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_1200_CURRENT",
+  "candidate_sha": "ce55fc2028c002819afb3e6e38b62fbbe687551c",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live supervisor soak streaming journey for 1200 seconds with PostgreSQL, Redpanda, Ronin API and Docker worker",
+  "worker_image_digest": "sha256:d5a67dbece94d0780c2e5620f858abe55a76e2c2d1cd10cfe50951d518691a41",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2186-live-supervisor-soak-1200-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2186-live-supervisor-soak-1200-current-20261128-rerun3 -StorageBackend postgres -WorkerImage ronin:qualification-d2186-live-supervisor-soak-1200-current-20261128 -TestGrep 'supervisor soak' -SupervisorSoakSeconds 1200 -RequestTimeoutSeconds 1260; docker image rm ronin:qualification-d2186-live-supervisor-soak-1200-current-20261128",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "supervisor_soak_seconds": 1200, "api_events": 1477, "correlated_events": 1477, "api_outcomes": {"OK": 1477}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 1241.02, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2186-live-supervisor-soak-1200-current-20261128-rerun3",
+  "evidence_sha256": {
+    "browser-live.log": "D895EFF8AA5749F5FB3E966B7D749CE95F890338D8C782087D14DF525AD3F4D8",
+    "browser-live.xml": "6B93B98D9529D1B236D2CB9CC039ACDFB3121FB989CA4198F536FAB1222C8194",
+    "live-api-traffic.json": "DEF7063C3B672EAC448CCDDD34B9EAC56786ED7AFA4F9448EEF106542443F978",
+    "live-python-freeze.txt": "E43639F9E04897B752EE9E930B48A03B4204D6420C28C1946B5AEFA1873639A8",
+    "live-server.stderr.log": "294CA3F6A2CB3E7AE207E94671BDECC31A4E43143C08CE545BE180A7A1820592",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "872A36426D664C436B9B3E415E262B6612E9ADE68FA43E193F5BAD0FA2C029D1",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Soak bounded a 1200 segundos; no demuestra operación indefinida, HA/RF3, multi-worker productivo, hosted providers, P11 completo ni aprobación de release.", "No se reatribuye evidencia histórica."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
