@@ -1,0 +1,42 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2243",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_PROJECTS_POSTGRES_CURRENT_CANDIDATE",
+  "candidate_sha": "d8d5dca237a32a50aec5b81adbb4c6714471b796",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live Projects create/export/reimport Bundle journey with PostgreSQL and streaming broker",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2243-live-projects-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live Projects create, export, and reimport a secret-safe Bundle through the UI' -RequestTimeoutSeconds 120"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "api_events": 12,
+    "api_events_correlated": 12,
+    "api_events_ok": 11,
+    "api_events_warn": 1,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "elapsed_seconds": 84.0,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2243-live-projects-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "94f559c93ec5ebaeb49f2f216fd4342e14fc1fefabf3a8722eb534e820e71a17",
+    "browser-live.xml": "b736d7907c25c3a7df80e29968e76a1ae35db8dfe8431cd67ef08eb12bf2b0d7",
+    "live-api-traffic.json": "01218027432f4ca0d7718cb6724109da3b77875ce13c81f9c9cc7a85cb9bcc3e",
+    "live-python-freeze.txt": "c917851292757d809b25b486c194df99d4a2ef41a44643dbf864022c391dade9",
+    "live-server.stderr.log": "d2d0d575e7ebbb7ce7e06871dd884900c09d24804e8ee730b3b39d6f742ad68a",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "7900ffc75039f4de5a92fe93f44e2784b6efa19302e52879c35df0988beef34b",
+    "web-test-dependency-cache.json": "8dc49380e156de0e68480e71c76fb0b0b986c0949246a7eaf21d4457c7e51ce"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is one filtered live Playwright journey; route-wide live qualification was not run.", "The bounded local PostgreSQL/broker run does not certify hosted providers, HA, multi-worker, indefinite operation or complete P11/release.", "D211 historical evidence remains separately bound; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
