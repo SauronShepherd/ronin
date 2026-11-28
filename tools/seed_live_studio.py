@@ -68,6 +68,8 @@ def main() -> int:
     if storage_backend not in {"sqlite", "postgres"}:
         raise SystemExit("RONIN_STORAGE_BACKEND must be sqlite or postgres")
     database = Path(raw_database).expanduser().resolve() if raw_database else None
+    if database is None:
+        raise SystemExit("RONIN_DB must be set for the SQLite-backed live fixtures")
     workspace_id = WorkspaceId(os.environ.get("RONIN_WORKSPACE_ID", "default"))
     now = "2026-09-17T00:00:00.000000Z"
     workspace = Workspace(

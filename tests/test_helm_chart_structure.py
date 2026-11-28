@@ -41,7 +41,7 @@ def test_reference_helm_chart_has_safe_single_replica_baseline() -> None:
     assert "RONIN_POSTGRES_DSN" in deployment
     assert "postgres-dsn" in deployment
     assert "server.postgresDsn must be set" in secret
-    assert 'storageBackend: sqlite' in values
+    assert "storageBackend: sqlite" in values
     assert 'postgresDsn: ""' in values
     assert schema["properties"]["server"]["properties"]["storageBackend"]["enum"] == [
         "sqlite",

@@ -8,6 +8,7 @@ import os
 import time
 from importlib import import_module
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlsplit
 
 from confluent_kafka import Producer
@@ -48,7 +49,7 @@ class _BoundedProducer:
         self._producer = producer
         self._enqueue_timeout_seconds = enqueue_timeout_seconds
 
-    def produce(self, *args: object, **kwargs: object) -> None:
+    def produce(self, *args: Any, **kwargs: Any) -> None:
         deadline = time.monotonic() + self._enqueue_timeout_seconds
         while True:
             try:
@@ -294,7 +295,9 @@ def main() -> int:
     storage_backend = os.environ.get("RONIN_STORAGE_BACKEND", "sqlite").strip().lower()
     if storage_backend == "postgres":
         postgres_dsn = _required("RONIN_POSTGRES_DSN")
-        store = PostgresStreamCheckpointStore(postgres_dsn)
+        store: PostgresStreamCheckpointStore | SqliteStreamCheckpointStore = (
+            PostgresStreamCheckpointStore(postgres_dsn)
+        )
     elif storage_backend == "sqlite":
         store = SqliteStreamCheckpointStore(database)
     else:

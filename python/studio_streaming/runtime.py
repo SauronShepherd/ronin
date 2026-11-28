@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-import time
 import tempfile
+import time
 from collections.abc import Callable, Mapping
 from contextlib import ExitStack, nullcontext
 from datetime import UTC, datetime

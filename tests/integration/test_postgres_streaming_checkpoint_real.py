@@ -68,7 +68,7 @@ def test_postgres_stream_checkpoint_concurrent_cas_fences_stale_writer() -> None
         try:
             durable = reopened.get(stream_id)
             assert durable is not None
-            assert durable == winner or durable == loser
+            assert durable in (winner, loser)
             assert not reopened.compare_and_set(stream_id, initial, loser)
         finally:
             del reopened
@@ -127,10 +127,13 @@ def test_postgres_stream_table_conflict_rolls_back_mixed_batch_atomically() -> N
     existing = StreamRecord(0, 31, 900, "existing", {"event": "original"})
     table = PostgresStreamTable(dsn)
     try:
-        assert table.append(
-            stream_id,
-            StreamBatch((existing,), StreamCheckpoint((StreamPosition(0, 31),))),
-        ) == 1
+        assert (
+            table.append(
+                stream_id,
+                StreamBatch((existing,), StreamCheckpoint((StreamPosition(0, 31),))),
+            )
+            == 1
+        )
         conflicting = StreamRecord(0, 31, 900, "existing", {"event": "changed"})
         new_record = StreamRecord(0, 32, 901, "new", {"event": "must-rollback"})
         with pytest.raises(ValueError, match="replay conflicts"):
@@ -185,7 +188,7 @@ def test_postgres_stream_processor_reopens_with_durable_checkpoint() -> None:
         def __init__(self, table):
             self.table = table
 
-        def write(self, current_stream_id, current_batch, rows):
+        def write(self, current_stream_id, current_batch, _rows):
             written = self.table.append(current_stream_id, current_batch)
             return StreamSinkCommit(
                 f"postgres-batch:{current_batch.checkpoint.digest}",

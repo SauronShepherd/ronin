@@ -266,10 +266,14 @@ def test_kafka_source_uses_one_grace_poll_after_partial_deadline_fetch(
         def __init__(self) -> None:
             super().__init__([])
             self.responses = [
-                [_Message(b'{"event":"partition-0-a"}', 0, partition=0),
-                 _Message(b'{"event":"partition-1-a"}', 0, partition=1)],
-                [_Message(b'{"event":"partition-0-b"}', 1, partition=0),
-                 _Message(b'{"event":"partition-1-b"}', 1, partition=1)],
+                [
+                    _Message(b'{"event":"partition-0-a"}', 0, partition=0),
+                    _Message(b'{"event":"partition-1-a"}', 0, partition=1),
+                ],
+                [
+                    _Message(b'{"event":"partition-0-b"}', 1, partition=0),
+                    _Message(b'{"event":"partition-1-b"}', 1, partition=1),
+                ],
             ]
 
         def consume(self, *, num_messages: int, timeout: float):

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -107,10 +108,8 @@ class SqliteStreamTable:
         """Best-effort cleanup for callers that do not retain the table."""
         connection = getattr(self, "_connection", None)
         if connection is not None:
-            try:
+            with suppress(Exception):
                 connection.close()
-            except Exception:
-                pass
 
 
 class _PostgresConnectionAdapter:
