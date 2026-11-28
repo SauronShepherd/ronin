@@ -1,0 +1,20 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2217",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_STREAMING_CURRENT_CANDIDATE",
+  "candidate_sha": "5417400101224a0c6ff23ade56ce40a3f2271efe",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "combined bounded live streaming diagnostic on current candidate with PostgreSQL, single-broker Redpanda, Ronin API and Docker worker",
+  "worker_image_digest": "sha256:7370dfd1d90cf43ef7bc3808b489519e5e3c931f3cb64b3290df4f3b1710718d",
+  "broker_image_digest": "redpandadata/redpanda:v24.2.18@sha256:0270951e8793c77f0dd9178d137198018fa7ffd920e5a2a3b02a050ec76195b8",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2217-live-streaming-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2217-live-streaming-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2217-live-streaming-current-20261128 -TestGrep streaming -RequestTimeoutSeconds 90; docker image rm ronin:qualification-d2217-live-streaming-current-20261128",
+  "result": {"tests_selected": 12, "tests_passed": 11, "tests_skipped": 1, "tests_failed": 0, "skip_reason": "multi-broker failover requires the dedicated three-node diagnostic", "api_events": 250, "correlated_events": 250, "api_outcomes": {"OK": 240, "WARN": 8, "ERROR": 2}, "duration_seconds": 199.17, "cleanup": "PASS", "postgres": true, "redpanda": true, "ronin_api": true},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2217-live-streaming-current-20261128",
+  "evidence_sha256": {"browser-live.log": "b368c3e4e3ced408ae71d5f90d184e4634f794273f80a5c666e73e904bf7b4db", "browser-live.xml": "dce24d4be9356bb4a4c60096c35f910faac4b037ab06d36d3ba39306b381b8dc", "live-api-traffic.json": "a22bbf56fd5013b146e618708bcb967f5764aa2d5c25c8449780c6e0de4a299f", "live-python-freeze.txt": "91e3c8f130590077a78a35e4c5eb56ac8270a3e3311f8a0e1a9e4b565c35b09d", "live-server.stderr.log": "b1f82169871f0997e5df0643d245de579511aae33693a752a1aca16a597398bf", "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "live-worker.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "live-worker.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "qualification-summary.json": "f1a8b88aafe1f3dc6c22e6108c9897673532bd94edb467fd86c7140224bae615", "web-test-dependency-cache.json": "8dc49380e156de0e68480e71c76fb0b0b986c0949246a7eaf21d4457c7e51ce"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Single-broker combined diagnostic; multi-broker remains dedicated RF3 evidence.", "The 2 HTTP 503 ERROR outcomes are expected during intentional broker restart; 8 WARN outcomes are expected recovery responses.", "Route coverage audit was not run for this filtered diagnostic; local bounded evidence does not certify hosted providers, HA/SLO, indefinite operation, multi-worker production, P11 complete or release.", "D2198 remains bound to its historical candidate; no evidence was reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
