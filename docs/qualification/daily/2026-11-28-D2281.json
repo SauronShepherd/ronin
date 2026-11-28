@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2281",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_STREAM_BYTE_BOUNDARIES_CURRENT_CANDIDATE",
+  "candidate_sha": "4bc269214d5f074e63caa4a0af6916e0cd355709",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "live near-record and near-micro-batch byte boundary enforcement with PostgreSQL",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2281-live-byte-boundaries-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming enforces near-record and near-batch byte boundaries' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 13,
+    "correlated_http_logs": 13,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 11, "WARN": 2},
+    "application_errors": 0,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2281-live-byte-boundaries-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "ec083b5702fa23e9fc1daa090405bb815f71a3ea40cbbdea21764fbaaabdd654",
+    "browser-live.xml": "91f7df76017641263b28bea3c7f7715e621754d9125c43445031b7fab247b6fb",
+    "live-api-traffic.json": "11cbdd94c19e4c9817776bc8f37a39191248bdb6ec90826b521313673a003e1d",
+    "live-server.stderr.log": "9e1a60e3bbb0a07aaa999154a747aec9764ff630242125b336c7077e8370bba5",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "1974fe3f19791a9df29c897a23bd63f01bf00a855010e8ecd3e9cc88d1f8eb48",
+    "live-python-freeze.txt": "52b8c718988168078f451da040c3a8f7492535e9f26c739c7e181ab980999885"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is bounded local byte-boundary evidence; the two WARN outcomes remain explicit and do not certify hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2280 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
