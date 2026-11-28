@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2202",
+  "date": "2026-11-28",
+  "status": "PASS_TRINO_LOCAL_CURRENT",
+  "candidate_sha": "1b413a56ca647ce8107ea02594952a3c2b9c719d",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded local Trino 484 provider qualification with digest-pinned container and QueryFlux worker recovery tests",
+  "provider_image": "trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_trino_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2202-trino-current-20261128 -ImageRef trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f",
+  "result": {
+    "tests_expected": 4,
+    "tests_passed": 4,
+    "tests_skipped": 0,
+    "tests_failed": 0,
+    "trino_version": "484",
+    "trino_state": "ACTIVE",
+    "cleanup": "PASS"
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2202-trino-current-20261128",
+  "evidence_sha256": {
+    "pytest-timings.json": "9d0edb5036e8b7fe330ab6064c5bcea26fc6bb201f3d37154bb453d33ccd70a4",
+    "qualification.json": "87c9c13b90c42dd96cde1cb64167cc4cd55e838a9415614e74b047f2e5447912",
+    "qualification.log": "836202ec0ef72935ff947d2a97ce1492d0b43ac4f16e559065baafbd7e3a3743",
+    "trino-container.log": "818129c0a6b3d9fd7058a1490dabb6876594f873ea1bf7806b9a892f82204dea",
+    "trino-junit.xml": "953cee9ca89382fc4af74d01608bfa8f6114464dbf5698340f59fe11f76d3447"
+  },
+  "coverage": [
+    "prepared scalar bindings",
+    "result byte-budget exact boundary and rejection",
+    "terminal QueryFlux evidence persistence",
+    "worker SIGKILL reclamation without duplicate execution"
+  ],
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Local Trino provider only; no hosted Trino, cluster HA, IAM, indefinite operation or SLA claim.",
+    "This bounded provider lane does not complete P11 or qualify release.",
+    "No historical evidence was reattributed."
+  ],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
