@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2269",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUPERVISOR_SOAK_CURRENT_CANDIDATE",
+  "candidate_sha": "6e43122c3aadbfbeb0f651041662a2fde7db8705",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "live 60-second supervisor soak while records arrive, with durable checkpoint progress and PostgreSQL",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2269-live-supervisor-soak-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming supervisor soak drains while records arrive for a bounded duration' -SupervisorSoakSeconds 60 -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "supervisor_soak_seconds": 60,
+    "api_events": 69,
+    "correlated_http_logs": 69,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 69},
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka_brokers": 1,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2269-live-supervisor-soak-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "09493bc701416f9b70a4d13f5dcadc2146e503637152ad98e9ded9a05927440d",
+    "browser-live.xml": "3cbecd5c1fcc6df83e5f40a9ebcebd43507396fbfcbfbf48a5812049bc1b517f",
+    "live-api-traffic.json": "b748716f891303e40dfe8e22bef68266235fac5f0016db78261a0e507794ece6",
+    "live-server.stderr.log": "d4e7ea50455e0f4f794738d4c5f6b5adc93eaef47cc2d4cb83706eb34fcd6df5",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "2aeee93910a079260ac5bf8bb4a531ea302901303af1c022e87e9cfeb0e36cb6",
+    "live-python-freeze.txt": "97bf9f0f0a6aadf1249c85f52a0473fec8eca1f5cf90475868b27866af900efe"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is bounded local supervisor continuity evidence; it does not certify indefinite operation, hosted providers, HA, complete P11 or release.", "No historical D83-D2268 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
