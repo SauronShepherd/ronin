@@ -1,0 +1,44 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2242",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_NOTEBOOK_DOCKER_WORKER_CURRENT_CANDIDATE",
+  "candidate_sha": "c0bbc891ba86f22409cd9c180190ad924fbf5623",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live Notebook Studio create/version/execute journey on a Docker worker with PostgreSQL and streaming broker",
+  "commands": {
+    "image": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2242-live-notebook .",
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2242-live-notebook-worker-postgres-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2242-live-notebook -TestGrep 'live Notebook Studio creates, versions and executes a notebook on a Docker worker' -RequestTimeoutSeconds 240"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "api_events": 20,
+    "api_events_ok": 20,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "elapsed_seconds": 124.67,
+    "ronin_image_id": "sha256:ead445d34051bb0643d733061138976452e8675089fbee9e713dcc133ffdfae1",
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2242-live-notebook-worker-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "be2ea7b885750ee3b2707d0c54ecbc500b8936c15aadca01578c15d5a629aeaa",
+    "browser-live.xml": "058a92cd6181db5b2beb28373c2df9848a6a7fabb7cf66fa7a306e62f07c4dcf",
+    "live-api-traffic.json": "52436a34f6a13c3407827fd3f2bd8243a50c6700c872220bc018c7812584bf08",
+    "live-python-freeze.txt": "428d988ceed8b30b2adff284545921b8e49928637735208e76987a76cd3830e2",
+    "live-server.stderr.log": "038d7935ce1882777ce84b0a22a8b216067426a04ffc3ff13489e90b16ea2e1d",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-worker.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-worker.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "42bfb1a3883258f90bb252e7fb6376c1fd80e744a39a2da88105727b66dcee7f",
+    "web-test-dependency-cache.json": "8dc49380e156de0e68480e71c76fb0b0b986c0949246a7eaf21d4457c7e51ce"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is one filtered live Playwright journey; route-wide live qualification was not run.", "The bounded local PostgreSQL/broker/worker run does not certify hosted providers, HA, multi-worker, indefinite operation or complete P11/release.", "D1775 historical evidence remains separately bound; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
