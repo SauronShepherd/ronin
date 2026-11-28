@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2155",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_BYTE_BOUNDARIES_CURRENT",
+  "candidate_sha": "ad004ecea9eede830e15c5467d5d42045e3d1c08",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live near-record and near-batch byte-boundary enforcement with real PostgreSQL, single-broker Redpanda, Ronin API and Docker worker.",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2155-live-byte-boundaries-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2155-live-byte-boundaries-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2155-live-byte-boundaries-current-20261128 -TestGrep 'near-record and near-batch byte boundaries' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2155-live-byte-boundaries-current-20261128",
+  "worker_image_digest": "sha256:37fa73fce922fdbb4c781701d14e97fe41b2f844a1537fbe5820c472d2b6f4f7",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 13, "correlated_events": 13, "api_outcomes": {"OK": 11, "WARN": 2}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 28.31, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2155-live-byte-boundaries-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "E0AE2D6E840753A7D7923A78D79B2427D10BACA151EA7A2BA6CBCED7509E9013",
+    "browser-live.xml": "6B35C3CC8C279B6D5CBAAACA08A844F7FC10018DAA12B41020655E4EDA92AC26",
+    "live-api-traffic.json": "AB649DF2179AB9ED894F90524F4340FAE74C7ACFCCC487244DB861B1B36428A4",
+    "live-python-freeze.txt": "B3985462E09F92A7C035E50D27D0E0E1E634B014B5FE7CBE0860A563B04AE43D",
+    "live-server.stderr.log": "C008ABB64FF15B2ECA1824021825B2200404C53A40201169B02282FCAD00432B",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "E441AD3B3A633671DFDA5D848911354197B51D3CC733CAAA8B1A23BB16D0F084",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "cleanup": "Runner removed PostgreSQL, Redpanda, volume, network, live processes and temporary worker image.",
+  "limitations": ["Single-broker bounded byte-boundary diagnostic; does not prove indefinite operation, HA, multi-worker operation, hosted providers or complete P11.", "The two WARN outcomes are expected boundary observations; no unexpected server/network or log errors were recorded. This receipt is bound to the current candidate and does not reattribute D2120."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
