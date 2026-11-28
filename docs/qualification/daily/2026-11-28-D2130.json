@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2130",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_CONNECTOR_CONTROL_PLANE_DIAGNOSTIC",
+  "candidate_sha": "51e56e6588b5f1be480b5e0a42f8135f8560fbc0",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Filtered real PostgreSQL connector control-plane journey for discovery, preview, validation and service reopen.",
+  "command": "pwsh -NoProfile -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2130-postgres-connector-control-plane-20261128 -TestPath tests/integration/test_postgres_connector_control_plane_real.py",
+  "service_profile": "isolated postgres:16.4-alpine",
+  "result": {
+    "selected_passed": 1,
+    "selected_skipped": 0,
+    "selected_failed": 0,
+    "deselected": 0,
+    "pytest_duration": "6.62s",
+    "case": "test_postgres_connector_control_plane_discover_preview_survives_reopen"
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2130-postgres-connector-control-plane-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "62b77a366b6f831c45bc4a641f0e1a07bcbd2a3d497d7f9c942af4045f26d92f",
+    "pytest-postgres.log": "97a8dc03ec91c6668a2ccd1324ecb39e3759c3e04bc87db29253988273d80dee",
+    "pytest-postgres.xml": "fd5948810563d7b860c8aea1ce5a0c4f9d15d3c5231106bc6182b129c0706a3e",
+    "pytest-timings.json": "84198d3958410c6e75c3689009dff4a35660efc46ef6eb4bcef169d43fad1ec8",
+    "runner-timings.json": "589f13a8699fd63829410701f987bc7031e0fe4c7ce5e05a80d367616bb19ebe"
+  },
+  "cleanup": "The isolated PostgreSQL container and runner resources were removed; no qualification container or kind cluster remains.",
+  "limitations": "Filtered diagnostic only; this does not certify hosted PostgreSQL, full control-plane breadth, indefinite HA or complete P11.",
+  "status_constraints": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  }
+}
