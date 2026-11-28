@@ -1,0 +1,20 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2211",
+  "date": "2026-11-28",
+  "status": "PASS_DOCKER_S3_JSON_CURRENT_CANDIDATE_FILTERED",
+  "candidate_sha": "90169e4880b4af45d081d88c1c261330948d3f2d",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered Docker S3 JSON connector qualification against local digest-pinned Floci on current candidate",
+  "provider_image_digest": "sha256:f5aa8c18302cedb4f2385f5c4e455b3efc77fee6bf7b6e5d1712b2817ba102db",
+  "worker_image_digest": "sha256:6dcf1de83b799a5c426c63be27130c6fa9aa807643bea0f4c2a2fe358db7f7cb",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d2211-docker-s3-json-current-20261128 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2211-docker-s3-json-current-20261128 -TestFilter s3_json",
+  "result": {"tests": "1 passed, 26 deselected, 0 skipped, 0 failed", "selected_test": "tests.integration.test_s3_json_connector_real::test_s3_json_sink_put_read_and_retry_round_trip", "fixture": "Floci S3 local emulator", "cleanup": "PASS", "strict_v01_gate": "not evaluated"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2211-docker-s3-json-current-20261128",
+  "evidence_sha256": {"docker-cleanup.json": "011ae6918c61389ceec6f09b7aaa320af8acd40bda4263c92e2606dc1159a2c3", "docker-pytest-output.log": "d8efb4ee6f44087f219309caf7b161c02d1dfe9d39b37af344a6a295e8a55823", "docker-qualification.log": "333cfa9cd301fef5e9e414dd8109a106048babc8b22f931179983748edb3c794", "floci-s3-qualification.log": "48e92d9790d95933829a4c9b8e41b3286a12baef41761aa775d2d8f707580931", "v01-acceptance.xml": "524d435e0b74014bb8d22cd4a8d274f042f33cab3415cfc877a1652780d69503"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Floci es un emulador S3 local; no certifica AWS/S3 hosted, IAM externo, red/latencia productiva, P11 completo ni release.", "La selección fue filtrada y strict v0.1 no se evaluó; los casos deseleccionados no se promocionan.", "D2190 permanece ligado a su candidato histórico; no se reatribuyó evidencia."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
