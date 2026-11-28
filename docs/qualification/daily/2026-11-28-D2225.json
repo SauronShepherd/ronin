@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2225",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_COMPLETE_NONPERFORMANCE_CURRENT_CANDIDATE",
+  "candidate_sha": "fb87199d1ac1b919920b452f7fff136cb0038e72",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded complete non-performance Python/PostgreSQL qualification against the current clean candidate",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2225-python-postgres-complete-current-20261128",
+  "result": {
+    "selected": 4801,
+    "passed": 4770,
+    "skipped": 31,
+    "failed": 0,
+    "errors": 0,
+    "selection": "full-nonperformance-suite",
+    "coverage": "enabled",
+    "postgres_image": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c",
+    "pytest_wall_seconds": 777.821,
+    "total_wall_seconds": 794.11,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2225-python-postgres-complete-current-20261128",
+  "evidence_sha256": {
+    ".coverage": "b50cf72012c853496fd44c6928fcfbeff4c5f2f5b9f95a41a7bd63b4508da944",
+    "pytest-output.log": "cc9e63e1c6b9cd4d22d871d1b62c971fbd348d73a691d00916cba5849f316349",
+    "pytest-postgres.log": "7ba8c5285efb962dddc65818c5f1ea10f21488f5c8958c712e00cdcb256be3d0",
+    "pytest-postgres.xml": "a539a99197979b6be45ff51e3096afe39b822d34049d8fa041d1c8ba3575b1a4",
+    "pytest-timings.json": "cf856d36fa8ffe1dac28737c9e8e5dee29de688120c2a995a9fab32dbc75c393",
+    "runner-timings.json": "35ae6d995fa748e5768fc37fbe80067ffe52c6914222b348f9ee038a34ba7329"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Complete here means the bounded non-performance suite; performance tests are excluded by runner contract.", "31 skips remain explicit for unavailable providers, Docker/worker, hosted services and host limitations; they are not PASS.", "Bounded local PostgreSQL evidence does not certify hosted providers, HA, indefinite operation, P11 complete or release. No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
