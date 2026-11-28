@@ -1,0 +1,16 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1805",
+  "date": "2026-12-01",
+  "status": "PASS_FLOCI_TERRAFORM_CURRENT",
+  "candidate_sha": "c851f435fda7326e0881298f364fbaa50bcfeb1c",
+  "implementation_commit_sha": "c851f435fda7326e0881298f364fbaa50bcfeb1c",
+  "production_change": "none",
+  "evidence": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1805-floci-terraform-current-20261201\\qualification.json",
+  "command": "docker compose -p ronin-d1805-floci -f examples/cloud-studio/compose.floci.yaml up -d floci; python tools/cloud_studio_floci_qualification.py --endpoint http://127.0.0.1:4566 --backend floci --terraform --terraform-executable C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1753-terraform-bin\\terraform.exe --workspace C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1805-floci-terraform-current-20261201\\workspace --evidence C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1805-floci-terraform-current-20261201\\qualification.json; docker compose -p ronin-d1805-floci -f examples/cloud-studio/compose.floci.yaml down --volumes --remove-orphans",
+  "result": {"status": "passed", "floci_health": "HTTP 200", "terraform": "1.13.5", "aws_provider": "6.65.0", "stages": ["plan", "validate", "apply", "refresh", "destroy", "state list"], "fixture_resources_after_apply": ["s3://qualification-bucket", "sqs://qualification-queue"], "residual_resources_after_destroy": [], "cleanup": "PASS"},
+  "evidence_hashes": {"qualification.json": "9AB4D47FF394C60BEA03178CB96EAEFF9CA3043B7B5FDDFD31BACFB7918A9AF7", "workspace/.terraform.lock.hcl": "C4127C840D7D8D8E56195FFCDFAC4CDC39CEF8415FA927A6D176CB1A9AB932CF", "workspace/main.tf": "3F4CA7660853C434C4B9F66F34BFF848D25CCD456AC01DF41A4437B01605AB48", "workspace/provider.tf": "25B1009BD0A9FAF2E36F5B6B9243BFF2C01FB177D27FB54632CDF8CF61A512A0", "workspace/resources.tf": "FEC8F8A4232DD7029525BFCDA7703AD6B1D87CF383D59AC99C9BC1F09E84EA83", "workspace/variables.tf": "96301C086EAD9439511C2E0A3079431910B2D90C954FEE784765EFED18C604E3"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Provider/object-store local bounded contra Floci; no certificación AWS hosted/IAM cloud, Azure hosted, HA, operación indefinida, P11 completo ni aprobación de release. No se reatribuye evidencia histórica."]
+}
