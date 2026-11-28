@@ -1,0 +1,33 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2219",
+  "date": "2026-11-28",
+  "status": "PASS_PYTHON_ARTIFACT_QUALIFICATION_CURRENT_CANDIDATE",
+  "candidate_sha": "92aab2695a55c9c90a13beb17d0656150a33f285",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "isolated wheel and sdist build/install/contract qualification for the current main candidate",
+  "command": "python -m tools.artifact_qualification --checkout . --work-root C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2219-supply-chain-current-20261128 --output C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2219-supply-chain-current-20261128\\artifact-qualification.json",
+  "result": {
+    "package": "pyronin",
+    "version": "0.0.1a0",
+    "wheel": "PASS",
+    "sdist": "PASS",
+    "isolated_install": "PASS",
+    "contract_tests": "92 passed",
+    "cleanup": "PASS_EXTERNAL_WORK_ROOT"
+  },
+  "artifacts": {
+    "wheel": {"filename": "pyronin-0.0.1a0-py3-none-any.whl", "sha256": "1f0dd07609307a0eecf5063f0f0e4fa7f0471c0828831e8192ae4d9f7b65ee9a"},
+    "sdist": {"filename": "pyronin-0.0.1a0.tar.gz", "sha256": "34a61c78435fb5c5939987cea968b4a7915d5c973886a5902275e6d38a2e69b0"},
+    "wheel_record_sha256": "5f38cb2415674e859ec5077fb5a15535fb6d6675d0dab12131898c6285b7df3b"
+  },
+  "evidence": {
+    "directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2219-supply-chain-current-20261128",
+    "qualification_sha256": "04bc507591e32fa13dca7b27c9f0909f4f4e1e64ecb3112fc2d52748390aaf38"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This receipt covers Python artifact build/install/contracts only; it does not qualify runtime/probe images, Trivy thresholds, SBOM binding, provenance or the 22 human license decisions.", "It does not complete P11 or release approval; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
