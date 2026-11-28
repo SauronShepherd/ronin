@@ -1,0 +1,36 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2236",
+  "date": "2026-11-28",
+  "status": "PASS_POSTGRES_STREAMING_CHECKPOINT_FOCUSED_CURRENT_CANDIDATE",
+  "candidate_sha": "92b84f3adea7456253f91e468d30ec0079d4f4bc",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded focused real PostgreSQL streaming checkpoint and stream-table recovery qualification",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_postgres_test_suite.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2236-postgres-streaming-checkpoint-current-20261128 -TestPath tests/integration/test_postgres_streaming_checkpoint_real.py",
+  "result": {
+    "selected": 7,
+    "passed": 7,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "selection": "path=tests\\integration\\test_postgres_streaming_checkpoint_real.py",
+    "coverage": "disabled",
+    "postgres_image": "postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c",
+    "pytest_wall_seconds": 16.367,
+    "total_wall_seconds": 49.62,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2236-postgres-streaming-checkpoint-current-20261128",
+  "evidence_sha256": {
+    "pytest-output.log": "d3d3692de05c18f38184253f2f38c006802dfa8393a33a471a8fb0da90ec35ce",
+    "pytest-postgres.log": "7eca247b3f40f3e1e76be7a3dd1e36bf041879b3b2f9a6a058d952f17d44093c",
+    "pytest-postgres.xml": "a8e5c8eaa8538621c2b9f70534cf0e5cd1ac7cdd1154d7c22a19852fbf7024e0",
+    "pytest-timings.json": "026219582a3e88b1477b177b421b8626687cfc83777631e339b1cb8f05490dbf",
+    "runner-timings.json": "943886fb3e0d13e9b23faad45e3e6bf7a8c4ad6a3a9c01023726c1733bbde59f"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Focused file qualification with coverage disabled is diagnostic evidence, not the complete Python/PostgreSQL suite or a release gate.", "Evidence is bounded to one PostgreSQL 16.4 container and one process; it does not certify multi-worker, HA, indefinite operation, hosted providers or complete P11.", "No historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
