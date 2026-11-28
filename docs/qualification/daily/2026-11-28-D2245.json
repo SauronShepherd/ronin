@@ -1,0 +1,42 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2245",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUPERVISED_DRAIN_POSTGRES_CURRENT_CANDIDATE",
+  "candidate_sha": "045e7907658195de332a5e64a0b3c9d1742e0b2c",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded live supervised stream drain to idle with durable checkpoint progress on PostgreSQL and Redpanda",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2245-live-supervised-drain-postgres-current-20261128 -StorageBackend postgres -TestGrep 'live streaming supervised drain stops at idle with durable checkpoint progress' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "api_events": 5,
+    "api_events_correlated": 5,
+    "api_events_ok": 4,
+    "api_events_warn": 1,
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "elapsed_seconds": 74.94,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2245-live-supervised-drain-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "5ecaf7a1cb9521bc03875882bce07b83a7b06d276ff2625f12ac1cda96e7ba80",
+    "browser-live.xml": "f2aa11080869a06b497a5185c34fdc5a1838fb17fae6d0af508bbf9766a2999c",
+    "live-api-traffic.json": "2b6fae481e8272330ab26efe15b325519a0fd783c3bf652d02d83be7a28340ce",
+    "live-python-freeze.txt": "ae3a290c3516b2712e17e1091cc9c4c45dbf8003c0dd846882216d06ffbd4e36",
+    "live-server.stderr.log": "3a173c334840a043253a53cc788841afaef4a27e5623b1d2f7d4d422744a200e",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "7fe9c39ed5e306f86864337e353ad968b43db902029b2844178454a1f04d6d01",
+    "web-test-dependency-cache.json": "8dc49380e156de0e68480e71c76fb0b0b986c0949246a7eaf21d4457c7e51ce"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This is one filtered bounded live journey; route-wide and indefinite qualification were not run.", "The result does not close P11 or certify hosted providers, HA, multi-worker operation or release.", "D2244 remains a separate NOT_PASS boundedness gap; no historical evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
