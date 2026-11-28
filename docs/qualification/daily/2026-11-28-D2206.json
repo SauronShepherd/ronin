@@ -1,0 +1,18 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2206",
+  "date": "2026-11-28",
+  "status": "PASS_QUERY_ENGINE_LOCAL_CURRENT",
+  "candidate_sha": "71d9808c1ea6b275117e7354be1bb770b543d0d6",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "bounded provider-neutral local Query Engine contract qualification on current main",
+  "command": "python -m tools.query_engine_qualification --output C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2206-query-engine-current-20261128.json",
+  "result": {"local_status": "qualified", "provider": "ronin-local-sql", "query_state": "succeeded", "row_count": 2, "bounded_preview": "qualified", "unauthorized_engine": "rejected", "invalid_profile": "rejected", "queryflux": "not_configured"},
+  "evidence_file": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2206-query-engine-current-20261128.json",
+  "evidence_sha256": "a89351c9877848a938336446387369213df5b13fd2d4b953bff64c8d050bd5f0",
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Local DuckDB/Parquet reference only; QueryFlux DuckDB/Trino are not configured.", "Timeout, cancellation, queue-capacity and provider-restart cases are explicitly unsupported in this bounded lane.", "This does not complete P11 or qualify release; no historical evidence was reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
