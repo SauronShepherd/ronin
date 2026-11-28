@@ -1,0 +1,50 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2198",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_STREAMING_CURRENT",
+  "candidate_sha": "69ac00dde5988380ca076b033a9009dc657c9167",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "combined bounded live streaming diagnostic on current main with PostgreSQL, single-broker Redpanda, Ronin API and Docker worker",
+  "worker_image_digest": "sha256:2ef64679fa04400255132980f29b262a7d497465953f441cb1524b3c9da4489d",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2198-live-streaming-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2198-live-streaming-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2198-live-streaming-current-20261128 -TestGrep streaming -RequestTimeoutSeconds 90; docker image rm ronin:qualification-d2198-live-streaming-current-20261128",
+  "result": {
+    "tests_selected": 12,
+    "tests_passed": 11,
+    "tests_skipped": 1,
+    "tests_failed": 0,
+    "skip_reason": "multi-broker failover requires the dedicated three-node diagnostic",
+    "api_events": 242,
+    "correlated_events": 242,
+    "api_outcomes": {"OK": 232, "WARN": 8, "ERROR": 2},
+    "application_log_levels": {"INFO": 289, "WARNING": 8, "ERROR": 2, "CRITICAL": 0},
+    "duration_seconds": 272.82,
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true
+  },
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2198-live-streaming-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "5b8a5666678a86aa9301bcaa69b66ca5c087201d00323b6e28c9e458555ace38",
+    "browser-live.xml": "5251f150b3dcd38ecaca4765ff7ddf17433a9ea0751454fe2720251050e947d8",
+    "live-api-traffic.json": "cf86cd37476e88271724f1ba5555609a57cdb0c2f118053b55f1e620e6616356",
+    "live-python-freeze.txt": "d961de0ef66294b1e402159d5ca0b0a7d2c0db6c8874a8171cecac735107aff9",
+    "live-server.stderr.log": "f0f815727449748535135adb1f2f3235208c065ab657993a4805de949e526365",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-worker.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "live-worker.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "37cfcd8a3e5b593d777b24fefce1ff9abc1683dfa271c4b9a5dbac3c29cbf966",
+    "web-test-dependency-cache.json": "8dc49380e156de0e68480e71c76fb0b0b986c0949246a7eaf21d4457c7e51ce"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": [
+    "Single-broker combined diagnostic; the multi-broker case was explicitly skipped and remains covered only by dedicated RF3 evidence.",
+    "The 2 HTTP 503 ERROR outcomes are expected during the intentional broker restart; 8 WARN outcomes are expected validation/recovery responses.",
+    "Bounded local evidence does not certify hosted providers, HA/SLO, indefinite operation, multi-worker production, complete P11 or release approval.",
+    "No historical evidence was reattributed."
+  ],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
