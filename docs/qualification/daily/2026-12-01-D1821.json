@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1821",
+  "status": "PASS_QUERYFLUX_REPEAT",
+  "candidate_sha": "6b2e6c4c0be365b2547adfd08437d748eae23b32",
+  "implementation_commit_sha": "6b2e6c4c0be365b2547adfd08437d748eae23b32",
+  "production_change": "none",
+  "command": "10x python -m pytest -q tests/integration/test_data_engineering_http.py -k queryflux_async_create_is_project_scoped_and_fail_closed_on_bounds",
+  "result": {"runs": 10, "passed": 10, "failed": 0, "skipped_per_run": 4, "cleanup": "PASS; no external runtime"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1821-queryflux-repeat-current-20261201",
+  "evidence_hashes": {"summary.log": "c15b23576485e5653d3a30c10332bf25a5d3419713005b306231b40fc0c68e83", "run_logs": "10 external run-*.log files preserved"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["does not erase the one failure in the prior full-suite run", "focused repeat only", "no historical evidence reattributed"]
+}
