@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1809",
+  "status": "PASS_ML_PROVIDER_CONTRACTS",
+  "candidate_sha": "e2fed41ced9ae513a4bf5e876c479006ee2c5505",
+  "implementation_commit_sha": "e2fed41ced9ae513a4bf5e876c479006ee2c5505",
+  "production_change": "none",
+  "command": "python -m pytest -q --junitxml=C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1809-ml-provider-contract-20261201\\ml-junit.xml tests/test_ml_backend_capabilities.py tests/test_ml_backend_capability_gate.py tests/test_ml_backend_contexts.py tests/test_ml_backend_registry.py tests/test_ml_provider_adapters.py tests/test_ml_remote_backend_protocol.py",
+  "result": {"tests": "6/6 passed, 0 skipped, 0 failed", "cleanup": "not applicable; no external runtime"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1809-ml-provider-contract-20261201",
+  "evidence_hashes": {"ml-junit.xml": "15b0cf3c343962403afb9cbf6dddd6a922e665bc7f064059292338fe642895f4", "qualification.json": "10d8a9752141eef4840780a227de9f41b90e62291ca7b975d95a1013061c9ce5"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["contract/unit qualification only", "no hosted providers, live runtime, HA, or complete release evidence", "no historical evidence reattributed"]
+}
