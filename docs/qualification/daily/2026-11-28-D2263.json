@@ -1,0 +1,43 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2263",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_STREAMING_ROUTE_CURRENT_CANDIDATE",
+  "candidate_sha": "934b411cb54cd5fbd464fbe05b28c96e79e47eb0",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "explicit live Streaming Studio/API journey with PostgreSQL and Kafka",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2263-live-streaming-route-postgres-20261128 -StorageBackend postgres -TestGrep 'route streaming loads and reaches the live API' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "playwright_executed": 1,
+    "playwright_passed": 1,
+    "playwright_skipped": 0,
+    "playwright_failed": 0,
+    "api_events": 52,
+    "correlated_http_logs": 52,
+    "uncorrelated": 0,
+    "outcomes": {"OK": 48, "WARN": 4},
+    "unexpected_authorization_gaps": 0,
+    "unexpected_server_or_network_errors": 0,
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true,
+    "cleanup": "PASS"
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2263-live-streaming-route-postgres-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "b0f7fa4423b126296feae78b6e1fc61e859f8066034355f77153bcbad3d6ce0f",
+    "browser-live.xml": "857033a1e2c88a2d426d1b6c27b4b9feb9bdc440d059054dc0e094092ba2b4ff",
+    "live-api-traffic.json": "8949b33bd7cc7ad712be9999adfcfd8960415bb426e41faa4d09734a23cb9659",
+    "live-server.stderr.log": "68173575917bffef2c9223881ac3ecaa32a6d739fbe52d438da3df1175696773",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "fb7809d9f4f07fa54787f6a8e4c3475799082b83347802dd3942cdd3edf5d15a",
+    "live-python-freeze.txt": "3d7424e5f5474a5923e01efe52b1db3a03e1c61c49d008802adf7a7fb20f59f2"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["This explicit route journey is bounded and current-candidate evidence; it does not reattribute D2259, certify hosted providers, indefinite operation, complete P11 or release.", "No historical D83-D2262 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
