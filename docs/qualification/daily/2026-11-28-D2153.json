@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2153",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_SUPERVISED_DRAIN_IDLE_CURRENT",
+  "candidate_sha": "31b7b56e0a091deb6b41e1e3368f5ba7febbe8b2",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live supervised streaming drain that stops at idle with durable checkpoint progress, using real PostgreSQL, single-broker Redpanda, Ronin API and Docker worker.",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2153-live-supervised-drain-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2153-live-supervised-drain-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2153-live-supervised-drain-current-20261128 -TestGrep 'live streaming supervised drain stops at idle' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2153-live-supervised-drain-current-20261128",
+  "worker_image_digest": "sha256:ab0c62175353c7bc2979543bae04aeb2f16b1e53fd2f42002ab97b4380ffa7df",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 5, "correlated_events": 5, "api_outcomes": {"OK": 4, "WARN": 1}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 53.82, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2153-live-supervised-drain-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "C7E1A792D8C09933FE265B8FBB34DE27B59B832C2D659B7A6369ADDA9A9DFBDE",
+    "browser-live.xml": "73FEF5257780F7D1E9356FE1B2B2088FA3F7A0861ED06B100F0C505F6910C968",
+    "live-api-traffic.json": "FDD9D4A6E78A7EACCA6DB1584E8CBAF56FC7BC72E8A53A78C6F7AE0F5A329B4D",
+    "live-python-freeze.txt": "9B38E2488FE3F1B0D1F70ABBDEF6A95840490EC66A94863B77CEDD8529F049B5",
+    "live-server.stderr.log": "F2E4E69E4F67F0C8D61BA7CF00BE2723EF8957DE3521A35C388E21ED0F53C75D",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "59ECBB3F311DF74624DF5DF62892D9F853CF3FD904128A9821A3E4551482D0FD",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "cleanup": "Runner removed PostgreSQL, Redpanda, volume, network, live processes and temporary worker image.",
+  "limitations": ["Single-broker bounded supervised-drain diagnostic; does not prove indefinite operation, HA, multi-worker operation, hosted providers or complete P11.", "The WARN outcome is the expected idle-stop observation; no unexpected server/network or log errors were recorded."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
