@@ -1,0 +1,40 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2251",
+  "date": "2026-11-28",
+  "status": "NOT_PASS_LIVE_INGESTION_WATERMARK_SKIPPED_NO_TRAFFIC",
+  "candidate_sha": "a9f2c68b8276955f7f855ea68d553770564a6401",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "filtered live PostgreSQL/Kafka diagnostic of Ingestion Studio watermark bootstrap and duplicate-free advance",
+  "commands": {
+    "qualification": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2251-live-ingestion-watermark-postgres-current-20261128 -StorageBackend postgres -TestGrep 'Ingestion Studio bootstraps and advances a PostgreSQL watermark without replay duplication' -RequestTimeoutSeconds 180"
+  },
+  "result": {
+    "selected": 1,
+    "passed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "failure_phase": "audit route coverage and real API traffic evidence",
+    "failure": "Live API traffic evidence is empty for a test expected to exercise the API.",
+    "api_events": 0,
+    "correlated_http_logs": 0,
+    "cleanup": "PASS",
+    "postgres": true,
+    "kafka": true,
+    "ronin_api": true
+  },
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2251-live-ingestion-watermark-postgres-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "d291f2bc75c970fdafd146bee35a869d8ec7d0d9320d84320236c9a706584b05",
+    "browser-live.xml": "bce4186414c64deecda140841f0cae9dc7161d4184c549fef4dd59e623eb2aa7",
+    "live-server.stderr.log": "fa97efe9bcae7e6b301586882639a40c0464899867b30db886e857f0571970b1",
+    "live-server.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-summary.json": "a357cb731ab13282305a820db4168b73188e669760b3df2f6dc0e3605b47c0b2",
+    "live-python-freeze.txt": "13b12701b2ad736ae7a4355fcee40796597eb1efc826dc4b20582c16c62deb69"
+  },
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["NOT_PASS: the selected test was skipped and produced no API traffic, so no watermark behavior is evidenced.", "No production change and no historical D83-D2250 evidence is reattributed."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
