@@ -1,0 +1,19 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2213",
+  "date": "2026-11-28",
+  "status": "PASS_TRINO_LOCAL_CURRENT_CANDIDATE",
+  "candidate_sha": "84175b7e4e26d9bfbc51b4507f3c1ba16bedd69e",
+  "implementation_commit_sha": null,
+  "production_change": false,
+  "scope": "real local Trino provider qualification with QueryFlux worker recovery tests on current candidate",
+  "provider_image": "trinodb/trino@sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f",
+  "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_trino_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2213-trino-current-20261128",
+  "result": {"tests": "4 passed, 0 skipped, 0 failed", "trino_version": "484", "selected_tests": ["test_trino_real_prepared_scalar_bindings", "test_trino_real_result_byte_budget_accepts_exact_limit_and_rejects_one_byte_less", "test_queryflux_worker_runner_real_trino_persists_terminal_evidence", "test_queryflux_real_worker_process_sigkill_reclaims_without_duplicate"], "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2213-trino-current-20261128",
+  "evidence_sha256": {"pytest-timings.json": "184de9d58e97a89a15fb54d5cc1a5e2773dc6d1d9f6763715c629aff8da61346", "qualification.json": "2f76e2aca3446e3ec87ea8983e235fcf8997c3e74c92c359d7d4d5b113d4d36c", "qualification.log": "693bc779bcf826386377a7c58dd90c35f9af81a03dcb2f113249f345d983281d", "trino-container.log": "3a1016a2d53121e63e4682e8be13f2898af0fc7958c6a26875efe284bc3d404b", "trino-junit.xml": "c846338ff94254114c596bf937a52ccd9fb98c8ce74efbff1302d86a6e3c55fd"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["Cualificación Trino local; no certifica Trino hosted, cluster HA, IAM externo, operación productiva indefinida, P11 completo ni release.", "D2193 permanece ligado a su candidato histórico; no se reatribuye evidencia."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
