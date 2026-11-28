@@ -1,0 +1,15 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D1820",
+  "status": "NOT_PASS_FULL_SUITE_TRANSIENT",
+  "candidate_sha": "ca5570bcd4cb50933e872e5618d68025af679ece",
+  "implementation_commit_sha": "ca5570bcd4cb50933e872e5618d68025af679ece",
+  "production_change": "none",
+  "command": "python -m pytest --ignore=tests/perf -q",
+  "result": {"full_suite": "4706 passed, 90 skipped, 1 failed", "failure": "test_queryflux_async_create_is_project_scoped_and_fail_closed_on_bounds: Windows ConnectionAbortedError during cross-workspace request", "focused_rerun": "1 passed, 4 deselected", "cleanup": "PASS; no external runtime"},
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1820-python-full-current-20261201",
+  "evidence_hashes": {"pytest-full.log": "25786227bcb98b82b7358e8c3497593ba86efa555e5396c7abfa66da7448cd49", "focused-rerun.log": "81dc0043ac551aa38e0f4fc5ecf8866bcdec7ef1bf76014fa4209082a6cdd2f9"},
+  "progress_before": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "progress_after": {"families": "1/13", "gates": "0/10", "release": "NO-GO"},
+  "limitations": ["full suite is not promoted as PASS", "focused rerun passed but does not erase the full-suite failure", "no historical evidence reattributed"]
+}
