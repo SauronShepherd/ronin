@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.daily-receipt/v1",
+  "phase": "D2151",
+  "date": "2026-11-28",
+  "status": "PASS_LIVE_EMPTY_PARTITION_HEALTH_CURRENT",
+  "candidate_sha": "181ae5421b24317aa174ae9579ebff8f76e04073",
+  "implementation_commit_sha": null,
+  "production_change_boundary": null,
+  "production_change": false,
+  "scope": "Bounded live health check for an empty streaming partition without false lag, with real PostgreSQL, single-broker Redpanda, Ronin API and Docker worker.",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d2151-live-empty-partition-current-20261128 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_live_product_qualification.ps1 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2151-live-empty-partition-current-20261128 -StorageBackend postgres -WorkerImage ronin:qualification-d2151-live-empty-partition-current-20261128 -TestGrep 'live streaming health reports an empty partition' -RequestTimeoutSeconds 240; docker image rm ronin:qualification-d2151-live-empty-partition-current-20261128",
+  "worker_image_digest": "sha256:8e78a1d8f38ece3767d5bb131db0e55ea9a597f3111e86e38d4d221796964b1e",
+  "result": {"tests": "1 passed, 0 skipped, 0 failed", "api_events": 4, "correlated_events": 4, "api_outcomes": {"OK": 4}, "unexpected_authorization_gaps": 0, "unexpected_server_or_network_errors": 0, "log_errors_or_critical": 0, "duration_seconds": 27.55, "cleanup": "PASS"},
+  "evidence_dir": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d2151-live-empty-partition-current-20261128",
+  "evidence_sha256": {
+    "browser-live.log": "E4391423CA5BA29BE4FF0F071B441255B09804698ACC50F8447BE840C75B2B86",
+    "browser-live.xml": "39FE3AB223895B0445C6ED7FCF43EF454F15D246AE2ED0B0968F3E95294479E6",
+    "live-api-traffic.json": "EBF1FF1D7FF5AD49419D8F63345B557BD9701814D36BFDC68CBDF283C1EE654C",
+    "live-python-freeze.txt": "5FA7F2247950A5967014837602BC207891AD9502299A26E03F4BD1E84BD8417F",
+    "live-server.stderr.log": "AD56E2557A0FE79A81867FF5C4C2824CF2185277B45836CDBB4BFF477044F455",
+    "live-server.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stderr.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "live-worker.stdout.log": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "qualification-summary.json": "DCFDB5126A21157E50065B036652BE933C6DDE1E2E45371A3F633D559495792B",
+    "web-test-dependency-cache.json": "8DC49380E156DE0E68480E71C76FB0B0B986C0949246A7EAF21D4457C7E51CE1"
+  },
+  "cleanup": "Runner removed PostgreSQL, Redpanda, volume, network, live processes and temporary worker image.",
+  "limitations": ["Single-broker bounded health diagnostic; does not prove indefinite operation, HA, multi-worker operation, hosted providers or complete P11.", "This receipt is bound to the current candidate and does not reattribute D2121 or earlier evidence."],
+  "status_constraints": {"P11": "in_progress", "P13": "blocked", "release": "NO-GO"}
+}
