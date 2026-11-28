@@ -1,0 +1,37 @@
+{
+  "schema": "ronin.qualification.daily/v1",
+  "date": "2026-12-01",
+  "qualification_id": "D1823",
+  "candidate_sha": "a2e63e29511dc2307f6a2e8e00fb2fd2120e607b",
+  "scope": "Docker full qualification on current main after Alpine runtime-lock and seeder corrections",
+  "result": "PASS",
+  "command": "docker build --pull=false --file docker/Dockerfile --tag ronin:qualification-d1823-docker-full-20261201 .; pwsh -NoProfile -ExecutionPolicy Bypass -File tools/run_docker_qualification.ps1 -ImageTag ronin:qualification-d1823-docker-full-20261201 -EvidenceDirectory C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1823-docker-full-current-20261201",
+  "image": {
+    "digest": "sha256:149fe043140e296b846c3ffbb115a3902452dcaee159fce0b81405e29ec69fd9",
+    "built_from_checkout": true
+  },
+  "acceptance": {
+    "integration_tests": "27 passed, 0 skipped, 0 failed",
+    "strict_v01": "15/15 live, 0 failed, 0 missing, 0 unexpected"
+  },
+  "fixtures": ["PostgreSQL", "Docker worker", "Floci/S3", "Azurite/Azure"],
+  "evidence_directory": "C:\\Users\\angel.alvarez\\AppData\\Local\\Temp\\ronin-d1823-docker-full-current-20261201",
+  "evidence_sha256": {
+    "docker-qualification.log": "cc37b3514f9bd8197b853f2b36b61e3f1a8db5c1647c0cfd4e6482ce99b20aa0",
+    "docker-pytest-output.log": "546f257cdbb3b2ed0460f44eff499d670f386a51f244a333e69ef7c12d45be46",
+    "qualification-summary.json": "fc3ed2bed4774bdd5e3ad6516ce04f8cc6150577c166e8ce840a6f545f423cdd",
+    "v01-acceptance-strict.json": "5da1b46c5a62ab1f23a067bc5ecb3b5cb60cc79d770f5e515e6821346c7a9b2c",
+    "v01-acceptance.xml": "9178e026b96b3b34ed2a3f4de5659170e8fb9e7fdc76a9819de0e54c7e112ac3",
+    "docker-cleanup.json": "923210833001f4300aa3146a97badd73b6b143c9ebfbbd810847fe282351cd53"
+  },
+  "cleanup": "PASS; owned containers and Ronin qualification image removed; no containers remain",
+  "status_after_receipt": {
+    "P11": "in_progress",
+    "P13": "blocked",
+    "release": "NO-GO"
+  },
+  "limitations": [
+    "Local Docker qualification only; does not qualify hosted IAM, HA, indefinite soak, or external production credentials.",
+    "Historical D83-D1822 evidence is unchanged and not reattributed."
+  ]
+}
